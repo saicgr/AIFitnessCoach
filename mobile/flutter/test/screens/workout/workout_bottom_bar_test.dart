@@ -26,11 +26,14 @@ void main() {
   Widget buildTestWidget({
     required WorkoutExercise currentExercise,
     WorkoutExercise? nextExercise,
+    List<WorkoutExercise>? allExercises,
+    int currentExerciseIndex = 0,
     bool showInstructions = false,
     bool isResting = false,
     VoidCallback? onToggleInstructions,
     VoidCallback? onSkip,
   }) {
+    final exercises = allExercises ?? [currentExercise, if (nextExercise != null) nextExercise];
     return MaterialApp(
       theme: ThemeData.dark(),
       home: Scaffold(
@@ -40,6 +43,8 @@ void main() {
             WorkoutBottomBar(
               currentExercise: currentExercise,
               nextExercise: nextExercise,
+              allExercises: exercises,
+              currentExerciseIndex: currentExerciseIndex,
               showInstructions: showInstructions,
               isResting: isResting,
               onToggleInstructions: onToggleInstructions ?? () {},

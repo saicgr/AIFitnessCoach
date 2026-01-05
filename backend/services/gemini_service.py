@@ -13,6 +13,7 @@ from google.genai import types
 from typing import List, Dict, Optional
 import json
 import logging
+import asyncio
 from core.config import get_settings
 from models.chat import IntentExtraction, CoachIntent
 
@@ -343,6 +344,9 @@ IMPORTANT:
 - Total values should be the sum of individual items
 - Provide helpful feedback about the nutritional quality of the meal'''
 
+        # Timeout for image analysis (20 seconds - images take longer)
+        IMAGE_ANALYSIS_TIMEOUT = 20
+
         try:
             # Create image part from base64
             image_part = types.Part.from_bytes(
@@ -350,15 +354,23 @@ IMPORTANT:
                 mime_type=mime_type
             )
 
-            response = await client.aio.models.generate_content(
-                model=self.model,
-                contents=[prompt, image_part],
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    max_output_tokens=2000,
-                    temperature=0.3,
-                ),
-            )
+            # Add timeout to prevent hanging on slow Gemini responses
+            try:
+                response = await asyncio.wait_for(
+                    client.aio.models.generate_content(
+                        model=self.model,
+                        contents=[prompt, image_part],
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                            max_output_tokens=2000,
+                            temperature=0.3,
+                        ),
+                    ),
+                    timeout=IMAGE_ANALYSIS_TIMEOUT
+                )
+            except asyncio.TimeoutError:
+                logger.error(f"Food image analysis timed out after {IMAGE_ANALYSIS_TIMEOUT}s")
+                return None
 
             content = response.text.strip()
 
@@ -418,177 +430,81 @@ IMPORTANT:
         if rag_context:
             rag_section = f"\nNUTRITION KNOWLEDGE CONTEXT:\n{rag_context}\n"
 
-        # Build scoring criteria based on goals
+        # Build scoring criteria based on goals - simplified for speed
         scoring_criteria = """
-GOAL-BASED SCORING CRITERIA (score each food 1-10):
-BE STRICT AND CRITICAL - Most restaurant/fast foods should score 4-6, not 7-8.
-A score of 8-10 should be RARE and only for truly excellent choices.
+SCORING (1-10): Be strict. Restaurant/fast food: 4-6. Whole foods: 7-8. Score 9-10 is rare.
+- Muscle goals: Need >25g protein for score >7
+- Weight loss: Penalize >500 cal, need fiber for score >7
+- Fried foods: -2 points. High sodium/sugar: -1 point each."""
 
-STRICT SCORING SCALE:
-- 9-10: Exceptional - Homemade whole foods, perfect macro balance, no processed ingredients
-- 7-8: Good - Mostly whole foods, reasonable portions, minor concerns
-- 5-6: Neutral - Average meal, some processed foods, calorie-dense, room for improvement
-- 3-4: Poor - High calorie, processed, missing nutrients, oversized portions
-- 1-2: Very Poor - Fast food, deep fried, excessive sugar/sodium, harmful to goals
-
-GOAL-SPECIFIC SCORING:
-- "build_muscle" / "gain_muscle": Require >25g protein AND quality source for score >7
-- "lose_weight" / "fat_loss": Penalize >500 calories/meal, require fiber >5g for score >7
-- "improve_endurance": Require complex carbs (not refined) for score >7
-- "general_fitness" / "stay_active": Require balanced macros AND whole foods for score >7
-- "maintain_weight": Penalize portions over 600 calories for score >7
-
-AUTOMATIC DEDUCTIONS:
-- Fried foods: -2 points from base score
-- White rice/bread: -1 point (refined carbs)
-- Restaurant portions: -1 point (typically oversized)
-- High sodium (>800mg): -1 point
-- High sugar (>15g): -1 point
-- Processed meats: -1 point
-
-HEALTH FLAGS TO DETECT:
-- High sodium (>500mg/serving): Flag as warning
-- High added sugar (>10g/serving): Flag as warning
-- Highly processed foods: Flag as warning
-- High protein content: Flag as positive for muscle building
-- High fiber content: Flag as positive for weight loss/health
-- Whole food/unprocessed: Flag as positive"""
-
-        # Choose response format based on whether we have user context
+        # Simplified response format for faster parsing
+        # Micronutrients are optional - only core macros required
         if user_goals or nutrition_targets:
             response_format = '''{{
   "food_items": [
-    {{
-      "name": "Food item name",
-      "amount": "Portion from description or reasonable default",
-      "calories": 150,
-      "protein_g": 10.0,
-      "carbs_g": 15.0,
-      "fat_g": 5.0,
-      "fiber_g": 2.0,
-      "sodium_mg": 200,
-      "sugar_g": 5.0,
-      "saturated_fat_g": 2.0,
-      "cholesterol_mg": 50,
-      "potassium_mg": 300,
-      "vitamin_a_iu": 500,
-      "vitamin_c_mg": 10,
-      "vitamin_d_iu": 40,
-      "calcium_mg": 100,
-      "iron_mg": 2.0,
-      "goal_score": 8,
-      "goal_alignment": "excellent",
-      "reason": "High protein content supports your muscle building goal"
-    }}
+    {{"name": "Food name", "amount": "portion", "calories": 150, "protein_g": 10, "carbs_g": 15, "fat_g": 5, "fiber_g": 2, "goal_score": 7}}
   ],
   "total_calories": 450,
-  "protein_g": 25.0,
-  "carbs_g": 40.0,
-  "fat_g": 15.0,
-  "fiber_g": 5.0,
-  "sodium_mg": 400,
-  "sugar_g": 10.0,
-  "saturated_fat_g": 4.0,
-  "cholesterol_mg": 100,
-  "potassium_mg": 600,
-  "vitamin_a_iu": 1000,
-  "vitamin_c_mg": 20,
-  "vitamin_d_iu": 80,
-  "calcium_mg": 200,
-  "iron_mg": 4.0,
+  "protein_g": 25,
+  "carbs_g": 40,
+  "fat_g": 15,
+  "fiber_g": 5,
   "overall_meal_score": 7,
-  "health_score": 8,
-  "goal_alignment_percentage": 75,
-  "ai_suggestion": "Great protein choice! Consider adding vegetables for more fiber and micronutrients.",
-  "encouragements": ["High protein intake - excellent for muscle building!", "Good portion control"],
-  "warnings": ["High sodium content - consider low-sodium alternatives"],
-  "recommended_swap": "Try brown rice instead of white rice for more fiber and sustained energy."
+  "ai_suggestion": "Brief feedback"
 }}'''
         else:
             response_format = '''{{
   "food_items": [
-    {{
-      "name": "Food item name",
-      "amount": "Portion from description or reasonable default",
-      "calories": 150,
-      "protein_g": 10.0,
-      "carbs_g": 15.0,
-      "fat_g": 5.0,
-      "fiber_g": 2.0,
-      "sodium_mg": 200,
-      "sugar_g": 5.0,
-      "saturated_fat_g": 2.0,
-      "cholesterol_mg": 50,
-      "potassium_mg": 300,
-      "vitamin_a_iu": 500,
-      "vitamin_c_mg": 10,
-      "vitamin_d_iu": 40,
-      "calcium_mg": 100,
-      "iron_mg": 2.0
-    }}
+    {{"name": "Food name", "amount": "portion", "calories": 150, "protein_g": 10, "carbs_g": 15, "fat_g": 5, "fiber_g": 2}}
   ],
   "total_calories": 450,
-  "protein_g": 25.0,
-  "carbs_g": 40.0,
-  "fat_g": 15.0,
-  "fiber_g": 5.0,
-  "sodium_mg": 400,
-  "sugar_g": 10.0,
-  "saturated_fat_g": 4.0,
-  "cholesterol_mg": 100,
-  "potassium_mg": 600,
-  "vitamin_a_iu": 1000,
-  "vitamin_c_mg": 20,
-  "vitamin_d_iu": 80,
-  "calcium_mg": 200,
-  "iron_mg": 4.0,
-  "health_score": 7,
-  "ai_suggestion": "Brief nutritional feedback about the meal"
+  "protein_g": 25,
+  "carbs_g": 40,
+  "fat_g": 15,
+  "fiber_g": 5,
+  "ai_suggestion": "Brief feedback"
 }}'''
 
-        prompt = f'''Parse this food description and provide detailed nutrition information with goal-based analysis.
+        prompt = f'''Parse food and return nutrition JSON. Be fast and accurate.
 
-Food description: "{description}"
-{user_context}
-{rag_section}
-{scoring_criteria if user_goals else ""}
+Food: "{description}"
+{user_context}{rag_section}{scoring_criteria if user_goals else ""}
 
-Return ONLY valid JSON in this exact format (no markdown, no explanation):
+Return ONLY JSON (no markdown):
 {response_format}
 
-IMPORTANT:
-- Extract ALL food items mentioned in the description
-- Use quantities specified (e.g., "2 eggs" = 2 large eggs)
-- If no quantity specified, assume a standard single serving
-- Use standard USDA nutrition data for calorie/macro estimates
-- Total values should be the sum of individual items
-- Account for preparation methods mentioned (e.g., "fried" vs "boiled")
-- goal_score: 1-10 based on how well the food aligns with user's specific goals
-- goal_alignment: "excellent" (8-10), "good" (6-7), "neutral" (4-5), "poor" (1-3)
-- reason: Brief explanation of why the food scored that way for the user's goals
-- overall_meal_score: Weighted average of individual food scores
-- goal_alignment_percentage: 0-100% indicating overall meal alignment with goals
-- encouragements: Array of positive aspects (what's helping their goals)
-- warnings: Array of concerns (high sodium, sugar, processed, etc.)
-- recommended_swap: Specific healthier alternative suggestion'''
+Rules: Use USDA data. Sum totals from items. Account for prep methods (fried adds fat).'''
 
         # Retry logic for intermittent Gemini failures
         max_retries = 3
         last_error = None
         content = ""
 
+        # Timeout for food analysis (10 seconds per attempt - fast UX)
+        FOOD_ANALYSIS_TIMEOUT = 10
+
         for attempt in range(max_retries):
             try:
                 print(f"🔍 [Gemini] Parsing food description (attempt {attempt + 1}/{max_retries}): {description[:100]}...")
-                response = await client.aio.models.generate_content(
-                    model=self.model,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        max_output_tokens=4096,  # Increased from 2000 to prevent truncation
-                        temperature=0.3,
-                    ),
-                )
+
+                # Add timeout to prevent hanging on slow Gemini responses
+                try:
+                    response = await asyncio.wait_for(
+                        client.aio.models.generate_content(
+                            model=self.model,
+                            contents=prompt,
+                            config=types.GenerateContentConfig(
+                                response_mime_type="application/json",
+                                max_output_tokens=1500,  # Reduced - simpler response format
+                                temperature=0.2,  # Lower = faster, more deterministic
+                            ),
+                        ),
+                        timeout=FOOD_ANALYSIS_TIMEOUT
+                    )
+                except asyncio.TimeoutError:
+                    print(f"⚠️ [Gemini] Request timed out after {FOOD_ANALYSIS_TIMEOUT}s (attempt {attempt + 1})")
+                    last_error = f"Timeout after {FOOD_ANALYSIS_TIMEOUT}s"
+                    continue
 
                 content = response.text.strip() if response.text else ""
                 print(f"🔍 [Gemini] Raw response: {content[:500]}...")
@@ -665,9 +581,23 @@ IMPORTANT:
             # Remove trailing commas before } or ]
             fixed_json = re.sub(r',\s*([}\]])', r'\1', fixed_json)
 
-            # Fix reversed JSON format (where Gemini outputs properties in reverse)
-            # This handles the case where content looks like: "value": ..., "key"
-            # Try to detect and fix property order issues
+            # Fix truncated JSON - common with token limits
+            # Count brackets to detect incomplete JSON
+            open_braces = fixed_json.count('{')
+            close_braces = fixed_json.count('}')
+            open_brackets = fixed_json.count('[')
+            close_brackets = fixed_json.count(']')
+
+            # Add missing closing brackets/braces
+            if open_braces > close_braces:
+                fixed_json += '}' * (open_braces - close_braces)
+            if open_brackets > close_brackets:
+                # Insert closing brackets before the final braces
+                insert_pos = fixed_json.rfind('}')
+                if insert_pos > 0:
+                    fixed_json = fixed_json[:insert_pos] + ']' * (open_brackets - close_brackets) + fixed_json[insert_pos:]
+                else:
+                    fixed_json += ']' * (open_brackets - close_brackets)
 
             try:
                 return json.loads(fixed_json)
@@ -726,7 +656,7 @@ IMPORTANT:
                         "fat_g": total_fat,
                         "fiber_g": total_fiber,
                         "health_score": 5,  # Default neutral score
-                        "ai_suggestion": "Unable to fully parse AI response, nutritional values may be approximate."
+                        "ai_suggestion": f"Logged {len(food_objects)} item(s): ~{total_calories} cal, {total_protein}g protein. Values are estimates - adjust if needed."
                     }
                     print(f"✅ [Gemini] Recovered {len(food_objects)} food items via regex extraction")
                     return recovered_result
@@ -1500,6 +1430,7 @@ Requirements:
 - EVERY exercise MUST match the focus area - do NOT include exercises for other muscle groups!
 - ONLY use equipment from this list: {', '.join(equipment) if equipment else 'bodyweight'}
 - For beginners: USE ALL AVAILABLE EQUIPMENT listed above! Focus on proper form and include adequate rest. Choose foundational compound movements (squats, bench press, rows, deadlifts) over isolation exercises. Beginners CAN and SHOULD use barbells, dumbbells, and machines - not just bodyweight!
+  ⚠️ CRITICAL FOR BEGINNERS: Do NOT include advanced/elite calisthenics movements like planche push-ups, front levers, muscle-ups, handstand push-ups, one-arm pull-ups, pistol squats, human flags, or L-sits. These require YEARS of training. Stick to basic movements: regular push-ups, squats, lunges, rows, planks, dips (assisted if needed), and standard pull-ups (assisted if needed).
 - For intermediate: balanced challenge, mix of compound and isolation movements
 - For advanced: higher intensity, complex movements, advanced techniques, less rest
 - For HELL difficulty: MAXIMUM intensity! Supersets, drop sets, minimal rest (30-45s), heavy weights, near-failure reps. This should be the hardest workout possible. Include at least 7-8 exercises with 4-5 sets each.
@@ -1723,6 +1654,8 @@ Include 5-8 exercises for {fitness_level} level using only: {', '.join(equipment
         custom_program_description: Optional[str] = None,
         workout_type_preference: Optional[str] = None,
         comeback_context: Optional[str] = None,
+        strength_history: Optional[Dict[str, Dict]] = None,
+        personal_bests: Optional[Dict[str, Dict]] = None,
     ) -> Dict:
         """
         Generate a workout plan using exercises from the exercise library.
@@ -1745,6 +1678,8 @@ Include 5-8 exercises for {fitness_level} level using only: {', '.join(equipment
             custom_program_description: Optional user's custom program description (e.g., "Train for HYROX")
             workout_type_preference: Optional workout type preference (strength, cardio, mixed)
             comeback_context: Optional context string for users returning from extended breaks
+            strength_history: Optional dict of exercise performance history (last weight, max weight, reps)
+            personal_bests: Optional dict of user's personal records per exercise
 
         Returns:
             Dict with workout structure
@@ -1810,6 +1745,17 @@ Include 5-8 exercises for {fitness_level} level using only: {', '.join(equipment
             logger.info(f"🔄 [Gemini Service] Library workout - user in comeback mode")
             comeback_instruction = f"\n\n🔄 COMEBACK NOTE: User is returning from an extended break. Include comeback/return-to-training themes in the name (e.g., 'Comeback', 'Return', 'Fresh Start')."
 
+        # Build performance context from strength history and personal bests
+        performance_context = ""
+        if strength_history or personal_bests:
+            from api.v1.workouts.utils import format_performance_context
+            performance_context = format_performance_context(
+                exercises, strength_history or {}, personal_bests or {}
+            )
+            if performance_context:
+                performance_context = f"\n\n{performance_context}"
+                logger.info(f"[Gemini Service] Added performance context for {len([ex for ex in exercises if strength_history.get(ex.get('name')) or personal_bests.get(ex.get('name'))])} exercises")
+
         # Format exercises for the prompt
         exercise_list = "\n".join([
             f"- {ex.get('name', 'Unknown')}: targets {ex.get('muscle_group', 'unknown')}, equipment: {ex.get('equipment', 'bodyweight')}"
@@ -1822,7 +1768,7 @@ Include 5-8 exercises for {fitness_level} level using only: {', '.join(equipment
 
 User profile:
 - Fitness Level: {fitness_level}
-- Goals: {', '.join(goals) if goals else 'General fitness'}{age_context}{custom_program_context}{safety_instruction}
+- Goals: {', '.join(goals) if goals else 'General fitness'}{age_context}{custom_program_context}{performance_context}{safety_instruction}
 
 Create a CREATIVE and MOTIVATING workout name (3-4 words) that reflects the user's training focus.
 
@@ -1838,7 +1784,7 @@ Return a JSON object with:
   "name": "Your creative workout name here",
   "type": "{workout_type}",
   "difficulty": "{difficulty}",
-  "notes": "A brief motivational tip for this workout (1-2 sentences)"
+  "notes": "A personalized tip for this workout based on the user's performance history (1-2 sentences). Reference their progress towards PRs or recent improvements if available."
 }}"""
 
         # Log the full prompt for debugging
@@ -1849,6 +1795,8 @@ Return a JSON object with:
         logger.info(f"Custom program description: {custom_program_description}")
         logger.info(f"Exercise count: {len(exercises)}")
         logger.info(f"Exercise names: {[ex.get('name') for ex in exercises]}")
+        logger.info(f"Strength history: {len(strength_history) if strength_history else 0} exercises")
+        logger.info(f"Personal bests: {len(personal_bests) if personal_bests else 0} exercises")
         logger.info("-" * 40)
         logger.info(f"FULL PROMPT:\n{prompt}")
         logger.info("=" * 80)

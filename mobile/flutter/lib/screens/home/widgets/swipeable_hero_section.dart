@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/workout.dart';
+import '../../../data/providers/today_workout_provider.dart';
 import 'hero_workout_card.dart';
 import 'hero_nutrition_card.dart';
 import 'hero_fasting_card.dart';
@@ -148,25 +149,90 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
         ),
 
         // Compact workout row (when not in workout focus)
-        if (currentFocus != HomeFocus.workout && widget.todayWorkout != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: CompactWorkoutRow(workout: widget.todayWorkout!),
-          ),
+        if (currentFocus != HomeFocus.workout)
+          _buildCompactWorkoutRow(),
       ],
     );
   }
 
   Widget _buildWorkoutHero() {
-    if (widget.isGenerating) {
-      return const GeneratingHeroCard();
-    }
+    // Always show workout from todayWorkoutProvider - NEVER show rest day
+    // This ensures consistency: either today's workout or next workout with date
+    final todayWorkoutState = ref.watch(todayWorkoutProvider);
 
-    if (widget.todayWorkout != null) {
-      return HeroWorkoutCard(workout: widget.todayWorkout!);
-    }
+    return todayWorkoutState.when(
+      loading: () => const GeneratingHeroCard(
+        message: 'Loading workout...',
+      ),
+      error: (_, __) {
+        // On error, try to use the passed workout as fallback
+        if (widget.todayWorkout != null) {
+          return HeroWorkoutCard(workout: widget.todayWorkout!);
+        }
+        return const GeneratingHeroCard(
+          message: 'Loading workout...',
+        );
+      },
+      data: (response) {
+        // Check if generating
+        if (response?.isGenerating == true || widget.isGenerating) {
+          return GeneratingHeroCard(
+            message: response?.generationMessage ?? 'Generating workout...',
+          );
+        }
 
-    return _buildNoWorkoutCard();
+        // Get workout: today's OR next (ALWAYS show a workout, never rest day)
+        final workoutSummary = response?.todayWorkout ?? response?.nextWorkout;
+
+        if (workoutSummary != null) {
+          return HeroWorkoutCard(workout: workoutSummary.toWorkout());
+        }
+
+        // Fallback to passed workout if provider returned null
+        if (widget.todayWorkout != null) {
+          return HeroWorkoutCard(workout: widget.todayWorkout!);
+        }
+
+        // Last resort: show generating card (backend should auto-generate)
+        return const GeneratingHeroCard(
+          message: 'Preparing your workout...',
+        );
+      },
+    );
+  }
+
+  Widget _buildCompactWorkoutRow() {
+    final todayWorkoutState = ref.watch(todayWorkoutProvider);
+
+    return todayWorkoutState.maybeWhen(
+      data: (response) {
+        final workoutSummary = response?.todayWorkout ?? response?.nextWorkout;
+        if (workoutSummary != null) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: CompactWorkoutRow(workout: workoutSummary.toWorkout()),
+          );
+        }
+        // Fallback to passed workout
+        if (widget.todayWorkout != null) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: CompactWorkoutRow(workout: widget.todayWorkout!),
+          );
+        }
+        return const SizedBox.shrink();
+      },
+      orElse: () {
+        // While loading or on error, use passed workout if available
+        if (widget.todayWorkout != null) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: CompactWorkoutRow(workout: widget.todayWorkout!),
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    );
   }
 
   Widget _buildNutritionHero() {
@@ -175,285 +241,6 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
 
   Widget _buildFastingHero() {
     return const HeroFastingCard();
-  }
-
-  Widget _buildNoWorkoutCard() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    // Motivational messages for rest day
-    final messages = [
-      'Recovery is progress!',
-      'Rest days build strength',
-      'Your muscles are growing',
-      'Time to recharge',
-      'Active recovery wins',
-    ];
-    // Use day of year for consistent daily message
-    final messageIndex = DateTime.now().dayOfYear % messages.length;
-    final message = messages[messageIndex];
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-      child: Container(
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: AppColors.success.withValues(alpha: 0.3),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Rest day icon with calming color
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(
-                  Icons.spa,
-                  size: 32,
-                  color: AppColors.success,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Rest Day',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                message,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.success,
-                ),
-              ),
-              const SizedBox(height: 14),
-
-              // Suggested activity
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.black.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.directions_walk,
-                      color: AppColors.cyan,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Suggested: 20-min walk',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: textPrimary,
-                            ),
-                          ),
-                          Text(
-                            'Light movement aids recovery',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Quick action buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: _RestDayActionButton(
-                      icon: Icons.self_improvement,
-                      label: 'Stretch',
-                      color: AppColors.purple,
-                      onTap: () => _showRestDayActivity(context, 'stretch'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _RestDayActionButton(
-                      icon: Icons.directions_run,
-                      label: 'Light Cardio',
-                      color: AppColors.orange,
-                      onTap: () => _showRestDayActivity(context, 'cardio'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _RestDayActionButton(
-                      icon: Icons.spa,
-                      label: 'Yoga',
-                      color: AppColors.cyan,
-                      onTap: () => _showRestDayActivity(context, 'yoga'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showRestDayActivity(BuildContext context, String activity) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final Map<String, Map<String, dynamic>> activities = {
-      'stretch': {
-        'title': 'Quick Stretch Routine',
-        'duration': '10-15 min',
-        'items': [
-          'Neck rolls - 30 sec each direction',
-          'Shoulder shrugs - 15 reps',
-          'Cat-cow stretches - 10 reps',
-          'Hamstring stretch - 30 sec each leg',
-          'Hip flexor stretch - 30 sec each side',
-          'Child\'s pose - 1 min',
-        ],
-        'color': AppColors.purple,
-      },
-      'cardio': {
-        'title': 'Light Cardio Options',
-        'duration': '15-30 min',
-        'items': [
-          'Brisk walk around the block',
-          'Easy bike ride',
-          'Swimming at relaxed pace',
-          'Light dancing',
-          'Stair climbing (slow pace)',
-        ],
-        'color': AppColors.orange,
-      },
-      'yoga': {
-        'title': 'Restorative Yoga Flow',
-        'duration': '15-20 min',
-        'items': [
-          'Mountain pose - 1 min',
-          'Forward fold - 1 min',
-          'Downward dog - 1 min',
-          'Warrior II - 30 sec each side',
-          'Pigeon pose - 1 min each side',
-          'Savasana - 3 min',
-        ],
-        'color': AppColors.cyan,
-      },
-    };
-
-    final data = activities[activity]!;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: (data['color'] as Color).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    activity == 'stretch'
-                        ? Icons.self_improvement
-                        : activity == 'cardio'
-                            ? Icons.directions_run
-                            : Icons.spa,
-                    color: data['color'] as Color,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        data['title'] as String,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        data['duration'] as String,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ...(data['items'] as List<String>).map((item) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.check_circle_outline,
-                        color: data['color'] as Color,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          item,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
   }
 
   Color _getFocusColor(HomeFocus focus) {
@@ -484,64 +271,9 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
       case HomeFocus.workout:
         return 340;
       case HomeFocus.nutrition:
-        return 460;
+        return 380; // Reduced from 470 - more compact design
       case HomeFocus.fasting:
         return 420;
     }
-  }
-}
-
-/// Rest day action button widget
-class _RestDayActionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _RestDayActionButton({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: color.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Extension to get day of year from DateTime
-extension DateTimeExtensions on DateTime {
-  int get dayOfYear {
-    return difference(DateTime(year, 1, 1)).inDays + 1;
   }
 }

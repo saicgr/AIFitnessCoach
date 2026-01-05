@@ -95,6 +95,9 @@ from .utils import (
     get_kegel_exercises_for_workout,
     # Focus area validation
     validate_and_filter_focus_mismatches,
+    # Performance context for personalized notes
+    get_user_personal_bests,
+    format_performance_context,
 )
 from services.adaptive_workout_service import (
     apply_age_caps,
@@ -1770,6 +1773,11 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
         if strength_history:
             logger.info(f"Loaded strength history for {len(strength_history)} exercises")
 
+        # Fetch user's personal bests for personalized notes
+        personal_bests = await get_user_personal_bests(request.user_id)
+        if personal_bests:
+            logger.info(f"Loaded PRs for {len(personal_bests)} exercises")
+
         # Fetch user's favorite exercises for prioritization
         favorite_exercises = await get_user_favorite_exercises(request.user_id)
         if favorite_exercises:
@@ -1927,7 +1935,9 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                         activity_level=user_activity_level,
                         intensity_preference=intensity_preference,
                         custom_program_description=custom_program_description,
-                        workout_type_preference=workout_type_preference
+                        workout_type_preference=workout_type_preference,
+                        strength_history=strength_history,
+                        personal_bests=personal_bests,
                     )
                 else:
                     workout_data = await gemini_service.generate_workout_plan(
@@ -2159,6 +2169,11 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         if strength_history:
             logger.info(f"Loaded strength history for {len(strength_history)} exercises")
 
+        # Fetch user's personal bests for personalized notes
+        personal_bests = await get_user_personal_bests(request.user_id)
+        if personal_bests:
+            logger.info(f"Loaded PRs for {len(personal_bests)} exercises")
+
         # Fetch user's favorite exercises for prioritization
         favorite_exercises = await get_user_favorite_exercises(request.user_id)
         if favorite_exercises:
@@ -2361,7 +2376,9 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                         age=user_age,
                         activity_level=user_activity_level,
                         intensity_preference=intensity_preference,
-                        custom_program_description=custom_program_description
+                        custom_program_description=custom_program_description,
+                        strength_history=strength_history,
+                        personal_bests=personal_bests,
                     )
                 else:
                     # No fallback - RAG must return exercises
@@ -2628,6 +2645,11 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
             if strength_history:
                 logger.info(f"[STREAM] Loaded strength history for {len(strength_history)} exercises")
 
+            # Fetch user's personal bests for personalized notes
+            personal_bests = await get_user_personal_bests(body.user_id)
+            if personal_bests:
+                logger.info(f"[STREAM] Loaded PRs for {len(personal_bests)} exercises")
+
             # Fetch user's favorite exercises for prioritization
             favorite_exercises = await get_user_favorite_exercises(body.user_id)
             if favorite_exercises:
@@ -2753,7 +2775,9 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                         age=user_age,
                         activity_level=user_activity_level,
                         intensity_preference=intensity_preference,
-                        custom_program_description=custom_program_description
+                        custom_program_description=custom_program_description,
+                        strength_history=strength_history,
+                        personal_bests=personal_bests,
                     )
 
                     name_words = extract_name_words(workout_data.get("name", ""))
@@ -2978,6 +3002,11 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         if strength_history:
             logger.info(f"Loaded strength history for {len(strength_history)} exercises")
 
+        # Fetch user's personal bests for personalized notes
+        personal_bests = await get_user_personal_bests(request.user_id)
+        if personal_bests:
+            logger.info(f"Loaded PRs for {len(personal_bests)} exercises")
+
         # Fetch user's favorite exercises for prioritization
         favorite_exercises = await get_user_favorite_exercises(request.user_id)
         if favorite_exercises:
@@ -3138,7 +3167,9 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                         age=user_age,
                         activity_level=user_activity_level,
                         intensity_preference=intensity_preference,
-                        custom_program_description=custom_program_description
+                        custom_program_description=custom_program_description,
+                        strength_history=strength_history,
+                        personal_bests=personal_bests,
                     )
                 else:
                     workout_data = await gemini_service.generate_workout_plan(

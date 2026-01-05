@@ -74,6 +74,10 @@ ADVANCED_PATTERNS = [
     r'\bmuscle.?up\b', r'\bpistol\b', r'\bone.?leg\b', r'\bone.?arm\b',
     r'\bhandstand\b', r'\bl.?sit\b', r'\bfront lever\b', r'\bback lever\b',
     r'\bdragon flag\b', r'\bhuman flag\b', r'\bweighted\b',
+    # Advanced calisthenics - require years of training
+    r'\bplanche\b', r'\biron cross\b', r'\bmaltese\b', r'\bvictorian\b',
+    r'\bv.?sit\b', r'\bmanna\b', r'\bshrimp squat\b', r'\bdragon squat\b',
+    r'\barcher\b', r'\b90.?degree\b', r'\bfreestanding\b',
 ]
 
 INTERMEDIATE_PATTERNS = [
@@ -214,16 +218,95 @@ def preview_inferences(limit: int = 20):
         print(f"{name:<50} {equip:<25} {difficulty:<12}")
 
 
+def fix_advanced_exercises():
+    """
+    Fix exercises that should be Advanced but aren't.
+
+    This scans ALL exercises (even those with difficulty set) and fixes any
+    that match advanced patterns but aren't marked as Advanced.
+    """
+    db = get_supabase().client
+
+    # Get ALL exercises
+    response = db.table("exercise_library").select(
+        "id, exercise_name, equipment, category, difficulty_level"
+    ).execute()
+
+    if not response.data:
+        print("No exercises found!")
+        return
+
+    print(f"Scanning {len(response.data)} exercises for advanced patterns...")
+
+    fixed_count = 0
+    fixed_exercises = []
+
+    for exercise in response.data:
+        exercise_id = exercise["id"]
+        name = exercise.get("exercise_name", "")
+        equipment = exercise.get("equipment", "")
+        category = exercise.get("category", "")
+        current_difficulty = exercise.get("difficulty_level", "")
+
+        # Check if name matches advanced patterns
+        name_lower = name.lower()
+        is_advanced = False
+        matched_pattern = None
+
+        for pattern in ADVANCED_PATTERNS:
+            if re.search(pattern, name_lower):
+                is_advanced = True
+                matched_pattern = pattern
+                break
+
+        # If it's advanced but not marked as such, fix it
+        if is_advanced and current_difficulty != "Advanced":
+            db.table("exercise_library").update({
+                "difficulty_level": "Advanced"
+            }).eq("id", exercise_id).execute()
+
+            fixed_count += 1
+            fixed_exercises.append({
+                "name": name,
+                "old_difficulty": current_difficulty or "NULL",
+                "pattern": matched_pattern
+            })
+
+            if fixed_count % 10 == 0:
+                print(f"Fixed {fixed_count} exercises...")
+
+    print(f"\n✅ Fixed {fixed_count} exercises to Advanced difficulty")
+
+    if fixed_exercises:
+        print("\nExercises that were fixed:")
+        print(f"{'Exercise Name':<50} {'Old Difficulty':<15} {'Matched Pattern'}")
+        print("-" * 90)
+        for ex in fixed_exercises[:50]:  # Show first 50
+            print(f"{ex['name'][:48]:<50} {ex['old_difficulty']:<15} {ex['pattern']}")
+
+        if len(fixed_exercises) > 50:
+            print(f"... and {len(fixed_exercises) - 50} more")
+
+    print("\n\nIMPORTANT: Now reindex ChromaDB to apply changes:")
+    print("  python scripts/reindex_chromadb.py")
+
+
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Backfill exercise difficulty levels")
     parser.add_argument("--preview", action="store_true", help="Preview inferences without updating")
+    parser.add_argument("--fix-advanced", action="store_true", help="Fix exercises that should be Advanced")
     parser.add_argument("--limit", type=int, default=20, help="Limit for preview mode")
     args = parser.parse_args()
 
     if args.preview:
         preview_inferences(args.limit)
+    elif args.fix_advanced:
+        print("=" * 60)
+        print("Fix Advanced Exercises")
+        print("=" * 60)
+        fix_advanced_exercises()
     else:
         print("=" * 60)
         print("Exercise Difficulty Backfill")

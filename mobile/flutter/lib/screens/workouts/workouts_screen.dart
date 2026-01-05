@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/workout.dart';
-import '../../data/providers/multi_screen_tour_provider.dart';
+import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/haptic_service.dart';
-import '../../widgets/multi_screen_tour_helper.dart';
 import '../home/widgets/cards/next_workout_card.dart';
 import '../home/widgets/cards/upcoming_workout_card.dart';
 import '../home/widgets/cards/weekly_progress_card.dart';
+import 'widgets/exercise_preferences_card.dart';
 
 /// Workouts screen - central hub for all workout-related content
 /// Accessible from the floating nav bar (replaces Profile)
@@ -24,19 +24,18 @@ class WorkoutsScreen extends ConsumerStatefulWidget {
 }
 
 class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
-  // Key for tour target
-  final GlobalKey _todaysWorkoutKey = GlobalKey();
   // Key for upcoming section (for scroll-to functionality)
   final GlobalKey _upcomingSectionKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
-    // Check and regenerate workouts if needed when this screen loads
+    // Scroll to section if requested
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAndRegenerateIfNeeded();
       _scrollToSectionIfNeeded();
     });
+    // Note: We no longer batch-generate workouts here.
+    // Workouts are now generated one-at-a-time after each completion.
   }
 
   /// Scroll to a section if scrollTo parameter is provided
@@ -55,59 +54,6 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
     }
   }
 
-  /// Check if user needs more workouts and trigger generation if needed
-  /// This is called when Workouts tab loads
-  Future<void> _checkAndRegenerateIfNeeded() async {
-    // Only check once per session
-    final hasChecked = ref.read(hasCheckedRegenerationProvider);
-    if (hasChecked) return;
-
-    final workoutsNotifier = ref.read(workoutsProvider.notifier);
-    final result = await workoutsNotifier.checkAndRegenerateIfNeeded();
-
-    // Mark as checked for this session
-    ref.read(hasCheckedRegenerationProvider.notifier).state = true;
-
-    // Show snackbar if generation was triggered
-    if (result['needs_generation'] == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Generating your upcoming workouts...'),
-          backgroundColor: AppColors.elevated,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 3),
-        ),
-      );
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Check if we should show tour step when this screen becomes visible
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAndShowTourStep();
-    });
-  }
-
-  /// Check and show the tour step for workouts screen
-  void _checkAndShowTourStep() {
-    final tourState = ref.read(multiScreenTourProvider);
-
-    if (!tourState.isActive || tourState.isLoading) return;
-
-    final currentStep = tourState.currentStep;
-    if (currentStep == null) return;
-
-    // Workouts screen handles step 2 (todays_workout_card)
-    if (currentStep.screenRoute != '/workouts') return;
-
-    if (currentStep.targetKeyId == 'todays_workout_card') {
-      final helper = MultiScreenTourHelper(context: context, ref: ref);
-      helper.checkAndShowTour('/workouts', _todaysWorkoutKey);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -115,8 +61,10 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
-    // Watch workouts state
+    // Watch workouts state (for weekly progress, upcoming list)
     final workoutsState = ref.watch(workoutsProvider);
+    // Watch todayWorkoutProvider (for today's/next workout - same as Home screen)
+    final todayWorkoutState = ref.watch(todayWorkoutProvider);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -175,6 +123,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
               textPrimary,
               textSecondary,
               workouts,
+              todayWorkoutState,
             ),
             loading: () => const SliverFillRemaining(
               child: Center(child: CircularProgressIndicator()),
@@ -192,7 +141,10 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
                     ),
                     const SizedBox(height: 8),
                     ElevatedButton(
-                      onPressed: () => ref.invalidate(workoutsProvider),
+                      onPressed: () {
+                        ref.invalidate(workoutsProvider);
+                        ref.invalidate(todayWorkoutProvider);
+                      },
                       child: const Text('Retry'),
                     ),
                   ],
@@ -211,13 +163,40 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
     Color textPrimary,
     Color textSecondary,
     List<Workout> workouts,
+    AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
   ) {
-    // Get next workout (first upcoming one)
     final now = DateTime.now();
+
+    // Use todayWorkoutProvider for today's/next workout (consistent with Home screen)
+    Workout? todayOrNextWorkout;
+    bool isToday = false;
+    int? daysUntilNext;
+
+    todayWorkoutState.whenData((response) {
+      if (response != null) {
+        if (response.hasWorkoutToday && response.todayWorkout != null) {
+          todayOrNextWorkout = response.todayWorkout!.toWorkout();
+          isToday = true;
+        } else if (response.nextWorkout != null) {
+          todayOrNextWorkout = response.nextWorkout!.toWorkout();
+          daysUntilNext = response.daysUntilNext;
+        }
+      }
+    });
+
+    // Get upcoming workouts from workoutsProvider (skip the first one we show)
     final upcomingWorkouts = workouts.where((w) {
       if (w.scheduledDate == null) return false;
       final date = DateTime.tryParse(w.scheduledDate!);
       if (date == null) return false;
+      // Skip today if we already have today's workout from todayWorkoutProvider
+      if (isToday && todayOrNextWorkout != null && w.id == todayOrNextWorkout!.id) {
+        return false;
+      }
+      // Skip the next workout if it matches what we're showing
+      if (!isToday && todayOrNextWorkout != null && w.id == todayOrNextWorkout!.id) {
+        return false;
+      }
       return date.isAfter(now.subtract(const Duration(days: 1)));
     }).toList()
       ..sort((a, b) {
@@ -226,8 +205,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
         return dateA.compareTo(dateB);
       });
 
-    final nextWorkout = upcomingWorkouts.isNotEmpty ? upcomingWorkouts.first : null;
-    final laterWorkouts = upcomingWorkouts.skip(1).take(5).toList();
+    final laterWorkouts = upcomingWorkouts.take(5).toList();
 
     // Calculate weekly progress
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
@@ -256,28 +234,82 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
 
         const SizedBox(height: 16),
 
-        // Today's Workout Section
-        if (nextWorkout != null) ...[
-          _buildSectionHeader('TODAY\'S WORKOUT', textSecondary),
+        // Exercise Preferences (expandable)
+        const ExercisePreferencesCard(),
+
+        const SizedBox(height: 16),
+
+        // Today's/Next Workout Section (using todayWorkoutProvider - same as Home)
+        if (todayWorkoutState.isLoading) ...[
+          _buildSectionHeader(
+            'LOADING WORKOUT...',
+            textSecondary,
+          ),
           const SizedBox(height: 8),
           Padding(
-            key: _todaysWorkoutKey,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              height: 150,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ] else if (todayOrNextWorkout != null) ...[
+          _buildSectionHeader(
+            isToday ? 'TODAY\'S WORKOUT' : 'NEXT WORKOUT${daysUntilNext != null ? ' (in $daysUntilNext day${daysUntilNext == 1 ? '' : 's'})' : ''}',
+            textSecondary,
+          ),
+          const SizedBox(height: 8),
+          Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: NextWorkoutCard(
-              workout: nextWorkout,
+              workout: todayOrNextWorkout!,
               onStart: () {
                 HapticService.medium();
-                context.push('/active-workout', extra: nextWorkout);
+                context.push('/active-workout', extra: todayOrNextWorkout);
               },
               showUpcomingLink: false,
             ),
           ),
           const SizedBox(height: 24),
         ] else ...[
-          // No workout scheduled - also use the key for tour purposes
-          Container(
-            key: _todaysWorkoutKey,
-            child: _buildNoWorkoutCard(context, isDark, textPrimary, textSecondary),
+          // No workout available yet - show generating state (never "no workout")
+          _buildSectionHeader(
+            'YOUR WORKOUT',
+            textSecondary,
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              height: 150,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Preparing your workout...',
+                      style: TextStyle(
+                        color: textSecondary,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 24),
         ],
@@ -454,71 +486,4 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
     );
   }
 
-  Widget _buildNoWorkoutCard(
-    BuildContext context,
-    bool isDark,
-    Color textPrimary,
-    Color textSecondary,
-  ) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: elevatedColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.cyan.withValues(alpha: 0.2),
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              Icons.fitness_center,
-              size: 48,
-              color: AppColors.cyan.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'No workout scheduled',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Start a custom workout or browse the library',
-              style: TextStyle(
-                fontSize: 14,
-                color: textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    HapticService.light();
-                    context.push('/workout/build');
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Custom Workout'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cyan,
-                    foregroundColor: Colors.black,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

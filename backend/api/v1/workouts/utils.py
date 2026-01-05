@@ -719,6 +719,125 @@ async def get_user_strength_history(user_id: str) -> dict:
     return strength_history
 
 
+async def get_user_personal_bests(user_id: str) -> Dict[str, Dict]:
+    """
+    Get user's personal records (PRs) per exercise from the personal_records table.
+
+    This provides the user's all-time best performance for each exercise,
+    which can be used to personalize workout notes and motivate users.
+
+    Returns:
+        Dict mapping exercise names to their PRs:
+        {
+            "Bench Press": {"weight": 85.0, "reps": 8, "1rm": 104.5, "achieved_at": "2025-01-03"},
+            "Squat": {"weight": 120.0, "reps": 5, "1rm": 135.0, "achieved_at": "2025-01-01"},
+        }
+    """
+    prs: Dict[str, Dict] = {}
+
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("personal_records").select(
+            "exercise_name, record_type, record_value, achieved_at"
+        ).eq("user_id", user_id).order("achieved_at", desc=True).execute()
+
+        for row in result.data or []:
+            name = row.get("exercise_name")
+            record_type = row.get("record_type")  # 'weight', 'reps', '1rm', 'time', 'distance'
+            value = row.get("record_value")
+
+            if not name or value is None:
+                continue
+
+            if name not in prs:
+                prs[name] = {}
+
+            # Store by record type (weight, reps, 1rm, etc.)
+            prs[name][record_type] = value
+
+            # Store achieved_at from the most recent record
+            achieved_at = row.get("achieved_at", "")
+            if achieved_at and "achieved_at" not in prs[name]:
+                prs[name]["achieved_at"] = str(achieved_at)[:10]
+
+        logger.info(f"Found PRs for {len(prs)} exercises for user {user_id}")
+
+    except Exception as e:
+        # Table might not exist or user has no PRs - this is fine
+        logger.debug(f"Could not get personal bests (may not exist yet): {e}")
+
+    return prs
+
+
+def format_performance_context(
+    exercises: List[Dict],
+    strength_history: Dict[str, Dict],
+    personal_bests: Dict[str, Dict],
+) -> str:
+    """
+    Format last session + PR data for selected exercises into Gemini context.
+
+    This creates a human-readable summary of the user's performance history
+    that can be included in the Gemini prompt for personalized workout notes.
+
+    Args:
+        exercises: List of exercise dicts with 'name' field
+        strength_history: Dict from get_user_strength_history()
+        personal_bests: Dict from get_user_personal_bests()
+
+    Returns:
+        String like:
+        "Performance history for selected exercises:
+        - Bench Press: Last session 75kg x 8 reps | PR: 85kg
+        - Squat: Last session 100kg x 6 reps | PR: 120kg"
+    """
+    if not exercises:
+        return ""
+
+    lines = []
+
+    for ex in exercises:
+        name = ex.get("name", "") if isinstance(ex, dict) else str(ex)
+        if not name:
+            continue
+
+        parts = []
+
+        # Last session data from strength_history
+        hist = strength_history.get(name) or {}
+        last_weight = hist.get("last_weight_kg", 0)
+        last_reps = hist.get("last_reps", 0)
+        max_weight = hist.get("max_weight_kg", 0)
+
+        if last_weight > 0:
+            if last_reps > 0:
+                parts.append(f"Last: {last_weight}kg x {last_reps} reps")
+            else:
+                parts.append(f"Last: {last_weight}kg")
+
+        # Personal best from personal_bests
+        pr = personal_bests.get(name) or {}
+        pr_weight = pr.get("weight", 0)
+        pr_1rm = pr.get("1rm", 0)
+
+        if pr_weight and pr_weight > 0:
+            parts.append(f"PR: {pr_weight}kg")
+        elif pr_1rm and pr_1rm > 0:
+            parts.append(f"1RM: {pr_1rm}kg")
+        elif max_weight > 0 and max_weight > last_weight:
+            # Fallback to max from strength_history if no PR table entry
+            parts.append(f"Max: {max_weight}kg")
+
+        if parts:
+            lines.append(f"- {name}: {' | '.join(parts)}")
+
+    if not lines:
+        return ""
+
+    return "Performance history for selected exercises:\n" + "\n".join(lines)
+
+
 async def get_user_favorite_exercises(user_id: str) -> List[str]:
     """
     Get user's favorite exercise names from the database.
@@ -1880,6 +1999,32 @@ ABSOLUTE_MAX_REPS = 30  # Never more than 30 reps of anything
 ABSOLUTE_MAX_SETS = 6   # Never more than 6 sets
 ABSOLUTE_MIN_REST = 30  # Always at least 30 sec rest
 
+# Advanced calisthenics exercises that require YEARS of training
+# These should NEVER be given to beginners - they risk injury
+ADVANCED_EXERCISES_BLOCKLIST = {
+    # Planche movements (require years of strength)
+    "planche", "planche push up", "planche push-up", "full planche", "straddle planche",
+    "planche lean", "pseudo planche",
+    # Front lever movements
+    "front lever", "front lever pull up", "front lever row", "front lever raise",
+    # Muscle ups
+    "muscle up", "muscle-up", "bar muscle up", "ring muscle up",
+    # Handstand movements
+    "handstand push up", "handstand push-up", "90 degree push up", "pike push up on wall",
+    "freestanding handstand push up",
+    # One arm movements
+    "one arm pull up", "one arm pull-up", "one arm chin up", "one arm push up",
+    "one arm push-up", "archer pull up", "archer push up",
+    # Pistol squat variations
+    "pistol squat", "one leg squat", "shrimp squat", "dragon squat",
+    # Human flag and other advanced
+    "human flag", "back lever", "iron cross", "maltese", "victorian",
+    # L-sit and V-sit
+    "l-sit", "l sit", "v-sit", "v sit", "manna",
+    # Advanced ring movements
+    "iron cross", "maltese cross", "ring handstand",
+}
+
 # Fitness level caps - applied to all exercises from Gemini
 FITNESS_LEVEL_CAPS = {
     "beginner": {"max_sets": 3, "max_reps": 12, "min_rest": 60},
@@ -1930,6 +2075,36 @@ def get_age_bracket_from_age(age: int) -> str:
         return "senior"
     else:
         return "elderly"
+
+
+def is_advanced_exercise(exercise_name: str) -> bool:
+    """
+    Check if an exercise is an advanced calisthenics movement.
+
+    These exercises require years of progressive training and should
+    NOT be given to beginners as they risk injury.
+
+    Args:
+        exercise_name: Name of the exercise to check
+
+    Returns:
+        True if the exercise is advanced and should be blocked for beginners
+    """
+    if not exercise_name:
+        return False
+
+    name_lower = exercise_name.lower().strip()
+
+    # Direct match
+    if name_lower in ADVANCED_EXERCISES_BLOCKLIST:
+        return True
+
+    # Partial match - check if any blocklist term is in the name
+    for blocked_term in ADVANCED_EXERCISES_BLOCKLIST:
+        if blocked_term in name_lower:
+            return True
+
+    return False
 
 
 def validate_and_cap_exercise_parameters(
@@ -1986,8 +2161,20 @@ def validate_and_cap_exercise_parameters(
             user_max_reps_ceiling = rep_preferences.get("max_reps")
 
     validated_exercises = []
+    filtered_count = 0
 
     for ex in exercises:
+        # SAFETY: Filter out advanced exercises for beginners
+        # These exercises require years of training and risk injury
+        exercise_name = ex.get("name", "")
+        if fitness_level and fitness_level.lower() == "beginner":
+            if is_advanced_exercise(exercise_name):
+                logger.warning(
+                    f"Filtered out advanced exercise '{exercise_name}' for beginner user"
+                )
+                filtered_count += 1
+                continue  # Skip this exercise entirely
+
         # Make a copy to avoid mutating the original
         validated_ex = dict(ex)
 

@@ -1759,3 +1759,65 @@ async def get_nutrition_targets(user_id: str):
     except Exception as e:
         logger.error(f"Failed to get nutrition targets: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class SyncFastingRequest(BaseModel):
+    """Request to sync fasting preferences from onboarding."""
+    interested_in_fasting: bool
+    fasting_protocol: Optional[str] = None
+
+
+class SyncFastingResponse(BaseModel):
+    """Response from fasting sync."""
+    success: bool
+    message: str
+    created: bool
+    protocol: Optional[str] = None
+
+
+@router.post("/{user_id}/sync-fasting-preferences", response_model=SyncFastingResponse)
+async def sync_fasting_preferences(user_id: str, request: SyncFastingRequest):
+    """
+    Sync fasting preferences from onboarding quiz to fasting_preferences table.
+
+    This endpoint should be called after onboarding when the user has selected
+    fasting options. It creates or updates the fasting_preferences record.
+    """
+    logger.info(f"Syncing fasting preferences for user: {user_id}")
+    try:
+        db = get_supabase_db()
+
+        # Verify user exists
+        user = db.get_user(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Call the Supabase function to sync fasting preferences
+        result = db.client.rpc(
+            'sync_fasting_from_onboarding',
+            {
+                'p_user_id': user_id,
+                'p_interested_in_fasting': request.interested_in_fasting,
+                'p_fasting_protocol': request.fasting_protocol,
+            }
+        ).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to sync fasting preferences")
+
+        data = result.data
+
+        logger.info(f"Synced fasting preferences for user {user_id}: {data}")
+
+        return SyncFastingResponse(
+            success=data.get('success', False),
+            message=data.get('message', ''),
+            created=data.get('created', False),
+            protocol=data.get('protocol'),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to sync fasting preferences: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

@@ -85,7 +85,6 @@ import '../screens/skills/chain_detail_screen.dart';
 import '../screens/demo/demo_workout_screen.dart';
 import '../screens/demo/demo_active_workout_screen.dart';
 import '../screens/demo/plan_preview_screen.dart';
-import '../screens/tour/app_tour_screen.dart';
 import '../screens/guest/guest_home_screen.dart';
 import '../screens/guest/guest_library_screen.dart';
 import '../screens/programs/program_selection_screen.dart';
@@ -488,37 +487,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                     parent: animation,
                     curve: Curves.easeOutCubic,
                   )),
-                  child: child,
-                ),
-              );
-            },
-          );
-        },
-      ),
-
-      // App Tour - Interactive walkthrough of app features for new users
-      // Can be restarted from Settings > App Tour & Demo
-      GoRoute(
-        path: '/app-tour',
-        pageBuilder: (context, state) {
-          // Source can be passed as extra data (new_user, settings, deep_link)
-          final extra = state.extra as Map<String, dynamic>?;
-          final source = extra?['source'] as String? ?? 'new_user';
-          return CustomTransitionPage(
-            key: state.pageKey,
-            child: AppTourScreen(source: source),
-            transitionDuration: const Duration(milliseconds: 500),
-            reverseTransitionDuration: const Duration(milliseconds: 300),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0, 0.1),
-                    end: Offset.zero,
-                  ).animate(
-                    CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-                  ),
                   child: child,
                 ),
               );

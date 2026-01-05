@@ -65,10 +65,11 @@ class _InlineNumberInputState extends State<InlineNumberInput> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final buttonWidth = widget.isActive ? 32.0 : 28.0;
-    final height = widget.isActive ? 40.0 : 36.0;
-    final iconSize = widget.isActive ? 18.0 : 16.0;
-    final fontSize = widget.isActive ? 15.0 : 13.0;
+    // WCAG accessibility: 48px minimum touch targets
+    final buttonWidth = widget.isActive ? 48.0 : 44.0;
+    final height = widget.isActive ? 48.0 : 44.0;
+    final iconSize = widget.isActive ? 22.0 : 20.0;
+    final fontSize = widget.isActive ? 16.0 : 14.0;
     final inputBg = widget.isActive
         ? (isDark ? AppColors.pureBlack : AppColorsLight.pureWhite)
         : (isDark ? AppColors.elevated : AppColorsLight.glassSurface);

@@ -17,7 +17,7 @@ Event Types:
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, date
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from enum import Enum
 import logging
 
@@ -1168,7 +1168,7 @@ class UserContextService:
     async def log_event(
         self,
         user_id: str,
-        event_type: EventType,
+        event_type: Union[EventType, str],
         event_data: Dict[str, Any],
         context: Optional[Dict[str, Any]] = None,
     ) -> Optional[str]:
@@ -1177,7 +1177,7 @@ class UserContextService:
 
         Args:
             user_id: User ID
-            event_type: Type of event
+            event_type: Type of event (EventType enum or string)
             event_data: Event-specific data
             context: Contextual information
 
@@ -1187,9 +1187,12 @@ class UserContextService:
         try:
             db = get_supabase_db()
 
+            # Handle both EventType enum and string
+            event_type_value = event_type.value if hasattr(event_type, 'value') else str(event_type)
+
             record = {
                 "user_id": user_id,
-                "event_type": event_type.value,
+                "event_type": event_type_value,
                 "event_data": event_data,
                 "context": context or {},
             }

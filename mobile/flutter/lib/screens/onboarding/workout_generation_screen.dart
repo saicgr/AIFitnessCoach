@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import 'pre_auth_quiz_screen.dart';
@@ -89,20 +90,21 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
       // Get quiz data for workout preferences
       final quizData = ref.read(preAuthQuizProvider);
       final selectedDays = quizData.workoutDays ?? [1, 3, 5]; // Default Mon/Wed/Fri
-      final daysPerWeek = quizData.daysPerWeek ?? 3;
+      final workoutDuration = quizData.workoutDuration ?? 45;
 
-      // Calculate total workouts (2 weeks worth)
-      _totalWorkouts = daysPerWeek * 2;
+      // Only generate 1 workout (today's or next workout day)
+      _totalWorkouts = 1;
 
       // Simulate step progression while waiting for stream
       _animateSteps();
 
-      // Start streaming workout generation
+      // Start streaming workout generation - only generate 1 workout
       final repository = ref.read(workoutRepositoryProvider);
       final stream = repository.generateMonthlyWorkoutsStreaming(
         userId: userId,
         selectedDays: selectedDays,
-        durationMinutes: 45,
+        durationMinutes: workoutDuration,
+        maxWorkouts: 1, // Only generate today's or next workout day
       );
 
       _generationSubscription = stream.listen(
@@ -143,6 +145,11 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
               _currentStep = _steps.length;
               _progress = 1.0;
             });
+
+            // CRITICAL: Invalidate providers so home fetches fresh data immediately
+            // Without this, home screen shows stale "Rest Day" for ~30 seconds
+            ref.invalidate(todayWorkoutProvider);
+            ref.invalidate(workoutsProvider);
 
             // Navigate to home after showing completion
             Future.delayed(const Duration(milliseconds: 800), () {
@@ -358,7 +365,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
           ),
         ),
 
-        if (_totalWorkouts > 0) ...[
+        if (_totalWorkouts > 1) ...[
           const SizedBox(height: 24),
           Text(
             '($_generatedWorkouts of $_totalWorkouts workouts)',

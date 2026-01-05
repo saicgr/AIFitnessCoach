@@ -487,6 +487,17 @@ async def complete_workout(
             supabase=supabase,
         )
 
+        # =====================================================================
+        # Generate Next Workout (one-at-a-time generation)
+        # =====================================================================
+        # Instead of batch-generating 2 weeks of workouts, we generate just
+        # the next workout after each completion. This provides immediate
+        # feedback and workouts appear one-by-one in the Upcoming section.
+        background_tasks.add_task(
+            _generate_next_workout_for_user,
+            user_id=user_id,
+        )
+
         await index_workout_to_rag(workout)
 
         # =====================================================================
@@ -1015,3 +1026,34 @@ async def recalculate_user_fitness_score(user_id: str, supabase):
 
     except Exception as e:
         logger.error(f"Background: Failed to recalculate fitness score: {e}")
+
+
+async def _generate_next_workout_for_user(user_id: str):
+    """
+    Background task to generate the next single workout for a user.
+
+    Called after workout completion to enable one-at-a-time workout generation.
+    This ensures workouts appear one-by-one in the Upcoming section instead of
+    batch-generating 2 weeks of workouts all at once.
+    """
+    try:
+        logger.info(f"Background: Generating next workout for user {user_id}")
+
+        # Import here to avoid circular dependency
+        from .background import generate_next_workout
+        from fastapi import BackgroundTasks
+
+        # Create a BackgroundTasks instance for the endpoint
+        background_tasks = BackgroundTasks()
+
+        # Call the generate-next endpoint logic
+        result = await generate_next_workout(user_id, background_tasks)
+
+        # Execute any scheduled background tasks
+        for task in background_tasks.tasks:
+            await task()
+
+        logger.info(f"Background: Next workout generation result: {result}")
+
+    except Exception as e:
+        logger.error(f"Background: Failed to generate next workout for user {user_id}: {e}")

@@ -3,10 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/accessibility/accessibility_provider.dart';
-import '../../data/providers/multi_screen_tour_provider.dart';
 import '../../data/providers/social_provider.dart';
 import '../../data/repositories/auth_repository.dart';
-import '../../widgets/multi_screen_tour_helper.dart';
 import 'tabs/feed_tab.dart';
 import 'tabs/challenges_tab.dart';
 import 'tabs/leaderboard_tab.dart';
@@ -27,47 +25,10 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  // Tour key for Challenges section
-  final GlobalKey _challengesSectionKey = GlobalKey();
-
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Check if we should show tour step when this screen becomes visible
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAndShowTourStep();
-    });
-  }
-
-  /// Check and show the tour step for social screen
-  void _checkAndShowTourStep() {
-    final tourState = ref.read(multiScreenTourProvider);
-
-    if (!tourState.isActive || tourState.isLoading) return;
-
-    final currentStep = tourState.currentStep;
-    if (currentStep == null) return;
-
-    // Social screen handles step 5 (challenges_section)
-    if (currentStep.screenRoute != '/social') return;
-
-    if (currentStep.targetKeyId == 'challenges_section') {
-      // Switch to challenges tab first
-      _tabController.animateTo(1);
-      // Small delay to let tab animation complete
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted) {
-          final helper = MultiScreenTourHelper(context: context, ref: ref);
-          helper.checkAndShowTour('/social', _challengesSectionKey);
-        }
-      });
-    }
   }
 
   @override
@@ -155,14 +116,11 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
           },
           body: TabBarView(
             controller: _tabController,
-            children: [
-              const FeedTab(),
-              Container(
-                key: _challengesSectionKey,
-                child: const ChallengesTab(),
-              ),
-              const LeaderboardTab(),
-              const FriendsTab(),
+            children: const [
+              FeedTab(),
+              ChallengesTab(),
+              LeaderboardTab(),
+              FriendsTab(),
             ],
           ),
         ),

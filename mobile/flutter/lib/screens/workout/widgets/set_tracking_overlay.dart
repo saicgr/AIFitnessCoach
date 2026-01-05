@@ -13,6 +13,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../models/workout_state.dart';
+import 'number_input_widgets.dart';
 
 /// Set tracking overlay for logging sets during workout
 class SetTrackingOverlay extends StatelessWidget {
@@ -318,19 +319,20 @@ class SetTrackingOverlay extends StatelessWidget {
             }
           : null,
       child: Container(
-        width: 36,
-        height: 36,
+        // WCAG accessibility: 48px minimum touch targets
+        width: 48,
+        height: 48,
         decoration: BoxDecoration(
           color: enabled
               ? (isDark
                   ? Colors.white.withOpacity(0.1)
                   : Colors.black.withOpacity(0.05))
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(
           icon,
-          size: 24,
+          size: 28,
           color: enabled
               ? (isDark ? Colors.white : AppColorsLight.textPrimary)
               : (isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.15)),
@@ -424,7 +426,7 @@ class SetTrackingOverlay extends StatelessWidget {
             child: Text(
               'SET',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textMuted,
                 letterSpacing: 0.5,
@@ -437,7 +439,7 @@ class SetTrackingOverlay extends StatelessWidget {
             child: Text(
               'PREVIOUS',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: textMuted,
                 letterSpacing: 0.5,
@@ -450,7 +452,7 @@ class SetTrackingOverlay extends StatelessWidget {
             child: Text(
               useKg ? 'KG' : 'LBS',
               style: const TextStyle(
-                fontSize: 11,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.electricBlue,
                 letterSpacing: 0.5,
@@ -463,7 +465,7 @@ class SetTrackingOverlay extends StatelessWidget {
             child: Text(
               'REPS',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.electricBlue,
                 letterSpacing: 0.5,
@@ -803,33 +805,12 @@ class SetTrackingOverlay extends StatelessWidget {
     required bool isDecimal,
     required bool isDark,
   }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onShowNumberInputDialog(controller, isDecimal);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.pureBlack.withOpacity(0.6)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: AppColors.electricBlue.withOpacity(0.4),
-            width: 1.5,
-          ),
-        ),
-        child: Text(
-          controller.text.isEmpty ? '-' : controller.text,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: AppColors.electricBlue,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ),
+    return InlineNumberInput(
+      controller: controller,
+      isDecimal: isDecimal,
+      isActive: true,
+      accentColor: AppColors.electricBlue,
+      onShowDialog: () => onShowNumberInputDialog(controller, isDecimal),
     );
   }
 

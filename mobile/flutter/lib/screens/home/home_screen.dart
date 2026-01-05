@@ -10,8 +10,6 @@ import '../../core/constants/app_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../data/models/home_layout.dart';
 import '../../data/providers/home_layout_provider.dart';
-import '../../data/providers/multi_screen_tour_provider.dart';
-import '../../widgets/multi_screen_tour_helper.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/providers/branded_program_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -218,7 +216,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       _checkPendingWidgetAction();
       _initializeCurrentProgram();
       _initializeWindowModeTracking();
-      _checkAppTour();
       // Start edit mode if requested via route parameter
       if (widget.startEditMode) {
         _enterEditMode();
@@ -250,8 +247,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Auto-refresh when screen becomes visible
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _autoRefreshIfNeeded();
-      // Check if we should show tour step when returning to home
-      _checkAndShowTourStep();
     });
   }
 
@@ -1264,59 +1259,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
-  /// Check if multi-screen tour should be shown for new users
-  Future<void> _checkAppTour() async {
-    try {
-      // Initialize the multi-screen tour provider
-      await ref.read(multiScreenTourProvider.notifier).initialize();
-      final tourState = ref.read(multiScreenTourProvider);
-
-      if (tourState.shouldShowTour && tourState.isActive && mounted) {
-        debugPrint('🎯 [Home] Multi-screen tour should be shown');
-        // Wait a bit for the UI to fully build before showing tour
-        await Future.delayed(const Duration(milliseconds: 800));
-        if (mounted) {
-          _checkAndShowTourStep();
-        }
-      }
-    } catch (e) {
-      debugPrint('❌ [Home] Error checking app tour: $e');
-    }
-  }
-
-  /// Check and show the appropriate tour step for home screen
-  void _checkAndShowTourStep() {
-    final tourState = ref.read(multiScreenTourProvider);
-
-    if (!tourState.isActive || tourState.isLoading) return;
-
-    final currentStep = tourState.currentStep;
-    if (currentStep == null) return;
-
-    // Home screen handles step 1 (next_workout_card) and step 6 (chat_fab)
-    if (currentStep.screenRoute != '/home') return;
-
-    // Determine which key to use based on the step
-    GlobalKey? targetKey;
-    if (currentStep.targetKeyId == 'next_workout_card') {
-      targetKey = HomeTourKeys.nextWorkoutKey;
-    } else if (currentStep.targetKeyId == 'chat_fab') {
-      targetKey = HomeTourKeys.chatFabKey;
-    }
-
-    if (targetKey == null) {
-      debugPrint('[Home] No matching key for step: ${currentStep.id}');
-      return;
-    }
-
-    // Use the helper to show the tour
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final helper = MultiScreenTourHelper(context: context, ref: ref);
-      helper.checkAndShowTour('/home', targetKey!);
-    });
-  }
-
   Future<void> _initializeWorkouts() async {
     // Home screen now uses todayWorkoutProvider (lazy loading)
     // No need to fetch all workouts or trigger regeneration here
@@ -1392,6 +1334,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // Missed Workout Banner (shows when user has missed workout(s) from past 3 days)
               const SliverToBoxAdapter(
                 child: MissedWorkoutBanner(),
+              ),
+
+              // TODAY section header with Edit + Customize Program buttons
+              SliverToBoxAdapter(
+                child: _buildTodaySectionHeader(isDark),
               ),
 
               // Dynamic Tile Rendering - action-focused layout
@@ -1635,6 +1582,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
     bool isAIGenerating,
   ) {
+    // In edit mode, show editable tiles
+    if (_isEditMode && _editingTiles.isNotEmpty) {
+      return _buildEditModeTilesLazy(context, isDark, todayWorkoutState, isAIGenerating);
+    }
+
     return activeLayoutState.when(
       loading: () => [
         const SliverToBoxAdapter(
@@ -1645,10 +1597,105 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ..._buildDefaultTilesLazy(context, isDark, todayWorkoutState, isAIGenerating),
       ],
       data: (layout) {
-        // Always use simplified default tiles for lazy loading
-        return _buildDefaultTilesLazy(context, isDark, todayWorkoutState, isAIGenerating);
+        // If no layout or no tiles, use default tiles
+        if (layout == null || layout.tiles.isEmpty) {
+          return _buildDefaultTilesLazy(context, isDark, todayWorkoutState, isAIGenerating);
+        }
+
+        // Get visible tiles sorted by order
+        final visibleTiles = layout.tiles.where((t) => t.isVisible).toList()
+          ..sort((a, b) => a.order.compareTo(b.order));
+
+        if (visibleTiles.isEmpty) {
+          return _buildDefaultTilesLazy(context, isDark, todayWorkoutState, isAIGenerating);
+        }
+
+        // Build tiles from layout configuration
+        return _buildLayoutTilesLazy(context, visibleTiles, isDark, todayWorkoutState, isAIGenerating);
       },
     );
+  }
+
+  /// Build tiles based on the saved layout configuration
+  List<Widget> _buildLayoutTilesLazy(
+    BuildContext context,
+    List<HomeTile> visibleTiles,
+    bool isDark,
+    AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
+    bool isAIGenerating,
+  ) {
+    final slivers = <Widget>[];
+    var i = 0;
+
+    // Get the workout for hero section if needed
+    final todayWorkout = _getTodayWorkoutFromState(todayWorkoutState);
+    final isGenerating = _isGeneratingFromState(todayWorkoutState);
+
+    while (i < visibleTiles.length) {
+      final tile = visibleTiles[i];
+
+      // Handle hero section specially (needs workout data)
+      if (tile.type == TileType.heroSection) {
+        slivers.add(
+          SliverToBoxAdapter(
+            child: SwipeableHeroSection(
+              todayWorkout: todayWorkout,
+              isGenerating: isGenerating || isAIGenerating || _isInitializing,
+            ),
+          ),
+        );
+        i++;
+        continue;
+      }
+
+      // Handle half-size tiles (pair them in a row)
+      if (tile.size == TileSize.half) {
+        final halfTiles = <HomeTile>[tile];
+        // Check if next tile is also half-size
+        if (i + 1 < visibleTiles.length &&
+            visibleTiles[i + 1].size == TileSize.half &&
+            visibleTiles[i + 1].isVisible) {
+          halfTiles.add(visibleTiles[i + 1]);
+          i++;
+        }
+
+        slivers.add(
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Row(
+                children: halfTiles.map((t) {
+                  return Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        right: halfTiles.length > 1 && t == halfTiles.first ? 8 : 0,
+                        left: halfTiles.length > 1 && t == halfTiles.last ? 8 : 0,
+                      ),
+                      child: TileFactory.buildTile(context, ref, t, isDark: isDark),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        );
+        i++;
+        continue;
+      }
+
+      // Full or compact tiles
+      slivers.add(
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+            child: TileFactory.buildTile(context, ref, tile, isDark: isDark),
+          ),
+        ),
+      );
+      i++;
+    }
+
+    return slivers;
   }
 
   /// Build default tiles using lazy loading (todayWorkoutProvider)
@@ -1667,20 +1714,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // Swipeable Hero Section - workout, nutrition, or fasting focus
       SliverToBoxAdapter(
         child: SwipeableHeroSection(
-          key: HomeTourKeys.nextWorkoutKey,
           todayWorkout: todayWorkout,
           isGenerating: isGenerating || isAIGenerating || _isInitializing,
         ),
       ),
 
       // Quick Actions Row - Food, Water, Fasting, Stats
-      SliverToBoxAdapter(
+      const SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.only(top: 8, bottom: 8),
-          child: Container(
-            key: HomeTourKeys.quickActionsKey,
-            child: const QuickActionsRow(),
-          ),
+          padding: EdgeInsets.only(top: 8, bottom: 8),
+          child: QuickActionsRow(),
         ),
       ),
 
@@ -1755,7 +1798,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         if (workoutSummary != null) {
           final workout = workoutSummary.toWorkout();
           return HeroWorkoutCard(
-            key: HomeTourKeys.nextWorkoutKey,
             workout: workout,
           );
         }
@@ -1838,12 +1880,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         if (workoutSummary != null) {
           // Convert summary to Workout for NextWorkoutCard
           final workout = workoutSummary.toWorkout();
-          return Container(
-            key: HomeTourKeys.nextWorkoutKey,
-            child: NextWorkoutCard(
-              workout: workout,
-              onStart: () => context.push('/workout/${workout.id}'),
-            ),
+          return NextWorkoutCard(
+            workout: workout,
+            onStart: () => context.push('/workout/${workout.id}'),
           );
         }
 
@@ -1894,12 +1933,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ).firstOrNull;
 
         if (todayWorkout != null) {
-          return Container(
-            key: HomeTourKeys.nextWorkoutKey,
-            child: NextWorkoutCard(
-              workout: todayWorkout,
-              onStart: () => context.push('/workout/${todayWorkout.id}'),
-            ),
+          return NextWorkoutCard(
+            workout: todayWorkout,
+            onStart: () => context.push('/workout/${todayWorkout.id}'),
           );
         }
 
@@ -1917,12 +1953,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         }).firstOrNull;
 
         if (nextWorkout != null) {
-          return Container(
-            key: HomeTourKeys.nextWorkoutKey,
-            child: NextWorkoutCard(
-              workout: nextWorkout,
-              onStart: () => context.push('/workout/${nextWorkout.id}'),
-            ),
+          return NextWorkoutCard(
+            workout: nextWorkout,
+            onStart: () => context.push('/workout/${nextWorkout.id}'),
           );
         }
 
@@ -2074,6 +2107,288 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         onReorder: _onReorderTiles,
       ),
     ];
+  }
+
+  /// Build edit mode tiles for lazy loading version
+  List<Widget> _buildEditModeTilesLazy(
+    BuildContext context,
+    bool isDark,
+    AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
+    bool isAIGenerating,
+  ) {
+    // Sort tiles by order for display
+    final sortedTiles = List<HomeTile>.from(_editingTiles)
+      ..sort((a, b) => a.order.compareTo(b.order));
+
+    return [
+      // Add Tile and Discover buttons row - at the top
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: Row(
+            children: [
+              // Add Tile button
+              Expanded(
+                child: Material(
+                  color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+                  borderRadius: BorderRadius.circular(16),
+                  child: InkWell(
+                    onTap: () => _showAddTileSheet(isDark),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.cyan.withValues(alpha: 0.3),
+                          width: 2,
+                          strokeAlign: BorderSide.strokeAlignInside,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_circle_outline,
+                            color: AppColors.cyan,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Add Tile',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.cyan,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Discover button
+              Expanded(
+                child: Material(
+                  color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+                  borderRadius: BorderRadius.circular(16),
+                  child: InkWell(
+                    onTap: () => _showDiscoverSheet(isDark),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.purple.withValues(alpha: 0.3),
+                          width: 2,
+                          strokeAlign: BorderSide.strokeAlignInside,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.explore,
+                            color: AppColors.purple,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Discover',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.purple,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Text(
+            'Drag to reorder • Tap size to resize • Tap eye to hide',
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+      SliverReorderableList(
+        itemBuilder: (context, index) {
+          final tile = sortedTiles[index];
+          return _buildEditableTileLazy(
+            context,
+            tile,
+            index,
+            isDark,
+            todayWorkoutState,
+            isAIGenerating,
+          );
+        },
+        itemCount: sortedTiles.length,
+        onReorder: _onReorderTiles,
+      ),
+    ];
+  }
+
+  /// Build a single tile in edit mode for lazy loading version
+  Widget _buildEditableTileLazy(
+    BuildContext context,
+    HomeTile tile,
+    int index,
+    bool isDark,
+    AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
+    bool isAIGenerating,
+  ) {
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    // Build the actual tile content
+    Widget tileContent;
+    if (tile.type == TileType.nextWorkout || tile.type == TileType.heroSection) {
+      final todayWorkout = _getTodayWorkoutFromState(todayWorkoutState);
+      tileContent = SwipeableHeroSection(
+        todayWorkout: todayWorkout,
+        isGenerating: isAIGenerating,
+      );
+    } else {
+      tileContent = TileFactory.buildTile(context, ref, tile, isDark: isDark);
+    }
+
+    return ReorderableDelayedDragStartListener(
+      key: ValueKey(tile.id),
+      index: index,
+      child: AnimatedBuilder(
+        animation: _wiggleController,
+        builder: (context, child) {
+          // Subtle wiggle animation
+          final wiggle = _wiggleController.value * 2 - 1;
+          final angle = wiggle * 0.006;
+
+          return Transform.rotate(
+            angle: angle,
+            child: child,
+          );
+        },
+        child: Stack(
+          children: [
+            // The tile content with opacity for hidden tiles
+            Opacity(
+              opacity: tile.isVisible ? 1.0 : 0.4,
+              child: IgnorePointer(
+                ignoring: true,
+                child: tileContent,
+              ),
+            ),
+            // Overlay with drag handle and visibility toggle
+            Positioned.fill(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.purple.withValues(alpha: 0.5),
+                    width: 2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    // Drag handle
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: elevatedColor.withValues(alpha: 0.95),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(14),
+                          bottomLeft: Radius.circular(14),
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.drag_handle_rounded,
+                        color: AppColors.purple,
+                        size: 24,
+                      ),
+                    ),
+                    const Spacer(),
+                    // Resize button (only if tile supports multiple sizes)
+                    if (tile.type.supportedSizes.length > 1)
+                      Listener(
+                        onPointerDown: (_) {
+                          _cycleTileSize(tile.id);
+                        },
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: elevatedColor.withValues(alpha: 0.95),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.aspect_ratio_rounded,
+                                color: AppColors.orange,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                tile.size.name,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.orange,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    const SizedBox(width: 8),
+                    // Visibility toggle
+                    Listener(
+                      onPointerDown: (_) {
+                        _toggleTileVisibility(tile.id);
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: elevatedColor.withValues(alpha: 0.95),
+                          borderRadius: const BorderRadius.only(
+                            topRight: Radius.circular(14),
+                            bottomRight: Radius.circular(14),
+                          ),
+                        ),
+                        child: Icon(
+                          tile.isVisible
+                              ? Icons.visibility_rounded
+                              : Icons.visibility_off_rounded,
+                          color: tile.isVisible ? AppColors.cyan : AppColors.textMuted,
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Build a single tile in edit mode with wiggle, drag handle, and visibility toggle
@@ -2284,13 +2599,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ),
 
       // Quick Actions Row
-      SliverToBoxAdapter(
+      const SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.only(top: 8, bottom: 8),
-          child: Container(
-            key: HomeTourKeys.quickActionsKey,
-            child: const QuickActionsRow(),
-          ),
+          padding: EdgeInsets.only(top: 8, bottom: 8),
+          child: QuickActionsRow(),
         ),
       ),
 
@@ -2403,17 +2715,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ),
           // Streak Badge
-          Container(
-            key: HomeTourKeys.streakBadgeKey,
-            child: _StreakBadge(streak: currentStreak, isDark: isDark, isCompact: isCompact),
-          ),
+          _StreakBadge(streak: currentStreak, isDark: isDark, isCompact: isCompact),
           SizedBox(width: spacing),
           // Hide Profile button in very narrow split screen
           if (!isCompact) ...[
-            Container(
-              key: HomeTourKeys.libraryButtonKey, // Keep key for tour compatibility
-              child: _ProfileButton(isDark: isDark),
-            ),
+            _ProfileButton(isDark: isDark),
             SizedBox(width: spacing / 2),
           ],
           NotificationBellButton(isDark: isDark),
@@ -2460,12 +2766,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               message: 'AI is generating your workout...',
             )
           : nextWorkout != null
-              ? Container(
-                  key: HomeTourKeys.nextWorkoutKey,
-                  child: NextWorkoutCard(
-                    workout: nextWorkout,
-                    onStart: () => context.push('/workout/${nextWorkout.id}'),
-                  ),
+              ? NextWorkoutCard(
+                  workout: nextWorkout,
+                  onStart: () => context.push('/workout/${nextWorkout.id}'),
                 )
               : (_isCheckingWorkouts || _isStreamingGeneration)
                   ? const GeneratingWorkoutsCard(
@@ -2537,41 +2840,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ] else ...[
             // Edit button (replaces My Space)
-            Container(
-              key: HomeTourKeys.editButtonKey,
-              child: Material(
-                color: elevatedColor,
+            Material(
+              color: elevatedColor,
+              borderRadius: BorderRadius.circular(20),
+              child: InkWell(
+                onTap: _enterEditMode,
                 borderRadius: BorderRadius.circular(20),
-                child: InkWell(
-                  onTap: _enterEditMode,
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AppColors.purple.withOpacity(0.3),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppColors.purple.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.edit_rounded,
+                        size: 16,
+                        color: AppColors.purple,
                       ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.edit_rounded,
-                          size: 16,
-                          color: AppColors.purple,
+                      const SizedBox(width: 6),
+                      Text(
+                        'Edit',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Edit',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -2766,22 +3066,3 @@ class _StreakBadge extends StatelessWidget {
   }
 }
 
-/// Global keys for tour targets on home screen
-class HomeTourKeys {
-  static final GlobalKey nextWorkoutKey = GlobalKey();
-  static final GlobalKey streakBadgeKey = GlobalKey();
-  static final GlobalKey libraryButtonKey = GlobalKey();
-  static final GlobalKey quickActionsKey = GlobalKey();
-  static final GlobalKey editButtonKey = GlobalKey();
-  static final GlobalKey chatFabKey = GlobalKey();
-
-  /// Get all keys as a map
-  static Map<String, GlobalKey> get all => {
-    'nextWorkout': nextWorkoutKey,
-    'streakBadge': streakBadgeKey,
-    'libraryButton': libraryButtonKey,
-    'quickActions': quickActionsKey,
-    'editButton': editButtonKey,
-    'chatFab': chatFabKey,
-  };
-}

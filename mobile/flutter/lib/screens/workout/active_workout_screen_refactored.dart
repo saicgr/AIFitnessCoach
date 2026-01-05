@@ -42,6 +42,9 @@ import 'widgets/set_tracking_overlay.dart';
 import 'widgets/workout_bottom_bar.dart';
 import 'widgets/number_input_widgets.dart';
 import 'widgets/set_row.dart'; // For RpeRirSelector
+import 'widgets/fatigue_alert_modal.dart';
+import '../../data/models/rest_suggestion.dart';
+import '../../core/services/fatigue_service.dart';
 
 /// Active workout screen with modular composition
 class ActiveWorkoutScreen extends ConsumerStatefulWidget {
@@ -125,6 +128,14 @@ class _ActiveWorkoutScreenState
   final bool _showRpeSelector = false;
   bool _isLoadingWeightSuggestion = false; // Loading state for AI suggestion
   SetLog? _pendingSetLog; // Set waiting for RPE/RIR input
+
+  // Fatigue detection state
+  FatigueAlertData? _fatigueAlertData;
+  bool _showFatigueAlert = false;
+
+  // Rest suggestion state (AI-powered)
+  RestSuggestion? _restSuggestion;
+  bool _isLoadingRestSuggestion = false;
 
   // Warmup/stretch state (fetched from API)
   List<WarmupExerciseData>? _warmupExercises;
@@ -405,8 +416,10 @@ class _ActiveWorkoutScreenState
       // Start rest between sets
       _startRest(false);
 
-      // Fetch AI-powered weight suggestion during rest
+      // Fetch AI-powered suggestions during rest
       _fetchAIWeightSuggestion(finalSetLog);
+      _fetchRestSuggestion();
+      _checkFatigue();
     }
 
     // Reset for next set
@@ -510,6 +523,145 @@ class _ActiveWorkoutScreenState
     setState(() {
       _currentWeightSuggestion = null;
     });
+  }
+
+  // ========================================================================
+  // FATIGUE DETECTION & REST SUGGESTIONS (AI Features)
+  // ========================================================================
+
+  /// Check for fatigue after completing a set
+  Future<void> _checkFatigue() async {
+    final exercise = _exercises[_currentExerciseIndex];
+    final completedSets = _completedSets[_currentExerciseIndex] ?? [];
+
+    // Need at least 2 sets to detect fatigue
+    if (completedSets.length < 2) return;
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final currentWeight = double.tryParse(_weightController.text) ?? 0;
+
+      // Build set data for fatigue check
+      final setsData = completedSets.map((s) => FatigueSetData(
+        reps: s.reps,
+        weight: s.weight,
+        rpe: s.rpe,
+        rir: s.rir,
+        targetReps: exercise.reps,
+      )).toList();
+
+      final exerciseType = FatigueService.getExerciseType(
+        exercise.muscleGroup,
+        exercise.name,
+      );
+
+      final alertData = await FatigueService.checkFatigue(
+        dio: apiClient.dio,
+        setsData: setsData,
+        currentWeight: currentWeight,
+        exerciseType: exerciseType,
+        targetReps: exercise.reps,
+      );
+
+      if (!mounted) return;
+
+      if (alertData != null && alertData.fatigueDetected) {
+        setState(() {
+          _fatigueAlertData = alertData;
+          _showFatigueAlert = true;
+        });
+        HapticFeedback.heavyImpact();
+      }
+    } catch (e) {
+      debugPrint('❌ [Fatigue] Error checking fatigue: $e');
+    }
+  }
+
+  /// Fetch AI-powered rest suggestion
+  Future<void> _fetchRestSuggestion() async {
+    final exercise = _exercises[_currentExerciseIndex];
+    final completedSets = _completedSets[_currentExerciseIndex] ?? [];
+
+    if (completedSets.isEmpty) return;
+
+    setState(() => _isLoadingRestSuggestion = true);
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) {
+        setState(() => _isLoadingRestSuggestion = false);
+        return;
+      }
+
+      final response = await apiClient.dio.post(
+        '/workouts/rest-suggestions',
+        data: {
+          'user_id': userId,
+          'exercise_name': exercise.name,
+          'exercise_id': exercise.id ?? exercise.libraryId ?? '',
+          'muscle_group': exercise.muscleGroup ?? 'unknown',
+          'set_number': completedSets.length,
+          'total_sets': _totalSetsPerExercise[_currentExerciseIndex] ?? 3,
+          'last_set_reps': completedSets.last.reps,
+          'last_set_weight': completedSets.last.weight,
+          'last_set_rpe': _lastSetRpe,
+          'last_set_rir': _lastSetRir,
+          'default_rest_seconds': exercise.restSeconds ?? 90,
+        },
+      );
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200 && response.data != null) {
+        final suggestion = RestSuggestion.fromJson(response.data);
+        setState(() {
+          _restSuggestion = suggestion;
+          _isLoadingRestSuggestion = false;
+        });
+        debugPrint('✅ [Rest] Got suggestion: ${suggestion.suggestedSeconds}s - ${suggestion.reasoning}');
+      } else {
+        setState(() => _isLoadingRestSuggestion = false);
+      }
+    } catch (e) {
+      debugPrint('❌ [Rest] Error fetching suggestion: $e');
+      if (mounted) {
+        setState(() => _isLoadingRestSuggestion = false);
+      }
+    }
+  }
+
+  /// Handle accepting fatigue suggestion (reduce weight)
+  void _handleAcceptFatigueSuggestion() {
+    if (_fatigueAlertData != null && _fatigueAlertData!.suggestedWeight > 0) {
+      _weightController.text = _fatigueAlertData!.suggestedWeight.toStringAsFixed(1);
+    }
+    setState(() {
+      _showFatigueAlert = false;
+      _fatigueAlertData = null;
+    });
+    HapticFeedback.mediumImpact();
+  }
+
+  /// Handle dismissing fatigue alert (continue as planned)
+  void _handleDismissFatigueAlert() {
+    setState(() {
+      _showFatigueAlert = false;
+      _fatigueAlertData = null;
+    });
+  }
+
+  /// Accept rest suggestion - restart timer with new duration
+  void _acceptRestSuggestion(int seconds) {
+    // Restart rest timer with the suggested duration
+    _timerController.startRestTimer(seconds);
+    setState(() => _restSuggestion = null);
+    HapticFeedback.mediumImpact();
+  }
+
+  /// Dismiss rest suggestion
+  void _dismissRestSuggestion() {
+    setState(() => _restSuggestion = null);
   }
 
   void _startRest(bool betweenExercises) {
@@ -656,16 +808,72 @@ class _ActiveWorkoutScreenState
     _videoController?.dispose();
     _videoController = null;
     _isVideoInitialized = false;
+    _imageUrl = null;
 
-    // Check for video or image URL
-    final videoUrl = exercise.videoUrl ?? exercise.videoS3Path;
-    final imageUrl = exercise.gifUrl ?? exercise.imageS3Path;
+    final apiClient = ref.read(apiClientProvider);
+    final exerciseName = exercise.name;
 
-    if (videoUrl != null && videoUrl.isNotEmpty) {
+    // 1. First try to use URLs from exercise model (if populated)
+    final modelVideoUrl = exercise.videoUrl ?? exercise.videoS3Path;
+    final modelImageUrl = exercise.gifUrl ?? exercise.imageS3Path;
+
+    // 2. If model has URLs, use them directly
+    if (modelImageUrl != null && modelImageUrl.isNotEmpty) {
+      setState(() {
+        _imageUrl = modelImageUrl;
+        _isLoadingMedia = false;
+      });
+    }
+
+    if (modelVideoUrl != null && modelVideoUrl.isNotEmpty) {
       try {
+        _videoController = VideoPlayerController.networkUrl(Uri.parse(modelVideoUrl));
+        await _videoController!.initialize();
+        _videoController!.setLooping(true);
+        _videoController!.setVolume(0); // Mute audio
+        _videoController!.play();
+
+        if (mounted) {
+          setState(() {
+            _videoUrl = modelVideoUrl;
+            _isVideoInitialized = true;
+            _isVideoPlaying = true;
+          });
+        }
+        return; // Success - exit early
+      } catch (e) {
+        debugPrint('❌ [Media] Model video failed: $e');
+      }
+    }
+
+    // 3. Fallback: Fetch from API endpoints (like old screen)
+    // First fetch image (faster)
+    try {
+      final imageResponse = await apiClient.dio.get(
+        '/exercise-images/${Uri.encodeComponent(exerciseName)}',
+      );
+      if (imageResponse.data?['url'] != null && mounted) {
+        setState(() {
+          _imageUrl = imageResponse.data['url'];
+          _isLoadingMedia = false;
+        });
+        debugPrint('✅ [Media] Image loaded from API: $_imageUrl');
+      }
+    } catch (e) {
+      debugPrint('❌ [Media] Image API fetch failed: $e');
+    }
+
+    // Then fetch video (slower, plays over image)
+    try {
+      final videoResponse = await apiClient.dio.get(
+        '/videos/by-exercise/${Uri.encodeComponent(exerciseName)}',
+      );
+      if (videoResponse.data?['url'] != null) {
+        final videoUrl = videoResponse.data['url'];
         _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
         await _videoController!.initialize();
         _videoController!.setLooping(true);
+        _videoController!.setVolume(0); // Mute audio
         _videoController!.play();
 
         if (mounted) {
@@ -673,22 +881,17 @@ class _ActiveWorkoutScreenState
             _videoUrl = videoUrl;
             _isVideoInitialized = true;
             _isVideoPlaying = true;
-            _isLoadingMedia = false;
           });
         }
-      } catch (e) {
-        // Fall back to image
-        setState(() {
-          _imageUrl = imageUrl;
-          _isLoadingMedia = false;
-        });
+        debugPrint('✅ [Media] Video loaded from API: $videoUrl');
       }
-    } else if (imageUrl != null && imageUrl.isNotEmpty) {
-      setState(() {
-        _imageUrl = imageUrl;
-        _isLoadingMedia = false;
-      });
-    } else {
+    } catch (e) {
+      debugPrint('❌ [Media] Video API fetch failed: $e');
+      // Keep showing image fallback
+    }
+
+    // Final fallback - show placeholder
+    if (mounted && _imageUrl == null && !_isVideoInitialized) {
       setState(() => _isLoadingMedia = false);
     }
   }
@@ -931,6 +1134,24 @@ class _ActiveWorkoutScreenState
                   isLoadingWeightSuggestion: _isLoadingWeightSuggestion,
                   onAcceptWeightSuggestion: _acceptWeightSuggestion,
                   onDismissWeightSuggestion: _dismissWeightSuggestion,
+                  // Rest suggestion props (AI-powered)
+                  restSuggestion: _restSuggestion,
+                  isLoadingRestSuggestion: _isLoadingRestSuggestion,
+                  onAcceptRestSuggestion: _acceptRestSuggestion,
+                  onDismissRestSuggestion: _dismissRestSuggestion,
+                ),
+              ),
+
+            // Fatigue alert modal (AI-powered)
+            if (_showFatigueAlert && _fatigueAlertData != null)
+              Positioned.fill(
+                child: FatigueAlertModal(
+                  alertData: _fatigueAlertData!,
+                  currentWeight: double.tryParse(_weightController.text) ?? 0,
+                  exerciseName: currentExercise.name,
+                  onAcceptSuggestion: _handleAcceptFatigueSuggestion,
+                  onContinueAsPlanned: _handleDismissFatigueAlert,
+                  onStopExercise: _skipExercise,
                 ),
               ),
 
@@ -1003,7 +1224,7 @@ class _ActiveWorkoutScreenState
                 ),
               ),
 
-            // Bottom bar
+            // Bottom bar with exercise strip navigation
             if (!_isResting)
               Positioned(
                 left: 0,
@@ -1012,6 +1233,11 @@ class _ActiveWorkoutScreenState
                 child: WorkoutBottomBar(
                   currentExercise: currentExercise,
                   nextExercise: nextExercise,
+                  allExercises: _exercises,
+                  currentExerciseIndex: _currentExerciseIndex,
+                  completedSetsPerExercise: _completedSets.map(
+                    (key, value) => MapEntry(key, value.length),
+                  ),
                   showInstructions: _showInstructions,
                   isResting: _isResting,
                   onToggleInstructions: () =>
@@ -1019,6 +1245,9 @@ class _ActiveWorkoutScreenState
                   onSkip: _isResting
                       ? () => _timerController.skipRest()
                       : _skipExercise,
+                  onExerciseTap: (index) {
+                    setState(() => _viewingExerciseIndex = index);
+                  },
                 ),
               ),
           ],

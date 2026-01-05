@@ -309,12 +309,33 @@ class NutritionDB(BaseDB):
         """
         Get user's daily nutrition targets.
 
+        First tries nutrition_preferences table (where calculate_nutrition_metrics saves),
+        then falls back to users table for legacy data.
+
         Args:
             user_id: User's UUID
 
         Returns:
             Dictionary with nutrition targets
         """
+        # First try nutrition_preferences (where calculated metrics are stored)
+        result = (
+            self.client.table("nutrition_preferences")
+            .select("target_calories, target_protein_g, target_carbs_g, target_fat_g")
+            .eq("user_id", user_id)
+            .maybe_single()
+            .execute()
+        )
+        if result.data:
+            prefs = result.data
+            return {
+                "daily_calorie_target": prefs.get("target_calories"),
+                "daily_protein_target_g": prefs.get("target_protein_g"),
+                "daily_carbs_target_g": prefs.get("target_carbs_g"),
+                "daily_fat_target_g": prefs.get("target_fat_g"),
+            }
+
+        # Fallback to users table for legacy data
         result = (
             self.client.table("users")
             .select(

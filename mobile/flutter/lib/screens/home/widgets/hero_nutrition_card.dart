@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../data/repositories/nutrition_repository.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../nutrition/log_meal_sheet.dart';
@@ -26,13 +28,84 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
   }
 
   Future<void> _loadData() async {
-    final userId = await ref.read(apiClientProvider).getUserId();
+    final apiClient = ref.read(apiClientProvider);
+    final userId = await apiClient.getUserId();
     if (userId != null && mounted) {
       await ref.read(nutritionProvider.notifier).loadTodaySummary(userId);
       await ref.read(nutritionProvider.notifier).loadTargets(userId);
+
+      // Check if targets are null - if so, try to calculate them from user profile
+      final nutritionState = ref.read(nutritionProvider);
+      if (nutritionState.targets?.dailyCalorieTarget == null) {
+        await _calculateTargetsFromProfile(userId, apiClient);
+        // Reload targets after calculation
+        await ref.read(nutritionProvider.notifier).loadTargets(userId);
+      }
+
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  /// Calculate nutrition targets from user profile if not already set
+  Future<void> _calculateTargetsFromProfile(String userId, ApiClient apiClient) async {
+    try {
+      final authState = ref.read(authStateProvider);
+      final user = authState.user;
+      if (user == null) return;
+
+      // Only calculate if we have the required data
+      if (user.weightKg == null || user.heightCm == null ||
+          user.age == null || user.gender == null) {
+        debugPrint('⚠️ [HeroNutritionCard] Missing user profile data for nutrition calculation');
+        return;
+      }
+
+      // Determine weight direction based on target vs current weight
+      String weightDirection = 'maintain';
+      if (user.targetWeightKg != null && user.weightKg != null) {
+        final diff = user.targetWeightKg! - user.weightKg!;
+        if (diff < -2) {
+          weightDirection = 'lose';
+        } else if (diff > 2) {
+          weightDirection = 'gain';
+        }
+      }
+
+      // Map fitness goals to nutrition goals
+      final nutritionGoals = user.goalsList.map((goal) {
+        switch (goal) {
+          case 'lose_weight':
+          case 'lose_fat':
+            return 'lose_fat';
+          case 'build_muscle':
+          case 'gain_muscle':
+            return 'build_muscle';
+          default:
+            return 'maintain';
+        }
+      }).toList();
+
+      debugPrint('🔄 [HeroNutritionCard] Calculating nutrition targets for existing user...');
+      await apiClient.post(
+        '${ApiConstants.users}/$userId/calculate-nutrition-targets',
+        data: {
+          'weight_kg': user.weightKg,
+          'height_cm': user.heightCm,
+          'age': user.age,
+          'gender': user.gender,
+          'activity_level': user.activityLevel ?? 'lightly_active',
+          'weight_direction': weightDirection,
+          'weight_change_rate': 'moderate',
+          'goal_weight_kg': user.targetWeightKg,
+          'nutrition_goals': nutritionGoals.isNotEmpty ? nutritionGoals : ['maintain'],
+          'workout_days_per_week': user.workoutsPerWeek ?? 3,
+        },
+      );
+      debugPrint('✅ [HeroNutritionCard] Nutrition targets calculated and saved');
+    } catch (e) {
+      debugPrint('❌ [HeroNutritionCard] Failed to calculate nutrition targets: $e');
     }
   }
 
@@ -79,28 +152,28 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Today badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: const Color(0xFF34C759).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Text(
                       'TODAY',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF34C759),
-                        letterSpacing: 1.5,
+                        letterSpacing: 1.2,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   // Calories remaining
                   if (_isLoading) ...[
@@ -126,7 +199,7 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
                           ? '$caloriesRemaining'
                           : '+${caloriesRemaining.abs()}',
                       style: TextStyle(
-                        fontSize: 48,
+                        fontSize: 42,
                         fontWeight: FontWeight.bold,
                         color: caloriesRemaining >= 0
                             ? textPrimary
@@ -138,17 +211,17 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
                           ? 'calories remaining'
                           : 'calories over',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         color: textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
 
                     // Progress bar
                     Container(
-                      height: 8,
+                      height: 6,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(3),
                         color: isDark
                             ? Colors.white.withValues(alpha: 0.1)
                             : Colors.black.withValues(alpha: 0.05),
@@ -158,7 +231,7 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
                         widthFactor: calorieProgress,
                         child: Container(
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(3),
                             color: calorieProgress < 1.0
                                 ? const Color(0xFF34C759)
                                 : AppColors.error,
@@ -166,17 +239,17 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
 
                     // Consumed / Target
                     Text(
                       '$caloriesConsumed / $calorieTarget kcal',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         color: textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
 
                     // Macros row
                     Row(
@@ -205,12 +278,12 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
                       ],
                     ),
                   ],
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
                   // Big LOG MEAL button
                   SizedBox(
                     width: double.infinity,
-                    height: 56,
+                    height: 48,
                     child: ElevatedButton(
                       onPressed: () {
                         HapticService.medium();
@@ -221,27 +294,27 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.restaurant_outlined, size: 24),
+                          Icon(Icons.restaurant_outlined, size: 20),
                           const SizedBox(width: 8),
                           const Text(
                             'LOG MEAL',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              letterSpacing: 1,
+                              letterSpacing: 0.8,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
 
                   // Secondary action - View Details
                   TextButton.icon(
@@ -251,14 +324,14 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
                     },
                     icon: Icon(
                       Icons.insights_outlined,
-                      size: 18,
+                      size: 16,
                       color: textSecondary,
                     ),
                     label: Text(
                       'View Details',
                       style: TextStyle(
                         color: textSecondary,
-                        fontSize: 13,
+                        fontSize: 12,
                       ),
                     ),
                   ),

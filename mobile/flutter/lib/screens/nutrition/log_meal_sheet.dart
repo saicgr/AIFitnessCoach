@@ -1707,6 +1707,7 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
   int _totalSteps = 3; // Analyze-only has 3 steps (save happens separately on confirm)
   String _progressMessage = '';
   String? _progressDetail;
+  int? _analysisElapsedMs; // Time taken for AI analysis
 
   // Rainbow colors for nutrition values
   static const caloriesColor = Color(0xFFFF6B6B);
@@ -1724,6 +1725,7 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
       _currentStep = 0;
       _progressMessage = 'Starting analysis...';
       _progressDetail = null;
+      _analysisElapsedMs = null; // Reset elapsed time
     });
 
     try {
@@ -1753,6 +1755,10 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
 
         if (progress.isCompleted && progress.foodLog != null) {
           response = progress.foodLog;
+          // Capture elapsed time when analysis completes
+          setState(() {
+            _analysisElapsedMs = progress.elapsedMs;
+          });
           break;
         }
 
@@ -2090,20 +2096,20 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
                       _CompactMacroChip(
                         icon: Icons.fitness_center,
                         value: '${response.proteinG.toStringAsFixed(0)}g',
-                        unit: 'P',
-                        color: proteinColor,
+                        unit: 'Protein',
+                        color: const Color(0xFFE6A700),  // Darker gold for readability
                       ),
                       _CompactMacroChip(
                         icon: Icons.grain,
                         value: '${response.carbsG.toStringAsFixed(0)}g',
-                        unit: 'C',
-                        color: carbsColor,
+                        unit: 'Carbs',
+                        color: const Color(0xFF2E9E4B),  // Darker green for readability
                       ),
                       _CompactMacroChip(
                         icon: Icons.opacity,
                         value: '${response.fatG.toStringAsFixed(0)}g',
-                        unit: 'F',
-                        color: fatColor,
+                        unit: 'Fat',
+                        color: const Color(0xFF3575CC),  // Darker blue for readability
                       ),
                     ],
                   ),

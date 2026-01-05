@@ -191,6 +191,7 @@ async def get_today_workout(
             to_date=future_end,
             is_completed=False,
             limit=1,
+            order_asc=True,  # Get earliest upcoming workout first
         )
 
         if future_rows:
@@ -247,6 +248,7 @@ async def get_today_workout(
                         to_date=future_end,
                         is_completed=False,
                         limit=1,
+                        order_asc=True,  # Get earliest upcoming workout first
                     )
 
                     if future_rows:

@@ -207,6 +207,53 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
         );
 
         debugPrint('✅ [CoachSelection] User preferences submitted successfully');
+
+        // Calculate and save nutrition targets based on quiz data
+        // This populates nutrition_preferences table with calories, macros, and goals
+        try {
+          await apiClient.post(
+            '${ApiConstants.users}/$userId/calculate-nutrition-targets',
+            data: {
+              'weight_kg': quizData.weightKg,
+              'height_cm': quizData.heightCm,
+              'age': quizData.age,
+              'gender': quizData.gender,
+              'activity_level': quizData.activityLevel,
+              'weight_direction': quizData.weightDirection,
+              'weight_change_rate': quizData.weightChangeAmount,
+              'goal_weight_kg': quizData.goalWeightKg,
+              'nutrition_goals': quizData.nutritionGoals,
+              'workout_days_per_week': quizData.daysPerWeek,
+            },
+          );
+          debugPrint('✅ [CoachSelection] Nutrition targets calculated and saved');
+        } catch (nutritionError) {
+          debugPrint('⚠️ [CoachSelection] Failed to calculate nutrition targets: $nutritionError');
+          // Non-critical - user can still use the app
+        }
+
+        // Sync fasting preferences if user selected fasting during onboarding
+        // This populates fasting_preferences table with protocol and settings
+        if (quizData.interestedInFasting != null) {
+          try {
+            await apiClient.post(
+              '${ApiConstants.users}/$userId/sync-fasting-preferences',
+              data: {
+                'interested_in_fasting': quizData.interestedInFasting,
+                'fasting_protocol': quizData.fastingProtocol,
+              },
+            );
+            debugPrint('✅ [CoachSelection] Fasting preferences synced');
+          } catch (fastingError) {
+            debugPrint('⚠️ [CoachSelection] Failed to sync fasting preferences: $fastingError');
+            // Non-critical - user can still use the app
+          }
+        }
+
+        // Refresh auth state with latest user data from backend
+        // This ensures the home screen shows updated preferences
+        await ref.read(authStateProvider.notifier).refreshUser();
+        debugPrint('✅ [CoachSelection] Auth state refreshed with latest user data');
       } catch (e) {
         debugPrint('❌ [CoachSelection] Failed to submit preferences: $e');
         // Preferences submission failure is not critical - user can still use the app

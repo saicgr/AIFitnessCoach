@@ -417,3 +417,137 @@ async def check_and_regenerate_workouts(
     except Exception as e:
         logger.error(f"Failed to check/regenerate workouts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/generate-next/{user_id}")
+async def generate_next_workout(
+    user_id: str,
+    background_tasks: BackgroundTasks
+):
+    """
+    Generate just the NEXT single workout for a user.
+
+    Called after workout completion to generate only the next workout day.
+    This enables one-at-a-time workout generation instead of batch generation.
+
+    Returns immediately - generation happens in background.
+    """
+    logger.info(f"[Generate-Next] Generating next workout for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+        job_queue = get_job_queue_service()
+
+        # Get user data including preferences
+        user = db.get_user(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Get user preferences for workout days
+        preferences = parse_json_field(user.get("preferences"), {})
+        selected_days = preferences.get("workout_days") or preferences.get("selected_days") or [0, 2, 4]
+        duration_minutes = preferences.get("workout_duration", 45)
+
+        # Check if already generating
+        existing_job = job_queue.get_user_pending_job(user_id)
+        if existing_job and existing_job.get("status") in ["pending", "in_progress"]:
+            return {
+                "success": True,
+                "message": "Generation already in progress",
+                "already_generating": True,
+                "job_id": existing_job.get("id")
+            }
+
+        # Find the latest scheduled workout date
+        today = datetime.now().date()
+        future_date = today + timedelta(days=60)
+
+        workouts = db.get_workouts_by_date_range(user_id, str(today), str(future_date))
+
+        # Find the latest scheduled date
+        latest_date = today
+        if workouts:
+            for w in workouts:
+                sched_date = w.get("scheduled_date", "")
+                if sched_date:
+                    try:
+                        workout_date = datetime.fromisoformat(str(sched_date)[:10]).date()
+                        if workout_date > latest_date:
+                            latest_date = workout_date
+                    except ValueError:
+                        pass
+
+        # Calculate next workout day based on selected_days
+        # Start searching from the day after the latest scheduled workout
+        search_date = latest_date + timedelta(days=1)
+
+        # Find the next day that matches user's workout days (limit search to 14 days)
+        next_workout_date = None
+        for i in range(14):
+            check_date = search_date + timedelta(days=i)
+            # Python weekday: Monday=0, Sunday=6 (matches our format)
+            if check_date.weekday() in selected_days:
+                next_workout_date = check_date
+                break
+
+        if not next_workout_date:
+            logger.warning(f"[Generate-Next] Could not find next workout day for user {user_id}")
+            return {
+                "success": False,
+                "message": "Could not determine next workout day",
+                "needs_generation": False
+            }
+
+        logger.info(f"[Generate-Next] Next workout date for user {user_id}: {next_workout_date}")
+
+        # Check if a workout already exists for this date
+        existing_for_date = [
+            w for w in workouts
+            if str(w.get("scheduled_date", ""))[:10] == str(next_workout_date)
+        ]
+
+        if existing_for_date:
+            logger.info(f"[Generate-Next] Workout already exists for {next_workout_date}")
+            return {
+                "success": True,
+                "message": "Workout already exists for next scheduled day",
+                "needs_generation": False,
+                "next_workout_date": str(next_workout_date)
+            }
+
+        # Create a job to generate just 1 workout
+        # Use weeks=1 and start from the exact next workout date
+        job_id = job_queue.create_job(
+            user_id=user_id,
+            month_start_date=str(next_workout_date),
+            duration_minutes=duration_minutes,
+            selected_days=selected_days,
+            weeks=1  # Only 1 week window - will generate just 1 workout
+        )
+
+        # Schedule the background task
+        background_tasks.add_task(
+            _run_background_generation,
+            job_id,
+            user_id,
+            str(next_workout_date),
+            duration_minutes,
+            selected_days,
+            1  # 1 week
+        )
+
+        logger.info(f"[Generate-Next] Scheduled single workout generation for {next_workout_date}")
+
+        return {
+            "success": True,
+            "message": "Next workout generation scheduled",
+            "needs_generation": True,
+            "job_id": job_id,
+            "next_workout_date": str(next_workout_date)
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[Generate-Next] Failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

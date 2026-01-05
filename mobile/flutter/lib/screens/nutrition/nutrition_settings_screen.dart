@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/api_constants.dart';
 import '../../data/models/nutrition_preferences.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 import 'food_library_screen.dart';
+import 'weekly_checkin_sheet.dart';
 
 /// Nutrition settings screen with toggles for calm mode, AI feedback, etc.
 class NutritionSettingsScreen extends ConsumerStatefulWidget {
@@ -336,6 +339,49 @@ class _NutritionSettingsScreenState
                         textMuted: textMuted,
                       ),
                     ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Nutrition Goals Section
+                  _buildSectionHeader(
+                    context,
+                    'Nutrition Goals',
+                    Icons.track_changes_rounded,
+                    const Color(0xFF34C759), // Green
+                    textPrimary,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildNutritionGoalsCard(
+                    context,
+                    isDark,
+                    elevated,
+                    cardBorder,
+                    textPrimary,
+                    textMuted,
+                    preferences,
+                    userId,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Weekly Check-In Section
+                  _buildSectionHeader(
+                    context,
+                    'Weekly Check-In',
+                    Icons.event_note_rounded,
+                    const Color(0xFF007AFF), // Blue
+                    textPrimary,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildWeeklyCheckinCard(
+                    context,
+                    isDark,
+                    elevated,
+                    cardBorder,
+                    textPrimary,
+                    textMuted,
+                    preferences,
                   ),
 
                   const SizedBox(height: 24),
@@ -1344,6 +1390,571 @@ class _NutritionSettingsScreenState
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
+
+  /// Build the nutrition goals card showing current goals with edit option
+  Widget _buildNutritionGoalsCard(
+    BuildContext context,
+    bool isDark,
+    Color elevated,
+    Color cardBorder,
+    Color textPrimary,
+    Color textMuted,
+    NutritionPreferences preferences,
+    String? userId,
+  ) {
+    final green = const Color(0xFF34C759);
+    final goals = preferences.nutritionGoals;
+    final primaryGoal = preferences.nutritionGoal;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Your Goals',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => _showEditGoalsSheet(
+                        context,
+                        isDark,
+                        textPrimary,
+                        textMuted,
+                        elevated,
+                        preferences,
+                        userId,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: green.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.edit_outlined, size: 16, color: green),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Edit',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: green,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Display goals
+                if (goals.isEmpty)
+                  Text(
+                    'No goals set',
+                    style: TextStyle(fontSize: 14, color: textMuted),
+                  )
+                else
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: goals.map((goal) {
+                      final isPrimary = goal == primaryGoal;
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isPrimary
+                              ? green.withValues(alpha: 0.15)
+                              : textMuted.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: isPrimary
+                              ? Border.all(color: green.withValues(alpha: 0.3))
+                              : null,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _getGoalDisplayName(goal),
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: isPrimary ? FontWeight.w600 : FontWeight.w500,
+                                color: isPrimary ? green : textPrimary,
+                              ),
+                            ),
+                            if (isPrimary) ...[
+                              const SizedBox(width: 4),
+                              Icon(Icons.star, size: 14, color: green),
+                            ],
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getGoalDisplayName(String goal) {
+    switch (goal) {
+      case 'lose_fat':
+        return 'Lose Fat';
+      case 'build_muscle':
+        return 'Build Muscle';
+      case 'maintain':
+        return 'Maintain';
+      case 'improve_energy':
+        return 'Improve Energy';
+      case 'eat_healthier':
+        return 'Eat Healthier';
+      case 'recomposition':
+        return 'Body Recomposition';
+      default:
+        return goal;
+    }
+  }
+
+  /// Show bottom sheet to edit nutrition goals
+  void _showEditGoalsSheet(
+    BuildContext context,
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+    Color elevated,
+    NutritionPreferences preferences,
+    String? userId,
+  ) {
+    if (userId == null) return;
+
+    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
+    final green = const Color(0xFF34C759);
+
+    // Available goals
+    final allGoals = [
+      {'id': 'lose_fat', 'name': 'Lose Fat', 'icon': Icons.local_fire_department},
+      {'id': 'build_muscle', 'name': 'Build Muscle', 'icon': Icons.fitness_center},
+      {'id': 'maintain', 'name': 'Maintain Weight', 'icon': Icons.balance},
+      {'id': 'improve_energy', 'name': 'Improve Energy', 'icon': Icons.bolt},
+      {'id': 'eat_healthier', 'name': 'Eat Healthier', 'icon': Icons.eco},
+      {'id': 'recomposition', 'name': 'Body Recomposition', 'icon': Icons.swap_vert},
+    ];
+
+    // Rate of change options
+    final rateOptions = ['slow', 'moderate', 'fast', 'aggressive'];
+
+    // Local state for selections
+    List<String> selectedGoals = List.from(preferences.nutritionGoals);
+    String selectedRate = preferences.rateOfChange ?? 'moderate';
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: nearBlack,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Edit Nutrition Goals',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(Icons.close, color: textMuted),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Select your goals (first selected = primary)',
+                  style: TextStyle(fontSize: 14, color: textMuted),
+                ),
+                const SizedBox(height: 16),
+                // Goals multi-select
+                ...allGoals.map((goal) {
+                  final isSelected = selectedGoals.contains(goal['id']);
+                  final isPrimary = selectedGoals.isNotEmpty && selectedGoals.first == goal['id'];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: GestureDetector(
+                      onTap: () {
+                        setSheetState(() {
+                          if (isSelected) {
+                            selectedGoals.remove(goal['id']);
+                          } else {
+                            selectedGoals.add(goal['id'] as String);
+                          }
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? green.withValues(alpha: 0.15)
+                              : elevated,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected
+                                ? green.withValues(alpha: 0.5)
+                                : Colors.transparent,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              goal['icon'] as IconData,
+                              color: isSelected ? green : textMuted,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                goal['name'] as String,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                  color: isSelected ? green : textPrimary,
+                                ),
+                              ),
+                            ),
+                            if (isPrimary)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: green.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'Primary',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: green,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              isSelected
+                                  ? Icons.check_circle
+                                  : Icons.circle_outlined,
+                              color: isSelected ? green : textMuted,
+                              size: 24,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+                const SizedBox(height: 16),
+                // Rate of change
+                Text(
+                  'Rate of Change',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: rateOptions.map((rate) {
+                    final isSelected = selectedRate == rate;
+                    return Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(right: rate != 'aggressive' ? 8 : 0),
+                        child: GestureDetector(
+                          onTap: () => setSheetState(() => selectedRate = rate),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? green.withValues(alpha: 0.15)
+                                  : elevated,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isSelected
+                                    ? green.withValues(alpha: 0.5)
+                                    : Colors.transparent,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                rate[0].toUpperCase() + rate.substring(1),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                  color: isSelected ? green : textMuted,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 24),
+                // Save button
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: isSaving || selectedGoals.isEmpty
+                        ? null
+                        : () async {
+                            setSheetState(() => isSaving = true);
+                            HapticService.light();
+
+                            try {
+                              // Call recalculate endpoint with new goals
+                              final authState = ref.read(authStateProvider);
+                              final user = authState.user;
+                              final apiClient = ref.read(apiClientProvider);
+
+                              await apiClient.post(
+                                '${ApiConstants.users}/$userId/calculate-nutrition-targets',
+                                data: {
+                                  'weight_kg': user?.weightKg ?? 70,
+                                  'height_cm': user?.heightCm ?? 170,
+                                  'age': user?.age ?? 30,
+                                  'gender': user?.gender ?? 'male',
+                                  'activity_level': user?.activityLevel ?? 'moderately_active',
+                                  'weight_direction': selectedGoals.contains('lose_fat') ? 'lose' : (selectedGoals.contains('build_muscle') ? 'gain' : 'maintain'),
+                                  'weight_change_rate': selectedRate,
+                                  'goal_weight_kg': user?.targetWeightKg,
+                                  'nutrition_goals': selectedGoals,
+                                  'workout_days_per_week': user?.workoutsPerWeek ?? 3,
+                                },
+                              );
+
+                              // Refresh preferences
+                              await ref.read(nutritionPreferencesProvider.notifier).initialize(userId);
+
+                              Navigator.pop(context);
+
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text('Goals updated and targets recalculated!'),
+                                    backgroundColor: green,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              debugPrint('❌ Error updating goals: $e');
+                              setSheetState(() => isSaving = false);
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error: $e'),
+                                    backgroundColor: const Color(0xFFFF3B30),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Save & Recalculate',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Build the weekly check-in card with manual trigger button
+  Widget _buildWeeklyCheckinCard(
+    BuildContext context,
+    bool isDark,
+    Color elevated,
+    Color cardBorder,
+    Color textPrimary,
+    Color textMuted,
+    NutritionPreferences preferences,
+  ) {
+    final blue = const Color(0xFF007AFF);
+    final isDue = preferences.isWeeklyCheckinDue;
+    final lastCheckin = preferences.lastWeeklyCheckinAt;
+    final daysSince = preferences.daysSinceLastCheckin;
+
+    String statusText;
+    if (lastCheckin == null) {
+      statusText = 'Never completed';
+    } else if (isDue) {
+      statusText = 'Due now ($daysSince days since last)';
+    } else {
+      statusText = '$daysSince days since last check-in';
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isDue
+                        ? blue.withValues(alpha: 0.15)
+                        : textMuted.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.insights_rounded,
+                    color: isDue ? blue : textMuted,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Review & Adjust Targets',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        statusText,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isDue ? blue : textMuted,
+                          fontWeight: isDue ? FontWeight.w500 : FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (isDue)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: blue.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Due',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: blue,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  HapticService.medium();
+                  showWeeklyCheckinSheet(context, ref);
+                },
+                icon: Icon(Icons.play_arrow_rounded, color: blue),
+                label: Text(
+                  'Run Weekly Check-In',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: blue,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: blue.withValues(alpha: 0.5)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

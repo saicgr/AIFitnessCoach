@@ -239,17 +239,6 @@ const Map<String, List<String>> _settingsSearchIndex = {
     'subscription price', 'how much', 'cancel auto renew', 'stop billing',
     'request refund', 'get refund', 'money back',
   ],
-  // App Tour & Demo - interactive walkthrough and demo features
-  'app_tour': [
-    // Direct keywords
-    'tour', 'demo', 'guide', 'walkthrough', 'tutorial', 'help', 'learn',
-    'app tour', 'demo workout', 'sample', 'preview', 'how to use',
-    // Natural language
-    'show me around', 'how to use', 'getting started', 'learn the app',
-    'restart tour', 'see demo', 'try demo', 'app guide', 'new user guide',
-    'what can this app do', 'feature tour', 'app features', 'explore app',
-    'sample workout', 'preview plan', 'try before', 'test app',
-  ],
   // Email preferences - unsubscribe from emails
   'email_preferences': [
     // Direct keywords
@@ -410,9 +399,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       id: 'about',
       icon: Icons.info_outline,
       title: 'About & Support',
-      subtitle: 'Legal, app tour, version info',
+      subtitle: 'Legal, version info',
       color: AppColors.textMuted,
-      sectionKeys: ['support', 'app_tour', 'app_info'],
+      sectionKeys: ['support', 'app_info'],
     ),
     _SettingsGroup(
       id: 'subscription',
@@ -735,8 +724,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return const Column(
           children: [
             SupportSection(),
-            SizedBox(height: 16),
-            AppTourSection(),
             SizedBox(height: 16),
             AppInfoSection(),
           ],

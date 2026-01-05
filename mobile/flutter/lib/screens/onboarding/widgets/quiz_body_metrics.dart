@@ -496,41 +496,33 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
               ),
               const SizedBox(height: 8),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Expanded(
-                    child: _buildGenderChip(
-                      isDark: isDark,
-                      textPrimary: textPrimary,
-                      cardBg: cardBg,
-                      cardBorder: cardBorder,
-                      id: 'male',
-                      label: 'M',
-                      icon: Icons.male,
-                    ),
+                  _buildGenderChip(
+                    isDark: isDark,
+                    textPrimary: textPrimary,
+                    cardBg: cardBg,
+                    cardBorder: cardBorder,
+                    id: 'male',
+                    icon: Icons.male,
                   ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: _buildGenderChip(
-                      isDark: isDark,
-                      textPrimary: textPrimary,
-                      cardBg: cardBg,
-                      cardBorder: cardBorder,
-                      id: 'female',
-                      label: 'F',
-                      icon: Icons.female,
-                    ),
+                  const SizedBox(width: 6),
+                  _buildGenderChip(
+                    isDark: isDark,
+                    textPrimary: textPrimary,
+                    cardBg: cardBg,
+                    cardBorder: cardBorder,
+                    id: 'female',
+                    icon: Icons.female,
                   ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: _buildGenderChip(
-                      isDark: isDark,
-                      textPrimary: textPrimary,
-                      cardBg: cardBg,
-                      cardBorder: cardBorder,
-                      id: 'other',
-                      label: 'X',
-                      icon: Icons.more_horiz,
-                    ),
+                  const SizedBox(width: 6),
+                  _buildGenderChip(
+                    isDark: isDark,
+                    textPrimary: textPrimary,
+                    cardBg: cardBg,
+                    cardBorder: cardBorder,
+                    id: 'other',
+                    icon: Icons.more_horiz,
                   ),
                 ],
               ),
@@ -586,7 +578,6 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     required Color cardBg,
     required Color cardBorder,
     required String id,
-    required String label,
     required IconData icon,
   }) {
     final isSelected = widget.gender == id;
@@ -598,34 +589,20 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
           gradient: isSelected ? AppColors.cyanGradient : null,
           color: isSelected ? null : cardBg,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected ? AppColors.cyan : cardBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? Colors.white : textPrimary,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? Colors.white : textPrimary,
-              ),
-            ),
-          ],
+        child: Icon(
+          icon,
+          size: 20,
+          color: isSelected ? Colors.white : textPrimary,
         ),
       ),
     );

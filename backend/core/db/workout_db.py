@@ -44,6 +44,7 @@ class WorkoutDB(BaseDB):
         to_date: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
+        order_asc: bool = False,
     ) -> List[Dict[str, Any]]:
         """
         List workouts for a user with filters.
@@ -75,9 +76,11 @@ class WorkoutDB(BaseDB):
 
         # Fetch more than needed to account for duplicates, then deduplicate
         fetch_limit = (limit + offset) * 3
+        # order_asc=True for getting earliest workouts first (used by /today endpoint)
+        # order_asc=False (default) for getting latest workouts first
         result = (
-            query.order("scheduled_date", desc=True)
-            .order("created_at", desc=True)
+            query.order("scheduled_date", desc=not order_asc)
+            .order("created_at", desc=not order_asc)
             .limit(fetch_limit)
             .execute()
         )

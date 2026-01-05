@@ -6,12 +6,10 @@ import '../../data/models/fasting.dart';
 import '../../data/providers/fasting_provider.dart';
 import '../../data/providers/guest_mode_provider.dart';
 import '../../data/providers/guest_usage_limits_provider.dart';
-import '../../data/providers/multi_screen_tour_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/fasting_timer_service.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/main_shell.dart';
-import '../../widgets/multi_screen_tour_helper.dart';
 import 'widgets/fasting_timer_widget.dart';
 import 'widgets/fasting_zone_timeline.dart';
 import 'widgets/fasting_stats_card.dart';
@@ -21,6 +19,7 @@ import 'widgets/start_fast_sheet.dart';
 import 'widgets/protocol_selector_chip.dart';
 import 'widgets/protocol_selector_sheet.dart';
 import 'widgets/time_schedule_row.dart';
+import 'widgets/fasting_settings_sheet.dart';
 
 /// Fasting tracker screen with timer and zone visualization
 class FastingScreen extends ConsumerStatefulWidget {
@@ -35,9 +34,6 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
   late TabController _tabController;
   bool _initialized = false;
 
-  // Tour key for Start Fast button
-  final GlobalKey _startFastKey = GlobalKey();
-
   // Inline fast configuration state
   FastingProtocol _selectedProtocol = FastingProtocol.sixteen8;
   int _customHours = 16;
@@ -49,33 +45,6 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _initialize());
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Check if we should show tour step when this screen becomes visible
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAndShowTourStep();
-    });
-  }
-
-  /// Check and show the tour step for fasting screen
-  void _checkAndShowTourStep() {
-    final tourState = ref.read(multiScreenTourProvider);
-
-    if (!tourState.isActive || tourState.isLoading) return;
-
-    final currentStep = tourState.currentStep;
-    if (currentStep == null) return;
-
-    // Fasting screen handles step 4 (start_fast_button)
-    if (currentStep.screenRoute != '/fasting') return;
-
-    if (currentStep.targetKeyId == 'start_fast_button') {
-      final helper = MultiScreenTourHelper(context: context, ref: ref);
-      helper.checkAndShowTour('/fasting', _startFastKey);
-    }
   }
 
   @override
@@ -246,7 +215,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                   if (fastingState.streak != null &&
                       fastingState.streak!.currentStreak > 0)
                     Container(
-                      margin: const EdgeInsets.only(right: 16),
+                      margin: const EdgeInsets.only(right: 8),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
@@ -269,6 +238,17 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                         ],
                       ),
                     ),
+                  // Settings icon
+                  IconButton(
+                    icon: Icon(
+                      Icons.settings_outlined,
+                      color: textMuted,
+                      size: 24,
+                    ),
+                    onPressed: () => _showFastingSettings(context, fastingState),
+                    tooltip: 'Fasting Settings',
+                  ),
+                  const SizedBox(width: 8),
                 ],
                 bottom: PreferredSize(
                   preferredSize: const Size.fromHeight(52),
@@ -383,18 +363,15 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
           ],
 
           // Timer Widget with Start button in center
-          Container(
-            key: _startFastKey,
-            child: FastingTimerWidget(
-              activeFast: fastingState.activeFast,
-              onEndFast: userId != null
-                  ? () => _showEndFastDialog(context, userId)
-                  : null,
-              onStartFast: userId != null && !hasFast
-                  ? () => _startFastDirectly(userId)
-                  : null,
-              isDark: isDark,
-            ),
+          FastingTimerWidget(
+            activeFast: fastingState.activeFast,
+            onEndFast: userId != null
+                ? () => _showEndFastDialog(context, userId)
+                : null,
+            onStartFast: userId != null && !hasFast
+                ? () => _startFastDirectly(userId)
+                : null,
+            isDark: isDark,
           ),
 
           // Inline controls (only when not fasting)
@@ -786,6 +763,27 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
           ],
         ),
       ),
+    );
+  }
+
+  /// Show fasting settings bottom sheet
+  void _showFastingSettings(BuildContext context, FastingState fastingState) {
+    // Create default preferences if none exist
+    final userId = ref.read(authStateProvider).user?.id;
+    if (userId == null) return;
+
+    final preferences = fastingState.preferences ?? FastingPreferences(
+      userId: userId,
+      defaultProtocol: '16:8',
+    );
+
+    HapticService.light();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => FastingSettingsSheet(preferences: preferences),
     );
   }
 }

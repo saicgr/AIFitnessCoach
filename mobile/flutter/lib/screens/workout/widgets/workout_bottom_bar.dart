@@ -1,22 +1,32 @@
 /// Workout bottom bar widget
 ///
 /// Bottom navigation bar for the active workout screen.
-/// Simplified design showing only next exercise preview.
+/// Exercise strip design for easy navigation between exercises.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 
-/// Bottom bar for workout navigation - simplified to next exercise preview
-class WorkoutBottomBar extends StatelessWidget {
+/// Bottom bar for workout navigation - exercise strip for easy navigation
+class WorkoutBottomBar extends StatefulWidget {
   /// Current exercise
   final WorkoutExercise currentExercise;
 
   /// Next exercise (null if last)
   final WorkoutExercise? nextExercise;
+
+  /// All exercises in workout
+  final List<WorkoutExercise> allExercises;
+
+  /// Current exercise index
+  final int currentExerciseIndex;
+
+  /// Completed sets per exercise (for showing progress)
+  final Map<int, int> completedSetsPerExercise;
 
   /// Whether instructions panel is shown (kept for compatibility)
   final bool showInstructions;
@@ -33,16 +43,66 @@ class WorkoutBottomBar extends StatelessWidget {
   /// Optional callback to show exercise details
   final VoidCallback? onShowExerciseDetails;
 
+  /// Callback when exercise is tapped in strip
+  final void Function(int exerciseIndex)? onExerciseTap;
+
   const WorkoutBottomBar({
     super.key,
     required this.currentExercise,
     this.nextExercise,
+    required this.allExercises,
+    required this.currentExerciseIndex,
+    this.completedSetsPerExercise = const {},
     required this.showInstructions,
     required this.isResting,
     required this.onToggleInstructions,
     required this.onSkip,
     this.onShowExerciseDetails,
+    this.onExerciseTap,
   });
+
+  @override
+  State<WorkoutBottomBar> createState() => _WorkoutBottomBarState();
+}
+
+class _WorkoutBottomBarState extends State<WorkoutBottomBar> {
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrentExercise());
+  }
+
+  @override
+  void didUpdateWidget(WorkoutBottomBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentExerciseIndex != widget.currentExerciseIndex) {
+      _scrollToCurrentExercise();
+    }
+  }
+
+  void _scrollToCurrentExercise() {
+    if (!_scrollController.hasClients) return;
+
+    // Each item is 64px wide + 12px spacing
+    const itemWidth = 76.0;
+    final targetOffset = (widget.currentExerciseIndex * itemWidth) -
+        (MediaQuery.of(context).size.width / 2) + (itemWidth / 2);
+
+    _scrollController.animateTo(
+      targetOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +111,6 @@ class WorkoutBottomBar extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
         decoration: BoxDecoration(
           color: isDark
               ? AppColors.nearBlack.withOpacity(0.95)
@@ -65,53 +124,118 @@ class WorkoutBottomBar extends StatelessWidget {
             ),
           ],
         ),
-        child: nextExercise != null
-            ? _buildNextExercisePreview(isDark)
-            : _buildLastExerciseIndicator(isDark),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Exercise strip
+            _buildExerciseStrip(isDark),
+
+            // Divider
+            Container(
+              height: 1,
+              color: isDark
+                  ? Colors.white.withOpacity(0.06)
+                  : Colors.black.withOpacity(0.04),
+            ),
+
+            // Current exercise info with large tap target for logging
+            _buildCurrentExerciseInfo(isDark),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildNextExercisePreview(bool isDark) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+  Widget _buildExerciseStrip(bool isDark) {
+    return Container(
+      height: 88,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: ListView.builder(
+        controller: _scrollController,
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: widget.allExercises.length,
+        itemBuilder: (context, index) {
+          final exercise = widget.allExercises[index];
+          final isCurrent = index == widget.currentExerciseIndex;
+          final isCompleted = index < widget.currentExerciseIndex;
+          final completedSets = widget.completedSetsPerExercise[index] ?? 0;
+          final totalSets = exercise.sets ?? 3;
+
+          return Padding(
+            padding: EdgeInsets.only(right: index < widget.allExercises.length - 1 ? 12 : 0),
+            child: _ExerciseStripItem(
+              exercise: exercise,
+              index: index,
+              isCurrent: isCurrent,
+              isCompleted: isCompleted,
+              completedSets: completedSets,
+              totalSets: totalSets,
+              isDark: isDark,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                widget.onExerciseTap?.call(index);
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCurrentExerciseInfo(bool isDark) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    final currentSets = widget.completedSetsPerExercise[widget.currentExerciseIndex] ?? 0;
+    final totalSets = widget.currentExercise.sets ?? 3;
+    final isLastExercise = widget.currentExerciseIndex == widget.allExercises.length - 1;
+    final allSetsComplete = currentSets >= totalSets;
 
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
-        onShowExerciseDetails?.call();
+        widget.onShowExerciseDetails?.call();
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: isDark
-              ? Colors.white.withOpacity(0.05)
-              : Colors.black.withOpacity(0.03),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withOpacity(0.08)
-                : Colors.black.withOpacity(0.05),
-          ),
-        ),
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
         child: Row(
           children: [
-            // Next icon
+            // Exercise number badge
             Container(
-              width: 40,
-              height: 40,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.electricBlue.withOpacity(0.12),
+                color: allSetsComplete
+                    ? AppColors.success.withOpacity(0.15)
+                    : AppColors.electricBlue.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: allSetsComplete
+                      ? AppColors.success.withOpacity(0.4)
+                      : AppColors.electricBlue.withOpacity(0.4),
+                  width: 2,
+                ),
               ),
-              child: const Icon(
-                Icons.arrow_forward_rounded,
-                size: 20,
-                color: AppColors.electricBlue,
+              child: Center(
+                child: allSetsComplete
+                    ? Icon(
+                        Icons.check_rounded,
+                        size: 28,
+                        color: AppColors.success,
+                      )
+                    : Text(
+                        '${widget.currentExerciseIndex + 1}',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.electricBlue,
+                        ),
+                      ),
               ),
             ),
-            const SizedBox(width: 14),
+
+            const SizedBox(width: 16),
 
             // Exercise info
             Expanded(
@@ -119,125 +243,265 @@ class WorkoutBottomBar extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'UP NEXT',
+                    widget.currentExercise.name,
                     style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1,
-                      color: textMuted,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    nextExercise!.name,
-                    style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _buildExerciseDetails(nextExercise!),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textMuted,
-                    ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      // Set progress
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: allSetsComplete
+                              ? AppColors.success.withOpacity(0.12)
+                              : AppColors.electricBlue.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          allSetsComplete
+                              ? 'Complete!'
+                              : 'Set ${currentSets + 1} of $totalSets',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: allSetsComplete
+                                ? AppColors.success
+                                : AppColors.electricBlue,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      // Weight/Reps info
+                      if (widget.currentExercise.weight != null)
+                        Text(
+                          '${widget.currentExercise.weight?.toStringAsFixed(0)}kg',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: textMuted,
+                          ),
+                        ),
+                      if (widget.currentExercise.weight != null && widget.currentExercise.reps != null)
+                        Text(
+                          ' × ',
+                          style: TextStyle(fontSize: 13, color: textMuted.withOpacity(0.5)),
+                        ),
+                      if (widget.currentExercise.reps != null)
+                        Text(
+                          '${widget.currentExercise.reps} reps',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: textMuted,
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),
             ),
 
-            // Chevron
-            Icon(
-              Icons.chevron_right,
-              size: 24,
-              color: textMuted,
-            ),
+            // Next indicator or finish flag
+            if (isLastExercise && allSetsComplete)
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.flag_rounded,
+                  size: 24,
+                  color: AppColors.success,
+                ),
+              )
+            else
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 28,
+                color: textMuted,
+              ),
           ],
         ),
       ),
     );
   }
+}
 
-  String _buildExerciseDetails(WorkoutExercise exercise) {
-    final parts = <String>[];
+/// Individual exercise item in the strip
+class _ExerciseStripItem extends StatelessWidget {
+  final WorkoutExercise exercise;
+  final int index;
+  final bool isCurrent;
+  final bool isCompleted;
+  final int completedSets;
+  final int totalSets;
+  final bool isDark;
+  final VoidCallback onTap;
 
-    if (exercise.sets != null) {
-      parts.add('${exercise.sets} sets');
+  const _ExerciseStripItem({
+    required this.exercise,
+    required this.index,
+    required this.isCurrent,
+    required this.isCompleted,
+    required this.completedSets,
+    required this.totalSets,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasImage = exercise.gifUrl != null && exercise.gifUrl!.isNotEmpty;
+    final allSetsComplete = completedSets >= totalSets;
+
+    // Determine colors based on state
+    Color borderColor;
+    Color bgColor;
+    if (isCurrent) {
+      borderColor = AppColors.electricBlue;
+      bgColor = AppColors.electricBlue.withOpacity(0.15);
+    } else if (isCompleted || allSetsComplete) {
+      borderColor = AppColors.success.withOpacity(0.6);
+      bgColor = AppColors.success.withOpacity(0.1);
+    } else {
+      borderColor = isDark
+          ? Colors.white.withOpacity(0.15)
+          : Colors.black.withOpacity(0.1);
+      bgColor = isDark
+          ? Colors.white.withOpacity(0.05)
+          : Colors.black.withOpacity(0.03);
     }
-    if (exercise.reps != null) {
-      parts.add('${exercise.reps} reps');
-    } else if (exercise.durationSeconds != null) {
-      parts.add('${exercise.durationSeconds}s');
-    }
-    if (exercise.weight != null) {
-      parts.add('${exercise.weight}kg');
-    }
 
-    return parts.join(' • ');
-  }
-
-  Widget _buildLastExerciseIndicator(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            AppColors.success.withOpacity(0.12),
-            AppColors.success.withOpacity(0.06),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppColors.success.withOpacity(0.25),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.success.withOpacity(0.15),
-            ),
-            child: const Icon(
-              Icons.flag_rounded,
-              size: 20,
-              color: AppColors.success,
-            ),
-          ),
-          const SizedBox(width: 14),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          // Thumbnail with progress ring
+          Stack(
             children: [
-              Text(
-                'FINAL EXERCISE',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1,
-                  color: AppColors.success,
+              // Progress ring background
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: borderColor,
+                    width: isCurrent ? 3 : 2,
+                  ),
+                ),
+                child: Container(
+                  margin: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: bgColor,
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: hasImage
+                      ? CachedNetworkImage(
+                          imageUrl: exercise.gifUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => _buildPlaceholder(),
+                          errorWidget: (context, url, error) => _buildPlaceholder(),
+                        )
+                      : _buildPlaceholder(),
                 ),
               ),
-              SizedBox(height: 2),
-              Text(
-                'You\'re almost there!',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.success,
+
+              // Completed checkmark overlay
+              if (isCompleted || allSetsComplete)
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: AppColors.success,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark ? AppColors.nearBlack : Colors.white,
+                        width: 2,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.check,
+                      size: 12,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
-              ),
+
+              // Current indicator dot
+              if (isCurrent && !allSetsComplete)
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: AppColors.electricBlue,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark ? AppColors.nearBlack : Colors.white,
+                        width: 2,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${completedSets + 1}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
+
+          const SizedBox(height: 4),
+
+          // Exercise number
+          Text(
+            '${index + 1}',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
+              color: isCurrent
+                  ? AppColors.electricBlue
+                  : (isCompleted
+                      ? AppColors.success
+                      : (isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Center(
+      child: Icon(
+        Icons.fitness_center_rounded,
+        size: 22,
+        color: isCurrent
+            ? AppColors.electricBlue
+            : (isCompleted
+                ? AppColors.success
+                : AppColors.textMuted.withOpacity(0.5)),
       ),
     );
   }

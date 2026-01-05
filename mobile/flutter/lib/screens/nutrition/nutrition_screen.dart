@@ -8,13 +8,11 @@ import '../../data/models/nutrition.dart';
 import '../../data/models/micronutrients.dart';
 import '../../data/models/nutrition_preferences.dart';
 import '../../data/models/recipe.dart';
-import '../../data/providers/multi_screen_tour_provider.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/repositories/nutrition_preferences_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/main_shell.dart';
-import '../../widgets/multi_screen_tour_helper.dart';
 import '../../widgets/nutrition/health_metrics_card.dart';
 import '../../widgets/nutrition/food_mood_analytics_card.dart';
 import 'log_meal_sheet.dart';
@@ -43,41 +41,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   bool _isLoadingMicronutrients = false;
   bool _hasCheckedWeeklyCheckin = false;  // Guard flag for weekly check-in prompt
 
-  // Tour key for Log Food FAB
-  final GlobalKey _logFoodFabKey = GlobalKey();
-
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _loadData();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Check if we should show tour step when this screen becomes visible
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAndShowTourStep();
-    });
-  }
-
-  /// Check and show the tour step for nutrition screen
-  void _checkAndShowTourStep() {
-    final tourState = ref.read(multiScreenTourProvider);
-
-    if (!tourState.isActive || tourState.isLoading) return;
-
-    final currentStep = tourState.currentStep;
-    if (currentStep == null) return;
-
-    // Nutrition screen handles step 3 (log_food_fab)
-    if (currentStep.screenRoute != '/nutrition') return;
-
-    if (currentStep.targetKeyId == 'log_food_fab') {
-      final helper = MultiScreenTourHelper(context: context, ref: ref);
-      helper.checkAndShowTour('/nutrition', _logFoodFabKey);
-    }
   }
 
   @override
@@ -98,11 +66,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       final initState = ref.read(nutritionPreferencesProvider);
       debugPrint('🥗 [NutritionScreen] After init: prefs=${initState.preferences != null}, calories=${initState.preferences?.targetCalories}');
 
-      // Check if weekly check-in is due (only once per screen load)
-      if (!_hasCheckedWeeklyCheckin && mounted) {
-        _hasCheckedWeeklyCheckin = true;
-        await _checkAndShowWeeklyCheckin();
-      }
+      // NOTE: Weekly check-in auto-popup removed - user can trigger via Settings
+      // The check-in is now manual-only to avoid annoying users every time they open the tab
 
       final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
       ref.read(nutritionProvider.notifier).loadTodaySummary(userId);

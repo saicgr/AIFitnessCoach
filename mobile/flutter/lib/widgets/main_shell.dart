@@ -11,7 +11,6 @@ import '../data/services/widget_action_service.dart';
 import '../screens/admin_support/admin_support_provider.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/nutrition/quick_log_overlay.dart';
-import '../screens/home/home_screen.dart';
 import 'floating_chat/floating_chat_overlay.dart';
 
 /// Provider to control floating nav bar visibility
@@ -254,15 +253,12 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
           _AdminSupportButton(),
 
           // AI Coach Button - fixed position
-          Container(
-            key: HomeTourKeys.chatFabKey,
-            child: _AICoachButton(
-              onTap: () {
-                HapticFeedback.mediumImpact();
-                // Show the chat bottom sheet directly (we have Navigator access here)
-                showChatBottomSheet(context, ref);
-              },
-            ),
+          _AICoachButton(
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              // Show the chat bottom sheet directly (we have Navigator access here)
+              showChatBottomSheet(context, ref);
+            },
           ),
         ],
       ),

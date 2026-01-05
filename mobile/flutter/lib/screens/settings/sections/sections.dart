@@ -5,7 +5,6 @@ library;
 
 export 'accessibility_section.dart';
 export 'app_info_section.dart';
-export 'app_tour_section.dart';
 export 'audio_settings_section.dart';
 export 'calibration_section.dart';
 export 'custom_content_section.dart';

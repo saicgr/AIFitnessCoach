@@ -134,14 +134,9 @@ class AuthRepository {
       await _supabase.auth.signOut();
       await _apiClient.clearAuth();
 
-      // Clear local onboarding and tour flags so next user gets fresh experience
+      // Clear local onboarding flags so next user gets fresh experience
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('onboarding_completed');
-      // Clear app tour state so new users see the tour
-      await prefs.remove('multi_screen_tour_completed');
-      await prefs.remove('multi_screen_tour_skipped');
-      await prefs.remove('multi_screen_tour_current_step');
-      await prefs.remove('multi_screen_tour_completed_at');
 
       debugPrint('✅ [Auth] Sign-out success');
     } catch (e) {
