@@ -284,6 +284,21 @@ const Map<String, List<String>> _settingsSearchIndex = {
     't-shirt', 'hoodie', 'tank top', 'shorts', 'accessories',
     'bottle', 'shaker', 'bag', 'bands', 'supplements', 'ebook', 'program',
   ],
+  // Nutrition & Fasting - intermittent fasting, eating window, sleep schedule
+  'nutrition_fasting': [
+    // Direct keywords
+    'nutrition', 'fasting', 'intermittent fasting', 'if', 'eating window',
+    'fasting protocol', 'eating schedule', 'meal timing', 'time restricted',
+    '16:8', '18:6', '12:12', '20:4', 'omad', 'one meal a day',
+    // Sleep related
+    'sleep', 'sleep schedule', 'wake time', 'wake up', 'bedtime', 'sleep time',
+    'circadian', 'rhythm',
+    // Natural language
+    'when to eat', 'eating hours', 'fasting hours', 'skip breakfast',
+    'intermittent', 'time restricted eating', 'eating pattern',
+    'fasting window', 'feeding window', 'fast schedule',
+    'change wake time', 'change sleep time', 'when i sleep', 'when i wake',
+  ],
 };
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
@@ -342,6 +357,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       subtitle: 'Progression, intensity, splits, schedule',
       color: AppColors.success,
       sectionKeys: ['training'],
+    ),
+    _SettingsGroup(
+      id: 'nutrition_fasting',
+      icon: Icons.restaurant_outlined,
+      title: 'Nutrition & Fasting',
+      subtitle: 'Fasting protocol, eating window, sleep',
+      color: AppColors.orange,
+      sectionKeys: ['nutrition_fasting'],
     ),
     _SettingsGroup(
       id: 'exercise_preferences',
@@ -663,6 +686,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         );
       case 'workout_settings':
         return const _WorkoutSettingsContent();
+      case 'nutrition_fasting':
+        return const NutritionFastingSection();
       case 'exercise_preferences':
         return const _ExercisePreferencesContent();
       case 'equipment':

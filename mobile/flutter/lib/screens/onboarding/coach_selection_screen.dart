@@ -172,6 +172,10 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
           if (quizData.interestedInFasting != null) 'interested_in_fasting': quizData.interestedInFasting,
           if (quizData.fastingProtocol != null) 'fasting_protocol': quizData.fastingProtocol,
 
+          // Sleep schedule for fasting optimization
+          if (quizData.wakeTime != null) 'wake_time': quizData.wakeTime,
+          if (quizData.sleepTime != null) 'sleep_time': quizData.sleepTime,
+
           // Motivations
           if (quizData.motivations != null) 'motivations': quizData.motivations,
 

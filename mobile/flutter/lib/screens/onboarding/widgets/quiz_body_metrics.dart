@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
+import 'scroll_hint_arrow.dart';
 
-/// Quiz step for collecting body metrics: height, current weight, and weight goal.
+/// Quiz step for collecting body metrics: age, gender, height, current weight, and weight goal.
 /// Uses two-step approach for weight goal: Direction (Lose/Gain/Maintain) + Amount.
 class QuizBodyMetrics extends StatefulWidget {
+  final int? age;
+  final String? gender;  // 'male' or 'female'
   final double? heightCm;
   final double? weightKg;
   final double? goalWeightKg;
   final bool useMetric;
   final String? weightDirection;  // 'lose', 'gain', 'maintain'
   final double? weightChangeAmount;  // Amount to change in current unit
+  final ValueChanged<int> onAgeChanged;
+  final ValueChanged<String> onGenderChanged;
   final ValueChanged<double> onHeightChanged;
   final ValueChanged<double> onWeightChanged;
   final ValueChanged<double> onGoalWeightChanged;
@@ -22,12 +26,16 @@ class QuizBodyMetrics extends StatefulWidget {
 
   const QuizBodyMetrics({
     super.key,
+    this.age,
+    this.gender,
     required this.heightCm,
     required this.weightKg,
     required this.goalWeightKg,
     required this.useMetric,
     this.weightDirection,
     this.weightChangeAmount,
+    required this.onAgeChanged,
+    required this.onGenderChanged,
     required this.onHeightChanged,
     required this.onWeightChanged,
     required this.onGoalWeightChanged,
@@ -45,6 +53,12 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
   late TextEditingController _heightFeetController;
   late TextEditingController _heightInchesController;
   late TextEditingController _weightController;
+  late TextEditingController _ageController;
+  late ScrollController _scrollController;
+
+  // Separate unit preferences for height and weight
+  late bool _heightInMetric;
+  late bool _weightInMetric;
 
   // Two-step weight goal
   double _weightChangeAmount = 10.0;  // Default 10 lbs or 5 kg
@@ -52,19 +66,27 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
+    // Initialize age controller
+    _ageController = TextEditingController(
+      text: widget.age != null ? widget.age.toString() : '',
+    );
+    // Initialize separate unit preferences (both start with the global preference)
+    _heightInMetric = widget.useMetric;
+    _weightInMetric = widget.useMetric;
     _initControllers();
     // Initialize weight change amount from widget or default
     if (widget.weightChangeAmount != null) {
       _weightChangeAmount = widget.weightChangeAmount!;
     } else {
       // Default to 10 lbs or ~5 kg
-      _weightChangeAmount = widget.useMetric ? 5.0 : 10.0;
+      _weightChangeAmount = _weightInMetric ? 5.0 : 10.0;
     }
   }
 
   void _initControllers() {
     // Height controllers
-    if (widget.useMetric) {
+    if (_heightInMetric) {
       _heightController = TextEditingController(
         text: widget.heightCm != null ? widget.heightCm!.toStringAsFixed(0) : '',
       );
@@ -85,7 +107,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     }
 
     // Weight controller
-    if (widget.useMetric) {
+    if (_weightInMetric) {
       _weightController = TextEditingController(
         text: widget.weightKg != null ? widget.weightKg!.toStringAsFixed(1) : '',
       );
@@ -99,45 +121,43 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
   @override
   void didUpdateWidget(QuizBodyMetrics oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.useMetric != widget.useMetric) {
-      _convertUnits(widget.useMetric);
-    }
+    // No longer need to respond to global unit change since we have per-field toggles
   }
 
-  void _convertUnits(bool toMetric) {
+  void _convertHeightUnits(bool toMetric) {
     if (toMetric) {
-      // Imperial to Metric
-      // Height: ft/in to cm
+      // Imperial to Metric: ft/in to cm
       final feet = double.tryParse(_heightFeetController.text) ?? 0;
       final inches = double.tryParse(_heightInchesController.text) ?? 0;
       final totalInches = (feet * 12) + inches;
       final cm = totalInches * 2.54;
       _heightController.text = cm > 0 ? cm.toStringAsFixed(0) : '';
-
-      // Weight: lbs to kg
-      final lbs = double.tryParse(_weightController.text) ?? 0;
-      final kg = lbs / 2.20462;
-      _weightController.text = kg > 0 ? kg.toStringAsFixed(1) : '';
-
-      // Convert weight change amount from lbs to kg
-      setState(() {
-        _weightChangeAmount = _weightChangeAmount / 2.20462;
-      });
     } else {
-      // Metric to Imperial
-      // Height: cm to ft/in
+      // Metric to Imperial: cm to ft/in
       final cm = double.tryParse(_heightController.text) ?? 0;
       final totalInches = cm / 2.54;
       final feet = (totalInches / 12).floor();
       final inches = (totalInches % 12).round();
       _heightFeetController.text = feet > 0 ? feet.toString() : '';
       _heightInchesController.text = inches > 0 ? inches.toString() : '';
+    }
+  }
 
-      // Weight: kg to lbs
+  void _convertWeightUnits(bool toMetric) {
+    if (toMetric) {
+      // Imperial to Metric: lbs to kg
+      final lbs = double.tryParse(_weightController.text) ?? 0;
+      final kg = lbs / 2.20462;
+      _weightController.text = kg > 0 ? kg.toStringAsFixed(1) : '';
+      // Convert weight change amount from lbs to kg
+      setState(() {
+        _weightChangeAmount = _weightChangeAmount / 2.20462;
+      });
+    } else {
+      // Metric to Imperial: kg to lbs
       final kg = double.tryParse(_weightController.text) ?? 0;
       final lbs = kg * 2.20462;
       _weightController.text = lbs > 0 ? lbs.toStringAsFixed(1) : '';
-
       // Convert weight change amount from kg to lbs
       setState(() {
         _weightChangeAmount = _weightChangeAmount * 2.20462;
@@ -151,12 +171,14 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     _heightFeetController.dispose();
     _heightInchesController.dispose();
     _weightController.dispose();
+    _ageController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   void _onHeightChanged() {
     double? heightCm;
-    if (widget.useMetric) {
+    if (_heightInMetric) {
       heightCm = double.tryParse(_heightController.text);
     } else {
       final feet = double.tryParse(_heightFeetController.text) ?? 0;
@@ -172,7 +194,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
   void _onWeightChanged() {
     final value = double.tryParse(_weightController.text);
     if (value != null && value > 0) {
-      final kg = widget.useMetric ? value : value / 2.20462;
+      final kg = _weightInMetric ? value : value / 2.20462;
       widget.onWeightChanged(kg);
     }
   }
@@ -185,57 +207,56 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     final cardBg = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildTitle(textPrimary),
-            const SizedBox(height: 6),
-            _buildSubtitle(textSecondary),
-            const SizedBox(height: 20),
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTitle(textPrimary),
+                const SizedBox(height: 6),
+                _buildSubtitle(textSecondary),
+                const SizedBox(height: 24),
 
-            // Unit toggle
-            _buildUnitToggle(isDark, textPrimary, cardBg, cardBorder),
-            const SizedBox(height: 24),
+                // Age and Gender inputs (NEW)
+                _buildAgeGenderSection(isDark, textPrimary, textSecondary, cardBg, cardBorder),
+                const SizedBox(height: 20),
 
-            // Height input
-            _buildHeightInput(isDark, textPrimary, textSecondary, cardBg, cardBorder),
-            const SizedBox(height: 20),
+                // Height input
+                _buildHeightInput(isDark, textPrimary, textSecondary, cardBg, cardBorder),
+                const SizedBox(height: 20),
 
-            // Current weight input
-            _buildWeightInput(
-              isDark,
-              textPrimary,
-              textSecondary,
-              cardBg,
-              cardBorder,
-              label: 'Current Weight',
-              hint: widget.useMetric ? 'kg' : 'lbs',
-              controller: _weightController,
-              onChanged: _onWeightChanged,
-              icon: Icons.monitor_weight_outlined,
-              color: AppColors.purple,
-              delay: 400,
+                // Current weight input with per-field unit toggle
+                _buildWeightInputWithToggle(
+                  isDark,
+                  textPrimary,
+                  textSecondary,
+                  cardBg,
+                  cardBorder,
+                ),
+
+                // Two-step weight goal (only show if current weight is set)
+                if (widget.weightKg != null) ...[
+                  const SizedBox(height: 24),
+                  _buildWeightGoalSection(isDark, textPrimary, textSecondary, cardBg, cardBorder),
+                ],
+
+                // BMI indicator (if both height and weight are set)
+                if (widget.heightCm != null && widget.weightKg != null) ...[
+                  const SizedBox(height: 24),
+                  _buildBmiIndicator(isDark, textPrimary, textSecondary, cardBg),
+                ],
+
+                const SizedBox(height: 60), // Extra space for scroll hint
+              ],
             ),
-
-            // Two-step weight goal (only show if current weight is set)
-            if (widget.weightKg != null) ...[
-              const SizedBox(height: 24),
-              _buildWeightGoalSection(isDark, textPrimary, textSecondary, cardBg, cardBorder),
-            ],
-
-            // BMI indicator (if both height and weight are set)
-            if (widget.heightCm != null && widget.weightKg != null) ...[
-              const SizedBox(height: 24),
-              _buildBmiIndicator(isDark, textPrimary, textSecondary, cardBg),
-            ],
-
-            const SizedBox(height: 24),
-          ],
+          ),
         ),
-      ),
+        ScrollHintArrow(scrollController: _scrollController),
+      ],
     );
   }
 
@@ -253,7 +274,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
 
   Widget _buildSubtitle(Color textSecondary) {
     return Text(
-      "We'll use this to predict when you'll reach your goal",
+      "We'll use this to calculate your personalized targets",
       style: TextStyle(
         fontSize: 14,
         color: textSecondary,
@@ -261,89 +282,199 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     ).animate().fadeIn(delay: 200.ms);
   }
 
-  Widget _buildUnitToggle(bool isDark, Color textPrimary, Color cardBg, Color cardBorder) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildUnitOption(
-            label: 'Metric',
-            subtitle: 'kg, cm',
-            isSelected: widget.useMetric,
-            onTap: () {
-              HapticFeedback.selectionClick();
-              widget.onUnitChanged(true);
-              _saveUnitPreference(true);
-            },
-            isDark: isDark,
-            textPrimary: textPrimary,
+  Widget _buildAgeGenderSection(
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+    Color cardBg,
+    Color cardBorder,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Age input
+        Expanded(
+          flex: 1,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.orange.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.cake_outlined, color: AppColors.orange, size: 16),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Age',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: cardBorder),
+                ),
+                child: TextField(
+                  controller: _ageController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(2),
+                  ],
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'years',
+                    hintStyle: TextStyle(
+                      color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                      fontWeight: FontWeight.normal,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    border: InputBorder.none,
+                    suffixText: 'yrs',
+                    suffixStyle: TextStyle(
+                      color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                      fontSize: 12,
+                    ),
+                  ),
+                  onChanged: (value) {
+                    final age = int.tryParse(value);
+                    if (age != null && age > 0 && age <= 99) {
+                      widget.onAgeChanged(age);
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
-          _buildUnitOption(
-            label: 'Imperial',
-            subtitle: 'lbs, ft/in',
-            isSelected: !widget.useMetric,
-            onTap: () {
-              HapticFeedback.selectionClick();
-              widget.onUnitChanged(false);
-              _saveUnitPreference(false);
-            },
-            isDark: isDark,
-            textPrimary: textPrimary,
+        ),
+        const SizedBox(width: 16),
+        // Gender selection
+        Expanded(
+          flex: 2,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.purple.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.person_outline, color: AppColors.purple, size: 16),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Gender',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildGenderChip(
+                      isDark: isDark,
+                      textPrimary: textPrimary,
+                      cardBg: cardBg,
+                      cardBorder: cardBorder,
+                      id: 'male',
+                      label: 'Male',
+                      icon: Icons.male,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildGenderChip(
+                      isDark: isDark,
+                      textPrimary: textPrimary,
+                      cardBg: cardBg,
+                      cardBorder: cardBorder,
+                      id: 'female',
+                      label: 'Female',
+                      icon: Icons.female,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 250.ms);
+        ),
+      ],
+    ).animate().fadeIn(delay: 250.ms).slideX(begin: 0.05);
   }
 
-  Widget _buildUnitOption({
-    required String label,
-    required String subtitle,
-    required bool isSelected,
-    required VoidCallback onTap,
+  Widget _buildGenderChip({
     required bool isDark,
     required Color textPrimary,
+    required Color cardBg,
+    required Color cardBorder,
+    required String id,
+    required String label,
+    required IconData icon,
   }) {
+    final isSelected = widget.gender == id;
+
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        widget.onGenderChanged(id);
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
           gradient: isSelected ? AppColors.cyanGradient : null,
-          borderRadius: BorderRadius.circular(10),
+          color: isSelected ? null : cardBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppColors.cyan : cardBorder,
+            width: isSelected ? 2 : 1,
+          ),
         ),
-        child: Column(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected ? Colors.white : textPrimary,
+            ),
+            const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected ? Colors.white : textPrimary,
-              ),
-            ),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 11,
-                color: isSelected ? Colors.white70 : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
               ),
             ),
           ],
         ),
       ),
     );
-  }
-
-  Future<void> _saveUnitPreference(bool useMetric) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('preAuth_useMetric', useMetric);
   }
 
   Widget _buildHeightInput(
@@ -375,10 +506,24 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                 color: textPrimary,
               ),
             ),
+            const Spacer(),
+            // Per-field unit toggle for height
+            _buildSmallUnitToggle(
+              isMetric: _heightInMetric,
+              metricLabel: 'cm',
+              imperialLabel: 'ft/in',
+              onChanged: (isMetric) {
+                _convertHeightUnits(isMetric);
+                setState(() => _heightInMetric = isMetric);
+              },
+              isDark: isDark,
+              cardBg: cardBg,
+              cardBorder: cardBorder,
+            ),
           ],
         ),
         const SizedBox(height: 12),
-        if (widget.useMetric)
+        if (_heightInMetric)
           _buildTextField(
             controller: _heightController,
             hint: 'cm',
@@ -420,20 +565,13 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     ).animate().fadeIn(delay: 300.ms).slideX(begin: 0.05);
   }
 
-  Widget _buildWeightInput(
+  Widget _buildWeightInputWithToggle(
     bool isDark,
     Color textPrimary,
     Color textSecondary,
     Color cardBg,
-    Color cardBorder, {
-    required String label,
-    required String hint,
-    required TextEditingController controller,
-    required VoidCallback onChanged,
-    required IconData icon,
-    required Color color,
-    required int delay,
-  }) {
+    Color cardBorder,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -442,27 +580,41 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
+                color: AppColors.purple.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: color, size: 20),
+              child: Icon(Icons.monitor_weight_outlined, color: AppColors.purple, size: 20),
             ),
             const SizedBox(width: 12),
             Text(
-              label,
+              'Current Weight',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: textPrimary,
               ),
             ),
+            const Spacer(),
+            // Per-field unit toggle for weight
+            _buildSmallUnitToggle(
+              isMetric: _weightInMetric,
+              metricLabel: 'kg',
+              imperialLabel: 'lbs',
+              onChanged: (isMetric) {
+                _convertWeightUnits(isMetric);
+                setState(() => _weightInMetric = isMetric);
+              },
+              isDark: isDark,
+              cardBg: cardBg,
+              cardBorder: cardBorder,
+            ),
           ],
         ),
         const SizedBox(height: 12),
         _buildTextField(
-          controller: controller,
-          hint: hint,
-          onChanged: (_) => onChanged(),
+          controller: _weightController,
+          hint: _weightInMetric ? 'kg' : 'lbs',
+          onChanged: (_) => _onWeightChanged(),
           isDark: isDark,
           textPrimary: textPrimary,
           cardBg: cardBg,
@@ -470,7 +622,79 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
           allowDecimal: true,
         ),
       ],
-    ).animate().fadeIn(delay: delay.ms).slideX(begin: 0.05);
+    ).animate().fadeIn(delay: 400.ms).slideX(begin: 0.05);
+  }
+
+  Widget _buildSmallUnitToggle({
+    required bool isMetric,
+    required String metricLabel,
+    required String imperialLabel,
+    required ValueChanged<bool> onChanged,
+    required bool isDark,
+    required Color cardBg,
+    required Color cardBorder,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onChanged(true);
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: isMetric ? AppColors.cyanGradient : null,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                metricLabel,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: isMetric
+                      ? Colors.white
+                      : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+                ),
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onChanged(false);
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: !isMetric ? AppColors.cyanGradient : null,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                imperialLabel,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: !isMetric
+                      ? Colors.white
+                      : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildTextField({
@@ -721,7 +945,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     Color cardBg,
     Color cardBorder,
   ) {
-    final unit = widget.useMetric ? 'kg' : 'lbs';
+    final unit = _weightInMetric ? 'kg' : 'lbs';
     final directionLabel = widget.weightDirection == 'lose' ? 'lose' : 'gain';
 
     return Container(
@@ -743,7 +967,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
           ),
           const SizedBox(height: 12),
 
-          // +/- buttons with amount display
+          // +/- buttons with amount display (tap number to type)
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -762,24 +986,36 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                 cardBorder: cardBorder,
               ),
               const SizedBox(width: 20),
-              Column(
-                children: [
-                  Text(
-                    _weightChangeAmount.round().toString(),
-                    style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
-                    ),
+              // Tappable amount display
+              GestureDetector(
+                onTap: () => _showAmountInputDialog(isDark, textPrimary, textSecondary, unit),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.cyan.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
                   ),
-                  Text(
-                    unit,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: textSecondary,
-                    ),
+                  child: Column(
+                    children: [
+                      Text(
+                        _weightChangeAmount.round().toString(),
+                        style: TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.cyan,
+                        ),
+                      ),
+                      Text(
+                        unit,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
               const SizedBox(width: 20),
               _buildIncrementButton(
@@ -831,13 +1067,113 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     );
   }
 
+  void _showAmountInputDialog(
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+    String unit,
+  ) {
+    HapticFeedback.selectionClick();
+    final controller = TextEditingController(text: _weightChangeAmount.round().toString());
+    final directionLabel = widget.weightDirection == 'lose' ? 'lose' : 'gain';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Enter amount to $directionLabel',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: textPrimary,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: controller,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              autofocus: true,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: AppColors.cyan,
+              ),
+              decoration: InputDecoration(
+                suffixText: unit,
+                suffixStyle: TextStyle(
+                  fontSize: 18,
+                  color: textSecondary,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.cyan),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.cyan, width: 2),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}\.?\d{0,1}')),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Enter a value between 1-100 $unit',
+              style: TextStyle(
+                fontSize: 12,
+                color: textSecondary,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final value = double.tryParse(controller.text);
+              if (value != null && value >= 1 && value <= 100) {
+                setState(() {
+                  _weightChangeAmount = value;
+                });
+                widget.onWeightChangeAmountChanged?.call(_weightChangeAmount);
+                _updateGoalWeight(widget.weightDirection!);
+                Navigator.pop(ctx);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.cyan,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text('Done'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildGoalSummary(
     bool isDark,
     Color textPrimary,
     Color textSecondary,
   ) {
-    final unit = widget.useMetric ? 'kg' : 'lbs';
-    final currentWeight = widget.useMetric
+    final unit = _weightInMetric ? 'kg' : 'lbs';
+    final currentWeight = _weightInMetric
         ? widget.weightKg!
         : widget.weightKg! * 2.20462;
 
@@ -935,7 +1271,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
       goalWeightKg = widget.weightKg!;
     } else {
       // Convert amount from display unit to kg
-      final amountKg = widget.useMetric
+      final amountKg = _weightInMetric
           ? _weightChangeAmount
           : _weightChangeAmount / 2.20462;
 

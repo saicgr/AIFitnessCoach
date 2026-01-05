@@ -126,6 +126,20 @@ async def nutrition_agent_node(state: NutritionAgentState) -> Dict[str, Any]:
         if profile.get("daily_calorie_target"):
             context_parts.append(f"Daily calorie target: {profile['daily_calorie_target']} kcal")
 
+    # Include calculated nutrition metrics from RAG
+    if state.get("nutrition_profile_context"):
+        context_parts.append(f"\n{state['nutrition_profile_context']}")
+    else:
+        # Try to fetch from RAG service
+        try:
+            from services.nutrition_rag_service import get_user_nutrition_profile_service
+            profile_service = get_user_nutrition_profile_service()
+            nutrition_context = profile_service.get_user_profile_context(state["user_id"])
+            if nutrition_context:
+                context_parts.append(f"\n{nutrition_context}")
+        except Exception as e:
+            logger.debug(f"Could not fetch nutrition profile from RAG: {e}")
+
     if state.get("rag_context_formatted"):
         context_parts.append(f"\nPrevious context:\n{state['rag_context_formatted']}")
 
@@ -323,6 +337,20 @@ async def nutrition_autonomous_node(state: NutritionAgentState) -> Dict[str, Any
         context_parts.append(f"User goals: {', '.join(profile.get('goals', []))}")
         if profile.get("daily_calorie_target"):
             context_parts.append(f"Daily calorie target: {profile['daily_calorie_target']} kcal")
+
+    # Include calculated nutrition metrics from RAG
+    if state.get("nutrition_profile_context"):
+        context_parts.append(f"\n{state['nutrition_profile_context']}")
+    else:
+        # Try to fetch from RAG service
+        try:
+            from services.nutrition_rag_service import get_user_nutrition_profile_service
+            profile_service = get_user_nutrition_profile_service()
+            nutrition_context = profile_service.get_user_profile_context(state["user_id"])
+            if nutrition_context:
+                context_parts.append(f"\n{nutrition_context}")
+        except Exception as e:
+            logger.debug(f"Could not fetch nutrition profile from RAG: {e}")
 
     if state.get("rag_context_formatted"):
         context_parts.append(f"\nPrevious context:\n{state['rag_context_formatted']}")

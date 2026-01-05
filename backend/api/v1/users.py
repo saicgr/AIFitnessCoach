@@ -235,6 +235,9 @@ def merge_extended_fields_into_preferences(
     coach_id: Optional[str] = None,
     training_experience: Optional[str] = None,
     workout_days: Optional[List[str]] = None,
+    # Sleep schedule for fasting optimization
+    wake_time: Optional[str] = None,
+    sleep_time: Optional[str] = None,
 ) -> dict:
     """Merge extended onboarding fields into preferences dict."""
     try:
@@ -287,6 +290,11 @@ def merge_extended_fields_into_preferences(
         prefs["training_experience"] = training_experience
     if workout_days is not None:
         prefs["workout_days"] = workout_days
+    # Sleep schedule for fasting optimization
+    if wake_time is not None:
+        prefs["wake_time"] = wake_time
+    if sleep_time is not None:
+        prefs["sleep_time"] = sleep_time
 
     return prefs
 
@@ -534,11 +542,14 @@ class UserPreferencesRequest(BaseModel):
     activity_level: Optional[str] = None
 
     # Body Metrics
+    age: Optional[int] = None
+    gender: Optional[str] = None  # 'male' or 'female'
     height_cm: Optional[float] = None
     weight_kg: Optional[float] = None
     goal_weight_kg: Optional[float] = None
     weight_direction: Optional[str] = None  # lose, gain, maintain
     weight_change_amount: Optional[float] = None
+    weight_change_rate: Optional[str] = None  # slow, moderate, fast, aggressive
 
     # Schedule
     days_per_week: Optional[int] = None
@@ -564,6 +575,10 @@ class UserPreferencesRequest(BaseModel):
     # Fasting
     interested_in_fasting: Optional[bool] = None
     fasting_protocol: Optional[str] = None
+
+    # Sleep schedule for fasting optimization
+    wake_time: Optional[str] = None  # HH:MM format, e.g., "07:00"
+    sleep_time: Optional[str] = None  # HH:MM format, e.g., "23:00"
 
     # Motivations
     motivations: Optional[List[str]] = None
@@ -610,6 +625,10 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest):
             update_data["equipment"] = request.equipment
         if request.custom_equipment is not None:
             update_data["custom_equipment"] = request.custom_equipment
+        if request.age is not None:
+            update_data["age"] = request.age
+        if request.gender is not None:
+            update_data["gender"] = request.gender
 
         # Merge into preferences JSON
         current_prefs = existing.get("preferences", {})
@@ -642,6 +661,9 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest):
             request.coach_id,
             request.training_experience,
             request.selected_days,
+            # Sleep schedule for fasting optimization
+            request.wake_time,
+            request.sleep_time,
         )
         update_data["preferences"] = final_preferences
 
@@ -1531,4 +1553,205 @@ async def remove_from_exercise_queue(user_id: str, exercise_name: str):
         raise
     except Exception as e:
         logger.error(f"Failed to remove from exercise queue: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# =============================================================================
+# NUTRITION METRICS CALCULATION
+# =============================================================================
+
+class NutritionCalculationRequest(BaseModel):
+    """Request body for calculating nutrition metrics."""
+    weight_kg: float
+    height_cm: float
+    age: int
+    gender: str  # 'male' or 'female'
+    activity_level: Optional[str] = 'lightly_active'
+    weight_direction: Optional[str] = 'maintain'
+    weight_change_rate: Optional[str] = 'moderate'
+    goal_weight_kg: Optional[float] = None
+    nutrition_goals: Optional[List[str]] = None
+    workout_days_per_week: Optional[int] = 3
+
+
+class NutritionMetricsResponse(BaseModel):
+    """Response model for calculated nutrition metrics."""
+    calories: int
+    protein: int
+    carbs: int
+    fat: int
+    water_liters: float
+    metabolic_age: int
+    max_safe_deficit: int
+    body_fat_percent: float
+    lean_mass: float
+    fat_mass: float
+    protein_per_kg: float
+    ideal_weight_min: float
+    ideal_weight_max: float
+    goal_date: Optional[str] = None
+    weeks_to_goal: Optional[int] = None
+    bmr: int
+    tdee: int
+
+
+@router.post("/{user_id}/calculate-nutrition-targets", response_model=NutritionMetricsResponse)
+async def calculate_nutrition_targets(user_id: str, request: NutritionCalculationRequest):
+    """
+    Calculate and save all nutrition metrics for a user.
+
+    This endpoint:
+    1. Calculates all nutrition metrics (BMR, TDEE, macros, metabolic age, etc.)
+    2. Saves them to the nutrition_preferences table
+    3. Indexes them for RAG/AI context
+    4. Returns the calculated metrics
+
+    Called after quiz completion or when user updates their profile.
+    """
+    logger.info(f"Calculating nutrition targets for user: {user_id}")
+    try:
+        db = get_supabase_db()
+
+        # Verify user exists
+        user = db.get_user(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Call the Supabase function to calculate and save metrics
+        result = db.client.rpc(
+            'calculate_nutrition_metrics',
+            {
+                'p_user_id': user_id,
+                'p_weight_kg': request.weight_kg,
+                'p_height_cm': request.height_cm,
+                'p_age': request.age,
+                'p_gender': request.gender,
+                'p_activity_level': request.activity_level,
+                'p_weight_direction': request.weight_direction,
+                'p_weight_change_rate': request.weight_change_rate,
+                'p_goal_weight_kg': request.goal_weight_kg,
+                'p_nutrition_goals': request.nutrition_goals,
+                'p_workout_days_per_week': request.workout_days_per_week,
+            }
+        ).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to calculate nutrition metrics")
+
+        metrics = result.data
+
+        logger.info(f"Calculated nutrition targets for user {user_id}: {metrics.get('calories')} cal")
+
+        # Index for RAG (optional - catch errors to not break main flow)
+        try:
+            from services.nutrition_rag_service import index_user_nutrition_metrics
+            await index_user_nutrition_metrics(user_id, metrics)
+            logger.info(f"Indexed nutrition metrics to RAG for user {user_id}")
+        except Exception as rag_error:
+            logger.warning(f"Could not index nutrition metrics to RAG: {rag_error}")
+
+        # Log activity
+        await log_user_activity(
+            user_id=user_id,
+            action="nutrition_targets_calculated",
+            endpoint=f"/api/v1/users/{user_id}/calculate-nutrition-targets",
+            message="Nutrition targets calculated",
+            metadata={
+                "calories": metrics.get('calories'),
+                "protein": metrics.get('protein'),
+            },
+            status_code=200
+        )
+
+        return NutritionMetricsResponse(
+            calories=metrics['calories'],
+            protein=metrics['protein'],
+            carbs=metrics['carbs'],
+            fat=metrics['fat'],
+            water_liters=metrics['water_liters'],
+            metabolic_age=metrics['metabolic_age'],
+            max_safe_deficit=metrics['max_safe_deficit'],
+            body_fat_percent=metrics['body_fat_percent'],
+            lean_mass=metrics['lean_mass'],
+            fat_mass=metrics['fat_mass'],
+            protein_per_kg=metrics['protein_per_kg'],
+            ideal_weight_min=metrics['ideal_weight_min'],
+            ideal_weight_max=metrics['ideal_weight_max'],
+            goal_date=str(metrics['goal_date']) if metrics.get('goal_date') else None,
+            weeks_to_goal=metrics.get('weeks_to_goal'),
+            bmr=metrics['bmr'],
+            tdee=metrics['tdee'],
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to calculate nutrition targets: {e}")
+        await log_user_error(
+            user_id=user_id,
+            action="nutrition_targets_calculated",
+            error=e,
+            endpoint=f"/api/v1/users/{user_id}/calculate-nutrition-targets",
+            status_code=500
+        )
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{user_id}/nutrition-targets", response_model=NutritionMetricsResponse)
+async def get_nutrition_targets(user_id: str):
+    """
+    Get the user's calculated nutrition targets.
+
+    Returns the most recently calculated nutrition metrics from the database.
+    """
+    logger.info(f"Getting nutrition targets for user: {user_id}")
+    try:
+        db = get_supabase_db()
+
+        # Verify user exists
+        user = db.get_user(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Get nutrition preferences
+        result = db.client.table('nutrition_preferences').select('*').eq(
+            'user_id', user_id
+        ).single().execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Nutrition targets not found. Please complete the quiz first.")
+
+        prefs = result.data
+
+        # Check if metrics have been calculated
+        if prefs.get('target_calories') is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Nutrition metrics not yet calculated. Please complete the body metrics in the quiz."
+            )
+
+        return NutritionMetricsResponse(
+            calories=prefs['target_calories'],
+            protein=prefs['target_protein_g'],
+            carbs=prefs['target_carbs_g'],
+            fat=prefs['target_fat_g'],
+            water_liters=prefs.get('water_intake_liters', 2.5),
+            metabolic_age=prefs.get('metabolic_age', 0),
+            max_safe_deficit=prefs.get('max_safe_deficit', 500),
+            body_fat_percent=prefs.get('estimated_body_fat_percent', 20.0),
+            lean_mass=prefs.get('lean_mass_kg', 60.0),
+            fat_mass=prefs.get('fat_mass_kg', 15.0),
+            protein_per_kg=prefs.get('protein_per_kg', 1.6),
+            ideal_weight_min=prefs.get('ideal_weight_min_kg', 60.0),
+            ideal_weight_max=prefs.get('ideal_weight_max_kg', 80.0),
+            goal_date=str(prefs['goal_date']) if prefs.get('goal_date') else None,
+            weeks_to_goal=prefs.get('weeks_to_goal'),
+            bmr=prefs['calculated_bmr'],
+            tdee=prefs['calculated_tdee'],
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get nutrition targets: {e}")
         raise HTTPException(status_code=500, detail=str(e))

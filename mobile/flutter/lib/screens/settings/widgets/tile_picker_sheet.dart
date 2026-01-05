@@ -297,6 +297,20 @@ class TilePickerSheet extends StatelessWidget {
         return Icons.trending_up;
       case TileType.weeklyPlan:
         return Icons.calendar_view_week;
+      case TileType.weightTrend:
+        return Icons.trending_up;
+      case TileType.dailyStats:
+        return Icons.bar_chart;
+      case TileType.achievements:
+        return Icons.emoji_events;
+      case TileType.heroSection:
+        return Icons.star;
+      case TileType.quickLogWeight:
+        return Icons.scale;
+      case TileType.quickLogMeasurements:
+        return Icons.straighten;
+      case TileType.habits:
+        return Icons.check_circle_outline;
     }
   }
 

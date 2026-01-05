@@ -18,23 +18,47 @@ class WeightDataPoint {
 
 /// Calculator for weight projection
 class WeightProjectionCalculator {
-  /// Calculate goal date based on current weight, goal weight, and workout frequency
+  /// Get weekly rate in kg based on rate selection
+  static double getWeeklyRate(String? rate, bool isLosing) {
+    if (isLosing) {
+      switch (rate) {
+        case 'slow':
+          return 0.25;
+        case 'moderate':
+          return 0.5;
+        case 'fast':
+          return 0.75;
+        case 'aggressive':
+          return 1.0;
+        default:
+          return 0.5; // Default to moderate
+      }
+    } else {
+      // Weight gain rates are typically slower
+      switch (rate) {
+        case 'slow':
+          return 0.25;
+        case 'moderate':
+          return 0.35;
+        case 'fast':
+          return 0.5;
+        default:
+          return 0.35; // Default to moderate
+      }
+    }
+  }
+
+  /// Calculate goal date based on current weight, goal weight, and rate
   static DateTime calculateGoalDate({
     required double currentWeight,
     required double goalWeight,
-    required int workoutDaysPerWeek,
+    String? weightChangeRate,
   }) {
     final weightDiff = (currentWeight - goalWeight).abs();
+    final isLosing = goalWeight < currentWeight;
 
-    // Safe rates (kg per week)
-    double weeklyRate;
-    if (goalWeight < currentWeight) {
-      // Weight loss: 0.5-1 kg/week based on workout frequency
-      weeklyRate = 0.5 + (workoutDaysPerWeek / 14); // 0.5-1.0
-    } else {
-      // Weight gain: 0.25-0.5 kg/week (muscle gain is slower)
-      weeklyRate = 0.25 + (workoutDaysPerWeek / 28); // 0.25-0.5
-    }
+    // Get weekly rate based on user selection
+    final weeklyRate = getWeeklyRate(weightChangeRate, isLosing);
 
     final weeksNeeded = (weightDiff / weeklyRate).ceil();
     return DateTime.now().add(Duration(days: weeksNeeded * 7));
@@ -123,7 +147,7 @@ class _WeightProjectionScreenState
     // Default values if not set
     final currentWeight = quizData.weightKg ?? 80.0;
     final goalWeight = quizData.goalWeightKg ?? 70.0;
-    final workoutDays = quizData.daysPerWeek ?? 4;
+    final weightChangeRate = quizData.weightChangeRate;
     final useMetric = quizData.useMetricUnits;
     final weightDirection = quizData.weightDirection;
 
@@ -145,7 +169,7 @@ class _WeightProjectionScreenState
     final goalDate = WeightProjectionCalculator.calculateGoalDate(
       currentWeight: currentWeight,
       goalWeight: goalWeight,
-      workoutDaysPerWeek: workoutDays,
+      weightChangeRate: weightChangeRate,
     );
 
     final projectionData = WeightProjectionCalculator.generateProjectionCurve(
@@ -197,26 +221,66 @@ class _WeightProjectionScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title
-                    RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
-                          height: 1.3,
-                        ),
-                        children: [
-                          const TextSpan(text: "At this rate you'll reach your goal by "),
-                          TextSpan(
-                            text: formattedGoalDate,
-                            style: TextStyle(
-                              color: AppColors.cyan,
-                              fontWeight: FontWeight.w800,
+                    // Title with info icon
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              style: TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.bold,
+                                color: textPrimary,
+                                height: 1.3,
+                              ),
+                              children: [
+                                const TextSpan(text: "At this rate you'll reach your goal by "),
+                                TextSpan(
+                                  text: formattedGoalDate,
+                                  style: TextStyle(
+                                    color: AppColors.cyan,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () => _showCalculationInfo(
+                            context,
+                            isDark,
+                            textPrimary,
+                            textSecondary,
+                            currentWeight,
+                            goalWeight,
+                            weightChangeRate,
+                            useMetric,
+                          ),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? AppColors.glassSurface
+                                  : AppColorsLight.glassSurface,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isDark
+                                    ? AppColors.cardBorder
+                                    : AppColorsLight.cardBorder,
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.info_outline,
+                              size: 18,
+                              color: textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.1),
 
                     const SizedBox(height: 40),
@@ -790,6 +854,253 @@ class _WeightProjectionScreenState
           ],
         ),
       ),
+    );
+  }
+
+  void _showCalculationInfo(
+    BuildContext context,
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+    double currentWeight,
+    double goalWeight,
+    String? weightChangeRate,
+    bool useMetric,
+  ) {
+    HapticFeedback.lightImpact();
+
+    final isLosing = goalWeight < currentWeight;
+    final weeklyRate = WeightProjectionCalculator.getWeeklyRate(weightChangeRate, isLosing);
+    final weightDiff = (currentWeight - goalWeight).abs();
+    final weeksNeeded = (weightDiff / weeklyRate).ceil();
+
+    // Convert for display
+    final displayCurrent = useMetric ? currentWeight : currentWeight * 2.20462;
+    final displayGoal = useMetric ? goalWeight : goalWeight * 2.20462;
+    final displayRate = useMetric ? weeklyRate : weeklyRate * 2.20462;
+    final displayDiff = useMetric ? weightDiff : weightDiff * 2.20462;
+    final unit = useMetric ? 'kg' : 'lbs';
+
+    String rateLabel;
+    switch (weightChangeRate) {
+      case 'slow':
+        rateLabel = isLosing ? 'Gradual' : 'Lean Bulk';
+        break;
+      case 'fast':
+        rateLabel = isLosing ? 'Faster' : 'Aggressive';
+        break;
+      case 'aggressive':
+        rateLabel = 'Aggressive';
+        break;
+      default:
+        rateLabel = isLosing ? 'Moderate' : 'Standard';
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: textSecondary.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+
+              // Title
+              Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.cyan.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.calculate_outlined,
+                      color: AppColors.cyan,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'How We Calculate Your Goal',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // Calculation breakdown
+              _buildInfoRow(
+                'Current Weight',
+                '${displayCurrent.toStringAsFixed(1)} $unit',
+                textPrimary,
+                textSecondary,
+              ),
+              const SizedBox(height: 10),
+              _buildInfoRow(
+                'Goal Weight',
+                '${displayGoal.toStringAsFixed(1)} $unit',
+                textPrimary,
+                textSecondary,
+              ),
+              const SizedBox(height: 10),
+              _buildInfoRow(
+                'Weight to ${isLosing ? 'Lose' : 'Gain'}',
+                '${displayDiff.toStringAsFixed(1)} $unit',
+                textPrimary,
+                textSecondary,
+              ),
+
+              Divider(
+                height: 24,
+                color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+              ),
+
+              _buildInfoRow(
+                'Selected Rate',
+                rateLabel,
+                textPrimary,
+                textSecondary,
+                highlight: true,
+              ),
+              const SizedBox(height: 10),
+              _buildInfoRow(
+                'Weekly Change',
+                '${displayRate.toStringAsFixed(2)} $unit/wk',
+                textPrimary,
+                textSecondary,
+              ),
+              const SizedBox(height: 10),
+              _buildInfoRow(
+                'Estimated Time',
+                '$weeksNeeded weeks',
+                textPrimary,
+                textSecondary,
+                highlight: true,
+              ),
+
+              const SizedBox(height: 16),
+
+              // Formula explanation
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.cyan.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: AppColors.cyan.withOpacity(0.2),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.lightbulb_outline,
+                      size: 16,
+                      color: AppColors.cyan,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Weeks = Weight ÷ Rate\n$weeksNeeded = ${displayDiff.toStringAsFixed(1)} ÷ ${displayRate.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: textSecondary,
+                          height: 1.4,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Close button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.cyan,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Got it',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: MediaQuery.of(ctx).padding.bottom + 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(
+    String label,
+    String value,
+    Color textPrimary,
+    Color textSecondary, {
+    bool highlight = false,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: textSecondary,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: highlight ? FontWeight.w700 : FontWeight.w500,
+            color: highlight ? AppColors.cyan : textPrimary,
+          ),
+        ),
+      ],
     );
   }
 

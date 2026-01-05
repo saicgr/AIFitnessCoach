@@ -134,6 +134,9 @@ class UserUpdate(BaseModel):
     nutrition_goals: Optional[list] = None  # Nutrition goal tags
     interested_in_fasting: Optional[bool] = None
     fasting_protocol: Optional[str] = Field(default=None, max_length=50)
+    # Sleep schedule for fasting window optimization
+    wake_time: Optional[str] = Field(default=None, max_length=10)  # HH:MM format, e.g., "07:00"
+    sleep_time: Optional[str] = Field(default=None, max_length=10)  # HH:MM format, e.g., "23:00"
     coach_id: Optional[str] = Field(default=None, max_length=50)  # Selected coach ID
 
 

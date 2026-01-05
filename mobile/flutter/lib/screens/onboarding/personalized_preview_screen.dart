@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import 'pre_auth_quiz_screen.dart';
+import 'widgets/calorie_macro_estimator.dart';
 
 /// Personalized preview screen that shows value before requiring sign-in
 /// This demonstrates what the user will get based on their quiz answers
@@ -228,6 +229,18 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
 
           const SizedBox(height: 20),
 
+          // Nutrition & Fasting Card
+          if (quizData.nutritionGoals?.isNotEmpty == true ||
+              quizData.fastingProtocol != null)
+            _buildNutritionFastingCard(isDark, quizData, textPrimary, textSecondary)
+                .animate()
+                .fadeIn(delay: 350.ms)
+                .slideY(begin: 0.1),
+
+          if (quizData.nutritionGoals?.isNotEmpty == true ||
+              quizData.fastingProtocol != null)
+            const SizedBox(height: 20),
+
           // Features List
           _buildFeaturesList(isDark, textPrimary, textSecondary)
               .animate()
@@ -281,7 +294,7 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
         const SizedBox(height: 8),
 
         Text(
-          'Based on your answers, we\'ve designed a personalized fitness journey just for you',
+          'Based on your answers, we\'ve designed a personalized fitness and nutrition journey just for you',
           style: TextStyle(
             fontSize: 14,
             color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
@@ -626,6 +639,486 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
     }
 
     return workouts;
+  }
+
+  Widget _buildNutritionFastingCard(
+    bool isDark,
+    PreAuthQuizData quizData,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
+    final cardColor = isDark ? AppColors.elevated : Colors.white;
+    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    final hasNutrition = quizData.nutritionGoals?.isNotEmpty == true;
+    final hasFasting = quizData.fastingProtocol != null &&
+                       quizData.fastingProtocol != 'none' &&
+                       quizData.fastingProtocol!.isNotEmpty;
+
+    // Calculate nutrition metrics if we have sufficient data
+    final canCalculateMetrics = quizData.age != null &&
+        quizData.gender != null &&
+        quizData.heightCm != null &&
+        quizData.weightKg != null;
+
+    NutritionEstimate? estimate;
+    if (canCalculateMetrics) {
+      estimate = CalorieMacroEstimator.calculateAll(
+        weightKg: quizData.weightKg!,
+        heightCm: quizData.heightCm!,
+        age: quizData.age!,
+        gender: quizData.gender!,
+        activityLevel: quizData.activityLevel,
+        weightDirection: quizData.weightDirection,
+        weightChangeRate: quizData.weightChangeRate,
+        goalWeightKg: quizData.goalWeightKg,
+        nutritionGoals: quizData.nutritionGoals,
+        workoutDaysPerWeek: quizData.daysPerWeek,
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.restaurant_menu, color: AppColors.orange, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Nutrition & Fasting',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+            ],
+          ),
+
+          // Daily Targets (show if we can calculate)
+          if (estimate != null) ...[
+            const SizedBox(height: 16),
+            _buildDailyTargetsSection(estimate, isDark, textPrimary, textSecondary),
+          ],
+
+          // Nutrition Goals
+          if (hasNutrition) ...[
+            const SizedBox(height: 16),
+            _buildNutritionGoalsRow(quizData.nutritionGoals!, isDark, textPrimary, textSecondary),
+          ],
+
+          // Fasting Protocol
+          if (hasFasting) ...[
+            const SizedBox(height: 16),
+            _buildFastingRow(quizData, isDark, textPrimary, textSecondary),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDailyTargetsSection(
+    NutritionEstimate estimate,
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Daily Targets',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: textSecondary,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Main macros row
+        Row(
+          children: [
+            _buildMacroTargetItem(
+              icon: Icons.local_fire_department,
+              value: '${estimate.calories}',
+              label: 'kcal',
+              color: AppColors.coral,
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+            ),
+            _buildMacroTargetItem(
+              icon: Icons.fitness_center,
+              value: '${estimate.protein}g',
+              label: 'protein',
+              color: AppColors.purple,
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+            ),
+            _buildMacroTargetItem(
+              icon: Icons.grain,
+              value: '${estimate.carbs}g',
+              label: 'carbs',
+              color: AppColors.orange,
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+            ),
+            _buildMacroTargetItem(
+              icon: Icons.water_drop,
+              value: '${estimate.fat}g',
+              label: 'fat',
+              color: AppColors.teal,
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        // Additional insights in a more compact format
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _buildInsightPill(
+              icon: Icons.water,
+              text: '${estimate.waterLiters}L water',
+              color: AppColors.electricBlue,
+            ),
+            _buildInsightPill(
+              icon: Icons.psychology,
+              text: 'Metabolic age ${estimate.metabolicAge}',
+              color: AppColors.purple,
+            ),
+            if (estimate.weeksToGoal != null)
+              _buildInsightPill(
+                icon: Icons.flag_outlined,
+                text: 'Goal in ~${estimate.weeksToGoal} weeks',
+                color: AppColors.success,
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMacroTargetItem({
+    required IconData icon,
+    required String value,
+    required String label,
+    required Color color,
+    required Color textPrimary,
+    required Color textSecondary,
+  }) {
+    return Expanded(
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color, size: 18),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: textPrimary,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInsightPill({
+    required IconData icon,
+    required String text,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 14),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 11,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNutritionGoalsRow(
+    List<String> goals,
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Your Nutrition Focus',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: textSecondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: goals.map((goal) {
+            final goalInfo = _getNutritionGoalInfo(goal);
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: (goalInfo['color'] as Color).withOpacity(0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: (goalInfo['color'] as Color).withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    goalInfo['icon'] as IconData,
+                    size: 14,
+                    color: goalInfo['color'] as Color,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    goalInfo['label'] as String,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: goalInfo['color'] as Color,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFastingRow(
+    PreAuthQuizData quizData,
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
+    final protocol = quizData.fastingProtocol!;
+    final protocolInfo = _getFastingProtocolInfo(protocol);
+
+    // Calculate eating window if we have wake/sleep times
+    String? eatingWindow;
+    if (quizData.wakeTime != null && quizData.sleepTime != null) {
+      eatingWindow = _calculateEatingWindow(protocol, quizData.wakeTime!, quizData.sleepTime!);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.teal.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.teal.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.teal.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.schedule,
+              color: AppColors.teal,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  protocolInfo['label'] as String,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  eatingWindow ?? (protocolInfo['description'] as String),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.teal,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              protocol,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Map<String, dynamic> _getNutritionGoalInfo(String goal) {
+    switch (goal) {
+      case 'lose_fat':
+        return {
+          'label': 'Lose Fat',
+          'icon': Icons.local_fire_department,
+          'color': AppColors.coral,
+        };
+      case 'build_muscle':
+        return {
+          'label': 'Build Muscle',
+          'icon': Icons.fitness_center,
+          'color': AppColors.purple,
+        };
+      case 'maintain':
+        return {
+          'label': 'Maintain Weight',
+          'icon': Icons.balance,
+          'color': AppColors.electricBlue,
+        };
+      case 'improve_energy':
+        return {
+          'label': 'More Energy',
+          'icon': Icons.bolt,
+          'color': AppColors.orange,
+        };
+      case 'eat_healthier':
+        return {
+          'label': 'Eat Healthier',
+          'icon': Icons.eco,
+          'color': AppColors.success,
+        };
+      default:
+        return {
+          'label': goal.replaceAll('_', ' ').split(' ').map((w) =>
+            w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w
+          ).join(' '),
+          'icon': Icons.restaurant,
+          'color': AppColors.teal,
+        };
+    }
+  }
+
+  Map<String, dynamic> _getFastingProtocolInfo(String protocol) {
+    switch (protocol) {
+      case '16:8':
+        return {
+          'label': 'Intermittent Fasting',
+          'description': '16 hours fasting, 8 hour eating window',
+        };
+      case '18:6':
+        return {
+          'label': 'Extended Fasting',
+          'description': '18 hours fasting, 6 hour eating window',
+        };
+      case '14:10':
+        return {
+          'label': 'Gentle Fasting',
+          'description': '14 hours fasting, 10 hour eating window',
+        };
+      case '20:4':
+        return {
+          'label': 'Warrior Diet',
+          'description': '20 hours fasting, 4 hour eating window',
+        };
+      default:
+        return {
+          'label': 'Intermittent Fasting',
+          'description': 'Custom fasting schedule',
+        };
+    }
+  }
+
+  String? _calculateEatingWindow(String protocol, String wakeTime, String sleepTime) {
+    try {
+      // Parse times
+      final wakeParts = wakeTime.split(':');
+      final wakeHour = int.parse(wakeParts[0]);
+      final wakeMinute = int.parse(wakeParts[1]);
+
+      // Get eating window hours from protocol (e.g., "16:8" -> 8 hours)
+      final protocolParts = protocol.split(':');
+      if (protocolParts.length != 2) return null;
+      final eatingHours = int.parse(protocolParts[1]);
+
+      // Start eating 1 hour after waking
+      final startHour = (wakeHour + 1) % 24;
+      final endHour = (startHour + eatingHours) % 24;
+
+      // Format times
+      String formatTime(int hour, int minute) {
+        final period = hour >= 12 ? 'PM' : 'AM';
+        final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+        return '$displayHour:${minute.toString().padLeft(2, '0')} $period';
+      }
+
+      return 'Eat ${formatTime(startHour, wakeMinute)} - ${formatTime(endHour, wakeMinute)}';
+    } catch (e) {
+      return null;
+    }
   }
 
   Widget _buildFeaturesList(

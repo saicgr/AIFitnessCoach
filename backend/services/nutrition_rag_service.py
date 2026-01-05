@@ -345,3 +345,160 @@ async def seed_nutrition_knowledge():
         )
 
     print(f"✅ Seeded nutrition knowledge collection with {service.get_collection_count()} documents")
+
+
+# ============================================
+# User Nutrition Profile Indexing
+# ============================================
+
+# Collection name for user nutrition profiles
+USER_NUTRITION_PROFILES_COLLECTION = "user_nutrition_profiles"
+
+
+class UserNutritionProfileService:
+    """Service for managing user-specific nutrition metrics in ChromaDB."""
+
+    def __init__(self):
+        self.chroma_client = get_chroma_cloud_client()
+        self.collection = self.chroma_client.get_or_create_collection(
+            USER_NUTRITION_PROFILES_COLLECTION
+        )
+
+    def index_user_metrics(self, user_id: str, metrics: Dict[str, Any]) -> None:
+        """
+        Add or update user's calculated nutrition metrics to ChromaDB.
+
+        Args:
+            user_id: User's UUID
+            metrics: Dictionary containing all nutrition metrics from calculation
+        """
+        # Build a natural language description for embedding
+        document_text = self._build_nutrition_profile_document(metrics)
+
+        # Metadata for filtering
+        from datetime import datetime, timezone
+        metadata = {
+            "user_id": user_id,
+            "type": "nutrition_profile",
+            "calories": int(metrics.get('calories', 0)),
+            "protein": int(metrics.get('protein', 0)),
+            "carbs": int(metrics.get('carbs', 0)),
+            "fat": int(metrics.get('fat', 0)),
+            "bmr": int(metrics.get('bmr', 0)),
+            "tdee": int(metrics.get('tdee', 0)),
+            "metabolic_age": int(metrics.get('metabolic_age', 0)),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+        doc_id = f"nutrition_profile_{user_id}"
+
+        # Delete existing if present (upsert)
+        try:
+            self.collection.delete(ids=[doc_id])
+        except Exception:
+            pass  # Document may not exist
+
+        # Add the updated profile
+        self.collection.add(
+            documents=[document_text],
+            metadatas=[metadata],
+            ids=[doc_id],
+        )
+
+        print(f"✅ Indexed nutrition profile to RAG for user {user_id}")
+
+    def _build_nutrition_profile_document(self, metrics: Dict[str, Any]) -> str:
+        """Build a natural language document for nutrition profile embedding."""
+        parts = [
+            "User Nutrition Profile:",
+            f"- Daily Calorie Target: {metrics.get('calories', 0)} kcal",
+            f"- Macros: {metrics.get('protein', 0)}g protein, {metrics.get('carbs', 0)}g carbs, {metrics.get('fat', 0)}g fat",
+            f"- BMR: {metrics.get('bmr', 0)} kcal, TDEE: {metrics.get('tdee', 0)} kcal",
+            f"- Metabolic Age: {metrics.get('metabolic_age', 0)} years",
+            f"- Daily Water Goal: {metrics.get('water_liters', 0)}L",
+            f"- Max Safe Deficit: {metrics.get('max_safe_deficit', 0)} kcal",
+        ]
+
+        # Body composition
+        if metrics.get('lean_mass') and metrics.get('fat_mass'):
+            parts.append(
+                f"- Body Composition: {metrics['lean_mass']}kg lean, "
+                f"{metrics['fat_mass']}kg fat ({metrics.get('body_fat_percent', 0)}% body fat)"
+            )
+
+        # Protein per kg
+        if metrics.get('protein_per_kg'):
+            parts.append(f"- Protein Target: {metrics['protein_per_kg']}g per kg body weight")
+
+        # Ideal weight range
+        if metrics.get('ideal_weight_min') and metrics.get('ideal_weight_max'):
+            parts.append(
+                f"- Ideal Weight Range: {metrics['ideal_weight_min']}-{metrics['ideal_weight_max']}kg"
+            )
+
+        # Goal timeline
+        if metrics.get('weeks_to_goal'):
+            goal_date = metrics.get('goal_date', 'TBD')
+            parts.append(f"- Goal Date: {goal_date} (~{metrics['weeks_to_goal']} weeks)")
+
+        return "\n".join(parts)
+
+    def get_user_profile_context(self, user_id: str) -> Optional[str]:
+        """
+        Get user's nutrition profile from ChromaDB.
+
+        Args:
+            user_id: User's UUID
+
+        Returns:
+            Natural language nutrition context or None if not found
+        """
+        try:
+            result = self.collection.get(
+                ids=[f"nutrition_profile_{user_id}"],
+                include=["documents"]
+            )
+
+            if result and result.get('documents') and len(result['documents']) > 0:
+                return result['documents'][0]
+
+            return None
+
+        except Exception as e:
+            print(f"⚠️ Could not retrieve nutrition profile for user {user_id}: {e}")
+            return None
+
+    def delete_user_profile(self, user_id: str) -> None:
+        """
+        Delete user's nutrition profile from ChromaDB.
+
+        Args:
+            user_id: User's UUID
+        """
+        try:
+            self.collection.delete(ids=[f"nutrition_profile_{user_id}"])
+            print(f"✅ Deleted nutrition profile from RAG for user {user_id}")
+        except Exception as e:
+            print(f"⚠️ Could not delete nutrition profile for user {user_id}: {e}")
+
+
+# Singleton instance for user profiles
+_user_nutrition_profile_service: Optional[UserNutritionProfileService] = None
+
+
+def get_user_nutrition_profile_service() -> UserNutritionProfileService:
+    """Get the global UserNutritionProfileService instance."""
+    global _user_nutrition_profile_service
+    if _user_nutrition_profile_service is None:
+        _user_nutrition_profile_service = UserNutritionProfileService()
+    return _user_nutrition_profile_service
+
+
+async def index_user_nutrition_metrics(user_id: str, metrics: Dict[str, Any]) -> None:
+    """
+    Async helper to index user nutrition metrics to ChromaDB.
+
+    This is the function imported and called from the API endpoint.
+    """
+    service = get_user_nutrition_profile_service()
+    service.index_user_metrics(user_id, metrics)

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
+import 'scroll_hint_arrow.dart';
 
 /// Combined Training Preferences widget for quiz screens.
 /// Includes: Training Split, Workout Type, Progression Pace, Sleep Quality, and Obstacles
@@ -37,6 +38,14 @@ class QuizTrainingPreferences extends StatefulWidget {
 }
 
 class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   // All 5 training splits with colors + "Nothing structured" option first
   static final _splits = [
     {'id': 'nothing_structured', 'label': 'Nothing structured', 'icon': Icons.shuffle, 'color': AppColors.cyan, 'desc': "I'll let AI decide"},
@@ -278,48 +287,54 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
 
           const SizedBox(height: 10),
 
-          // Content in scrollable area
+          // Content in scrollable area with scroll hint
           Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Section 1: Training Split (colorful cards)
-                  _buildSectionLabel('Training Split', textSecondary, 0),
-                  const SizedBox(height: 6),
-                  _buildSplitCards(isDark, textPrimary),
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  controller: _scrollController,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Section 1: Training Split (colorful cards)
+                      _buildSectionLabel('Training Split', textSecondary, 0),
+                      const SizedBox(height: 6),
+                      _buildSplitCards(isDark, textPrimary),
 
-                  const SizedBox(height: 12),
+                      const SizedBox(height: 12),
 
-                  // Section 2: Workout Type (horizontal colorful chips)
-                  _buildSectionLabel('Workout Type', textSecondary, 1),
-                  const SizedBox(height: 6),
-                  _buildWorkoutTypeChips(isDark, textPrimary),
+                      // Section 2: Workout Type (horizontal colorful chips)
+                      _buildSectionLabel('Workout Type', textSecondary, 1),
+                      const SizedBox(height: 6),
+                      _buildWorkoutTypeChips(isDark, textPrimary),
 
-                  const SizedBox(height: 12),
+                      const SizedBox(height: 12),
 
-                  // Section 3: Progression Pace (horizontal colorful chips)
-                  _buildSectionLabel('Weight Progression', textSecondary, 2),
-                  const SizedBox(height: 6),
-                  _buildPaceChips(isDark, textPrimary, textSecondary),
+                      // Section 3: Progression Pace (horizontal colorful chips)
+                      _buildSectionLabel('Weight Progression', textSecondary, 2),
+                      const SizedBox(height: 6),
+                      _buildPaceChips(isDark, textPrimary, textSecondary),
 
-                  // Section 4: Sleep Quality (only show if callback is provided)
-                  if (widget.onSleepQualityChanged != null) ...[
-                    const SizedBox(height: 16),
-                    _buildSectionLabel('Sleep Quality', textSecondary, 3),
-                    const SizedBox(height: 6),
-                    _buildSleepQualityChips(isDark, textPrimary, textSecondary),
-                  ],
+                      // Section 4: Sleep Quality (only show if callback is provided)
+                      if (widget.onSleepQualityChanged != null) ...[
+                        const SizedBox(height: 16),
+                        _buildSectionLabel('Sleep Quality', textSecondary, 3),
+                        const SizedBox(height: 6),
+                        _buildSleepQualityChips(isDark, textPrimary, textSecondary),
+                      ],
 
-                  // Section 5: Obstacles (only show if callback is provided)
-                  if (widget.onObstacleToggle != null) ...[
-                    const SizedBox(height: 16),
-                    _buildObstaclesSection(isDark, textPrimary, textSecondary),
-                  ],
+                      // Section 5: Obstacles (only show if callback is provided)
+                      if (widget.onObstacleToggle != null) ...[
+                        const SizedBox(height: 16),
+                        _buildObstaclesSection(isDark, textPrimary, textSecondary),
+                      ],
 
-                  const SizedBox(height: 12),
-                ],
-              ),
+                      const SizedBox(height: 60), // Extra space for scroll hint
+                    ],
+                  ),
+                ),
+                ScrollHintArrow(scrollController: _scrollController),
+              ],
             ),
           ),
 
