@@ -491,8 +491,8 @@ async def get_weight_correlation(
         # Get weight logs
         result = db.client.table("weight_logs").select("*").eq(
             "user_id", user_id
-        ).gte("date", start_date.isoformat()).lte("date", end_date.isoformat()).order(
-            "date", desc=True
+        ).gte("logged_at", start_date.isoformat()).lte("logged_at", end_date.isoformat()).order(
+            "logged_at", desc=True
         ).execute()
 
         weight_logs = []
@@ -622,27 +622,28 @@ async def get_fasting_impact_analysis(
         # Get weight logs
         weight_result = db.client.table("weight_logs").select("*").eq(
             "user_id", user_id
-        ).gte("date", start_date.isoformat()).execute()
+        ).gte("logged_at", start_date.isoformat()).execute()
 
         fasting_weights = []
         non_fasting_weights = []
         for row in (weight_result.data or []):
             weight = row.get("weight_kg", 0)
-            if row.get("is_fasting_day") or row.get("date") in fasting_dates:
+            log_date = (row.get("logged_at") or "")[:10]  # Extract date part
+            if row.get("is_fasting_day") or log_date in fasting_dates:
                 fasting_weights.append(weight)
             else:
                 non_fasting_weights.append(weight)
 
         # Get workout completions
         workout_result = db.client.table("workout_logs").select(
-            "id, date, completed, completion_percentage"
-        ).eq("user_id", user_id).gte("date", start_date.isoformat()).execute()
+            "id, completed_at"
+        ).eq("user_id", user_id).gte("completed_at", start_date.isoformat()).execute()
 
         fasting_workouts = []
         non_fasting_workouts = []
         for row in (workout_result.data or []):
-            workout_date = row.get("date", "")
-            completion = row.get("completion_percentage", 0) or 0
+            workout_date = (row.get("completed_at") or "")[:10]  # Extract date part
+            completion = 100  # workout_logs doesn't have completion_percentage, assume complete
             is_fasting = workout_date in fasting_dates
 
             if is_fasting:
@@ -650,10 +651,10 @@ async def get_fasting_impact_analysis(
             else:
                 non_fasting_workouts.append(completion)
 
-        # Get goal achievements (personal goals)
-        goals_result = db.client.table("personal_goal_progress").select(
-            "date, completed"
-        ).eq("user_id", user_id).gte("date", start_date.isoformat()).execute()
+        # Get goal achievements (weekly personal goals)
+        goals_result = db.client.table("weekly_personal_goals").select(
+            "created_at, status"
+        ).eq("user_id", user_id).gte("created_at", start_date.isoformat()).execute()
 
         fasting_goals_success = []
         non_fasting_goals_success = []
@@ -661,8 +662,8 @@ async def get_fasting_impact_analysis(
         goals_non_fasting_hit = 0
 
         for row in (goals_result.data or []):
-            goal_date = row.get("date", "")
-            completed = row.get("completed", False)
+            goal_date = (row.get("created_at") or "")[:10]
+            completed = row.get("status") == "completed"
             is_fasting = goal_date in fasting_dates
 
             if is_fasting:
@@ -1002,42 +1003,43 @@ async def get_fasting_calendar(
 
         # Get weight logs
         weight_result = db.client.table("weight_logs").select(
-            "date, weight_kg"
+            "logged_at, weight_kg"
         ).eq("user_id", user_id).gte(
-            "date", first_day.isoformat()
-        ).lte("date", last_day.isoformat()).execute()
+            "logged_at", first_day.isoformat()
+        ).lte("logged_at", last_day.isoformat()).execute()
 
         weight_by_date = {
-            row.get("date"): row.get("weight_kg")
+            (row.get("logged_at") or "")[:10]: row.get("weight_kg")
             for row in (weight_result.data or [])
         }
 
         # Get workout completions
         workout_result = db.client.table("workout_logs").select(
-            "id, date, completed"
+            "id, completed_at"
         ).eq("user_id", user_id).gte(
-            "date", first_day.isoformat()
-        ).lte("date", last_day.isoformat()).execute()
+            "completed_at", first_day.isoformat()
+        ).lte("completed_at", last_day.isoformat()).execute()
 
         workouts_by_date = {}
         for row in (workout_result.data or []):
-            if row.get("completed"):
-                workouts_by_date[row.get("date")] = row.get("id")
+            completed_date = (row.get("completed_at") or "")[:10]
+            if completed_date:
+                workouts_by_date[completed_date] = row.get("id")
 
-        # Get goal progress
-        goals_result = db.client.table("personal_goal_progress").select(
-            "date, completed"
+        # Get goal progress (using weekly_personal_goals table instead of non-existent personal_goal_progress)
+        goals_result = db.client.table("weekly_personal_goals").select(
+            "created_at, status"
         ).eq("user_id", user_id).gte(
-            "date", first_day.isoformat()
-        ).lte("date", last_day.isoformat()).execute()
+            "created_at", first_day.isoformat()
+        ).lte("created_at", last_day.isoformat()).execute()
 
         goals_by_date = {}
         for row in (goals_result.data or []):
-            goal_date = row.get("date")
+            goal_date = (row.get("created_at") or "")[:10]
             if goal_date not in goals_by_date:
                 goals_by_date[goal_date] = {"hit": 0, "total": 0}
             goals_by_date[goal_date]["total"] += 1
-            if row.get("completed"):
+            if row.get("status") == "completed":
                 goals_by_date[goal_date]["hit"] += 1
 
         # Build calendar days
@@ -1259,8 +1261,8 @@ async def get_goal_data_for_ai(user_id: str, days: int = 30) -> Dict[str, Any]:
 
         # Get workout completions
         workout_result = db.client.table("workout_logs").select(
-            "date, completed"
-        ).eq("user_id", user_id).gte("date", start_date.isoformat()).execute()
+            "completed_at"
+        ).eq("user_id", user_id).gte("completed_at", start_date.isoformat()).execute()
 
         fasting_workout_completed = 0
         fasting_workout_total = 0
@@ -1268,29 +1270,26 @@ async def get_goal_data_for_ai(user_id: str, days: int = 30) -> Dict[str, Any]:
         non_fasting_workout_total = 0
 
         for row in (workout_result.data or []):
-            workout_date = row.get("date", "")[:10] if row.get("date") else ""
-            completed = row.get("completed", False)
-
+            workout_date = (row.get("completed_at") or "")[:10]
+            # All workout_logs entries are completed workouts
             if workout_date in fasting_days:
                 fasting_workout_total += 1
-                if completed:
-                    fasting_workout_completed += 1
+                fasting_workout_completed += 1
             else:
                 non_fasting_workout_total += 1
-                if completed:
-                    non_fasting_workout_completed += 1
+                non_fasting_workout_completed += 1
 
         # Get goal achievements
-        goals_result = db.client.table("personal_goal_progress").select(
-            "date, completed"
-        ).eq("user_id", user_id).gte("date", start_date.isoformat()).execute()
+        goals_result = db.client.table("weekly_personal_goals").select(
+            "created_at, status"
+        ).eq("user_id", user_id).gte("created_at", start_date.isoformat()).execute()
 
         goals_fasting = 0
         goals_non_fasting = 0
 
         for row in (goals_result.data or []):
-            goal_date = row.get("date", "")[:10] if row.get("date") else ""
-            if row.get("completed"):
+            goal_date = (row.get("created_at") or "")[:10]
+            if row.get("status") == "completed":
                 if goal_date in fasting_days:
                     goals_fasting += 1
                 else:

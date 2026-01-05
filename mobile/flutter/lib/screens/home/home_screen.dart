@@ -2717,11 +2717,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           // Streak Badge
           _StreakBadge(streak: currentStreak, isDark: isDark, isCompact: isCompact),
           SizedBox(width: spacing),
-          // Hide Profile button in very narrow split screen
-          if (!isCompact) ...[
-            _ProfileButton(isDark: isDark),
-            SizedBox(width: spacing / 2),
-          ],
+          // Profile button - always visible
+          _ProfileButton(isDark: isDark),
+          SizedBox(width: spacing / 2),
           NotificationBellButton(isDark: isDark),
           SizedBox(width: spacing / 2),
           // Edit home button

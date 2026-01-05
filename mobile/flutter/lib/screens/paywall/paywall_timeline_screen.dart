@@ -182,7 +182,8 @@ class PaywallTimelineScreen extends ConsumerWidget {
   void _skipToFree(BuildContext context, WidgetRef ref) async {
     await ref.read(subscriptionProvider.notifier).skipToFree();
     if (context.mounted) {
-      context.go('/home');
+      // Navigate to calibration intro (correct flow: Paywall → Calibration → Workout Gen → Home)
+      context.go('/calibration/intro', extra: {'fromOnboarding': true});
     }
   }
 }

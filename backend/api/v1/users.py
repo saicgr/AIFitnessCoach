@@ -1807,6 +1807,15 @@ async def sync_fasting_preferences(user_id: str, request: SyncFastingRequest):
 
         data = result.data
 
+        # Handle case where RPC returns string instead of dict
+        if isinstance(data, str):
+            import json
+            try:
+                data = json.loads(data)
+            except json.JSONDecodeError:
+                logger.error(f"Failed to parse RPC response: {data}")
+                raise HTTPException(status_code=500, detail="Invalid response from database function")
+
         logger.info(f"Synced fasting preferences for user {user_id}: {data}")
 
         return SyncFastingResponse(

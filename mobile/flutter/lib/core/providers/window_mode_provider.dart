@@ -213,15 +213,10 @@ class WindowModeNotifier extends StateNotifier<WindowModeState> {
       splitRatio = 0.3;
     }
 
-    // Additional split screen detection based on unusual padding or safe areas
-    // On some devices, split screen introduces specific padding patterns
-    if (padding.left > 20 || padding.right > 20) {
-      // Unusual horizontal padding might indicate split/freeform mode
-      if (!isInSplitScreen && windowWidth < 500) {
-        isInSplitScreen = true;
-        mode = WindowMode.freeform;
-      }
-    }
+    // REMOVED: Padding-based split screen detection
+    // Modern phones with notches/punch holes always have horizontal padding,
+    // making this heuristic unreliable and causing false positives on normal phones.
+    // Split screen detection now relies only on width/aspect ratio checks above.
 
     // Determine if compact mode (single column layouts preferred)
     final isCompactMode = sizeClass == WindowSizeClass.compact;

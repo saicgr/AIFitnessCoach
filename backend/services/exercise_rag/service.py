@@ -662,16 +662,13 @@ class ExerciseRAGService:
                 # Default to "beginner" so exercises without explicit difficulty are available to all
                 exercise_difficulty = meta.get("difficulty", "beginner")
 
-                # For beginners, use strict filtering (ceiling of 3) to prevent advanced exercises
-                # For intermediate/advanced, use permissive filtering (only blocks elite for intermediate)
-                if validated_fitness_level == "beginner":
-                    if is_exercise_too_difficult_strict(exercise_difficulty, validated_fitness_level, difficulty_adjustment):
-                        logger.debug(f"Filtered out '{meta.get('name')}' - too difficult ({exercise_difficulty}) for beginner (strict)")
-                        continue
-                else:
-                    if is_exercise_too_difficult(exercise_difficulty, validated_fitness_level, difficulty_adjustment):
-                        logger.debug(f"Filtered out '{meta.get('name')}' - too difficult ({exercise_difficulty}) for {validated_fitness_level}")
-                        continue
+                # Use permissive filtering for all fitness levels (only blocks Elite for beginners)
+                # Difficulty is used for RANKING, not hard filtering (see DIFFICULTY_RATIOS)
+                # This allows beginners to access beginner/intermediate/advanced exercises
+                # while still protecting them from Elite (10) exercises
+                if is_exercise_too_difficult(exercise_difficulty, validated_fitness_level, difficulty_adjustment):
+                    logger.debug(f"Filtered out '{meta.get('name')}' - too difficult ({exercise_difficulty}) for {validated_fitness_level}")
+                    continue
 
                 # Clean name for display
                 raw_name = meta.get("name", "Unknown")

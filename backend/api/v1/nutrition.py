@@ -3670,8 +3670,8 @@ async def get_dynamic_nutrition_targets(
         workout_result = db.client.table("workout_logs")\
             .select("id")\
             .eq("user_id", user_id)\
-            .gte("started_at", f"{target_date_str}T00:00:00")\
-            .lt("started_at", f"{target_date_str}T23:59:59")\
+            .gte("completed_at", f"{target_date_str}T00:00:00")\
+            .lt("completed_at", f"{target_date_str}T23:59:59")\
             .execute()
 
         has_workout = bool(workout_result and workout_result.data)

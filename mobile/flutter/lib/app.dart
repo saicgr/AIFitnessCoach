@@ -54,12 +54,49 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
       routerConfig: router,
       builder: (context, child) {
         // Wrap the entire app with:
-        // 1. WindowModeObserver - Tracks split screen / multi-window mode changes
-        // 2. FloatingChatOverlay - Messenger-style chat bubble on all screens
-        return WindowModeObserver(
-          child: FloatingChatOverlay(
-            key: const ValueKey('floating_chat_overlay'),
-            child: child ?? const SizedBox.shrink(),
+        // 1. MediaQuery - Constrain text scaling to prevent layout overflow on devices with large system fonts
+        // 2. WindowModeObserver - Tracks split screen / multi-window mode changes
+        // 3. FloatingChatOverlay - Messenger-style chat bubble on all screens
+
+        final mediaQuery = MediaQuery.of(context);
+
+        // Debug logging to diagnose overflow issues
+        debugPrint('📱 [MediaQuery] Size: ${mediaQuery.size.width}x${mediaQuery.size.height}');
+        debugPrint('📱 [MediaQuery] DevicePixelRatio: ${mediaQuery.devicePixelRatio}');
+        debugPrint('📱 [MediaQuery] TextScaler: ${mediaQuery.textScaler}');
+        debugPrint('📱 [MediaQuery] Padding: ${mediaQuery.padding}');
+        debugPrint('📱 [MediaQuery] BoldText: ${mediaQuery.boldText}');
+
+        debugPrint('📱 [MediaQuery] OVERRIDE: Forcing textScaler to 1.0 and boldText to false');
+
+        return MediaQuery(
+          data: MediaQueryData(
+            size: mediaQuery.size,
+            devicePixelRatio: mediaQuery.devicePixelRatio,
+            // Force text scaling to 1.0 to prevent overflow
+            textScaler: const TextScaler.linear(1.0),
+            padding: mediaQuery.padding,
+            viewPadding: mediaQuery.viewPadding,
+            viewInsets: mediaQuery.viewInsets,
+            systemGestureInsets: mediaQuery.systemGestureInsets,
+            alwaysUse24HourFormat: mediaQuery.alwaysUse24HourFormat,
+            accessibleNavigation: mediaQuery.accessibleNavigation,
+            invertColors: mediaQuery.invertColors,
+            highContrast: mediaQuery.highContrast,
+            onOffSwitchLabels: mediaQuery.onOffSwitchLabels,
+            disableAnimations: mediaQuery.disableAnimations,
+            // Disable bold text to prevent layout changes
+            boldText: false,
+            navigationMode: mediaQuery.navigationMode,
+            gestureSettings: mediaQuery.gestureSettings,
+            displayFeatures: mediaQuery.displayFeatures,
+            platformBrightness: mediaQuery.platformBrightness,
+          ),
+          child: WindowModeObserver(
+            child: FloatingChatOverlay(
+              key: const ValueKey('floating_chat_overlay'),
+              child: child ?? const SizedBox.shrink(),
+            ),
           ),
         );
       },

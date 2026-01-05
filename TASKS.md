@@ -199,6 +199,7 @@ Similar to how exercises show what muscle group is being worked, I'd like to see
 
 Could we get widgets that show different info? Maybe upcoming workout(s), muscle recovery, or even maybe the calendar with blue squares that shows what days you’ve worked out over the last month or two
 50. Maybe I'm asking too much, but is it possible to add a feature so that the additional workouts I log (such as forearms, core, or cardio) are not counted toward my weekly goal?
+51. SPLIT SCREEN
 
 
 

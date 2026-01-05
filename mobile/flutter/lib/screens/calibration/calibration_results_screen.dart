@@ -73,8 +73,13 @@ class _CalibrationResultsScreenState extends ConsumerState<CalibrationResultsScr
     // Show success toast
     _showSuccessToast('Settings updated successfully!');
 
-    // Navigate to home (paywall is already completed if fromOnboarding)
-    context.go('/home');
+    // Navigate based on onboarding flow
+    // Correct flow: Coach → Paywall → Calibration → Workout Gen → Home
+    if (widget.fromOnboarding) {
+      context.go('/workout-generation');
+    } else {
+      context.go('/home');
+    }
   }
 
   void _declineAdjustments() {
@@ -89,8 +94,13 @@ class _CalibrationResultsScreenState extends ConsumerState<CalibrationResultsScr
     // Show info toast
     _showInfoToast('Keeping your original settings');
 
-    // Navigate to home (paywall is already completed if fromOnboarding)
-    context.go('/home');
+    // Navigate based on onboarding flow
+    // Correct flow: Coach → Paywall → Calibration → Workout Gen → Home
+    if (widget.fromOnboarding) {
+      context.go('/workout-generation');
+    } else {
+      context.go('/home');
+    }
   }
 
   void _showSuccessToast(String message) {

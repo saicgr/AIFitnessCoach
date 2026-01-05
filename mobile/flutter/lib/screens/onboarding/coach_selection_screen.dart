@@ -111,9 +111,9 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     ref.read(authStateProvider.notifier).markCoachSelected();
     ref.read(authStateProvider.notifier).markOnboardingComplete();
 
-    // Navigate to workout generation screen to show progress
+    // Navigate to paywall screen (correct flow: Coach → Paywall → Calibration → Workout Gen → Home)
     if (mounted) {
-      context.go('/workout-generation');
+      context.go('/paywall-features');
     }
 
     // Update backend in background (fire-and-forget) - submit all quiz data + coach

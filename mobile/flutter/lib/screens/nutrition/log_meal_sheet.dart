@@ -1796,7 +1796,10 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
   }
 
   void _handleEdit() {
-    setState(() => _analyzedResponse = null);
+    setState(() {
+      _analyzedResponse = null;
+      _analysisElapsedMs = null;
+    });
   }
 
   Future<void> _handleLog() async {
@@ -2048,6 +2051,14 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
                       'AI Estimated',
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary),
                     ),
+                    // Show analysis time if available
+                    if (_analysisElapsedMs != null) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        '(${(_analysisElapsedMs! / 1000).toStringAsFixed(1)}s)',
+                        style: TextStyle(fontSize: 12, color: textMuted),
+                      ),
+                    ],
                     const Spacer(),
                     // Star button
                     GestureDetector(

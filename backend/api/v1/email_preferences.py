@@ -126,9 +126,9 @@ async def get_email_preferences(user_id: str):
         # Try to get existing preferences
         prefs_result = supabase.client.table("email_preferences").select(
             "*"
-        ).eq("user_id", user_id).single().execute()
+        ).eq("user_id", user_id).maybe_single().execute()
 
-        if prefs_result.data:
+        if prefs_result and prefs_result.data:
             logger.info(f"Found existing email preferences for user {user_id}")
             return _preferences_to_response(prefs_result.data)
 
