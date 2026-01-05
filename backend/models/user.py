@@ -36,7 +36,7 @@ class UserCreate(BaseModel):
     preferred_time: Optional[str] = Field(default=None, max_length=50)
     # New personal/health fields
     name: Optional[str] = Field(default=None, max_length=200)
-    gender: Optional[str] = Field(default=None, max_length=20)
+    gender: Optional[str] = Field(default=None, max_length=20)  # 'male', 'female', or 'other'
     age: Optional[int] = Field(default=None, ge=1, le=150)
     date_of_birth: Optional[str] = Field(default=None, max_length=20)  # ISO date string: "1990-05-15"
     height_cm: Optional[float] = Field(default=None, ge=50, le=300)
@@ -96,7 +96,7 @@ class UserUpdate(BaseModel):
     preferred_time: Optional[str] = Field(default=None, max_length=50)
     # New personal/health fields
     name: Optional[str] = Field(default=None, max_length=200)
-    gender: Optional[str] = Field(default=None, max_length=20)
+    gender: Optional[str] = Field(default=None, max_length=20)  # 'male', 'female', or 'other'
     age: Optional[int] = Field(default=None, ge=1, le=150)
     date_of_birth: Optional[str] = Field(default=None, max_length=20)  # ISO date string: "1990-05-15"
     height_cm: Optional[float] = Field(default=None, ge=50, le=300)
@@ -163,7 +163,7 @@ class User(BaseModel):
     target_weight_kg: Optional[float] = Field(default=None, ge=20, le=500)
     age: Optional[int] = Field(default=None, ge=1, le=150)
     date_of_birth: Optional[str] = Field(default=None, max_length=20)
-    gender: Optional[str] = Field(default=None, max_length=20)
+    gender: Optional[str] = Field(default=None, max_length=20)  # 'male', 'female', or 'other'
     activity_level: Optional[str] = Field(default=None, max_length=50)
     # Accessibility settings
     accessibility_mode: Optional[str] = Field(default="standard", max_length=20)  # 'standard', 'senior', 'kids'

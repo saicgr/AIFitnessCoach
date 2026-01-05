@@ -139,10 +139,27 @@ class User extends Equatable {
   /// Get photo URL (placeholder for now - would come from auth provider)
   String? get photoUrl => null;
 
-  /// Get fitness goal (first goal from goals list)
+  /// Get fitness goal (first goal from goals list, formatted for display)
   String? get fitnessGoal {
     final goals = goalsList;
-    return goals.isNotEmpty ? goals.first : null;
+    if (goals.isEmpty) return null;
+    // Convert goal ID to user-friendly display name
+    const goalDisplayNames = {
+      'build_muscle': 'Build Muscle',
+      'lose_weight': 'Lose Weight',
+      'lose_fat': 'Lose Fat',
+      'improve_endurance': 'Improve Endurance',
+      'increase_strength': 'Increase Strength',
+      'improve_flexibility': 'Improve Flexibility',
+      'stay_active': 'Stay Active',
+      'mental_health': 'Mental Health',
+      'sport_performance': 'Sport Performance',
+      'general_fitness': 'General Fitness',
+      'tone_up': 'Tone Up',
+      'gain_muscle': 'Gain Muscle',
+    };
+    final firstGoal = goals.first;
+    return goalDisplayNames[firstGoal] ?? firstGoal;
   }
 
   /// Get workouts per week from preferences
@@ -164,15 +181,45 @@ class User extends Equatable {
     }
   }
 
+  /// Get workout duration in minutes from preferences
+  int? get workoutDuration {
+    if (preferences == null || preferences!.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(preferences!);
+      if (decoded is Map && decoded['workout_duration'] != null) {
+        return decoded['workout_duration'] as int;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Get workout duration as formatted display string
+  String get workoutDurationDisplay {
+    final duration = workoutDuration;
+    if (duration == null) return 'Not set';
+    return '$duration min';
+  }
+
   /// Get workout days from preferences (0=Mon, 6=Sun)
   List<int> get workoutDays {
     if (preferences == null || preferences!.isEmpty) return [];
     try {
       final decoded = jsonDecode(preferences!);
-      if (decoded is Map && decoded['workout_days'] != null) {
-        final days = decoded['workout_days'];
-        if (days is List) {
-          return days.map((e) => e as int).toList()..sort();
+      if (decoded is Map) {
+        // Try workout_days first, then selected_days as fallback
+        final days = decoded['workout_days'] ?? decoded['selected_days'];
+        if (days is List && days.isNotEmpty) {
+          // Handle both int indices and string day names
+          if (days.first is int || (days.first is String && int.tryParse(days.first) != null)) {
+            // Int indices (e.g., [0, 2, 4])
+            return days.map((e) => e is int ? e : int.parse(e.toString())).toList().cast<int>()..sort();
+          } else if (days.first is String) {
+            // String day names (e.g., ["Mon", "Wed", "Fri"])
+            const dayMap = {'Mon': 0, 'Tue': 1, 'Wed': 2, 'Thu': 3, 'Fri': 4, 'Sat': 5, 'Sun': 6};
+            return days.map((e) => dayMap[e] ?? -1).where((i) => i >= 0).toList().cast<int>()..sort();
+          }
         }
       }
       return [];

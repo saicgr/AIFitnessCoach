@@ -3,19 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 
-/// Combined days per week and specific days selector widget.
+/// Combined days per week, specific days, and workout duration selector widget.
 class QuizDaysSelector extends StatelessWidget {
   final int? selectedDays;
   final Set<int> selectedWorkoutDays;
+  final int? workoutDuration;  // Duration in minutes (30, 45, 60, 75, 90)
   final ValueChanged<int> onDaysChanged;
   final ValueChanged<int> onWorkoutDayToggled;
+  final ValueChanged<int>? onDurationChanged;
 
   const QuizDaysSelector({
     super.key,
     required this.selectedDays,
     required this.selectedWorkoutDays,
+    this.workoutDuration,
     required this.onDaysChanged,
     required this.onWorkoutDayToggled,
+    this.onDurationChanged,
   });
 
   static const _dayInfo = [
@@ -26,6 +30,14 @@ class QuizDaysSelector extends StatelessWidget {
     {'index': 4, 'short': 'Fri', 'full': 'Friday'},
     {'index': 5, 'short': 'Sat', 'full': 'Saturday'},
     {'index': 6, 'short': 'Sun', 'full': 'Sunday'},
+  ];
+
+  static const _durationOptions = [
+    {'minutes': 30, 'label': '30', 'desc': 'Quick'},
+    {'minutes': 45, 'label': '45', 'desc': 'Standard'},
+    {'minutes': 60, 'label': '60', 'desc': 'Full'},
+    {'minutes': 75, 'label': '75', 'desc': 'Extended'},
+    {'minutes': 90, 'label': '90', 'desc': 'Long'},
   ];
 
   @override
@@ -54,10 +66,148 @@ class QuizDaysSelector extends StatelessWidget {
               if (selectedDays != null && selectedCount >= requiredDays)
                 _buildRecommendation(isDark, textPrimary),
             ],
+
+            // Workout Duration Section (only show if callback is provided)
+            if (onDurationChanged != null) ...[
+              const SizedBox(height: 28),
+              _buildDurationSection(isDark, textPrimary, textSecondary),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildDurationSection(bool isDark, Color textPrimary, Color textSecondary) {
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'How long are your workouts?',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: textPrimary,
+          ),
+        ).animate().fadeIn(delay: 100.ms),
+        const SizedBox(height: 6),
+        Text(
+          'Average session length (including rest)',
+          style: TextStyle(
+            fontSize: 13,
+            color: textSecondary,
+          ),
+        ).animate().fadeIn(delay: 150.ms),
+        const SizedBox(height: 16),
+        Row(
+          children: _durationOptions.asMap().entries.map((entry) {
+            final index = entry.key;
+            final option = entry.value;
+            final minutes = option['minutes'] as int;
+            final isSelected = workoutDuration == minutes;
+
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(right: index < _durationOptions.length - 1 ? 8 : 0),
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    onDurationChanged!(minutes);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      gradient: isSelected ? AppColors.cyanGradient : null,
+                      color: isSelected
+                          ? null
+                          : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? AppColors.cyan : cardBorder,
+                        width: isSelected ? 2 : 1,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: AppColors.cyan.withValues(alpha: 0.3),
+                                blurRadius: 6,
+                                spreadRadius: 0,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          option['label'] as String,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? Colors.white : textPrimary,
+                          ),
+                        ),
+                        Text(
+                          'min',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isSelected ? Colors.white70 : textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ).animate(delay: (200 + index * 40).ms).fadeIn().scale(begin: const Offset(0.9, 0.9)),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 12),
+        // Duration hint
+        if (workoutDuration != null)
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.cyan.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.timer_outlined, size: 16, color: AppColors.cyan),
+                  const SizedBox(width: 6),
+                  Text(
+                    _getDurationHint(workoutDuration!),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textPrimary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ).animate().fadeIn(delay: 400.ms),
+      ],
+    );
+  }
+
+  String _getDurationHint(int minutes) {
+    if (minutes <= 30) {
+      return 'Great for busy schedules';
+    } else if (minutes <= 45) {
+      return 'Most popular choice';
+    } else if (minutes <= 60) {
+      return 'Complete workout session';
+    } else if (minutes <= 75) {
+      return 'Includes thorough warmup';
+    } else {
+      return 'For serious training days';
+    }
   }
 
   Widget _buildTitle(Color textPrimary) {

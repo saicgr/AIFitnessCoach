@@ -1,13 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:video_player/video_player.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
@@ -23,7 +21,6 @@ import '../../widgets/log_1rm_sheet.dart';
 import '../../widgets/responsive_layout.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import '../challenges/widgets/challenge_quit_dialog.dart';
-import 'widgets/timed_exercise_timer.dart';
 import 'widgets/transition_countdown_overlay.dart';
 import 'widgets/set_adjustment_sheet.dart';
 import 'widgets/exercise_swap_sheet.dart';
@@ -31,6 +28,15 @@ import 'widgets/superset_pair_sheet.dart';
 import '../../data/repositories/superset_repository.dart';
 import 'widgets/exercise_thumbnail_strip.dart';
 import 'widgets/video_pip.dart';
+import 'widgets/rest_timer_overlay.dart';
+import 'widgets/fatigue_alert_modal.dart';
+import 'widgets/set_tracking_section.dart';
+import 'widgets/hydration_dialog.dart';
+import 'widgets/quit_workout_dialog.dart';
+import 'mixins/exercise_management_mixin.dart';
+import '../../data/models/rest_suggestion.dart';
+import '../../data/models/smart_weight_suggestion.dart';
+import '../../core/services/fatigue_service.dart';
 
 /// Log for a single set
 class SetLog {
@@ -125,7 +131,6 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
   String? _videoUrl;
   bool _isLoadingMedia = true;
   bool _showVideoPip = true; // PiP video visibility
-  bool _isVideoExpanded = false; // Full-screen video modal
 
   // Timers
   Timer? _workoutTimer;
@@ -204,6 +209,22 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
   static const int _transitionDuration = 7; // Configurable: 5-10 seconds
   String? _nextExerciseImageUrl; // Cached image URL for next exercise
 
+  // AI-powered rest suggestion state
+  RestSuggestion? _restSuggestion;
+  bool _isLoadingRestSuggestion = false;
+
+  // AI-powered smart weight suggestion state
+  SmartWeightSuggestion? _smartWeightSuggestion;
+  bool _isLoadingSmartWeight = false;
+  bool _isWeightFromAiSuggestion = false;
+
+  // Fatigue detection state
+  bool _showFatigueAlert = false;
+  FatigueAlertData? _fatigueAlertData;
+
+  // Fatigue service instance
+  FatigueService? _fatigueService;
+
   @override
   void initState() {
     super.initState();
@@ -229,6 +250,8 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     }
     // Fetch historical data from backend
     _fetchExerciseHistory();
+    // Initialize fatigue service
+    _initFatigueService();
     // Don't fetch media yet - wait for warmup to complete
     // Media will be fetched in _finishWarmup()
     // Start exercise time tracking for first exercise
@@ -444,6 +467,8 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     });
     // Now fetch media for first exercise
     _fetchMediaForExercise(_exercises[0]);
+    // Fetch smart weight suggestion for first exercise
+    _fetchSmartWeight();
   }
 
   Widget _buildWarmupScreen(BuildContext context, bool isDark, Color backgroundColor) {
@@ -1219,20 +1244,6 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     HapticFeedback.lightImpact();
   }
 
-  /// Handle tap on video/screen background
-  /// - If overlay is showing: hide it to show full video
-  /// - If overlay is hidden: toggle BOTH video and workout pause
-  void _handleScreenTap() {
-    if (_showSetOverlay) {
-      // First tap: hide overlay to show full video
-      setState(() => _showSetOverlay = false);
-      HapticFeedback.lightImpact();
-    } else {
-      // Overlay is hidden, toggle both video and workout timer
-      _togglePause();
-    }
-  }
-
   void _startWorkoutTimer() {
     _workoutTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!_isPaused) {
@@ -1288,6 +1299,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     });
 
     HapticFeedback.mediumImpact();
+
+    // Fetch AI rest time suggestion
+    _fetchRestSuggestion();
   }
 
   void _endRest() {
@@ -1316,6 +1330,187 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     if (wasRestingBetweenExercises) {
       _startTransitionCountdown();
     }
+
+    // Clear rest suggestion when rest ends
+    setState(() {
+      _restSuggestion = null;
+      _isLoadingRestSuggestion = false;
+    });
+  }
+
+  /// Initialize fatigue detection service
+  Future<void> _initFatigueService() async {
+    // FatigueService uses static methods, no initialization needed
+    // We just create a placeholder to indicate fatigue detection is available
+    final apiClient = ref.read(apiClientProvider);
+    final userId = await apiClient.getUserId();
+    if (userId != null) {
+      _fatigueService = FatigueService();
+    }
+  }
+
+  /// Fetch AI rest time suggestion when rest starts
+  Future<void> _fetchRestSuggestion() async {
+    if (_fatigueService == null) return;
+
+    final currentExercise = _exercises[_currentExerciseIndex];
+    final completedSets = _completedSets[_currentExerciseIndex] ?? [];
+    if (completedSets.isEmpty) return;
+
+    final lastSet = completedSets.last;
+
+    setState(() => _isLoadingRestSuggestion = true);
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) {
+        setState(() => _isLoadingRestSuggestion = false);
+        return;
+      }
+
+      final response = await apiClient.post(
+        '/api/v1/workouts/rest-suggestions',
+        data: {
+          'user_id': userId,
+          'exercise_name': currentExercise.name,
+          'muscle_group': currentExercise.muscleGroup ?? 'unknown',
+          'set_number': completedSets.length,
+          'total_sets': _totalSetsPerExercise[_currentExerciseIndex] ?? 3,
+          'weight_kg': lastSet.weight,
+          'reps_completed': lastSet.reps,
+          'rpe': 7.0, // Default RPE, will be updated when we add RPE tracking
+          'goal_type': 'hypertrophy', // Default, will be from user profile
+          'time_constraints': false,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        setState(() {
+          _restSuggestion = RestSuggestion.fromJson(response.data);
+          _isLoadingRestSuggestion = false;
+        });
+      } else {
+        setState(() => _isLoadingRestSuggestion = false);
+      }
+    } catch (e) {
+      print('❌ [Rest Suggestion] Error: $e');
+      setState(() => _isLoadingRestSuggestion = false);
+    }
+  }
+
+  /// Fetch smart weight suggestion for next set
+  Future<void> _fetchSmartWeight() async {
+    final currentExercise = _exercises[_currentExerciseIndex];
+    final completedSets = _completedSets[_currentExerciseIndex] ?? [];
+
+    setState(() => _isLoadingSmartWeight = true);
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) {
+        setState(() => _isLoadingSmartWeight = false);
+        return;
+      }
+
+      final response = await apiClient.get(
+        '/api/v1/workouts/smart-weights/${Uri.encodeComponent(currentExercise.name)}',
+        queryParameters: {
+          'user_id': userId,
+          'set_number': completedSets.length + 1,
+          'target_reps': currentExercise.reps ?? 10,
+          'goal_type': 'hypertrophy',
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final suggestion = SmartWeightSuggestion.fromJson(response.data);
+        setState(() {
+          _smartWeightSuggestion = suggestion;
+          _isLoadingSmartWeight = false;
+          // Auto-fill weight if confidence is high
+          if (suggestion.confidence > 0.7) {
+            _weightController.text = suggestion.suggestedWeight.toStringAsFixed(1);
+            _isWeightFromAiSuggestion = true;
+          }
+        });
+      } else {
+        setState(() => _isLoadingSmartWeight = false);
+      }
+    } catch (e) {
+      print('❌ [Smart Weight] Error: $e');
+      setState(() => _isLoadingSmartWeight = false);
+    }
+  }
+
+  /// Check for fatigue after set completion
+  Future<void> _checkFatigue() async {
+    if (_fatigueService == null) return;
+
+    final currentExercise = _exercises[_currentExerciseIndex];
+    final completedSets = _completedSets[_currentExerciseIndex] ?? [];
+    if (completedSets.length < 2) return; // Need at least 2 sets to detect fatigue
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) return;
+
+      // Build set history for fatigue detection
+      final setHistory = completedSets.map((set) => {
+        'set_number': completedSets.indexOf(set) + 1,
+        'weight_kg': set.weight,
+        'reps_completed': set.reps,
+        'rpe': 7.0, // Default
+        'rest_time_seconds': 90, // Default
+      }).toList();
+
+      final response = await apiClient.post(
+        '/api/v1/workouts/fatigue-alerts',
+        data: {
+          'user_id': userId,
+          'exercise_name': currentExercise.name,
+          'muscle_group': currentExercise.muscleGroup ?? 'unknown',
+          'target_reps': currentExercise.reps ?? 10,
+          'set_history': setHistory,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final alertData = FatigueAlertData.fromJson(response.data);
+        if (alertData.fatigueDetected) {
+          setState(() {
+            _showFatigueAlert = true;
+            _fatigueAlertData = alertData;
+          });
+        }
+      }
+    } catch (e) {
+      print('❌ [Fatigue Detection] Error: $e');
+    }
+  }
+
+  /// Handle accepting the fatigue suggestion (reduce weight)
+  void _handleAcceptFatigueSuggestion() {
+    HapticFeedback.mediumImpact();
+    if (_fatigueAlertData != null) {
+      // Apply suggested weight
+      _weightController.text = _fatigueAlertData!.suggestedWeight.toStringAsFixed(1);
+    }
+    setState(() {
+      _showFatigueAlert = false;
+      _fatigueAlertData = null;
+    });
+  }
+
+  /// Handle continuing as planned (dismiss fatigue alert)
+  void _handleContinueAsPlanned() {
+    HapticFeedback.lightImpact();
+    setState(() {
+      _showFatigueAlert = false;
+      _fatigueAlertData = null;
+    });
   }
 
   /// Start transition countdown before moving to next exercise
@@ -1465,6 +1660,12 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
       HapticFeedback.lightImpact();
     });
 
+    // Check for fatigue after set completion (runs in background)
+    _checkFatigue();
+
+    // Reset AI weight suggestion flag for next set
+    _isWeightFromAiSuggestion = false;
+
     if (_currentSet < totalSets) {
       // Move to next set, keep the same weight/reps for convenience
       setState(() => _currentSet++);
@@ -1576,21 +1777,6 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
       reps: reps,
       wasFast: wasFast,
     );
-  }
-
-  /// Delete a completed set (from swipe action)
-  void _deleteCompletedSet(int exerciseIndex, int setIndex) {
-    final sets = _completedSets[exerciseIndex];
-    if (sets == null || setIndex >= sets.length) return;
-
-    setState(() {
-      sets.removeAt(setIndex);
-      // If we deleted a set from the current exercise, adjust current set counter
-      if (exerciseIndex == _currentExerciseIndex) {
-        _currentSet = sets.length + 1;
-      }
-    });
-    HapticFeedback.mediumImpact();
   }
 
   /// Edit a completed set (from swipe action)
@@ -1775,325 +1961,6 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     );
   }
 
-  /// Handle remove set button press
-  void _handleRemoveSet(int exerciseIndex, int totalSets, int completedSetsCount) async {
-    final remainingSets = totalSets - completedSetsCount;
-
-    // If sets have been completed, show confirmation
-    if (completedSetsCount > 0) {
-      final result = await showSetAdjustmentSheet(
-        context: context,
-        title: 'Remove Set',
-        subtitle: 'You have already completed $completedSetsCount set${completedSetsCount > 1 ? 's' : ''}',
-      );
-
-      if (result != null) {
-        final (reason, notes) = result;
-        setState(() {
-          _totalSetsPerExercise[exerciseIndex] = totalSets - 1;
-          _setAdjustments[exerciseIndex]?.add(SetAdjustment(
-            reason: reason,
-            notes: notes,
-            exerciseIndex: exerciseIndex,
-            originalSets: _originalSetsPerExercise[exerciseIndex] ?? totalSets,
-            newSets: totalSets - 1,
-            timestamp: DateTime.now(),
-          ));
-        });
-        HapticFeedback.mediumImpact();
-        debugPrint('✅ [Workout] Removed set from exercise $exerciseIndex: ${reason.name} - $notes');
-      }
-    } else {
-      // No sets completed, just remove
-      setState(() {
-        _totalSetsPerExercise[exerciseIndex] = totalSets - 1;
-      });
-      HapticFeedback.mediumImpact();
-      debugPrint('✅ [Workout] Removed set from exercise $exerciseIndex (no completed sets)');
-    }
-  }
-
-  /// Handle skip remaining sets button press
-  void _handleSkipRemainingSets(
-    int exerciseIndex,
-    String exerciseName,
-    int totalSets,
-    int completedSetsCount,
-  ) async {
-    final result = await showSkipRemainingSetsSheet(
-      context: context,
-      exerciseName: exerciseName,
-      completedSets: completedSetsCount,
-      totalSets: totalSets,
-    );
-
-    if (result != null) {
-      final (reason, notes) = result;
-
-      setState(() {
-        // Set total sets to completed count (effectively skip remaining)
-        _totalSetsPerExercise[exerciseIndex] = completedSetsCount;
-
-        // Log the adjustment
-        _setAdjustments[exerciseIndex]?.add(SetAdjustment(
-          reason: reason,
-          notes: notes,
-          exerciseIndex: exerciseIndex,
-          originalSets: _originalSetsPerExercise[exerciseIndex] ?? totalSets,
-          newSets: completedSetsCount,
-          timestamp: DateTime.now(),
-        ));
-      });
-
-      HapticFeedback.mediumImpact();
-      debugPrint('✅ [Workout] Skipped remaining sets for $exerciseName: ${reason.name} - $notes');
-
-      // Automatically move to next exercise since we're done with this one
-      if (exerciseIndex == _currentExerciseIndex) {
-        _moveToNextExercise();
-      }
-    }
-  }
-
-  /// Handle comprehensive set editing - opens sheet to modify all sets
-  void _handleEditAllSets(int exerciseIndex) async {
-    final exercise = _exercises[exerciseIndex];
-    final completedSets = _completedSets[exerciseIndex] ?? [];
-    final totalSets = _totalSetsPerExercise[exerciseIndex] ?? exercise.sets ?? 3;
-    final originalSets = _originalSetsPerExercise[exerciseIndex] ?? totalSets;
-
-    // Build initial sets data
-    final List<EditableSetData> initialSets = [];
-
-    // Add completed sets
-    for (int i = 0; i < completedSets.length; i++) {
-      final set = completedSets[i];
-      initialSets.add(EditableSetData(
-        reps: set.reps,
-        weight: _useKg ? set.weight : set.weight / 0.453592, // Convert to lbs if needed
-        isCompleted: true,
-      ));
-    }
-
-    // Add remaining incomplete sets
-    final defaultReps = exercise.reps ?? 10;
-    final defaultWeight = exercise.weight ?? 0.0;
-    for (int i = completedSets.length; i < totalSets; i++) {
-      initialSets.add(EditableSetData(
-        reps: defaultReps,
-        weight: _useKg ? defaultWeight : defaultWeight / 0.453592,
-        isCompleted: false,
-      ));
-    }
-
-    // Current set index (0-based)
-    final currentSetIndex = completedSets.length;
-
-    final result = await showInWorkoutSetEditingSheet(
-      context: context,
-      exerciseName: exercise.name,
-      initialSets: initialSets,
-      originalSetCount: originalSets,
-      currentSetIndex: currentSetIndex,
-      defaultWeight: _useKg ? defaultWeight : defaultWeight / 0.453592,
-      defaultReps: defaultReps,
-      useKg: _useKg,
-    );
-
-    if (result != null) {
-      setState(() {
-        // Update total sets count
-        _totalSetsPerExercise[exerciseIndex] = result.newSetCount;
-
-        // Log adjustment if sets were reduced
-        if (result.wasReduced && result.adjustmentReason != null) {
-          _setAdjustments[exerciseIndex]?.add(SetAdjustment(
-            reason: result.adjustmentReason!,
-            notes: result.notes,
-            exerciseIndex: exerciseIndex,
-            originalSets: originalSets,
-            newSets: result.newSetCount,
-            timestamp: DateTime.now(),
-          ));
-
-          // Record adjustment to backend for pattern tracking
-          final repository = ref.read(workoutRepositoryProvider);
-          repository.recordSetAdjustment(
-            exerciseName: exercise.name,
-            originalSets: originalSets,
-            actualSets: result.newSetCount,
-            reason: result.adjustmentReason!.name,
-            notes: result.notes,
-            workoutId: widget.workout.id,
-            exerciseIndex: exerciseIndex,
-          );
-        }
-
-        // Update weight/reps for incomplete sets if they were edited
-        // Note: We update the current exercise's expected weight/reps
-        for (int i = 0; i < result.sets.length; i++) {
-          final setData = result.sets[i];
-          if (!setData.isCompleted && i == currentSetIndex) {
-            // Update current set's values in the input controllers
-            _repsController.text = setData.reps.toString();
-            final weight = _useKg ? setData.weight : setData.weight * 0.453592;
-            _weightController.text = weight.toStringAsFixed(1);
-          }
-        }
-      });
-
-      HapticFeedback.mediumImpact();
-      debugPrint('✅ [Workout] Updated sets for ${exercise.name}: ${result.originalSetCount} -> ${result.newSetCount}');
-    }
-  }
-
-  /// Show delete confirmation dialog for a completed set
-  Future<bool> _showDeleteSetConfirmation(int exerciseIndex, int setIndex) async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.delete_outline,
-                color: AppColors.error,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Delete Set ${setIndex + 1}?',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: textPrimary,
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          'This will remove the set from your workout log. This action cannot be undone.',
-          style: TextStyle(
-            fontSize: 14,
-            color: textSecondary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(
-              'Cancel',
-              style: TextStyle(
-                color: textSecondary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text(
-              'Delete',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    return result ?? false;
-  }
-
-  /// Delete a completed set with confirmation
-  void _deleteCompletedSetWithConfirmation(int exerciseIndex, int setIndex) async {
-    final confirmed = await _showDeleteSetConfirmation(exerciseIndex, setIndex);
-    if (confirmed) {
-      _deleteCompletedSet(exerciseIndex, setIndex);
-      debugPrint('✅ [Workout] Deleted set ${setIndex + 1} from exercise $exerciseIndex');
-    }
-  }
-
-  /// Complete a timed set (for timed/isometric exercises)
-  void _completeTimedSet({
-    required int exerciseIndex,
-    required int setIndex,
-    required int durationSeconds,
-  }) {
-    setState(() {
-      // Add a completed set log for the timed exercise
-      _completedSets[exerciseIndex]?.add(SetLog(
-        reps: 1, // 1 "rep" for a completed hold
-        weight: 0, // No weight for timed exercises
-        setType: 'timed',
-        targetReps: 1, // For timed exercises, 1 complete = target met
-      ));
-
-      // Trigger burst animation
-      _justCompletedSetIndex = setIndex;
-
-      // Update current set if this is the current exercise
-      if (exerciseIndex == _currentExerciseIndex) {
-        final exercise = _exercises[exerciseIndex];
-        final totalSets = _totalSetsPerExercise[exerciseIndex] ?? exercise.sets ?? 3;
-        final completedCount = _completedSets[exerciseIndex]?.length ?? 0;
-
-        if (completedCount >= totalSets) {
-          // All sets completed, trigger rest between exercises
-          _isRestingBetweenExercises = true;
-          _startRestTimer(exercise.restSeconds ?? 90);
-        } else {
-          // Still have sets remaining, trigger rest between sets
-          _isRestingBetweenExercises = false;
-          _startRestTimer(exercise.restSeconds ?? 60);
-        }
-      }
-    });
-
-    // Clear animation after delay
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (mounted) {
-        setState(() => _justCompletedSetIndex = null);
-      }
-    });
-
-    debugPrint('✅ [Workout] Completed timed set ${setIndex + 1} for exercise $exerciseIndex (${durationSeconds}s)');
-  }
-
-  /// Update controllers when switching exercises
-  void _updateControllersForExercise(WorkoutExercise exercise) {
-    // Get last logged values or default from exercise
-    final previousLogs = _completedSets[_currentExerciseIndex] ?? [];
-    final defaultReps = exercise.reps ?? 10;
-    final defaultWeight = exercise.weight ?? 0;
-
-    final newReps = previousLogs.isNotEmpty ? previousLogs.last.reps : defaultReps;
-    final newWeight = previousLogs.isNotEmpty ? previousLogs.last.weight : defaultWeight;
-
-    _repsController.text = newReps.toString();
-    _weightController.text = newWeight.toString();
-  }
-
   void _moveToNextExercise() {
     // Track time spent on current exercise
     if (_currentExerciseStartTime != null) {
@@ -2129,6 +1996,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
       _repsController.text = (nextExercise.reps ?? 10).toString();
       _weightController.text = (nextExercise.weight ?? 0).toString();
       _fetchMediaForExercise(nextExercise);
+
+      // Fetch smart weight suggestion for new exercise
+      _fetchSmartWeight();
 
       // Reset exercise time tracking for next exercise
       _currentExerciseStartTime = DateTime.now();
@@ -2293,7 +2163,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
             const SizedBox(height: 20),
 
             // Start this exercise (make active)
-            _ExerciseOptionTile(
+            ExerciseOptionTile(
               icon: Icons.play_circle_outline,
               title: 'Start This Exercise',
               subtitle: 'Make this the active exercise',
@@ -2308,7 +2178,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
             const SizedBox(height: 12),
 
             // Replace with similar (uses AI-powered swap sheet)
-            _ExerciseOptionTile(
+            ExerciseOptionTile(
               icon: Icons.swap_horiz,
               title: 'Replace Exercise',
               subtitle: 'AI-powered alternatives',
@@ -2322,7 +2192,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
             const SizedBox(height: 12),
 
             // Skip this exercise
-            _ExerciseOptionTile(
+            ExerciseOptionTile(
               icon: Icons.skip_next,
               title: 'Skip Exercise',
               subtitle: 'Remove from this workout',
@@ -2339,7 +2209,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
             // Superset options
             if (exercise.isInSuperset) ...[
               // Remove from superset
-              _ExerciseOptionTile(
+              ExerciseOptionTile(
                 icon: Icons.link_off,
                 title: 'Remove from Superset',
                 subtitle: 'Break the superset pair',
@@ -2353,7 +2223,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
             ] else ...[
               // Create superset with next exercise
               if (index < _exercises.length - 1 && !_exercises[index + 1].isInSuperset)
-                _ExerciseOptionTile(
+                ExerciseOptionTile(
                   icon: Icons.link,
                   title: 'Pair with Next Exercise',
                   subtitle: 'Create superset with ${_exercises[index + 1].name}',
@@ -2366,7 +2236,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
                 ),
               const SizedBox(height: 12),
               // Create superset (choose exercise)
-              _ExerciseOptionTile(
+              ExerciseOptionTile(
                 icon: Icons.add_link,
                 title: 'Create Superset',
                 subtitle: 'Choose exercise to pair with',
@@ -2958,7 +2828,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     HapticFeedback.selectionClick();
   }
 
-  void _showQuitDialog() {
+  Future<void> _showQuitDialog() async {
     // If this is a challenge workout, show the Challenge Quit Dialog with psychological pressure!
     if (widget.challengeId != null && widget.challengeData != null) {
       _showChallengeQuitDialog();
@@ -2979,211 +2849,22 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
         ? (exercisesWithCompletedSets / _exercises.length * 100).round()
         : 0;
 
-    String? selectedReason;
-    final TextEditingController notesController = TextEditingController();
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showModalBottomSheet(
+    final result = await showQuitWorkoutDialog(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) {
-
-          return Container(
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.surface : AppColorsLight.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Handle bar
-                Center(
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted).withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-
-                // Title with progress
-                Row(
-                  children: [
-                    Icon(Icons.exit_to_app, color: isDark ? AppColors.orange : AppColorsLight.orange, size: 28),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'End Workout Early?',
-                            style: TextStyle(
-                              color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            '$progressPercent% complete • $totalCompletedSets sets done',
-                            style: TextStyle(
-                              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                // Progress bar
-                Container(
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                  child: FractionallySizedBox(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: progressPercent / 100,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: progressPercent >= 50 ? (isDark ? AppColors.cyan : AppColorsLight.cyan) : (isDark ? AppColors.orange : AppColorsLight.orange),
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Question
-                Text(
-                  'Why are you ending early?',
-                  style: TextStyle(
-                    color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // Quick reply reasons
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _buildReasonChip('too_tired', 'Too tired', Icons.battery_1_bar, selectedReason, isDark, (reason) {
-                      setModalState(() => selectedReason = reason);
-                    }),
-                    _buildReasonChip('out_of_time', 'Out of time', Icons.timer_off, selectedReason, isDark, (reason) {
-                      setModalState(() => selectedReason = reason);
-                    }),
-                    _buildReasonChip('not_feeling_well', 'Not feeling well', Icons.sick, selectedReason, isDark, (reason) {
-                      setModalState(() => selectedReason = reason);
-                    }),
-                    _buildReasonChip('equipment_unavailable', 'Equipment busy', Icons.fitness_center, selectedReason, isDark, (reason) {
-                      setModalState(() => selectedReason = reason);
-                    }),
-                    _buildReasonChip('injury', 'Pain/Injury', Icons.healing, selectedReason, isDark, (reason) {
-                      setModalState(() => selectedReason = reason);
-                    }),
-                    _buildReasonChip('other', 'Other reason', Icons.more_horiz, selectedReason, isDark, (reason) {
-                      setModalState(() => selectedReason = reason);
-                    }),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                // Optional notes
-                TextField(
-                  controller: notesController,
-                  style: TextStyle(color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary, fontSize: 14),
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    hintText: 'Add a note (optional)...',
-                    hintStyle: TextStyle(color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted).withOpacity(0.6)),
-                    filled: true,
-                    fillColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.all(14),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Action buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: BorderSide(color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          'Keep Going',
-                          style: TextStyle(color: isDark ? AppColors.cyan : AppColorsLight.cyan, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          Navigator.pop(ctx);
-                          await _logWorkoutExitAndQuit(
-                            selectedReason ?? 'quick_exit',
-                            notesController.text.isEmpty ? null : notesController.text,
-                            exercisesWithCompletedSets,
-                            totalCompletedSets,
-                            progressPercent.toDouble(),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isDark ? AppColors.orange : AppColorsLight.orange,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'End Workout',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                // Safe area padding
-                SizedBox(height: MediaQuery.of(context).padding.bottom),
-              ],
-            ),
-          );
-        },
-      ),
+      progressPercent: progressPercent,
+      totalCompletedSets: totalCompletedSets,
+      exercisesWithCompletedSets: exercisesWithCompletedSets,
     );
+
+    if (result != null) {
+      await _logWorkoutExitAndQuit(
+        result.reason,
+        result.notes,
+        exercisesWithCompletedSets,
+        totalCompletedSets,
+        progressPercent.toDouble(),
+      );
+    }
   }
 
   /// Show Challenge Quit Dialog with psychological pressure!
@@ -3260,59 +2941,6 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     );
   }
 
-  Widget _buildReasonChip(
-    String value,
-    String label,
-    IconData icon,
-    String? selectedReason,
-    bool isDark,
-    Function(String) onSelected,
-  ) {
-    final isSelected = selectedReason == value;
-    final orangeColor = isDark ? AppColors.orange : AppColorsLight.orange;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final textSecondaryColor = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onSelected(value);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? orangeColor.withOpacity(0.2) : elevatedColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? orangeColor : borderColor,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: isSelected ? orangeColor : textSecondaryColor,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? orangeColor : textSecondaryColor,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _logWorkoutExitAndQuit(
     String exitReason,
     String? exitNotes,
@@ -3356,289 +2984,6 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     if (mounted) {
       context.go('/home');
     }
-  }
-
-  void _showDrinkIntakeDialog() {
-    int selectedAmount = 250; // Default 250ml
-    bool useOz = false; // false = ml, true = oz
-    final customController = TextEditingController();
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) {
-          // Convert display amounts based on unit
-          String formatAmount(int ml) {
-            if (useOz) {
-              return '${(ml / 29.5735).toStringAsFixed(1)} oz';
-            }
-            return '${ml}ml';
-          }
-
-          String formatTotal() {
-            if (useOz) {
-              return '${(_totalDrinkIntakeMl / 29.5735).toStringAsFixed(1)} oz';
-            }
-            return '${(_totalDrinkIntakeMl / 1000).toStringAsFixed(2)}L';
-          }
-
-          return Padding(
-            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-            child: Container(
-              decoration: const BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Handle bar
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.textMuted.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-
-                  // Title with unit toggle
-                  Row(
-                    children: [
-                      const Icon(Icons.water_drop, color: Colors.blue, size: 28),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Log Water Intake',
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              'Total: ${formatTotal()}',
-                              style: const TextStyle(
-                                color: AppColors.textMuted,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Unit toggle
-                      GestureDetector(
-                        onTap: () {
-                          setModalState(() => useOz = !useOz);
-                          HapticFeedback.selectionClick();
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.blue),
-                          ),
-                          child: Text(
-                            useOz ? 'oz' : 'ml',
-                            style: const TextStyle(
-                              color: Colors.blue,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Quick amount buttons - common sizes
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildDrinkAmountChip(250, selectedAmount, useOz, (amount) {
-                        setModalState(() {
-                          selectedAmount = amount;
-                          customController.clear();
-                        });
-                      }),
-                      _buildDrinkAmountChip(350, selectedAmount, useOz, (amount) {
-                        setModalState(() {
-                          selectedAmount = amount;
-                          customController.clear();
-                        });
-                      }),
-                      _buildDrinkAmountChip(500, selectedAmount, useOz, (amount) {
-                        setModalState(() {
-                          selectedAmount = amount;
-                          customController.clear();
-                        });
-                      }),
-                      _buildDrinkAmountChip(750, selectedAmount, useOz, (amount) {
-                        setModalState(() {
-                          selectedAmount = amount;
-                          customController.clear();
-                        });
-                      }),
-                      _buildDrinkAmountChip(1000, selectedAmount, useOz, (amount) {
-                        setModalState(() {
-                          selectedAmount = amount;
-                          customController.clear();
-                        });
-                      }),
-                      // 1 gallon = 3785ml
-                      _buildDrinkAmountChipLabeled(3785, '1 gal', selectedAmount, useOz, (amount) {
-                        setModalState(() {
-                          selectedAmount = amount;
-                          customController.clear();
-                        });
-                      }),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Custom input row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: customController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
-                          decoration: InputDecoration(
-                            hintText: 'Custom amount',
-                            hintStyle: TextStyle(color: AppColors.textMuted.withOpacity(0.5)),
-                            filled: true,
-                            fillColor: AppColors.elevated,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            suffixText: useOz ? 'oz' : 'ml',
-                            suffixStyle: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-                          ),
-                          onChanged: (val) {
-                            final parsed = double.tryParse(val);
-                            if (parsed != null && parsed > 0) {
-                              setModalState(() {
-                                // Convert to ml if using oz
-                                selectedAmount = useOz ? (parsed * 29.5735).round() : parsed.round();
-                              });
-                            }
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Log button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        _logDrinkIntake(selectedAmount);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        'Log ${formatAmount(selectedAmount)}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildDrinkAmountChip(int amountMl, int selected, bool useOz, Function(int) onTap) {
-    final isSelected = amountMl == selected;
-    String label = useOz ? '${(amountMl / 29.5735).toStringAsFixed(1)}oz' : '${amountMl}ml';
-
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap(amountMl);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.blue.withOpacity(0.2) : AppColors.elevated,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? Colors.blue : AppColors.cardBorder,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.blue : AppColors.textSecondary,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            fontSize: 15,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrinkAmountChipLabeled(int amountMl, String label, int selected, bool useOz, Function(int) onTap) {
-    final isSelected = amountMl == selected;
-
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap(amountMl);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.blue.withOpacity(0.2) : AppColors.elevated,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? Colors.blue : AppColors.cardBorder,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.blue : AppColors.textSecondary,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            fontSize: 15,
-          ),
-        ),
-      ),
-    );
   }
 
   void _logDrinkIntake(int amountMl) {
@@ -4215,10 +3560,71 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
               ),
             ),
 
-            // Rest timer overlay
+            // Rest timer overlay - using RestTimerOverlay widget with AI suggestions
             if (_isResting)
               Positioned.fill(
-                child: _buildRestOverlay(),
+                child: RestTimerOverlay(
+                  restSecondsRemaining: _restSecondsRemaining,
+                  initialRestDuration: _initialRestDuration,
+                  restMessage: _currentRestMessage,
+                  currentExercise: _exercises[_currentExerciseIndex],
+                  completedSetsCount: _completedSets[_currentExerciseIndex]?.length ?? 0,
+                  totalSets: _totalSetsPerExercise[_currentExerciseIndex] ?? 3,
+                  nextExercise: _currentExerciseIndex < _exercises.length - 1
+                      ? _exercises[_currentExerciseIndex + 1]
+                      : null,
+                  isRestBetweenExercises: _isRestingBetweenExercises,
+                  onSkipRest: _endRest,
+                  onLog1RM: () async {
+                    final exercise = _exercises[_currentExerciseIndex];
+                    final result = await showLog1RMSheet(
+                      context,
+                      ref,
+                      exerciseName: exercise.name,
+                      exerciseId: exercise.exerciseId ?? exercise.libraryId ?? exercise.name.toLowerCase().replaceAll(' ', '_'),
+                    );
+                    if (result != null && mounted) {
+                      HapticFeedback.mediumImpact();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: [
+                              const Icon(Icons.emoji_events, color: Colors.white, size: 20),
+                              const SizedBox(width: 8),
+                              Text('1RM logged: ${(result['estimated_1rm'] as num?)?.toStringAsFixed(1) ?? 'N/A'} kg'),
+                            ],
+                          ),
+                          backgroundColor: AppColors.success,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                  restSuggestion: _restSuggestion,
+                  isLoadingRestSuggestion: _isLoadingRestSuggestion,
+                  onAcceptRestSuggestion: (seconds) {
+                    setState(() {
+                      _restSecondsRemaining = seconds;
+                      _initialRestDuration = seconds;
+                    });
+                  },
+                  onDismissRestSuggestion: () {
+                    setState(() => _restSuggestion = null);
+                  },
+                ),
+              ),
+
+            // Fatigue Alert Modal
+            if (_showFatigueAlert && _fatigueAlertData != null)
+              Positioned.fill(
+                child: FatigueAlertModal(
+                  alertData: _fatigueAlertData!,
+                  currentWeight: double.tryParse(_weightController.text) ?? 0,
+                  exerciseName: _exercises[_currentExerciseIndex].name,
+                  onAcceptSuggestion: _handleAcceptFatigueSuggestion,
+                  onContinueAsPlanned: _handleContinueAsPlanned,
+                  onStopExercise: _skipExercise,
+                ),
               ),
 
             // Transition countdown overlay (between exercises)
@@ -4227,13 +3633,70 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
                 child: _buildTransitionOverlay(),
               ),
 
-            // Set tracking table overlay (in middle of screen)
+            // Set tracking section with FuturisticSetCard
             if (_showSetOverlay && !_isResting && !_isInTransition)
               Positioned(
                 left: 16,
                 right: 16,
                 top: MediaQuery.of(context).padding.top + 150, // Below top overlay
-                child: _buildSetTrackingOverlay(),
+                child: SetTrackingSection(
+                  exercise: _exercises[_viewingExerciseIndex],
+                  exerciseIndex: _viewingExerciseIndex,
+                  totalExercises: _exercises.length,
+                  currentSetNumber: _currentSet,
+                  totalSets: _totalSetsPerExercise[_viewingExerciseIndex] ?? 3,
+                  completedSets: (_completedSets[_viewingExerciseIndex] ?? [])
+                      .map((s) => CompletedSetData(
+                            reps: s.reps,
+                            weight: s.weight,
+                            targetReps: s.targetReps,
+                            isEdited: _editedSets[_viewingExerciseIndex]?.contains(
+                                    (_completedSets[_viewingExerciseIndex] ?? []).indexOf(s)) ??
+                                false,
+                            setType: s.setType,
+                          ))
+                      .toList(),
+                  previousSets: _previousSets[_viewingExerciseIndex] ?? [],
+                  currentWeight: double.tryParse(_weightController.text) ?? 0,
+                  currentReps: int.tryParse(_repsController.text) ?? 10,
+                  weightStep: 2.5,
+                  useKg: _useKg,
+                  setType: 'working',
+                  smartWeightSuggestion: _smartWeightSuggestion,
+                  isWeightFromAiSuggestion: _isWeightFromAiSuggestion,
+                  isCurrentExercise: _viewingExerciseIndex == _currentExerciseIndex,
+                  isExpanded: _isActiveRowExpanded,
+                  justCompletedSetIndex: _justCompletedSetIndex,
+                  onWeightChanged: (value) {
+                    setState(() {
+                      _weightController.text = value.toStringAsFixed(1);
+                      _isWeightFromAiSuggestion = false;
+                    });
+                  },
+                  onRepsChanged: (value) {
+                    setState(() => _repsController.text = value.toString());
+                  },
+                  onCompleteSet: _completeSet,
+                  onSkipExercise: _skipExercise,
+                  onSetTypeChanged: (type) {
+                    // Handle set type change if needed
+                    HapticFeedback.lightImpact();
+                  },
+                  onToggleExpand: () {
+                    setState(() => _isActiveRowExpanded = !_isActiveRowExpanded);
+                    HapticFeedback.mediumImpact();
+                  },
+                  onPreviousExercise: _viewingExerciseIndex > 0
+                      ? () => setState(() => _viewingExerciseIndex--)
+                      : null,
+                  onNextExercise: _viewingExerciseIndex < _exercises.length - 1
+                      ? () => setState(() => _viewingExerciseIndex++)
+                      : null,
+                  onEditSet: (index) {
+                    // Open edit sheet for completed set
+                    _editCompletedSet(_viewingExerciseIndex, index);
+                  },
+                ),
               ),
 
             // Bottom section: next exercise + collapsible instructions
@@ -4288,83 +3751,6 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
           _showFullScreenVideo();
         },
         onClose: () => Navigator.pop(context),
-      ),
-    );
-  }
-
-  Widget _buildMediaBackground() {
-    // Video if available - use LayoutBuilder for proper cover scaling
-    if (_isVideoInitialized && _videoController != null) {
-      final videoSize = _videoController!.value.size;
-      if (videoSize.width > 0 && videoSize.height > 0) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final screenWidth = constraints.maxWidth;
-            final screenHeight = constraints.maxHeight;
-            final screenAspect = screenWidth / screenHeight;
-            final videoAspect = videoSize.width / videoSize.height;
-
-            // Calculate scale to cover the screen
-            final scale = videoAspect > screenAspect
-                ? screenHeight / videoSize.height
-                : screenWidth / videoSize.width;
-
-            return ClipRect(
-              child: OverflowBox(
-                maxWidth: double.infinity,
-                maxHeight: double.infinity,
-                child: Transform.scale(
-                  scale: scale,
-                  child: SizedBox(
-                    width: videoSize.width,
-                    height: videoSize.height,
-                    child: VideoPlayer(_videoController!),
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      }
-    }
-
-    // Image fallback
-    if (_imageUrl != null) {
-      return SizedBox.expand(
-        child: CachedNetworkImage(
-          imageUrl: _imageUrl!,
-          fit: BoxFit.cover,
-          alignment: Alignment.center,
-          width: double.infinity,
-          height: double.infinity,
-          placeholder: (_, __) => Container(color: AppColors.elevated),
-          errorWidget: (_, __, ___) => _buildPlaceholderBackground(),
-        ),
-      );
-    }
-
-    // Loading or error
-    if (_isLoadingMedia) {
-      return Container(
-        color: AppColors.elevated,
-        child: const Center(
-          child: CircularProgressIndicator(color: AppColors.cyan),
-        ),
-      );
-    }
-
-    return _buildPlaceholderBackground();
-  }
-
-  Widget _buildPlaceholderBackground() {
-    return Container(
-      color: AppColors.elevated,
-      child: const Center(
-        child: Icon(
-          Icons.fitness_center,
-          size: 80,
-          color: AppColors.textMuted,
-        ),
       ),
     );
   }
@@ -4572,9 +3958,15 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
                       Container(width: 1, height: 16, color: dividerColor),
                       // Water - tappable
                       GestureDetector(
-                        onTap: () {
+                        onTap: () async {
                           HapticFeedback.lightImpact();
-                          _showDrinkIntakeDialog();
+                          final amount = await showHydrationDialog(
+                            context: context,
+                            totalIntakeMl: _totalDrinkIntakeMl,
+                          );
+                          if (amount != null) {
+                            _logDrinkIntake(amount);
+                          }
                         },
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -4724,407 +4116,6 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     );
   }
 
-  /// Build 1RM prompt button for rest overlay
-  Widget _build1RMPrompt(
-    WorkoutExercise exercise,
-    Color cardBg,
-    Color textColor,
-    Color subtitleColor,
-  ) {
-    // Check if user just did a heavy set (low reps suggest strength work)
-    final completedSets = _completedSets[_currentExerciseIndex] ?? [];
-    final lastSet = completedSets.isNotEmpty ? completedSets.last : null;
-
-    // Show prompt if: just completed a heavy set (5 or fewer reps) or any working set
-    final showPrompt = lastSet != null;
-
-    if (!showPrompt) return const SizedBox.shrink();
-
-    return GestureDetector(
-      onTap: () async {
-        final result = await showLog1RMSheet(
-          context,
-          ref,
-          exerciseName: exercise.name,
-          exerciseId: exercise.exerciseId ?? exercise.libraryId ?? exercise.name.toLowerCase().replaceAll(' ', '_'),
-        );
-
-        if (result != null && mounted) {
-          HapticFeedback.mediumImpact();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.emoji_events, color: Colors.white, size: 20),
-                  const SizedBox(width: 8),
-                  Text('1RM logged: ${(result['estimated_1rm'] as num?)?.toStringAsFixed(1) ?? 'N/A'} kg'),
-                ],
-              ),
-              backgroundColor: AppColors.success,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.orange.withOpacity(0.3),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: AppColors.orange.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.fitness_center,
-                color: AppColors.orange,
-                size: 18,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Log 1RM',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.orange,
-                  ),
-                ),
-                Text(
-                  'Track your max',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: subtitleColor,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 8),
-            Icon(
-              Icons.chevron_right,
-              color: AppColors.orange.withOpacity(0.7),
-              size: 20,
-            ),
-          ],
-        ),
-      ),
-    ).animate().fadeIn(delay: 300.ms, duration: 400.ms).slideY(begin: 0.1, end: 0);
-  }
-
-  Widget _buildRestOverlay() {
-    // Calculate progress (1.0 = full, 0.0 = done)
-    final progress = _initialRestDuration > 0
-        ? _restSecondsRemaining / _initialRestDuration
-        : 0.0;
-
-    // Get next exercise info
-    final hasNextExercise = _currentExerciseIndex < _exercises.length - 1;
-    final nextExercise = hasNextExercise
-        ? _exercises[_currentExerciseIndex + 1]
-        : null;
-
-    // Check if this is a rest between sets (not exercises)
-    final currentExercise = _exercises[_currentExerciseIndex];
-    final completedSetsCount = _completedSets[_currentExerciseIndex]?.length ?? 0;
-    final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? currentExercise.sets ?? 3;
-    // Use the explicit flag if set, otherwise fall back to computed check
-    final isRestBetweenSets = !_isRestingBetweenExercises && completedSetsCount < totalSets;
-
-    // Theme colors
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark
-        ? AppColors.pureBlack.withOpacity(0.92)
-        : AppColorsLight.surface.withOpacity(0.98);
-    final cardBg = isDark
-        ? AppColors.elevated.withOpacity(0.8)
-        : AppColorsLight.elevated;
-    final textColor = isDark ? Colors.white : AppColorsLight.textPrimary;
-    final subtitleColor = isDark ? Colors.white70 : AppColorsLight.textSecondary;
-
-    return Container(
-      color: bgColor,
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(flex: 2),
-
-              // REST label
-              Text(
-                'REST',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.purple.withOpacity(0.8),
-                  letterSpacing: 6,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Large timer
-              Text(
-                '${_restSecondsRemaining}s',
-                style: TextStyle(
-                  fontSize: 80,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                  height: 1,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Progress bar
-              Container(
-                height: 6,
-                width: 200,
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withOpacity(0.15) : AppColorsLight.cardBorder,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    height: 6,
-                    width: 200 * progress,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.purple,
-                          AppColors.purple.withOpacity(0.7),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // AI Coach encouragement message
-              if (_currentRestMessage.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: AppColors.purple.withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.purple.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.psychology,
-                          color: AppColors.purple,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          _currentRestMessage,
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: textColor,
-                            fontWeight: FontWeight.w500,
-                            height: 1.3,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0),
-
-              const SizedBox(height: 24),
-
-              // Next up section
-              if (isRestBetweenSets)
-                // Rest between sets - show current exercise set info
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.replay,
-                          color: Colors.orange,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'NEXT SET',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.orange.withOpacity(0.8),
-                                letterSpacing: 1,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              currentExercise.name,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: textColor,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Set ${completedSetsCount + 1} of $totalSets',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: subtitleColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ).animate().fadeIn(delay: 200.ms, duration: 400.ms).slideY(begin: 0.1, end: 0)
-              else if (nextExercise != null)
-                // Rest between exercises - show next exercise
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.skip_next,
-                          color: Colors.green,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'NEXT UP',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.green.withOpacity(0.8),
-                                letterSpacing: 1,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              nextExercise.name,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: textColor,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${nextExercise.sets ?? 3} sets · ${nextExercise.reps ?? 10} reps${nextExercise.weight != null && nextExercise.weight! > 0 ? ' · ${nextExercise.weight}kg' : ''}',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: subtitleColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ).animate().fadeIn(delay: 200.ms, duration: 400.ms).slideY(begin: 0.1, end: 0),
-
-              const SizedBox(height: 16),
-
-              // Log 1RM button - shown during rest
-              _build1RMPrompt(currentExercise, cardBg, textColor, subtitleColor),
-
-              const Spacer(flex: 2),
-
-              // Skip Rest button
-              TextButton.icon(
-                onPressed: _endRest,
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  backgroundColor: isDark ? Colors.white.withOpacity(0.1) : AppColorsLight.cardBorder,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                icon: const Icon(Icons.skip_next, color: AppColors.purple, size: 20),
-                label: const Text(
-                  'Skip Rest',
-                  style: TextStyle(
-                    color: AppColors.purple,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 32),
-            ],
-          ),
-        ),
-      ),
-    ).animate().fadeIn(duration: 200.ms);
-  }
-
   /// Build the transition countdown overlay (shown before moving to next exercise)
   Widget _buildTransitionOverlay() {
     // Safety check
@@ -5143,1851 +4134,8 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     );
   }
 
-  /// Build the set tracking table overlay (Strong app style on top of video)
-  Widget _buildSetTrackingOverlay() {
-    final viewingExercise = _exercises[_viewingExerciseIndex];
-    final totalSets = _totalSetsPerExercise[_viewingExerciseIndex] ?? viewingExercise.sets ?? 3;
-    final completedSetsForExercise = _completedSets[_viewingExerciseIndex] ?? [];
-    final previousSetsForExercise = _previousSets[_viewingExerciseIndex] ?? [];
-    final isViewingCurrent = _viewingExerciseIndex == _currentExerciseIndex;
-
-    // Theme-aware colors
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final headerBg = isDark
-        ? AppColors.elevated.withOpacity(0.6)
-        : AppColorsLight.glassSurface.withOpacity(0.8);
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final rowBorder = isDark
-        ? AppColors.cardBorder.withOpacity(0.2)
-        : AppColorsLight.cardBorder.withOpacity(0.3);
-
-    // iOS-style blur effect with ClipRRect and BackdropFilter
-    // Reduced blur for better content visibility behind
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: isDark ? 10 : 8,
-          sigmaY: isDark ? 10 : 8,
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            // More translucent background to see content behind
-            color: isDark
-                ? AppColors.pureBlack.withOpacity(0.65)
-                : Colors.white.withOpacity(0.75),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withOpacity(0.1)
-                  : AppColorsLight.cardBorder.withOpacity(0.4),
-            ),
-            // Subtle shadows for visual separation from background
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
-                blurRadius: 20,
-                spreadRadius: 0,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header row with exercise navigation
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: headerBg,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Row(
-              children: [
-                // Previous exercise button
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: _viewingExerciseIndex > 0
-                      ? () {
-                          setState(() => _viewingExerciseIndex--);
-                          HapticFeedback.selectionClick();
-                        }
-                      : null,
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: _viewingExerciseIndex > 0
-                          ? AppColors.cyan.withOpacity(0.2)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.chevron_left,
-                      size: 24,
-                      color: _viewingExerciseIndex > 0
-                          ? AppColors.cyan
-                          : textMuted.withOpacity(0.3),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Exercise name and position
-                Expanded(
-                  child: Column(
-                    children: [
-                      Text(
-                        viewingExercise.name,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: isViewingCurrent ? AppColors.cyan : textPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '${_viewingExerciseIndex + 1}/${_exercises.length}',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: textMuted,
-                            ),
-                          ),
-                          if (!isViewingCurrent) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: AppColors.orange.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                _viewingExerciseIndex < _currentExerciseIndex ? 'PAST' : 'UPCOMING',
-                                style: TextStyle(
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.orange,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Next exercise button
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: _viewingExerciseIndex < _exercises.length - 1
-                      ? () {
-                          setState(() => _viewingExerciseIndex++);
-                          HapticFeedback.selectionClick();
-                        }
-                      : null,
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: _viewingExerciseIndex < _exercises.length - 1
-                          ? AppColors.cyan.withOpacity(0.2)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.chevron_right,
-                      size: 24,
-                      color: _viewingExerciseIndex < _exercises.length - 1
-                          ? AppColors.cyan
-                          : textMuted.withOpacity(0.3),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Unit toggle
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      final currentVal = double.tryParse(_weightController.text) ?? 0;
-                      if (_useKg) {
-                        final lbsVal = currentVal * 2.20462;
-                        _weightController.text = lbsVal.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '');
-                      } else {
-                        final kgVal = currentVal * 0.453592;
-                        _weightController.text = kgVal.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '');
-                      }
-                      _useKg = !_useKg;
-                    });
-                    HapticFeedback.selectionClick();
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.cyan.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      _useKg ? 'KG' : 'LBS',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.cyan,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Collapse button
-                GestureDetector(
-                  onTap: () => setState(() => _showSetOverlay = false),
-                  child: Icon(Icons.close, size: 18, color: AppColors.textMuted),
-                ),
-              ],
-            ),
-          ),
-
-          // For timed exercises (planks, holds, wall sits), show the timer UI
-          if (viewingExercise.isTimedExercise) ...[
-            // Timed exercise header
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.elevated.withOpacity(0.3)
-                    : AppColorsLight.glassSurface.withOpacity(0.6),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.timer, size: 16, color: AppColors.cyan),
-                  const SizedBox(width: 8),
-                  Text(
-                    'TIMED EXERCISE',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.cyan,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.cyan.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'PAUSEABLE',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.cyan,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Timed set rows with pause/resume
-            ...List.generate(totalSets, (index) {
-              final isCompleted = index < completedSetsForExercise.length;
-              final isCurrent = isViewingCurrent && index == completedSetsForExercise.length;
-
-              return TimedSetRow(
-                key: ValueKey('timed_set_${_viewingExerciseIndex}_$index'),
-                durationSeconds: viewingExercise.timerDurationSeconds,
-                setNumber: index + 1,
-                isCurrentSet: isCurrent,
-                isCompleted: isCompleted,
-                onComplete: () {
-                  // Log the completed timed set
-                  _completeTimedSet(
-                    exerciseIndex: _viewingExerciseIndex,
-                    setIndex: index,
-                    durationSeconds: viewingExercise.timerDurationSeconds ?? 30,
-                  );
-                  HapticFeedback.heavyImpact();
-                },
-                onTimeUpdate: (remaining) {
-                  // Could log partial time if needed
-                },
-              );
-            }),
-          ] else ...[
-            // Standard weight-based exercise UI
-            // Table header
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.elevated.withOpacity(0.3)
-                    : AppColorsLight.glassSurface.withOpacity(0.6),
-              ),
-              child: Row(
-                children: [
-                  SizedBox(width: 36, child: Center(child: Text('SET', style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: textMuted,
-                    letterSpacing: 0.5,
-                  )))),
-                  Expanded(flex: 3, child: Center(child: Text('PREVIOUS', style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: textMuted,
-                    letterSpacing: 0.5,
-                  )))),
-                  Expanded(flex: 4, child: Center(child: Text(_useKg ? 'KG' : 'LBS', style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.cyan,
-                    letterSpacing: 0.5,
-                  )))),
-                  const SizedBox(width: 8), // Gap between KG and REPS
-                  Expanded(flex: 4, child: Center(child: Text('REPS', style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.purple,
-                    letterSpacing: 0.5,
-                  )))),
-                  const SizedBox(width: 50), // Match max checkmark button width
-                ],
-              ),
-            ),
-
-            // Warmup set rows (2 warmup sets displayed with "W" label)
-            ...List.generate(2, (warmupIndex) => _buildWarmupSetRow(
-              setLabel: 'W',
-              repRange: _getRepRange(viewingExercise),
-              rowBorder: rowBorder,
-              textMuted: textMuted,
-              textSecondary: textSecondary,
-            )),
-          ],
-
-          // Working set rows (only for non-timed exercises)
-          if (!viewingExercise.isTimedExercise)
-          ...List.generate(totalSets, (index) {
-            final isCompleted = index < completedSetsForExercise.length;
-            // Only show current set indicator if viewing the current exercise
-            final isCurrent = isViewingCurrent && index == completedSetsForExercise.length;
-            final previousSet = index < previousSetsForExercise.length
-                ? previousSetsForExercise[index]
-                : null;
-
-            // Get completed set data if available
-            SetLog? completedSetData;
-            if (isCompleted) {
-              completedSetData = completedSetsForExercise[index];
-            }
-
-            // Check if this set was edited
-            final isEdited = _editedSets[_viewingExerciseIndex]?.contains(index) ?? false;
-
-            // Format previous session data
-            String prevDisplay = '-';
-            if (previousSet != null) {
-              final prevWeight = _useKg
-                  ? previousSet['weight'] as double
-                  : (previousSet['weight'] as double) * 2.20462;
-              prevDisplay = '${prevWeight.toStringAsFixed(0)} × ${previousSet['reps']}';
-            }
-
-            // Check if this is the expanded active row
-            final isExpanded = isCurrent && _isActiveRowExpanded;
-
-            // Calculate opacity for non-active rows when expanded
-            final rowOpacity = (isCurrent || !_isActiveRowExpanded) ? 1.0 : 0.5;
-
-            // Active row is much more prominent
-            final rowWidget = GestureDetector(
-              onTap: isCurrent ? () {
-                setState(() => _isActiveRowExpanded = !_isActiveRowExpanded);
-                // More satisfying haptic for expand/collapse
-                HapticFeedback.mediumImpact();
-              } : null,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 200),
-                opacity: rowOpacity,
-                child: AnimatedContainer(
-                duration: const Duration(milliseconds: 260),
-                curve: Curves.easeOutCubic,
-                margin: isCurrent
-                    ? EdgeInsets.symmetric(horizontal: 2, vertical: isExpanded ? 6 : 3)
-                    : EdgeInsets.zero,
-                padding: EdgeInsets.symmetric(
-                  horizontal: isCurrent ? 8 : 10,
-                  vertical: isExpanded ? 16 : (isCurrent ? 8 : 5),
-                ),
-                decoration: BoxDecoration(
-                  // Active row: subtle gradient background (premium feel)
-                  gradient: isCurrent
-                      ? LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            AppColors.cyan.withOpacity(isExpanded ? 0.18 : 0.12),
-                            AppColors.electricBlue.withOpacity(isExpanded ? 0.12 : 0.08),
-                            AppColors.cyan.withOpacity(isExpanded ? 0.08 : 0.05),
-                          ],
-                          stops: const [0.0, 0.5, 1.0],
-                        )
-                      : null,
-                  color: isCompleted
-                      ? (isEdited
-                          ? AppColors.orange.withOpacity(0.12) // Edited sets show orange tint
-                          : AppColors.success.withOpacity(0.08))
-                      : isCurrent
-                          ? null // Using gradient
-                          : Colors.transparent,
-                  borderRadius: isCurrent ? BorderRadius.circular(isExpanded ? 16 : 12) : null,
-                  border: isCurrent
-                      ? Border.all(
-                          color: AppColors.cyan.withOpacity(isExpanded ? 0.4 : 0.3),
-                          width: isExpanded ? 1.5 : 1,
-                        )
-                      : Border(
-                          bottom: BorderSide(color: rowBorder),
-                        ),
-                  // Soft ambient glow for active row (premium, not gamey)
-                  boxShadow: isCurrent
-                      ? [
-                          // Outer soft glow - large blur, no spread
-                          BoxShadow(
-                            color: AppColors.cyan.withOpacity(isExpanded ? 0.15 : 0.1),
-                            blurRadius: isExpanded ? 16 : 10,
-                            spreadRadius: 0,
-                          ),
-                          // Inner subtle highlight
-                          BoxShadow(
-                            color: AppColors.electricBlue.withOpacity(0.05),
-                            blurRadius: 4,
-                            spreadRadius: 0,
-                          ),
-                        ]
-                      : null,
-                ),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 260),
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: child,
-                    );
-                  },
-                  child: isExpanded
-                    // EXPANDED VIEW - Large, tactile controls with animations
-                    ? Column(
-                        key: const ValueKey('expanded'),
-                        children: [
-                          // Collapse hint - fades in with delay
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.keyboard_arrow_up, size: 16, color: AppColors.cyan.withOpacity(0.6)),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Tap to collapse',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: AppColors.cyan.withOpacity(0.6),
-                                ),
-                              ),
-                            ],
-                          ).animate().fadeIn(delay: 50.ms, duration: 200.ms),
-                          const SizedBox(height: 12),
-                          // Large KG and REPS side by side - fades in with delay
-                          Row(
-                            children: [
-                              // KG section
-                              Expanded(
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      _useKg ? 'WEIGHT (KG)' : 'WEIGHT (LBS)',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.cyan,
-                                        letterSpacing: 1,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    _buildExpandedInput(
-                                      controller: _weightController,
-                                      isDecimal: true,
-                                      accentColor: AppColors.cyan,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              // REPS section with target indicator
-                              Expanded(
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          'REPS',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.purple,
-                                            letterSpacing: 1,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        // Target indicator
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.purple.withOpacity(0.15),
-                                            borderRadius: BorderRadius.circular(4),
-                                            border: Border.all(
-                                              color: AppColors.purple.withOpacity(0.3),
-                                            ),
-                                          ),
-                                          child: Text(
-                                            'Target: ${viewingExercise.reps ?? 10}',
-                                            style: TextStyle(
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.w600,
-                                              color: AppColors.purple,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    _buildExpandedInput(
-                                      controller: _repsController,
-                                      isDecimal: false,
-                                      accentColor: AppColors.purple,
-                                    ),
-                                    // Quick preset buttons for reps
-                                    const SizedBox(height: 8),
-                                    _buildRepsPresetButtons(viewingExercise.reps ?? 10),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ).animate().fadeIn(delay: 80.ms, duration: 200.ms),
-                          const SizedBox(height: 16),
-                          // Large complete button - pops in with spring scale
-                          _buildExpandedCompleteButton()
-                            .animate()
-                            .fadeIn(delay: 100.ms, duration: 200.ms)
-                            .scale(
-                              begin: const Offset(0.9, 0.9),
-                              end: const Offset(1.0, 1.0),
-                              delay: 100.ms,
-                              duration: 300.ms,
-                              curve: Curves.elasticOut,
-                            ),
-                        ],
-                      )
-                    // COMPACT VIEW - Normal row
-                    : Row(
-                        key: const ValueKey('compact'),
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // Set number - compact, centered
-                          SizedBox(
-                            width: 36,
-                            child: Center(
-                              child: Container(
-                                width: isCurrent ? 28 : 22,
-                                height: isCurrent ? 28 : 22,
-                                decoration: isCurrent
-                                    ? BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: AppColors.cyan.withOpacity(0.2),
-                                        border: Border.all(color: AppColors.cyan, width: 1.5),
-                                      )
-                                    : null,
-                                child: Center(
-                                  child: Text(
-                                    '${index + 1}',
-                                    style: TextStyle(
-                                      fontSize: isCurrent ? 14 : 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: isCompleted
-                                          ? AppColors.success
-                                          : isCurrent
-                                              ? AppColors.cyan
-                                              : textMuted,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          // Previous session
-                          Expanded(
-                            flex: 3,
-                            child: Center(
-                              child: Text(
-                                prevDisplay,
-                                style: TextStyle(
-                                  fontSize: isCurrent ? 13 : 12,
-                                  color: isCurrent
-                                      ? textSecondary
-                                      : textMuted.withOpacity(0.7),
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          // Weight - inline editable for current set only when viewing current exercise
-                          Expanded(
-                            flex: 4,
-                            child: Center(
-                              child: isCurrent
-                                  ? _buildInlineInput(
-                                      controller: _weightController,
-                                      isDecimal: true,
-                                      isActive: true,
-                                      accentColor: AppColors.cyan,
-                                    )
-                                  : Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          isCompleted
-                                              ? (_useKg
-                                                  ? completedSetData!.weight.toStringAsFixed(0)
-                                                  : (completedSetData!.weight * 2.20462).toStringAsFixed(0))
-                                              : '-',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.normal,
-                                            color: isCompleted
-                                                ? (isEdited ? AppColors.orange : AppColors.success)
-                                                : textMuted,
-                                          ),
-                                        ),
-                                        // Show edit indicator
-                                        if (isEdited)
-                                          Padding(
-                                            padding: const EdgeInsets.only(left: 2),
-                                            child: Icon(
-                                              Icons.edit,
-                                              size: 10,
-                                              color: AppColors.orange,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                            ),
-                          ),
-
-                          const SizedBox(width: 8), // Gap between KG and REPS
-
-                          // Reps - inline editable for current set only when viewing current exercise
-                          Expanded(
-                            flex: 4,
-                            child: Center(
-                              child: isCurrent
-                                  ? Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        // Target indicator above input
-                                        Text(
-                                          'Target: ${viewingExercise.reps ?? 10}',
-                                          style: TextStyle(
-                                            fontSize: 9,
-                                            color: AppColors.purple.withOpacity(0.7),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        _buildInlineInput(
-                                          controller: _repsController,
-                                          isDecimal: false,
-                                          isActive: true,
-                                          accentColor: AppColors.purple,
-                                        ),
-                                      ],
-                                    )
-                                  : isCompleted
-                                      ? _buildCompletedRepsDisplay(completedSetData!, isEdited)
-                                      : Text(
-                                          '-',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.normal,
-                                            color: textMuted,
-                                          ),
-                                        ),
-                            ),
-                          ),
-
-                          // Checkmark / Complete button - CIRCULAR with neon ring
-                          SizedBox(
-                            width: 50, // Consistent width for alignment
-                            child: isCompleted
-                                // Completed state - green checkmark with burst animation
-                                ? Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      // Burst effect for just-completed set
-                                      if (_justCompletedSetIndex == index)
-                                        Container(
-                                          width: 50,
-                                          height: 50,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            border: Border.all(color: AppColors.success, width: 2),
-                                          ),
-                                        ).animate()
-                                          .scale(begin: const Offset(0.5, 0.5), end: const Offset(1.4, 1.4), duration: 400.ms)
-                                          .fadeOut(duration: 400.ms),
-                                      // Second burst ring
-                                      if (_justCompletedSetIndex == index)
-                                        Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: AppColors.success.withOpacity(0.3),
-                                          ),
-                                        ).animate()
-                                          .scale(begin: const Offset(0.3, 0.3), end: const Offset(1.8, 1.8), duration: 500.ms, delay: 50.ms)
-                                          .fadeOut(duration: 400.ms, delay: 100.ms),
-                                      // Main checkmark
-                                      Container(
-                                        width: 36,
-                                        height: 36,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: AppColors.success.withOpacity(0.15),
-                                          border: Border.all(color: AppColors.success, width: 2),
-                                        ),
-                                        child: const Icon(Icons.check_rounded, size: 20, color: AppColors.success),
-                                      ).animate()
-                                        .scale(begin: const Offset(0.5, 0.5), end: const Offset(1.0, 1.0), duration: 300.ms, curve: Curves.elasticOut),
-                                    ],
-                                  )
-                                : isCurrent
-                                    // Active set - clean circular button with soft glow
-                                    ? GestureDetector(
-                                        onTapDown: (_) => setState(() => _isDoneButtonPressed = true),
-                                        onTapUp: (_) {
-                                          setState(() => _isDoneButtonPressed = false);
-                                          HapticFeedback.heavyImpact();
-                                          _completeSet();
-                                        },
-                                        onTapCancel: () => setState(() => _isDoneButtonPressed = false),
-                                        child: AnimatedContainer(
-                                          duration: const Duration(milliseconds: 100),
-                                          width: _isDoneButtonPressed ? 40 : 44,
-                                          height: _isDoneButtonPressed ? 40 : 44,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            gradient: LinearGradient(
-                                              begin: Alignment.topLeft,
-                                              end: Alignment.bottomRight,
-                                              colors: _isDoneButtonPressed
-                                                  ? [AppColors.electricBlue, AppColors.cyan]
-                                                  : [AppColors.cyan, AppColors.electricBlue],
-                                            ),
-                                            boxShadow: [
-                                              // Soft ambient glow (premium feel)
-                                              BoxShadow(
-                                                color: AppColors.cyan.withOpacity(_isDoneButtonPressed ? 0.35 : 0.2),
-                                                blurRadius: _isDoneButtonPressed ? 12 : 8,
-                                                spreadRadius: 0,
-                                              ),
-                                            ],
-                                          ),
-                                          child: const Icon(Icons.check_rounded, size: 26, color: Colors.white),
-                                        ),
-                                      )
-                                    // Pending set - subtle outline
-                                    : Container(
-                                        width: 28,
-                                        height: 28,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: textMuted.withOpacity(0.2),
-                                            width: 1.5,
-                                          ),
-                                        ),
-                                      ),
-                          ),
-                        ],
-                      ),
-                ), // Close AnimatedSwitcher
-              ), // Close AnimatedContainer
-              ), // Close AnimatedOpacity
-            );
-
-            // Return with animations - reduced opacity for completed sets
-            if (isCompleted) {
-              // Wrap completed sets with Dismissible for swipe actions
-              return Dismissible(
-                key: Key('set_${_viewingExerciseIndex}_$index'),
-                background: Container(
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.only(left: 20),
-                  decoration: BoxDecoration(
-                    color: AppColors.cyan.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.edit, color: AppColors.cyan, size: 20),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Edit',
-                        style: TextStyle(
-                          color: AppColors.cyan,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                secondaryBackground: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 20),
-                  decoration: BoxDecoration(
-                    color: AppColors.error.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      const Text(
-                        'Delete',
-                        style: TextStyle(
-                          color: AppColors.error,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.delete, color: AppColors.error, size: 20),
-                    ],
-                  ),
-                ),
-                onUpdate: (details) {
-                  // Haptic feedback when swipe threshold is reached
-                  if (details.reached && details.previousReached == false) {
-                    HapticFeedback.mediumImpact();
-                  }
-                },
-                confirmDismiss: (direction) async {
-                  HapticFeedback.selectionClick();
-                  if (direction == DismissDirection.startToEnd) {
-                    // Swipe right to edit - don't dismiss, just open editor
-                    _editCompletedSet(_viewingExerciseIndex, index);
-                    return false;
-                  } else if (direction == DismissDirection.endToStart) {
-                    // Swipe left to delete - confirm first
-                    return await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        backgroundColor: AppColors.elevated,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        title: const Text(
-                          'Delete Set?',
-                          style: TextStyle(color: AppColors.textPrimary),
-                        ),
-                        content: Text(
-                          'Are you sure you want to delete Set ${index + 1}?',
-                          style: const TextStyle(color: AppColors.textSecondary),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            style: TextButton.styleFrom(
-                              foregroundColor: AppColors.error,
-                            ),
-                            child: const Text('Delete'),
-                          ),
-                        ],
-                      ),
-                    ) ?? false;
-                  }
-                  return false;
-                },
-                onDismissed: (direction) {
-                  if (direction == DismissDirection.endToStart) {
-                    _deleteCompletedSet(_viewingExerciseIndex, index);
-                  }
-                },
-                child: Opacity(
-                  opacity: 0.6, // Reduce cognitive load on completed sets
-                  child: rowWidget,
-                ),
-              );
-            } else if (isCurrent) {
-              return rowWidget.animate().shimmer(
-                duration: 2000.ms,
-                color: AppColors.cyan.withOpacity(0.1),
-              );
-            } else {
-              return rowWidget;
-            }
-          }),
-
-          // Set adjustment indicator (if sets were reduced)
-          if (_totalSetsPerExercise[_viewingExerciseIndex]! < _originalSetsPerExercise[_viewingExerciseIndex]!)
-            Container(
-              margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.orange.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: AppColors.orange.withOpacity(0.3),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    size: 14,
-                    color: AppColors.orange,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${completedSetsForExercise.length}/${_originalSetsPerExercise[_viewingExerciseIndex]} sets (reduced from ${_originalSetsPerExercise[_viewingExerciseIndex]})',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.orange,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // Add/Edit/Remove Set buttons row
-          Container(
-            margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-            child: Row(
-              children: [
-                // Add Set button
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _totalSetsPerExercise[_viewingExerciseIndex] = totalSets + 1;
-                      });
-                      // Satisfying haptic for adding a set
-                      HapticFeedback.mediumImpact();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.elevated : AppColorsLight.glassSurface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.cyan.withOpacity(0.4),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 22,
-                            height: 22,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.cyan.withOpacity(0.15),
-                            ),
-                            child: const Icon(Icons.add, size: 14, color: AppColors.cyan),
-                          ),
-                          const SizedBox(width: 6),
-                          const Flexible(
-                            child: Text(
-                              '+1 Set',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.cyan,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                // Edit All Sets button - comprehensive editing
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => _handleEditAllSets(_viewingExerciseIndex),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.elevated : AppColorsLight.glassSurface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.purple.withOpacity(0.4),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 22,
-                            height: 22,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.purple.withOpacity(0.15),
-                            ),
-                            child: const Icon(Icons.tune, size: 14, color: AppColors.purple),
-                          ),
-                          const SizedBox(width: 6),
-                          const Flexible(
-                            child: Text(
-                              'Edit All',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.purple,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                // Remove Set button - only show if more than 1 set remaining
-                if (totalSets - completedSetsForExercise.length > 1)
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => _handleRemoveSet(
-                        _viewingExerciseIndex,
-                        totalSets,
-                        completedSetsForExercise.length,
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.elevated : AppColorsLight.glassSurface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppColors.orange.withOpacity(0.4),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 22,
-                              height: 22,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.orange.withOpacity(0.15),
-                              ),
-                              child: const Icon(Icons.remove, size: 14, color: AppColors.orange),
-                            ),
-                            const SizedBox(width: 6),
-                            const Flexible(
-                              child: Text(
-                                '-1 Set',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.orange,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-
-          // Skip Remaining Sets button - only show if viewing current exercise and there are remaining sets
-          if (isViewingCurrent && totalSets - completedSetsForExercise.length > 0)
-            Container(
-              margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-              child: GestureDetector(
-                onTap: () => _handleSkipRemainingSets(
-                  _viewingExerciseIndex,
-                  viewingExercise.name,
-                  totalSets,
-                  completedSetsForExercise.length,
-                ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: textMuted.withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.skip_next_rounded,
-                        size: 18,
-                        color: textMuted,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        "I'm done with this exercise",
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-          const SizedBox(height: 24),
-
-          // Rest timer info - distinct card with clear separation
-          Container(
-            margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.elevated : AppColorsLight.glassSurface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: AppColors.purple.withOpacity(0.4),
-                width: 1.5,
-              ),
-            ),
-            child: isViewingCurrent
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 26,
-                        height: 26,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.purple.withOpacity(0.15),
-                        ),
-                        child: const Icon(Icons.timer_outlined, size: 14, color: AppColors.purple),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Rest: ${viewingExercise.restSeconds ?? 90}s between sets',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.purple,
-                        ),
-                      ),
-                    ],
-                  )
-                : GestureDetector(
-                    onTap: () {
-                      setState(() => _viewingExerciseIndex = _currentExerciseIndex);
-                      HapticFeedback.selectionClick();
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 26,
-                          height: 26,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.cyan.withOpacity(0.15),
-                          ),
-                          child: const Icon(Icons.keyboard_return, size: 14, color: AppColors.cyan),
-                        ),
-                        const SizedBox(width: 10),
-                        const Text(
-                          'Back to Current Exercise',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.cyan,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-          ),
-        ],
-      ),
-        ), // Close Container
-      ), // Close BackdropFilter
-    ).animate().fadeIn(duration: 200.ms).slideY(begin: -0.1); // Close ClipRRect with animation
-  }
-
-  static const _overlayHeaderStyle = TextStyle(
-    fontSize: 10,
-    fontWeight: FontWeight.bold,
-    color: AppColors.textMuted,
-    letterSpacing: 0.5,
-  );
-
-  /// Build inline editable input for the Set Tracker
-  Widget _buildInlineInput({
-    required TextEditingController controller,
-    required bool isDecimal,
-    bool isActive = false,
-    Color accentColor = AppColors.cyan,
-  }) {
-    final increment = isDecimal ? 2.5 : 1.0;
-    // Larger tap targets for easier use during workouts (10-15% bigger)
-    final buttonWidth = isActive ? 32.0 : 28.0;
-    final height = isActive ? 40.0 : 36.0;
-    final iconSize = isActive ? 18.0 : 16.0;
-    final fontSize = isActive ? 15.0 : 13.0;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final inputBg = isActive
-        ? (isDark ? AppColors.pureBlack : AppColorsLight.pureWhite)
-        : (isDark ? AppColors.elevated : AppColorsLight.glassSurface);
-    final textColor = isDark ? Colors.white : AppColorsLight.textPrimary;
-
-    return Container(
-      height: height,
-      decoration: BoxDecoration(
-        color: inputBg,
-        borderRadius: BorderRadius.circular(isActive ? 10 : 8),
-        border: Border.all(
-          color: isActive ? accentColor : accentColor.withOpacity(0.5),
-          width: isActive ? 1.5 : 1,
-        ),
-        boxShadow: isActive
-            ? [
-                BoxShadow(
-                  color: accentColor.withOpacity(isDark ? 0.2 : 0.1),
-                  blurRadius: 6,
-                  spreadRadius: 0,
-                ),
-              ]
-            : null,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.max,
-        children: [
-          // Minus button - compact but tappable
-          GestureDetector(
-            onTap: () {
-              if (isDecimal) {
-                final current = double.tryParse(controller.text) ?? 0;
-                final newVal = (current - increment).clamp(0.0, 999.0);
-                controller.text = newVal.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '');
-              } else {
-                final current = int.tryParse(controller.text) ?? 0;
-                final newVal = (current - 1).clamp(0, 999);
-                controller.text = newVal.toString();
-              }
-              setState(() {});
-              HapticFeedback.mediumImpact();
-            },
-            child: Container(
-              width: buttonWidth,
-              height: height,
-              decoration: BoxDecoration(
-                gradient: isActive
-                    ? LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          accentColor.withOpacity(0.3),
-                          accentColor.withOpacity(0.15),
-                        ],
-                      )
-                    : null,
-                color: isActive ? null : accentColor.withOpacity(0.15),
-                borderRadius: BorderRadius.horizontal(
-                  left: Radius.circular(isActive ? 8 : 7),
-                ),
-              ),
-              child: Center(
-                child: Icon(
-                  Icons.remove,
-                  size: iconSize,
-                  color: isActive ? Colors.white : accentColor,
-                ),
-              ),
-            ),
-          ),
-          // Text display - tappable to edit via dialog
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                _showNumberInputDialog(controller, isDecimal);
-              },
-              child: Container(
-                height: height,
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    controller.text.isEmpty ? '0' : controller.text,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    style: TextStyle(
-                      fontSize: fontSize,
-                      fontWeight: FontWeight.bold,
-                      color: isActive ? textColor : accentColor,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // Plus button - compact but tappable
-          GestureDetector(
-            onTap: () {
-              if (isDecimal) {
-                final current = double.tryParse(controller.text) ?? 0;
-                final newVal = current + increment;
-                controller.text = newVal.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '');
-              } else {
-                final current = int.tryParse(controller.text) ?? 0;
-                final newVal = current + 1;
-                controller.text = newVal.toString();
-              }
-              setState(() {});
-              HapticFeedback.mediumImpact();
-            },
-            child: Container(
-              width: buttonWidth,
-              height: height,
-              decoration: BoxDecoration(
-                gradient: isActive
-                    ? LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          accentColor.withOpacity(0.3),
-                          accentColor.withOpacity(0.15),
-                        ],
-                      )
-                    : null,
-                color: isActive ? null : accentColor.withOpacity(0.15),
-                borderRadius: BorderRadius.horizontal(
-                  right: Radius.circular(isActive ? 8 : 7),
-                ),
-              ),
-              child: Center(
-                child: Icon(
-                  Icons.add,
-                  size: iconSize,
-                  color: isActive ? Colors.white : accentColor,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Get rep range string for an exercise
-  String _getRepRange(WorkoutExercise exercise) {
-    if (exercise.reps != null) {
-      final reps = exercise.reps!;
-      if (reps <= 6) return '${reps - 1}-${reps + 1}';
-      if (reps <= 12) return '${reps - 2}-${reps + 2}';
-      return '${reps - 3}-${reps + 3}';
-    } else if (exercise.durationSeconds != null) {
-      return '${exercise.durationSeconds}s';
-    }
-    return '8-12';
-  }
-
-  /// Build warmup set row for the Set Tracker (display only, not interactive)
-  Widget _buildWarmupSetRow({
-    required String setLabel,
-    required String repRange,
-    required Color rowBorder,
-    required Color textMuted,
-    required Color textSecondary,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: AppColors.orange.withOpacity(0.05),
-        border: Border(
-          bottom: BorderSide(color: rowBorder),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Set label (W for warmup)
-          SizedBox(
-            width: 36,
-            child: Center(
-              child: Container(
-                width: 22,
-                height: 22,
-                decoration: BoxDecoration(
-                  color: AppColors.orange.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Center(
-                  child: Text(
-                    setLabel,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.orange,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // Previous (dash for warmup)
-          Expanded(
-            flex: 3,
-            child: Center(
-              child: Text(
-                '-',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: textMuted.withOpacity(0.5),
-                ),
-              ),
-            ),
-          ),
-          // Weight (dash for warmup - user decides warmup weight)
-          Expanded(
-            flex: 4,
-            child: Center(
-              child: Text(
-                '-',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: textMuted.withOpacity(0.5),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Rep range
-          Expanded(
-            flex: 4,
-            child: Center(
-              child: Text(
-                repRange,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: textSecondary,
-                ),
-              ),
-            ),
-          ),
-          // Empty space for checkmark column alignment
-          const SizedBox(width: 50),
-        ],
-      ),
-    );
-  }
-
-  /// Build expanded input for the Set Tracker (larger, more tactile)
-  Widget _buildExpandedInput({
-    required TextEditingController controller,
-    required bool isDecimal,
-    required Color accentColor,
-  }) {
-    final increment = isDecimal ? 2.5 : 1.0;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final inputBg = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final textColor = isDark ? Colors.white : AppColorsLight.textPrimary;
-
-    return Container(
-      height: 64,
-      decoration: BoxDecoration(
-        color: inputBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accentColor, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withOpacity(isDark ? 0.3 : 0.15),
-            blurRadius: 12,
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Large minus button with glow effect
-          _GlowingIncrementButton(
-            icon: Icons.remove,
-            accentColor: accentColor,
-            isLeft: true,
-            onTap: () {
-              if (isDecimal) {
-                final current = double.tryParse(controller.text) ?? 0;
-                final newVal = (current - increment).clamp(0.0, 999.0);
-                controller.text = newVal.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '');
-              } else {
-                final current = int.tryParse(controller.text) ?? 0;
-                final newVal = (current - 1).clamp(0, 999);
-                controller.text = newVal.toString();
-              }
-              setState(() {});
-            },
-          ),
-          // Large text display - tappable to edit
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                _showNumberInputDialog(controller, isDecimal);
-              },
-              child: Container(
-                height: 64,
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    controller.text.isEmpty ? '0' : controller.text,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // Large plus button with glow effect
-          _GlowingIncrementButton(
-            icon: Icons.add,
-            accentColor: accentColor,
-            isLeft: false,
-            onTap: () {
-              if (isDecimal) {
-                final current = double.tryParse(controller.text) ?? 0;
-                final newVal = current + increment;
-                controller.text = newVal.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '');
-              } else {
-                final current = int.tryParse(controller.text) ?? 0;
-                final newVal = current + 1;
-                controller.text = newVal.toString();
-              }
-              setState(() {});
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Build quick preset buttons for reps (Target, -5, -2)
-  Widget _buildRepsPresetButtons(int targetReps) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        Flexible(
-          child: _buildPresetButton(
-            label: 'Target',
-            value: targetReps,
-            color: AppColors.purple,
-            isPrimary: true,
-          ),
-        ),
-        Flexible(
-          child: _buildPresetButton(
-            label: '-5',
-            value: targetReps - 5,
-            color: AppColors.orange,
-          ),
-        ),
-        Flexible(
-          child: _buildPresetButton(
-            label: '-2',
-            value: targetReps - 2,
-            color: AppColors.orange,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Build a single preset button
-  Widget _buildPresetButton({
-    required String label,
-    required int value,
-    required Color color,
-    bool isPrimary = false,
-  }) {
-    final safeValue = value.clamp(0, 999);
-    return GestureDetector(
-      onTap: () {
-        _repsController.text = safeValue.toString();
-        HapticFeedback.selectionClick();
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: isPrimary ? 12 : 10,
-          vertical: 6,
-        ),
-        decoration: BoxDecoration(
-          color: color.withOpacity(isPrimary ? 0.2 : 0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: color.withOpacity(isPrimary ? 0.5 : 0.3),
-          ),
-        ),
-        child: Text(
-          isPrimary ? '$label ($safeValue)' : label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: isPrimary ? FontWeight.bold : FontWeight.w600,
-            color: color,
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Build completed reps display with planned vs actual indicator
-  Widget _buildCompletedRepsDisplay(SetLog setData, bool isEdited) {
-    final actualReps = setData.reps;
-    final targetReps = setData.targetReps;
-    final differsFromTarget = setData.differsFromTarget;
-    final metTarget = setData.metTarget;
-
-    // Determine color based on performance
-    Color repsColor;
-    if (isEdited) {
-      repsColor = AppColors.orange;
-    } else if (differsFromTarget && !metTarget) {
-      // Under target - show orange/warning
-      repsColor = AppColors.orange;
-    } else {
-      repsColor = AppColors.success;
-    }
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Actual reps (bold)
-        Text(
-          actualReps.toString(),
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: repsColor,
-          ),
-        ),
-        // Show target comparison if differs
-        if (differsFromTarget) ...[
-          const SizedBox(width: 3),
-          Text(
-            '/$targetReps',
-            style: TextStyle(
-              fontSize: 10,
-              color: AppColors.textMuted.withOpacity(0.7),
-            ),
-          ),
-          const SizedBox(width: 4),
-          // Accuracy badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            decoration: BoxDecoration(
-              color: metTarget
-                  ? AppColors.success.withOpacity(0.15)
-                  : AppColors.orange.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              '${setData.accuracyPercent}%',
-              style: TextStyle(
-                fontSize: 8,
-                fontWeight: FontWeight.bold,
-                color: metTarget ? AppColors.success : AppColors.orange,
-              ),
-            ),
-          ),
-        ],
-        // Edit indicator
-        if (isEdited)
-          Padding(
-            padding: const EdgeInsets.only(left: 2),
-            child: Icon(
-              Icons.edit,
-              size: 10,
-              color: AppColors.orange,
-            ),
-          ),
-      ],
-    );
-  }
-
-  /// Build expanded complete button for the Set Tracker
-  Widget _buildExpandedCompleteButton() {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isDoneButtonPressed = true),
-      onTapUp: (_) {
-        setState(() {
-          _isDoneButtonPressed = false;
-          // Keep expanded state for next set - better UX
-        });
-        HapticFeedback.heavyImpact();
-        _completeSet();
-      },
-      onTapCancel: () => setState(() => _isDoneButtonPressed = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        width: double.infinity,
-        height: _isDoneButtonPressed ? 52 : 56,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: _isDoneButtonPressed
-                ? [AppColors.electricBlue, AppColors.cyan]
-                : [AppColors.cyan, AppColors.electricBlue],
-          ),
-          boxShadow: [
-            // Soft ambient glow (premium, not gamey)
-            BoxShadow(
-              color: AppColors.cyan.withOpacity(_isDoneButtonPressed ? 0.3 : 0.18),
-              blurRadius: _isDoneButtonPressed ? 14 : 10,
-              spreadRadius: 0,
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.check_rounded, size: 28, color: Colors.white),
-            const SizedBox(width: 8),
-            const Text(
-              'COMPLETE SET',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: 1,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Show a dialog to edit the number value
-  void _showNumberInputDialog(TextEditingController controller, bool isDecimal) {
-    final editController = TextEditingController(text: controller.text);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.elevated,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          isDecimal ? 'Enter Weight (${_useKg ? 'kg' : 'lbs'})' : 'Enter Reps',
-          style: const TextStyle(color: AppColors.textPrimary),
-        ),
-        content: TextField(
-          controller: editController,
-          autofocus: true,
-          keyboardType: isDecimal
-              ? const TextInputType.numberWithOptions(decimal: true)
-              : TextInputType.number,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: AppColors.cyan,
-          ),
-          textAlign: TextAlign.center,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: AppColors.pureBlack,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.cyan),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.cyan, width: 2),
-            ),
-          ),
-          onSubmitted: (value) {
-            // For reps, convert to integer
-            if (!isDecimal) {
-              final intVal = int.tryParse(value.replaceAll(RegExp(r'[^\d]'), '')) ?? 0;
-              controller.text = intVal.toString();
-            } else {
-              controller.text = value;
-            }
-            setState(() {});
-            Navigator.pop(context);
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textMuted)),
-          ),
-          TextButton(
-            onPressed: () {
-              // For reps, convert to integer
-              if (!isDecimal) {
-                final intVal = int.tryParse(editController.text.replaceAll(RegExp(r'[^\d]'), '')) ?? 0;
-                controller.text = intVal.toString();
-              } else {
-                controller.text = editController.text;
-              }
-              setState(() {});
-              Navigator.pop(context);
-            },
-            child: const Text('OK', style: TextStyle(color: AppColors.cyan, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
-
+  // NOTE: _buildSetTrackingOverlay was removed - now using SetTrackingSection widget
+  // NOTE: _buildRestOverlay was removed - now using RestTimerOverlay widget
   Widget _buildBottomSection(WorkoutExercise currentExercise, WorkoutExercise? nextExercise) {
     // Build completed sets count per exercise
     final completedSetsPerExercise = <int, int>{};
@@ -7216,525 +4364,6 @@ class _GlowingIncrementButtonState extends State<_GlowingIncrementButton>
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Stat Chip
-// ─────────────────────────────────────────────────────────────────
-
-class _StatChip extends StatelessWidget {
-  final IconData icon;
-  final String value;
-  final String? suffix;
-  final String? label;
-  final Color color;
-  final double scaleFactor;
-  final bool isTappable;
-
-  const _StatChip({
-    required this.icon,
-    required this.value,
-    required this.color,
-    this.suffix,
-    this.label,
-    this.scaleFactor = 1.0,
-    this.isTappable = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Dynamic dimensions based on scale factor
-    final horizontalPadding = (10 * scaleFactor).clamp(6.0, 14.0);
-    final verticalPadding = (6 * scaleFactor).clamp(4.0, 8.0);
-    final iconSize = (16 * scaleFactor).clamp(12.0, 20.0);
-    final valueFontSize = (14 * scaleFactor).clamp(10.0, 18.0);
-    final suffixFontSize = (10 * scaleFactor).clamp(8.0, 13.0);
-    final labelFontSize = (8 * scaleFactor).clamp(6.0, 10.0);
-    final innerSpacing = (4 * scaleFactor).clamp(2.0, 6.0);
-    final borderRadius = (12 * scaleFactor).clamp(8.0, 16.0);
-
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: horizontalPadding,
-        vertical: verticalPadding,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.pureBlack.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: isTappable ? color.withOpacity(0.5) : color.withOpacity(0.3),
-          width: isTappable ? 1.5 : 1.0,
-        ),
-        // Add subtle glow for tappable items
-        boxShadow: isTappable
-            ? [
-                BoxShadow(
-                  color: color.withOpacity(0.2),
-                  blurRadius: 8,
-                  spreadRadius: 0,
-                ),
-              ]
-            : null,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: iconSize, color: color),
-          SizedBox(width: innerSpacing),
-          Text(
-            // If paused, just show the label instead of time + PAUSED to save space
-            label != null ? label! : value,
-            style: TextStyle(
-              fontSize: label != null ? labelFontSize : valueFontSize,
-              fontWeight: FontWeight.bold,
-              fontFamily: label != null ? null : 'monospace',
-              color: label != null ? AppColors.orange : color,
-            ),
-          ),
-          if (suffix != null && label == null)
-            Text(
-              suffix!,
-              style: TextStyle(
-                fontSize: suffixFontSize,
-                color: color.withOpacity(0.7),
-              ),
-            ),
-          // Add tap indicator for tappable chips
-          if (isTappable) ...[
-            SizedBox(width: innerSpacing * 0.5),
-            Icon(Icons.add_circle_outline, size: iconSize * 0.7, color: color.withOpacity(0.5)),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Set Dots
-// ─────────────────────────────────────────────────────────────────
-
-class _SetDots extends StatelessWidget {
-  final int totalSets;
-  final int completedSets;
-
-  const _SetDots({
-    required this.totalSets,
-    required this.completedSets,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Label
-        Text(
-          'Set ${completedSets + 1} of $totalSets',
-          style: const TextStyle(
-            fontSize: 11,
-            color: AppColors.textMuted,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 6),
-        // Dots
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(totalSets, (index) {
-            final isCompleted = index < completedSets;
-            final isCurrent = index == completedSets;
-
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              width: isCurrent ? 24 : 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: isCompleted
-                    ? AppColors.success
-                    : isCurrent
-                        ? AppColors.cyan
-                        : AppColors.glassSurface,
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: isCurrent ? AppColors.cyan : Colors.transparent,
-                  width: 2,
-                ),
-              ),
-              child: isCompleted
-                  ? const Icon(Icons.check, size: 8, color: Colors.white)
-                  : null,
-            );
-          }),
-        ),
-      ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Instruction Row
-// ─────────────────────────────────────────────────────────────────
-
-class _InstructionRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _InstructionRow({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 60,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textMuted,
-              ),
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Number Input Field
-// ─────────────────────────────────────────────────────────────────
-
-class _NumberInputField extends StatelessWidget {
-  final TextEditingController controller;
-  final IconData icon;
-  final String hint;
-  final Color color;
-  final bool isDecimal;
-
-  const _NumberInputField({
-    required this.controller,
-    required this.icon,
-    required this.hint,
-    required this.color,
-    this.isDecimal = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.elevated,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          // Decrement button
-          GestureDetector(
-            onTap: () {
-              final current = isDecimal
-                  ? (double.tryParse(controller.text) ?? 0)
-                  : (int.tryParse(controller.text) ?? 0);
-              final newValue = isDecimal
-                  ? (current - 2.5).clamp(0, 999)
-                  : (current - 1).clamp(0, 999);
-              controller.text = isDecimal
-                  ? newValue.toStringAsFixed(1).replaceAll('.0', '')
-                  : newValue.toInt().toString();
-              HapticFeedback.selectionClick();
-            },
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              child: Icon(Icons.remove, color: color, size: 20),
-            ),
-          ),
-          // Text field
-          Expanded(
-            child: TextField(
-              controller: controller,
-              textAlign: TextAlign.center,
-              keyboardType: TextInputType.numberWithOptions(decimal: isDecimal),
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                hintText: hint,
-                hintStyle: TextStyle(color: color.withOpacity(0.4)),
-              ),
-            ),
-          ),
-          // Increment button
-          GestureDetector(
-            onTap: () {
-              final current = isDecimal
-                  ? (double.tryParse(controller.text) ?? 0)
-                  : (int.tryParse(controller.text) ?? 0);
-              final newValue = isDecimal ? current + 2.5 : current + 1;
-              controller.text = isDecimal
-                  ? newValue.toStringAsFixed(1).replaceAll('.0', '')
-                  : newValue.toInt().toString();
-              HapticFeedback.selectionClick();
-            },
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              child: Icon(Icons.add, color: color, size: 20),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Exercise Option Tile (for options menu)
-// ─────────────────────────────────────────────────────────────────
-
-class _ExerciseOptionTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _ExerciseOptionTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 24),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: color,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right, color: color.withOpacity(0.7)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Inline Number Input (for active workout screen)
-// ─────────────────────────────────────────────────────────────────
-
-class _InlineNumberInput extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-  final IconData icon;
-  final Color color;
-  final bool isDecimal;
-  final String? unitLabel;
-  final VoidCallback? onUnitToggle;
-
-  const _InlineNumberInput({
-    required this.controller,
-    required this.label,
-    required this.icon,
-    required this.color,
-    this.isDecimal = false,
-    this.unitLabel,
-    this.onUnitToggle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.elevated,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.4)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Label with optional unit toggle
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 12, color: color),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              if (unitLabel != null) ...[
-                const SizedBox(width: 4),
-                GestureDetector(
-                  onTap: onUnitToggle,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: color.withAlpha(40),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: color.withAlpha(80)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          unitLabel!,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: color,
-                          ),
-                        ),
-                        const SizedBox(width: 2),
-                        Icon(Icons.swap_horiz, size: 10, color: color),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 4),
-          // Input row with +/- buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Decrement button
-              GestureDetector(
-                onTap: () {
-                  final current = isDecimal
-                      ? (double.tryParse(controller.text) ?? 0)
-                      : (int.tryParse(controller.text) ?? 0);
-                  final newValue = isDecimal
-                      ? (current - 2.5).clamp(0.0, 999.0)
-                      : (current - 1).clamp(0, 999);
-                  controller.text = isDecimal
-                      ? newValue.toStringAsFixed(1).replaceAll('.0', '')
-                      : newValue.toInt().toString();
-                  HapticFeedback.selectionClick();
-                },
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.remove, color: color, size: 18),
-                ),
-              ),
-              // Value field
-              SizedBox(
-                width: 60,
-                child: TextField(
-                  controller: controller,
-                  textAlign: TextAlign.center,
-                  keyboardType: TextInputType.numberWithOptions(decimal: isDecimal),
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(vertical: 4),
-                  ),
-                ),
-              ),
-              // Increment button
-              GestureDetector(
-                onTap: () {
-                  final current = isDecimal
-                      ? (double.tryParse(controller.text) ?? 0)
-                      : (int.tryParse(controller.text) ?? 0);
-                  final newValue = isDecimal ? current + 2.5 : current + 1;
-                  controller.text = isDecimal
-                      ? newValue.toStringAsFixed(1).replaceAll('.0', '')
-                      : newValue.toInt().toString();
-                  HapticFeedback.selectionClick();
-                },
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.add, color: color, size: 18),
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

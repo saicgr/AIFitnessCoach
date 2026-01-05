@@ -24,6 +24,7 @@ import '../screens/onboarding/weight_projection_screen.dart';
 import '../screens/onboarding/senior_onboarding_screen.dart';
 import '../screens/onboarding/mode_selection_screen.dart';
 import '../screens/onboarding/coach_selection_screen.dart';
+import '../screens/onboarding/workout_generation_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/summaries/weekly_summary_screen.dart';
 import '../screens/social/social_screen.dart';
@@ -719,6 +720,23 @@ final routerProvider = Provider<GoRouter>((ref) {
                 )),
                 child: child,
               ),
+            );
+          },
+        ),
+      ),
+
+      // Workout Generation - full screen progress while generating workouts
+      GoRoute(
+        path: '/workout-generation',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const WorkoutGenerationScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
             );
           },
         ),

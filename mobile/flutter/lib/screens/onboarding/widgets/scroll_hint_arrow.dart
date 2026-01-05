@@ -60,11 +60,16 @@ class _ScrollHintArrowState extends State<ScrollHintArrow> {
     }
 
     final maxScroll = widget.scrollController.position.maxScrollExtent;
+    final currentScroll = widget.scrollController.offset;
     final isScrollable = maxScroll > widget.threshold;
+    final isNearBottom = currentScroll >= maxScroll - widget.threshold;
 
-    if (!_hasCheckedInitial || _showArrow != isScrollable) {
+    // Only show arrow if content is scrollable AND we're not already at/near the bottom
+    final shouldShow = isScrollable && !isNearBottom;
+
+    if (!_hasCheckedInitial || _showArrow != shouldShow) {
       setState(() {
-        _showArrow = isScrollable;
+        _showArrow = shouldShow;
         _hasCheckedInitial = true;
       });
     }

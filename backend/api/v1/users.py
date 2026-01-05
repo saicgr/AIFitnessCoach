@@ -234,7 +234,7 @@ def merge_extended_fields_into_preferences(
     fasting_protocol: Optional[str] = None,
     coach_id: Optional[str] = None,
     training_experience: Optional[str] = None,
-    workout_days: Optional[List[str]] = None,
+    workout_days: Optional[List[int]] = None,  # List of day indices [0=Mon, 1=Tue, ..., 6=Sun]
     # Sleep schedule for fasting optimization
     wake_time: Optional[str] = None,
     sleep_time: Optional[str] = None,
@@ -553,7 +553,8 @@ class UserPreferencesRequest(BaseModel):
 
     # Schedule
     days_per_week: Optional[int] = None
-    selected_days: Optional[List[str]] = None
+    selected_days: Optional[List[int]] = None  # List of day indices [0=Mon, 1=Tue, ..., 6=Sun]
+    workout_duration: Optional[int] = None  # Duration in minutes (30, 45, 60, 75, 90)
 
     # Equipment
     equipment: Optional[List[str]] = None
@@ -620,11 +621,14 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest):
         if request.activity_level is not None:
             update_data["activity_level"] = request.activity_level
         if request.goals is not None:
-            update_data["goals"] = request.goals
+            # goals column is VARCHAR, needs JSON string
+            update_data["goals"] = json.dumps(request.goals) if isinstance(request.goals, list) else request.goals
         if request.equipment is not None:
-            update_data["equipment"] = request.equipment
+            # equipment column is VARCHAR, needs JSON string
+            update_data["equipment"] = json.dumps(request.equipment) if isinstance(request.equipment, list) else request.equipment
         if request.custom_equipment is not None:
-            update_data["custom_equipment"] = request.custom_equipment
+            # custom_equipment column is VARCHAR, needs JSON string
+            update_data["custom_equipment"] = json.dumps(request.custom_equipment) if isinstance(request.custom_equipment, list) else request.custom_equipment
         if request.age is not None:
             update_data["age"] = request.age
         if request.gender is not None:
@@ -641,7 +645,7 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest):
         final_preferences = merge_extended_fields_into_preferences(
             current_prefs,
             request.days_per_week,
-            None,  # workout_duration
+            request.workout_duration,
             request.training_split,
             None,  # intensity_preference
             None,  # preferred_time

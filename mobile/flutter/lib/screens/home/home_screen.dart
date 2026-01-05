@@ -276,17 +276,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   void _enterEditMode() async {
     final layout = ref.read(activeLayoutProvider).value;
-    if (layout != null) {
-      setState(() {
-        _isEditMode = true;
-        _editingTiles = List.from(layout.tiles);
-      });
-      _wiggleController.repeat(reverse: true);
-      HapticService.medium();
 
-      // Show one-time tooltip/coach mark for edit mode
-      await _showEditModeTooltipIfNeeded();
+    // If layout is null or empty, create default tiles
+    List<HomeTile> tilesToEdit;
+    if (layout != null && layout.tiles.isNotEmpty) {
+      tilesToEdit = List.from(layout.tiles);
+    } else {
+      // Create default tiles for editing
+      final defaultTileTypes = [
+        TileType.fitnessScore,
+        TileType.moodPicker,
+        TileType.dailyActivity,
+        TileType.nextWorkout,
+        TileType.quickActions,
+        TileType.weekChanges,
+        TileType.weeklyProgress,
+        TileType.weeklyGoals,
+        TileType.upcomingWorkouts,
+        TileType.aiCoachTip,
+      ];
+      tilesToEdit = defaultTileTypes.asMap().entries.map((entry) {
+        return HomeTile(
+          id: 'tile_${entry.key}',
+          type: entry.value,
+          order: entry.key,
+          isVisible: true,
+          size: entry.value.defaultSize,
+        );
+      }).toList();
     }
+
+    setState(() {
+      _isEditMode = true;
+      _editingTiles = tilesToEdit;
+    });
+    _wiggleController.repeat(reverse: true);
+    HapticService.medium();
+
+    // Show one-time tooltip/coach mark for edit mode
+    await _showEditModeTooltipIfNeeded();
   }
 
   /// Shows a one-time tooltip explaining edit mode features

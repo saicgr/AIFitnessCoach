@@ -4,18 +4,20 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import 'scroll_hint_arrow.dart';
 
-/// Quiz step for collecting body metrics: age, gender, height, current weight, and weight goal.
+/// Quiz step for collecting body metrics: name, DOB, gender, height, current weight, and weight goal.
 /// Uses two-step approach for weight goal: Direction (Lose/Gain/Maintain) + Amount.
 class QuizBodyMetrics extends StatefulWidget {
-  final int? age;
-  final String? gender;  // 'male' or 'female'
+  final String? name;
+  final DateTime? dateOfBirth;
+  final String? gender;  // 'male', 'female', or 'other'
   final double? heightCm;
   final double? weightKg;
   final double? goalWeightKg;
   final bool useMetric;
   final String? weightDirection;  // 'lose', 'gain', 'maintain'
   final double? weightChangeAmount;  // Amount to change in current unit
-  final ValueChanged<int> onAgeChanged;
+  final ValueChanged<String> onNameChanged;
+  final ValueChanged<DateTime> onDateOfBirthChanged;
   final ValueChanged<String> onGenderChanged;
   final ValueChanged<double> onHeightChanged;
   final ValueChanged<double> onWeightChanged;
@@ -26,7 +28,8 @@ class QuizBodyMetrics extends StatefulWidget {
 
   const QuizBodyMetrics({
     super.key,
-    this.age,
+    this.name,
+    this.dateOfBirth,
     this.gender,
     required this.heightCm,
     required this.weightKg,
@@ -34,7 +37,8 @@ class QuizBodyMetrics extends StatefulWidget {
     required this.useMetric,
     this.weightDirection,
     this.weightChangeAmount,
-    required this.onAgeChanged,
+    required this.onNameChanged,
+    required this.onDateOfBirthChanged,
     required this.onGenderChanged,
     required this.onHeightChanged,
     required this.onWeightChanged,
@@ -43,6 +47,18 @@ class QuizBodyMetrics extends StatefulWidget {
     this.onWeightDirectionChanged,
     this.onWeightChangeAmountChanged,
   });
+
+  /// Calculate age from date of birth
+  int? get age {
+    if (dateOfBirth == null) return null;
+    final now = DateTime.now();
+    int age = now.year - dateOfBirth!.year;
+    if (now.month < dateOfBirth!.month ||
+        (now.month == dateOfBirth!.month && now.day < dateOfBirth!.day)) {
+      age--;
+    }
+    return age;
+  }
 
   @override
   State<QuizBodyMetrics> createState() => _QuizBodyMetricsState();
@@ -53,7 +69,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
   late TextEditingController _heightFeetController;
   late TextEditingController _heightInchesController;
   late TextEditingController _weightController;
-  late TextEditingController _ageController;
+  late TextEditingController _nameController;
   late ScrollController _scrollController;
 
   // Separate unit preferences for height and weight
@@ -67,10 +83,8 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    // Initialize age controller
-    _ageController = TextEditingController(
-      text: widget.age != null ? widget.age.toString() : '',
-    );
+    // Initialize name controller
+    _nameController = TextEditingController(text: widget.name ?? '');
     // Initialize separate unit preferences (both start with the global preference)
     _heightInMetric = widget.useMetric;
     _weightInMetric = widget.useMetric;
@@ -171,7 +185,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     _heightFeetController.dispose();
     _heightInchesController.dispose();
     _weightController.dispose();
-    _ageController.dispose();
+    _nameController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -221,8 +235,12 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                 _buildSubtitle(textSecondary),
                 const SizedBox(height: 24),
 
-                // Age and Gender inputs (NEW)
-                _buildAgeGenderSection(isDark, textPrimary, textSecondary, cardBg, cardBorder),
+                // Name input (NEW)
+                _buildNameInput(isDark, textPrimary, textSecondary, cardBg, cardBorder),
+                const SizedBox(height: 20),
+
+                // DOB and Gender inputs
+                _buildDobGenderSection(isDark, textPrimary, textSecondary, cardBg, cardBorder),
                 const SizedBox(height: 20),
 
                 // Height input
@@ -282,19 +300,94 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     ).animate().fadeIn(delay: 200.ms);
   }
 
-  Widget _buildAgeGenderSection(
+  Widget _buildNameInput(
     bool isDark,
     Color textPrimary,
     Color textSecondary,
     Color cardBg,
     Color cardBorder,
   ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.electricBlue.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.person_outline, color: AppColors.electricBlue, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'What should we call you?',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cardBorder),
+          ),
+          child: TextField(
+            controller: _nameController,
+            keyboardType: TextInputType.name,
+            textCapitalization: TextCapitalization.words,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Your name',
+              hintStyle: TextStyle(
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                fontWeight: FontWeight.normal,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              border: InputBorder.none,
+            ),
+            onChanged: (value) {
+              if (value.trim().isNotEmpty) {
+                widget.onNameChanged(value.trim());
+              }
+            },
+          ),
+        ),
+      ],
+    ).animate().fadeIn(delay: 250.ms).slideX(begin: 0.05);
+  }
+
+  Widget _buildDobGenderSection(
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+    Color cardBg,
+    Color cardBorder,
+  ) {
+    // Format DOB for display
+    String dobDisplay = 'Select date';
+    if (widget.dateOfBirth != null) {
+      final dob = widget.dateOfBirth!;
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      dobDisplay = '${months[dob.month - 1]} ${dob.day}, ${dob.year}';
+    }
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Age input
+        // Date of Birth input
         Expanded(
-          flex: 1,
+          flex: 3,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -303,14 +396,14 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: AppColors.orange.withOpacity(0.15),
+                      color: AppColors.orange.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(Icons.cake_outlined, color: AppColors.orange, size: 16),
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Age',
+                    'Date of Birth',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -320,50 +413,60 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                 ],
               ),
               const SizedBox(height: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: cardBg,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: cardBorder),
-                ),
-                child: TextField(
-                  controller: _ageController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(2),
-                  ],
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
+              GestureDetector(
+                onTap: () => _showDatePicker(isDark),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: cardBorder),
                   ),
-                  decoration: InputDecoration(
-                    hintText: 'years',
-                    hintStyle: TextStyle(
-                      color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                      fontWeight: FontWeight.normal,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    border: InputBorder.none,
-                    suffixText: 'yrs',
-                    suffixStyle: TextStyle(
-                      color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                      fontSize: 12,
-                    ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          dobDisplay,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: widget.dateOfBirth != null ? FontWeight.w600 : FontWeight.normal,
+                            color: widget.dateOfBirth != null
+                                ? textPrimary
+                                : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+                          ),
+                        ),
+                      ),
+                      if (widget.age != null) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.cyan.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '${widget.age} yrs',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.cyan,
+                            ),
+                          ),
+                        ),
+                      ] else ...[
+                        Icon(
+                          Icons.calendar_today_outlined,
+                          color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                          size: 18,
+                        ),
+                      ],
+                    ],
                   ),
-                  onChanged: (value) {
-                    final age = int.tryParse(value);
-                    if (age != null && age > 0 && age <= 99) {
-                      widget.onAgeChanged(age);
-                    }
-                  },
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
         // Gender selection
         Expanded(
           flex: 2,
@@ -375,7 +478,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: AppColors.purple.withOpacity(0.15),
+                      color: AppColors.purple.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(Icons.person_outline, color: AppColors.purple, size: 16),
@@ -401,11 +504,11 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                       cardBg: cardBg,
                       cardBorder: cardBorder,
                       id: 'male',
-                      label: 'Male',
+                      label: 'M',
                       icon: Icons.male,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 4),
                   Expanded(
                     child: _buildGenderChip(
                       isDark: isDark,
@@ -413,8 +516,20 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                       cardBg: cardBg,
                       cardBorder: cardBorder,
                       id: 'female',
-                      label: 'Female',
+                      label: 'F',
                       icon: Icons.female,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: _buildGenderChip(
+                      isDark: isDark,
+                      textPrimary: textPrimary,
+                      cardBg: cardBg,
+                      cardBorder: cardBorder,
+                      id: 'other',
+                      label: 'X',
+                      icon: Icons.more_horiz,
                     ),
                   ),
                 ],
@@ -423,7 +538,46 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
           ),
         ),
       ],
-    ).animate().fadeIn(delay: 250.ms).slideX(begin: 0.05);
+    ).animate().fadeIn(delay: 300.ms).slideX(begin: 0.05);
+  }
+
+  Future<void> _showDatePicker(bool isDark) async {
+    HapticFeedback.selectionClick();
+
+    final now = DateTime.now();
+    final initialDate = widget.dateOfBirth ?? DateTime(now.year - 25, now.month, now.day);
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(1920),
+      lastDate: DateTime(now.year - 13, now.month, now.day), // Min 13 years old
+      helpText: 'SELECT YOUR DATE OF BIRTH',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: AppColors.cyan,
+                    onPrimary: Colors.white,
+                    surface: AppColors.elevated,
+                    onSurface: AppColors.textPrimary,
+                  )
+                : ColorScheme.light(
+                    primary: AppColors.cyan,
+                    onPrimary: Colors.white,
+                    surface: Colors.white,
+                    onSurface: AppColorsLight.textPrimary,
+                  ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      widget.onDateOfBirthChanged(picked);
+    }
   }
 
   Widget _buildGenderChip({
@@ -444,7 +598,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         decoration: BoxDecoration(
           gradient: isSelected ? AppColors.cyanGradient : null,
           color: isSelected ? null : cardBg,
@@ -459,14 +613,14 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
           children: [
             Icon(
               icon,
-              size: 18,
+              size: 16,
               color: isSelected ? Colors.white : textPrimary,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected ? Colors.white : textPrimary,
               ),

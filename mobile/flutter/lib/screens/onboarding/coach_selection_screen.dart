@@ -107,13 +107,13 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     }
 
     // Update local auth state immediately for fast navigation
-    // Skip conversational onboarding - mark onboarding as complete and go to home
+    // Skip conversational onboarding - mark onboarding as complete
     ref.read(authStateProvider.notifier).markCoachSelected();
     ref.read(authStateProvider.notifier).markOnboardingComplete();
 
-    // Navigate directly to home (skipping conversational onboarding)
+    // Navigate to workout generation screen to show progress
     if (mounted) {
-      context.go('/home');
+      context.go('/workout-generation');
     }
 
     // Update backend in background (fire-and-forget) - submit all quiz data + coach
@@ -134,6 +134,12 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
 
         // Build preferences payload from quiz data
         final preferencesPayload = <String, dynamic>{
+          // Personal Info
+          if (quizData.name != null) 'name': quizData.name,
+          if (quizData.dateOfBirth != null) 'date_of_birth': quizData.dateOfBirth!.toIso8601String().split('T').first,
+          if (quizData.age != null) 'age': quizData.age,  // Computed from dateOfBirth
+          if (quizData.gender != null) 'gender': quizData.gender,
+
           // Goals & Fitness
           if (quizData.goals != null) 'goals': quizData.goals,
           if (quizData.fitnessLevel != null) 'fitness_level': quizData.fitnessLevel,
@@ -150,6 +156,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
           // Schedule
           if (quizData.daysPerWeek != null) 'days_per_week': quizData.daysPerWeek,
           if (quizData.workoutDays != null) 'selected_days': quizData.workoutDays,
+          if (quizData.workoutDuration != null) 'workout_duration': quizData.workoutDuration,
 
           // Equipment
           if (quizData.equipment != null) 'equipment': quizData.equipment,
@@ -167,6 +174,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
           // Nutrition
           if (quizData.nutritionGoals != null) 'nutrition_goals': quizData.nutritionGoals,
           if (quizData.dietaryRestrictions != null) 'dietary_restrictions': quizData.dietaryRestrictions,
+          if (quizData.mealsPerDay != null) 'meals_per_day': quizData.mealsPerDay,
 
           // Fasting
           if (quizData.interestedInFasting != null) 'interested_in_fasting': quizData.interestedInFasting,

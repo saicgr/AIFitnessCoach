@@ -30,9 +30,11 @@ class PreAuthQuizData {
   final String? trainingExperience;
   // Activity level (outside of gym) - for TDEE calculations
   final String? activityLevel;  // sedentary, lightly_active, moderately_active, very_active
+  // Personal info
+  final String? name;
+  final DateTime? dateOfBirth;
   // Body metrics for weight projection
-  final int? age;
-  final String? gender;  // 'male' or 'female'
+  final String? gender;  // 'male', 'female', or 'other'
   final double? heightCm;
   final double? weightKg;
   final double? goalWeightKg;
@@ -43,6 +45,7 @@ class PreAuthQuizData {
   final String? weightChangeRate;  // slow (0.25kg/wk), moderate (0.5kg/wk), fast (0.75kg/wk), aggressive (1kg/wk)
   final int? daysPerWeek;
   final List<int>? workoutDays;
+  final int? workoutDuration;  // Duration in minutes (30, 45, 60, 75, 90)
   final List<String>? equipment;
   final List<String>? customEquipment;  // User-added custom equipment
   final String? workoutEnvironment;
@@ -68,12 +71,25 @@ class PreAuthQuizData {
   final String? wakeTime;  // e.g., "07:00"
   final String? sleepTime;  // e.g., "23:00"
 
+  /// Computed age from dateOfBirth
+  int? get age {
+    if (dateOfBirth == null) return null;
+    final now = DateTime.now();
+    int age = now.year - dateOfBirth!.year;
+    if (now.month < dateOfBirth!.month ||
+        (now.month == dateOfBirth!.month && now.day < dateOfBirth!.day)) {
+      age--;
+    }
+    return age;
+  }
+
   PreAuthQuizData({
     this.goals,
     this.fitnessLevel,
     this.trainingExperience,
     this.activityLevel,
-    this.age,
+    this.name,
+    this.dateOfBirth,
     this.gender,
     this.heightCm,
     this.weightKg,
@@ -84,6 +100,7 @@ class PreAuthQuizData {
     this.weightChangeRate,
     this.daysPerWeek,
     this.workoutDays,
+    this.workoutDuration,
     this.equipment,
     this.customEquipment,
     this.workoutEnvironment,
@@ -127,7 +144,8 @@ class PreAuthQuizData {
         'fitnessLevel': fitnessLevel,
         'trainingExperience': trainingExperience,
         'activityLevel': activityLevel,
-        'age': age,
+        'name': name,
+        'dateOfBirth': dateOfBirth?.toIso8601String(),
         'gender': gender,
         'heightCm': heightCm,
         'weightKg': weightKg,
@@ -138,6 +156,7 @@ class PreAuthQuizData {
         'weightChangeRate': weightChangeRate,
         'daysPerWeek': daysPerWeek,
         'workoutDays': workoutDays,
+        'workoutDuration': workoutDuration,
         'equipment': equipment,
         'customEquipment': customEquipment,
         'workoutEnvironment': workoutEnvironment,
@@ -165,7 +184,10 @@ class PreAuthQuizData {
         fitnessLevel: json['fitnessLevel'] as String?,
         trainingExperience: json['trainingExperience'] as String?,
         activityLevel: json['activityLevel'] as String?,
-        age: json['age'] as int?,
+        name: json['name'] as String?,
+        dateOfBirth: json['dateOfBirth'] != null
+            ? DateTime.tryParse(json['dateOfBirth'] as String)
+            : null,
         gender: json['gender'] as String?,
         heightCm: (json['heightCm'] as num?)?.toDouble(),
         weightKg: (json['weightKg'] as num?)?.toDouble(),
@@ -176,6 +198,7 @@ class PreAuthQuizData {
         weightChangeRate: json['weightChangeRate'] as String?,
         daysPerWeek: json['daysPerWeek'] as int?,
         workoutDays: (json['workoutDays'] as List<dynamic>?)?.cast<int>(),
+        workoutDuration: json['workoutDuration'] as int?,
         equipment: (json['equipment'] as List<dynamic>?)?.cast<String>(),
         customEquipment: (json['customEquipment'] as List<dynamic>?)?.cast<String>(),
         workoutEnvironment: json['workoutEnvironment'] as String?,
@@ -217,8 +240,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final level = prefs.getString('preAuth_fitnessLevel');
     final trainingExp = prefs.getString('preAuth_trainingExperience');
     final activityLevel = prefs.getString('preAuth_activityLevel');
+    // Personal info
+    final name = prefs.getString('preAuth_name');
+    final dateOfBirthStr = prefs.getString('preAuth_dateOfBirth');
+    final dateOfBirth = dateOfBirthStr != null ? DateTime.tryParse(dateOfBirthStr) : null;
     // Body metrics
-    final age = prefs.getInt('preAuth_age');
     final gender = prefs.getString('preAuth_gender');
     final heightCm = prefs.getDouble('preAuth_heightCm');
     final weightKg = prefs.getDouble('preAuth_weightKg');
@@ -230,6 +256,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final days = prefs.getInt('preAuth_daysPerWeek');
     final workoutDaysStr = prefs.getStringList('preAuth_workoutDays');
     final workoutDays = workoutDaysStr?.map((s) => int.tryParse(s) ?? 0).toList();
+    final workoutDuration = prefs.getInt('preAuth_workoutDuration');
     final equipmentStr = prefs.getStringList('preAuth_equipment');
     final customEquipmentStr = prefs.getStringList('preAuth_customEquipment');
     final workoutEnv = prefs.getString('preAuth_workoutEnvironment');
@@ -254,7 +281,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: level,
       trainingExperience: trainingExp,
       activityLevel: activityLevel,
-      age: age,
+      name: name,
+      dateOfBirth: dateOfBirth,
       gender: gender,
       heightCm: heightCm,
       weightKg: weightKg,
@@ -265,6 +293,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: weightChangeRate,
       daysPerWeek: days,
       workoutDays: workoutDays,
+      workoutDuration: workoutDuration,
       equipment: equipmentStr,
       customEquipment: customEquipmentStr,
       workoutEnvironment: workoutEnv,
@@ -302,6 +331,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
       activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
       heightCm: state.heightCm,
       weightKg: state.weightKg,
       goalWeightKg: state.goalWeightKg,
@@ -311,6 +343,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: state.weightChangeRate,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -340,6 +373,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: level,
       trainingExperience: state.trainingExperience,
       activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
       heightCm: state.heightCm,
       weightKg: state.weightKg,
       goalWeightKg: state.goalWeightKg,
@@ -349,6 +385,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: state.weightChangeRate,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -378,6 +415,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: state.fitnessLevel,
       trainingExperience: experience,
       activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
       heightCm: state.heightCm,
       weightKg: state.weightKg,
       goalWeightKg: state.goalWeightKg,
@@ -387,6 +427,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: state.weightChangeRate,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -416,6 +457,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
       activityLevel: level,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
       heightCm: state.heightCm,
       weightKg: state.weightKg,
       goalWeightKg: state.goalWeightKg,
@@ -425,6 +469,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: state.weightChangeRate,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -447,7 +492,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
   }
 
   Future<void> setBodyMetrics({
-    int? age,
+    String? name,
+    DateTime? dateOfBirth,
     String? gender,
     required double heightCm,
     required double weightKg,
@@ -458,8 +504,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     String? weightChangeRate,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    if (age != null) {
-      await prefs.setInt('preAuth_age', age);
+    if (name != null) {
+      await prefs.setString('preAuth_name', name);
+    }
+    if (dateOfBirth != null) {
+      await prefs.setString('preAuth_dateOfBirth', dateOfBirth.toIso8601String());
     }
     if (gender != null) {
       await prefs.setString('preAuth_gender', gender);
@@ -482,7 +531,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
       activityLevel: state.activityLevel,
-      age: age ?? state.age,
+      name: name ?? state.name,
+      dateOfBirth: dateOfBirth ?? state.dateOfBirth,
       gender: gender ?? state.gender,
       heightCm: heightCm,
       weightKg: weightKg,
@@ -493,6 +543,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: weightChangeRate ?? state.weightChangeRate,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -522,6 +573,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
       activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
       heightCm: state.heightCm,
       weightKg: state.weightKg,
       goalWeightKg: state.goalWeightKg,
@@ -531,6 +585,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: state.weightChangeRate,
       daysPerWeek: days,
       workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -560,6 +615,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
       activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
       heightCm: state.heightCm,
       weightKg: state.weightKg,
       goalWeightKg: state.goalWeightKg,
@@ -569,6 +627,49 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: state.weightChangeRate,
       daysPerWeek: state.daysPerWeek,
       workoutDays: workoutDays,
+      workoutDuration: state.workoutDuration,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
+      wakeTime: state.wakeTime,
+      sleepTime: state.sleepTime,
+    );
+  }
+
+  Future<void> setWorkoutDuration(int duration) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('preAuth_workoutDuration', duration);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
+      weightChangeRate: state.weightChangeRate,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      workoutDuration: duration,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -621,6 +722,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
       activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
       heightCm: state.heightCm,
       weightKg: state.weightKg,
       goalWeightKg: state.goalWeightKg,
@@ -659,6 +763,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
       activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
       heightCm: state.heightCm,
       weightKg: state.weightKg,
       goalWeightKg: state.goalWeightKg,
@@ -668,6 +775,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: state.weightChangeRate,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -697,6 +805,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
       activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
       heightCm: state.heightCm,
       weightKg: state.weightKg,
       goalWeightKg: state.goalWeightKg,
@@ -706,6 +817,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: state.weightChangeRate,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -735,6 +847,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
       activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
       heightCm: state.heightCm,
       weightKg: state.weightKg,
       goalWeightKg: state.goalWeightKg,
@@ -744,6 +859,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: state.weightChangeRate,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -773,6 +889,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
       activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
       heightCm: state.heightCm,
       weightKg: state.weightKg,
       goalWeightKg: state.goalWeightKg,
@@ -782,6 +901,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: state.weightChangeRate,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -811,6 +931,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
       activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
       heightCm: state.heightCm,
       weightKg: state.weightKg,
       goalWeightKg: state.goalWeightKg,
@@ -820,6 +943,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: state.weightChangeRate,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -866,6 +990,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
       activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
       heightCm: state.heightCm,
       weightKg: state.weightKg,
       goalWeightKg: state.goalWeightKg,
@@ -875,6 +1002,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: state.weightChangeRate,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -903,6 +1031,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
       activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
       heightCm: state.heightCm,
       weightKg: state.weightKg,
       goalWeightKg: state.goalWeightKg,
@@ -912,6 +1043,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: state.weightChangeRate,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -941,6 +1073,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
       activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
       heightCm: state.heightCm,
       weightKg: state.weightKg,
       goalWeightKg: state.goalWeightKg,
@@ -950,6 +1085,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: state.weightChangeRate,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -979,6 +1115,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
       activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
       heightCm: state.heightCm,
       weightKg: state.weightKg,
       goalWeightKg: state.goalWeightKg,
@@ -988,6 +1127,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: state.weightChangeRate,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -1017,7 +1157,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
       activityLevel: state.activityLevel,
-      age: state.age,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
       gender: state.gender,
       heightCm: state.heightCm,
       weightKg: state.weightKg,
@@ -1028,6 +1169,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: state.weightChangeRate,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -1055,7 +1197,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     await prefs.remove('preAuth_fitnessLevel');
     await prefs.remove('preAuth_trainingExperience');
     await prefs.remove('preAuth_activityLevel');
-    await prefs.remove('preAuth_age');
+    await prefs.remove('preAuth_name');
+    await prefs.remove('preAuth_dateOfBirth');
     await prefs.remove('preAuth_gender');
     await prefs.remove('preAuth_heightCm');
     await prefs.remove('preAuth_weightKg');
@@ -1111,9 +1254,10 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   // Question 2: Fitness Level + Training Experience
   String? _selectedLevel;
   String? _selectedTrainingExperience;
-  // Question 3: Body Metrics (age, gender, height, weight, goal weight)
-  int? _age;
-  String? _gender;  // 'male' or 'female'
+  // Question 3: Body Metrics (name, DOB, gender, height, weight, goal weight)
+  String? _name;
+  DateTime? _dateOfBirth;
+  String? _gender;  // 'male', 'female', or 'other'
   double? _heightCm;
   double? _weightKg;
   double? _goalWeightKg;
@@ -1129,9 +1273,10 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   final Set<String> _selectedObstacles = {};
   // Dietary restrictions (added to nutrition goals screen)
   final Set<String> _selectedDietaryRestrictions = {};
-  // Question 4: Days per week + which days
+  // Question 4: Days per week + which days + duration
   int? _selectedDays;
   final Set<int> _selectedWorkoutDays = {};
+  int? _workoutDuration;  // Duration in minutes (30, 45, 60, 75, 90)
   // Question 5: Equipment
   final Set<String> _selectedEquipment = {};
   final Set<String> _otherSelectedEquipment = {};
@@ -1156,6 +1301,17 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
 
   late AnimationController _progressController;
   late AnimationController _questionController;
+
+  /// Calculate age from date of birth
+  int _calculateAge(DateTime dateOfBirth) {
+    final now = DateTime.now();
+    int age = now.year - dateOfBirth.year;
+    if (now.month < dateOfBirth.month ||
+        (now.month == dateOfBirth.month && now.day < dateOfBirth.day)) {
+      age--;
+    }
+    return age;
+  }
 
   @override
   void initState() {
@@ -1272,10 +1428,11 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         await _saveEquipmentData();
         break;
       case 4:
-        // Body metrics with age, gender, weight direction and amount
+        // Body metrics with name, DOB, gender, weight direction and amount
         if (_heightCm != null && _weightKg != null && _goalWeightKg != null) {
           await ref.read(preAuthQuizProvider.notifier).setBodyMetrics(
-            age: _age,
+            name: _name,
+            dateOfBirth: _dateOfBirth,
             gender: _gender,
             heightCm: _heightCm!,
             weightKg: _weightKg!,
@@ -1292,7 +1449,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           // Rate selection - update body metrics with rate
           if (_weightChangeRate != null && _heightCm != null && _weightKg != null && _goalWeightKg != null) {
             await ref.read(preAuthQuizProvider.notifier).setBodyMetrics(
-              age: _age,
+              name: _name,
+              dateOfBirth: _dateOfBirth,
               gender: _gender,
               heightCm: _heightCm!,
               weightKg: _weightKg!,
@@ -1342,6 +1500,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     }
     if (_selectedWorkoutDays.isNotEmpty) {
       await ref.read(preAuthQuizProvider.notifier).setWorkoutDays(_selectedWorkoutDays.toList()..sort());
+    }
+    if (_workoutDuration != null) {
+      await ref.read(preAuthQuizProvider.notifier).setWorkoutDuration(_workoutDuration!);
     }
   }
 
@@ -1432,14 +1593,14 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         // Fitness Level
         return _selectedLevel != null && _selectedTrainingExperience != null && _selectedActivityLevel != null;
       case 2:
-        // Days selector
-        return _selectedDays != null && _selectedWorkoutDays.length >= _selectedDays!;
+        // Days selector (days + which days + duration)
+        return _selectedDays != null && _selectedWorkoutDays.length >= _selectedDays! && _workoutDuration != null;
       case 3:
         // Equipment
         return _selectedEquipment.isNotEmpty || _otherSelectedEquipment.isNotEmpty;
       case 4:
-        // Body metrics: age, gender, height, weight, and goal weight are required
-        return _age != null && _gender != null && _heightCm != null && _weightKg != null && _goalWeightKg != null;
+        // Body metrics: name, DOB, gender, height, weight, and goal weight are required
+        return _name != null && _name!.isNotEmpty && _dateOfBirth != null && _gender != null && _heightCm != null && _weightKg != null && _goalWeightKg != null;
       case 5:
         if (showRateQuestion) {
           // Rate selection page - must select a rate
@@ -1772,7 +1933,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       case 4:
         return QuizBodyMetrics(
           key: const ValueKey('body_metrics'),
-          age: _age,
+          name: _name,
+          dateOfBirth: _dateOfBirth,
           gender: _gender,
           heightCm: _heightCm,
           weightKg: _weightKg,
@@ -1780,7 +1942,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           useMetric: _useMetric,
           weightDirection: _weightDirection,
           weightChangeAmount: _weightChangeAmount,
-          onAgeChanged: (age) => setState(() => _age = age),
+          onNameChanged: (name) => setState(() => _name = name),
+          onDateOfBirthChanged: (dob) => setState(() => _dateOfBirth = dob),
           onGenderChanged: (gender) => setState(() => _gender = gender),
           onHeightChanged: (height) => setState(() => _heightCm = height),
           onWeightChanged: (weight) => setState(() => _weightKg = weight),
@@ -1830,6 +1993,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       key: const ValueKey('days_selector'),
       selectedDays: _selectedDays,
       selectedWorkoutDays: _selectedWorkoutDays,
+      workoutDuration: _workoutDuration,
       onDaysChanged: (days) {
         setState(() {
           _selectedDays = days;
@@ -1845,6 +2009,11 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           } else if (_selectedWorkoutDays.length < (_selectedDays ?? 7)) {
             _selectedWorkoutDays.add(day);
           }
+        });
+      },
+      onDurationChanged: (duration) {
+        setState(() {
+          _workoutDuration = duration;
         });
       },
     );
@@ -1929,8 +2098,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       // Meals per day
       mealsPerDay: _mealsPerDay,
       onMealsPerDayChanged: (meals) => setState(() => _mealsPerDay = meals),
-      // Pass user data for nutrition targets preview
-      age: _age,
+      // Pass user data for nutrition targets preview (calculate age from DOB)
+      age: _dateOfBirth != null ? _calculateAge(_dateOfBirth!) : null,
       gender: _gender,
       heightCm: _heightCm,
       weightKg: _weightKg,

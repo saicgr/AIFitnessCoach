@@ -181,7 +181,6 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     // Motivational messages for rest day
@@ -197,7 +196,7 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
     final message = messages[messageIndex];
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
       child: Container(
         decoration: BoxDecoration(
           color: cardBg,
@@ -207,46 +206,47 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               // Rest day icon with calming color
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: AppColors.success.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(
                   Icons.spa,
-                  size: 40,
+                  size: 32,
                   color: AppColors.success,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               Text(
                 'Rest Day',
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: textPrimary,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               Text(
                 message,
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: AppColors.success,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
 
               // Suggested activity
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.05)
@@ -258,9 +258,9 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
                     Icon(
                       Icons.directions_walk,
                       color: AppColors.cyan,
-                      size: 24,
+                      size: 22,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,7 +268,7 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
                           Text(
                             'Suggested: 20-min walk',
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: textPrimary,
                             ),
@@ -276,7 +276,7 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
                           Text(
                             'Light movement aids recovery',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: textMuted,
                             ),
                           ),
@@ -286,7 +286,7 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               // Quick action buttons
               Row(
@@ -299,7 +299,7 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
                       onTap: () => _showRestDayActivity(context, 'stretch'),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _RestDayActionButton(
                       icon: Icons.directions_run,
@@ -308,7 +308,7 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
                       onTap: () => _showRestDayActivity(context, 'cardio'),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _RestDayActionButton(
                       icon: Icons.spa,
@@ -509,21 +509,21 @@ class _RestDayActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: color.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: color, size: 22),
-              const SizedBox(height: 6),
+              Icon(icon, color: color, size: 20),
+              const SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: FontWeight.w600,
                   color: color,
                 ),
