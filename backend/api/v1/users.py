@@ -815,10 +815,8 @@ async def update_user(user_id: str, user: UserUpdate):
                 try:
                     from services.rag_service import WorkoutRAGService
                     from services.gemini_service import GeminiService
-                    from core.config import get_settings
 
-                    settings = get_settings()
-                    gemini_service = GeminiService(settings)
+                    gemini_service = GeminiService()
                     rag_service = WorkoutRAGService(gemini_service)
 
                     # Get preferences from the update

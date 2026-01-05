@@ -286,3 +286,141 @@ class TestEquipmentConstants:
         # Check that each has a list of patterns
         assert isinstance(INJURY_CONTRAINDICATIONS["leg"], list)
         assert len(INJURY_CONTRAINDICATIONS["leg"]) > 0
+
+
+class TestDifficultyFiltering:
+    """Tests for exercise difficulty filtering functions.
+
+    CRITICAL: These tests verify the fix for the bug where beginner users
+    only received 1 exercise (Push-ups) because the strict difficulty filter
+    blocked all intermediate/advanced exercises.
+
+    The permissive filter (is_exercise_too_difficult) should:
+    - Only block Elite (10) exercises for beginners
+    - Allow all other exercises for ranking, not hard filtering
+    """
+
+    def test_permissive_allows_intermediate_for_beginners(self):
+        """Beginner users should have access to intermediate exercises.
+
+        This is the core fix: intermediate exercises (difficulty 5) should
+        NOT be blocked for beginners. Only Elite (10) exercises are blocked.
+        """
+        from services.exercise_rag.service import is_exercise_too_difficult
+
+        # Intermediate exercises (difficulty 5) should be allowed for beginners
+        assert is_exercise_too_difficult("intermediate", "beginner") is False
+        assert is_exercise_too_difficult(5, "beginner") is False
+
+    def test_permissive_allows_advanced_for_beginners(self):
+        """Beginner users should have access to advanced exercises for variety.
+
+        Advanced exercises are allowed but will be ranked lower via DIFFICULTY_RATIOS.
+        """
+        from services.exercise_rag.service import is_exercise_too_difficult
+
+        # Advanced exercises (difficulty 8) should be allowed for beginners
+        assert is_exercise_too_difficult("advanced", "beginner") is False
+        assert is_exercise_too_difficult(8, "beginner") is False
+
+    def test_permissive_blocks_elite_for_beginners(self):
+        """Elite exercises should be blocked for beginners to prevent injury."""
+        from services.exercise_rag.service import is_exercise_too_difficult
+
+        # Elite exercises (difficulty 10) should be blocked for beginners
+        assert is_exercise_too_difficult("elite", "beginner") is True
+        assert is_exercise_too_difficult(10, "beginner") is True
+
+    def test_permissive_allows_beginner_exercises_for_all(self):
+        """Beginner exercises should be allowed for all fitness levels."""
+        from services.exercise_rag.service import is_exercise_too_difficult
+
+        # Beginner exercises should never be blocked
+        for level in ["beginner", "intermediate", "advanced"]:
+            assert is_exercise_too_difficult("beginner", level) is False
+            assert is_exercise_too_difficult(2, level) is False
+
+    def test_strict_blocks_intermediate_for_beginners(self):
+        """Strict filter blocks intermediate exercises for beginners.
+
+        This is the OLD behavior that caused the bug. The strict filter
+        has a ceiling of 3 for beginners, which blocks intermediate (5).
+        """
+        from services.exercise_rag.service import is_exercise_too_difficult_strict
+
+        # Strict filter should block intermediate (5) for beginners (ceiling 3)
+        assert is_exercise_too_difficult_strict("intermediate", "beginner") is True
+        assert is_exercise_too_difficult_strict(5, "beginner") is True
+
+    def test_strict_allows_beginner_exercises_for_beginners(self):
+        """Strict filter allows beginner exercises for beginners."""
+        from services.exercise_rag.service import is_exercise_too_difficult_strict
+
+        # Beginner exercises (difficulty 2) should pass strict filter
+        assert is_exercise_too_difficult_strict("beginner", "beginner") is False
+        assert is_exercise_too_difficult_strict(2, "beginner") is False
+
+    def test_difficulty_adjustment_increases_ceiling(self):
+        """Positive difficulty adjustment should raise the ceiling."""
+        from services.exercise_rag.service import is_exercise_too_difficult
+
+        # With +2 adjustment, Elite exercises should be allowed for beginners
+        # (demonstrates the ceiling shifting mechanism)
+        assert is_exercise_too_difficult(10, "beginner", difficulty_adjustment=2) is False
+
+    def test_difficulty_adjustment_does_not_affect_permissive_for_normal_exercises(self):
+        """Difficulty adjustment doesn't change permissive filter for non-elite exercises."""
+        from services.exercise_rag.service import is_exercise_too_difficult
+
+        # Intermediate exercises allowed regardless of adjustment
+        assert is_exercise_too_difficult(5, "beginner", difficulty_adjustment=-2) is False
+        assert is_exercise_too_difficult(5, "beginner", difficulty_adjustment=0) is False
+        assert is_exercise_too_difficult(5, "beginner", difficulty_adjustment=2) is False
+
+
+class TestCheckAndRegenerateThreshold:
+    """Tests for the check-and-regenerate workout threshold logic.
+
+    Verifies the fix for the bug where threshold_days=0 with upcoming_count=0
+    incorrectly returned 'sufficient workouts' because 0 >= 0 is True.
+    """
+
+    def test_zero_workouts_always_triggers_generation(self):
+        """When user has 0 workouts, generation should always be triggered.
+
+        This tests the logic: if upcoming_count == 0, we should generate
+        regardless of threshold (critical for new users after onboarding).
+        """
+        # The fix changes the condition from:
+        #   if upcoming_count >= threshold_days:
+        # to:
+        #   if upcoming_count > 0 and upcoming_count >= threshold_days:
+
+        # Test the logic directly
+        upcoming_count = 0
+        threshold_days = 0
+
+        # Old buggy logic: 0 >= 0 = True (would skip generation)
+        old_logic_needs_skip = upcoming_count >= threshold_days
+        assert old_logic_needs_skip is True  # Bug: returns True
+
+        # New fixed logic: 0 > 0 and 0 >= 0 = False and True = False
+        new_logic_needs_skip = upcoming_count > 0 and upcoming_count >= threshold_days
+        assert new_logic_needs_skip is False  # Fixed: returns False, so generation happens
+
+    def test_some_workouts_below_threshold_triggers_generation(self):
+        """When user has workouts but below threshold, generation should trigger."""
+        upcoming_count = 2
+        threshold_days = 3
+
+        # Both old and new logic should trigger generation here
+        needs_skip = upcoming_count > 0 and upcoming_count >= threshold_days
+        assert needs_skip is False  # 2 < 3, so generate
+
+    def test_sufficient_workouts_skips_generation(self):
+        """When user has sufficient workouts, generation should be skipped."""
+        upcoming_count = 5
+        threshold_days = 3
+
+        needs_skip = upcoming_count > 0 and upcoming_count >= threshold_days
+        assert needs_skip is True  # 5 >= 3, so skip

@@ -320,7 +320,9 @@ async def check_and_regenerate_workouts(
         logger.info(f"User {user_id} has {upcoming_count} upcoming workout days (threshold: {threshold_days})")
 
         # Check if generation is needed
-        if upcoming_count >= threshold_days:
+        # Always generate if user has 0 workouts (critical for new users after onboarding)
+        # Otherwise, generate if below threshold
+        if upcoming_count > 0 and upcoming_count >= threshold_days:
             return {
                 "success": True,
                 "needs_generation": False,
