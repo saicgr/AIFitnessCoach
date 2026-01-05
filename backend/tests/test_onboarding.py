@@ -225,13 +225,13 @@ class TestQuickReplies:
     """
 
     @pytest.mark.asyncio
-    async def test_workout_duration_detected_from_response(self, partial_state_needs_goals):
+    async def test_workout_duration_detected_from_response(self, partial_state_needs_duration):
         """CRITICAL: When AI asks about duration, show duration quick replies.
 
         Note: Quiz fields (goals, equipment, etc.) are now pre-filled from quiz.
         The AI is instructed to skip them and ask about workout_duration first.
         """
-        result = await onboarding_agent_node(partial_state_needs_goals)
+        result = await onboarding_agent_node(partial_state_needs_duration)
 
         # The AI should ask about workout_duration (skipping quiz fields)
         # and quick replies should match the detected field from response
