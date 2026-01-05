@@ -14,6 +14,10 @@ class QuizNutritionGoals extends StatefulWidget {
   final ValueChanged<String> onToggle;
   final ValueChanged<String>? onRestrictionToggle;
 
+  // Meals per day selection
+  final int? mealsPerDay;
+  final ValueChanged<int>? onMealsPerDayChanged;
+
   // User data for calculating nutrition targets
   final int? age;
   final String? gender;
@@ -31,6 +35,9 @@ class QuizNutritionGoals extends StatefulWidget {
     this.selectedRestrictions,
     required this.onToggle,
     this.onRestrictionToggle,
+    // Meals per day
+    this.mealsPerDay,
+    this.onMealsPerDayChanged,
     // Optional user data for targets preview
     this.age,
     this.gender,
@@ -289,6 +296,85 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                           ),
                         ),
                       ).animate(delay: (500 + index * 40).ms).fadeIn().scale(begin: const Offset(0.9, 0.9));
+                    }).toList(),
+                  ),
+                ],
+
+                // Meals per Day section (only show if callback is provided)
+                if (widget.onMealsPerDayChanged != null) ...[
+                  const SizedBox(height: 28),
+                  Text(
+                    'How many meals per day?',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ).animate().fadeIn(delay: 550.ms),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Helps plan your meal distribution',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textSecondary,
+                    ),
+                  ).animate().fadeIn(delay: 580.ms),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [4, 5, 6].asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final mealCount = entry.value;
+                      final isSelected = widget.mealsPerDay == mealCount;
+
+                      return Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            right: index < 2 ? 8 : 0,
+                          ),
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              widget.onMealsPerDayChanged!(mealCount);
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              decoration: BoxDecoration(
+                                gradient: isSelected ? AppColors.cyanGradient : null,
+                                color: isSelected
+                                    ? null
+                                    : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: isSelected ? AppColors.cyan : cardBorder,
+                                  width: isSelected ? 2 : 1,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    '$mealCount',
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected ? Colors.white : textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'meals',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                      color: isSelected ? Colors.white.withValues(alpha: 0.9) : textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ).animate(delay: (620 + index * 50).ms).fadeIn().scale(begin: const Offset(0.9, 0.9)),
+                        ),
+                      );
                     }).toList(),
                   ),
                 ],

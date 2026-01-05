@@ -51,6 +51,10 @@ ADD COLUMN IF NOT EXISTS weeks_to_goal INTEGER;
 ALTER TABLE nutrition_preferences
 ADD COLUMN IF NOT EXISTS metrics_calculated_at TIMESTAMPTZ;
 
+-- Meals per day preference (4, 5, or 6)
+ALTER TABLE nutrition_preferences
+ADD COLUMN IF NOT EXISTS meals_per_day INTEGER DEFAULT 4;
+
 -- ============================================================================
 -- PART 2: ADD age AND gender TO users TABLE IF NOT EXISTS
 -- ============================================================================
@@ -415,6 +419,7 @@ COMMENT ON COLUMN nutrition_preferences.ideal_weight_max_kg IS 'Upper end of hea
 COMMENT ON COLUMN nutrition_preferences.goal_date IS 'Projected date to reach goal weight based on selected rate.';
 COMMENT ON COLUMN nutrition_preferences.weeks_to_goal IS 'Estimated weeks to reach goal weight.';
 COMMENT ON COLUMN nutrition_preferences.metrics_calculated_at IS 'Timestamp when nutrition metrics were last calculated.';
+COMMENT ON COLUMN nutrition_preferences.meals_per_day IS 'User preference for number of meals per day (4, 5, or 6).';
 
 -- ============================================================================
 -- MIGRATION COMPLETE

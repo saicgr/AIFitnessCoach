@@ -60,6 +60,7 @@ class NutritionPreferences(BaseModel):
     preferred_units: str = Field(default="metric", description="Preferred units (metric/imperial)")
     show_micronutrients: bool = Field(default=False, description="Show detailed micronutrients")
     quick_access_foods_count: int = Field(default=5, ge=1, le=10, description="Number of quick access foods to show")
+    meals_per_day: int = Field(default=4, ge=3, le=8, description="Number of meals per day (4, 5, or 6)")
     # Hormonal diet preferences
     hormonal_diet_enabled: bool = Field(default=False, description="Enable hormonal diet recommendations")
     hormonal_goal: Optional[str] = Field(default=None, description="Primary hormonal goal for diet recommendations")
@@ -85,6 +86,7 @@ class NutritionPreferencesUpdate(BaseModel):
     preferred_units: Optional[str] = Field(default=None, pattern="^(metric|imperial)$")
     show_micronutrients: Optional[bool] = None
     quick_access_foods_count: Optional[int] = Field(default=None, ge=1, le=10)
+    meals_per_day: Optional[int] = Field(default=None, ge=3, le=8)
     # Hormonal diet preferences
     hormonal_diet_enabled: Optional[bool] = None
     hormonal_goal: Optional[str] = None
@@ -326,6 +328,7 @@ async def get_nutrition_preferences(current_user: dict = Depends(get_current_use
                 preferred_units=prefs_data.get("preferred_units", "metric"),
                 show_micronutrients=prefs_data.get("show_micronutrients", False),
                 quick_access_foods_count=prefs_data.get("quick_access_foods_count", 5),
+                meals_per_day=prefs_data.get("meals_per_day", 4),
                 # Hormonal diet preferences
                 hormonal_diet_enabled=prefs_data.get("hormonal_diet_enabled", False),
                 hormonal_goal=prefs_data.get("hormonal_goal"),
@@ -427,6 +430,7 @@ async def update_nutrition_preferences(
             preferred_units=prefs_data.get("preferred_units", "metric"),
             show_micronutrients=prefs_data.get("show_micronutrients", False),
             quick_access_foods_count=prefs_data.get("quick_access_foods_count", 5),
+            meals_per_day=prefs_data.get("meals_per_day", 4),
             # Hormonal diet preferences
             hormonal_diet_enabled=prefs_data.get("hormonal_diet_enabled", False),
             hormonal_goal=prefs_data.get("hormonal_goal"),

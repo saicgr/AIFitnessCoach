@@ -60,6 +60,7 @@ class PreAuthQuizData {
   // Nutrition preferences
   final List<String>? nutritionGoals;  // lose_fat, build_muscle, maintain, improve_energy, eat_healthier
   final List<String>? dietaryRestrictions;  // vegetarian, vegan, gluten_free, dairy_free, nut_allergy, keto, none
+  final int? mealsPerDay;  // 4, 5, or 6 meals per day
   // Fasting preferences
   final bool? interestedInFasting;
   final String? fastingProtocol;  // 16:8, 18:6, 14:10, 20:4, none
@@ -96,6 +97,7 @@ class PreAuthQuizData {
     this.obstacles,
     this.nutritionGoals,
     this.dietaryRestrictions,
+    this.mealsPerDay,
     this.interestedInFasting,
     this.fastingProtocol,
     this.wakeTime,
@@ -150,6 +152,7 @@ class PreAuthQuizData {
         'obstacles': obstacles,
         'nutritionGoals': nutritionGoals,
         'dietaryRestrictions': dietaryRestrictions,
+        'mealsPerDay': mealsPerDay,
         'interestedInFasting': interestedInFasting,
         'fastingProtocol': fastingProtocol,
         'wakeTime': wakeTime,
@@ -187,6 +190,7 @@ class PreAuthQuizData {
         obstacles: (json['obstacles'] as List<dynamic>?)?.cast<String>(),
         nutritionGoals: (json['nutritionGoals'] as List<dynamic>?)?.cast<String>(),
         dietaryRestrictions: (json['dietaryRestrictions'] as List<dynamic>?)?.cast<String>(),
+        mealsPerDay: json['mealsPerDay'] as int?,
         interestedInFasting: json['interestedInFasting'] as bool?,
         fastingProtocol: json['fastingProtocol'] as String?,
         wakeTime: json['wakeTime'] as String?,
@@ -239,6 +243,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final obstacles = prefs.getStringList('preAuth_obstacles');
     final nutritionGoals = prefs.getStringList('preAuth_nutritionGoals');
     final dietaryRestrictions = prefs.getStringList('preAuth_dietaryRestrictions');
+    final mealsPerDay = prefs.getInt('preAuth_mealsPerDay');
     final interestedInFasting = prefs.getBool('preAuth_interestedInFasting');
     final fastingProtocol = prefs.getString('preAuth_fastingProtocol');
     final wakeTime = prefs.getString('preAuth_wakeTime');
@@ -273,6 +278,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       obstacles: obstacles,
       nutritionGoals: nutritionGoals,
       dietaryRestrictions: dietaryRestrictions,
+      mealsPerDay: mealsPerDay,
       interestedInFasting: interestedInFasting,
       fastingProtocol: fastingProtocol,
       wakeTime: wakeTime,
@@ -318,6 +324,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       obstacles: state.obstacles,
       nutritionGoals: state.nutritionGoals,
       dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
       interestedInFasting: state.interestedInFasting,
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
@@ -355,6 +362,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       obstacles: state.obstacles,
       nutritionGoals: state.nutritionGoals,
       dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
       interestedInFasting: state.interestedInFasting,
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
@@ -392,6 +400,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       obstacles: state.obstacles,
       nutritionGoals: state.nutritionGoals,
       dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
       interestedInFasting: state.interestedInFasting,
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
@@ -429,6 +438,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       obstacles: state.obstacles,
       nutritionGoals: state.nutritionGoals,
       dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
       interestedInFasting: state.interestedInFasting,
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
@@ -496,6 +506,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       obstacles: state.obstacles,
       nutritionGoals: state.nutritionGoals,
       dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
       interestedInFasting: state.interestedInFasting,
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
@@ -533,6 +544,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       obstacles: state.obstacles,
       nutritionGoals: state.nutritionGoals,
       dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
       interestedInFasting: state.interestedInFasting,
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
@@ -570,6 +582,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       obstacles: state.obstacles,
       nutritionGoals: state.nutritionGoals,
       dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
       interestedInFasting: state.interestedInFasting,
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
@@ -630,6 +643,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       obstacles: state.obstacles,
       nutritionGoals: state.nutritionGoals,
       dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
       interestedInFasting: state.interestedInFasting,
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
@@ -667,6 +681,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       obstacles: state.obstacles,
       nutritionGoals: state.nutritionGoals,
       dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
       interestedInFasting: state.interestedInFasting,
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
@@ -704,6 +719,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       obstacles: state.obstacles,
       nutritionGoals: state.nutritionGoals,
       dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
       interestedInFasting: state.interestedInFasting,
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
@@ -741,6 +757,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       obstacles: state.obstacles,
       nutritionGoals: state.nutritionGoals,
       dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
       interestedInFasting: state.interestedInFasting,
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
@@ -778,6 +795,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       obstacles: state.obstacles,
       nutritionGoals: state.nutritionGoals,
       dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
       interestedInFasting: state.interestedInFasting,
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
@@ -815,6 +833,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       obstacles: state.obstacles,
       nutritionGoals: nutritionGoals,
       dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
       interestedInFasting: state.interestedInFasting,
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
@@ -906,6 +925,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       obstacles: state.obstacles,
       nutritionGoals: state.nutritionGoals,
       dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
       interestedInFasting: state.interestedInFasting,
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
@@ -943,6 +963,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       obstacles: obstacles,
       nutritionGoals: state.nutritionGoals,
       dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
       interestedInFasting: state.interestedInFasting,
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
@@ -980,6 +1001,47 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       obstacles: state.obstacles,
       nutritionGoals: state.nutritionGoals,
       dietaryRestrictions: restrictions,
+      mealsPerDay: state.mealsPerDay,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
+      wakeTime: state.wakeTime,
+      sleepTime: state.sleepTime,
+    );
+  }
+
+  Future<void> setMealsPerDay(int meals) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('preAuth_mealsPerDay', meals);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      age: state.age,
+      gender: state.gender,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
+      weightChangeRate: state.weightChangeRate,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: meals,
       interestedInFasting: state.interestedInFasting,
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
@@ -1017,6 +1079,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     await prefs.remove('preAuth_obstacles');
     await prefs.remove('preAuth_nutritionGoals');
     await prefs.remove('preAuth_dietaryRestrictions');
+    await prefs.remove('preAuth_mealsPerDay');
     await prefs.remove('preAuth_interestedInFasting');
     await prefs.remove('preAuth_fastingProtocol');
     await prefs.remove('preAuth_wakeTime');
@@ -1082,6 +1145,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   String? _selectedProgressionPace;
   // Question 7: Nutrition Goals
   final Set<String> _selectedNutritionGoals = {};
+  int? _mealsPerDay;  // 4, 5, or 6 meals per day
   // Question 8: Fasting Interest & Protocol
   bool? _interestedInFasting;
   String? _selectedFastingProtocol;
@@ -1318,6 +1382,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     }
     if (_selectedDietaryRestrictions.isNotEmpty) {
       await ref.read(preAuthQuizProvider.notifier).setDietaryRestrictions(_selectedDietaryRestrictions.toList());
+    }
+    if (_mealsPerDay != null) {
+      await ref.read(preAuthQuizProvider.notifier).setMealsPerDay(_mealsPerDay!);
     }
   }
 
@@ -1859,6 +1926,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           }
         });
       },
+      // Meals per day
+      mealsPerDay: _mealsPerDay,
+      onMealsPerDayChanged: (meals) => setState(() => _mealsPerDay = meals),
       // Pass user data for nutrition targets preview
       age: _age,
       gender: _gender,
