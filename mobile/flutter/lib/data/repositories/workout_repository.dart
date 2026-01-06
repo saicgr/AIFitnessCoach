@@ -54,12 +54,29 @@ class WorkoutRepository {
   WorkoutRepository(this._apiClient);
 
   /// Get all workouts for a user
-  Future<List<Workout>> getWorkouts(String userId) async {
+  ///
+  /// [userId] The user ID to fetch workouts for
+  /// [limit] Optional limit on number of workouts to return (default: 50)
+  /// [offset] Optional offset for pagination (default: 0)
+  Future<List<Workout>> getWorkouts(
+    String userId, {
+    int? limit,
+    int? offset,
+  }) async {
     try {
-      debugPrint('🔍 [Workout] Fetching workouts for user: $userId');
+      debugPrint('🔍 [Workout] Fetching workouts for user: $userId (limit: ${limit ?? "unlimited"})');
+      final queryParams = {'user_id': userId};
+
+      if (limit != null) {
+        queryParams['limit'] = limit.toString();
+      }
+      if (offset != null) {
+        queryParams['offset'] = offset.toString();
+      }
+
       final response = await _apiClient.get(
         ApiConstants.workouts,
-        queryParameters: {'user_id': userId},
+        queryParameters: queryParams,
       );
 
       if (response.statusCode == 200) {

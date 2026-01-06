@@ -331,6 +331,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             onRefresh: _loadData,
                             onLogMeal: (mealType) => _showLogMealSheet(isDark, mealType: mealType),
                             onDeleteMeal: (id) => _deleteMeal(id),
+                            onSwitchToNutrientsTab: () => _tabController.animateTo(1), // Switch to Nutrients tab (index 1)
                             isDark: isDark,
                             calmMode: calmMode,
                           ),
@@ -928,6 +929,7 @@ class _DailyTab extends ConsumerStatefulWidget {
   final VoidCallback onRefresh;
   final void Function(String? mealType) onLogMeal;
   final void Function(String) onDeleteMeal;
+  final VoidCallback? onSwitchToNutrientsTab;
   final bool isDark;
   final bool calmMode;
 
@@ -939,6 +941,7 @@ class _DailyTab extends ConsumerStatefulWidget {
     required this.onRefresh,
     required this.onLogMeal,
     required this.onDeleteMeal,
+    this.onSwitchToNutrientsTab,
     required this.isDark,
     this.calmMode = false,
   });
@@ -1411,6 +1414,10 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
                   _PinnedNutrientsCard(
                     pinned: widget.micronutrients!.pinned,
                     isDark: widget.isDark,
+                    onEdit: () {
+                      // Switch to Nutrients tab where users can pin/unpin nutrients
+                      widget.onSwitchToNutrientsTab?.call();
+                    },
                   ).animate().fadeIn(delay: 50.ms),
                   const SizedBox(height: 12),
                 ],
@@ -2959,10 +2966,12 @@ class _CompactMacroCard extends StatelessWidget {
 class _PinnedNutrientsCard extends StatelessWidget {
   final List<NutrientProgress> pinned;
   final bool isDark;
+  final VoidCallback? onEdit;
 
   const _PinnedNutrientsCard({
     required this.pinned,
     required this.isDark,
+    this.onEdit,
   });
 
   @override
@@ -2993,7 +3002,13 @@ class _PinnedNutrientsCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              Icon(Icons.edit, size: 16, color: textMuted),
+              IconButton(
+                onPressed: onEdit,
+                icon: Icon(Icons.edit, size: 16, color: textMuted),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                tooltip: 'Edit Pinned Nutrients',
+              ),
             ],
           ),
           const SizedBox(height: 12),

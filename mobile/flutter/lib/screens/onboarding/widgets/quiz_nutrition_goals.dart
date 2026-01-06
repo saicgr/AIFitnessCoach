@@ -499,7 +499,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
               Expanded(
                 child: _buildInsightChip(
                   icon: Icons.psychology,
-                  text: 'Metabolic age: ${estimate.metabolicAge}',
+                  text: 'Target metabolic age: ${estimate.metabolicAge}',
                   color: AppColors.purple,
                   textSecondary: textSecondary,
                 ),

@@ -108,22 +108,46 @@ final nutritionProvider =
 /// Nutrition state notifier
 class NutritionNotifier extends StateNotifier<NutritionState> {
   final NutritionRepository _repository;
+  String? _lastLoadedUserId;  // Track which user data is loaded for
+  DateTime? _lastLoadTime;     // Track when data was last loaded
 
   NutritionNotifier(this._repository) : super(const NutritionState());
 
+  /// Check if we should skip loading (data is fresh - less than 30 seconds old)
+  bool _shouldSkipLoad(String userId) {
+    if (_lastLoadedUserId != userId) return false;
+    if (_lastLoadTime == null) return false;
+    final elapsed = DateTime.now().difference(_lastLoadTime!);
+    return elapsed.inSeconds < 30;  // Cache for 30 seconds
+  }
+
   /// Load today's nutrition summary
-  Future<void> loadTodaySummary(String userId) async {
+  Future<void> loadTodaySummary(String userId, {bool forceRefresh = false}) async {
+    // Skip if data is fresh (prevents redundant calls on tab switch)
+    if (!forceRefresh && _shouldSkipLoad(userId) && state.todaySummary != null) {
+      debugPrint('🥗 [NutritionProvider] Skipping loadTodaySummary - data is fresh');
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null);
     try {
       final summary = await _repository.getDailySummary(userId);
       state = state.copyWith(isLoading: false, todaySummary: summary);
+      _lastLoadedUserId = userId;
+      _lastLoadTime = DateTime.now();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
   /// Load nutrition targets
-  Future<void> loadTargets(String userId) async {
+  Future<void> loadTargets(String userId, {bool forceRefresh = false}) async {
+    // Skip if data is fresh
+    if (!forceRefresh && _shouldSkipLoad(userId) && state.targets != null) {
+      debugPrint('🥗 [NutritionProvider] Skipping loadTargets - data is fresh');
+      return;
+    }
+
     try {
       final targets = await _repository.getTargets(userId);
       state = state.copyWith(targets: targets);
@@ -133,13 +157,29 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
   }
 
   /// Load recent food logs
-  Future<void> loadRecentLogs(String userId, {int limit = 50}) async {
+  Future<void> loadRecentLogs(String userId, {int limit = 50, bool forceRefresh = false}) async {
+    // Skip if data is fresh
+    if (!forceRefresh && _shouldSkipLoad(userId) && state.recentLogs.isNotEmpty) {
+      debugPrint('🥗 [NutritionProvider] Skipping loadRecentLogs - data is fresh');
+      return;
+    }
+
     try {
       final logs = await _repository.getFoodLogs(userId, limit: limit);
       state = state.copyWith(recentLogs: logs);
     } catch (e) {
       debugPrint('Error loading recent food logs: $e');
     }
+  }
+
+  /// Force refresh all data (use after logging a meal, etc.)
+  Future<void> refreshAll(String userId) async {
+    _lastLoadTime = null;  // Clear cache
+    await Future.wait([
+      loadTodaySummary(userId, forceRefresh: true),
+      loadTargets(userId, forceRefresh: true),
+      loadRecentLogs(userId, forceRefresh: true),
+    ]);
   }
 
   /// Delete a food log

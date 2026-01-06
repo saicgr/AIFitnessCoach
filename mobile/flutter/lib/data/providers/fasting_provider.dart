@@ -102,14 +102,22 @@ class FastingState {
 class FastingNotifier extends StateNotifier<FastingState> {
   final FastingRepository _repository;
   Timer? _refreshTimer;
+  String? _initializedUserId;  // Track which user is already initialized
 
   FastingNotifier(this._repository) : super(const FastingState());
 
   /// Initialize fasting state for a user
-  Future<void> initialize(String userId) async {
+  /// Skips API calls if data is already loaded for this user (prevents redundant calls on tab switch)
+  Future<void> initialize(String userId, {bool forceRefresh = false}) async {
+    // Skip if already initialized for this user (unless force refresh requested)
+    if (!forceRefresh && _initializedUserId == userId && !state.isLoading && state.preferences != null) {
+      debugPrint('🕐 [FastingProvider] Already initialized for $userId, skipping API calls');
+      return;
+    }
+
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      debugPrint('🕐 [FastingProvider] Initializing for $userId');
+      debugPrint('🕐 [FastingProvider] Initializing for $userId (forceRefresh=$forceRefresh)');
 
       // Load all data in parallel
       final results = await Future.wait([
@@ -175,6 +183,9 @@ class FastingNotifier extends StateNotifier<FastingState> {
       if (activeFast != null) {
         _startRefreshTimer();
       }
+
+      // Mark as initialized for this user
+      _initializedUserId = userId;
 
       debugPrint('✅ [FastingProvider] Initialized: hasFast=${activeFast != null}, onboarded=${preferences?.fastingOnboardingCompleted}, score=${score?.score}');
     } catch (e) {

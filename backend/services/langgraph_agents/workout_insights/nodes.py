@@ -95,9 +95,51 @@ def repair_json_string(content: str) -> Optional[str]:
         json.loads(repaired)
         logger.info("[JSON Repair] Completed truncated JSON")
         return repaired
-    except json.JSONDecodeError as e:
-        logger.warning(f"[JSON Repair] Could not repair JSON: {e}")
-        return None
+    except json.JSONDecodeError:
+        pass
+
+    # More aggressive repair: try to find the last complete section
+    # This handles cases where truncation happened mid-object
+    try:
+        # Find the last complete array element in sections
+        sections_match = re.search(r'"sections"\s*:\s*\[(.*)', original, re.DOTALL)
+        if sections_match:
+            sections_content = sections_match.group(1)
+            # Find all complete section objects
+            complete_sections = []
+            depth = 0
+            current_obj = ""
+            for char in sections_content:
+                current_obj += char
+                if char == '{':
+                    depth += 1
+                elif char == '}':
+                    depth -= 1
+                    if depth == 0:
+                        try:
+                            obj = json.loads(current_obj.strip().rstrip(','))
+                            complete_sections.append(obj)
+                            current_obj = ""
+                        except json.JSONDecodeError:
+                            current_obj = ""
+                            depth = 0
+
+            if complete_sections:
+                # Extract headline from original
+                headline_match = re.search(r'"headline"\s*:\s*"([^"]*)"', original)
+                headline = headline_match.group(1) if headline_match else "Let's crush this workout!"
+
+                repaired_obj = {
+                    "headline": headline,
+                    "sections": complete_sections
+                }
+                logger.info(f"[JSON Repair] Recovered {len(complete_sections)} complete sections from truncated response")
+                return json.dumps(repaired_obj)
+    except Exception as repair_error:
+        logger.debug(f"[JSON Repair] Aggressive repair failed: {repair_error}")
+
+    logger.warning(f"[JSON Repair] Could not repair JSON after all attempts")
+    return None
 
 
 
@@ -218,7 +260,7 @@ async def generate_structured_insights_node(state: WorkoutInsightsState) -> Dict
     llm = ChatGoogleGenerativeAI(
         model=settings.gemini_model,
         temperature=0.85,  # Higher for more variety
-        max_tokens=800,  # Increased from 400 to prevent truncation
+        max_tokens=1200,  # Increased to prevent truncation of JSON response
         google_api_key=settings.gemini_api_key,
     )
 

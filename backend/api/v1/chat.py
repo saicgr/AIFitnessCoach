@@ -54,8 +54,8 @@ def get_rag_service() -> RAGService:
 @router.post("/send", response_model=ChatResponse)
 @limiter.limit("10/minute")
 async def send_message(
-    request: ChatRequest,
-    http_request: Request,
+    request: Request,  # Must be named 'request' for slowapi rate limiter
+    chat_request: ChatRequest,
     coach: LangGraphCoachService = Depends(get_coach_service),
 ):
     """
@@ -69,17 +69,17 @@ async def send_message(
     5. Records analytics with AI settings snapshot
     6. Returns action data for workout modifications
     """
-    logger.info(f"Chat request from user {request.user_id}: {request.message[:50]}...")
-    if request.current_workout:
-        logger.debug(f"Current workout: {request.current_workout.name} (id={request.current_workout.id})")
-    if request.workout_schedule:
-        logger.debug(f"Workout schedule: yesterday={request.workout_schedule.yesterday is not None}, today={request.workout_schedule.today is not None}, tomorrow={request.workout_schedule.tomorrow is not None}, thisWeek={len(request.workout_schedule.thisWeek)}")
+    logger.info(f"Chat request from user {chat_request.user_id}: {chat_request.message[:50]}...")
+    if chat_request.current_workout:
+        logger.debug(f"Current workout: {chat_request.current_workout.name} (id={chat_request.current_workout.id})")
+    if chat_request.workout_schedule:
+        logger.debug(f"Workout schedule: yesterday={chat_request.workout_schedule.yesterday is not None}, today={chat_request.workout_schedule.today is not None}, tomorrow={chat_request.workout_schedule.tomorrow is not None}, thisWeek={len(chat_request.workout_schedule.thisWeek)}")
 
     # Track response time for analytics
     start_time = time.time()
 
     try:
-        response = await coach.process_message(request)
+        response = await coach.process_message(chat_request)
         response_time_ms = int((time.time() - start_time) * 1000)
         logger.info(f"Chat response sent: intent={response.intent}, rag_used={response.rag_context_used}, time={response_time_ms}ms")
 
@@ -99,13 +99,13 @@ async def send_message(
                 logger.debug(f"Saving action_data to context_json: {response.action_data}")
 
             chat_data = {
-                "user_id": request.user_id,
-                "user_message": request.message,
+                "user_id": chat_request.user_id,
+                "user_message": chat_request.message,
                 "ai_response": response.message,
                 "context_json": json.dumps(context_dict) if response.intent else None,
             }
             db.create_chat_message(chat_data)
-            logger.debug(f"Chat message saved to database for user {request.user_id}, intent={response.intent}, agent={response.agent_type}")
+            logger.debug(f"Chat message saved to database for user {chat_request.user_id}, intent={response.intent}, agent={response.agent_type}")
         except Exception as db_error:
             # Log but don't fail the request if DB save fails
             logger.warning(f"Failed to save chat to database: {db_error}")
@@ -113,11 +113,11 @@ async def send_message(
         # Record chat interaction analytics with AI settings snapshot
         try:
             supabase = get_supabase().client
-            ai_settings = request.ai_settings
+            ai_settings = chat_request.ai_settings
 
             analytics_data = {
-                "user_id": request.user_id,
-                "user_message_length": len(request.message),
+                "user_id": chat_request.user_id,
+                "user_message_length": len(chat_request.message),
                 "ai_response_length": len(response.message),
                 "coaching_style": ai_settings.coaching_style if ai_settings else "motivational",
                 "communication_tone": ai_settings.communication_tone if ai_settings else "encouraging",
@@ -130,14 +130,14 @@ async def send_message(
                 "response_time_ms": response_time_ms,
             }
             supabase.table("chat_interaction_analytics").insert(analytics_data).execute()
-            logger.debug(f"Chat analytics recorded for user {request.user_id}")
+            logger.debug(f"Chat analytics recorded for user {chat_request.user_id}")
         except Exception as analytics_error:
             # Log but don't fail the request if analytics save fails
             logger.warning(f"Failed to save chat analytics: {analytics_error}")
 
         # Log successful chat activity
         await log_user_activity(
-            user_id=request.user_id,
+            user_id=chat_request.user_id,
             action="chat",
             endpoint="/api/v1/chat/send",
             message=f"Chat: {response.intent.value if hasattr(response.intent, 'value') else str(response.intent)}",
@@ -155,11 +155,11 @@ async def send_message(
         logger.error(f"Failed to process message: {e}")
         # Log error to database with webhook alert
         await log_user_error(
-            user_id=request.user_id,
+            user_id=chat_request.user_id,
             action="chat",
             error=e,
             endpoint="/api/v1/chat/send",
-            metadata={"message": request.message[:200]},
+            metadata={"message": chat_request.message[:200]},
             duration_ms=int((time.time() - start_time) * 1000),
             status_code=500
         )

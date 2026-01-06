@@ -795,7 +795,7 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
             ),
             _buildInsightPill(
               icon: Icons.psychology,
-              text: 'Metabolic age ${estimate.metabolicAge}',
+              text: 'Target: body of a ${estimate.metabolicAge}-year-old',
               color: AppColors.purple,
             ),
             if (estimate.weeksToGoal != null)

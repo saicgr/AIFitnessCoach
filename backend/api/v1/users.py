@@ -564,6 +564,10 @@ class UserPreferencesRequest(BaseModel):
     training_split: Optional[str] = None
     workout_type: Optional[str] = None
     progression_pace: Optional[str] = None
+    workout_environment: Optional[str] = None  # commercial_gym, home_gym, home, outdoors
+
+    # Coach
+    coach_id: Optional[str] = None
 
     # Lifestyle
     sleep_quality: Optional[str] = None
@@ -651,7 +655,7 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest):
             None,  # preferred_time
             request.progression_pace,
             request.workout_type,
-            None,  # workout_environment
+            request.workout_environment,  # Where they train: commercial_gym, home_gym, home, outdoors
             # Enhanced pre-auth quiz fields
             request.sleep_quality,
             request.obstacles,

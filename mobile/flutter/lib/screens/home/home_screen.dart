@@ -1506,7 +1506,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         ),
                       );
                     },
-                    childCount: upcomingWorkouts.length.clamp(0, 3),
+                    childCount: upcomingWorkouts.length.clamp(0, 1),
                   ),
                 ),
               );

@@ -318,41 +318,52 @@ class NutritionDB(BaseDB):
         Returns:
             Dictionary with nutrition targets
         """
-        # First try nutrition_preferences (where calculated metrics are stored)
-        result = (
-            self.client.table("nutrition_preferences")
-            .select("target_calories, target_protein_g, target_carbs_g, target_fat_g")
-            .eq("user_id", user_id)
-            .maybe_single()
-            .execute()
-        )
-        if result.data:
-            prefs = result.data
-            return {
-                "daily_calorie_target": prefs.get("target_calories"),
-                "daily_protein_target_g": prefs.get("target_protein_g"),
-                "daily_carbs_target_g": prefs.get("target_carbs_g"),
-                "daily_fat_target_g": prefs.get("target_fat_g"),
-            }
-
-        # Fallback to users table for legacy data
-        result = (
-            self.client.table("users")
-            .select(
-                "daily_calorie_target, daily_protein_target_g, "
-                "daily_carbs_target_g, daily_fat_target_g"
-            )
-            .eq("id", user_id)
-            .execute()
-        )
-        if result.data:
-            return result.data[0]
-        return {
+        # Default empty response
+        empty_response = {
             "daily_calorie_target": None,
             "daily_protein_target_g": None,
             "daily_carbs_target_g": None,
             "daily_fat_target_g": None,
         }
+
+        try:
+            # First try nutrition_preferences (where calculated metrics are stored)
+            result = (
+                self.client.table("nutrition_preferences")
+                .select("target_calories, target_protein_g, target_carbs_g, target_fat_g")
+                .eq("user_id", user_id)
+                .maybe_single()
+                .execute()
+            )
+            if result and result.data:
+                prefs = result.data
+                return {
+                    "daily_calorie_target": prefs.get("target_calories"),
+                    "daily_protein_target_g": prefs.get("target_protein_g"),
+                    "daily_carbs_target_g": prefs.get("target_carbs_g"),
+                    "daily_fat_target_g": prefs.get("target_fat_g"),
+                }
+        except Exception as e:
+            logger.warning(f"Error fetching nutrition_preferences for {user_id}: {e}")
+
+        try:
+            # Fallback to users table for legacy data
+            result = (
+                self.client.table("users")
+                .select(
+                    "daily_calorie_target, daily_protein_target_g, "
+                    "daily_carbs_target_g, daily_fat_target_g"
+                )
+                .eq("id", user_id)
+                .maybe_single()
+                .execute()
+            )
+            if result and result.data:
+                return result.data
+        except Exception as e:
+            logger.warning(f"Error fetching user nutrition targets for {user_id}: {e}")
+
+        return empty_response
 
     # ==================== WEIGHT LOGS ====================
 

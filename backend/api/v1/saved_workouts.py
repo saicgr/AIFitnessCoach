@@ -619,13 +619,26 @@ async def schedule_workout(
 async def get_upcoming_scheduled_workouts(
     user_id: str,
     days_ahead: int = Query(30, ge=1, le=365),
+    limit: Optional[int] = Query(None, ge=1, le=100, description="Maximum number of workouts to return"),
 ):
-    """Get upcoming scheduled workouts."""
+    """Get upcoming scheduled workouts.
+
+    Args:
+        user_id: User ID to fetch workouts for
+        days_ahead: Number of days to look ahead (default 30)
+        limit: Maximum number of workouts to return (default unlimited)
+    """
     supabase = get_supabase_client()
 
-    result = supabase.table("upcoming_scheduled_workouts").select(
+    query = supabase.table("upcoming_scheduled_workouts").select(
         "*", count="exact"
-    ).eq("user_id", user_id).limit(days_ahead).execute()
+    ).eq("user_id", user_id)
+
+    # Apply limit if specified
+    if limit:
+        query = query.limit(limit)
+
+    result = query.execute()
 
     workouts = [ScheduledWorkout(**row) for row in result.data]
 

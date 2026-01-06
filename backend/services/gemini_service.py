@@ -495,7 +495,7 @@ Rules: Use USDA data. Sum totals from items. Account for prep methods (fried add
                             contents=prompt,
                             config=types.GenerateContentConfig(
                                 response_mime_type="application/json",
-                                max_output_tokens=1500,  # Reduced - simpler response format
+                                max_output_tokens=2500,  # Increased to handle multiple food items with full nutrition
                                 temperature=0.2,  # Lower = faster, more deterministic
                             ),
                         ),
@@ -618,14 +618,25 @@ Rules: Use USDA data. Sum totals from items. Account for prep methods (fried add
         # Step 6: If all else fails, try regex extraction for key fields
         print(f"⚠️ [Gemini] Attempting regex-based JSON recovery...")
         try:
-            # Try to extract food_items array
+            # Try to extract food_items array - handle both complete and truncated responses
+            # First try complete array with closing bracket
             food_items_match = re.search(r'"food_items"\s*:\s*\[(.*?)\]', content, re.DOTALL)
-            if food_items_match:
-                # Try to manually build a valid response
+            if not food_items_match:
+                # Try to find truncated food_items array (no closing bracket)
+                food_items_start = re.search(r'"food_items"\s*:\s*\[', content)
+                if food_items_start:
+                    items_str = content[food_items_start.end():]
+                    print(f"🔍 [Gemini] Found truncated food_items array, attempting recovery...")
+                else:
+                    items_str = None
+            else:
                 items_str = food_items_match.group(1)
-                # Extract individual food objects
+
+            if items_str:
+                # Extract individual food objects - look for complete objects with required fields
                 food_objects = []
-                obj_pattern = r'\{[^{}]*\}'
+                # Match complete objects that have at minimum: name, calories, amount
+                obj_pattern = r'\{\s*"name"\s*:\s*"[^"]+"\s*,\s*"amount"\s*:\s*"[^"]+"\s*,\s*"calories"\s*:\s*\d+[^{}]*\}'
                 for obj_match in re.finditer(obj_pattern, items_str):
                     try:
                         obj = json.loads(obj_match.group())
@@ -639,6 +650,24 @@ Rules: Use USDA data. Sum totals from items. Account for prep methods (fried add
                             food_objects.append(obj)
                         except:
                             pass
+
+                # If structured pattern failed, try simpler pattern for complete objects
+                if not food_objects:
+                    simple_pattern = r'\{[^{}]+\}'
+                    for obj_match in re.finditer(simple_pattern, items_str):
+                        try:
+                            obj = json.loads(obj_match.group())
+                            if 'name' in obj and 'calories' in obj:
+                                food_objects.append(obj)
+                        except json.JSONDecodeError:
+                            obj_str = obj_match.group()
+                            obj_str = re.sub(r',\s*([}\]])', r'\1', obj_str)
+                            try:
+                                obj = json.loads(obj_str)
+                                if 'name' in obj and 'calories' in obj:
+                                    food_objects.append(obj)
+                            except:
+                                pass
 
                 if food_objects:
                     # Calculate totals from individual items

@@ -77,14 +77,14 @@ class _ConversationalOnboardingScreenState
 
     final state = ref.read(onboardingStateProvider);
 
-    // Load pre-auth quiz data and pre-populate collected data
+    // Wait for quiz data to load from SharedPreferences BEFORE using it
+    final preAuthData = await ref.read(preAuthQuizProvider.notifier).ensureLoaded();
+
+    // Load pre-auth quiz data and pre-populate collected data (now that it's loaded)
     _loadPreAuthData();
 
     if (state.messages.isEmpty) {
       ref.read(onboardingStateProvider.notifier).setActive(true);
-
-      // Wait for quiz data to load from SharedPreferences
-      final preAuthData = await ref.read(preAuthQuizProvider.notifier).ensureLoaded();
       final greeting = _buildPersonalizedGreeting(preAuthData);
       final coach = ref.read(aiSettingsProvider).getCurrentCoach();
 
