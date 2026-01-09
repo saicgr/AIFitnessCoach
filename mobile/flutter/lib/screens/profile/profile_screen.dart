@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 import '../home/widgets/edit_program_sheet.dart';
 import 'widgets/widgets.dart';
@@ -67,9 +68,7 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 32),
           _buildFitnessProfileSection(user),
           const SizedBox(height: 24),
-          _buildEquipmentSection(user),
-          const SizedBox(height: 24),
-          _buildWorkoutPreferencesSection(context, ref, user),
+          _buildTrainingSetupSection(context, ref, user),
           const SizedBox(height: 32),
           _buildAccountSection(context, ref),
           const SizedBox(height: 32),
@@ -199,22 +198,12 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEquipmentSection(dynamic user) {
+  Widget _buildTrainingSetupSection(BuildContext context, WidgetRef ref, dynamic user) {
     return Column(
       children: [
-        const SectionHeader(title: 'EQUIPMENT'),
+        const SectionHeader(title: 'TRAINING SETUP'),
         const SizedBox(height: 12),
-        EquipmentCard(user: user).animate().fadeIn(delay: 180.ms),
-      ],
-    );
-  }
-
-  Widget _buildWorkoutPreferencesSection(BuildContext context, WidgetRef ref, dynamic user) {
-    return Column(
-      children: [
-        const SectionHeader(title: 'WORKOUT PREFERENCES'),
-        const SizedBox(height: 12),
-        WorkoutPreferencesCard(
+        TrainingSetupCard(
           user: user,
           onEdit: () async {
             HapticService.selection();
@@ -225,8 +214,84 @@ class ProfileScreen extends ConsumerWidget {
               ref.invalidate(workoutsProvider);
             }
           },
-        ).animate().fadeIn(delay: 190.ms),
+          onCustomEquipment: () {
+            HapticService.selection();
+            _showCustomEquipmentSheet(context, ref);
+          },
+        ).animate().fadeIn(delay: 180.ms),
       ],
+    );
+  }
+
+  void _showCustomEquipmentSheet(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.fitness_center, color: AppColors.cyan),
+                      const SizedBox(width: 12),
+                      Text(
+                        'My Custom Equipment',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    'Add equipment that will be used when generating your workouts.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: _CustomEquipmentManager(
+                    scrollController: scrollController,
+                    ref: ref,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -394,6 +459,324 @@ class ProfileScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       useRootNavigator: true,
       builder: (context) => const EditPersonalInfoSheet(),
+    );
+  }
+}
+
+/// Widget to manage custom equipment from profile
+class _CustomEquipmentManager extends StatefulWidget {
+  final ScrollController scrollController;
+  final WidgetRef ref;
+
+  const _CustomEquipmentManager({
+    required this.scrollController,
+    required this.ref,
+  });
+
+  @override
+  State<_CustomEquipmentManager> createState() => _CustomEquipmentManagerState();
+}
+
+class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
+  List<String> _customEquipment = [];
+  final _textController = TextEditingController();
+  bool _isLoading = true;
+  bool _isSaving = false;
+  String? _userId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCustomEquipment();
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadCustomEquipment() async {
+    debugPrint('🏋️ [CustomEquipment] Loading custom equipment...');
+    try {
+      final authState = widget.ref.read(authStateProvider);
+      _userId = authState.user?.id;
+
+      if (_userId == null) {
+        debugPrint('⚠️ [CustomEquipment] User not logged in');
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Fetch user data to get custom_equipment
+      final apiClient = widget.ref.read(apiClientProvider);
+      final response = await apiClient.get('/users/$_userId');
+
+      if (response.data != null) {
+        final userData = response.data as Map<String, dynamic>;
+        final customEquipmentData = userData['custom_equipment'];
+
+        List<String> equipment = [];
+        if (customEquipmentData != null) {
+          if (customEquipmentData is List) {
+            equipment = customEquipmentData.cast<String>();
+          } else if (customEquipmentData is String && customEquipmentData.isNotEmpty) {
+            try {
+              final parsed = List<String>.from(
+                (customEquipmentData).isNotEmpty
+                    ? List.from(Uri.decodeComponent(customEquipmentData).split(','))
+                    : [],
+              );
+              equipment = parsed;
+            } catch (e) {
+              debugPrint('⚠️ [CustomEquipment] Error parsing: $e');
+            }
+          }
+        }
+
+        debugPrint('✅ [CustomEquipment] Loaded ${equipment.length} custom equipment items');
+        setState(() {
+          _customEquipment = equipment;
+          _isLoading = false;
+        });
+      } else {
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      debugPrint('❌ [CustomEquipment] Error loading: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _saveCustomEquipment() async {
+    if (_userId == null) return;
+
+    setState(() => _isSaving = true);
+    debugPrint('💾 [CustomEquipment] Saving ${_customEquipment.length} items...');
+
+    try {
+      final apiClient = widget.ref.read(apiClientProvider);
+      await apiClient.put(
+        '/users/$_userId',
+        data: {
+          'custom_equipment': _customEquipment,
+        },
+      );
+      debugPrint('✅ [CustomEquipment] Saved successfully');
+    } catch (e) {
+      debugPrint('❌ [CustomEquipment] Error saving: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppColors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  Future<void> _addEquipment(String name) async {
+    if (name.trim().isEmpty) return;
+
+    final trimmed = name.trim();
+    if (_customEquipment.contains(trimmed)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$trimmed is already in your list'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _customEquipment.add(trimmed);
+    });
+    _textController.clear();
+
+    await _saveCustomEquipment();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Added "$trimmed" to your equipment'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.cyan.withValues(alpha: 0.9),
+        ),
+      );
+    }
+  }
+
+  Future<void> _removeEquipment(String name) async {
+    setState(() {
+      _customEquipment.remove(name);
+    });
+
+    await _saveCustomEquipment();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Removed "$name"'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Column(
+      children: [
+        // Add Equipment Input
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _textController,
+                  decoration: InputDecoration(
+                    hintText: 'Enter equipment name...',
+                    hintStyle: TextStyle(color: textMuted),
+                    filled: true,
+                    fillColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: cardBorder),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: cardBorder),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.cyan),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                  onSubmitted: _addEquipment,
+                ),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton(
+                onPressed: () => _addEquipment(_textController.text),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.cyan,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Add',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Equipment List
+        Expanded(
+          child: _customEquipment.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.inventory_2_outlined,
+                        size: 48,
+                        color: textMuted,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No custom equipment yet',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Add equipment above to get started',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  controller: widget.scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _customEquipment.length,
+                  itemBuilder: (context, index) {
+                    final equipment = _customEquipment[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: cardBorder),
+                      ),
+                      child: ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.cyan.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.fitness_center,
+                            color: AppColors.cyan,
+                            size: 20,
+                          ),
+                        ),
+                        title: Text(
+                          equipment,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: AppColors.red,
+                            size: 22,
+                          ),
+                          onPressed: () => _removeEquipment(equipment),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 }

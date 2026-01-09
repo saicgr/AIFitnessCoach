@@ -1398,7 +1398,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           );
         }
 
-        final visibleTiles = layout.tiles.where((t) => t.isVisible).toList()
+        // Tile types that have been removed/deprecated and return empty widgets
+        const deprecatedTileTypes = {
+          TileType.weeklyProgress,
+          TileType.upcomingFeatures,
+          TileType.upcomingWorkouts,
+        };
+
+        final visibleTiles = layout.tiles
+            .where((t) => t.isVisible && !deprecatedTileTypes.contains(t.type))
+            .toList()
           ..sort((a, b) => a.order.compareTo(b.order));
 
         if (visibleTiles.isEmpty) {
@@ -1420,7 +1429,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         // Group YOUR WEEK tiles together
         final weekTileTypes = {
           TileType.weekChanges,
-          TileType.weeklyProgress,
           TileType.weeklyGoals,
         };
         bool hasAddedWeekHeader = false;
@@ -1583,8 +1591,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           return _buildDefaultTilesLazy(context, isDark, todayWorkoutState, isAIGenerating);
         }
 
-        // Get visible tiles sorted by order
-        final visibleTiles = layout.tiles.where((t) => t.isVisible).toList()
+        // Tile types that have been removed/deprecated and return empty widgets
+        const deprecatedTileTypes = {
+          TileType.weeklyProgress,
+          TileType.upcomingFeatures,
+          TileType.upcomingWorkouts,
+        };
+
+        // Get visible tiles sorted by order, filtering out deprecated types
+        final visibleTiles = layout.tiles
+            .where((t) => t.isVisible && !deprecatedTileTypes.contains(t.type))
+            .toList()
           ..sort((a, b) => a.order.compareTo(b.order));
 
         if (visibleTiles.isEmpty) {
@@ -2744,25 +2761,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       message: 'Generating your personalized workouts...',
                     )
                   : EmptyWorkoutCard(
-                      onGenerate: () async {
-                        setState(() => _isCheckingWorkouts = true);
-                        final result = await workoutsNotifier
-                            .checkAndRegenerateIfNeeded();
-                        if (mounted) {
-                          setState(() => _isCheckingWorkouts = false);
-                          if (result['needs_generation'] != true) {
-                            context.go('/onboarding');
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content:
-                                    const Text('Generating your workouts...'),
-                                backgroundColor: AppColors.elevated,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        }
+                      onGenerate: () {
+                        // Navigate to Workouts tab where user can generate more
+                        context.go('/workouts');
                       },
                     ),
     );

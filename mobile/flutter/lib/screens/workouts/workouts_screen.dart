@@ -4,10 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/workout.dart';
 import '../../data/providers/today_workout_provider.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../home/widgets/cards/next_workout_card.dart';
-import '../home/widgets/cards/upcoming_workout_card.dart';
 import '../home/widgets/cards/weekly_progress_card.dart';
 import 'widgets/exercise_preferences_card.dart';
 
@@ -24,35 +24,9 @@ class WorkoutsScreen extends ConsumerStatefulWidget {
 }
 
 class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
-  // Key for upcoming section (for scroll-to functionality)
-  final GlobalKey _upcomingSectionKey = GlobalKey();
-
-  @override
-  void initState() {
-    super.initState();
-    // Scroll to section if requested
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToSectionIfNeeded();
-    });
-    // Note: We no longer batch-generate workouts here.
-    // Workouts are now generated one-at-a-time after each completion.
-  }
-
-  /// Scroll to a section if scrollTo parameter is provided
-  void _scrollToSectionIfNeeded() {
-    if (widget.scrollTo == 'upcoming' && _upcomingSectionKey.currentContext != null) {
-      // Small delay to ensure the UI is built
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (_upcomingSectionKey.currentContext != null) {
-          Scrollable.ensureVisible(
-            _upcomingSectionKey.currentContext!,
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeInOut,
-          );
-        }
-      });
-    }
-  }
+  // State for "Generate More" button
+  bool _isGenerating = false;
+  String? _generationMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -184,29 +158,6 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
       }
     });
 
-    // Get upcoming workouts from workoutsProvider (skip the first one we show)
-    final upcomingWorkouts = workouts.where((w) {
-      if (w.scheduledDate == null) return false;
-      final date = DateTime.tryParse(w.scheduledDate!);
-      if (date == null) return false;
-      // Skip today if we already have today's workout from todayWorkoutProvider
-      if (isToday && todayOrNextWorkout != null && w.id == todayOrNextWorkout!.id) {
-        return false;
-      }
-      // Skip the next workout if it matches what we're showing
-      if (!isToday && todayOrNextWorkout != null && w.id == todayOrNextWorkout!.id) {
-        return false;
-      }
-      return date.isAfter(now.subtract(const Duration(days: 1)));
-    }).toList()
-      ..sort((a, b) {
-        final dateA = DateTime.tryParse(a.scheduledDate ?? '') ?? DateTime(2099);
-        final dateB = DateTime.tryParse(b.scheduledDate ?? '') ?? DateTime(2099);
-        return dateA.compareTo(dateB);
-      });
-
-    final laterWorkouts = upcomingWorkouts.take(5).toList();
-
     // Calculate weekly progress
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
     final endOfWeek = startOfWeek.add(const Duration(days: 7));
@@ -327,30 +278,13 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
         ),
         const SizedBox(height: 24),
 
-        // Upcoming Workouts
-        if (laterWorkouts.isNotEmpty) ...[
-          Container(
-            key: _upcomingSectionKey,
-            child: _buildSectionHeader(
-              'UPCOMING',
-              textSecondary,
-              actionText: 'View Schedule',
-              onAction: () {
-                HapticService.light();
-                context.push('/schedule');
-              },
-            ),
-          ),
-          const SizedBox(height: 8),
-          ...laterWorkouts.map((workout) => UpcomingWorkoutCard(
-                workout: workout,
-                onTap: () {
-                  HapticService.light();
-                  context.push('/workout/${workout.id}');
-                },
-              )),
-          const SizedBox(height: 16),
-        ],
+        // Generate More button - always visible
+        _buildGenerateMoreSection(
+          context,
+          isDark,
+          textPrimary,
+          textSecondary,
+        ),
 
         // Bottom padding for nav bar
         const SizedBox(height: 100),
@@ -486,4 +420,284 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
     );
   }
 
+  /// Build the "Generate More" section - always visible
+  Widget _buildGenerateMoreSection(
+    BuildContext context,
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: elevatedColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _isGenerating
+                ? AppColors.cyan.withValues(alpha: 0.3)
+                : AppColors.teal.withValues(alpha: 0.3),
+          ),
+        ),
+        child: _isGenerating
+            ? _buildGeneratingState(textPrimary, textSecondary)
+            : _buildGenerateButton(
+                context,
+                textPrimary,
+                textSecondary,
+              ),
+      ),
+    );
+  }
+
+  Widget _buildGeneratingState(Color textPrimary, Color textSecondary) {
+    return Row(
+      children: [
+        const SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.5,
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.cyan),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Generating Workouts...',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+              if (_generationMessage != null)
+                Text(
+                  _generationMessage!,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textSecondary,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGenerateButton(
+    BuildContext context,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.teal.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.auto_awesome,
+                color: AppColors.teal,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Generate More Workouts',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  Text(
+                    'Create 4 new AI-powered workouts',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () => _onGenerateMore(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.teal,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add_circle_outline, size: 18),
+                SizedBox(width: 8),
+                Text(
+                  'Generate 4 Workouts',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _onGenerateMore(BuildContext context) async {
+    HapticService.medium();
+
+    setState(() {
+      _isGenerating = true;
+      _generationMessage = 'Starting generation...';
+    });
+
+    try {
+      final repository = ref.read(workoutRepositoryProvider);
+
+      // Get user ID from auth provider
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final result = await repository.triggerGenerateMore(
+        userId: userId,
+        maxWorkouts: 4,
+      );
+
+      if (result['success'] == true) {
+        if (result['needs_generation'] == true) {
+          final workoutsToGenerate = result['workouts_to_generate'] ?? 4;
+          setState(() {
+            _generationMessage = 'Generating $workoutsToGenerate workouts...';
+          });
+
+          // Poll for completion
+          await _pollForCompletion(repository, userId);
+        } else {
+          // Already have enough workouts
+          setState(() {
+            _isGenerating = false;
+            _generationMessage = null;
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(result['message'] ?? 'Workouts ready!'),
+                backgroundColor: AppColors.teal,
+              ),
+            );
+          }
+        }
+      } else {
+        throw Exception(result['message'] ?? 'Generation failed');
+      }
+    } catch (e) {
+      setState(() {
+        _isGenerating = false;
+        _generationMessage = null;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate workouts: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _pollForCompletion(WorkoutRepository repository, String userId) async {
+    const maxAttempts = 60; // 60 attempts * 2 seconds = 2 minutes max
+    var attempts = 0;
+
+    while (attempts < maxAttempts && _isGenerating) {
+      await Future.delayed(const Duration(seconds: 2));
+      attempts++;
+
+      try {
+        final status = await repository.getGenerationStatus(userId);
+        final statusValue = status['status'] as String?;
+
+        if (statusValue == 'completed' || statusValue == 'none') {
+          // Generation complete - refresh workouts
+          ref.invalidate(workoutsProvider);
+          ref.invalidate(todayWorkoutProvider);
+
+          if (mounted) {
+            setState(() {
+              _isGenerating = false;
+              _generationMessage = null;
+            });
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Workouts generated successfully!'),
+                backgroundColor: AppColors.teal,
+              ),
+            );
+          }
+          return;
+        } else if (statusValue == 'failed') {
+          throw Exception(status['error_message'] ?? 'Generation failed');
+        } else if (statusValue == 'in_progress') {
+          final generated = status['total_generated'] ?? 0;
+          final expected = status['total_expected'] ?? 0;
+          if (mounted && expected > 0) {
+            setState(() {
+              _generationMessage = 'Generated $generated of $expected workouts...';
+            });
+          }
+        }
+      } catch (e) {
+        debugPrint('Error polling generation status: $e');
+      }
+    }
+
+    // Timeout - refresh anyway
+    ref.invalidate(workoutsProvider);
+    ref.invalidate(todayWorkoutProvider);
+
+    if (mounted) {
+      setState(() {
+        _isGenerating = false;
+        _generationMessage = null;
+      });
+    }
+  }
 }

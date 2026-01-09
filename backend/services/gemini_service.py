@@ -1458,6 +1458,12 @@ Requirements:
 - MUST include AT LEAST 5 exercises (minimum 5, ideally 6-8) appropriate for {fitness_level} fitness level
 - EVERY exercise MUST match the focus area - do NOT include exercises for other muscle groups!
 - ONLY use equipment from this list: {', '.join(equipment) if equipment else 'bodyweight'}
+- ⚠️ CRITICAL EQUIPMENT USAGE: If the user has gym equipment (full_gym, barbell, cable_machine, dumbbells, machines), you MUST include AT LEAST 3-4 exercises that use that equipment! Do NOT generate mostly bodyweight exercises when gym equipment is available. For example:
+  - If user has "full_gym": Include barbell squats, bench press, cable rows, lat pulldowns, leg press, etc.
+  - If user has "barbell": Include deadlifts, squats, overhead press, rows, etc.
+  - If user has "dumbbells": Include dumbbell press, rows, curls, lunges with weights, etc.
+  - If user has "cable_machine": Include cable flies, face pulls, tricep pushdowns, cable rows, etc.
+  Bodyweight exercises should only supplement, not dominate, a gym workout!
 - For beginners: USE ALL AVAILABLE EQUIPMENT listed above! Focus on proper form and include adequate rest. Choose foundational compound movements (squats, bench press, rows, deadlifts) over isolation exercises. Beginners CAN and SHOULD use barbells, dumbbells, and machines - not just bodyweight!
   ⚠️ CRITICAL FOR BEGINNERS: Do NOT include advanced/elite calisthenics movements like planche push-ups, front levers, muscle-ups, handstand push-ups, one-arm pull-ups, pistol squats, human flags, or L-sits. These require YEARS of training. Stick to basic movements: regular push-ups, squats, lunges, rows, planks, dips (assisted if needed), and standard pull-ups (assisted if needed).
 - For intermediate: balanced challenge, mix of compound and isolation movements
@@ -1646,6 +1652,7 @@ Return ONLY valid JSON (no markdown):
 }}
 
 Include 5-8 exercises for {fitness_level} level using only: {', '.join(equipment) if equipment else 'bodyweight'}
+⚠️ CRITICAL: If user has gym equipment (full_gym, barbell, dumbbells, cable_machine), include AT LEAST 3-4 exercises using that equipment! Do NOT generate mostly bodyweight when gym equipment is available!
 {senior_instruction}{holiday_instruction}{avoid_instruction}{progression_instruction}"""
 
             logger.info(f"[Streaming] Starting workout generation for {fitness_level} user")

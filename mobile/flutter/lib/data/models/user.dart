@@ -277,18 +277,43 @@ class User extends Equatable {
     }
   }
 
-  /// Get workout environment from preferences
+  /// Get workout environment from preferences (or infer from equipment)
   String? get workoutEnvironment {
-    if (preferences == null || preferences!.isEmpty) return null;
+    if (preferences == null || preferences!.isEmpty) {
+      // If no preferences, try to infer from equipment
+      return _inferWorkoutEnvironmentFromEquipment();
+    }
     try {
       final decoded = jsonDecode(preferences!);
       if (decoded is Map && decoded['workout_environment'] != null) {
         return decoded['workout_environment'] as String;
       }
-      return null;
+      // If workout_environment not in preferences, try to infer from equipment
+      return _inferWorkoutEnvironmentFromEquipment();
     } catch (_) {
-      return null;
+      return _inferWorkoutEnvironmentFromEquipment();
     }
+  }
+
+  /// Infer workout environment from equipment list
+  String? _inferWorkoutEnvironmentFromEquipment() {
+    final equip = equipmentList;
+    if (equip.isEmpty) return null;
+
+    if (equip.contains('full_gym') ||
+        (equip.contains('barbell') && equip.contains('cable_machine'))) {
+      return 'commercial_gym';
+    }
+    if (equip.contains('barbell') || equip.contains('cable_machine')) {
+      return 'home_gym';
+    }
+    if (equip.contains('dumbbells') || equip.contains('kettlebell') || equip.contains('resistance_bands')) {
+      return 'home';
+    }
+    if (equip.contains('bodyweight')) {
+      return 'home';
+    }
+    return null;
   }
 
   /// Get workout environment as display text
@@ -362,13 +387,26 @@ class User extends Equatable {
     }).join(', ');
   }
 
-  /// Get motivation from preferences
+  /// Get motivation from preferences (checks both 'motivation' and 'motivations')
   String? get motivation {
     if (preferences == null || preferences!.isEmpty) return null;
     try {
       final decoded = jsonDecode(preferences!);
-      if (decoded is Map && decoded['motivation'] != null) {
-        return decoded['motivation'] as String;
+      if (decoded is Map) {
+        // Check for singular 'motivation' first
+        if (decoded['motivation'] != null) {
+          return decoded['motivation'] as String;
+        }
+        // Fall back to 'motivations' (plural) - take first item if it's a list
+        if (decoded['motivations'] != null) {
+          final motivations = decoded['motivations'];
+          if (motivations is List && motivations.isNotEmpty) {
+            return motivations.first.toString();
+          }
+          if (motivations is String) {
+            return motivations;
+          }
+        }
       }
       return null;
     } catch (_) {
@@ -376,16 +414,44 @@ class User extends Equatable {
     }
   }
 
+  /// Get all motivations from preferences as a list
+  List<String> get motivationsList {
+    if (preferences == null || preferences!.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(preferences!);
+      if (decoded is Map && decoded['motivations'] != null) {
+        final motivations = decoded['motivations'];
+        if (motivations is List) {
+          return motivations.map((e) => e.toString()).toList();
+        }
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
   /// Get motivation as display text
   String get motivationDisplay {
-    final mot = motivation;
-    if (mot == null) return 'Not set';
+    final mots = motivationsList;
+    if (mots.isEmpty) {
+      final mot = motivation;
+      if (mot == null) return 'Not set';
+      return _formatMotivation(mot);
+    }
+    // Display up to 2 motivations
+    return mots.take(2).map(_formatMotivation).join(', ');
+  }
+
+  String _formatMotivation(String mot) {
     switch (mot) {
       case 'seeing_progress':
         return 'Seeing progress';
       case 'feeling_stronger':
+      case 'feel_stronger':
         return 'Feeling stronger';
       case 'looking_better':
+      case 'look_better':
         return 'Looking better';
       case 'health_improvements':
         return 'Health improvements';
@@ -393,8 +459,14 @@ class User extends Equatable {
         return 'Stress relief';
       case 'social':
         return 'Social/accountability';
+      case 'more_energy':
+        return 'More energy';
+      case 'confidence':
+        return 'Confidence';
+      case 'longevity':
+        return 'Longevity';
       default:
-        return mot;
+        return mot.replaceAll('_', ' ');
     }
   }
 

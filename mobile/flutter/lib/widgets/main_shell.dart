@@ -26,9 +26,8 @@ class MainShell extends ConsumerWidget {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/workouts')) return 1;
-    if (location.startsWith('/nutrition')) return 2;
-    if (location.startsWith('/fasting')) return 3;
-    if (location.startsWith('/social')) return 4;
+    if (location.startsWith('/social')) return 2;
+    if (location.startsWith('/profile')) return 3;
     return 0;
   }
 
@@ -41,13 +40,10 @@ class MainShell extends ConsumerWidget {
         context.go('/workouts');
         break;
       case 2:
-        context.go('/nutrition');
+        context.go('/social');
         break;
       case 3:
-        context.go('/fasting');
-        break;
-      case 4:
-        context.go('/social');
+        context.go('/profile');
         break;
     }
   }
@@ -210,35 +206,25 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     itemHeight: itemHeight,
                     selectedColor: AppColors.cyan,
                   ),
-                  // Food - Green
-                  _NavItem(
-                    icon: Icons.restaurant_outlined,
-                    selectedIcon: Icons.restaurant,
-                    label: 'Food',
-                    isSelected: selectedIndex == 2,
-                    onTap: () => onItemTapped(2),
-                    itemHeight: itemHeight,
-                    selectedColor: const Color(0xFF34C759),
-                  ),
-                  // Fasting - Purple
-                  _NavItem(
-                    icon: Icons.timer_outlined,
-                    selectedIcon: Icons.timer,
-                    label: 'Fasting',
-                    isSelected: selectedIndex == 3,
-                    onTap: () => onItemTapped(3),
-                    itemHeight: itemHeight,
-                    selectedColor: isDark ? AppColors.purple : AppColorsLight.purple,
-                  ),
                   // Social - Orange (people/community icon)
                   _NavItem(
                     icon: Icons.people_outline,
                     selectedIcon: Icons.people,
                     label: 'Social',
-                    isSelected: selectedIndex == 4,
-                    onTap: () => onItemTapped(4),
+                    isSelected: selectedIndex == 2,
+                    onTap: () => onItemTapped(2),
                     itemHeight: itemHeight,
                     selectedColor: const Color(0xFFFF9500),
+                  ),
+                  // Profile - Purple
+                  _NavItem(
+                    icon: Icons.person_outline,
+                    selectedIcon: Icons.person,
+                    label: 'Profile',
+                    isSelected: selectedIndex == 3,
+                    onTap: () => onItemTapped(3),
+                    itemHeight: itemHeight,
+                    selectedColor: isDark ? AppColors.purple : AppColorsLight.purple,
                   ),
                 ],
               ),

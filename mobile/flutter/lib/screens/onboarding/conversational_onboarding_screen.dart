@@ -696,6 +696,8 @@ class _ConversationalOnboardingScreenState
       debugPrint('🔍 [Onboarding] equipment: ${finalData['equipment']}');
       debugPrint('🔍 [Onboarding] trainingExperience: ${finalData['trainingExperience']}');
       debugPrint('🔍 [Onboarding] workoutEnvironment: ${finalData['workoutEnvironment']}');
+      debugPrint('🔍 [Onboarding] All finalData keys: ${finalData.keys.toList()}');
+      debugPrint('🔍 [Onboarding] focusAreas: ${finalData['focusAreas']}');
       debugPrint('🔍 [Onboarding] focusAreas: ${finalData['focusAreas']}');
       debugPrint('🔍 [Onboarding] motivation: ${finalData['motivation']}');
       debugPrint('🔍 [Onboarding] motivations: ${finalData['motivations']}');

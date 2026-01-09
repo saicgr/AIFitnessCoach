@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../data/models/home_layout.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
@@ -192,8 +193,9 @@ class TileFactory {
         }
 
         return EmptyWorkoutCard(
-          onGenerate: () async {
-            await workoutsNotifier.checkAndRegenerateIfNeeded();
+          onGenerate: () {
+            // Navigate to Workouts tab where user can generate more
+            context.go('/workouts');
           },
         );
       },

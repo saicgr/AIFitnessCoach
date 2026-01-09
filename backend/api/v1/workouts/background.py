@@ -553,3 +553,113 @@ async def generate_next_workout(
     except Exception as e:
         logger.error(f"[Generate-Next] Failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/generate-more/{user_id}")
+async def generate_more_workouts(
+    user_id: str,
+    background_tasks: BackgroundTasks,
+    max_workouts: int = Query(default=4, description="Maximum number of workouts to generate")
+):
+    """
+    Generate up to max_workouts additional workouts for a user.
+
+    This is a simplified endpoint designed to be called manually from the Workouts tab.
+    It generates workouts starting from the day after the last scheduled workout,
+    limited to max_workouts (default 4).
+
+    Returns immediately - generation happens in background.
+    """
+    logger.info(f"[Generate-More] Generating up to {max_workouts} workouts for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+        job_queue = get_job_queue_service()
+
+        # Get user data including preferences
+        user = db.get_user(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Get user preferences for workout days
+        preferences = parse_json_field(user.get("preferences"), {})
+        selected_days = preferences.get("workout_days") or preferences.get("selected_days") or [0, 2, 4]
+        duration_minutes = preferences.get("workout_duration", 45)
+
+        # Check if already generating
+        existing_job = job_queue.get_user_pending_job(user_id)
+        if existing_job and existing_job.get("status") in ["pending", "in_progress"]:
+            return {
+                "success": True,
+                "message": "Generation already in progress",
+                "already_generating": True,
+                "job_id": existing_job.get("id")
+            }
+
+        # Get existing workouts to find the latest scheduled date
+        today = datetime.now().date()
+        future_date = today + timedelta(days=60)
+
+        workouts = db.get_workouts_by_date_range(user_id, str(today), str(future_date))
+
+        # Find the latest scheduled workout date
+        latest_date = today
+        if workouts:
+            for w in workouts:
+                sched_date = w.get("scheduled_date", "")
+                if sched_date:
+                    try:
+                        workout_date = datetime.fromisoformat(str(sched_date)[:10]).date()
+                        if workout_date > latest_date:
+                            latest_date = workout_date
+                    except ValueError:
+                        pass
+
+        # Always generate max_workouts (default 4) new workouts
+        workouts_needed = max_workouts
+
+        # Calculate the number of weeks needed to generate workouts_needed
+        # Based on workout days per week
+        workouts_per_week = len(selected_days) if selected_days else 3
+        weeks_needed = max(1, (workouts_needed + workouts_per_week - 1) // workouts_per_week)
+
+        # Start from the day after the latest scheduled workout
+        start_date = str(latest_date + timedelta(days=1))
+
+        logger.info(f"[Generate-More] User {user_id}: generating {workouts_needed} workouts ({weeks_needed} weeks starting {start_date})")
+
+        # Create a job
+        job_id = job_queue.create_job(
+            user_id=user_id,
+            month_start_date=start_date,
+            duration_minutes=duration_minutes,
+            selected_days=selected_days,
+            weeks=weeks_needed
+        )
+
+        # Schedule the background task
+        background_tasks.add_task(
+            _run_background_generation,
+            job_id,
+            user_id,
+            start_date,
+            duration_minutes,
+            selected_days,
+            weeks_needed
+        )
+
+        return {
+            "success": True,
+            "message": f"Generating {workouts_needed} more workouts",
+            "needs_generation": True,
+            "job_id": job_id,
+            "start_date": start_date,
+            "workouts_to_generate": workouts_needed,
+            "weeks": weeks_needed
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[Generate-More] Failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

@@ -11,6 +11,48 @@ class EquipmentCard extends StatelessWidget {
     required this.user,
   });
 
+  /// Format equipment name for display
+  String _formatEquipmentName(String equipment) {
+    const displayNames = {
+      'full_gym': 'Full Gym Access',
+      'home_gym': 'Home Gym',
+      'bodyweight': 'Bodyweight',
+      'dumbbells': 'Dumbbells',
+      'barbell': 'Barbell',
+      'kettlebell': 'Kettlebell',
+      'resistance_bands': 'Resistance Bands',
+      'pull_up_bar': 'Pull-up Bar',
+      'cable_machine': 'Cable Machine',
+      'smith_machine': 'Smith Machine',
+      'leg_press': 'Leg Press',
+      'bench': 'Bench',
+      'squat_rack': 'Squat Rack',
+    };
+    return displayNames[equipment] ?? equipment.replaceAll('_', ' ');
+  }
+
+  /// Get simplified equipment list for display
+  List<String> _getDisplayEquipment(List<String> equipment) {
+    // If user has full_gym, just show that - they have access to everything
+    if (equipment.contains('full_gym')) {
+      return ['full_gym'];
+    }
+
+    // If user has home_gym, show that plus any unique items
+    if (equipment.contains('home_gym')) {
+      final uniqueItems = equipment.where((e) =>
+        e != 'home_gym' &&
+        e != 'dumbbells' &&
+        e != 'barbell' &&
+        e != 'bench'
+      ).toList();
+      return ['home_gym', ...uniqueItems];
+    }
+
+    // Otherwise show all equipment
+    return equipment;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -19,7 +61,8 @@ class EquipmentCard extends StatelessWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final success = isDark ? AppColors.success : AppColorsLight.success;
 
-    final equipment = user?.equipmentList ?? ['Dumbbells', 'Bodyweight'];
+    final rawEquipment = user?.equipmentList ?? ['bodyweight'];
+    final equipment = _getDisplayEquipment(rawEquipment);
 
     return Container(
       width: double.infinity,
@@ -33,7 +76,7 @@ class EquipmentCard extends StatelessWidget {
         runSpacing: 8,
         children: equipment.map((eq) {
           return _EquipmentChip(
-            label: eq,
+            label: _formatEquipmentName(eq),
             glassSurface: glassSurface,
             textPrimary: textPrimary,
             success: success,

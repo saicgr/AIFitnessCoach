@@ -200,75 +200,11 @@ async def get_today_workout(
             days_until_next = (next_date - date.today()).days
             logger.info(f"Found next workout in {days_until_next} days: {next_workout.name}")
 
-        # If NO workouts exist at all (neither today nor future), trigger generation
+        # No auto-generation here. Users can manually generate workouts from the Workouts tab.
+        # If no workouts exist, the frontend will show the "Ready to Start?" empty state card
+        # which navigates to the Workouts tab where users can generate more.
         if not has_workout_today and next_workout is None:
-            logger.info(f"No workouts exist for user {user_id}. Triggering auto-generation...")
-            is_generating = True
-            generation_message = "Generating your workout..."
-
-            try:
-                from .background import check_and_regenerate_workouts
-
-                # Create a BackgroundTasks instance for background generation
-                background_tasks = BackgroundTasks()
-
-                # Trigger regeneration with threshold=0 to force generation
-                regen_result = await check_and_regenerate_workouts(
-                    user_id=user_id,
-                    background_tasks=background_tasks,
-                    threshold_days=0  # Force generation
-                )
-
-                # Run any scheduled background tasks synchronously
-                for task in background_tasks.tasks:
-                    await task()
-
-                logger.info(f"Auto-generation triggered: {regen_result}")
-
-                # Re-fetch workouts after generation
-                today_rows = db.list_workouts(
-                    user_id=user_id,
-                    from_date=today_str,
-                    to_date=today_str,
-                    is_completed=False,
-                    limit=1,
-                )
-
-                if today_rows:
-                    today_workout = _row_to_summary(today_rows[0])
-                    has_workout_today = True
-                    is_generating = False
-                    generation_message = None
-                    logger.info(f"Auto-generated today's workout: {today_workout.name}")
-                else:
-                    # Check for next workout
-                    future_rows = db.list_workouts(
-                        user_id=user_id,
-                        from_date=tomorrow_str,
-                        to_date=future_end,
-                        is_completed=False,
-                        limit=1,
-                        order_asc=True,  # Get earliest upcoming workout first
-                    )
-
-                    if future_rows:
-                        next_workout = _row_to_summary(future_rows[0])
-                        next_date = datetime.strptime(next_workout.scheduled_date, "%Y-%m-%d").date()
-                        days_until_next = (next_date - date.today()).days
-                        is_generating = False
-                        generation_message = None
-                        logger.info(f"Auto-generated next workout: {next_workout.name}")
-                    else:
-                        # Generation might still be async
-                        is_generating = regen_result.get("needs_generation", False) or regen_result.get("already_generating", False)
-                        if is_generating:
-                            generation_message = "Your workout is being generated. Refresh in a moment!"
-                        else:
-                            generation_message = "Unable to generate workout. Please try again."
-
-            except Exception as gen_error:
-                logger.error(f"Failed to auto-generate workout: {gen_error}")
-                generation_message = "Failed to generate workout. Please try again."
+            logger.info(f"No workouts exist for user {user_id}. User should navigate to Workouts tab to generate.")
 
         # Log analytics event for quick start view
         try:

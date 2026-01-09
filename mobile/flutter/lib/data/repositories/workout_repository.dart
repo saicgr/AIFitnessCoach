@@ -1059,6 +1059,38 @@ class WorkoutRepository {
     }
   }
 
+  /// Trigger generation of more workouts (max 4) using the simplified endpoint.
+  /// Returns immediately - generation happens in background.
+  /// Check generation status with [getGenerationStatus] to monitor progress.
+  Future<Map<String, dynamic>> triggerGenerateMore({
+    required String userId,
+    int maxWorkouts = 4,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Triggering generation of up to $maxWorkouts workouts...');
+
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/generate-more/$userId',
+        queryParameters: {'max_workouts': maxWorkouts},
+        options: Options(
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        debugPrint('✅ [Workout] Generate more response: $data');
+        return data;
+      }
+
+      return {'success': false, 'message': 'Unexpected response'};
+    } catch (e) {
+      debugPrint('❌ [Workout] Error triggering generate more: $e');
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
   /// Get user's current program preferences
   Future<ProgramPreferences?> getProgramPreferences(String userId) async {
     try {

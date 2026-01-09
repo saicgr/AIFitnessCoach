@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/providers/today_workout_provider.dart';
+import '../../../data/repositories/workout_repository.dart';
 import 'hero_workout_card.dart';
 import 'hero_nutrition_card.dart';
 import 'hero_fasting_card.dart';
@@ -68,6 +69,7 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
             children: HomeFocus.values.map((focus) {
               final isActive = focus == currentFocus;
               return GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () {
                   _pageController.animateToPage(
                     focus.index,
@@ -75,18 +77,21 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
                     curve: Curves.easeInOut,
                   );
                 },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: isActive ? 24 : 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
-                    color: isActive
-                        ? _getFocusColor(focus)
-                        : (isDark
-                            ? Colors.white.withValues(alpha: 0.2)
-                            : Colors.black.withValues(alpha: 0.1)),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: isActive ? 24 : 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      color: isActive
+                          ? _getFocusColor(focus)
+                          : (isDark
+                              ? Colors.white.withValues(alpha: 0.2)
+                              : Colors.black.withValues(alpha: 0.1)),
+                    ),
                   ),
                 ),
               );
@@ -102,6 +107,7 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
             children: HomeFocus.values.map((focus) {
               final isActive = focus == currentFocus;
               return GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () {
                   _pageController.animateToPage(
                     focus.index,
@@ -110,7 +116,7 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
                   );
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: Text(
                     _getFocusLabel(focus),
                     style: TextStyle(
@@ -169,9 +175,8 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
         if (widget.todayWorkout != null) {
           return HeroWorkoutCard(workout: widget.todayWorkout!);
         }
-        return const GeneratingHeroCard(
-          message: 'Loading workout...',
-        );
+        // Fallback to workoutsProvider
+        return _buildFallbackFromWorkoutsProvider();
       },
       data: (response) {
         // Check if generating
@@ -193,9 +198,47 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
           return HeroWorkoutCard(workout: widget.todayWorkout!);
         }
 
-        // Last resort: show generating card (backend should auto-generate)
-        return const GeneratingHeroCard(
-          message: 'Preparing your workout...',
+        // Fallback to workoutsProvider as last resort
+        return _buildFallbackFromWorkoutsProvider();
+      },
+    );
+  }
+
+  /// Fallback to workoutsProvider when todayWorkoutProvider fails or returns no workouts
+  Widget _buildFallbackFromWorkoutsProvider() {
+    return Consumer(
+      builder: (context, ref, _) {
+        final workoutsState = ref.watch(workoutsProvider);
+
+        return workoutsState.when(
+          loading: () => const GeneratingHeroCard(
+            message: 'Loading workout...',
+          ),
+          error: (_, __) => const GeneratingHeroCard(
+            message: 'Loading workout...',
+          ),
+          data: (workouts) {
+            if (workouts.isEmpty) {
+              return const GeneratingHeroCard(
+                message: 'Preparing your workout...',
+              );
+            }
+
+            // Find next workout (today or future, not completed)
+            final today = DateTime.now().toIso8601String().split('T')[0];
+            final nextWorkout = workouts.where((w) {
+              final date = w.scheduledDate?.split('T')[0] ?? '';
+              return !(w.isCompleted ?? false) && date.compareTo(today) >= 0;
+            }).firstOrNull;
+
+            if (nextWorkout != null) {
+              return HeroWorkoutCard(workout: nextWorkout);
+            }
+
+            return const GeneratingHeroCard(
+              message: 'Preparing your workout...',
+            );
+          },
         );
       },
     );
