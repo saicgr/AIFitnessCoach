@@ -10,6 +10,7 @@ import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/fasting_timer_service.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/main_shell.dart';
 import 'widgets/fasting_history_list.dart';
 import 'widgets/protocol_selector_sheet.dart';
 import 'widgets/fasting_settings_sheet.dart';
@@ -44,7 +45,11 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _initialize());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initialize();
+      // Collapse nav bar labels on this secondary page
+      ref.read(navBarLabelsExpandedProvider.notifier).state = false;
+    });
   }
 
   @override
@@ -159,7 +164,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
             style: TextStyle(
               color: textPrimary,
               fontWeight: FontWeight.bold,
-              fontSize: 24,
+              fontSize: 32,
             ),
           ),
           const Spacer(),

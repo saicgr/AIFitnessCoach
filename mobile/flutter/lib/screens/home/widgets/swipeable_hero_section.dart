@@ -10,10 +10,10 @@ import 'hero_fasting_card.dart';
 import 'compact_workout_row.dart';
 
 /// Focus type for the home screen
-enum HomeFocus { workout, nutrition, fasting }
+enum HomeFocus { forYou, workout, nutrition, fasting }
 
 /// Provider to persist the user's home focus preference
-final homeFocusProvider = StateProvider<HomeFocus>((ref) => HomeFocus.workout);
+final homeFocusProvider = StateProvider<HomeFocus>((ref) => HomeFocus.forYou);
 
 /// Swipeable hero section allowing users to switch between workout, nutrition, and fasting focus
 /// Each focus shows a hero card with the compact workout row below (if not workout focus)
@@ -33,6 +33,7 @@ class SwipeableHeroSection extends ConsumerStatefulWidget {
 
 class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
   late PageController _pageController;
+  bool _isAnimating = false;
 
   @override
   void initState() {
@@ -51,13 +52,30 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
   }
 
   void _onPageChanged(int index) {
-    ref.read(homeFocusProvider.notifier).state = HomeFocus.values[index];
+    if (!_isAnimating) {
+      ref.read(homeFocusProvider.notifier).state = HomeFocus.values[index];
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentFocus = ref.watch(homeFocusProvider);
+
+    // Sync PageController when provider changes (e.g., from pills)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_pageController.hasClients &&
+          _pageController.page?.round() != currentFocus.index) {
+        _isAnimating = true;
+        _pageController
+            .animateToPage(
+              currentFocus.index,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            )
+            .then((_) => _isAnimating = false);
+      }
+    });
 
     return Column(
       children: [
@@ -142,6 +160,9 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
             controller: _pageController,
             onPageChanged: _onPageChanged,
             children: [
+              // For You focus (same as workout)
+              _buildWorkoutHero(),
+
               // Workout focus
               _buildWorkoutHero(),
 
@@ -154,8 +175,8 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
           ),
         ),
 
-        // Compact workout row (when not in workout focus)
-        if (currentFocus != HomeFocus.workout)
+        // Compact workout row (when in nutrition or fasting focus)
+        if (currentFocus == HomeFocus.nutrition || currentFocus == HomeFocus.fasting)
           _buildCompactWorkoutRow(),
       ],
     );
@@ -288,6 +309,8 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
 
   Color _getFocusColor(HomeFocus focus) {
     switch (focus) {
+      case HomeFocus.forYou:
+        return AppColors.teal;
       case HomeFocus.workout:
         return AppColors.cyan;
       case HomeFocus.nutrition:
@@ -299,6 +322,8 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
 
   String _getFocusLabel(HomeFocus focus) {
     switch (focus) {
+      case HomeFocus.forYou:
+        return 'For You';
       case HomeFocus.workout:
         return 'Workout';
       case HomeFocus.nutrition:
@@ -311,6 +336,8 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
   double _getHeroHeight(HomeFocus focus) {
     // Different hero cards have different heights
     switch (focus) {
+      case HomeFocus.forYou:
+        return 340; // Same as workout
       case HomeFocus.workout:
         return 340;
       case HomeFocus.nutrition:

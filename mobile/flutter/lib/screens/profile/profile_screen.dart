@@ -17,9 +17,7 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
-    ref.watch(workoutsProvider);
     final user = authState.user;
-    final completedCount = ref.read(workoutsProvider.notifier).completedCount;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
@@ -31,7 +29,7 @@ class ProfileScreen extends ConsumerWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            _buildScrollableContent(context, ref, user, completedCount, isDark),
+            _buildScrollableContent(context, ref, user, isDark),
             _buildFloatingHeader(context, isDark),
           ],
         ),
@@ -43,7 +41,6 @@ class ProfileScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     dynamic user,
-    int completedCount,
     bool isDark,
   ) {
     return SingleChildScrollView(
@@ -58,14 +55,6 @@ class ProfileScreen extends ConsumerWidget {
             photoUrl: user?.photoUrl,
           ).animate().fadeIn().slideY(begin: 0.1),
           const SizedBox(height: 32),
-          _buildStatsRow(completedCount).animate().fadeIn(delay: 100.ms),
-          const SizedBox(height: 24),
-          const GoalBanner().animate().fadeIn(delay: 120.ms),
-          const SizedBox(height: 24),
-          _buildQuickAccessSection(context),
-          const SizedBox(height: 32),
-          const WorkoutGallerySection(),
-          const SizedBox(height: 32),
           _buildFitnessProfileSection(user),
           const SizedBox(height: 24),
           _buildTrainingSetupSection(context, ref, user),
@@ -76,115 +65,6 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 100),
         ],
       ),
-    );
-  }
-
-  Widget _buildStatsRow(int completedCount) {
-    return Row(
-      children: [
-        Expanded(
-          child: StatCard(
-            icon: Icons.fitness_center,
-            value: '$completedCount',
-            label: 'Workouts',
-            color: AppColors.cyan,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: StatCard(
-            icon: Icons.local_fire_department,
-            value: '~${(completedCount * 45 * 6)}',
-            label: 'Est. Cal',
-            color: AppColors.orange,
-            isEstimate: true,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: StatCard(
-            icon: Icons.timer,
-            value: '~${(completedCount * 45)}',
-            label: 'Est. Min',
-            color: AppColors.purple,
-            isEstimate: true,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQuickAccessSection(BuildContext context) {
-    return Column(
-      children: [
-        const SectionHeader(title: 'QUICK ACCESS'),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: QuickAccessCard(
-                icon: Icons.emoji_events,
-                title: 'Achievements',
-                color: AppColors.orange,
-                onTap: () => context.push('/achievements'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: QuickAccessCard(
-                icon: Icons.water_drop,
-                title: 'Hydration',
-                color: AppColors.electricBlue,
-                onTap: () => context.push('/hydration'),
-              ),
-            ),
-          ],
-        ).animate().fadeIn(delay: 120.ms),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: QuickAccessCard(
-                icon: Icons.restaurant,
-                title: 'Nutrition',
-                color: AppColors.success,
-                onTap: () => context.push('/nutrition'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: QuickAccessCard(
-                icon: Icons.summarize,
-                title: 'Weekly Summary',
-                color: AppColors.purple,
-                onTap: () => context.push('/summaries'),
-              ),
-            ),
-          ],
-        ).animate().fadeIn(delay: 140.ms),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: QuickAccessCard(
-                icon: Icons.straighten,
-                title: 'Measurements',
-                color: AppColors.cyan,
-                onTap: () => context.push('/measurements'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: QuickAccessCard(
-                icon: Icons.insights,
-                title: 'Stats',
-                color: AppColors.purple,
-                onTap: () => context.push('/stats'),
-              ),
-            ),
-          ],
-        ).animate().fadeIn(delay: 160.ms),
-      ],
     );
   }
 

@@ -243,6 +243,52 @@ class User extends Equatable {
     return names.join(', ');
   }
 
+  /// Check if today is the last workout day of the week
+  /// Returns true if today is a workout day and there are no more workout days after today this week
+  bool get isLastWorkoutDayOfWeek {
+    final days = workoutDays;
+    if (days.isEmpty) return false;
+
+    // DateTime.weekday: 1=Monday, 7=Sunday
+    // workoutDays uses 0=Monday, 6=Sunday
+    final todayIndex = DateTime.now().weekday - 1; // Convert to 0-indexed
+
+    // Check if today is a workout day
+    if (!days.contains(todayIndex)) return false;
+
+    // Check if there are any workout days after today this week
+    final remainingDays = days.where((d) => d > todayIndex).toList();
+    return remainingDays.isEmpty;
+  }
+
+  /// Get remaining workout days this week (including today if not completed)
+  /// Returns list of day indices (0=Mon, 6=Sun)
+  List<int> get remainingWorkoutDaysThisWeek {
+    final days = workoutDays;
+    if (days.isEmpty) return [];
+
+    final todayIndex = DateTime.now().weekday - 1; // 0=Monday
+
+    // Include today and all days after today
+    return days.where((d) => d >= todayIndex).toList();
+  }
+
+  /// Get the count of workouts to generate for smart generation
+  /// If it's the last workout day, includes next week's workouts
+  int getSmartGenerationCount({bool includeNextWeekOnLastDay = true}) {
+    final days = workoutDays;
+    if (days.isEmpty) return 0;
+
+    final remaining = remainingWorkoutDaysThisWeek;
+
+    if (includeNextWeekOnLastDay && isLastWorkoutDayOfWeek) {
+      // Add next week's workout days
+      return remaining.length + days.length;
+    }
+
+    return remaining.length;
+  }
+
   /// Get training experience from preferences
   String? get trainingExperience {
     if (preferences == null || preferences!.isEmpty) return null;

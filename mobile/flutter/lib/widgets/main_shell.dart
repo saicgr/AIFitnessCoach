@@ -16,6 +16,10 @@ import 'floating_chat/floating_chat_overlay.dart';
 /// Provider to control floating nav bar visibility
 final floatingNavBarVisibleProvider = StateProvider<bool>((ref) => true);
 
+/// Provider to control whether nav bar labels are expanded
+/// Set to false when on secondary pages (Workouts, Nutrition, Fasting)
+final navBarLabelsExpandedProvider = StateProvider<bool>((ref) => true);
+
 /// Main shell with floating bottom navigation bar
 class MainShell extends ConsumerWidget {
   final Widget child;
@@ -25,10 +29,18 @@ class MainShell extends ConsumerWidget {
   int _calculateSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/home')) return 0;
-    if (location.startsWith('/workouts')) return 1;
-    if (location.startsWith('/social')) return 2;
-    if (location.startsWith('/profile')) return 3;
+    if (location.startsWith('/social')) return 1;
+    if (location.startsWith('/profile')) return 2;
+    if (location.startsWith('/stats')) return 3;
     return 0;
+  }
+
+  bool _isSecondaryPage(BuildContext context) {
+    // Use the full URI path to detect secondary pages, not just the shell's matched location
+    final fullPath = GoRouter.of(context).routerDelegate.currentConfiguration.uri.path;
+    return fullPath.startsWith('/workouts') ||
+           fullPath.startsWith('/nutrition') ||
+           fullPath.startsWith('/fasting');
   }
 
   void _onItemTapped(BuildContext context, int index) {
@@ -37,13 +49,13 @@ class MainShell extends ConsumerWidget {
         context.go('/home');
         break;
       case 1:
-        context.go('/workouts');
-        break;
-      case 2:
         context.go('/social');
         break;
-      case 3:
+      case 2:
         context.go('/profile');
+        break;
+      case 3:
+        context.go('/stats');
         break;
     }
   }
@@ -115,6 +127,7 @@ class MainShell extends ConsumerWidget {
                 opacity: isNavBarVisible ? 1.0 : 0.0,
                 child: _FloatingNavBarWithAI(
                   selectedIndex: selectedIndex,
+                  isSecondaryPage: _isSecondaryPage(context),
                   onItemTapped: (index) => _onItemTapped(context, index),
                 ),
               ),
@@ -129,10 +142,12 @@ class MainShell extends ConsumerWidget {
 /// Container widget with nav bar and AI button side by side
 class _FloatingNavBarWithAI extends ConsumerWidget {
   final int selectedIndex;
+  final bool isSecondaryPage;
   final Function(int) onItemTapped;
 
   const _FloatingNavBarWithAI({
     required this.selectedIndex,
+    required this.isSecondaryPage,
     required this.onItemTapped,
   });
 
@@ -143,16 +158,14 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
     final navBarColor = isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated;
     final shadowColor = isDark ? Colors.black.withValues(alpha: 0.5) : Colors.black.withValues(alpha: 0.1);
 
-    // Dynamic sizing based on nav bar dimensions
-    const navBarHeight = 46.0;
-    const navBarRadius = navBarHeight / 2; // Fully rounded ends = 23
-    const itemPadding = 4.0; // 8px grid compliant padding
-    final itemHeight = navBarHeight - (itemPadding * 2); // 40
+    // Watch the labels expanded provider - secondary pages set this to false
+    final labelsExpanded = ref.watch(navBarLabelsExpandedProvider);
 
-    // Calculate available width for nav bar (screen width - padding - AI button - spacing)
-    final screenWidth = MediaQuery.of(context).size.width;
-    final availableNavBarWidth = screenWidth - 32 - 44 - 8; // 32 = left+right padding, 44 = AI button, 8 = spacing
-    final navBarMaxWidth = availableNavBarWidth.clamp(0.0, 320.0); // Cap at 320 max
+    // Dynamic sizing based on nav bar dimensions - compact design
+    const navBarHeight = 42.0;
+    const navBarRadius = navBarHeight / 2; // Fully rounded ends
+    const itemPadding = 3.0; // Reduced padding for compact look
+    final itemHeight = navBarHeight - (itemPadding * 2); // 36
 
     return Padding(
       padding: EdgeInsets.only(
@@ -162,12 +175,25 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Nav bar - flexible to avoid overflow
-          Flexible(
-            child: Container(
-              height: navBarHeight,
-              constraints: BoxConstraints(maxWidth: navBarMaxWidth),
+          // Back button - only shown on secondary pages (when labels are collapsed), OUTSIDE the nav bar
+          if (!labelsExpanded) ...[
+            _FloatingBackButton(
+              onTap: () {
+                // Reset labels to expanded before navigating home
+                ref.read(navBarLabelsExpandedProvider.notifier).state = true;
+                onItemTapped(0); // Go to Home
+              },
+            ),
+            const SizedBox(width: 8),
+          ],
+
+          // Nav bar - uses intrinsic width, animates when items expand/collapse
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            height: navBarHeight,
             decoration: BoxDecoration(
               color: navBarColor,
               borderRadius: BorderRadius.circular(navBarRadius),
@@ -175,16 +201,16 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
               boxShadow: [
                 BoxShadow(
                   color: shadowColor,
-                  blurRadius: 25,
-                  offset: const Offset(0, 10),
-                  spreadRadius: 2,
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                  spreadRadius: 1,
                 ),
               ],
             ),
             child: Padding(
               padding: EdgeInsets.all(itemPadding),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   // Home - Cyan
                   _NavItem(
@@ -192,44 +218,50 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     selectedIcon: Icons.home_rounded,
                     label: 'Home',
                     isSelected: selectedIndex == 0,
+                    labelsExpanded: labelsExpanded,
                     onTap: () => onItemTapped(0),
                     itemHeight: itemHeight,
                     selectedColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
                   ),
-                  // Workouts - Cyan
+                  const SizedBox(width: 4),
+                  // Social - Orange (globe icon)
                   _NavItem(
-                    icon: Icons.fitness_center_outlined,
-                    selectedIcon: Icons.fitness_center,
-                    label: 'Workouts',
-                    isSelected: selectedIndex == 1,
-                    onTap: () => onItemTapped(1),
-                    itemHeight: itemHeight,
-                    selectedColor: AppColors.cyan,
-                  ),
-                  // Social - Orange (people/community icon)
-                  _NavItem(
-                    icon: Icons.people_outline,
-                    selectedIcon: Icons.people,
+                    icon: Icons.public_outlined,
+                    selectedIcon: Icons.public,
                     label: 'Social',
-                    isSelected: selectedIndex == 2,
-                    onTap: () => onItemTapped(2),
+                    isSelected: selectedIndex == 1,
+                    labelsExpanded: labelsExpanded,
+                    onTap: () => onItemTapped(1),
                     itemHeight: itemHeight,
                     selectedColor: const Color(0xFFFF9500),
                   ),
+                  const SizedBox(width: 4),
                   // Profile - Purple
                   _NavItem(
                     icon: Icons.person_outline,
                     selectedIcon: Icons.person,
                     label: 'Profile',
-                    isSelected: selectedIndex == 3,
-                    onTap: () => onItemTapped(3),
+                    isSelected: selectedIndex == 2,
+                    labelsExpanded: labelsExpanded,
+                    onTap: () => onItemTapped(2),
                     itemHeight: itemHeight,
                     selectedColor: isDark ? AppColors.purple : AppColorsLight.purple,
+                  ),
+                  const SizedBox(width: 4),
+                  // Stats - Teal (bar chart icon)
+                  _NavItem(
+                    icon: Icons.bar_chart_outlined,
+                    selectedIcon: Icons.bar_chart,
+                    label: 'Stats',
+                    isSelected: selectedIndex == 3,
+                    labelsExpanded: labelsExpanded,
+                    onTap: () => onItemTapped(3),
+                    itemHeight: itemHeight,
+                    selectedColor: AppColors.teal,
                   ),
                 ],
               ),
             ),
-          ),
           ),
 
           // Spacing between nav bar and buttons
@@ -273,16 +305,16 @@ class _AdminSupportButton extends ConsumerWidget {
           clipBehavior: Clip.none,
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
                 color: AppColors.warning,
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(21),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.warning.withOpacity(0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
                     spreadRadius: 1,
                   ),
                 ],
@@ -291,7 +323,7 @@ class _AdminSupportButton extends ConsumerWidget {
                 child: Icon(
                   Icons.support_agent,
                   color: Colors.white,
-                  size: 22,
+                  size: 18,
                 ),
               ),
             ),
@@ -346,20 +378,20 @@ class _AICoachButton extends ConsumerWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 44,
-        height: 44,
+        width: 42,
+        height: 42,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [primaryColor, accentColor],
           ),
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(21),
           boxShadow: [
             BoxShadow(
               color: accentColor.withOpacity(0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
               spreadRadius: 1,
             ),
           ],
@@ -368,7 +400,7 @@ class _AICoachButton extends ConsumerWidget {
           child: Icon(
             coachIcon,
             color: Colors.white,
-            size: 22,
+            size: 18,
           ),
         ),
       ),
@@ -376,12 +408,13 @@ class _AICoachButton extends ConsumerWidget {
   }
 }
 
-/// Individual navigation item
+/// Individual navigation item with fluid expand animation
 class _NavItem extends StatelessWidget {
   final IconData icon;
   final IconData selectedIcon;
   final String label;
   final bool isSelected;
+  final bool labelsExpanded;
   final VoidCallback onTap;
   final double itemHeight;
   final Color selectedColor;
@@ -391,6 +424,7 @@ class _NavItem extends StatelessWidget {
     required this.selectedIcon,
     required this.label,
     required this.isSelected,
+    required this.labelsExpanded,
     required this.onTap,
     required this.itemHeight,
     required this.selectedColor,
@@ -401,8 +435,8 @@ class _NavItem extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    // Squircle radius - about 1/3 of height for smooth rounded rectangle
-    final squircleRadius = itemHeight / 3;
+    // Show label only when selected AND labels are expanded (not on secondary pages)
+    final showLabel = isSelected && labelsExpanded;
 
     return Semantics(
       label: label,
@@ -414,58 +448,97 @@ class _NavItem extends StatelessWidget {
           onTap();
         },
         behavior: HitTestBehavior.opaque,
-        child: AnimatedSize(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-          clipBehavior: Clip.none,
-          child: Container(
-            height: itemHeight,
-            padding: EdgeInsets.symmetric(
-              horizontal: isSelected ? 12 : 9,
-            ),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? selectedColor.withValues(alpha: 0.15)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(squircleRadius),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          height: itemHeight,
+          padding: EdgeInsets.symmetric(
+            horizontal: showLabel ? 10 : 8,
+          ),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? selectedColor.withValues(alpha: 0.15)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(itemHeight / 2),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: Icon(
                   isSelected ? selectedIcon : icon,
+                  key: ValueKey(isSelected),
                   color: isSelected ? selectedColor : textMuted,
                   size: 22,
                 ),
-                // Animated label - clips to prevent overflow during transition
-                ClipRect(
-                  child: AnimatedSize(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeInOut,
-                    alignment: Alignment.centerLeft,
-                    child: SizedBox(
-                      width: isSelected ? null : 0,
-                      child: isSelected
-                          ? Padding(
-                              padding: const EdgeInsets.only(left: 6),
-                              child: Text(
-                                label,
-                                style: TextStyle(
-                                  color: selectedColor,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                overflow: TextOverflow.clip,
-                                softWrap: false,
-                              ),
-                            )
-                          : null,
-                    ),
-                  ),
-                ),
-              ],
+              ),
+              // Animated label - only shows when selected AND labels expanded
+              AnimatedSize(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.centerLeft,
+                child: showLabel
+                    ? Padding(
+                        padding: const EdgeInsets.only(left: 6),
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            color: selectedColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Floating back button for secondary pages - appears to the left of nav bar (like AI button)
+class _FloatingBackButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _FloatingBackButton({
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cyanColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: cyanColor,
+          borderRadius: BorderRadius.circular(21),
+          boxShadow: [
+            BoxShadow(
+              color: cyanColor.withOpacity(0.4),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+              spreadRadius: 1,
             ),
+          ],
+        ),
+        child: const Center(
+          child: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+            size: 18,
           ),
         ),
       ),

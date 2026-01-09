@@ -3321,7 +3321,7 @@ async def get_workout_generation_params(workout_id: str):
 
         # Get user profile for context
         user_result = db.client.table("users").select(
-            "fitness_level, goals, equipment, injuries, age, weight_kg, height_cm, gender"
+            "fitness_level, goals, equipment, active_injuries, age, weight_kg, height_cm, gender"
         ).eq("id", user_id).execute()
 
         user_profile = {}
@@ -3331,7 +3331,7 @@ async def get_workout_generation_params(workout_id: str):
                 "fitness_level": user_data.get("fitness_level", "intermediate"),
                 "goals": parse_json_field(user_data.get("goals"), []),
                 "equipment": parse_json_field(user_data.get("equipment"), []),
-                "injuries": parse_json_field(user_data.get("injuries"), []),
+                "injuries": parse_json_field(user_data.get("active_injuries"), []),
                 "age": user_data.get("age"),
                 "weight_kg": user_data.get("weight_kg"),
                 "height_cm": user_data.get("height_cm"),

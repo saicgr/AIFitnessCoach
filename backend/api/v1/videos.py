@@ -13,6 +13,7 @@ from fastapi import APIRouter, HTTPException
 import boto3
 from botocore.exceptions import ClientError
 import os
+import re
 from dotenv import load_dotenv
 from core.supabase_db import get_supabase_db
 
@@ -141,6 +142,91 @@ async def get_video_by_exercise_name(exercise_name: str, gender: str = None):
         raise HTTPException(status_code=500, detail=f"Failed to get video URL: {str(e)}")
 
 
+def normalize_exercise_name(name: str) -> str:
+    """Normalize exercise name for matching: lowercase, remove special chars, collapse spaces."""
+    # Convert to lowercase
+    name = name.lower()
+    # Remove special characters except spaces and underscores
+    name = re.sub(r'[^a-z0-9\s_]', '', name)
+    # Replace underscores with spaces
+    name = name.replace('_', ' ')
+    # Collapse multiple spaces
+    name = re.sub(r'\s+', ' ', name).strip()
+    return name
+
+
+def get_search_keywords(exercise_name: str) -> list:
+    """Extract key search terms from exercise name."""
+    normalized = normalize_exercise_name(exercise_name)
+    # Remove common filler words
+    stopwords = {'the', 'a', 'an', 'with', 'on', 'in', 'for', 'to', 'and', 'or'}
+    words = [w for w in normalized.split() if w not in stopwords and len(w) > 2]
+    return words
+
+
+def search_s3_for_image(exercise_name: str, gender: str = None) -> str:
+    """
+    Search S3 ILLUSTRATIONS folder for matching exercise image.
+    Uses fuzzy matching on filename with pagination support.
+    """
+    try:
+        keywords = get_search_keywords(exercise_name)
+        if not keywords:
+            return None
+
+        best_match = None
+        best_score = 0
+
+        # Use paginator to handle more than 1000 objects
+        paginator = s3_client.get_paginator('list_objects_v2')
+        pages = paginator.paginate(Bucket=BUCKET_NAME, Prefix=IMAGE_BASE_PREFIX)
+
+        for page in pages:
+            if 'Contents' not in page:
+                continue
+
+            for obj in page['Contents']:
+                key = obj['Key']
+                # Only consider image files
+                if not key.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
+                    continue
+
+                # Get filename without path and extension
+                filename = key.split('/')[-1]
+                filename_base = filename.rsplit('.', 1)[0]
+                normalized_filename = normalize_exercise_name(filename_base)
+
+                # Calculate match score based on keyword matches
+                score = 0
+                for keyword in keywords:
+                    if keyword in normalized_filename:
+                        score += len(keyword)  # Weight by keyword length
+
+                # Gender preference bonus
+                if gender:
+                    if gender.lower() in normalized_filename:
+                        score += 5
+                    # Penalize wrong gender
+                    other_gender = 'female' if gender == 'male' else 'male'
+                    if other_gender in normalized_filename:
+                        score -= 10
+
+                if score > best_score:
+                    best_score = score
+                    best_match = key
+
+        # Require at least some match quality (at least one keyword fully matched)
+        min_required_score = len(keywords[0]) if keywords else 0
+        if best_score >= min_required_score:
+            return best_match
+
+        return None
+
+    except Exception as e:
+        print(f"Error searching S3 for image: {e}")
+        return None
+
+
 @router.get("/exercise-images/{exercise_name:path}")
 async def get_image_by_exercise_name(exercise_name: str, gender: str = None):
     """
@@ -150,6 +236,8 @@ async def get_image_by_exercise_name(exercise_name: str, gender: str = None):
     for the associated S3 illustration image.
 
     If gender is specified ('male' or 'female'), tries to find gendered variant first.
+
+    Falls back to S3 fuzzy search if database lookup fails.
 
     Args:
         exercise_name: Name of the exercise to lookup
@@ -191,6 +279,31 @@ async def get_image_by_exercise_name(exercise_name: str, gender: str = None):
             if result.data and result.data[0].get("image_s3_path"):
                 found_result = result.data[0]
                 break
+
+            # Try contains match (exercise name contained anywhere)
+            result = db.client.table("exercise_library").select(
+                "image_s3_path, exercise_name"
+            ).ilike("exercise_name", f"%{name}%").limit(1).execute()
+
+            if result.data and result.data[0].get("image_s3_path"):
+                found_result = result.data[0]
+                break
+
+        # If database lookup failed, try fuzzy S3 search
+        if not found_result:
+            s3_key = search_s3_for_image(exercise_name, gender)
+            if s3_key:
+                url = s3_client.generate_presigned_url(
+                    'get_object',
+                    Params={'Bucket': BUCKET_NAME, 'Key': s3_key},
+                    ExpiresIn=PRESIGNED_URL_EXPIRATION
+                )
+                return {
+                    "url": url,
+                    "expires_in": PRESIGNED_URL_EXPIRATION,
+                    "exercise_name": exercise_name,
+                    "source": "s3_fuzzy_search"
+                }
 
         if not found_result:
             raise HTTPException(status_code=404, detail="Image not found for exercise")

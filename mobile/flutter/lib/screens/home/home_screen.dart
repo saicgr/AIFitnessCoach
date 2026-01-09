@@ -19,6 +19,7 @@ import '../../data/providers/today_workout_provider.dart';
 import '../../data/services/deep_link_service.dart';
 import '../../data/services/health_service.dart';
 import '../../widgets/responsive_layout.dart';
+import '../../widgets/main_shell.dart';
 import '../nutrition/log_meal_sheet.dart';
 import 'widgets/components/components.dart';
 import 'widgets/cards/cards.dart';
@@ -208,6 +209,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Register for app lifecycle events
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Reset nav bar labels to expanded when on Home screen
+      ref.read(navBarLabelsExpandedProvider.notifier).state = true;
       _initializeWorkouts();
       _checkPendingWidgetAction();
       _initializeCurrentProgram();
@@ -243,6 +246,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   /// Auto-refresh workouts if enough time has passed since last refresh
   Future<void> _autoRefreshIfNeeded() async {
+    if (!mounted) return;
+
     final now = DateTime.now();
     if (_lastRefreshTime == null ||
         now.difference(_lastRefreshTime!) > _minRefreshInterval) {
@@ -250,10 +255,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       _lastRefreshTime = now;
       final workoutsNotifier = ref.read(workoutsProvider.notifier);
       await workoutsNotifier.refresh();
+
+      // Check mounted after async operation
+      if (!mounted) return;
+
       // Force UI rebuild by invalidating the provider
-      if (mounted) {
-        ref.invalidate(workoutsProvider);
-      }
+      ref.invalidate(workoutsProvider);
 
       // Refresh Health Connect status - user may have granted permissions externally
       ref.read(healthSyncProvider.notifier).refreshConnectionStatus();
@@ -2715,9 +2722,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           const Spacer(),
           // Streak Badge - Consolidated metric
           _StreakBadge(streak: currentStreak, isDark: isDark, isCompact: isCompact),
-          SizedBox(width: spacing),
-          // Profile Menu Button - Combines notifications + settings
-          _ProfileMenuButton(isDark: isDark, isCompact: isCompact),
         ],
       ),
     );
@@ -3072,46 +3076,32 @@ class _DummyAnimationController extends ChangeNotifier {
   double get value => 0.0;
 }
 
-/// Category pills for workout filtering with smooth animations
-class WorkoutCategoryPills extends StatefulWidget {
+/// Focus pills for navigating between For You (Home), Workouts, Nutrition, and Fasting
+class WorkoutCategoryPills extends ConsumerWidget {
   final bool isDark;
 
   const WorkoutCategoryPills({super.key, required this.isDark});
 
-  @override
-  State<WorkoutCategoryPills> createState() => _WorkoutCategoryPillsState();
-}
-
-class _WorkoutCategoryPillsState extends State<WorkoutCategoryPills> with SingleTickerProviderStateMixin {
-  int _selectedIndex = 0;
-  late AnimationController _animationController;
-
-  final List<Map<String, dynamic>> _categories = [
-    {'label': 'For You', 'icon': Icons.star_rounded},
-    {'label': 'Strength', 'icon': Icons.fitness_center},
-    {'label': 'Cardio', 'icon': Icons.directions_run},
-    {'label': 'Yoga', 'icon': Icons.self_improvement},
-    {'label': 'HIIT', 'icon': Icons.local_fire_department},
+  static final List<Map<String, dynamic>> _focusOptions = [
+    {'label': 'For You', 'icon': Icons.star_rounded, 'route': null, 'color': AppColors.teal},
+    {'label': 'Workout', 'icon': Icons.fitness_center, 'route': '/workouts', 'color': AppColors.cyan},
+    {'label': 'Nutrition', 'icon': Icons.restaurant, 'route': '/nutrition', 'color': const Color(0xFF34C759)},
+    {'label': 'Fasting', 'icon': Icons.timer, 'route': '/fasting', 'color': AppColors.orange},
   ];
 
   @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _animationController.forward();
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Determine which pill is active based on current route
+    final location = GoRouterState.of(context).matchedLocation;
+    int activeIndex = 0; // Default to "For You"
+    if (location.startsWith('/workouts')) {
+      activeIndex = 1;
+    } else if (location.startsWith('/nutrition')) {
+      activeIndex = 2;
+    } else if (location.startsWith('/fasting')) {
+      activeIndex = 3;
+    }
 
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return AnimationLimiter(
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -3123,21 +3113,27 @@ class _WorkoutCategoryPillsState extends State<WorkoutCategoryPills> with Single
               horizontalOffset: 50.0,
               child: FadeInAnimation(child: widget),
             ),
-            children: _categories.asMap().entries.map((entry) {
+            children: _focusOptions.asMap().entries.map((entry) {
               final index = entry.key;
-              final category = entry.value;
+              final option = entry.value;
+              final isActive = index == activeIndex;
+              final activeColor = option['color'] as Color;
+              final route = option['route'] as String?;
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: _CategoryPill(
-                  label: category['label'],
-                  icon: category['icon'],
-                  isActive: _selectedIndex == index,
-                  isDark: widget.isDark,
+                  label: option['label'] as String,
+                  icon: option['icon'] as IconData,
+                  isActive: isActive,
+                  isDark: isDark,
+                  activeColor: activeColor,
                   onTap: () {
                     HapticService.selection();
-                    setState(() => _selectedIndex = index);
-                    _animationController.reset();
-                    _animationController.forward();
+                    if (route != null) {
+                      // Navigate to the respective page
+                      context.push(route);
+                    }
+                    // "For You" stays on Home - no navigation needed
                   },
                 ),
               );
@@ -3154,6 +3150,7 @@ class _CategoryPill extends StatelessWidget {
   final IconData icon;
   final bool isActive;
   final bool isDark;
+  final Color activeColor;
   final VoidCallback onTap;
 
   const _CategoryPill({
@@ -3161,18 +3158,19 @@ class _CategoryPill extends StatelessWidget {
     required this.icon,
     required this.isActive,
     required this.isDark,
+    required this.activeColor,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final activeBg = AppColors.teal;
-    final inactiveBg = isDark 
-        ? AppColors.glassSurface 
+    final activeBg = activeColor;
+    final inactiveBg = isDark
+        ? AppColors.glassSurface
         : AppColorsLight.glassSurface;
-    final activeText = Colors.white;
-    final inactiveText = isDark 
-        ? AppColors.textSecondary 
+    const activeText = Colors.white;
+    final inactiveText = isDark
+        ? AppColors.textSecondary
         : AppColorsLight.textSecondary;
 
     return AnimatedContainer(
@@ -3193,8 +3191,8 @@ class _CategoryPill extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isActive 
-                    ? activeBg 
+                color: isActive
+                    ? activeBg
                     : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
                 width: isActive ? 0 : 1,
               ),

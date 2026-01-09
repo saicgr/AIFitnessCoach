@@ -22,6 +22,12 @@ Streaks & Stats:
 Safety:
 - GET  /api/v1/fasting/safety-check/{user_id} - Check safety eligibility
 - POST /api/v1/fasting/safety-screening - Save safety screening
+
+Fasting Scores:
+- POST /api/v1/fasting/score - Save/upsert a fasting score
+- GET  /api/v1/fasting/score/history/{user_id} - Get historical scores
+- GET  /api/v1/fasting/score/{user_id}/current - Get current/latest score
+- GET  /api/v1/fasting/score/trend/{user_id} - Get score trend vs last week
 """
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
@@ -211,6 +217,51 @@ class SafetyCheckResponse(BaseModel):
     requires_warning: bool
     warnings: List[str]
     blocked_reasons: List[str]
+
+
+# ==================== Fasting Score Models ====================
+
+class FastingScoreCreateRequest(BaseModel):
+    """Request to save/update a fasting score."""
+    user_id: str
+    score: int = Field(ge=0, le=100)
+    completion_component: float = 0
+    streak_component: float = 0
+    duration_component: float = 0
+    weekly_component: float = 0
+    protocol_component: float = 0
+    current_streak: int = 0
+    fasts_this_week: int = 0
+    weekly_goal: int = 5
+    completion_rate: float = 0
+    avg_duration_minutes: int = 0
+
+
+class FastingScoreResponse(BaseModel):
+    """Response for a single fasting score."""
+    id: str
+    user_id: str
+    score: int
+    completion_component: float
+    streak_component: float
+    duration_component: float
+    weekly_component: float
+    protocol_component: float
+    current_streak: int
+    fasts_this_week: int
+    weekly_goal: int
+    completion_rate: float
+    avg_duration_minutes: int
+    recorded_at: str
+    score_date: str
+
+
+class FastingScoreTrendResponse(BaseModel):
+    """Response for score trend data."""
+    current_score: int
+    previous_score: int
+    score_change: int
+    trend: str  # 'up', 'down', 'stable'
 
 
 # ==================== Helper Functions ====================
@@ -1131,6 +1182,169 @@ async def get_fasting_context(
         logger.error(f"Error getting fasting context: {e}")
         # Return empty if table doesn't exist
         return {"contexts": [], "count": 0}
+
+
+# ==================== Fasting Score Endpoints ====================
+
+@router.post("/score")
+async def save_fasting_score(request: FastingScoreCreateRequest):
+    """
+    Save or update today's fasting score for a user.
+
+    Uses upsert to update today's score if already exists (one score per user per day).
+    """
+    logger.info(f"Saving fasting score for user {request.user_id}: {request.score}")
+
+    try:
+        db = get_supabase_db()
+
+        data = {
+            "user_id": request.user_id,
+            "score": request.score,
+            "completion_component": request.completion_component,
+            "streak_component": request.streak_component,
+            "duration_component": request.duration_component,
+            "weekly_component": request.weekly_component,
+            "protocol_component": request.protocol_component,
+            "current_streak": request.current_streak,
+            "fasts_this_week": request.fasts_this_week,
+            "weekly_goal": request.weekly_goal,
+            "completion_rate": request.completion_rate,
+            "avg_duration_minutes": request.avg_duration_minutes,
+            "score_date": date.today().isoformat(),
+            "recorded_at": datetime.utcnow().isoformat(),
+        }
+
+        result = db.client.table("fasting_scores").upsert(
+            data, on_conflict="user_id,score_date"
+        ).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to save fasting score")
+
+        logger.info(f"✅ Fasting score saved for user {request.user_id}")
+        return result.data[0]
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error saving fasting score: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/score/history/{user_id}")
+async def get_fasting_score_history(
+    user_id: str,
+    days: int = Query(30, ge=1, le=365, description="Number of days of history to retrieve"),
+):
+    """
+    Get historical fasting scores for a user.
+
+    Returns scores for the specified number of days, ordered by most recent first.
+    """
+    logger.info(f"Getting fasting score history for user {user_id} (last {days} days)")
+
+    try:
+        db = get_supabase_db()
+
+        cutoff_date = (date.today() - timedelta(days=days)).isoformat()
+
+        result = db.client.table("fasting_scores")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .gte("score_date", cutoff_date)\
+            .order("recorded_at", desc=True)\
+            .execute()
+
+        logger.info(f"✅ Retrieved {len(result.data or [])} score records for user {user_id}")
+        return result.data or []
+
+    except Exception as e:
+        logger.error(f"Error getting fasting score history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/score/{user_id}/current")
+async def get_current_fasting_score(user_id: str):
+    """
+    Get the most recent fasting score for a user.
+
+    Returns 404 if no score exists for the user.
+    """
+    logger.info(f"Getting current fasting score for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("fasting_scores")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .order("recorded_at", desc=True)\
+            .limit(1)\
+            .execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="No fasting score found for user")
+
+        logger.info(f"✅ Current fasting score retrieved for user {user_id}")
+        return result.data[0]
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting current fasting score: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/score/trend/{user_id}")
+async def get_fasting_score_trend(user_id: str):
+    """
+    Get fasting score trend comparing current score vs last week.
+
+    Uses the database function get_fasting_score_trend() to calculate:
+    - current_score: Most recent score
+    - previous_score: Score from ~7 days ago
+    - score_change: Difference between current and previous
+    - trend: 'up', 'down', or 'stable'
+
+    Returns default values (0, 0, 0, 'stable') if no scores exist.
+    """
+    logger.info(f"Getting fasting score trend for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        result = db.client.rpc("get_fasting_score_trend", {"p_user_id": user_id}).execute()
+
+        if result.data:
+            row = result.data[0]
+            trend_data = {
+                "current_score": row.get("current_score", 0),
+                "previous_score": row.get("previous_score", 0),
+                "score_change": row.get("score_change", 0),
+                "trend": row.get("trend", "stable"),
+            }
+            logger.info(f"✅ Fasting score trend retrieved for user {user_id}: {trend_data}")
+            return trend_data
+
+        # Return default if no data
+        logger.info(f"No score trend data found for user {user_id}, returning defaults")
+        return {
+            "current_score": 0,
+            "previous_score": 0,
+            "score_change": 0,
+            "trend": "stable",
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting fasting score trend: {e}")
+        # Return default on error to not break the frontend
+        return {
+            "current_score": 0,
+            "previous_score": 0,
+            "score_change": 0,
+            "trend": "stable",
+        }
 
 
 # ==================== Extended Protocol Helpers ====================

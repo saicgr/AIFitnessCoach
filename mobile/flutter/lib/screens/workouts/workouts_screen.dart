@@ -7,6 +7,7 @@ import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/main_shell.dart';
 import '../home/widgets/cards/next_workout_card.dart';
 import '../home/widgets/cards/weekly_progress_card.dart';
 import 'widgets/exercise_preferences_card.dart';
@@ -27,6 +28,20 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
   // State for "Generate More" button
   bool _isGenerating = false;
   String? _generationMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    // Collapse nav bar labels on this secondary page
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(navBarLabelsExpandedProvider.notifier).state = false;
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,10 +65,11 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
             snap: true,
             backgroundColor: backgroundColor,
             surfaceTintColor: Colors.transparent,
+            centerTitle: false,
             title: Text(
               'Workouts',
               style: TextStyle(
-                fontSize: 28,
+                fontSize: 32,
                 fontWeight: FontWeight.bold,
                 color: textPrimary,
               ),
@@ -145,6 +161,12 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
     Workout? todayOrNextWorkout;
     bool isToday = false;
     int? daysUntilNext;
+    bool isNextWeek = false;
+
+    // Get user for checking if it's last workout day
+    final authState = ref.watch(authStateProvider);
+    final user = authState.user;
+    final isLastWorkoutDay = user?.isLastWorkoutDayOfWeek ?? false;
 
     todayWorkoutState.whenData((response) {
       if (response != null) {
@@ -154,6 +176,10 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
         } else if (response.nextWorkout != null) {
           todayOrNextWorkout = response.nextWorkout!.toWorkout();
           daysUntilNext = response.daysUntilNext;
+          // Check if next workout is in next week (more than remaining days this week)
+          if (isLastWorkoutDay && daysUntilNext != null && daysUntilNext! > 0) {
+            isNextWeek = true;
+          }
         }
       }
     });
@@ -213,7 +239,11 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
           const SizedBox(height: 24),
         ] else if (todayOrNextWorkout != null) ...[
           _buildSectionHeader(
-            isToday ? 'TODAY\'S WORKOUT' : 'NEXT WORKOUT${daysUntilNext != null ? ' (in $daysUntilNext day${daysUntilNext == 1 ? '' : 's'})' : ''}',
+            isToday
+                ? 'TODAY\'S WORKOUT'
+                : isNextWeek
+                    ? 'NEXT WEEK\'S WORKOUT${daysUntilNext != null ? ' (in $daysUntilNext day${daysUntilNext == 1 ? '' : 's'})' : ''}'
+                    : 'NEXT WORKOUT${daysUntilNext != null ? ' (in $daysUntilNext day${daysUntilNext == 1 ? '' : 's'})' : ''}',
             textSecondary,
           ),
           const SizedBox(height: 8),
@@ -498,6 +528,28 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
     Color textPrimary,
     Color textSecondary,
   ) {
+    // Get user for smart generation calculation
+    final authState = ref.watch(authStateProvider);
+    final user = authState.user;
+
+    // Calculate smart generation count
+    final smartCount = user?.getSmartGenerationCount() ?? 4;
+    final isLastDay = user?.isLastWorkoutDayOfWeek ?? false;
+
+    // Determine description text
+    String description;
+    String buttonText;
+    if (smartCount == 0) {
+      description = 'All workouts for this week are ready';
+      buttonText = 'Generate Next Week';
+    } else if (isLastDay) {
+      description = 'Generate $smartCount workouts through next week';
+      buttonText = 'Generate $smartCount Workouts';
+    } else {
+      description = 'Generate $smartCount workouts for this week';
+      buttonText = 'Generate $smartCount Workouts';
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -529,7 +581,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
                     ),
                   ),
                   Text(
-                    'Create 4 new AI-powered workouts',
+                    description,
                     style: TextStyle(
                       fontSize: 12,
                       color: textSecondary,
@@ -553,14 +605,14 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.add_circle_outline, size: 18),
-                SizedBox(width: 8),
+                const Icon(Icons.add_circle_outline, size: 18),
+                const SizedBox(width: 8),
                 Text(
-                  'Generate 4 Workouts',
-                  style: TextStyle(
+                  buttonText,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -584,17 +636,29 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
     try {
       final repository = ref.read(workoutRepositoryProvider);
 
-      // Get user ID from auth provider
+      // Get user from auth provider
       final authState = ref.read(authStateProvider);
-      final userId = authState.user?.id;
+      final user = authState.user;
+      final userId = user?.id;
 
       if (userId == null) {
         throw Exception('User not authenticated');
       }
 
+      // Calculate smart generation count
+      int smartCount = user?.getSmartGenerationCount() ?? 4;
+
+      // If smartCount is 0 (all workouts ready), generate next week
+      if (smartCount == 0) {
+        smartCount = user?.workoutDays.length ?? 3;
+      }
+
+      // Ensure at least 1 workout
+      if (smartCount < 1) smartCount = 1;
+
       final result = await repository.triggerGenerateMore(
         userId: userId,
-        maxWorkouts: 4,
+        maxWorkouts: smartCount,
       );
 
       if (result['success'] == true) {

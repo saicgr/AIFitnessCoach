@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/nutrition.dart';
@@ -46,6 +47,10 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _loadData();
+    // Collapse nav bar labels on this secondary page
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(navBarLabelsExpandedProvider.notifier).state = false;
+    });
   }
 
   @override
@@ -191,13 +196,22 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
         foregroundColor: textPrimary,
-        title: const Text('Food Diary'),
+        automaticallyImplyLeading: false,
+        title: Text(
+          'Food Diary',
+          style: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: textPrimary,
+          ),
+        ),
         centerTitle: false,
         actions: [
           // Date Navigation
