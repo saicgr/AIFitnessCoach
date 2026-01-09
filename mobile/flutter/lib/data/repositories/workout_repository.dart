@@ -1091,6 +1091,41 @@ class WorkoutRepository {
     }
   }
 
+  /// Trigger generation of the next single workout (JIT generation)
+  ///
+  /// This is the primary method for on-demand workout generation.
+  /// Called when:
+  /// - No workout exists (safety net)
+  /// - User manually requests next workout generation
+  ///
+  /// Returns immediately - generation happens in background.
+  Future<Map<String, dynamic>> triggerGenerateNext({
+    required String userId,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Triggering JIT generation of next workout...');
+
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/generate-next/$userId',
+        options: Options(
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        debugPrint('✅ [Workout] Generate next response: $data');
+        return data;
+      }
+
+      return {'success': false, 'message': 'Unexpected response'};
+    } catch (e) {
+      debugPrint('❌ [Workout] Error triggering generate next: $e');
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
   /// Get user's current program preferences
   Future<ProgramPreferences?> getProgramPreferences(String userId) async {
     try {

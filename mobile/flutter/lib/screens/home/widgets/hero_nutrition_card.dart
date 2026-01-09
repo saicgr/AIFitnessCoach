@@ -116,9 +116,16 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
+    // Debug logging
+    debugPrint('🥗 [HeroNutritionCard] build() - isDark: $isDark, isLoading: $_isLoading');
+    debugPrint('🥗 [HeroNutritionCard] textPrimary: $textPrimary, textSecondary: $textSecondary');
+    debugPrint('🥗 [HeroNutritionCard] cardBg: $cardBg');
+
     final nutritionState = ref.watch(nutritionProvider);
     final summary = nutritionState.todaySummary;
     final targets = nutritionState.targets;
+
+    debugPrint('🥗 [HeroNutritionCard] summary: $summary, targets: $targets');
 
     final caloriesConsumed = summary?.totalCalories ?? 0;
     final calorieTarget = targets?.dailyCalorieTarget ?? 2000;

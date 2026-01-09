@@ -187,11 +187,25 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
     // This ensures consistency: either today's workout or next workout with date
     final todayWorkoutState = ref.watch(todayWorkoutProvider);
 
+    // Debug logging
+    debugPrint('🏠 [SwipeableHero] todayWorkoutState: ${todayWorkoutState.runtimeType}');
+    todayWorkoutState.whenData((response) {
+      debugPrint('🏠 [SwipeableHero] response: $response');
+      debugPrint('🏠 [SwipeableHero] hasWorkoutToday: ${response?.hasWorkoutToday}');
+      debugPrint('🏠 [SwipeableHero] todayWorkout: ${response?.todayWorkout}');
+      debugPrint('🏠 [SwipeableHero] nextWorkout: ${response?.nextWorkout}');
+      debugPrint('🏠 [SwipeableHero] isGenerating: ${response?.isGenerating}');
+    });
+
     return todayWorkoutState.when(
-      loading: () => const GeneratingHeroCard(
-        message: 'Loading workout...',
-      ),
-      error: (_, __) {
+      loading: () {
+        debugPrint('🏠 [SwipeableHero] State: LOADING');
+        return const GeneratingHeroCard(
+          message: 'Loading workout...',
+        );
+      },
+      error: (error, stack) {
+        debugPrint('🏠 [SwipeableHero] State: ERROR - $error');
         // On error, try to use the passed workout as fallback
         if (widget.todayWorkout != null) {
           return HeroWorkoutCard(workout: widget.todayWorkout!);
@@ -200,8 +214,10 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
         return _buildFallbackFromWorkoutsProvider();
       },
       data: (response) {
+        debugPrint('🏠 [SwipeableHero] State: DATA');
         // Check if generating
         if (response?.isGenerating == true || widget.isGenerating) {
+          debugPrint('🏠 [SwipeableHero] Showing GeneratingHeroCard (isGenerating)');
           return GeneratingHeroCard(
             message: response?.generationMessage ?? 'Generating workout...',
           );
@@ -209,17 +225,21 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
 
         // Get workout: today's OR next (ALWAYS show a workout, never rest day)
         final workoutSummary = response?.todayWorkout ?? response?.nextWorkout;
+        debugPrint('🏠 [SwipeableHero] workoutSummary: $workoutSummary');
 
         if (workoutSummary != null) {
+          debugPrint('🏠 [SwipeableHero] Showing HeroWorkoutCard with workout: ${workoutSummary.name}');
           return HeroWorkoutCard(workout: workoutSummary.toWorkout());
         }
 
         // Fallback to passed workout if provider returned null
         if (widget.todayWorkout != null) {
+          debugPrint('🏠 [SwipeableHero] Using fallback widget.todayWorkout');
           return HeroWorkoutCard(workout: widget.todayWorkout!);
         }
 
         // Fallback to workoutsProvider as last resort
+        debugPrint('🏠 [SwipeableHero] Using fallback workoutsProvider');
         return _buildFallbackFromWorkoutsProvider();
       },
     );

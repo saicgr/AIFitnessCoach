@@ -25,10 +25,6 @@ class WorkoutsScreen extends ConsumerStatefulWidget {
 }
 
 class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
-  // State for "Generate More" button
-  bool _isGenerating = false;
-  String? _generationMessage;
-
   @override
   void initState() {
     super.initState();
@@ -65,6 +61,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
             snap: true,
             backgroundColor: backgroundColor,
             surfaceTintColor: Colors.transparent,
+            automaticallyImplyLeading: false,
             centerTitle: false,
             title: Text(
               'Workouts',
@@ -308,13 +305,10 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
         ),
         const SizedBox(height: 24),
 
-        // Generate More button - always visible
-        _buildGenerateMoreSection(
-          context,
-          isDark,
-          textPrimary,
-          textSecondary,
-        ),
+        // JIT Generation: No "Generate More" button needed
+        // Workouts are automatically generated after each completion
+        // Show a subtle info message instead
+        _buildJitInfoSection(isDark, textSecondary),
 
         // Bottom padding for nav bar
         const SizedBox(height: 100),
@@ -450,318 +444,30 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
     );
   }
 
-  /// Build the "Generate More" section - always visible
-  Widget _buildGenerateMoreSection(
-    BuildContext context,
-    bool isDark,
-    Color textPrimary,
-    Color textSecondary,
-  ) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-
+  /// Build JIT info section - explains that workouts are auto-generated
+  Widget _buildJitInfoSection(bool isDark, Color textSecondary) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: elevatedColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: _isGenerating
-                ? AppColors.cyan.withValues(alpha: 0.3)
-                : AppColors.teal.withValues(alpha: 0.3),
+      child: Row(
+        children: [
+          Icon(
+            Icons.auto_awesome,
+            size: 16,
+            color: textSecondary.withValues(alpha: 0.6),
           ),
-        ),
-        child: _isGenerating
-            ? _buildGeneratingState(textPrimary, textSecondary)
-            : _buildGenerateButton(
-                context,
-                textPrimary,
-                textSecondary,
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Your next workout is created automatically after each session',
+              style: TextStyle(
+                fontSize: 12,
+                color: textSecondary.withValues(alpha: 0.6),
+                fontStyle: FontStyle.italic,
               ),
+            ),
+          ),
+        ],
       ),
     );
-  }
-
-  Widget _buildGeneratingState(Color textPrimary, Color textSecondary) {
-    return Row(
-      children: [
-        const SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(
-            strokeWidth: 2.5,
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.cyan),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Generating Workouts...',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
-                ),
-              ),
-              if (_generationMessage != null)
-                Text(
-                  _generationMessage!,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: textSecondary,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGenerateButton(
-    BuildContext context,
-    Color textPrimary,
-    Color textSecondary,
-  ) {
-    // Get user for smart generation calculation
-    final authState = ref.watch(authStateProvider);
-    final user = authState.user;
-
-    // Calculate smart generation count
-    final smartCount = user?.getSmartGenerationCount() ?? 4;
-    final isLastDay = user?.isLastWorkoutDayOfWeek ?? false;
-
-    // Determine description text
-    String description;
-    String buttonText;
-    if (smartCount == 0) {
-      description = 'All workouts for this week are ready';
-      buttonText = 'Generate Next Week';
-    } else if (isLastDay) {
-      description = 'Generate $smartCount workouts through next week';
-      buttonText = 'Generate $smartCount Workouts';
-    } else {
-      description = 'Generate $smartCount workouts for this week';
-      buttonText = 'Generate $smartCount Workouts';
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.teal.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.auto_awesome,
-                color: AppColors.teal,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Generate More Workouts',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
-                  ),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () => _onGenerateMore(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.teal,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.add_circle_outline, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  buttonText,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _onGenerateMore(BuildContext context) async {
-    HapticService.medium();
-
-    setState(() {
-      _isGenerating = true;
-      _generationMessage = 'Starting generation...';
-    });
-
-    try {
-      final repository = ref.read(workoutRepositoryProvider);
-
-      // Get user from auth provider
-      final authState = ref.read(authStateProvider);
-      final user = authState.user;
-      final userId = user?.id;
-
-      if (userId == null) {
-        throw Exception('User not authenticated');
-      }
-
-      // Calculate smart generation count
-      int smartCount = user?.getSmartGenerationCount() ?? 4;
-
-      // If smartCount is 0 (all workouts ready), generate next week
-      if (smartCount == 0) {
-        smartCount = user?.workoutDays.length ?? 3;
-      }
-
-      // Ensure at least 1 workout
-      if (smartCount < 1) smartCount = 1;
-
-      final result = await repository.triggerGenerateMore(
-        userId: userId,
-        maxWorkouts: smartCount,
-      );
-
-      if (result['success'] == true) {
-        if (result['needs_generation'] == true) {
-          final workoutsToGenerate = result['workouts_to_generate'] ?? 4;
-          setState(() {
-            _generationMessage = 'Generating $workoutsToGenerate workouts...';
-          });
-
-          // Poll for completion
-          await _pollForCompletion(repository, userId);
-        } else {
-          // Already have enough workouts
-          setState(() {
-            _isGenerating = false;
-            _generationMessage = null;
-          });
-
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(result['message'] ?? 'Workouts ready!'),
-                backgroundColor: AppColors.teal,
-              ),
-            );
-          }
-        }
-      } else {
-        throw Exception(result['message'] ?? 'Generation failed');
-      }
-    } catch (e) {
-      setState(() {
-        _isGenerating = false;
-        _generationMessage = null;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to generate workouts: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _pollForCompletion(WorkoutRepository repository, String userId) async {
-    const maxAttempts = 60; // 60 attempts * 2 seconds = 2 minutes max
-    var attempts = 0;
-
-    while (attempts < maxAttempts && _isGenerating) {
-      await Future.delayed(const Duration(seconds: 2));
-      attempts++;
-
-      try {
-        final status = await repository.getGenerationStatus(userId);
-        final statusValue = status['status'] as String?;
-
-        if (statusValue == 'completed' || statusValue == 'none') {
-          // Generation complete - refresh workouts
-          ref.invalidate(workoutsProvider);
-          ref.invalidate(todayWorkoutProvider);
-
-          if (mounted) {
-            setState(() {
-              _isGenerating = false;
-              _generationMessage = null;
-            });
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Workouts generated successfully!'),
-                backgroundColor: AppColors.teal,
-              ),
-            );
-          }
-          return;
-        } else if (statusValue == 'failed') {
-          throw Exception(status['error_message'] ?? 'Generation failed');
-        } else if (statusValue == 'in_progress') {
-          final generated = status['total_generated'] ?? 0;
-          final expected = status['total_expected'] ?? 0;
-          if (mounted && expected > 0) {
-            setState(() {
-              _generationMessage = 'Generated $generated of $expected workouts...';
-            });
-          }
-        }
-      } catch (e) {
-        debugPrint('Error polling generation status: $e');
-      }
-    }
-
-    // Timeout - refresh anyway
-    ref.invalidate(workoutsProvider);
-    ref.invalidate(todayWorkoutProvider);
-
-    if (mounted) {
-      setState(() {
-        _isGenerating = false;
-        _generationMessage = null;
-      });
-    }
   }
 }

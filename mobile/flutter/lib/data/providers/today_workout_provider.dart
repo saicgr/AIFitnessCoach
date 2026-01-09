@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../repositories/workout_repository.dart';
 
@@ -10,10 +11,27 @@ import '../repositories/workout_repository.dart';
 /// - Auto-disposes when no longer in use
 /// - Auto-refreshes on provider invalidation
 /// - Caches result for the current session
+/// - Auto-polls when is_generating is true (JIT generation in progress)
 final todayWorkoutProvider =
     FutureProvider.autoDispose<TodayWorkoutResponse?>((ref) async {
   final repository = ref.watch(workoutRepositoryProvider);
-  return repository.getTodayWorkout();
+  final response = await repository.getTodayWorkout();
+
+  // If generation is in progress, schedule a refresh after 2 seconds
+  // This enables automatic polling until the workout is ready
+  if (response?.isGenerating == true) {
+    // Use a timer to auto-refresh (non-blocking)
+    Timer(const Duration(seconds: 2), () {
+      // Only invalidate if the provider is still active
+      try {
+        ref.invalidateSelf();
+      } catch (_) {
+        // Provider may have been disposed
+      }
+    });
+  }
+
+  return response;
 });
 
 /// Provider to track if the quick start was used

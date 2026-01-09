@@ -71,10 +71,17 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
+    // Debug logging
+    debugPrint('⏰ [HeroFastingCard] build() - isDark: $isDark, userId: $_userId');
+    debugPrint('⏰ [HeroFastingCard] textPrimary: $textPrimary, textSecondary: $textSecondary');
+    debugPrint('⏰ [HeroFastingCard] cardBg: $cardBg');
+
     final fastingState = ref.watch(fastingProvider);
     final hasFast = fastingState.hasFast;
     final activeFast = fastingState.activeFast;
     final preferences = fastingState.preferences;
+
+    debugPrint('⏰ [HeroFastingCard] hasFast: $hasFast, activeFast: $activeFast, preferences: $preferences');
 
     // Calculate progress
     final elapsedMinutes = activeFast?.elapsedMinutes ?? 0;

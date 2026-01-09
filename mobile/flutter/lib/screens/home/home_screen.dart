@@ -30,7 +30,6 @@ import 'widgets/tile_factory.dart';
 import 'widgets/my_program_summary_card.dart';
 import 'widgets/hero_workout_card.dart';
 import 'widgets/week_progress_strip.dart';
-import 'widgets/swipeable_hero_section.dart';
 
 /// Preset layout templates for quick customization
 class LayoutPreset {
@@ -1410,6 +1409,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           TileType.weeklyProgress,
           TileType.upcomingFeatures,
           TileType.upcomingWorkouts,
+          TileType.heroSection,
+          TileType.weightTrend,
+          TileType.sleepScore,
+          TileType.streakCounter,
         };
 
         final visibleTiles = layout.tiles
@@ -1603,6 +1606,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           TileType.weeklyProgress,
           TileType.upcomingFeatures,
           TileType.upcomingWorkouts,
+          TileType.heroSection,
+          TileType.weightTrend,
+          TileType.sleepScore,
+          TileType.streakCounter,
         };
 
         // Get visible tiles sorted by order, filtering out deprecated types
@@ -1639,16 +1646,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     while (i < visibleTiles.length) {
       final tile = visibleTiles[i];
 
-      // Handle hero section specially (needs workout data)
+      // Skip hero section tiles (removed)
       if (tile.type == TileType.heroSection) {
-        slivers.add(
-          SliverToBoxAdapter(
-            child: SwipeableHeroSection(
-              todayWorkout: todayWorkout,
-              isGenerating: isGenerating || isAIGenerating || _isInitializing,
-            ),
-          ),
-        );
         i++;
         continue;
       }
@@ -1704,26 +1703,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   /// Build default tiles using lazy loading (todayWorkoutProvider)
-  /// Action-focused layout: Swipeable hero (workout/nutrition/fasting), Quick actions, Week progress, My Program
+  /// Action-focused layout: Quick actions, Week progress, My Program
   List<Widget> _buildDefaultTilesLazy(
     BuildContext context,
     bool isDark,
     AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
     bool isAIGenerating,
   ) {
-    // Get the workout for the swipeable section
-    final todayWorkout = _getTodayWorkoutFromState(todayWorkoutState);
-    final isGenerating = _isGeneratingFromState(todayWorkoutState);
-
     return [
-      // Swipeable Hero Section - workout, nutrition, or fasting focus
-      SliverToBoxAdapter(
-        child: SwipeableHeroSection(
-          todayWorkout: todayWorkout,
-          isGenerating: isGenerating || isAIGenerating || _isInitializing,
-        ),
-      ),
-
       // Quick Actions Row - Food, Water, Fasting, Stats
       const SliverToBoxAdapter(
         child: Padding(
@@ -2263,12 +2250,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     // Build the actual tile content
     Widget tileContent;
-    if (tile.type == TileType.nextWorkout || tile.type == TileType.heroSection) {
-      final todayWorkout = _getTodayWorkoutFromState(todayWorkoutState);
-      tileContent = SwipeableHeroSection(
-        todayWorkout: todayWorkout,
-        isGenerating: isAIGenerating,
-      );
+    if (tile.type == TileType.heroSection) {
+      // Hero section removed - return empty container
+      tileContent = const SizedBox.shrink();
     } else {
       tileContent = TileFactory.buildTile(context, ref, tile, isDark: isDark);
     }

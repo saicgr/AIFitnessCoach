@@ -20,6 +20,7 @@ from core.logger import get_logger
 from services.user_context_service import user_context_service
 
 from .utils import parse_json_field
+from .background import generate_next_workout
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -126,6 +127,7 @@ def _get_user_workout_days(user: dict) -> List[int]:
 @router.get("/today", response_model=TodayWorkoutResponse)
 async def get_today_workout(
     user_id: str = Query(..., description="User ID"),
+    background_tasks: BackgroundTasks = None,
 ) -> TodayWorkoutResponse:
     """
     Get today's scheduled workout or the next upcoming workout.
@@ -200,11 +202,32 @@ async def get_today_workout(
             days_until_next = (next_date - date.today()).days
             logger.info(f"Found next workout in {days_until_next} days: {next_workout.name}")
 
-        # No auto-generation here. Users can manually generate workouts from the Workouts tab.
-        # If no workouts exist, the frontend will show the "Ready to Start?" empty state card
-        # which navigates to the Workouts tab where users can generate more.
+        # JIT Generation Safety Net: If no workouts exist, trigger generation automatically
+        # This ensures a workout ALWAYS exists for the user
         if not has_workout_today and next_workout is None:
-            logger.info(f"No workouts exist for user {user_id}. User should navigate to Workouts tab to generate.")
+            logger.info(f"[JIT Safety Net] No workouts exist for user {user_id}. Triggering auto-generation.")
+
+            # Check if we have background_tasks available for async generation
+            if background_tasks is not None:
+                # Trigger generation in background - user sees "Creating your workout..."
+                try:
+                    # Call generate_next_workout which schedules the actual generation
+                    result = await generate_next_workout(user_id, background_tasks)
+
+                    if result.get("needs_generation") or result.get("already_generating"):
+                        is_generating = True
+                        generation_message = "Creating your next workout..."
+                        logger.info(f"[JIT Safety Net] Generation triggered for user {user_id}: {result}")
+                    elif result.get("success") and not result.get("needs_generation"):
+                        # Workout already exists - this shouldn't happen but handle it
+                        logger.info(f"[JIT Safety Net] Workout already exists: {result}")
+                except Exception as gen_error:
+                    logger.error(f"[JIT Safety Net] Failed to trigger generation: {gen_error}")
+                    # Don't fail the request - just log and continue
+                    is_generating = False
+                    generation_message = None
+            else:
+                logger.warning(f"[JIT Safety Net] No background_tasks available for user {user_id}")
 
         # Log analytics event for quick start view
         try:
