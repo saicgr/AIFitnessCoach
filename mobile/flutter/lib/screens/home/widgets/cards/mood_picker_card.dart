@@ -74,88 +74,124 @@ class _MoodPickerCardState extends ConsumerState<MoodPickerCard>
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Material(
-        color: elevatedColor,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppColors.cyan.withOpacity(0.2),
-            ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+                ? [
+                    AppColors.purple.withOpacity(0.08),
+                    AppColors.cyan.withOpacity(0.05),
+                  ]
+                : [
+                    AppColors.purple.withOpacity(0.04),
+                    AppColors.cyan.withOpacity(0.02),
+                  ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                children: [
-                  Icon(
-                    Icons.wb_sunny_outlined,
-                    color: AppColors.cyan,
-                    size: 22,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'How are you feeling?',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: textColor,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Tap to generate a workout for your mood',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // View history button
-                  IconButton(
-                    icon: Icon(
-                      Icons.history,
-                      color: textMuted,
-                      size: 20,
-                    ),
-                    onPressed: () => context.push('/mood-history'),
-                    tooltip: 'Mood History',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
-                    ),
-                  ),
-                ],
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.purple.withOpacity(0.15),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border(
+                left: BorderSide(color: AppColors.purple, width: 4),
+                top: BorderSide(color: AppColors.cyan.withOpacity(0.2)),
+                right: BorderSide(color: AppColors.cyan.withOpacity(0.2)),
+                bottom: BorderSide(color: AppColors.cyan.withOpacity(0.2)),
               ),
-              const SizedBox(height: 16),
-              // Mood buttons
-              Row(
-                children: Mood.values.map((mood) {
-                  return Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        right: mood != Mood.values.last ? 8 : 0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.cyan.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: _MoodButton(
-                        mood: mood,
-                        isSelected: moodState.selectedMood == mood,
-                        onTap: () => _onMoodSelected(mood),
+                      child: Icon(
+                        Icons.wb_sunny_outlined,
+                        color: AppColors.cyan,
+                        size: 20,
                       ),
                     ),
-                  );
-                }).toList(),
-              ),
-            ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'How are you feeling?',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Get a workout for your mood',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // View history button
+                    IconButton(
+                      icon: Icon(
+                        Icons.history,
+                        color: textMuted,
+                        size: 20,
+                      ),
+                      onPressed: () => context.push('/mood-history'),
+                      tooltip: 'Mood History',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // Mood buttons
+                Row(
+                  children: Mood.values.map((mood) {
+                    return Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          right: mood != Mood.values.last ? 8 : 0,
+                        ),
+                        child: _MoodButton(
+                          mood: mood,
+                          isSelected: moodState.selectedMood == mood,
+                          onTap: () => _onMoodSelected(mood),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -548,35 +584,47 @@ class _MoodButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevatedColor = isDark
-        ? AppColors.elevated.withOpacity(0.7)
-        : AppColorsLight.elevated.withOpacity(0.9);
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     return Material(
       color: isSelected ? mood.color.withOpacity(0.15) : elevatedColor,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isSelected
                   ? mood.color.withOpacity(0.5)
                   : Colors.transparent,
               width: isSelected ? 2 : 1,
             ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: mood.color.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                mood.emoji,
-                style: const TextStyle(fontSize: 24),
+              // Larger emoji with scale animation on selection
+              AnimatedScale(
+                scale: isSelected ? 1.1 : 1.0,
+                duration: const Duration(milliseconds: 200),
+                child: Text(
+                  mood.emoji,
+                  style: const TextStyle(fontSize: 32),
+                ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
                 mood.label,
                 style: TextStyle(

@@ -102,7 +102,25 @@ class HabitsCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: accentColor.withValues(alpha: 0.2)),
+          border: Border(
+            left: BorderSide(color: AppColors.limeGreen, width: 4),
+            top: BorderSide(color: accentColor.withValues(alpha: 0.2)),
+            right: BorderSide(color: accentColor.withValues(alpha: 0.2)),
+            bottom: BorderSide(color: accentColor.withValues(alpha: 0.2)),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.green.withOpacity(0.15),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+              spreadRadius: 1,
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,7 +189,25 @@ class HabitsCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+          border: Border(
+            left: BorderSide(color: AppColors.limeGreen, width: 4),
+            top: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
+            right: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
+            bottom: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.green.withOpacity(0.15),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+              spreadRadius: 1,
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -231,7 +267,25 @@ class HabitsCard extends ConsumerWidget {
           decoration: BoxDecoration(
             color: elevatedColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+            border: Border(
+              left: BorderSide(color: AppColors.limeGreen, width: 4),
+              top: BorderSide(color: accentColor.withValues(alpha: 0.3)),
+              right: BorderSide(color: accentColor.withValues(alpha: 0.3)),
+              bottom: BorderSide(color: accentColor.withValues(alpha: 0.3)),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.green.withOpacity(0.15),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+                spreadRadius: 1,
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -384,7 +438,25 @@ class HabitsCard extends ConsumerWidget {
           decoration: BoxDecoration(
             color: elevatedColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+            border: Border(
+              left: BorderSide(color: AppColors.limeGreen, width: 4),
+              top: BorderSide(color: accentColor.withValues(alpha: 0.3)),
+              right: BorderSide(color: accentColor.withValues(alpha: 0.3)),
+              bottom: BorderSide(color: accentColor.withValues(alpha: 0.3)),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.green.withOpacity(0.15),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+                spreadRadius: 1,
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -557,6 +629,7 @@ class HabitsCard extends ConsumerWidget {
     Color accentColor,
   ) {
     final isComplete = completed == total && total > 0;
+    final ringColor = isComplete ? AppColors.green : accentColor;
 
     return SizedBox(
       width: 48,
@@ -564,14 +637,20 @@ class HabitsCard extends ConsumerWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          CircularProgressIndicator(
-            value: progress,
-            strokeWidth: 4,
-            backgroundColor: textMuted.withValues(alpha: 0.2),
-            valueColor: AlwaysStoppedAnimation<Color>(
-              isComplete ? AppColors.green : accentColor,
+          // Animated progress ring
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: progress),
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, _) => CircularProgressIndicator(
+              value: value,
+              strokeWidth: 4,
+              backgroundColor: textMuted.withValues(alpha: 0.2),
+              color: ringColor,
+              strokeCap: StrokeCap.round,
             ),
           ),
+          // Percentage text
           Text(
             '${(progress * 100).toInt()}%',
             style: TextStyle(

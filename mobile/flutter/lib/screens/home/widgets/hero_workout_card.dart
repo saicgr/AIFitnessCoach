@@ -144,17 +144,43 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
         decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isToday
-                ? AppColors.cyan.withValues(alpha: 0.4)
-                : AppColors.purple.withValues(alpha: 0.3),
-            width: isToday ? 2 : 1,
+          border: Border(
+            left: BorderSide(
+              color: AppColors.cyan,
+              width: 4,
+            ),
+            top: BorderSide(
+              color: isToday
+                  ? AppColors.cyan.withValues(alpha: 0.4)
+                  : AppColors.purple.withValues(alpha: 0.3),
+              width: isToday ? 2 : 1,
+            ),
+            right: BorderSide(
+              color: isToday
+                  ? AppColors.cyan.withValues(alpha: 0.4)
+                  : AppColors.purple.withValues(alpha: 0.3),
+              width: isToday ? 2 : 1,
+            ),
+            bottom: BorderSide(
+              color: isToday
+                  ? AppColors.cyan.withValues(alpha: 0.4)
+                  : AppColors.purple.withValues(alpha: 0.3),
+              width: isToday ? 2 : 1,
+            ),
           ),
           boxShadow: [
+            // Main colored glow shadow
             BoxShadow(
-              color: (isToday ? AppColors.cyan : AppColors.purple).withValues(alpha: 0.1),
-              blurRadius: 20,
+              color: (isToday ? AppColors.cyan : AppColors.purple).withValues(alpha: 0.25),
+              blurRadius: 24,
               offset: const Offset(0, 8),
+              spreadRadius: 2,
+            ),
+            // Subtle depth shadow
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -382,8 +408,11 @@ class GeneratingHeroCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: AppColors.cyan.withValues(alpha: 0.3),
+          border: Border(
+            left: BorderSide(color: AppColors.cyan, width: 4),
+            top: BorderSide(color: AppColors.cyan.withValues(alpha: 0.3)),
+            right: BorderSide(color: AppColors.cyan.withValues(alpha: 0.3)),
+            bottom: BorderSide(color: AppColors.cyan.withValues(alpha: 0.3)),
           ),
         ),
         child: Column(

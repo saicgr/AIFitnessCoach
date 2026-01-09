@@ -75,7 +75,25 @@ class DailyStatsCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: cardBorder),
+          border: Border(
+            left: BorderSide(color: AppColors.magenta, width: 4),
+            top: BorderSide(color: cardBorder),
+            right: BorderSide(color: cardBorder),
+            bottom: BorderSide(color: cardBorder),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.purple.withOpacity(0.15),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+              spreadRadius: 1,
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: activityState.isLoading
             ? _buildLoadingState(textMuted)
@@ -115,7 +133,25 @@ class DailyStatsCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: cardBorder),
+          border: Border(
+            left: BorderSide(color: AppColors.magenta, width: 4),
+            top: BorderSide(color: cardBorder),
+            right: BorderSide(color: cardBorder),
+            bottom: BorderSide(color: cardBorder),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.purple.withOpacity(0.15),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+              spreadRadius: 1,
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -359,32 +395,73 @@ class _StatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Parse the value to get the numeric part for animation
+    final numericValue = _extractNumericValue(value);
+
     return Column(
       children: [
+        // Large metric number with animation
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: numericValue),
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeOutCubic,
+          builder: (context, animatedValue, _) {
+            final displayValue = _formatAnimatedValue(animatedValue, value);
+            return Text(
+              displayValue,
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+                height: 1.0,
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 4),
+        // Small label with icon
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 18, color: iconColor),
-            const SizedBox(width: 6),
+            Icon(icon, size: 14, color: iconColor),
+            const SizedBox(width: 4),
             Text(
-              value,
+              label,
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: textColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: textMuted,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: textMuted,
-          ),
-        ),
       ],
     );
+  }
+
+  double _extractNumericValue(String value) {
+    // Extract numeric value from strings like "5.2k", "150", "-300", etc.
+    final numStr = value.replaceAll(RegExp(r'[^0-9.\-\+]'), '');
+    final parsed = double.tryParse(numStr) ?? 0.0;
+
+    // Handle k notation (e.g., "5.2k" = 5200)
+    if (value.contains('k')) {
+      return parsed * 1000;
+    }
+    return parsed;
+  }
+
+  String _formatAnimatedValue(double animatedValue, String originalValue) {
+    // Preserve original formatting (k notation, +/- signs)
+    if (originalValue.contains('k')) {
+      return '${(animatedValue / 1000).toStringAsFixed(1)}k';
+    }
+
+    // Preserve sign for deficit/surplus
+    final hasSign = originalValue.startsWith('+') || originalValue.startsWith('-');
+    final sign = animatedValue >= 0 ? (hasSign ? '+' : '') : '-';
+    final absValue = animatedValue.abs().round();
+
+    return '$sign$absValue';
   }
 }

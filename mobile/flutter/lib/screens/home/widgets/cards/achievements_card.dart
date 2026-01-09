@@ -63,7 +63,25 @@ class AchievementsCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: cardBorder),
+          border: Border(
+            left: BorderSide(color: const Color(0xFFFFD700), width: 4), // Gold
+            top: BorderSide(color: cardBorder),
+            right: BorderSide(color: cardBorder),
+            bottom: BorderSide(color: cardBorder),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.orange.withOpacity(0.15),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+              spreadRadius: 1,
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: isLoading
             ? _buildLoadingState(textMuted)
@@ -101,7 +119,25 @@ class AchievementsCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: cardBorder),
+          border: Border(
+            left: BorderSide(color: const Color(0xFFFFD700), width: 4), // Gold
+            top: BorderSide(color: cardBorder),
+            right: BorderSide(color: cardBorder),
+            bottom: BorderSide(color: cardBorder),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.orange.withOpacity(0.15),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+              spreadRadius: 1,
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -216,31 +252,37 @@ class AchievementsCard extends ConsumerWidget {
             Icon(Icons.emoji_events, color: const Color(0xFFFFD700), size: 20),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(
-                'Achievements',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: textMuted,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Achievements',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: textMuted,
+                    ),
+                  ),
+                  // Large points number with animation
+                  TweenAnimationBuilder<int>(
+                    tween: IntTween(begin: 0, end: totalPoints),
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, animatedValue, _) {
+                      return Text(
+                        '$animatedValue pts',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.purple,
+                          height: 1.0,
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.purple.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                '$totalPoints pts',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.purple,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
             Icon(
               Icons.chevron_right,
               color: textMuted,

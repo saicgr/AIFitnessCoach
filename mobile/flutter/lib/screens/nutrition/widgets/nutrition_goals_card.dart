@@ -56,7 +56,25 @@ class NutritionGoalsCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
+        border: Border(
+          left: BorderSide(color: AppColors.green, width: 4),
+          top: BorderSide(color: cardBorder),
+          right: BorderSide(color: cardBorder),
+          bottom: BorderSide(color: cardBorder),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: teal.withValues(alpha: 0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+            spreadRadius: 1,
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

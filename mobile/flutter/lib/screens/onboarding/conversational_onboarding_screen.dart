@@ -690,6 +690,20 @@ class _ConversationalOnboardingScreenState
         'healthConditions': conditions,
       };
 
+      // DEBUG: Log all collected data
+      debugPrint('🔍 [Onboarding] ===== COMPLETE ONBOARDING DEBUG =====');
+      debugPrint('🔍 [Onboarding] Collected data keys: ${state.collectedData.keys.toList()}');
+      debugPrint('🔍 [Onboarding] equipment: ${finalData['equipment']}');
+      debugPrint('🔍 [Onboarding] trainingExperience: ${finalData['trainingExperience']}');
+      debugPrint('🔍 [Onboarding] workoutEnvironment: ${finalData['workoutEnvironment']}');
+      debugPrint('🔍 [Onboarding] focusAreas: ${finalData['focusAreas']}');
+      debugPrint('🔍 [Onboarding] motivation: ${finalData['motivation']}');
+      debugPrint('🔍 [Onboarding] motivations: ${finalData['motivations']}');
+      debugPrint('🔍 [Onboarding] selectedDays: ${finalData['selectedDays']}');
+      debugPrint('🔍 [Onboarding] daysPerWeek: ${finalData['daysPerWeek']}');
+      debugPrint('🔍 [Onboarding] goals: ${finalData['goals']}');
+      debugPrint('🔍 [Onboarding] fitnessLevel: ${finalData['fitnessLevel']}');
+
       // Save conversation
       setState(() {
         _workoutLoadingProgress = 5;
@@ -789,6 +803,14 @@ class _ConversationalOnboardingScreenState
         'weight_kg': finalData['weightKg'],
         'target_weight_kg': finalData['targetWeightKg'],
       };
+
+      // DEBUG: Log the data being sent to API
+      debugPrint('🔍 [Onboarding] ===== API REQUEST DATA =====');
+      debugPrint('🔍 [Onboarding] userData keys: ${userData.keys.toList()}');
+      debugPrint('🔍 [Onboarding] equipment JSON: $equipmentJson');
+      debugPrint('🔍 [Onboarding] preferences JSON: $preferencesJson');
+      debugPrint('🔍 [Onboarding] goals JSON: $goalsJson');
+      debugPrint('🔍 [Onboarding] API endpoint: ${ApiConstants.users}/${authState.user?.id}');
 
       await apiClient.put(
         '${ApiConstants.users}/${authState.user?.id}',

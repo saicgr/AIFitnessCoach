@@ -36,13 +36,15 @@ class TileFactory {
           child: QuickActionsRow(),
         );
       case TileType.weeklyProgress:
-        return _buildWeeklyProgressTile(context, ref, tile, isDark);
+        // Removed feature - return empty widget
+        return const SizedBox.shrink();
       case TileType.weeklyGoals:
         return WeeklyGoalsCard(isDark: isDark);
       case TileType.weekChanges:
         return const WeekChangesCard();
       case TileType.upcomingFeatures:
-        return const UpcomingFeaturesCard();
+        // Removed feature - return empty widget
+        return const SizedBox.shrink();
       case TileType.upcomingWorkouts:
         return _buildUpcomingWorkoutsTile(context, ref, tile, isDark);
       // New tiles - using real implementations

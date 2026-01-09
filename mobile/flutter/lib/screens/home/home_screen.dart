@@ -188,17 +188,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   String _generationMessage = '';
   String? _generationDetail;
 
-  // Edit mode state
-  bool _isEditMode = false;
-  late AnimationController _wiggleController;
-  List<HomeTile> _editingTiles = [];
-
-  // Edit mode tooltip state
-  final bool _hasShownEditModeTooltip = false;
-  static const String _editModeTooltipKey = 'has_shown_edit_mode_tooltip';
-
   // Auto-refresh tracking
   DateTime? _lastRefreshTime;
+
+  // Deprecated: Edit mode state (no longer used but kept for backwards compatibility with dead code)
+  @Deprecated('Edit mode has been removed')
+  bool _isEditMode = false;
+  @Deprecated('Edit mode has been removed')
+  List<dynamic> _editingTiles = [];
+  @Deprecated('Edit mode has been removed')
+  static const String _editModeTooltipKey = 'has_shown_edit_mode_tooltip';
+  @Deprecated('Edit mode has been removed')
+  late final _wiggleController = _DummyAnimationController();
   static const Duration _minRefreshInterval = Duration(seconds: 30);
 
   @override
@@ -206,27 +207,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     super.initState();
     // Register for app lifecycle events
     WidgetsBinding.instance.addObserver(this);
-    // Wiggle animation for edit mode (like iOS app icons)
-    _wiggleController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 150),
-    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeWorkouts();
       _checkPendingWidgetAction();
       _initializeCurrentProgram();
       _initializeWindowModeTracking();
-      // Start edit mode if requested via route parameter
-      if (widget.startEditMode) {
-        _enterEditMode();
-      }
     });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _wiggleController.dispose();
     super.dispose();
   }
 
@@ -458,8 +449,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _wiggleController.reset();
 
     if (save && _editingTiles.isNotEmpty) {
-      // Save the updated tiles
-      await ref.read(activeLayoutProvider.notifier).updateTiles(_editingTiles);
+      // Save the updated tiles (casting is safe since this dead code is never executed)
+      await ref.read(activeLayoutProvider.notifier).updateTiles(_editingTiles.cast<HomeTile>());
       HapticService.success();
     }
 
@@ -1321,9 +1312,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 ),
               ),
 
-              // Feature voting pill - compact access below header
+              // Category Pills - Workout Filtering
               SliverToBoxAdapter(
-                child: _FeatureVotingPill(isDark: isDark),
+                child: WorkoutCategoryPills(isDark: isDark),
               ),
 
               // Renewal Reminder Banner (shows 5 days before subscription renewal)
@@ -1373,11 +1364,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     (int, int) weeklyProgress,
     List upcomingWorkouts,
   ) {
-    // In edit mode, use the editing tiles list
-    if (_isEditMode && _editingTiles.isNotEmpty) {
-      return _buildEditModeTiles(context, isDark, workoutsState, workoutsNotifier, nextWorkout, isAIGenerating);
-    }
-
     return activeLayoutState.when(
       loading: () => [
         const SliverToBoxAdapter(
@@ -1582,11 +1568,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
     bool isAIGenerating,
   ) {
-    // In edit mode, show editable tiles
-    if (_isEditMode && _editingTiles.isNotEmpty) {
-      return _buildEditModeTilesLazy(context, isDark, todayWorkoutState, isAIGenerating);
-    }
-
     return activeLayoutState.when(
       loading: () => [
         const SliverToBoxAdapter(
@@ -2714,22 +2695,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ],
             ),
           ),
-          // Streak Badge
+          const Spacer(),
+          // Streak Badge - Consolidated metric
           _StreakBadge(streak: currentStreak, isDark: isDark, isCompact: isCompact),
           SizedBox(width: spacing),
-          // Profile button - always visible
-          _ProfileButton(isDark: isDark),
-          SizedBox(width: spacing / 2),
-          NotificationBellButton(isDark: isDark),
-          SizedBox(width: spacing / 2),
-          // Edit home button
-          _EditHomeButton(
-            isDark: isDark,
-            isEditMode: _isEditMode,
-            onTap: _isEditMode ? () => _exitEditMode(save: true) : _enterEditMode,
-          ),
-          SizedBox(width: spacing / 2),
-          SettingsButton(isDark: isDark),
+          // Profile Menu Button - Combines notifications + settings
+          _ProfileMenuButton(isDark: isDark, isCompact: isCompact),
         ],
       ),
     );
@@ -2815,188 +2786,215 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ),
           const Spacer(),
-          if (_isEditMode) ...[
-            // Done button in edit mode
-            Material(
-              color: AppColors.cyan,
-              borderRadius: BorderRadius.circular(20),
-              child: InkWell(
-                onTap: () => _exitEditMode(save: true),
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: const Text(
-                    'Done',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ] else ...[
-            // Edit button (replaces My Space)
-            Material(
-              color: elevatedColor,
-              borderRadius: BorderRadius.circular(20),
-              child: InkWell(
-                onTap: _enterEditMode,
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppColors.purple.withOpacity(0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.edit_rounded,
-                        size: 16,
-                        color: AppColors.purple,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Edit',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            CustomizeProgramButton(isDark: isDark),
-          ],
+          CustomizeProgramButton(isDark: isDark),
         ],
       ),
     );
   }
 }
 
-/// A button that navigates to the profile screen
-class _ProfileButton extends StatelessWidget {
+/// Consolidated profile menu button with notification badge
+class _ProfileMenuButton extends StatelessWidget {
   final bool isDark;
+  final bool isCompact;
 
-  const _ProfileButton({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: () {
-        HapticService.light();
-        context.push('/profile');
-      },
-      icon: Icon(
-        Icons.person_outline,
-        color: AppColors.purple,
-        size: 24,
-      ),
-      tooltip: 'Profile',
-    );
-  }
-}
-
-/// Edit home button - toggles edit mode for home screen customization
-class _EditHomeButton extends StatelessWidget {
-  final bool isDark;
-  final bool isEditMode;
-  final VoidCallback onTap;
-
-  const _EditHomeButton({
+  const _ProfileMenuButton({
     required this.isDark,
-    required this.isEditMode,
-    required this.onTap,
+    this.isCompact = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: () {
-        HapticService.light();
-        onTap();
-      },
-      icon: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 200),
-        child: isEditMode
-            ? Icon(
-                Icons.check_rounded,
-                key: const ValueKey('done'),
-                color: AppColors.success,
-                size: 24,
-              )
-            : Icon(
-                Icons.edit_rounded,
-                key: const ValueKey('edit'),
-                color: AppColors.purple,
-                size: 22,
+    final iconSize = isCompact ? 20.0 : 24.0;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        IconButton(
+          onPressed: () {
+            HapticService.light();
+            _showProfileMenu(context);
+          },
+          icon: Icon(
+            Icons.person_outline,
+            color: AppColors.purple,
+            size: iconSize,
+          ),
+          tooltip: 'Menu',
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+        ),
+        // Notification indicator
+        // Positioned(
+        //   top: -2,
+        //   right: -2,
+        //   child: Container(
+        //     width: 8,
+        //     height: 8,
+        //     decoration: BoxDecoration(
+        //       color: AppColors.orange,
+        //       shape: BoxShape.circle,
+        //       border: Border.all(
+        //         color: isDark ? AppColors.background : AppColorsLight.background,
+        //         width: 1.5,
+        //       ),
+        //     ),
+        //   ),
+        // ),
+      ],
+    );
+  }
+
+  void _showProfileMenu(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: textSecondary.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
+              const SizedBox(height: 24),
+
+              // Profile option
+              _MenuOption(
+                icon: Icons.person_outline,
+                label: 'Profile',
+                onTap: () {
+                  Navigator.pop(context);
+                  context.push('/profile');
+                },
+                isDark: isDark,
+              ),
+
+              // Notifications option
+              _MenuOption(
+                icon: Icons.notifications_outlined,
+                label: 'Notifications',
+                badge: 0, // TODO: Connect to actual notification count
+                onTap: () {
+                  Navigator.pop(context);
+                  // TODO: Navigate to notifications
+                },
+                isDark: isDark,
+              ),
+
+              // Settings option
+              _MenuOption(
+                icon: Icons.settings_outlined,
+                label: 'Settings',
+                onTap: () {
+                  Navigator.pop(context);
+                  context.push('/settings');
+                },
+                isDark: isDark,
+              ),
+
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
       ),
-      tooltip: isEditMode ? 'Done editing' : 'Customize home',
     );
   }
 }
 
-/// Compact pill for feature voting access - shown below header
-class _FeatureVotingPill extends StatelessWidget {
+class _MenuOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
   final bool isDark;
+  final int? badge;
 
-  const _FeatureVotingPill({required this.isDark});
+  const _MenuOption({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    required this.isDark,
+    this.badge,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final pillBg = isDark
-        ? AppColors.cyan.withValues(alpha: 0.12)
-        : AppColors.cyan.withValues(alpha: 0.08);
-    final borderColor = AppColors.cyan.withValues(alpha: 0.3);
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: GestureDetector(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         onTap: () {
           HapticService.light();
-          context.push('/features');
+          onTap();
         },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: pillBg,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: borderColor, width: 1),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.how_to_vote_rounded,
-                color: AppColors.cyan,
-                size: 16,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'What should we build next?',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.cyan,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: glassSurface,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, size: 20, color: AppColors.purple),
                 ),
-              ),
-              const SizedBox(width: 4),
-              Icon(
-                Icons.arrow_forward_ios,
-                color: AppColors.cyan,
-                size: 12,
-              ),
-            ],
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: textPrimary,
+                    ),
+                  ),
+                ),
+                if (badge != null && badge! > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.orange,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      badge! > 99 ? '99+' : '$badge',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                Icon(Icons.chevron_right, color: textSecondary, size: 20),
+              ],
+            ),
           ),
         ),
       ),
@@ -3064,3 +3062,164 @@ class _StreakBadge extends StatelessWidget {
   }
 }
 
+
+/// Dummy animation controller for backwards compatibility with deprecated edit mode code
+class _DummyAnimationController extends ChangeNotifier {
+  void repeat({bool reverse = false}) {}
+  void stop() {}
+  void reset() {}
+  double get value => 0.0;
+}
+
+/// Category pills for workout filtering with smooth animations
+class WorkoutCategoryPills extends StatefulWidget {
+  final bool isDark;
+
+  const WorkoutCategoryPills({super.key, required this.isDark});
+
+  @override
+  State<WorkoutCategoryPills> createState() => _WorkoutCategoryPillsState();
+}
+
+class _WorkoutCategoryPillsState extends State<WorkoutCategoryPills> with SingleTickerProviderStateMixin {
+  int _selectedIndex = 0;
+  late AnimationController _animationController;
+
+  final List<Map<String, dynamic>> _categories = [
+    {'label': 'For You', 'icon': Icons.star_rounded},
+    {'label': 'Strength', 'icon': Icons.fitness_center},
+    {'label': 'Cardio', 'icon': Icons.directions_run},
+    {'label': 'Yoga', 'icon': Icons.self_improvement},
+    {'label': 'HIIT', 'icon': Icons.local_fire_department},
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimationLimiter(
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: AnimationConfiguration.toStaggeredList(
+            duration: const Duration(milliseconds: 400),
+            childAnimationBuilder: (widget) => SlideAnimation(
+              horizontalOffset: 50.0,
+              child: FadeInAnimation(child: widget),
+            ),
+            children: _categories.asMap().entries.map((entry) {
+              final index = entry.key;
+              final category = entry.value;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _CategoryPill(
+                  label: category['label'],
+                  icon: category['icon'],
+                  isActive: _selectedIndex == index,
+                  isDark: widget.isDark,
+                  onTap: () {
+                    HapticService.selection();
+                    setState(() => _selectedIndex = index);
+                    _animationController.reset();
+                    _animationController.forward();
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryPill extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isActive;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _CategoryPill({
+    required this.label,
+    required this.icon,
+    required this.isActive,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final activeBg = AppColors.teal;
+    final inactiveBg = isDark 
+        ? AppColors.glassSurface 
+        : AppColorsLight.glassSurface;
+    final activeText = Colors.white;
+    final inactiveText = isDark 
+        ? AppColors.textSecondary 
+        : AppColorsLight.textSecondary;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      child: Material(
+        color: isActive ? activeBg : inactiveBg,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: EdgeInsets.symmetric(
+              horizontal: isActive ? 16 : 14,
+              vertical: isActive ? 10 : 8,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isActive 
+                    ? activeBg 
+                    : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                width: isActive ? 0 : 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color: isActive ? activeText : inactiveText,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                    color: isActive ? activeText : inactiveText,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

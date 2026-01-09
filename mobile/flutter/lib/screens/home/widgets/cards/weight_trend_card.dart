@@ -82,7 +82,25 @@ class WeightTrendCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: trendColor.withValues(alpha: 0.3)),
+          border: Border(
+            left: BorderSide(color: AppColors.orange, width: 4),
+            top: BorderSide(color: trendColor.withValues(alpha: 0.3)),
+            right: BorderSide(color: trendColor.withValues(alpha: 0.3)),
+            bottom: BorderSide(color: trendColor.withValues(alpha: 0.3)),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.orange.withOpacity(0.15),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+              spreadRadius: 1,
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: isLoading
             ? _buildLoadingState(textMuted)
@@ -97,6 +115,7 @@ class WeightTrendCard extends ConsumerWidget {
                     isGaining: isGaining,
                     changeText: changeText,
                     direction: direction,
+                    changeLbs: changeLbs,
                   ),
       ),
     );
@@ -126,7 +145,25 @@ class WeightTrendCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: trendColor.withValues(alpha: 0.3)),
+          border: Border(
+            left: BorderSide(color: AppColors.orange, width: 4),
+            top: BorderSide(color: trendColor.withValues(alpha: 0.3)),
+            right: BorderSide(color: trendColor.withValues(alpha: 0.3)),
+            bottom: BorderSide(color: trendColor.withValues(alpha: 0.3)),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.orange.withOpacity(0.15),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+              spreadRadius: 1,
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -237,6 +274,7 @@ class WeightTrendCard extends ConsumerWidget {
     required bool isGaining,
     required String changeText,
     required String direction,
+    required double changeLbs,
   }) {
     // Format the message based on direction
     String getMessage() {
@@ -261,17 +299,44 @@ class WeightTrendCard extends ConsumerWidget {
                       ? Icons.trending_up
                       : Icons.trending_flat,
               color: trendColor,
-              size: 20,
+              size: 24,
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(
-                getMessage(),
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Large change number with animation
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: changeLbs),
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, animatedValue, _) {
+                      final displayText = animatedValue >= 0.1
+                          ? '${animatedValue.toStringAsFixed(1)} lbs'
+                          : 'No change';
+                      return Text(
+                        displayText,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
+                          height: 1.0,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 2),
+                  // Small label
+                  Text(
+                    getMessage().replaceAll(changeText, '').trim(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
               ),
             ),
             Icon(

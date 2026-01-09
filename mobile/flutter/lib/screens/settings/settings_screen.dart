@@ -307,15 +307,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // Samsung-style settings groups
   late final List<_SettingsGroup> _settingsGroups = [
     _SettingsGroup(
-      id: 'customize_home',
-      icon: Icons.dashboard_customize_outlined,
-      title: 'Customize Home',
-      subtitle: 'Tiles, layout presets, personalization',
-      color: AppColors.purple,
-      sectionKeys: ['home_layout'],
-      onTap: () => _openHomeCustomization(),
-    ),
-    _SettingsGroup(
       id: 'ai_coach',
       icon: Icons.auto_awesome,
       title: 'AI Coach',
@@ -433,12 +424,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       _searchQuery = value.toLowerCase().trim();
       _matchingSections = _computeMatchingSections(_searchQuery);
     });
-  }
-
-  /// Navigate to home screen with edit mode enabled
-  void _openHomeCustomization() {
-    // Navigate to home and trigger edit mode
-    context.go('/home?edit=true');
   }
 
   /// AI-powered semantic search - finds sections that match user intent

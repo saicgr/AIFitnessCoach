@@ -83,12 +83,22 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
             return _buildNoDataState(elevatedColor, textColor, textMuted);
           }
 
+          // Always prioritize showing a workout (today's or next available)
           if (response.hasWorkoutToday && response.todayWorkout != null) {
             return _buildWorkoutReadyState(
               elevatedColor,
               textColor,
               textMuted,
               response.todayWorkout!,
+            );
+          } else if (response.nextWorkout != null) {
+            // Show next workout if today is rest day
+            return _buildWorkoutReadyState(
+              elevatedColor,
+              textColor,
+              textMuted,
+              response.nextWorkout!,
+              isNextWorkout: true,
             );
           } else {
             return _buildRestDayState(
@@ -109,7 +119,25 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.2)),
+        border: Border(
+          left: BorderSide(color: AppColors.teal, width: 4),
+          top: BorderSide(color: AppColors.cyan.withValues(alpha: 0.2)),
+          right: BorderSide(color: AppColors.cyan.withValues(alpha: 0.2)),
+          bottom: BorderSide(color: AppColors.cyan.withValues(alpha: 0.2)),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.teal.withOpacity(0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+            spreadRadius: 1,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(widget.isDark ? 0.2 : 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -142,7 +170,25 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+        border: Border(
+          left: BorderSide(color: AppColors.teal, width: 4),
+          top: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
+          right: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
+          bottom: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.teal.withOpacity(0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+            spreadRadius: 1,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(widget.isDark ? 0.2 : 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -176,7 +222,25 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.textMuted.withValues(alpha: 0.2)),
+        border: Border(
+          left: BorderSide(color: AppColors.teal, width: 4),
+          top: BorderSide(color: AppColors.textMuted.withValues(alpha: 0.2)),
+          right: BorderSide(color: AppColors.textMuted.withValues(alpha: 0.2)),
+          bottom: BorderSide(color: AppColors.textMuted.withValues(alpha: 0.2)),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.teal.withOpacity(0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+            spreadRadius: 1,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(widget.isDark ? 0.2 : 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -205,8 +269,9 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
     Color elevatedColor,
     Color textColor,
     Color textMuted,
-    TodayWorkoutSummary workout,
-  ) {
+    TodayWorkoutSummary workout, {
+    bool isNextWorkout = false,
+  }) {
     final typeColor = AppColors.getWorkoutTypeColor(workout.type);
 
     return AnimatedBuilder(
@@ -259,18 +324,18 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
                       color: AppColors.cyan.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Icons.today,
+                          isNextWorkout ? Icons.event : Icons.today,
                           size: 14,
                           color: AppColors.cyan,
                         ),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Text(
-                          'TODAY',
-                          style: TextStyle(
+                          isNextWorkout ? 'TOMORROW' : 'TODAY',
+                          style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: AppColors.cyan,
@@ -404,7 +469,25 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.purple.withValues(alpha: 0.3)),
+        border: Border(
+          left: BorderSide(color: AppColors.teal, width: 4),
+          top: BorderSide(color: AppColors.purple.withValues(alpha: 0.3)),
+          right: BorderSide(color: AppColors.purple.withValues(alpha: 0.3)),
+          bottom: BorderSide(color: AppColors.purple.withValues(alpha: 0.3)),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.teal.withOpacity(0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+            spreadRadius: 1,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(widget.isDark ? 0.2 : 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [

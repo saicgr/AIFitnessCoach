@@ -28,9 +28,30 @@ class UpcomingWorkoutCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Material(
-        color: elevatedColor,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(12),
-        child: InkWell(
+        child: Container(
+          decoration: BoxDecoration(
+            color: elevatedColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border(
+              left: BorderSide(color: typeColor, width: 4),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: typeColor.withOpacity(0.15),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+                spreadRadius: 1,
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: InkWell(
           onTap: () {
             HapticService.selection();
             debugPrint('Target: [UpcomingCard] Tapped: ${workout.name}');
@@ -100,6 +121,7 @@ class UpcomingWorkoutCard extends StatelessWidget {
               ],
             ),
           ),
+        ),
         ),
       ),
     );

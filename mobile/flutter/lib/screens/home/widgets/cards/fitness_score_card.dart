@@ -56,28 +56,48 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Material(
-        color: elevatedColor,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          onTap: () {
-            HapticService.light();
-            // Log score view
-            ref.read(contextLoggingServiceProvider).logScoreView(
-              screen: 'home_card',
-            );
-            context.push('/scores');
-          },
+      child: Container(
+        decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: _getScoreColor(overallScore).withOpacity(0.3),
-              ),
+          boxShadow: [
+            BoxShadow(
+              color: _getScoreColor(overallScore).withOpacity(0.2),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+              spreadRadius: 1,
             ),
-            child: Column(
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: elevatedColor,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            onTap: () {
+              HapticService.light();
+              // Log score view
+              ref.read(contextLoggingServiceProvider).logScoreView(
+                screen: 'home_card',
+              );
+              context.push('/scores');
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border(
+                  left: BorderSide(color: AppColors.cyan, width: 4),
+                  top: BorderSide(color: _getScoreColor(overallScore).withOpacity(0.3)),
+                  right: BorderSide(color: _getScoreColor(overallScore).withOpacity(0.3)),
+                  bottom: BorderSide(color: _getScoreColor(overallScore).withOpacity(0.3)),
+                ),
+              ),
+              child: Column(
               children: [
                 // Title row
                 Row(
@@ -170,6 +190,7 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
                   ],
                 ),
               ],
+              ),
             ),
           ),
         ),
@@ -190,8 +211,11 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppColors.cyan.withOpacity(0.2),
+            border: Border(
+              left: BorderSide(color: AppColors.cyan, width: 4),
+              top: BorderSide(color: AppColors.cyan.withOpacity(0.2)),
+              right: BorderSide(color: AppColors.cyan.withOpacity(0.2)),
+              bottom: BorderSide(color: AppColors.cyan.withOpacity(0.2)),
             ),
           ),
           child: Column(
@@ -324,19 +348,44 @@ class _ScoreItem extends StatelessWidget {
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final scoreColor = _getScoreColor(score);
+    final progress = score / 100.0;
 
     return Column(
       children: [
-        Icon(
-          icon,
-          color: scoreColor.withOpacity(0.8),
-          size: 20,
+        // Circular ring with icon
+        SizedBox(
+          width: 56,
+          height: 56,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Animated progress ring
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: progress),
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, _) => CircularProgressIndicator(
+                  value: value,
+                  strokeWidth: 4,
+                  backgroundColor: textMuted.withOpacity(0.15),
+                  color: scoreColor,
+                  strokeCap: StrokeCap.round,
+                ),
+              ),
+              // Icon in center
+              Icon(
+                icon,
+                color: scoreColor,
+                size: 20,
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 6),
         Text(
           '$score',
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
             color: textColor,
           ),
@@ -347,6 +396,7 @@ class _ScoreItem extends StatelessWidget {
           style: TextStyle(
             fontSize: 10,
             color: textMuted,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],

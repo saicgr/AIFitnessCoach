@@ -95,7 +95,14 @@ class UserDB(BaseDB):
         Returns:
             Updated user record or None on failure
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"🔍 [DB] update_user called - user_id: {user_id}")
+        logger.info(f"🔍 [DB] update_user - data keys: {list(data.keys())}")
+        logger.info(f"🔍 [DB] update_user - equipment value: {data.get('equipment')}")
+        logger.info(f"🔍 [DB] update_user - preferences value: {data.get('preferences')}")
         result = self.client.table("users").update(data).eq("id", user_id).execute()
+        logger.info(f"🔍 [DB] update_user - result.data: {result.data}")
         return result.data[0] if result.data else None
 
     def delete_user(self, user_id: str) -> bool:

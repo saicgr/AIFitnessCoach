@@ -676,9 +676,13 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest):
         update_data["preferences"] = final_preferences
 
         # Perform update
+        logger.info(f"🔍 [DEBUG] save_user_preferences - update_data: {update_data}")
+        logger.info(f"🔍 [DEBUG] save_user_preferences - equipment: {update_data.get('equipment')}")
+        logger.info(f"🔍 [DEBUG] save_user_preferences - preferences: {update_data.get('preferences')}")
         if update_data:
-            db.update_user(user_id, update_data)
+            result = db.update_user(user_id, update_data)
             logger.info(f"Saved {len(update_data)} preference fields for user {user_id}")
+            logger.info(f"🔍 [DEBUG] save_user_preferences - update result: {result}")
 
         # Log activity
         await log_user_activity(
@@ -710,6 +714,11 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest):
 async def update_user(user_id: str, user: UserUpdate):
     """Update a user."""
     logger.info(f"Updating user: id={user_id}")
+    # DEBUG: Log incoming data
+    logger.info(f"🔍 [DEBUG] Incoming user data:")
+    logger.info(f"🔍 [DEBUG] preferences: {user.preferences}")
+    logger.info(f"🔍 [DEBUG] equipment: {user.equipment}")
+    logger.info(f"🔍 [DEBUG] goals: {user.goals}")
     try:
         db = get_supabase_db()
 
@@ -762,6 +771,7 @@ async def update_user(user_id: str, user: UserUpdate):
                 user.workout_environment,
             )
             update_data["preferences"] = final_preferences
+            logger.info(f"🔍 [DEBUG] Final preferences to save: {final_preferences}")
 
         # Handle personal/health fields
         if user.name is not None:
@@ -810,6 +820,7 @@ async def update_user(user_id: str, user: UserUpdate):
             update_data["equipment_details"] = user.equipment_details
             logger.info(f"Updating equipment_details for user {user_id}: {len(user.equipment_details)} items")
 
+        logger.info(f"🔍 [DEBUG] Final update_data to save: {update_data}")
         if update_data:
             updated = db.update_user(user_id, update_data)
             logger.debug(f"Updated {len(update_data)} fields for user {user_id}")

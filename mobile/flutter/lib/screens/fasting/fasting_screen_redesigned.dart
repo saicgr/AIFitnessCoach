@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/fasting.dart';
 import '../../data/providers/fasting_provider.dart';
 import '../../data/providers/guest_mode_provider.dart';
+import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/fasting_timer_service.dart';
 import '../../data/services/haptic_service.dart';
@@ -35,6 +36,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
 
   // Fast configuration
   FastingProtocol _selectedProtocol = FastingProtocol.sixteen8;
+  int _customHours = 16;
   DateTime _startTime = DateTime.now();
   bool _isProcessing = false;
 
@@ -251,7 +253,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
 
     // Calculate end time
     final endTime = hasFast && activeFast != null
-        ? activeFast.startedAt.add(Duration(minutes: goalMinutes))
+        ? activeFast.startTime.add(Duration(minutes: goalMinutes))
         : _startTime.add(Duration(minutes: goalMinutes));
 
     return SingleChildScrollView(
@@ -571,7 +573,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
     Color textMuted,
   ) {
     final stats = fastingState.stats;
-    final hasStats = stats != null && stats.totalCompleted > 0;
+    final hasStats = stats != null && stats.completedFasts > 0;
 
     if (!hasStats) {
       return Container(
@@ -621,7 +623,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
         ),
         _buildStatCard(
           icon: Icons.check_circle_outline,
-          value: '${stats.totalCompleted}',
+          value: '${stats.completedFasts}',
           label: 'Total Fasts',
           elevated: elevated,
           purple: purple,
@@ -630,7 +632,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
         ),
         _buildStatCard(
           icon: Icons.schedule,
-          value: '${stats.averageDurationHours.toStringAsFixed(1)}h',
+          value: '${(stats.avgDurationMinutes / 60).toStringAsFixed(1)}h',
           label: 'Avg Duration',
           elevated: elevated,
           purple: purple,
@@ -639,7 +641,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
         ),
         _buildStatCard(
           icon: Icons.star_outline,
-          value: '${stats.longestDurationHours.toStringAsFixed(1)}h',
+          value: '${(stats.longestFastMinutes / 60).toStringAsFixed(1)}h',
           label: 'Longest Fast',
           elevated: elevated,
           purple: purple,
@@ -859,12 +861,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
             userId: userId,
             protocol: _selectedProtocol,
             startTime: _startTime,
-            goalDurationMinutes: durationMinutes,
-          );
-
-      // Start the timer service
-      await ref.read(fastingTimerServiceProvider).startTimer(
-            ref.read(fastingProvider).activeFast!,
+            customDurationMinutes: durationMinutes,
           );
     } catch (e) {
       if (mounted) {
@@ -924,8 +921,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
     HapticService.medium();
 
     try {
-      await ref.read(fastingProvider.notifier).endFast(userId);
-      await ref.read(fastingTimerServiceProvider).stopTimer();
+      await ref.read(fastingProvider.notifier).endFast(userId: userId);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -948,14 +944,17 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => ProtocolSelectorSheet(
-        selectedProtocol: _selectedProtocol,
-        onProtocolSelected: (protocol) {
+        currentProtocol: _selectedProtocol,
+        currentCustomHours: _customHours,
+        onSelect: (protocol, customHours) {
           setState(() {
             _selectedProtocol = protocol;
+            if (customHours != null) {
+              _customHours = customHours;
+            }
           });
           Navigator.of(context).pop();
         },
-        isDark: Theme.of(context).brightness == Brightness.dark,
       ),
     );
   }
@@ -966,8 +965,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => FastingSettingsSheet(
-        currentSettings: fastingState.settings,
-        isDark: Theme.of(context).brightness == Brightness.dark,
+        preferences: fastingState.preferences ?? const FastingPreferences(userId: ''),
       ),
     );
   }

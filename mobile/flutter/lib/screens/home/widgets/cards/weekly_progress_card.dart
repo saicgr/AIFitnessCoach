@@ -36,6 +36,22 @@ class WeeklyProgressCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
+          border: Border(
+            left: BorderSide(color: AppColors.purple, width: 4),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.cyan.withOpacity(0.15),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+              spreadRadius: 1,
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,13 +63,22 @@ class WeeklyProgressCard extends StatelessWidget {
                   '$completed of $total workouts',
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
-                Text(
-                  '${(progress * 100).toInt()}%',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.cyan,
-                  ),
+                // Large percentage number with animation
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: progress * 100),
+                  duration: const Duration(milliseconds: 800),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, animatedValue, _) {
+                    return Text(
+                      '${animatedValue.toInt()}%',
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.cyan,
+                        height: 1.0,
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -74,37 +99,64 @@ class WeeklyProgressCard extends StatelessWidget {
               children: List.generate(7, (index) {
                 final isToday = index == today;
                 final isPast = index < today;
+                final dayProgress = isPast ? 1.0 : (isToday && completed > 0 ? 0.5 : 0.0);
 
                 return Column(
                   children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: isToday
-                            ? AppColors.cyan.withOpacity(0.2)
-                            : isPast
-                                ? AppColors.success.withOpacity(0.2)
-                                : glassSurface,
-                        shape: BoxShape.circle,
-                        border: isToday
-                            ? Border.all(color: AppColors.cyan, width: 2)
-                            : null,
-                      ),
-                      child: isPast
-                          ? const Icon(
+                    // Circular ring for each day
+                    SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Background ring
+                          CircularProgressIndicator(
+                            value: 1.0,
+                            strokeWidth: 3,
+                            color: glassSurface,
+                          ),
+                          // Progress ring
+                          TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0, end: dayProgress),
+                            duration: Duration(milliseconds: 600 + (index * 100)),
+                            curve: Curves.easeOutCubic,
+                            builder: (context, value, _) => CircularProgressIndicator(
+                              value: value,
+                              strokeWidth: 3,
+                              backgroundColor: Colors.transparent,
+                              color: isPast || (isToday && value > 0)
+                                  ? AppColors.cyan
+                                  : Colors.transparent,
+                              strokeCap: StrokeCap.round,
+                            ),
+                          ),
+                          // Check icon for completed days
+                          if (isPast)
+                            const Icon(
                               Icons.check,
-                              size: 16,
-                              color: AppColors.success,
+                              size: 14,
+                              color: AppColors.cyan,
                             )
-                          : null,
+                          // Today indicator dot
+                          else if (isToday)
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: AppColors.cyan,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       days[index],
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 10,
+                        fontWeight: isToday ? FontWeight.bold : FontWeight.w500,
                         color: isToday ? AppColors.cyan : textMuted,
                       ),
                     ),
