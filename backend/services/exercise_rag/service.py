@@ -490,6 +490,7 @@ class ExerciseRAGService:
         readiness_score: Optional[int] = None,
         user_mood: Optional[str] = None,
         difficulty_adjustment: int = 0,
+        batch_offset: int = 0,
     ) -> List[Dict[str, Any]]:
         """
         Intelligently select exercises for a workout using RAG + AI.
@@ -521,11 +522,14 @@ class ExerciseRAGService:
             user_mood: User's current mood - affects workout type recommendation
             difficulty_adjustment: Feedback-based difficulty adjustment (-2 to +2).
                                    Positive values allow harder exercises, negative use easier ones.
+            batch_offset: Offset for batch generation to ensure variety across parallel workouts.
+                          Each workout in a batch should get a different offset (0, 1, 2, 3, ...).
+                          This skips the first (batch_offset * count) candidates to ensure variety.
 
         Returns:
             List of selected exercises with full details
         """
-        logger.info(f"Selecting {count} exercises for {focus_area} workout")
+        logger.info(f"Selecting {count} exercises for {focus_area} workout (batch_offset={batch_offset})")
         logger.info(f"Equipment: {equipment}, Dumbbells: {dumbbell_count}, Kettlebells: {kettlebell_count}")
         logger.info(f"Consistency mode: {consistency_mode}, Variation: {variation_percentage}%")
         logger.info(f"Progression pace: {progression_pace}, Workout type preference: {workout_type_preference}")
@@ -980,9 +984,34 @@ class ExerciseRAGService:
                 logger.info(f"🎯 [AI Consistency] Mood ({user_mood}): Further reduced intensity")
 
         if remaining_count > 0:
+            # Apply batch offset to ensure variety across parallel workout generations
+            # Each workout in a batch gets a different offset (0, 1, 2, ...) to select
+            # different exercises from the candidate pool
+            offset_start = batch_offset * count
+            offset_end = offset_start + 20  # Get 20 candidates starting from offset
+
+            # Ensure we have enough candidates by using modulo wrap-around
+            if len(candidates) > 0:
+                if offset_start >= len(candidates):
+                    # Wrap around if offset is beyond candidate list
+                    offset_start = offset_start % len(candidates)
+                    offset_end = offset_start + 20
+
+                # Get candidates with offset
+                if offset_end <= len(candidates):
+                    offset_candidates = candidates[offset_start:offset_end]
+                else:
+                    # Wrap around to beginning if needed
+                    offset_candidates = candidates[offset_start:] + candidates[:offset_end - len(candidates)]
+
+                if batch_offset > 0:
+                    logger.info(f"🎯 [Batch Variety] Applied batch_offset={batch_offset}, using candidates [{offset_start}:{offset_end}] (total: {len(candidates)})")
+            else:
+                offset_candidates = candidates[:20]
+
             # Use AI to select remaining exercises
             selected = await self._ai_select_exercises(
-                candidates=candidates[:20],
+                candidates=offset_candidates[:20],  # Ensure max 20
                 focus_area=focus_area,
                 fitness_level=fitness_level,
                 goals=goals,

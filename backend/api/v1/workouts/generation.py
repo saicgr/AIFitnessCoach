@@ -1879,6 +1879,7 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                 all_avoided = list(set(used_exercises + avoided_exercises))
 
                 # Use RAG to intelligently select exercises with adaptive params
+                # (sequential loop - no batch offset needed)
                 rag_exercises = await exercise_rag.select_exercises_for_workout(
                     focus_area=focus,
                     equipment=equipment if isinstance(equipment, list) else [],
@@ -1901,6 +1902,7 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                     progression_pace=progression_pace,  # User's progression pace preference
                     workout_type_preference=workout_type_pref,  # User's workout type preference
                     difficulty_adjustment=difficulty_adjustment,  # Feedback-based difficulty shift
+                    batch_offset=0,  # Sequential generation - offset not needed
                 )
 
                 if rag_exercises:
@@ -2285,7 +2287,8 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
             workout_date: datetime,
             index: int,
             avoid_words: List[str],
-            exercises_to_avoid: List[str]
+            exercises_to_avoid: List[str],
+            batch_offset: int = 0
         ):
             weekday = workout_date.weekday()
             focus = workout_focus_map.get(weekday, "full_body")
@@ -2311,6 +2314,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                 all_avoided_exercises = list(set(exercises_to_avoid + avoided_exercises))
 
                 # Use RAG to intelligently select exercises from ChromaDB/Supabase
+                # Pass batch_offset to ensure variety across parallel workouts
                 rag_exercises = await exercise_rag.select_exercises_for_workout(
                     focus_area=focus,
                     equipment=equipment if isinstance(equipment, list) else [],
@@ -2337,6 +2341,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     readiness_score=readiness_score,  # User's readiness score (affects intensity)
                     user_mood=user_mood,  # User's current mood (affects workout type)
                     difficulty_adjustment=difficulty_adjustment,  # Feedback-based difficulty shift
+                    batch_offset=batch_offset,  # Ensures variety in parallel batch generation
                 )
 
                 # Return the exercises used so they can be tracked after batch completes
@@ -2417,11 +2422,14 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     avoid_list = used_exercises[-(30 + offset):].copy()
                 else:
                     avoid_list = []
+                # Pass batch_offset (i) to ensure variety in parallel workout selection
+                # This ensures each workout in the batch uses different exercises
                 tasks.append(generate_single_workout(
                     date,
                     batch_start + i,
                     used_name_words.copy(),
-                    avoid_list
+                    avoid_list,
+                    batch_offset=i  # Critical: ensures variety in parallel generation
                 ))
             batch_results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -2725,7 +2733,7 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                     avoid_list = used_exercises[-30:].copy() if used_exercises else []
                     avoid_list = list(set(avoid_list + avoided_exercises))
 
-                    # Select exercises via RAG
+                    # Select exercises via RAG (sequential - no batch offset needed)
                     rag_exercises = await exercise_rag.select_exercises_for_workout(
                         focus_area=focus,
                         equipment=equipment if isinstance(equipment, list) else [],
@@ -2749,6 +2757,7 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                         progression_pace=progression_pace,  # User's progression pace preference
                         workout_type_preference=workout_type_pref,  # User's workout type preference
                         difficulty_adjustment=difficulty_adjustment,  # Feedback-based difficulty shift
+                        batch_offset=0,  # Sequential generation - offset not needed
                     )
 
                     if not rag_exercises:
@@ -3081,7 +3090,8 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         async def generate_single_workout(
             workout_date: datetime,
             avoid_words: List[str],
-            exercises_to_avoid: List[str]
+            exercises_to_avoid: List[str],
+            batch_offset: int = 0
         ):
             weekday = workout_date.weekday()
             focus = workout_focus_map.get(weekday, "full_body")
@@ -3107,6 +3117,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                 all_avoided = list(set(exercises_to_avoid + avoided_exercises))
 
                 # Use RAG to intelligently select exercises
+                # Pass batch_offset to ensure variety across parallel workouts
                 rag_exercises = await exercise_rag.select_exercises_for_workout(
                     focus_area=focus,
                     equipment=equipment if isinstance(equipment, list) else [],
@@ -3130,6 +3141,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     progression_pace=progression_pace,  # User's progression pace preference
                     workout_type_preference=workout_type_pref,  # User's workout type preference
                     difficulty_adjustment=difficulty_adjustment,  # Feedback-based difficulty shift
+                    batch_offset=batch_offset,  # Ensures variety in parallel batch generation
                 )
 
                 exercises_used = []
@@ -3256,10 +3268,13 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     avoid_list = used_exercises[-(30 + offset):].copy()
                 else:
                     avoid_list = []
+                # Pass batch_offset (i) to ensure variety in parallel workout selection
+                # This ensures each workout in the batch uses different exercises
                 tasks.append(generate_single_workout(
                     date,
                     used_name_words.copy(),
-                    avoid_list
+                    avoid_list,
+                    batch_offset=i  # Critical: ensures variety in parallel generation
                 ))
             batch_results = await asyncio.gather(*tasks, return_exceptions=True)
 

@@ -1323,30 +1323,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 child: WorkoutCategoryPills(isDark: isDark),
               ),
 
-              // Renewal Reminder Banner (shows 5 days before subscription renewal)
-              const SliverToBoxAdapter(
-                child: RenewalReminderBanner(),
-              ),
-
-              // Missed Workout Banner (shows when user has missed workout(s) from past 3 days)
-              const SliverToBoxAdapter(
-                child: MissedWorkoutBanner(),
-              ),
-
-              // TODAY section header with Edit + Customize Program buttons
-              SliverToBoxAdapter(
-                child: _buildTodaySectionHeader(isDark),
-              ),
-
-              // Dynamic Tile Rendering - action-focused layout
-              ..._buildDynamicTilesLazy(
-                context,
-                activeLayoutState,
-                isDark,
-                todayWorkoutState,
-                isAIGenerating,
-              ),
-
               // Bottom padding
               const SliverToBoxAdapter(
                 child: SizedBox(height: 100),
