@@ -122,6 +122,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
             _QuickAddSection(
               amounts: _selectedUnit.getQuickAmounts(),
               onAdd: (amount) => _quickLog(amount),
+              onCustom: () => _showCustomAmountDialog(),
               isDark: widget.isDark,
             ).animate().fadeIn(delay: 100.ms),
             const SizedBox(height: 24),
@@ -319,6 +320,175 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
           behavior: SnackBarBehavior.floating,
         ),
       );
+    }
+  }
+
+  Future<void> _showCustomAmountDialog() async {
+    final amountController = TextEditingController();
+    final nearBlack = widget.isDark
+        ? AppColors.nearBlack
+        : AppColorsLight.nearWhite;
+    final elevated = widget.isDark
+        ? AppColors.elevated
+        : AppColorsLight.elevated;
+    final textMuted = widget.isDark
+        ? AppColors.textMuted
+        : AppColorsLight.textMuted;
+    final textPrimary = widget.isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final electricBlue = widget.isDark
+        ? AppColors.electricBlue
+        : AppColorsLight.electricBlue;
+
+    final result = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          20,
+          24,
+          MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
+        decoration: BoxDecoration(
+          color: nearBlack,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: textMuted,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Icon(Icons.water_drop, color: electricBlue, size: 28),
+                const SizedBox(width: 12),
+                Text(
+                  'Custom Amount',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Enter any amount in milliliters',
+              style: TextStyle(
+                fontSize: 14,
+                color: textMuted,
+              ),
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: amountController,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              style: TextStyle(
+                color: textPrimary,
+                fontSize: 18,
+              ),
+              decoration: InputDecoration(
+                labelText: 'Amount',
+                labelStyle: TextStyle(color: textMuted),
+                suffixText: 'ml',
+                suffixStyle: TextStyle(
+                  color: textMuted,
+                  fontSize: 16,
+                ),
+                filled: true,
+                fillColor: elevated,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: electricBlue, width: 2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Quick suggestion chips
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [100, 150, 200, 300, 350, 400].map((ml) {
+                return GestureDetector(
+                  onTap: () {
+                    amountController.text = ml.toString();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: elevated,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: electricBlue.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Text(
+                      '${ml}ml',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: textPrimary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  final amount = int.tryParse(amountController.text);
+                  if (amount != null && amount > 0) {
+                    Navigator.pop(context, amount);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: electricBlue,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Add Water',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result != null && result > 0) {
+      await _quickLog(result);
     }
   }
 
@@ -628,34 +798,88 @@ class _StatItem extends StatelessWidget {
 class _QuickAddSection extends StatelessWidget {
   final List<QuickAmountUnit> amounts;
   final Function(int) onAdd;
+  final VoidCallback onCustom;
   final bool isDark;
 
   const _QuickAddSection({
     required this.amounts,
     required this.onAdd,
+    required this.onCustom,
     required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
+    final electricBlue =
+        isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(title: 'QUICK ADD WATER', isDark: isDark),
         const SizedBox(height: 12),
         Row(
-          children: amounts.map((amount) {
-            return Expanded(
+          children: [
+            // Preset amounts (first 3 only to make room for custom)
+            ...amounts.take(3).map((amount) {
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: _QuickAddButton(
+                    amount: amount,
+                    onTap: () => onAdd(amount.ml),
+                    isDark: isDark,
+                  ),
+                ),
+              );
+            }),
+            // Custom button
+            Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: _QuickAddButton(
-                  amount: amount,
-                  onTap: () => onAdd(amount.ml),
-                  isDark: isDark,
+                child: GestureDetector(
+                  onTap: onCustom,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: elevated,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: electricBlue.withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.edit_outlined,
+                          color: electricBlue,
+                          size: 20,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Custom',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                          ),
+                        ),
+                        Text(
+                          'Any ml',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            );
-          }).toList(),
+            ),
+          ],
         ),
       ],
     );

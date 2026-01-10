@@ -23,6 +23,12 @@ class NutritionFastingCard extends ConsumerWidget {
     final fastingState = ref.watch(fastingSettingsProvider);
     final prefs = nutritionState.preferences;
 
+    // Use current targets (dynamic if available, otherwise base) for consistency with nutrition tab
+    final currentCalories = nutritionState.currentCalorieTarget;
+    final currentProtein = nutritionState.currentProteinTarget;
+    final currentCarbs = nutritionState.currentCarbsTarget;
+    final currentFat = nutritionState.currentFatTarget;
+
     // Show loading state
     if (nutritionState.isLoading || fastingState.isLoading) {
       return Container(
@@ -84,7 +90,7 @@ class NutritionFastingCard extends ConsumerWidget {
             icon: Icons.local_fire_department_outlined,
             iconColor: AppColors.orange,
             label: 'Daily Target',
-            value: '${prefs?.targetCalories ?? 2000} cal',
+            value: '$currentCalories cal',
             isDark: isDark,
             textPrimary: textPrimary,
             textMuted: textMuted,
@@ -115,7 +121,9 @@ class NutritionFastingCard extends ConsumerWidget {
 
           // Macros row
           _buildMacrosRow(
-            prefs: prefs,
+            protein: currentProtein,
+            carbs: currentCarbs,
+            fat: currentFat,
             isDark: isDark,
             textPrimary: textPrimary,
             textMuted: textMuted,
@@ -178,15 +186,13 @@ class NutritionFastingCard extends ConsumerWidget {
   }
 
   Widget _buildMacrosRow({
-    required NutritionPreferences? prefs,
+    required int protein,
+    required int carbs,
+    required int fat,
     required bool isDark,
     required Color textPrimary,
     required Color textMuted,
   }) {
-    final protein = prefs?.targetProteinG ?? 150;
-    final carbs = prefs?.targetCarbsG ?? 200;
-    final fat = prefs?.targetFatG ?? 65;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(

@@ -18,6 +18,10 @@ SECONDARY_MUSCLE_AVOID_THRESHOLD = 0.20
 # Penalty multiplier for exercises with secondary muscles in the "reduce" list
 SECONDARY_MUSCLE_REDUCE_PENALTY = 0.7
 
+# Penalty multiplier for exercises with primary muscles in the "reduce" list
+# Primary muscles get a stronger penalty since they're the main target
+PRIMARY_MUSCLE_REDUCE_PENALTY = 0.5
+
 
 # Full gym equipment list
 FULL_GYM_EQUIPMENT = [
@@ -195,12 +199,13 @@ def filter_by_equipment(
     """
     equipment_lower = [eq.lower() for eq in user_equipment]
 
-    # Expand general equipment options (use 'any' to match partial strings like "full gym access")
-    if any("full gym" in eq for eq in equipment_lower):
+    # Expand general equipment options (use 'any' to match partial strings)
+    # Handle both 'full_gym' (app storage format) and 'full gym' (display format)
+    if any("full_gym" in eq or "full gym" in eq for eq in equipment_lower):
         equipment_lower = FULL_GYM_EQUIPMENT
-    elif any("home gym" in eq for eq in equipment_lower):
+    elif any("home_gym" in eq or "home gym" in eq for eq in equipment_lower):
         equipment_lower = HOME_GYM_EQUIPMENT
-    elif any("bodyweight only" in eq for eq in equipment_lower):
+    elif any("bodyweight only" in eq or "bodyweight_only" in eq for eq in equipment_lower):
         equipment_lower = ["body weight", "bodyweight", "none"]
     else:
         # Always include bodyweight as an option
@@ -209,17 +214,38 @@ def filter_by_equipment(
     ex_equipment_lower = ex_equipment.lower() if ex_equipment else ""
 
     # Check if exercise equipment matches user's equipment
+    # Use word-based matching to avoid false positives like "bar" matching "barbell"
     equipment_match = False
     for eq in equipment_lower:
-        if eq and ex_equipment_lower and (eq in ex_equipment_lower or ex_equipment_lower in eq):
+        if not eq or not ex_equipment_lower:
+            continue
+        # Exact match
+        if eq == ex_equipment_lower:
+            equipment_match = True
+            break
+        # Word-based matching: check if equipment is a complete word in the exercise equipment
+        # This prevents "bar" from matching "barbell" but allows "dumbbell" to match "dumbbell"
+        ex_words = set(ex_equipment_lower.replace("-", " ").replace("_", " ").split())
+        eq_words = set(eq.replace("-", " ").replace("_", " ").split())
+        # Match if all words in user equipment are found in exercise equipment
+        if eq_words and eq_words.issubset(ex_words):
+            equipment_match = True
+            break
+        # Also match if exercise equipment is a single word that matches any user equipment word
+        if len(ex_words) == 1 and ex_words.issubset(eq_words):
             equipment_match = True
             break
 
     if not equipment_match:
-        # Also check exercise name for equipment clues
+        # Also check exercise name for equipment clues (word-based)
         exercise_name_lower = exercise_name.lower() if exercise_name else ""
+        exercise_words = set(exercise_name_lower.replace("-", " ").replace("_", " ").split())
         for eq in equipment_lower:
-            if eq and eq in exercise_name_lower:
+            if not eq:
+                continue
+            eq_words = set(eq.replace("-", " ").replace("_", " ").split())
+            # Check if equipment words appear in exercise name
+            if eq_words and eq_words.issubset(exercise_words):
                 equipment_match = True
                 break
 
@@ -476,11 +502,11 @@ def filter_by_avoided_muscles(
             for reduced in reduce_muscles_list:
                 if reduced in target_muscle or reduced in body_part:
                     original_sim = candidate.get("similarity", 1.0)
-                    candidate["similarity"] = original_sim * 0.5
+                    candidate["similarity"] = original_sim * PRIMARY_MUSCLE_REDUCE_PENALTY
                     candidate["reduced_muscle_penalty"] = True
                     candidate["reduced_muscle_reason"] = f"primary: {reduced}"
                     primary_reduced = True
-                    logger.debug(f"Reduced priority for '{candidate.get('name')}' - targets reduced muscle: {reduced}")
+                    logger.debug(f"Reduced priority for '{candidate.get('name')}' - targets reduced muscle: {reduced} (penalty={PRIMARY_MUSCLE_REDUCE_PENALTY})")
                     break
 
             # Check secondary muscles if primary wasn't reduced

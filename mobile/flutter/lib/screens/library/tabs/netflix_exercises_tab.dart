@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/exceptions/app_exceptions.dart';
 import '../../../data/models/exercise.dart';
+import '../components/exercise_filter_sheet.dart';
 import '../providers/library_providers.dart';
 import '../widgets/exercise_search_bar.dart';
+import '../widgets/filter_button.dart';
 import '../widgets/netflix_exercise_carousel.dart';
 
 /// Netflix-style exercises tab with horizontal carousels by category
@@ -24,6 +26,15 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _showFilterSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const ExerciseFilterSheet(),
+    );
   }
 
   @override
@@ -46,12 +57,24 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
       _prevSearchQuery = '';
     }
 
+    // Get active filter count for badge
+    final activeFilterCount = getActiveFilterCount(ref);
+
     return Column(
       children: [
-        // Search bar
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: ExerciseSearchBar(),
+        // Search bar with filter button
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              const Expanded(child: ExerciseSearchBar()),
+              const SizedBox(width: 12),
+              FilterButton(
+                activeFilterCount: activeFilterCount,
+                onTap: () => _showFilterSheet(context),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 8),
 

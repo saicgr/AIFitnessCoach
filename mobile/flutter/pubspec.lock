@@ -1080,6 +1080,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.4"
+  muscle_selector:
+    dependency: "direct main"
+    description:
+      name: muscle_selector
+      sha256: f2c574be998a3c21956d15e6fd496d83609bd630838ac0a99f80f02a483edf09
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.4"
   network_image_mock:
     dependency: "direct dev"
     description:
@@ -1629,6 +1637,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.10.3"
+  svg_path_parser:
+    dependency: transitive
+    description:
+      name: svg_path_parser
+      sha256: adff09b1099a0c9e0dc81e1975de70999889f825c1a2e8e9139bab03464a3657
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.2"
   synchronized:
     dependency: transitive
     description:

@@ -129,13 +129,13 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
   IconData get _icon {
     switch (widget.type) {
       case ExercisePickerType.favorite:
-        return Icons.favorite;
+        return Icons.favorite_border;
       case ExercisePickerType.staple:
-        return Icons.lock;
+        return Icons.lock_outline;
       case ExercisePickerType.queue:
-        return Icons.queue;
+        return Icons.add_circle_outline;
       case ExercisePickerType.avoided:
-        return Icons.block;
+        return Icons.block_outlined;
     }
   }
 
@@ -567,9 +567,9 @@ class _ExerciseCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   clipBehavior: Clip.hardEdge,
-                  child: exercise.gifUrl != null
+                  child: (exercise.gifUrl != null || exercise.imageUrl != null)
                       ? CachedNetworkImage(
-                          imageUrl: exercise.gifUrl!,
+                          imageUrl: exercise.gifUrl ?? exercise.imageUrl!,
                           fit: BoxFit.cover,
                           placeholder: (_, __) => const Center(
                             child: CircularProgressIndicator(strokeWidth: 2),

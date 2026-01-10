@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:go_router/go_router.dart';
@@ -1438,7 +1437,7 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
                     isDark: widget.isDark,
                     onEdit: () => _showEditTargetsSheet(context),
                     onRecalculate: () => _recalculateTargets(),
-                  ).animate().fadeIn().scale(),
+                  ),
 
                 if (!widget.calmMode) const SizedBox(height: 12),
 
@@ -1446,7 +1445,7 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
                 HydrationSummaryBlock(
                   isDark: widget.isDark,
                   onTap: widget.onSwitchToHydrationTab,
-                ).animate().fadeIn(delay: 25.ms),
+                ),
 
                 const SizedBox(height: 12),
 
@@ -1460,7 +1459,7 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
                       // Switch to Nutrients tab where users can pin/unpin nutrients
                       widget.onSwitchToNutrientsTab?.call();
                     },
-                  ).animate().fadeIn(delay: 50.ms),
+                  ),
                   const SizedBox(height: 12),
                 ],
 
@@ -1469,7 +1468,7 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
                   isDark: widget.isDark,
                   onLogMeal: widget.onLogMeal,
                   meals: widget.summary?.meals ?? [],
-                ).animate().fadeIn(delay: 75.ms),
+                ),
 
                 const SizedBox(height: 12),
 
@@ -1481,7 +1480,7 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
                     isDark: widget.isDark,
                     userId: widget.userId,
                     onFoodSaved: _loadFavorites,
-                  ).animate().fadeIn(delay: 100.ms),
+                  ),
                   const SizedBox(height: 12),
                 ],
 

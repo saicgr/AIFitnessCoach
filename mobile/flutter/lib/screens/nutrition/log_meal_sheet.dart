@@ -4057,20 +4057,31 @@ class _FoodItemRankingCard extends StatefulWidget {
   State<_FoodItemRankingCard> createState() => _FoodItemRankingCardState();
 }
 
+/// Display mode for portion adjustment
+enum _PortionDisplayMode { weight, count, both }
+
 class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
   late TextEditingController _weightController;
+  late TextEditingController _countController;
   late double _currentWeight;
+  late int _currentCount;
+  _PortionDisplayMode _displayMode = _PortionDisplayMode.weight;
 
   @override
   void initState() {
     super.initState();
     _currentWeight = widget.item.weightG ?? 100.0;
+    _currentCount = widget.item.count ?? 1;
     _weightController = TextEditingController(text: _currentWeight.round().toString());
+    _countController = TextEditingController(text: _currentCount.toString());
+    // Always default to weight mode - it's the universal unit
+    _displayMode = _PortionDisplayMode.weight;
   }
 
   @override
   void dispose() {
     _weightController.dispose();
+    _countController.dispose();
     super.dispose();
   }
 
@@ -4080,6 +4091,10 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
     if (oldWidget.item.weightG != widget.item.weightG) {
       _currentWeight = widget.item.weightG ?? 100.0;
       _weightController.text = _currentWeight.round().toString();
+    }
+    if (oldWidget.item.count != widget.item.count) {
+      _currentCount = widget.item.count ?? 1;
+      _countController.text = _currentCount.toString();
     }
   }
 
@@ -4095,9 +4110,31 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
     setState(() {
       _currentWeight = newWeight;
       _weightController.text = newWeight.round().toString();
+      // Update count based on new weight if in count mode capable
+      if (widget.item.weightPerUnitG != null && widget.item.weightPerUnitG! > 0) {
+        _currentCount = (newWeight / widget.item.weightPerUnitG!).round();
+        _countController.text = _currentCount.toString();
+      }
     });
     if (widget.onWeightChanged != null && widget.item.canScale) {
       final updatedItem = widget.item.withWeight(newWeight);
+      widget.onWeightChanged!(updatedItem);
+    }
+  }
+
+  void _updateCount(int newCount) {
+    if (newCount <= 0 || newCount > 1000) return;
+    setState(() {
+      _currentCount = newCount;
+      _countController.text = newCount.toString();
+      // Calculate weight from count
+      if (widget.item.weightPerUnitG != null) {
+        _currentWeight = newCount * widget.item.weightPerUnitG!;
+        _weightController.text = _currentWeight.round().toString();
+      }
+    });
+    if (widget.onWeightChanged != null && widget.item.canScaleByCount) {
+      final updatedItem = widget.item.withCount(newCount);
       widget.onWeightChanged!(updatedItem);
     }
   }
@@ -4156,87 +4193,305 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
                         color: textPrimary,
                       ),
                     ),
-                    // Weight editing row (if scalable)
+                    // Weight/Count editing row (if scalable)
                     if (canScale)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Decrease weight button
-                            GestureDetector(
-                              onTap: () => _updateWeight(_currentWeight - 10),
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: glassSurface,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Icon(Icons.remove, size: 14, color: textMuted),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            // Weight input
-                            SizedBox(
-                              width: 50,
-                              child: TextField(
-                                controller: _weightController,
-                                keyboardType: TextInputType.number,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: textPrimary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                decoration: InputDecoration(
-                                  isDense: true,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 4,
-                                  ),
-                                  filled: true,
-                                  fillColor: glassSurface,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(4),
-                                    borderSide: BorderSide.none,
+                            // Input row based on display mode
+                            Row(
+                              children: [
+                                // Decrease button
+                                GestureDetector(
+                                  onTap: () => _displayMode == _PortionDisplayMode.weight
+                                      ? _updateWeight(_currentWeight - 10)
+                                      : _updateCount(_currentCount - 1),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: glassSurface,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Icon(Icons.remove, size: 14, color: textMuted),
                                   ),
                                 ),
-                                onSubmitted: (value) {
-                                  final newWeight = double.tryParse(value);
-                                  if (newWeight != null) {
-                                    _updateWeight(newWeight);
-                                  }
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              'g${isEstimated ? ' ~' : ''}',
-                              style: TextStyle(fontSize: 12, color: textMuted),
-                            ),
-                            const SizedBox(width: 6),
-                            // Increase weight button
-                            GestureDetector(
-                              onTap: () => _updateWeight(_currentWeight + 10),
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: glassSurface,
-                                  borderRadius: BorderRadius.circular(4),
+                                const SizedBox(width: 6),
+                                // Display based on mode
+                                if (_displayMode == _PortionDisplayMode.weight)
+                                  // Weight only mode
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SizedBox(
+                                        width: 50,
+                                        child: TextField(
+                                          controller: _weightController,
+                                          keyboardType: TextInputType.number,
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: textPrimary,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          decoration: InputDecoration(
+                                            isDense: true,
+                                            contentPadding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 4,
+                                            ),
+                                            filled: true,
+                                            fillColor: glassSurface,
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(4),
+                                              borderSide: BorderSide.none,
+                                            ),
+                                          ),
+                                          onSubmitted: (value) {
+                                            final newWeight = double.tryParse(value);
+                                            if (newWeight != null) {
+                                              _updateWeight(newWeight);
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        '${widget.item.displayUnit}${isEstimated ? ' ~' : ''}',
+                                        style: TextStyle(fontSize: 12, color: textMuted),
+                                      ),
+                                    ],
+                                  )
+                                else if (_displayMode == _PortionDisplayMode.count)
+                                  // Count only mode
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SizedBox(
+                                        width: 40,
+                                        child: TextField(
+                                          controller: _countController,
+                                          keyboardType: TextInputType.number,
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: textPrimary,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          decoration: InputDecoration(
+                                            isDense: true,
+                                            contentPadding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 4,
+                                            ),
+                                            filled: true,
+                                            fillColor: glassSurface,
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(4),
+                                              borderSide: BorderSide.none,
+                                            ),
+                                          ),
+                                          onSubmitted: (value) {
+                                            final newCount = int.tryParse(value);
+                                            if (newCount != null) {
+                                              _updateCount(newCount);
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        'pcs',
+                                        style: TextStyle(fontSize: 12, color: textMuted),
+                                      ),
+                                    ],
+                                  )
+                                else
+                                  // Both mode - show count = weight
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SizedBox(
+                                        width: 40,
+                                        child: TextField(
+                                          controller: _countController,
+                                          keyboardType: TextInputType.number,
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: textPrimary,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          decoration: InputDecoration(
+                                            isDense: true,
+                                            contentPadding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 4,
+                                            ),
+                                            filled: true,
+                                            fillColor: glassSurface,
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(4),
+                                              borderSide: BorderSide.none,
+                                            ),
+                                          ),
+                                          onSubmitted: (value) {
+                                            final newCount = int.tryParse(value);
+                                            if (newCount != null) {
+                                              _updateCount(newCount);
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        'pcs = ${_currentWeight.round()}${widget.item.displayUnit}',
+                                        style: TextStyle(fontSize: 12, color: textMuted),
+                                      ),
+                                    ],
+                                  ),
+                                const SizedBox(width: 6),
+                                // Increase button
+                                GestureDetector(
+                                  onTap: () => _displayMode == _PortionDisplayMode.weight
+                                      ? _updateWeight(_currentWeight + 10)
+                                      : _updateCount(_currentCount + 1),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: glassSurface,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Icon(Icons.add, size: 14, color: textMuted),
+                                  ),
                                 ),
-                                child: Icon(Icons.add, size: 14, color: textMuted),
-                              ),
+                                if (isEstimated && _displayMode == _PortionDisplayMode.weight) ...[
+                                  const SizedBox(width: 8),
+                                  Tooltip(
+                                    message: 'Weight estimated from "${widget.item.amount}"',
+                                    child: Icon(
+                                      Icons.info_outline,
+                                      size: 14,
+                                      color: teal.withValues(alpha: 0.7),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
-                            if (isEstimated) ...[
-                              const SizedBox(width: 8),
-                              Tooltip(
-                                message: 'Weight estimated from "${widget.item.amount}"',
-                                child: Icon(
-                                  Icons.info_outline,
-                                  size: 14,
-                                  color: teal.withValues(alpha: 0.7),
+                            // Three-mode toggle (only show if item supports count-based scaling)
+                            if (widget.item.canScaleByCount)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Row(
+                                  children: [
+                                    // Weight toggle
+                                    GestureDetector(
+                                      onTap: () => setState(() => _displayMode = _PortionDisplayMode.weight),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 3,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: _displayMode == _PortionDisplayMode.weight
+                                              ? teal.withValues(alpha: 0.2)
+                                              : glassSurface,
+                                          borderRadius: const BorderRadius.only(
+                                            topLeft: Radius.circular(6),
+                                            bottomLeft: Radius.circular(6),
+                                          ),
+                                          border: Border.all(
+                                            color: _displayMode == _PortionDisplayMode.weight
+                                                ? teal.withValues(alpha: 0.5)
+                                                : glassSurface,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'Weight',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: _displayMode == _PortionDisplayMode.weight
+                                                ? FontWeight.w600
+                                                : FontWeight.normal,
+                                            color: _displayMode == _PortionDisplayMode.weight
+                                                ? teal
+                                                : textMuted,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    // Count toggle
+                                    GestureDetector(
+                                      onTap: () => setState(() => _displayMode = _PortionDisplayMode.count),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 3,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: _displayMode == _PortionDisplayMode.count
+                                              ? teal.withValues(alpha: 0.2)
+                                              : glassSurface,
+                                          border: Border.all(
+                                            color: _displayMode == _PortionDisplayMode.count
+                                                ? teal.withValues(alpha: 0.5)
+                                                : glassSurface,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'Count',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: _displayMode == _PortionDisplayMode.count
+                                                ? FontWeight.w600
+                                                : FontWeight.normal,
+                                            color: _displayMode == _PortionDisplayMode.count
+                                                ? teal
+                                                : textMuted,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    // Both toggle
+                                    GestureDetector(
+                                      onTap: () => setState(() => _displayMode = _PortionDisplayMode.both),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 3,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: _displayMode == _PortionDisplayMode.both
+                                              ? teal.withValues(alpha: 0.2)
+                                              : glassSurface,
+                                          borderRadius: const BorderRadius.only(
+                                            topRight: Radius.circular(6),
+                                            bottomRight: Radius.circular(6),
+                                          ),
+                                          border: Border.all(
+                                            color: _displayMode == _PortionDisplayMode.both
+                                                ? teal.withValues(alpha: 0.5)
+                                                : glassSurface,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'Both',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: _displayMode == _PortionDisplayMode.both
+                                                ? FontWeight.w600
+                                                : FontWeight.normal,
+                                            color: _displayMode == _PortionDisplayMode.both
+                                                ? teal
+                                                : textMuted,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
                           ],
                         ),
                       )

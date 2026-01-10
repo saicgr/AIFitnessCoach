@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
@@ -92,9 +93,13 @@ class ProfileScreen extends ConsumerWidget {
             HapticService.selection();
             final result = await showEditProgramSheet(context, ref);
             if (result == true) {
+              // Small delay to ensure database transaction completes
+              await Future.delayed(const Duration(milliseconds: 500));
               // Refresh user data and workouts after editing
               ref.invalidate(authStateProvider);
+              await ref.read(workoutsProvider.notifier).refresh();
               ref.invalidate(workoutsProvider);
+              ref.invalidate(todayWorkoutProvider);
             }
           },
           onCustomEquipment: () {

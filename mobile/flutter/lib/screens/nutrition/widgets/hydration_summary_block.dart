@@ -16,6 +16,7 @@ class HydrationSummaryBlock extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    debugPrint('💧 HydrationSummaryBlock build called, isDark: $isDark');
     final state = ref.watch(hydrationProvider);
     final currentMl = state.todaySummary?.totalMl ?? 0;
     final goalMl = state.dailyGoalMl;
@@ -40,21 +41,26 @@ class HydrationSummaryBlock extends ConsumerWidget {
     final gallons = (currentMl / 3785.0).toStringAsFixed(2);
     final goalGallons = (goalMl / 3785.0).toStringAsFixed(2);
 
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: elevated,
           borderRadius: BorderRadius.circular(16),
-          border: Border(
-            left: BorderSide(color: electricBlue, width: 4),
-            top: BorderSide(color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-            right: BorderSide(color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-            bottom: BorderSide(color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-          ),
+          border: Border.all(color: cardBorder),
         ),
-        child: Column(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(color: electricBlue, width: 4),
+              ),
+            ),
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header row
@@ -149,6 +155,8 @@ class HydrationSummaryBlock extends ConsumerWidget {
               ],
             ),
           ],
+            ),
+          ),
         ),
       ),
     );

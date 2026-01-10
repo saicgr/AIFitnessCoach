@@ -3329,21 +3329,26 @@ async def get_workout_generation_params(workout_id: str):
                 "gender": user_data.get("gender"),
             }
 
-        # Get program preferences
-        prefs_result = db.client.table("user_program_preferences").select("*").eq("user_id", user_id).execute()
-
+        # Get program preferences from workout_regenerations (most recent user selections)
         program_preferences = {}
-        if prefs_result.data:
-            prefs = prefs_result.data[0]
-            program_preferences = {
-                "difficulty": prefs.get("difficulty"),
-                "duration_minutes": prefs.get("duration_minutes"),
-                "workout_type": prefs.get("workout_type"),
-                "training_split": prefs.get("training_split"),
-                "workout_days": parse_json_field(prefs.get("workout_days"), []),
-                "focus_areas": parse_json_field(prefs.get("focus_areas"), []),
-                "custom_program_description": prefs.get("custom_program_description"),
-            }
+        try:
+            regen_result = db.client.table("workout_regenerations").select("*").eq(
+                "user_id", user_id
+            ).order("created_at", desc=True).limit(1).execute()
+
+            if regen_result.data:
+                regen = regen_result.data[0]
+                program_preferences = {
+                    "difficulty": regen.get("selected_difficulty"),
+                    "duration_minutes": regen.get("selected_duration_minutes"),
+                    "workout_type": regen.get("selected_workout_type"),
+                    "training_split": regen.get("selected_training_split"),
+                    "workout_days": parse_json_field(regen.get("selected_workout_days"), []),
+                    "focus_areas": parse_json_field(regen.get("selected_focus_areas"), []),
+                    "equipment": parse_json_field(regen.get("selected_equipment"), []),
+                }
+        except Exception as e:
+            logger.warning(f"Could not fetch program preferences: {e}")
 
         # Parse workout exercises
         exercises = parse_json_field(workout_data.get("exercises_json"), [])

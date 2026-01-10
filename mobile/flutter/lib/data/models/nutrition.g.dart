@@ -252,6 +252,9 @@ FoodItemRanking _$FoodItemRankingFromJson(Map<String, dynamic> json) =>
       aiPerGram: json['ai_per_gram'] == null
           ? null
           : AiPerGramData.fromJson(json['ai_per_gram'] as Map<String, dynamic>),
+      count: (json['count'] as num?)?.toInt(),
+      weightPerUnitG: (json['weight_per_unit_g'] as num?)?.toDouble(),
+      unit: json['unit'] as String?,
     );
 
 Map<String, dynamic> _$FoodItemRankingToJson(FoodItemRanking instance) =>
@@ -268,8 +271,11 @@ Map<String, dynamic> _$FoodItemRankingToJson(FoodItemRanking instance) =>
       'reason': instance.reason,
       'weight_g': instance.weightG,
       'weight_source': instance.weightSource,
-      'usda_data': instance.usdaData,
-      'ai_per_gram': instance.aiPerGram,
+      'usda_data': instance.usdaData?.toJson(),
+      'ai_per_gram': instance.aiPerGram?.toJson(),
+      'count': instance.count,
+      'weight_per_unit_g': instance.weightPerUnitG,
+      'unit': instance.unit,
     };
 
 LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
@@ -365,6 +371,8 @@ SavedFoodItem _$SavedFoodItemFromJson(Map<String, dynamic> json) =>
       aiPerGram: json['ai_per_gram'] == null
           ? null
           : AiPerGramData.fromJson(json['ai_per_gram'] as Map<String, dynamic>),
+      count: (json['count'] as num?)?.toInt(),
+      weightPerUnitG: (json['weight_per_unit_g'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$SavedFoodItemToJson(SavedFoodItem instance) =>
@@ -379,8 +387,10 @@ Map<String, dynamic> _$SavedFoodItemToJson(SavedFoodItem instance) =>
       'goal_score': instance.goalScore,
       'goal_alignment': instance.goalAlignment,
       'weight_g': instance.weightG,
-      'usda_data': instance.usdaData,
-      'ai_per_gram': instance.aiPerGram,
+      'usda_data': instance.usdaData?.toJson(),
+      'ai_per_gram': instance.aiPerGram?.toJson(),
+      'count': instance.count,
+      'weight_per_unit_g': instance.weightPerUnitG,
     };
 
 SavedFood _$SavedFoodFromJson(Map<String, dynamic> json) => SavedFood(

@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/exercise_preferences_repository.dart';
+import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 
 /// State for avoided exercises
@@ -141,7 +143,11 @@ class AvoidedNotifier extends StateNotifier<AvoidedState> {
         ],
       );
 
-      debugPrint('🚫 [AvoidedProvider] Added avoided: $exerciseName');
+      // Invalidate workout providers to trigger reload without avoided exercise
+      // The backend clears future incomplete workouts, so this will regenerate them
+      _ref.invalidate(todayWorkoutProvider);
+      _ref.invalidate(workoutsProvider);
+      debugPrint('🚫 [AvoidedProvider] Added avoided: $exerciseName - invalidated workout providers for regeneration');
       return true;
     } catch (e) {
       debugPrint('❌ [AvoidedProvider] Error adding avoided: $e');

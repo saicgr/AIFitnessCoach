@@ -95,6 +95,9 @@ dependencies:
   # Tutorial/Coach Mark for App Tour
   tutorial_coach_mark: ^1.2.11
 
+  # Muscle Selector (Human Body Diagram)
+  muscle_selector: ^1.0.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -126,3 +129,4 @@ flutter:
     - assets/icon/
     - assets/images/
     - assets/lottie/
+    - packages/muscle_selector/assets/maps/

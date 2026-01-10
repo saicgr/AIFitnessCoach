@@ -285,6 +285,40 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
             ],
           ).animate().fadeIn(delay: 150.ms),
 
+          const SizedBox(height: 6),
+
+          // Progressive overload & RIR badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.success.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AppColors.success.withValues(alpha: 0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.trending_up,
+                  size: 14,
+                  color: AppColors.success,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Progressive overload & RIR integrated',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.success,
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn(delay: 180.ms).slideX(begin: -0.02),
+
           const SizedBox(height: 10),
 
           // Content in scrollable area with scroll hint

@@ -412,7 +412,7 @@ class AiPerGramData {
 }
 
 /// Individual food item with goal-based ranking
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class FoodItemRanking {
   final String name;
   final String? amount;
@@ -442,6 +442,14 @@ class FoodItemRanking {
   @JsonKey(name: 'ai_per_gram')
   final AiPerGramData? aiPerGram;  // AI fallback if no USDA match
 
+  // Count-based scaling fields (for countable items like tater tots, cookies)
+  final int? count;  // Number of pieces
+  @JsonKey(name: 'weight_per_unit_g')
+  final double? weightPerUnitG;  // Weight of 1 piece in grams
+
+  // Measurement unit (g, ml, oz, cups, tsp, tbsp)
+  final String? unit;  // Default is 'g' for grams
+
   const FoodItemRanking({
     required this.name,
     this.amount,
@@ -457,6 +465,9 @@ class FoodItemRanking {
     this.weightSource,
     this.usdaData,
     this.aiPerGram,
+    this.count,
+    this.weightPerUnitG,
+    this.unit,
   });
 
   factory FoodItemRanking.fromJson(Map<String, dynamic> json) =>
@@ -477,9 +488,18 @@ class FoodItemRanking {
   /// Check if weight was estimated (not exact)
   bool get isWeightEstimated => weightSource == 'estimated';
 
+  /// Check if this item supports count-based scaling
+  bool get canScaleByCount => count != null && weightPerUnitG != null && canScale;
+
+  /// Get the display unit (defaults to 'g')
+  String get displayUnit => unit ?? 'g';
+
+  /// Check if this is a liquid (ml, oz, cups)
+  bool get isLiquid => ['ml', 'oz', 'cups'].contains(displayUnit);
+
   /// Calculate nutrition for a new weight
   /// Returns a new FoodItemRanking with updated values
-  FoodItemRanking withWeight(double newWeightG) {
+  FoodItemRanking withWeight(double newWeightG, {int? newCount}) {
     if (!canScale) return this;
 
     int newCalories;
@@ -505,9 +525,18 @@ class FoodItemRanking {
       return this;
     }
 
+    // Format amount string based on whether we have count and unit
+    final effectiveUnit = unit ?? 'g';
+    String amountStr;
+    if (newCount != null && weightPerUnitG != null) {
+      amountStr = '$newCount pieces (${newWeightG.round()}$effectiveUnit)';
+    } else {
+      amountStr = '${newWeightG.round()} $effectiveUnit';
+    }
+
     return FoodItemRanking(
       name: name,
-      amount: '${newWeightG.round()} grams',
+      amount: amountStr,
       calories: newCalories,
       proteinG: double.parse(newProtein.toStringAsFixed(1)),
       carbsG: double.parse(newCarbs.toStringAsFixed(1)),
@@ -517,10 +546,21 @@ class FoodItemRanking {
       goalAlignment: goalAlignment,
       reason: reason,
       weightG: newWeightG,
-      weightSource: 'exact',  // User-specified weight is now exact
+      weightSource: 'exact',  // User-specified is now exact
       usdaData: usdaData,
       aiPerGram: aiPerGram,
+      count: newCount ?? count,
+      weightPerUnitG: weightPerUnitG,
+      unit: effectiveUnit,
     );
+  }
+
+  /// Calculate nutrition for a new count (for countable items)
+  /// Returns a new FoodItemRanking with updated values
+  FoodItemRanking withCount(int newCount) {
+    if (!canScaleByCount) return this;
+    final newWeightG = newCount * weightPerUnitG!;
+    return withWeight(newWeightG, newCount: newCount);
   }
 }
 
@@ -732,7 +772,7 @@ enum FoodSourceType {
 }
 
 /// Saved food item with goal-based ranking
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class SavedFoodItem {
   final String name;
   final String? amount;
@@ -758,6 +798,11 @@ class SavedFoodItem {
   @JsonKey(name: 'ai_per_gram')
   final AiPerGramData? aiPerGram;
 
+  // Count-based scaling fields
+  final int? count;
+  @JsonKey(name: 'weight_per_unit_g')
+  final double? weightPerUnitG;
+
   const SavedFoodItem({
     required this.name,
     this.amount,
@@ -771,6 +816,8 @@ class SavedFoodItem {
     this.weightG,
     this.usdaData,
     this.aiPerGram,
+    this.count,
+    this.weightPerUnitG,
   });
 
   factory SavedFoodItem.fromJson(Map<String, dynamic> json) =>
@@ -779,6 +826,9 @@ class SavedFoodItem {
 
   /// Check if this item supports portion scaling
   bool get canScale => usdaData != null || aiPerGram != null;
+
+  /// Check if this item supports count-based scaling
+  bool get canScaleByCount => count != null && weightPerUnitG != null && canScale;
 }
 
 /// Saved food (favorite recipe)

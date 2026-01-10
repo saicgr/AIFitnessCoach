@@ -60,6 +60,51 @@ async def fetch_all_rows(
     return all_rows
 
 
+def sort_by_relevance(exercises: List['LibraryExercise'], search_query: str) -> List['LibraryExercise']:
+    """
+    Sort exercises by relevance to the search query.
+
+    Ranking priority:
+    1. Exact match (case-insensitive) - highest priority
+    2. Name starts with search query
+    3. Name contains search as a complete word
+    4. Other matches - alphabetical
+
+    This ensures "Push Up" appears before "Incline Push Up" when searching "push up".
+    """
+    if not search_query:
+        return exercises
+
+    search_lower = search_query.lower().strip()
+
+    def relevance_score(exercise: 'LibraryExercise') -> tuple:
+        name_lower = (exercise.name or "").lower()
+
+        # Tier 1: Exact match (score 0)
+        if name_lower == search_lower:
+            return (0, name_lower)
+
+        # Tier 2: Name starts with search query (score 1)
+        if name_lower.startswith(search_lower):
+            return (1, name_lower)
+
+        # Tier 3: Search is a complete word in the name (score 2)
+        # e.g., "Push Up" contains "push up" as complete words
+        import re
+        pattern = r'\b' + re.escape(search_lower) + r'\b'
+        if re.search(pattern, name_lower):
+            return (2, name_lower)
+
+        # Tier 4: Partial match (score 3)
+        if search_lower in name_lower:
+            return (3, name_lower)
+
+        # Tier 5: Everything else (score 4)
+        return (4, name_lower)
+
+    return sorted(exercises, key=relevance_score)
+
+
 def normalize_body_part(target_muscle: str) -> str:
     """
     Normalize target_muscle to a simple body part category.

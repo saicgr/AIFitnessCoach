@@ -63,6 +63,9 @@ class SavedFoodItem(BaseModel):
     weight_g: Optional[float] = Field(default=None, ge=0, le=10000)
     usda_data: Optional[USDANutrientData] = None
     ai_per_gram: Optional[AiPerGramData] = None
+    # Count-based scaling fields (for countable items like tater tots, cookies)
+    count: Optional[int] = Field(default=None, ge=0, le=1000)
+    weight_per_unit_g: Optional[float] = Field(default=None, ge=0, le=1000)
 
 
 # ============================================================

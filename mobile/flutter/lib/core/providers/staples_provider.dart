@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/exercise_preferences_repository.dart';
+import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 
 /// State for staple exercises
@@ -97,6 +99,13 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
       state = state.copyWith(
         staples: [...state.staples, staple],
       );
+
+      // Invalidate workout providers to trigger reload with new staple
+      // The backend clears future incomplete workouts, so this will regenerate them
+      _ref.invalidate(todayWorkoutProvider);
+      _ref.invalidate(workoutsProvider);
+      debugPrint('⭐ Staple added - invalidated workout providers for regeneration');
+
       return true;
     } catch (e) {
       debugPrint('Error adding staple: $e');

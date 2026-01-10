@@ -225,6 +225,23 @@ async def add_staple_exercise(request: StapleExerciseCreate):
 
         row = result.data[0]
 
+        # Clear future incomplete workouts so they regenerate with the new staple
+        # This ensures the staple exercise appears in today's and upcoming workouts
+        try:
+            today_str = date.today().isoformat()
+            deleted = db.client.table("workouts").delete().eq(
+                "user_id", request.user_id
+            ).gte(
+                "scheduled_date", today_str
+            ).eq(
+                "is_completed", False
+            ).execute()
+            deleted_count = len(deleted.data) if deleted.data else 0
+            if deleted_count > 0:
+                logger.info(f"⭐ Cleared {deleted_count} future workouts to include new staple: {request.exercise_name}")
+        except Exception as e:
+            logger.warning(f"Could not clear future workouts for staple: {e}")
+
         # Get exercise details from library if library_id provided
         body_part = None
         equipment = None
@@ -808,6 +825,24 @@ async def add_avoided_exercise(user_id: str, request: AvoidedExerciseCreate):
             raise HTTPException(status_code=500, detail="Failed to add avoided exercise")
 
         row = result.data[0]
+
+        # Clear future incomplete workouts so they regenerate without the avoided exercise
+        # This ensures the avoided exercise is excluded from today's and upcoming workouts
+        try:
+            today_str = date.today().isoformat()
+            deleted = db.client.table("workouts").delete().eq(
+                "user_id", user_id
+            ).gte(
+                "scheduled_date", today_str
+            ).eq(
+                "is_completed", False
+            ).execute()
+            deleted_count = len(deleted.data) if deleted.data else 0
+            if deleted_count > 0:
+                logger.info(f"🚫 Cleared {deleted_count} future workouts to exclude avoided exercise: {request.exercise_name}")
+        except Exception as e:
+            logger.warning(f"Could not clear future workouts for avoided exercise: {e}")
+
         return AvoidedExerciseResponse(
             id=row["id"],
             exercise_name=row["exercise_name"],
@@ -983,6 +1018,24 @@ async def add_avoided_muscle(user_id: str, request: AvoidedMuscleCreate):
             raise HTTPException(status_code=500, detail="Failed to add avoided muscle")
 
         row = result.data[0]
+
+        # Clear future incomplete workouts so they regenerate with muscle avoidance applied
+        # This ensures exercises targeting this muscle are excluded/reduced in upcoming workouts
+        try:
+            today_str = date.today().isoformat()
+            deleted = db.client.table("workouts").delete().eq(
+                "user_id", user_id
+            ).gte(
+                "scheduled_date", today_str
+            ).eq(
+                "is_completed", False
+            ).execute()
+            deleted_count = len(deleted.data) if deleted.data else 0
+            if deleted_count > 0:
+                logger.info(f"🚫 Cleared {deleted_count} future workouts to {request.severity} muscle: {request.muscle_group}")
+        except Exception as e:
+            logger.warning(f"Could not clear future workouts for avoided muscle: {e}")
+
         return AvoidedMuscleResponse(
             id=row["id"],
             muscle_group=row["muscle_group"],

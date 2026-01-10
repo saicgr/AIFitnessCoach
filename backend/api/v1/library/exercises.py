@@ -23,6 +23,7 @@ from .utils import (
     normalize_body_part,
     row_to_library_exercise,
     derive_exercise_type,
+    sort_by_relevance,
 )
 
 router = APIRouter()
@@ -312,6 +313,11 @@ async def list_exercises(
 
         # Convert to exercises (from cleaned view)
         exercises = [row_to_library_exercise(row, from_cleaned_view=True) for row in all_rows]
+
+        # Apply relevance sorting when searching (before other filters)
+        # This ensures exact matches appear first, e.g., "Push Up" before "Incline Push Up"
+        if search:
+            exercises = sort_by_relevance(exercises, search)
 
         # Apply post-filters
         # Filter by body parts (OR logic - match ANY of the selected body parts)

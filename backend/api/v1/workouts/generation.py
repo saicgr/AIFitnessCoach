@@ -53,6 +53,7 @@ from .utils import (
     get_user_exercise_queue,
     mark_queued_exercises_used,
     get_user_staple_exercises,
+    get_staple_names,
     get_user_variation_percentage,
     get_user_1rm_data,
     get_user_training_intensity,
@@ -270,6 +271,39 @@ async def generate_workout(request: GenerateWorkoutRequest):
                 filtered_count = original_count - len(exercises)
                 if filtered_count > 0:
                     logger.warning(f"⚠️ [Validation] Filtered out {filtered_count} exercises targeting avoided muscles")
+
+            # Handle "reduce" muscles - limit to max 1 exercise per reduced muscle
+            if avoided_muscles and avoided_muscles.get("reduce"):
+                reduce_muscles_lower = [m.lower() for m in avoided_muscles["reduce"]]
+                muscle_counts = {}  # Track count of exercises per reduced muscle
+
+                # Count exercises per reduced muscle
+                for ex in exercises:
+                    muscle = ex.get("muscle_group", "").lower()
+                    if muscle in reduce_muscles_lower:
+                        muscle_counts[muscle] = muscle_counts.get(muscle, 0) + 1
+
+                # If any reduced muscle has more than 1 exercise, remove extras
+                if any(count > 1 for count in muscle_counts.values()):
+                    reduced_seen = set()
+                    new_exercises = []
+                    removed_count = 0
+
+                    for ex in exercises:
+                        muscle = ex.get("muscle_group", "").lower()
+                        if muscle in reduce_muscles_lower:
+                            if muscle not in reduced_seen:
+                                reduced_seen.add(muscle)
+                                new_exercises.append(ex)  # Keep first occurrence
+                            else:
+                                filtered_exercises.append(ex)  # Mark for substitution
+                                removed_count += 1
+                        else:
+                            new_exercises.append(ex)
+
+                    if removed_count > 0:
+                        logger.info(f"🎯 [Validation] Limited {removed_count} exercises targeting reduced muscles (max 1 per muscle)")
+                        exercises = new_exercises
 
             # Auto-substitute filtered exercises with safe alternatives
             if filtered_exercises and exercises:
@@ -571,6 +605,28 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     filtered_count = original_count - len(exercises)
                     if filtered_count > 0:
                         logger.warning(f"⚠️ [Streaming Validation] Filtered out {filtered_count} exercises targeting avoided muscles")
+
+                # Handle "reduce" muscles - limit to max 1 exercise per reduced muscle
+                if avoided_muscles and avoided_muscles.get("reduce"):
+                    reduce_muscles_lower = [m.lower() for m in avoided_muscles["reduce"]]
+                    reduced_seen = set()
+                    new_exercises = []
+                    removed_count = 0
+
+                    for ex in exercises:
+                        muscle = ex.get("muscle_group", "").lower()
+                        if muscle in reduce_muscles_lower:
+                            if muscle not in reduced_seen:
+                                reduced_seen.add(muscle)
+                                new_exercises.append(ex)
+                            else:
+                                removed_count += 1
+                        else:
+                            new_exercises.append(ex)
+
+                    if removed_count > 0:
+                        logger.info(f"🎯 [Streaming Validation] Limited {removed_count} exercises targeting reduced muscles")
+                        exercises = new_exercises
 
                 # Update workout_data with filtered exercises
                 workout_data["exercises"] = exercises
@@ -1903,6 +1959,7 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                     workout_type_preference=workout_type_pref,  # User's workout type preference
                     difficulty_adjustment=difficulty_adjustment,  # Feedback-based difficulty shift
                     batch_offset=0,  # Sequential generation - offset not needed
+                    workout_environment=workout_environment,  # User's workout location
                 )
 
                 if rag_exercises:
@@ -2322,7 +2379,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     goals=goals if isinstance(goals, list) else [],
                     count=6,
                     avoid_exercises=all_avoided_exercises,
-                    injuries=active_injuries if active_injuries else None,
+                    injuries=active_injuries if active_injuries is not None else None,
                     workout_params=adaptive_params,
                     dumbbell_count=dumbbell_count,
                     kettlebell_count=kettlebell_count,
@@ -2342,6 +2399,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     user_mood=user_mood,  # User's current mood (affects workout type)
                     difficulty_adjustment=difficulty_adjustment,  # Feedback-based difficulty shift
                     batch_offset=batch_offset,  # Ensures variety in parallel batch generation
+                    workout_environment=workout_environment,  # User's workout location
                 )
 
                 # Return the exercises used so they can be tracked after batch completes
@@ -2503,7 +2561,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                         workout_id=workout.id,
                         exercises=exercises,
                         duration_minutes=warmup_duration,
-                        injuries=active_injuries if active_injuries else None,
+                        injuries=active_injuries if active_injuries is not None else None,
                         user_id=request.user_id
                     )
 
@@ -2512,7 +2570,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                         workout_id=workout.id,
                         exercises=exercises,
                         duration_minutes=stretch_duration,
-                        injuries=active_injuries if active_injuries else None,
+                        injuries=active_injuries if active_injuries is not None else None,
                         user_id=request.user_id
                     )
                     logger.info(f"Generated warmup ({warmup_duration}m) and stretches ({stretch_duration}m) for workout {workout.id}")
@@ -2748,7 +2806,7 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                         goals=goals if isinstance(goals, list) else [],
                         count=6,
                         avoid_exercises=avoid_list,
-                        injuries=active_injuries if active_injuries else None,
+                        injuries=active_injuries if active_injuries is not None else None,
                         workout_params=adaptive_params,
                         dumbbell_count=dumbbell_count,
                         kettlebell_count=kettlebell_count,
@@ -2765,6 +2823,7 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                         workout_type_preference=workout_type_pref,  # User's workout type preference
                         difficulty_adjustment=difficulty_adjustment,  # Feedback-based difficulty shift
                         batch_offset=0,  # Sequential generation - offset not needed
+                        workout_environment=workout_environment,  # User's workout location
                     )
 
                     if not rag_exercises:
@@ -2841,14 +2900,14 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                             workout_id=workout.id,
                             exercises=workout_data.get("exercises", []),
                             duration_minutes=warmup_duration,
-                            injuries=active_injuries if active_injuries else None,
+                            injuries=active_injuries if active_injuries is not None else None,
                             user_id=body.user_id
                         ))
                         asyncio.create_task(warmup_stretch_service.create_stretches_for_workout(
                             workout_id=workout.id,
                             exercises=workout_data.get("exercises", []),
                             duration_minutes=stretch_duration,
-                            injuries=active_injuries if active_injuries else None,
+                            injuries=active_injuries if active_injuries is not None else None,
                             user_id=body.user_id
                         ))
                     except Exception:
@@ -3136,7 +3195,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     goals=goals if isinstance(goals, list) else [],
                     count=6,
                     avoid_exercises=all_avoided,
-                    injuries=active_injuries if active_injuries else None,
+                    injuries=active_injuries if active_injuries is not None else None,
                     workout_params=adaptive_params,
                     dumbbell_count=dumbbell_count,
                     kettlebell_count=kettlebell_count,
@@ -3153,6 +3212,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     workout_type_preference=workout_type_pref,  # User's workout type preference
                     difficulty_adjustment=difficulty_adjustment,  # Feedback-based difficulty shift
                     batch_offset=batch_offset,  # Ensures variety in parallel batch generation
+                    workout_environment=workout_environment,  # User's workout location
                 )
 
                 exercises_used = []
@@ -3348,7 +3408,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                         workout_id=workout.id,
                         exercises=exercises,
                         duration_minutes=warmup_duration,
-                        injuries=active_injuries if active_injuries else None,
+                        injuries=active_injuries if active_injuries is not None else None,
                         user_id=request.user_id
                     )
 
@@ -3357,7 +3417,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                         workout_id=workout.id,
                         exercises=exercises,
                         duration_minutes=stretch_duration,
-                        injuries=active_injuries if active_injuries else None,
+                        injuries=active_injuries if active_injuries is not None else None,
                         user_id=request.user_id
                     )
                     logger.info(f"Generated warmup ({warmup_duration}m) and stretches ({stretch_duration}m) for remaining workout {workout.id}")

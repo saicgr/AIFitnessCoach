@@ -15,6 +15,7 @@ import '../screens/home/senior_home_screen.dart';
 import '../screens/hydration/hydration_screen.dart';
 import '../screens/library/library_screen.dart';
 import '../screens/nutrition/nutrition_screen.dart';
+import '../screens/nutrition/nutrition_settings_screen.dart';
 import '../screens/fasting/fasting_screen_redesigned.dart';
 import '../screens/stats/comprehensive_stats_screen.dart';
 import '../screens/onboarding/conversational_onboarding_screen.dart';
@@ -1230,6 +1231,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/recipe-suggestions',
         builder: (context, state) => const RecipeSuggestionsScreen(),
+      ),
+
+      // Nutrition Settings - Edit nutrition preferences and targets
+      GoRoute(
+        path: '/nutrition-settings',
+        builder: (context, state) => const NutritionSettingsScreen(),
       ),
 
       // Mood History and Analytics

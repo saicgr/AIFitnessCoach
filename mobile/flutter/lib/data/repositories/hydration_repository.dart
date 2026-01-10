@@ -54,8 +54,11 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
   HydrationNotifier(this._repository) : super(const HydrationState());
 
   /// Load today's hydration summary
-  Future<void> loadTodaySummary(String userId) async {
-    state = state.copyWith(isLoading: true, error: null);
+  /// Set [showLoading] to false for background refreshes (e.g., after adding water)
+  Future<void> loadTodaySummary(String userId, {bool showLoading = true}) async {
+    if (showLoading) {
+      state = state.copyWith(isLoading: true, error: null);
+    }
     try {
       final summary = await _repository.getDailySummary(userId);
       state = state.copyWith(
@@ -77,6 +80,25 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
     String? notes,
   }) async {
     try {
+      // Optimistic update - immediately update the total
+      final currentSummary = state.todaySummary;
+      if (currentSummary != null) {
+        final newTotal = currentSummary.totalMl + amountMl;
+        final updatedSummary = DailyHydrationSummary(
+          date: currentSummary.date,
+          totalMl: newTotal,
+          waterMl: drinkType == 'water' ? currentSummary.waterMl + amountMl : currentSummary.waterMl,
+          proteinShakeMl: drinkType == 'protein_shake' ? currentSummary.proteinShakeMl + amountMl : currentSummary.proteinShakeMl,
+          sportsDrinkMl: drinkType == 'sports_drink' ? currentSummary.sportsDrinkMl + amountMl : currentSummary.sportsDrinkMl,
+          otherMl: (drinkType != 'water' && drinkType != 'protein_shake' && drinkType != 'sports_drink')
+              ? currentSummary.otherMl + amountMl : currentSummary.otherMl,
+          goalMl: currentSummary.goalMl,
+          goalPercentage: newTotal / currentSummary.goalMl,
+          entries: currentSummary.entries,
+        );
+        state = state.copyWith(todaySummary: updatedSummary);
+      }
+
       await _repository.logHydration(
         userId: userId,
         drinkType: drinkType,
@@ -84,11 +106,12 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
         workoutId: workoutId,
         notes: notes,
       );
-      // Refresh summary after logging
-      await loadTodaySummary(userId);
+      // Refresh summary in background (no loading indicator)
+      await loadTodaySummary(userId, showLoading: false);
       return true;
     } catch (e) {
       state = state.copyWith(error: e.toString());
+      // Reload to revert optimistic update on error
       return false;
     }
   }
@@ -100,12 +123,32 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
     int amountMl = 250,
   }) async {
     try {
+      // Optimistic update - immediately update the total
+      final currentSummary = state.todaySummary;
+      if (currentSummary != null) {
+        final newTotal = currentSummary.totalMl + amountMl;
+        final updatedSummary = DailyHydrationSummary(
+          date: currentSummary.date,
+          totalMl: newTotal,
+          waterMl: drinkType == 'water' ? currentSummary.waterMl + amountMl : currentSummary.waterMl,
+          proteinShakeMl: drinkType == 'protein_shake' ? currentSummary.proteinShakeMl + amountMl : currentSummary.proteinShakeMl,
+          sportsDrinkMl: drinkType == 'sports_drink' ? currentSummary.sportsDrinkMl + amountMl : currentSummary.sportsDrinkMl,
+          otherMl: (drinkType != 'water' && drinkType != 'protein_shake' && drinkType != 'sports_drink')
+              ? currentSummary.otherMl + amountMl : currentSummary.otherMl,
+          goalMl: currentSummary.goalMl,
+          goalPercentage: newTotal / currentSummary.goalMl,
+          entries: currentSummary.entries,
+        );
+        state = state.copyWith(todaySummary: updatedSummary);
+      }
+
       await _repository.quickLog(
         userId: userId,
         drinkType: drinkType,
         amountMl: amountMl,
       );
-      await loadTodaySummary(userId);
+      // Refresh summary in background (no loading indicator)
+      await loadTodaySummary(userId, showLoading: false);
       return true;
     } catch (e) {
       state = state.copyWith(error: e.toString());
@@ -116,9 +159,11 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
   /// Update daily goal
   Future<void> updateGoal(String userId, int goalMl) async {
     try {
-      await _repository.updateGoal(userId, goalMl);
+      // Optimistic update
       state = state.copyWith(dailyGoalMl: goalMl);
-      await loadTodaySummary(userId);
+      await _repository.updateGoal(userId, goalMl);
+      // Refresh in background
+      await loadTodaySummary(userId, showLoading: false);
     } catch (e) {
       state = state.copyWith(error: e.toString());
     }
@@ -128,7 +173,8 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
   Future<void> deleteLog(String userId, String logId) async {
     try {
       await _repository.deleteLog(logId);
-      await loadTodaySummary(userId);
+      // Refresh in background (no loading indicator)
+      await loadTodaySummary(userId, showLoading: false);
     } catch (e) {
       state = state.copyWith(error: e.toString());
     }

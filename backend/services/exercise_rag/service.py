@@ -482,7 +482,7 @@ class ExerciseRAGService:
         queued_exercises: Optional[List[Dict]] = None,
         consistency_mode: str = "vary",
         recently_used_exercises: Optional[List[str]] = None,
-        staple_exercises: Optional[List[str]] = None,
+        staple_exercises: Optional[List[dict]] = None,
         variation_percentage: int = 30,
         avoided_muscles: Optional[Dict[str, List[str]]] = None,
         progression_pace: str = "medium",
@@ -491,6 +491,7 @@ class ExerciseRAGService:
         user_mood: Optional[str] = None,
         difficulty_adjustment: int = 0,
         batch_offset: int = 0,
+        workout_environment: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Intelligently select exercises for a workout using RAG + AI.
@@ -513,7 +514,7 @@ class ExerciseRAGService:
             queued_exercises: List of exercises user has queued for inclusion
             consistency_mode: "vary" to avoid recent exercises, "consistent" to prefer them
             recently_used_exercises: List of exercises used in recent workouts (for consistency boost)
-            staple_exercises: List of user's staple exercises that should ALWAYS be included
+            staple_exercises: List of dicts with name, reason, muscle_group for user's staple exercises
             variation_percentage: How much variety user wants (0-100, default 30)
             avoided_muscles: Dict with 'avoid' (completely skip) and 'reduce' (lower priority) muscle lists
             progression_pace: User's progression pace - "slow", "medium", or "fast"
@@ -534,6 +535,28 @@ class ExerciseRAGService:
         logger.info(f"Consistency mode: {consistency_mode}, Variation: {variation_percentage}%")
         logger.info(f"Progression pace: {progression_pace}, Workout type preference: {workout_type_preference}")
 
+        # Adjust equipment based on workout environment
+        if workout_environment:
+            logger.info(f"Workout environment: {workout_environment}")
+            from .filters import FULL_GYM_EQUIPMENT, HOME_GYM_EQUIPMENT
+            env_lower = workout_environment.lower()
+            if "gym" in env_lower and "home" not in env_lower:
+                # Commercial gym - ensure full gym equipment available
+                if not any("full_gym" in eq.lower() or "full gym" in eq.lower() for eq in equipment):
+                    equipment = list(set(equipment + FULL_GYM_EQUIPMENT))
+                    logger.info(f"Expanded equipment for gym environment: {len(equipment)} items")
+            elif "home" in env_lower:
+                # Home gym - restrict to home equipment only
+                if not any("home_gym" in eq.lower() or "home gym" in eq.lower() for eq in equipment):
+                    equipment = [eq for eq in equipment if eq.lower() in HOME_GYM_EQUIPMENT or eq.lower() == "bodyweight"]
+                    if not equipment:
+                        equipment = HOME_GYM_EQUIPMENT
+                    logger.info(f"Filtered equipment for home environment: {equipment}")
+            elif "outdoor" in env_lower or "park" in env_lower:
+                # Outdoor - bodyweight and minimal equipment
+                equipment = ["bodyweight", "pull_up_bar", "resistance_bands"]
+                logger.info(f"Set equipment for outdoor environment: {equipment}")
+
         # Log readiness and mood for AI consistency tracking
         if readiness_score is not None:
             logger.info(f"🎯 [AI Consistency] Readiness score: {readiness_score}")
@@ -545,11 +568,19 @@ class ExerciseRAGService:
             logger.info(f"🎯 [AI Consistency] User mood: {user_mood}")
             if user_mood.lower() in ["tired", "stressed", "anxious"]:
                 logger.info(f"   -> {user_mood}: Will suggest recovery-focused exercises")
+        # Extract staple names (supports both old List[str] and new List[dict] format)
+        staple_names = []
         if staple_exercises:
-            logger.info(f"User has {len(staple_exercises)} staple exercises (never rotated)")
+            for s in staple_exercises:
+                if isinstance(s, dict):
+                    staple_names.append(s.get("name", ""))
+                else:
+                    staple_names.append(s)
+            staple_names = [n for n in staple_names if n]  # Remove empty names
+            logger.info(f"User has {len(staple_names)} staple exercises (never rotated): {staple_names}")
             # CRITICAL: Never put staples in avoid list - they should always be included
             if avoid_exercises:
-                staple_lower = [s.lower() for s in staple_exercises]
+                staple_lower = [s.lower() for s in staple_names]
                 avoid_exercises = [e for e in avoid_exercises if e.lower() not in staple_lower]
                 logger.info(f"Removed staples from avoid list, now avoiding {len(avoid_exercises)} exercises")
         if strength_history:
@@ -765,7 +796,35 @@ class ExerciseRAGService:
                 logger.info(f"Pre-filtered {len(candidates)} candidates to {len(safe_candidates)} safe exercises")
                 candidates = safe_candidates
             else:
-                logger.warning("Pre-filter removed all candidates, keeping original list")
+                # SAFETY FIX: Don't keep unsafe exercises - instead, select the least risky ones
+                logger.warning(f"Injury filter too restrictive - all {len(candidates)} exercises flagged as unsafe")
+                logger.warning(f"User injuries: {injuries}")
+                # Sort by how many injury patterns they match (fewer = safer)
+                # This ensures we pick the "safest" of the unsafe options rather than random
+                from .filters import INJURY_CONTRAINDICATIONS
+                active_patterns = set()
+                for injury in [inj.lower() for inj in injuries]:
+                    for key, patterns in INJURY_CONTRAINDICATIONS.items():
+                        if key in injury:
+                            active_patterns.update(patterns)
+
+                def count_matches(candidate):
+                    name_lower = candidate.get("name", "").lower()
+                    target_lower = candidate.get("target_muscle", "").lower()
+                    body_lower = candidate.get("body_part", "").lower()
+                    count = 0
+                    for pattern in active_patterns:
+                        if pattern in name_lower or pattern in target_lower or pattern in body_lower:
+                            count += 1
+                    return count
+
+                # Sort by match count (ascending) so least-risky exercises are first
+                candidates.sort(key=lambda c: (count_matches(c), -c.get("similarity", 0)))
+                # Take only exercises with minimum matches
+                if candidates:
+                    min_matches = count_matches(candidates[0])
+                    candidates = [c for c in candidates if count_matches(c) == min_matches]
+                    logger.info(f"Selected {len(candidates)} least-risky exercises (match count: {min_matches})")
 
         # Filter by avoided muscles (now includes secondary muscles with >20% involvement)
         if avoided_muscles:
@@ -868,23 +927,32 @@ class ExerciseRAGService:
         staple_included = []
         staple_names_used = []
 
-        if staple_exercises:
-            staple_names_lower = [s.lower() for s in staple_exercises]
+        if staple_names:  # Use extracted staple_names from earlier
+            staple_names_lower = [s.lower() for s in staple_names]
+
+            # Build a map of staple name -> reason for tagging
+            staple_reasons = {}
+            if staple_exercises:
+                for s in staple_exercises:
+                    if isinstance(s, dict):
+                        staple_reasons[s.get("name", "").lower()] = s.get("reason", "favorite")
 
             # Find staple exercises in candidates
-            for staple_name in staple_exercises:
+            for staple_name in staple_names:
                 staple_lower = staple_name.lower()
                 for candidate in candidates:
                     if candidate["name"].lower() == staple_lower:
                         staple_included.append(candidate)
                         staple_names_used.append(candidate["name"])
                         candidate["is_staple"] = True
-                        logger.info(f"Including STAPLE exercise: {candidate['name']}")
+                        candidate["staple_reason"] = staple_reasons.get(staple_lower, "favorite")
+                        reason_label = staple_reasons.get(staple_lower, "favorite")
+                        logger.info(f"Including STAPLE exercise: {candidate['name']} (reason: {reason_label})")
                         break
 
             # Remove staples from candidates to avoid duplicates
             candidates = [c for c in candidates if c["name"].lower() not in staple_names_lower]
-            logger.info(f"Staples included: {len(staple_included)} of {len(staple_exercises)}")
+            logger.info(f"Staples included: {len(staple_included)} of {len(staple_names)}")
 
         # Process queued exercises - include them first before AI selection
         # Track exclusion reasons for user feedback

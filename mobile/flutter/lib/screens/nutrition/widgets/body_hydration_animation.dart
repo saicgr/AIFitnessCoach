@@ -243,66 +243,96 @@ class BodyHydrationPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    // Start at neck (left side)
-    path.moveTo(w * 0.35, h * 0.12);
+    // Human silhouette - standing pose with arms slightly away from body
+    // Start from top of head
 
-    // Head - left side
-    path.quadraticBezierTo(w * 0.25, h * 0.10, w * 0.25, h * 0.06);
-    path.quadraticBezierTo(w * 0.25, h * 0.01, w * 0.5, h * 0.01);
+    // HEAD (oval shape)
+    path.moveTo(w * 0.42, h * 0.08);
+    path.quadraticBezierTo(w * 0.42, h * 0.02, w * 0.50, h * 0.02);
+    path.quadraticBezierTo(w * 0.58, h * 0.02, w * 0.58, h * 0.08);
+    path.quadraticBezierTo(w * 0.58, h * 0.11, w * 0.54, h * 0.12);
 
-    // Head - right side
-    path.quadraticBezierTo(w * 0.75, h * 0.01, w * 0.75, h * 0.06);
-    path.quadraticBezierTo(w * 0.75, h * 0.10, w * 0.65, h * 0.12);
+    // NECK (right side)
+    path.lineTo(w * 0.54, h * 0.14);
 
-    // Neck to right shoulder
-    path.lineTo(w * 0.65, h * 0.15);
-    path.quadraticBezierTo(w * 0.90, h * 0.16, w * 0.92, h * 0.22);
+    // RIGHT SHOULDER
+    path.quadraticBezierTo(w * 0.60, h * 0.14, w * 0.72, h * 0.16);
+    path.quadraticBezierTo(w * 0.80, h * 0.17, w * 0.82, h * 0.20);
 
-    // Right arm
-    path.quadraticBezierTo(w * 0.95, h * 0.28, w * 0.88, h * 0.38);
-    path.quadraticBezierTo(w * 0.85, h * 0.42, w * 0.78, h * 0.40);
+    // RIGHT ARM (slightly away from body)
+    path.quadraticBezierTo(w * 0.86, h * 0.24, w * 0.84, h * 0.32);
+    path.quadraticBezierTo(w * 0.82, h * 0.38, w * 0.78, h * 0.42);
+    // Right hand
+    path.quadraticBezierTo(w * 0.76, h * 0.44, w * 0.74, h * 0.43);
+    // Right arm inner
+    path.quadraticBezierTo(w * 0.72, h * 0.40, w * 0.70, h * 0.34);
+    path.quadraticBezierTo(w * 0.68, h * 0.28, w * 0.68, h * 0.24);
 
-    // Right side of torso
-    path.lineTo(w * 0.72, h * 0.42);
-    path.quadraticBezierTo(w * 0.75, h * 0.52, w * 0.72, h * 0.58);
+    // RIGHT TORSO
+    path.lineTo(w * 0.66, h * 0.28);
+    path.quadraticBezierTo(w * 0.68, h * 0.36, w * 0.66, h * 0.42);
 
-    // Right hip
-    path.quadraticBezierTo(w * 0.70, h * 0.62, w * 0.68, h * 0.65);
+    // RIGHT WAIST & HIP
+    path.quadraticBezierTo(w * 0.64, h * 0.46, w * 0.66, h * 0.50);
+    path.quadraticBezierTo(w * 0.68, h * 0.54, w * 0.66, h * 0.56);
 
-    // Right leg
-    path.lineTo(w * 0.65, h * 0.75);
-    path.quadraticBezierTo(w * 0.64, h * 0.85, w * 0.62, h * 0.92);
-    path.quadraticBezierTo(w * 0.61, h * 0.97, w * 0.56, h * 0.98);
-
+    // RIGHT LEG (thigh)
+    path.quadraticBezierTo(w * 0.66, h * 0.62, w * 0.64, h * 0.68);
+    // Right knee
+    path.quadraticBezierTo(w * 0.63, h * 0.72, w * 0.62, h * 0.76);
+    // Right calf
+    path.quadraticBezierTo(w * 0.61, h * 0.84, w * 0.60, h * 0.90);
+    // Right ankle
+    path.quadraticBezierTo(w * 0.59, h * 0.94, w * 0.60, h * 0.96);
     // Right foot
-    path.lineTo(w * 0.54, h * 0.99);
+    path.lineTo(w * 0.64, h * 0.96);
+    path.quadraticBezierTo(w * 0.66, h * 0.97, w * 0.66, h * 0.98);
+    path.lineTo(w * 0.56, h * 0.98);
+    path.lineTo(w * 0.56, h * 0.96);
 
-    // Between legs
-    path.lineTo(w * 0.54, h * 0.65);
-    path.quadraticBezierTo(w * 0.50, h * 0.63, w * 0.46, h * 0.65);
-    path.lineTo(w * 0.46, h * 0.99);
+    // INNER LEGS (crotch area)
+    path.lineTo(w * 0.54, h * 0.58);
+    path.quadraticBezierTo(w * 0.50, h * 0.56, w * 0.46, h * 0.58);
+    path.lineTo(w * 0.44, h * 0.96);
 
-    // Left foot
+    // LEFT FOOT
     path.lineTo(w * 0.44, h * 0.98);
-    path.quadraticBezierTo(w * 0.39, h * 0.97, w * 0.38, h * 0.92);
+    path.lineTo(w * 0.34, h * 0.98);
+    path.quadraticBezierTo(w * 0.34, h * 0.97, w * 0.36, h * 0.96);
+    path.lineTo(w * 0.40, h * 0.96);
+    // Left ankle
+    path.quadraticBezierTo(w * 0.41, h * 0.94, w * 0.40, h * 0.90);
+    // Left calf
+    path.quadraticBezierTo(w * 0.39, h * 0.84, w * 0.38, h * 0.76);
+    // Left knee
+    path.quadraticBezierTo(w * 0.37, h * 0.72, w * 0.36, h * 0.68);
+    // Left thigh
+    path.quadraticBezierTo(w * 0.34, h * 0.62, w * 0.34, h * 0.56);
 
-    // Left leg
-    path.quadraticBezierTo(w * 0.36, h * 0.85, w * 0.35, h * 0.75);
-    path.lineTo(w * 0.32, h * 0.65);
+    // LEFT HIP & WAIST
+    path.quadraticBezierTo(w * 0.32, h * 0.54, w * 0.34, h * 0.50);
+    path.quadraticBezierTo(w * 0.36, h * 0.46, w * 0.34, h * 0.42);
 
-    // Left hip
-    path.quadraticBezierTo(w * 0.30, h * 0.62, w * 0.28, h * 0.58);
+    // LEFT TORSO
+    path.quadraticBezierTo(w * 0.32, h * 0.36, w * 0.34, h * 0.28);
+    path.lineTo(w * 0.32, h * 0.24);
 
-    // Left side of torso
-    path.quadraticBezierTo(w * 0.25, h * 0.52, w * 0.28, h * 0.42);
-    path.lineTo(w * 0.22, h * 0.40);
+    // LEFT ARM (slightly away from body)
+    path.quadraticBezierTo(w * 0.32, h * 0.28, w * 0.30, h * 0.34);
+    path.quadraticBezierTo(w * 0.28, h * 0.40, w * 0.26, h * 0.43);
+    // Left hand
+    path.quadraticBezierTo(w * 0.24, h * 0.44, w * 0.22, h * 0.42);
+    // Left arm outer
+    path.quadraticBezierTo(w * 0.18, h * 0.38, w * 0.16, h * 0.32);
+    path.quadraticBezierTo(w * 0.14, h * 0.24, w * 0.18, h * 0.20);
 
-    // Left arm
-    path.quadraticBezierTo(w * 0.15, h * 0.42, w * 0.12, h * 0.38);
-    path.quadraticBezierTo(w * 0.05, h * 0.28, w * 0.08, h * 0.22);
+    // LEFT SHOULDER
+    path.quadraticBezierTo(w * 0.20, h * 0.17, w * 0.28, h * 0.16);
+    path.quadraticBezierTo(w * 0.40, h * 0.14, w * 0.46, h * 0.14);
 
-    // Left shoulder to neck
-    path.quadraticBezierTo(w * 0.10, h * 0.16, w * 0.35, h * 0.15);
+    // NECK (left side)
+    path.lineTo(w * 0.46, h * 0.12);
+    path.quadraticBezierTo(w * 0.42, h * 0.11, w * 0.42, h * 0.08);
 
     path.close();
     return path;

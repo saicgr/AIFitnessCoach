@@ -654,10 +654,11 @@ SCORING (1-10): Be strict. Restaurant/fast food: 4-6. Whole foods: 7-8. Score 9-
 
         # Simplified response format for faster parsing
         # Micronutrients are optional - only core macros required
+        # Added count, weight_per_unit_g for countable items, and unit for measurement type
         if user_goals or nutrition_targets:
             response_format = '''{{
   "food_items": [
-    {{"name": "Food name", "amount": "portion", "calories": 150, "protein_g": 10, "carbs_g": 15, "fat_g": 5, "fiber_g": 2, "goal_score": 7}}
+    {{"name": "Food name", "amount": "portion", "calories": 150, "protein_g": 10, "carbs_g": 15, "fat_g": 5, "fiber_g": 2, "goal_score": 7, "weight_g": 100, "unit": "g", "count": null, "weight_per_unit_g": null}}
   ],
   "total_calories": 450,
   "protein_g": 25,
@@ -673,7 +674,7 @@ SCORING (1-10): Be strict. Restaurant/fast food: 4-6. Whole foods: 7-8. Score 9-
         else:
             response_format = '''{{
   "food_items": [
-    {{"name": "Food name", "amount": "portion", "calories": 150, "protein_g": 10, "carbs_g": 15, "fat_g": 5, "fiber_g": 2}}
+    {{"name": "Food name", "amount": "portion", "calories": 150, "protein_g": 10, "carbs_g": 15, "fat_g": 5, "fiber_g": 2, "weight_g": 100, "unit": "g", "count": null, "weight_per_unit_g": null}}
   ],
   "total_calories": 450,
   "protein_g": 25,
@@ -713,6 +714,23 @@ CRITICAL PORTION SIZE RULES:
 - Coffee drinks without size = medium (16oz)
 - Fast food without size = regular/medium combo
 - Pizza without count = assume 2 slices
+
+COUNTABLE ITEMS - For foods naturally counted as pieces/units (NOT by weight):
+- ALWAYS include "count" (number of pieces) and "weight_per_unit_g" (weight of ONE piece)
+- Examples: tater tots (~8g each), cookies (~15g each), chicken nuggets (~18g each), eggs (~50g each), slices of pizza (~100g each), meatballs (~30g each)
+- weight_g = count × weight_per_unit_g
+- If user mentions count (e.g., "18 tater tots"), use that count
+- If user just says "tater tots" without count, estimate reasonable serving (e.g., 10-12 pieces)
+
+MEASUREMENT UNITS - Use "unit" field to specify the most natural unit:
+- "g" = grams (default for solid foods: chicken, rice, bread)
+- "ml" = milliliters (liquids: shakes, smoothies, milk, juice, soup)
+- "oz" = fluid ounces (US drinks: coffee, soda)
+- "cups" = cups (cooking: "2 cups of strawberry milkshake")
+- "tsp" = teaspoons (small amounts: sugar, oil)
+- "tbsp" = tablespoons (sauces, dressings, peanut butter)
+- For liquids, weight_g should be the ml equivalent (1ml ≈ 1g for water-based drinks)
+- Examples: protein shake → unit: "ml", 2 cups milkshake → unit: "cups", 1 tbsp peanut butter → unit: "tbsp"
 
 Rules: Use USDA data. Sum totals from items. Account for prep methods (fried adds fat).'''
 
@@ -1179,7 +1197,7 @@ IMPORTANT RULES:
         equipment_details: Optional[List[Dict]] = None,
         avoided_exercises: Optional[List[str]] = None,
         avoided_muscles: Optional[Dict] = None,
-        staple_exercises: Optional[List[str]] = None,
+        staple_exercises: Optional[List[dict]] = None,
         comeback_context: Optional[str] = None,
         progression_philosophy: Optional[str] = None,
         workout_patterns_context: Optional[str] = None,
@@ -1207,7 +1225,7 @@ IMPORTANT RULES:
                                [{"name": "dumbbells", "quantity": 2, "weights": [15, 25, 40], "weight_unit": "lbs"}]
             avoided_exercises: Optional list of exercise names the user wants to avoid (e.g., injuries, preferences)
             avoided_muscles: Optional dict with 'avoid' (completely skip) and 'reduce' (minimize) muscle groups
-            staple_exercises: Optional list of exercises that should always be included when appropriate
+            staple_exercises: Optional list of dicts with name, reason, muscle_group for user's staple exercises
             comeback_context: Optional context string for users returning from extended breaks (includes specific
                             adjustments for volume, intensity, rest periods, and age-specific modifications)
             progression_philosophy: Optional progression philosophy prompt section for leverage-based progressions
@@ -1544,14 +1562,37 @@ Include at most 1 exercise targeting these muscles, and prefer compound movement
 
         # Staple exercises - exercises user wants to always include when appropriate
         if staple_exercises and len(staple_exercises) > 0:
-            logger.info(f"⭐ [Gemini Service] User has {len(staple_exercises)} staple exercises: {staple_exercises}")
+            staple_names = [s.get("name", s) if isinstance(s, dict) else s for s in staple_exercises]
+            logger.info(f"⭐ [Gemini Service] User has {len(staple_exercises)} staple exercises: {staple_names}")
+
+            # Format staples with reasons for better AI understanding
+            staple_lines = []
+            for s in staple_exercises:
+                if isinstance(s, dict):
+                    name = s.get("name", "Unknown")
+                    reason = s.get("reason", "favorite")
+                    reason_label = {
+                        "core_compound": "Core Compound - ALWAYS include when targeting this muscle group",
+                        "favorite": "Personal Favorite",
+                        "rehab": "Rehab/Recovery - use controlled form",
+                        "strength_focus": "Strength Focus - prioritize for progressive overload",
+                        "other": "User Preference",
+                    }.get(reason, reason)
+                    staple_lines.append(f"  - {name} ({reason_label})")
+                else:
+                    staple_lines.append(f"  - {s}")
+
             preference_constraints_instruction += f"""
 
 ⭐ USER'S STAPLE EXERCISES:
-The user has marked these as their preferred exercises. Include them when they match the workout focus:
-{chr(10).join(f'  - {ex}' for ex in staple_exercises)}
+The user has marked these as their preferred exercises with specific reasons. Include them when they match the workout focus:
+{chr(10).join(staple_lines)}
 
-If any staple exercises match today's muscle group focus, prioritize including them."""
+STAPLE PRIORITIZATION:
+- "Core Compound" staples: MUST be included if the workout targets that muscle group
+- "Strength Focus" staples: Prioritize for compound movements
+- "Rehab/Recovery" staples: Include with lower intensity and focus on form
+- Other staples: Include when appropriate for variety"""
 
         # Build comeback instruction for users returning from extended breaks
         comeback_instruction = ""

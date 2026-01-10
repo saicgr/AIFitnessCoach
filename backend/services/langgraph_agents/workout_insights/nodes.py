@@ -37,12 +37,18 @@ def repair_json_string(content: str) -> Optional[str]:
     # Try simple repairs first
     repaired = content
 
+    # Fix unescaped control characters in strings (newlines, tabs, etc)
+    # This is a common issue with AI-generated JSON
+    repaired = re.sub(r'(?<!\\)\n', r'\\n', repaired)
+    repaired = re.sub(r'(?<!\\)\t', r'\\t', repaired)
+    repaired = re.sub(r'(?<!\\)\r', r'\\r', repaired)
+
     # Remove trailing commas before closing brackets/braces
     repaired = re.sub(r',(\s*[}\]])', r'\1', repaired)
 
     try:
         json.loads(repaired)
-        logger.info("[JSON Repair] Fixed trailing commas")
+        logger.info("[JSON Repair] Fixed control characters and/or trailing commas")
         return repaired
     except json.JSONDecodeError:
         pass
@@ -51,22 +57,23 @@ def repair_json_string(content: str) -> Optional[str]:
     json_match = re.search(r'\{[\s\S]*\}', original)
     if json_match:
         extracted = json_match.group(0)
+        # Apply same fixes to extracted
+        extracted = re.sub(r'(?<!\\)\n', r'\\n', extracted)
+        extracted = re.sub(r'(?<!\\)\t', r'\\t', extracted)
+        extracted = re.sub(r',(\s*[}\]])', r'\1', extracted)
         try:
             json.loads(extracted)
-            logger.info("[JSON Repair] Extracted JSON from text")
+            logger.info("[JSON Repair] Extracted and fixed JSON from text")
             return extracted
         except json.JSONDecodeError:
-            # Try trailing comma fix on extracted
-            extracted_fixed = re.sub(r',(\s*[}\]])', r'\1', extracted)
-            try:
-                json.loads(extracted_fixed)
-                logger.info("[JSON Repair] Extracted and fixed trailing commas")
-                return extracted_fixed
-            except json.JSONDecodeError:
-                pass
+            pass
 
     # Last resort: try to complete truncated JSON
     repaired = original
+    # Re-apply control char fixes
+    repaired = re.sub(r'(?<!\\)\n', r'\\n', repaired)
+    repaired = re.sub(r'(?<!\\)\t', r'\\t', repaired)
+    repaired = re.sub(r',(\s*[}\]])', r'\1', repaired)
 
     # Count braces and brackets
     open_braces = repaired.count('{') - repaired.count('}')
@@ -85,6 +92,11 @@ def repair_json_string(content: str) -> Optional[str]:
         i += 1
 
     if in_string:
+        # Try to find a reasonable place to end the string
+        # Remove any incomplete content and close the string
+        repaired = repaired.rstrip()
+        if repaired.endswith(','):
+            repaired = repaired[:-1]
         repaired += '"'
 
     # Close any open brackets/braces
@@ -109,20 +121,28 @@ def repair_json_string(content: str) -> Optional[str]:
             complete_sections = []
             depth = 0
             current_obj = ""
+            in_str = False
+            prev_char = ''
             for char in sections_content:
                 current_obj += char
-                if char == '{':
-                    depth += 1
-                elif char == '}':
-                    depth -= 1
-                    if depth == 0:
-                        try:
-                            obj = json.loads(current_obj.strip().rstrip(','))
-                            complete_sections.append(obj)
-                            current_obj = ""
-                        except json.JSONDecodeError:
-                            current_obj = ""
-                            depth = 0
+                # Track string state to avoid counting braces inside strings
+                if char == '"' and prev_char != '\\':
+                    in_str = not in_str
+                if not in_str:
+                    if char == '{':
+                        depth += 1
+                    elif char == '}':
+                        depth -= 1
+                        if depth == 0:
+                            try:
+                                obj_str = current_obj.strip().rstrip(',')
+                                obj = json.loads(obj_str)
+                                complete_sections.append(obj)
+                                current_obj = ""
+                            except json.JSONDecodeError:
+                                current_obj = ""
+                                depth = 0
+                prev_char = char
 
             if complete_sections:
                 # Extract headline from original

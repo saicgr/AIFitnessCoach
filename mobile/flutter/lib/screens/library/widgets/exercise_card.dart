@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -132,7 +133,7 @@ class ExerciseCard extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            // Thumbnail with video indicator
+            // Thumbnail with image or icon fallback
             Container(
               width: 90,
               height: 90,
@@ -153,12 +154,36 @@ class ExerciseCard extends ConsumerWidget {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Body part icon
-                  Icon(
-                    _getBodyPartIcon(exercise.bodyPart),
-                    size: 36,
-                    color: purple.withOpacity(0.8),
-                  ),
+                  // Exercise image or body part icon fallback
+                  if (exercise.imageUrl != null && exercise.imageUrl!.isNotEmpty)
+                    ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        bottomLeft: Radius.circular(16),
+                      ),
+                      child: CachedNetworkImage(
+                        imageUrl: exercise.imageUrl!,
+                        width: 90,
+                        height: 90,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Icon(
+                          _getBodyPartIcon(exercise.bodyPart),
+                          size: 36,
+                          color: purple.withOpacity(0.8),
+                        ),
+                        errorWidget: (context, url, error) => Icon(
+                          _getBodyPartIcon(exercise.bodyPart),
+                          size: 36,
+                          color: purple.withOpacity(0.8),
+                        ),
+                      ),
+                    )
+                  else
+                    Icon(
+                      _getBodyPartIcon(exercise.bodyPart),
+                      size: 36,
+                      color: purple.withOpacity(0.8),
+                    ),
                   // Video play indicator
                   if (hasVideo)
                     Positioned(

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/providers/branded_program_provider.dart';
 import '../../../../data/providers/today_workout_provider.dart';
+import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/services/haptic_service.dart';
@@ -688,6 +689,8 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
       // Small delay to ensure database transaction completes
       await Future.delayed(const Duration(milliseconds: 500));
 
+      // Refresh user profile data (for consistent Training Setup display)
+      ref.invalidate(authStateProvider);
       // Refresh workouts and invalidate to force UI rebuild
       await ref.read(workoutsProvider.notifier).refresh();
       ref.invalidate(workoutsProvider);

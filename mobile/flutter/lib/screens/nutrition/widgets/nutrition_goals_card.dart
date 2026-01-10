@@ -25,6 +25,7 @@ class NutritionGoalsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    debugPrint('🎯 NutritionGoalsCard build called, isDark: $isDark');
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -51,17 +52,13 @@ class NutritionGoalsCard extends ConsumerWidget {
     final consumedCarbs = (summary?.totalCarbsG ?? 0).toDouble();
     final consumedFat = (summary?.totalFatG ?? 0).toDouble();
 
+    final green = isDark ? AppColors.green : AppColorsLight.green;
+
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(16),
-        border: Border(
-          left: BorderSide(color: AppColors.green, width: 4),
-          top: BorderSide(color: cardBorder),
-          right: BorderSide(color: cardBorder),
-          bottom: BorderSide(color: cardBorder),
-        ),
+        border: Border.all(color: cardBorder),
         boxShadow: [
           BoxShadow(
             color: teal.withValues(alpha: 0.15),
@@ -76,6 +73,15 @@ class NutritionGoalsCard extends ConsumerWidget {
           ),
         ],
       ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: green, width: 4),
+            ),
+          ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -236,6 +242,8 @@ class NutritionGoalsCard extends ConsumerWidget {
             ),
           ],
         ],
+      ),
+        ),
       ),
     );
   }

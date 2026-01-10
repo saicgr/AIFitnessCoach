@@ -169,24 +169,28 @@ def _extract_selected_days(user_message: str) -> list:
 
 
 def _extract_equipment(user_message: str, existing_equipment: list = None) -> list:
-    """Extract equipment from user message."""
+    """Extract equipment from user message.
+
+    Returns lowercase with underscores to match Flutter app format:
+    - full_gym, dumbbells, barbell, resistance_bands, pull_up_bar, kettlebell, cable_machine
+    """
     equipment_map = {
-        'full gym': 'Full Gym',
-        'dumbbells': 'Dumbbells',
-        'dumbbell': 'Dumbbells',
-        'resistance bands': 'Resistance Bands',
-        'resistance band': 'Resistance Bands',
-        'bands': 'Resistance Bands',
-        'bodyweight only': 'Bodyweight Only',
-        'bodyweight': 'Bodyweight Only',
-        'barbell': 'Barbell',
-        'kettlebell': 'Kettlebell',
-        'kettlebells': 'Kettlebell',
-        'cable machine': 'Cable Machine',
-        'cable': 'Cable Machine',
-        'pull-up bar': 'Pull-up Bar',
-        'pull up bar': 'Pull-up Bar',
-        'bench': 'Bench',
+        'full gym': 'full_gym',
+        'dumbbells': 'dumbbells',
+        'dumbbell': 'dumbbells',
+        'resistance bands': 'resistance_bands',
+        'resistance band': 'resistance_bands',
+        'bands': 'resistance_bands',
+        'bodyweight only': 'bodyweight',
+        'bodyweight': 'bodyweight',
+        'barbell': 'barbell',
+        'kettlebell': 'kettlebell',
+        'kettlebells': 'kettlebell',
+        'cable machine': 'cable_machine',
+        'cable': 'cable_machine',
+        'pull-up bar': 'pull_up_bar',
+        'pull up bar': 'pull_up_bar',
+        'bench': 'bench',
     }
 
     user_lower = user_message.strip().lower()

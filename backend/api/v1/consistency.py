@@ -291,7 +291,7 @@ async def get_consistency_insights(
         completed_response = db.client.table("workouts").select(
             "id", count="exact"
         ).eq("user_id", user_id).eq(
-            "completed", True
+            "is_completed", True
         ).gte(
             "scheduled_date", month_start.isoformat()
         ).lte(
@@ -324,7 +324,7 @@ async def get_consistency_insights(
             week_completed_resp = db.client.table("workouts").select(
                 "id", count="exact"
             ).eq("user_id", user_id).eq(
-                "completed", True
+                "is_completed", True
             ).gte(
                 "scheduled_date", week_start.isoformat()
             ).lte(
@@ -554,7 +554,7 @@ async def get_calendar_heatmap(
 
         # Get all scheduled workouts in range
         workouts_response = db.client.table("workouts").select(
-            "id, name, scheduled_date, completed"
+            "id, name, scheduled_date, is_completed"
         ).eq("user_id", user_id).gte(
             "scheduled_date", start_date.isoformat()
         ).lte(
@@ -570,7 +570,7 @@ async def get_calendar_heatmap(
             workout_date = date.fromisoformat(scheduled_str)
             workout_map[workout_date] = {
                 "name": workout["name"],
-                "completed": workout["completed"],
+                "completed": workout["is_completed"],
             }
 
         # Build calendar data
@@ -657,7 +657,7 @@ async def get_day_detail(
 
         # Get scheduled workout for this date
         workout_response = db.client.table("workouts").select(
-            "id, name, type, difficulty, duration_minutes, exercises_json, completed, target_muscles"
+            "id, name, type, difficulty, duration_minutes, exercises_json, is_completed, target_muscles"
         ).eq("user_id", user_id).eq(
             "scheduled_date", date_str
         ).maybe_single().execute()
@@ -674,7 +674,7 @@ async def get_day_detail(
 
         workout = workout_response.data
         workout_id = workout["id"]
-        is_completed = workout.get("completed", False)
+        is_completed = workout.get("is_completed", False)
 
         if not is_completed:
             # Workout was scheduled but not completed
