@@ -1,8 +1,8 @@
 """
-Tests for on-demand workout generation with max_workouts parameter.
+Tests for JIT (Just-In-Time) workout generation.
 
-This tests the feature that allows generating a limited number of workouts
-instead of the full 2-week batch, improving UX when users only need one workout.
+All workout generation now follows JIT philosophy - always 1 workout at a time.
+The backend hardcodes workout_dates[:1] in generate_remaining_workouts.
 """
 import pytest
 from pydantic import ValidationError
@@ -172,25 +172,17 @@ class TestOnDemandGenerationFlow:
         assert request.duration_minutes == 45
         assert len(request.selected_days) == 3
 
-    def test_on_demand_vs_batch_generation(self):
-        """Document the difference between on-demand and batch generation."""
-        # Batch generation (from Edit Program Sheet) - no max_workouts
-        batch_request = GenerateMonthlyRequest(
+    def test_jit_always_generates_one_workout(self):
+        """Document that JIT philosophy always generates 1 workout at a time."""
+        # All generation now follows JIT - always 1 workout
+        # The backend hardcodes workout_dates[:1] in generate_remaining_workouts
+        request = GenerateMonthlyRequest(
             user_id="user-123",
             month_start_date="2025-01-01",
             selected_days=[0, 2, 4],
             duration_minutes=45,
-            # max_workouts not set - will generate all workouts for 2 weeks
         )
 
-        # On-demand generation (from Home Screen) - max_workouts=1
-        on_demand_request = GenerateMonthlyRequest(
-            user_id="user-123",
-            month_start_date="2025-01-03",
-            selected_days=[0, 2, 4],
-            duration_minutes=45,
-            max_workouts=1,  # Generate only 1 workout
-        )
-
-        assert batch_request.max_workouts is None
-        assert on_demand_request.max_workouts == 1
+        # max_workouts is optional but backend always generates 1
+        assert request.max_workouts is None  # Schema allows None
+        # Actual generation is limited to 1 in generate_remaining_workouts

@@ -65,8 +65,6 @@ class _InlineNumberInputState extends State<InlineNumberInput> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // WCAG accessibility: 48px minimum touch targets
-    final buttonWidth = widget.isActive ? 48.0 : 44.0;
     final height = widget.isActive ? 48.0 : 44.0;
     final iconSize = widget.isActive ? 22.0 : 20.0;
     final fontSize = widget.isActive ? 16.0 : 14.0;
@@ -75,127 +73,136 @@ class _InlineNumberInputState extends State<InlineNumberInput> {
         : (isDark ? AppColors.elevated : AppColorsLight.glassSurface);
     final textColor = isDark ? Colors.white : AppColorsLight.textPrimary;
 
-    return Container(
-      height: height,
-      decoration: BoxDecoration(
-        color: inputBg,
-        borderRadius: BorderRadius.circular(widget.isActive ? 10 : 8),
-        border: Border.all(
-          color: widget.isActive
-              ? widget.accentColor
-              : widget.accentColor.withOpacity(0.5),
-          width: widget.isActive ? 1.5 : 1,
-        ),
-        boxShadow: widget.isActive
-            ? [
-                BoxShadow(
-                  color: widget.accentColor.withOpacity(isDark ? 0.2 : 0.1),
-                  blurRadius: 6,
-                  spreadRadius: 0,
-                ),
-              ]
-            : null,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.max,
-        children: [
-          // Minus button
-          GestureDetector(
-            onTap: _decrement,
-            child: Container(
-              width: buttonWidth,
-              height: height,
-              decoration: BoxDecoration(
-                gradient: widget.isActive
-                    ? LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          widget.accentColor.withOpacity(0.3),
-                          widget.accentColor.withOpacity(0.15),
-                        ],
-                      )
-                    : null,
-                color: widget.isActive
-                    ? null
-                    : widget.accentColor.withOpacity(0.15),
-                borderRadius: BorderRadius.horizontal(
-                  left: Radius.circular(widget.isActive ? 8 : 7),
-                ),
-              ),
-              child: Center(
-                child: Icon(
-                  Icons.remove,
-                  size: iconSize,
-                  color: widget.isActive ? Colors.white : widget.accentColor,
-                ),
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Responsive button width: use 30% of available width per button,
+        // clamped between 32px min and 48px max for touch accessibility
+        final availableWidth = constraints.maxWidth;
+        final buttonWidth = (availableWidth * 0.30).clamp(32.0, 48.0);
+
+        return Container(
+          height: height,
+          decoration: BoxDecoration(
+            color: inputBg,
+            borderRadius: BorderRadius.circular(widget.isActive ? 10 : 8),
+            border: Border.all(
+              color: widget.isActive
+                  ? widget.accentColor
+                  : widget.accentColor.withOpacity(0.5),
+              width: widget.isActive ? 1.5 : 1,
             ),
+            boxShadow: widget.isActive
+                ? [
+                    BoxShadow(
+                      color: widget.accentColor.withOpacity(isDark ? 0.2 : 0.1),
+                      blurRadius: 6,
+                      spreadRadius: 0,
+                    ),
+                  ]
+                : null,
           ),
-          // Text display
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                widget.onShowDialog?.call();
-              },
-              child: Container(
-                height: height,
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    widget.controller.text.isEmpty
-                        ? '0'
-                        : widget.controller.text,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    style: TextStyle(
-                      fontSize: fontSize,
-                      fontWeight: FontWeight.bold,
-                      color: widget.isActive ? textColor : widget.accentColor,
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              // Minus button
+              GestureDetector(
+                onTap: _decrement,
+                child: Container(
+                  width: buttonWidth,
+                  height: height,
+                  decoration: BoxDecoration(
+                    gradient: widget.isActive
+                        ? LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              widget.accentColor.withOpacity(0.3),
+                              widget.accentColor.withOpacity(0.15),
+                            ],
+                          )
+                        : null,
+                    color: widget.isActive
+                        ? null
+                        : widget.accentColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.horizontal(
+                      left: Radius.circular(widget.isActive ? 8 : 7),
+                    ),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.remove,
+                      size: iconSize,
+                      color: widget.isActive ? Colors.white : widget.accentColor,
                     ),
                   ),
                 ),
               ),
-            ),
-          ),
-          // Plus button
-          GestureDetector(
-            onTap: _increment,
-            child: Container(
-              width: buttonWidth,
-              height: height,
-              decoration: BoxDecoration(
-                gradient: widget.isActive
-                    ? LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          widget.accentColor.withOpacity(0.3),
-                          widget.accentColor.withOpacity(0.15),
-                        ],
-                      )
-                    : null,
-                color: widget.isActive
-                    ? null
-                    : widget.accentColor.withOpacity(0.15),
-                borderRadius: BorderRadius.horizontal(
-                  right: Radius.circular(widget.isActive ? 8 : 7),
+              // Text display
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    widget.onShowDialog?.call();
+                  },
+                  child: Container(
+                    height: height,
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        widget.controller.text.isEmpty
+                            ? '0'
+                            : widget.controller.text,
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.bold,
+                          color: widget.isActive ? textColor : widget.accentColor,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              child: Center(
-                child: Icon(
-                  Icons.add,
-                  size: iconSize,
-                  color: widget.isActive ? Colors.white : widget.accentColor,
+              // Plus button
+              GestureDetector(
+                onTap: _increment,
+                child: Container(
+                  width: buttonWidth,
+                  height: height,
+                  decoration: BoxDecoration(
+                    gradient: widget.isActive
+                        ? LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              widget.accentColor.withOpacity(0.3),
+                              widget.accentColor.withOpacity(0.15),
+                            ],
+                          )
+                        : null,
+                    color: widget.isActive
+                        ? null
+                        : widget.accentColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.horizontal(
+                      right: Radius.circular(widget.isActive ? 8 : 7),
+                    ),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.add,
+                      size: iconSize,
+                      color: widget.isActive ? Colors.white : widget.accentColor,
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

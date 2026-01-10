@@ -71,16 +71,8 @@ class DailyStatsCard extends ConsumerWidget {
         margin: size == TileSize.full
             ? const EdgeInsets.symmetric(horizontal: 16, vertical: 4)
             : null,
-        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border(
-            left: BorderSide(color: AppColors.magenta, width: 4),
-            top: BorderSide(color: cardBorder),
-            right: BorderSide(color: cardBorder),
-            bottom: BorderSide(color: cardBorder),
-          ),
           boxShadow: [
             BoxShadow(
               color: AppColors.purple.withOpacity(0.15),
@@ -95,18 +87,33 @@ class DailyStatsCard extends ConsumerWidget {
             ),
           ],
         ),
-        child: activityState.isLoading
-            ? _buildLoadingState(textMuted)
-            : _buildContentState(
-                textColor: textColor,
-                textMuted: textMuted,
-                steps: steps,
-                stepsFormatted: stepsFormatted,
-                deficit: deficit,
-                deficitFormatted: deficitFormatted,
-                isInDeficit: isInDeficit,
-                caloriesBurned: caloriesBurned,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: elevatedColor,
+              border: Border(
+                left: BorderSide(color: AppColors.magenta, width: 4),
+                top: BorderSide(color: cardBorder),
+                right: BorderSide(color: cardBorder),
+                bottom: BorderSide(color: cardBorder),
               ),
+            ),
+            child: activityState.isLoading
+                ? _buildLoadingState(textMuted)
+                : _buildContentState(
+                    textColor: textColor,
+                    textMuted: textMuted,
+                    steps: steps,
+                    stepsFormatted: stepsFormatted,
+                    deficit: deficit,
+                    deficitFormatted: deficitFormatted,
+                    isInDeficit: isInDeficit,
+                    caloriesBurned: caloriesBurned,
+                  ),
+          ),
+        ),
       ),
     );
   }

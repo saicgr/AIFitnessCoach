@@ -197,8 +197,7 @@ async def lifespan(app: FastAPI):
                         user_id=str(user_id),
                         month_start_date=str(job.get("month_start_date")),
                         duration_minutes=job.get("duration_minutes", 45),
-                        selected_days=job.get("selected_days", [0, 2, 4]),
-                        weeks=job.get("weeks", 11)
+                        selected_days=job.get("selected_days", [0, 2, 4])
                     )
                 )
         else:

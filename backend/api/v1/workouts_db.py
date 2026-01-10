@@ -2445,25 +2445,22 @@ async def _run_background_generation(
     user_id: str,
     month_start_date: str,
     duration_minutes: int,
-    selected_days: List[int],
-    weeks: int
+    selected_days: List[int]
 ):
-    """Background task to generate remaining workouts with database-backed job tracking."""
-    logger.info(f"🔄 Starting background generation for user {user_id} (job {job_id})")
+    """Background task to generate 1 workout."""
+    logger.info(f"Starting background generation for user {user_id} (job {job_id})")
 
     job_queue = get_job_queue_service()
 
     try:
-        # Update job status to in_progress
         job_queue.update_job_status(job_id, "in_progress")
 
-        # Create the request and call the existing generate_remaining_workouts logic
         request = GenerateMonthlyRequest(
             user_id=user_id,
             month_start_date=month_start_date,
             duration_minutes=duration_minutes,
             selected_days=selected_days,
-            weeks=weeks
+            weeks=1
         )
 
         # Call the synchronous generation
@@ -2523,15 +2520,14 @@ async def schedule_background_generation(
         weeks=request.weeks
     )
 
-    # Schedule the background task with job_id
+    # Schedule the background task
     background_tasks.add_task(
         _run_background_generation,
         job_id,
         request.user_id,
         request.month_start_date,
         request.duration_minutes,
-        request.selected_days,
-        request.weeks
+        request.selected_days
     )
 
     return {
@@ -2631,20 +2627,19 @@ async def ensure_workouts_generated(
         weeks=request.weeks
     )
 
-    # Schedule the background task with job_id
+    # Schedule the background task
     background_tasks.add_task(
         _run_background_generation,
         job_id,
         request.user_id,
         request.month_start_date,
         request.duration_minutes,
-        request.selected_days,
-        request.weeks
+        request.selected_days
     )
 
     return {
         "success": True,
-        "message": "Workout generation scheduled",
+        "message": "Generating next workout",
         "workout_count": workout_count,
         "needs_generation": True,
         "status": "pending",
@@ -3039,14 +3034,12 @@ async def check_and_regenerate_workouts(
             start_date = str(today)
 
         # Create a new job in the database
-        # Generate 2 weeks at a time for more adaptive workout planning
-        generation_weeks = 2
         job_id = job_queue.create_job(
             user_id=user_id,
             month_start_date=start_date,
             duration_minutes=duration_minutes,
             selected_days=selected_days,
-            weeks=generation_weeks
+            weeks=1
         )
 
         # Schedule the background task
@@ -3056,21 +3049,19 @@ async def check_and_regenerate_workouts(
             user_id,
             start_date,
             duration_minutes,
-            selected_days,
-            generation_weeks
+            selected_days
         )
 
-        logger.info(f"✅ Scheduled workout generation for user {user_id} starting from {start_date} ({generation_weeks} weeks)")
+        logger.info(f"Scheduled workout generation for user {user_id}")
 
         return {
             "success": True,
             "needs_generation": True,
             "upcoming_workout_days": upcoming_count,
-            "message": "Workout generation scheduled",
+            "message": "Generating next workout",
             "status": "pending",
             "job_id": job_id,
             "start_date": start_date,
-            "weeks": generation_weeks,
             "selected_days": selected_days
         }
 

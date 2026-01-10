@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
@@ -165,6 +166,14 @@ class BrandedProgramRepository {
       }
 
       debugPrint('ℹ️ [BrandedProgram] No current program found');
+      return null;
+    } on DioException catch (e) {
+      // 404 is expected when user has no current program - not an error
+      if (e.response?.statusCode == 404) {
+        debugPrint('ℹ️ [BrandedProgram] No current program (404)');
+        return null;
+      }
+      debugPrint('❌ [BrandedProgram] Error fetching current program: $e');
       return null;
     } catch (e) {
       debugPrint('❌ [BrandedProgram] Error fetching current program: $e');

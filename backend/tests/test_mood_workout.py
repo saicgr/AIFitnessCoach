@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from unittest.mock import MagicMock, AsyncMock, patch
 import json
 
-from backend.services.mood_workout_service import (
+from services.mood_workout_service import (
     MoodWorkoutService,
     MoodType,
     MoodWorkoutConfig,

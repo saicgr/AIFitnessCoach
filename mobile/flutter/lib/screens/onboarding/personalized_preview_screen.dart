@@ -1229,35 +1229,6 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          // View Full Plan button - See more before committing
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                context.push('/plan-preview');
-              },
-              icon: const Icon(Icons.visibility_outlined, size: 20),
-              label: const Text(
-                'View Full 4-Week Plan',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.cyan,
-                side: BorderSide(color: AppColors.cyan, width: 1.5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
           // Main CTA
           SizedBox(
             width: double.infinity,

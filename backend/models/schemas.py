@@ -568,7 +568,7 @@ class ScheduleBackgroundGenerationRequest(BaseModel):
     month_start_date: str = Field(..., max_length=20)
     duration_minutes: int = Field(default=45, ge=1, le=480)
     selected_days: List[int] = Field(..., max_length=7)
-    weeks: int = Field(default=11, ge=1, le=52)
+    weeks: int = Field(default=1, ge=1, le=52)
 
 
 # ============================================

@@ -32,8 +32,8 @@ class ApiConstants {
       '843677137160-h1jh9t4d0s6mui2eqsek2h0rnq27n19o.apps.googleusercontent.com';
 
   /// RevenueCat API Keys (Public SDK keys - safe for client apps)
-  static const String revenueCatAppleApiKey = 'test_vYc0UpSGFVdQBcuHxeIUEaztDAJ';
-  static const String revenueCatGoogleApiKey = 'test_vYc0UpSGFVdQBcuHxeIUEaztDAJ';
+  static const String revenueCatAppleApiKey = 'test_vYc0UpSGFVdQBcuHxeIUEaztDAJ'; // TODO: Add iOS key when available
+  static const String revenueCatGoogleApiKey = 'goog_lnoRpFUioBNbTpTzsRsIKswnIWj';
 
   // Endpoint paths
   static const String auth = '/users/auth/google';

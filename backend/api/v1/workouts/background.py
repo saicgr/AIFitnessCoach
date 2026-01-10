@@ -32,25 +32,22 @@ async def _run_background_generation(
     user_id: str,
     month_start_date: str,
     duration_minutes: int,
-    selected_days: List[int],
-    weeks: int
+    selected_days: List[int]
 ):
-    """Background task to generate remaining workouts with database-backed job tracking."""
+    """Background task to generate 1 workout."""
     logger.info(f"Starting background generation for user {user_id} (job {job_id})")
 
     job_queue = get_job_queue_service()
 
     try:
-        # Update job status to in_progress
         job_queue.update_job_status(job_id, "in_progress")
 
-        # Create the request and call the existing generate_remaining_workouts logic
         request = GenerateMonthlyRequest(
             user_id=user_id,
             month_start_date=month_start_date,
             duration_minutes=duration_minutes,
             selected_days=selected_days,
-            weeks=weeks
+            weeks=1
         )
 
         # Call the synchronous generation
@@ -110,15 +107,14 @@ async def schedule_background_generation(
         weeks=request.weeks
     )
 
-    # Schedule the background task with job_id
+    # Schedule the background task
     background_tasks.add_task(
         _run_background_generation,
         job_id,
         request.user_id,
         request.month_start_date,
         request.duration_minutes,
-        request.selected_days,
-        request.weeks
+        request.selected_days
     )
 
     return {
@@ -206,8 +202,8 @@ async def ensure_workouts_generated(
             "job_id": existing_job.get("id")
         }
 
-    # Need to generate more workouts
-    logger.info(f"User {request.user_id} has only {workout_count} workouts, triggering generation")
+    # Need to generate more workouts - JIT: generate 1 at a time
+    logger.info(f"User {request.user_id} has only {workout_count} workouts, triggering single workout generation")
 
     # Create a new job in the database
     job_id = job_queue.create_job(
@@ -218,20 +214,19 @@ async def ensure_workouts_generated(
         weeks=request.weeks
     )
 
-    # Schedule the background task with job_id
+    # Schedule the background task
     background_tasks.add_task(
         _run_background_generation,
         job_id,
         request.user_id,
         request.month_start_date,
         request.duration_minutes,
-        request.selected_days,
-        request.weeks
+        request.selected_days
     )
 
     return {
         "success": True,
-        "message": "Workout generation scheduled",
+        "message": "Generating next workout",
         "workout_count": workout_count,
         "needs_generation": True,
         "status": "pending",
@@ -347,29 +342,16 @@ async def check_and_regenerate_workouts(
                 "total_generated": existing_job.get("total_generated", 0),
             }
 
-        # Need to generate more workouts
+        # Need to generate more workouts - JIT philosophy: generate 1 at a time
         logger.info(f"User {user_id} needs workout generation: only {upcoming_count} days available")
 
         # Find the appropriate start date for generation
-        # Cap at 4 weeks from today to prevent runaway generation into the far future
-        max_horizon = today + timedelta(days=28)
-
         if upcoming_workouts:
             # Get the latest scheduled date
             latest_date = max(
                 datetime.fromisoformat(str(w.get("scheduled_date"))[:10]).date()
                 for w in upcoming_workouts
             )
-
-            # If latest workout is already beyond our 4-week horizon, don't generate more
-            if latest_date >= max_horizon:
-                logger.info(f"User {user_id} has workouts scheduled until {latest_date}, beyond 4-week horizon. Skipping generation.")
-                return {
-                    "success": True,
-                    "needs_generation": False,
-                    "upcoming_workout_days": upcoming_count,
-                    "message": f"Workouts already scheduled through {latest_date}"
-                }
 
             # Start from the day after the latest workout, but not before today
             next_day = latest_date + timedelta(days=1)
@@ -379,14 +361,12 @@ async def check_and_regenerate_workouts(
             start_date = str(today)
 
         # Create a new job in the database
-        # Generate 2 weeks at a time for more adaptive workout planning
-        generation_weeks = 2
         job_id = job_queue.create_job(
             user_id=user_id,
             month_start_date=start_date,
             duration_minutes=duration_minutes,
             selected_days=selected_days,
-            weeks=generation_weeks
+            weeks=1
         )
 
         # Schedule the background task
@@ -396,21 +376,19 @@ async def check_and_regenerate_workouts(
             user_id,
             start_date,
             duration_minutes,
-            selected_days,
-            generation_weeks
+            selected_days
         )
 
-        logger.info(f"Scheduled workout generation for user {user_id} starting from {start_date} ({generation_weeks} weeks)")
+        logger.info(f"Scheduled workout generation for user {user_id}")
 
         return {
             "success": True,
             "needs_generation": True,
             "upcoming_workout_days": upcoming_count,
-            "message": "Workout generation scheduled",
+            "message": "Generating next workout",
             "status": "pending",
             "job_id": job_id,
             "start_date": start_date,
-            "weeks": generation_weeks,
             "selected_days": selected_days
         }
 
@@ -521,14 +499,13 @@ async def generate_next_workout(
                 "next_workout_date": str(next_workout_date)
             }
 
-        # Create a job to generate just 1 workout
-        # Use weeks=1 and start from the exact next workout date
+        # Create a job to generate 1 workout
         job_id = job_queue.create_job(
             user_id=user_id,
             month_start_date=str(next_workout_date),
             duration_minutes=duration_minutes,
             selected_days=selected_days,
-            weeks=1  # Only 1 week window - will generate just 1 workout
+            weeks=1
         )
 
         # Schedule the background task
@@ -538,11 +515,10 @@ async def generate_next_workout(
             user_id,
             str(next_workout_date),
             duration_minutes,
-            selected_days,
-            1  # 1 week
+            selected_days
         )
 
-        logger.info(f"[Generate-Next] Scheduled single workout generation for {next_workout_date}")
+        logger.info(f"[Generate-Next] Scheduled workout generation for {next_workout_date}")
 
         return {
             "success": True,
@@ -562,19 +538,15 @@ async def generate_next_workout(
 @router.post("/generate-more/{user_id}")
 async def generate_more_workouts(
     user_id: str,
-    background_tasks: BackgroundTasks,
-    max_workouts: int = Query(default=4, description="Maximum number of workouts to generate")
+    background_tasks: BackgroundTasks
 ):
     """
-    Generate up to max_workouts additional workouts for a user.
+    Generate 1 additional workout for a user.
 
-    This is a simplified endpoint designed to be called manually from the Workouts tab.
-    It generates workouts starting from the day after the last scheduled workout,
-    limited to max_workouts (default 4).
-
+    This endpoint generates the next workout starting from the day after the last scheduled workout.
     Returns immediately - generation happens in background.
     """
-    logger.info(f"[Generate-More] Generating up to {max_workouts} workouts for user {user_id}")
+    logger.info(f"[Generate-More] Generating 1 workout for user {user_id}")
 
     try:
         db = get_supabase_db()
@@ -619,18 +591,10 @@ async def generate_more_workouts(
                     except ValueError:
                         pass
 
-        # Always generate max_workouts (default 4) new workouts
-        workouts_needed = max_workouts
-
-        # Calculate the number of weeks needed to generate workouts_needed
-        # Based on workout days per week
-        workouts_per_week = len(selected_days) if selected_days else 3
-        weeks_needed = max(1, (workouts_needed + workouts_per_week - 1) // workouts_per_week)
-
         # Start from the day after the latest scheduled workout
         start_date = str(latest_date + timedelta(days=1))
 
-        logger.info(f"[Generate-More] User {user_id}: generating {workouts_needed} workouts ({weeks_needed} weeks starting {start_date})")
+        logger.info(f"[Generate-More] User {user_id}: generating 1 workout starting {start_date}")
 
         # Create a job
         job_id = job_queue.create_job(
@@ -638,7 +602,7 @@ async def generate_more_workouts(
             month_start_date=start_date,
             duration_minutes=duration_minutes,
             selected_days=selected_days,
-            weeks=weeks_needed
+            weeks=1
         )
 
         # Schedule the background task
@@ -648,18 +612,14 @@ async def generate_more_workouts(
             user_id,
             start_date,
             duration_minutes,
-            selected_days,
-            weeks_needed
+            selected_days
         )
 
         return {
             "success": True,
-            "message": f"Generating {workouts_needed} more workouts",
+            "message": "Generating next workout",
             "needs_generation": True,
-            "job_id": job_id,
-            "start_date": start_date,
-            "workouts_to_generate": workouts_needed,
-            "weeks": weeks_needed
+            "job_id": job_id
         }
 
     except HTTPException:

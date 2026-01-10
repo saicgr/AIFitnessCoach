@@ -2921,6 +2921,7 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
     } else {
       // Fallback to apiClient.getUserId() for backwards compatibility
       final userId = await _apiClient.getUserId();
+      if (!mounted) return; // Check mounted after async
       if (userId != null && userId.isNotEmpty) {
         debugPrint('🏋️ [Workouts] _init() with userId from apiClient: $userId');
         await fetchWorkouts(userId);
@@ -2933,9 +2934,11 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
 
   /// Fetch workouts for user
   Future<void> fetchWorkouts(String userId) async {
+    if (!mounted) return;
     state = const AsyncValue.loading();
     try {
       final workouts = await _repository.getWorkouts(userId);
+      if (!mounted) return; // Check mounted after async
       // Sort by scheduled date
       workouts.sort((a, b) {
         final dateA = a.scheduledDate ?? '';
@@ -2944,12 +2947,14 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
       });
       state = AsyncValue.data(workouts);
     } catch (e, st) {
+      if (!mounted) return; // Check mounted after async
       state = AsyncValue.error(e, st);
     }
   }
 
   /// Refresh workouts
   Future<void> refresh() async {
+    if (!mounted) return;
     debugPrint('🏋️ [Workouts] refresh() called');
     // Use userId from authStateProvider (passed from provider) first
     String? userId = _userId;
@@ -2957,9 +2962,11 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
       // Fallback to apiClient.getUserId() for backwards compatibility
       userId = await _apiClient.getUserId();
     }
+    if (!mounted) return; // Check mounted after async
     if (userId != null && userId.isNotEmpty) {
       debugPrint('🏋️ [Workouts] Fetching workouts for user: $userId');
       await fetchWorkouts(userId);
+      if (!mounted) return; // Check mounted after async
       final currentWorkouts = state.valueOrNull ?? [];
       debugPrint('🏋️ [Workouts] After refresh: ${currentWorkouts.length} workouts');
       final nextWorkoutName = nextWorkout?.name;

@@ -99,12 +99,12 @@ class _ExerciseThumbnailStripState extends State<ExerciseThumbnailStrip> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Get bottom padding for safe area - ensures content doesn't overflow into system UI
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(0, 12, 0, 8),
-        decoration: BoxDecoration(
+    return Container(
+      padding: EdgeInsets.fromLTRB(0, 12, 0, 8 + bottomPadding),
+      decoration: BoxDecoration(
           color: isDark
               ? AppColors.nearBlack.withOpacity(0.95)
               : Colors.white.withOpacity(0.98),
@@ -229,8 +229,7 @@ class _ExerciseThumbnailStripState extends State<ExerciseThumbnailStrip> {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }
 

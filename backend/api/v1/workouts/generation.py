@@ -2952,12 +2952,13 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         if active_injuries:
             logger.info(f"User has active injuries for remaining workouts: {active_injuries}")
 
-        # Cap at 4 weeks to prevent generating workouts too far in the future
+        # Use the requested weeks parameter, cap at 4 weeks max to prevent generating workouts too far in the future
         MAX_GENERATION_WEEKS = 4
+        requested_weeks = min(request.weeks or MAX_GENERATION_WEEKS, MAX_GENERATION_WEEKS)
         today = datetime.now().date()
-        max_horizon = today + timedelta(days=28)  # 4 weeks from today
+        max_horizon = today + timedelta(days=requested_weeks * 7)  # Based on requested weeks
 
-        all_workout_dates = calculate_monthly_dates(request.month_start_date, request.selected_days, MAX_GENERATION_WEEKS)
+        all_workout_dates = calculate_monthly_dates(request.month_start_date, request.selected_days, requested_weeks)
 
         # Filter out any dates beyond our horizon
         all_workout_dates = [d for d in all_workout_dates if d.date() <= max_horizon]
@@ -2977,7 +2978,9 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
 
         workout_dates = [d for d in all_workout_dates if str(d.date()) not in existing_dates]
 
-        logger.info(f"Generating remaining workouts: {len(workout_dates)} dates (capped at {max_horizon})")
+        # JIT Philosophy: Always generate only 1 workout at a time
+        workout_dates = workout_dates[:1]
+        logger.info(f"Generating 1 workout (JIT philosophy)")
 
         if not workout_dates:
             return GenerateMonthlyResponse(workouts=[], total_generated=0)

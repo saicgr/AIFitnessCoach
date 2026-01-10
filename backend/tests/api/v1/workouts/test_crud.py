@@ -12,7 +12,7 @@ Tests cover:
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
-from fastapi import HTTPException
+from fastapi import HTTPException, BackgroundTasks
 
 
 class TestCreateWorkout:
@@ -298,11 +298,13 @@ class TestCompleteWorkout:
             "is_completed": True,
         }
 
+        mock_background_tasks = MagicMock(spec=BackgroundTasks)
+
         with patch("api.v1.workouts.crud.get_supabase_db", return_value=mock_db):
             with patch("api.v1.workouts.crud.index_workout_to_rag", new_callable=AsyncMock):
-                result = await complete_workout("workout-1")
+                result = await complete_workout("workout-1", mock_background_tasks)
 
-        assert result.is_completed is True
+        assert result.workout.is_completed is True
 
     @pytest.mark.asyncio
     async def test_complete_workout_not_found(self):
@@ -311,9 +313,10 @@ class TestCompleteWorkout:
 
         mock_db = MagicMock()
         mock_db.get_workout.return_value = None
+        mock_background_tasks = MagicMock(spec=BackgroundTasks)
 
         with patch("api.v1.workouts.crud.get_supabase_db", return_value=mock_db):
             with pytest.raises(HTTPException) as exc_info:
-                await complete_workout("nonexistent-id")
+                await complete_workout("nonexistent-id", mock_background_tasks)
 
         assert exc_info.value.status_code == 404

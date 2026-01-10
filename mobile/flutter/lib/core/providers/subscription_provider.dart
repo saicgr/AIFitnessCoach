@@ -209,6 +209,12 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
           ? ApiConstants.revenueCatAppleApiKey
           : ApiConstants.revenueCatGoogleApiKey;
 
+      // Skip configuration if API key is empty
+      if (apiKey.isEmpty) {
+        debugPrint('⚠️ RevenueCat: Skipping - no API key configured');
+        return;
+      }
+
       await Purchases.configure(PurchasesConfiguration(apiKey));
       _revenueCatInitialized = true;
       debugPrint('✅ RevenueCat configured successfully');
