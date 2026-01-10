@@ -3492,13 +3492,29 @@ Return ONLY a JSON array of exercises (no wrapper object):
 Generate exactly {request.additional_exercises} exercises that complement the existing workout."""
 
         try:
-            response = await gemini_service._generate_json_response(extension_prompt)
+            # Use the chat method to generate JSON response
+            raw_response = await gemini_service.chat(
+                user_message=extension_prompt,
+                system_prompt="You are a fitness expert. Return ONLY valid JSON arrays/objects with no additional text or markdown formatting."
+            )
 
-            # Parse the response
-            if isinstance(response, list):
-                new_exercises = response
+            # Parse the JSON response using robust extraction
+            parsed_response = gemini_service._extract_json_robust(raw_response)
+
+            # Handle the response
+            if parsed_response is None:
+                # Try to parse the raw response directly
+                try:
+                    parsed_response = json.loads(raw_response.strip())
+                except json.JSONDecodeError:
+                    logger.error(f"Failed to parse extension response: {raw_response[:500]}")
+                    raise ValueError("Failed to parse AI response as JSON")
+
+            # Parse the response - could be list or dict
+            if isinstance(parsed_response, list):
+                new_exercises = parsed_response
             else:
-                new_exercises = response.get("exercises", []) if isinstance(response, dict) else []
+                new_exercises = parsed_response.get("exercises", []) if isinstance(parsed_response, dict) else []
 
             # Validate and filter new exercises
             if avoided_exercises:

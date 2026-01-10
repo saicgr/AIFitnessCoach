@@ -143,13 +143,8 @@ class TestGeminiPromptContainsPreferences:
         """Test that the Gemini prompt includes avoided exercises instruction."""
         from services.gemini_service import GeminiService
 
-        with patch.object(GeminiService, '_generate_json_response', new_callable=AsyncMock) as mock_generate:
-            mock_generate.return_value = {
-                "name": "Test Workout",
-                "type": "strength",
-                "difficulty": "medium",
-                "exercises": []
-            }
+        with patch.object(GeminiService, 'chat', new_callable=AsyncMock) as mock_chat:
+            mock_chat.return_value = '{"name": "Test Workout", "type": "strength", "difficulty": "medium", "exercises": []}'
 
             service = GeminiService()
 
@@ -169,13 +164,8 @@ class TestGeminiPromptContainsPreferences:
         """Test that the Gemini prompt includes avoided muscles instruction."""
         from services.gemini_service import GeminiService
 
-        with patch.object(GeminiService, '_generate_json_response', new_callable=AsyncMock) as mock_generate:
-            mock_generate.return_value = {
-                "name": "Test Workout",
-                "type": "strength",
-                "difficulty": "medium",
-                "exercises": []
-            }
+        with patch.object(GeminiService, 'chat', new_callable=AsyncMock) as mock_chat:
+            mock_chat.return_value = '{"name": "Test Workout", "type": "strength", "difficulty": "medium", "exercises": []}'
 
             service = GeminiService()
 
