@@ -304,7 +304,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                 if (widget.onMealsPerDayChanged != null) ...[
                   const SizedBox(height: 28),
                   Text(
-                    'How many meals per day?',
+                    'Meals + snacks per day?',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -313,7 +313,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                   ).animate().fadeIn(delay: 550.ms),
                   const SizedBox(height: 4),
                   Text(
-                    'Helps plan your meal distribution',
+                    'Include all meals and snacks',
                     style: TextStyle(
                       fontSize: 12,
                       color: textSecondary,
@@ -321,7 +321,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                   ).animate().fadeIn(delay: 580.ms),
                   const SizedBox(height: 12),
                   Row(
-                    children: [4, 5, 6].asMap().entries.map((entry) {
+                    children: [1, 2, 3, 4, 5, 6].asMap().entries.map((entry) {
                       final index = entry.key;
                       final mealCount = entry.value;
                       final isSelected = widget.mealsPerDay == mealCount;
@@ -329,7 +329,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                       return Expanded(
                         child: Padding(
                           padding: EdgeInsets.only(
-                            right: index < 2 ? 8 : 0,
+                            right: index < 5 ? 6 : 0,
                           ),
                           child: GestureDetector(
                             onTap: () {
@@ -338,41 +338,30 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                             },
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
                                 gradient: isSelected ? AppColors.cyanGradient : null,
                                 color: isSelected
                                     ? null
                                     : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
                                   color: isSelected ? AppColors.cyan : cardBorder,
                                   width: isSelected ? 2 : 1,
                                 ),
                               ),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    '$mealCount',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: isSelected ? Colors.white : textPrimary,
-                                    ),
+                              child: Center(
+                                child: Text(
+                                  '$mealCount',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: isSelected ? Colors.white : textPrimary,
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'meals',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                      color: isSelected ? Colors.white.withValues(alpha: 0.9) : textSecondary,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ),
-                          ).animate(delay: (620 + index * 50).ms).fadeIn().scale(begin: const Offset(0.9, 0.9)),
+                          ).animate(delay: (620 + index * 40).ms).fadeIn().scale(begin: const Offset(0.9, 0.9)),
                         ),
                       );
                     }).toList(),
@@ -411,6 +400,10 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
     final estimate = _nutritionEstimate;
     if (estimate == null) return const SizedBox.shrink();
 
+    final meals = widget.mealsPerDay ?? 3;
+    final calPerMeal = (estimate.calories / meals).round();
+    final proteinPerMeal = (estimate.protein / meals).round();
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -432,12 +425,14 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
             children: [
               Icon(Icons.insights_outlined, color: AppColors.cyan, size: 20),
               const SizedBox(width: 8),
-              Text(
-                'Your Estimated Daily Targets',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
+              Expanded(
+                child: Text(
+                  'Your Estimated Daily Targets',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -482,6 +477,33 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
             ],
           ),
 
+          // Per meal breakdown (shows when meals selected)
+          if (widget.mealsPerDay != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.cyan.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.restaurant, color: AppColors.cyan, size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    '~$calPerMeal kcal & ${proteinPerMeal}g protein per meal',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.cyan,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           const SizedBox(height: 12),
 
           // Additional insights row
@@ -499,7 +521,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
               Expanded(
                 child: _buildInsightChip(
                   icon: Icons.psychology,
-                  text: 'Target metabolic age: ${estimate.metabolicAge}',
+                  text: 'Metabolic age: ${estimate.metabolicAge}',
                   color: AppColors.purple,
                   textSecondary: textSecondary,
                 ),

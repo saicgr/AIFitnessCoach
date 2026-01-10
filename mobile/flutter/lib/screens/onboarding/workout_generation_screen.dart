@@ -146,13 +146,13 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
               _progress = 1.0;
             });
 
-            // CRITICAL: Invalidate providers so home fetches fresh data immediately
-            // Without this, home screen shows stale "Rest Day" for ~30 seconds
-            ref.invalidate(todayWorkoutProvider);
-            ref.invalidate(workoutsProvider);
-
             // Navigate to home after showing completion
-            Future.delayed(const Duration(milliseconds: 800), () {
+            // Use a 1.5 second delay to:
+            // 1. Show the completion UI to the user
+            // 2. Allow the database write to fully propagate
+            // This prevents a race condition where the home screen's /workouts/today
+            // query runs before the workout is visible in the database.
+            Future.delayed(const Duration(milliseconds: 1500), () {
               if (mounted) {
                 context.go('/home');
               }

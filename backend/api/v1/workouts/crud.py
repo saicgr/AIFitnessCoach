@@ -317,6 +317,97 @@ async def delete_workout(workout_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.delete("/cleanup/{user_id}")
+async def cleanup_old_workouts(
+    user_id: str,
+    keep_count: int = Query(default=1, ge=1, le=10, description="Number of future workouts to keep")
+):
+    """
+    Clean up old workouts for a user, keeping only the specified number of upcoming workouts.
+
+    This is useful after migrating from batch generation to JIT (one-at-a-time) generation.
+    Keeps incomplete workouts scheduled for today or later (up to keep_count).
+    All other workouts are deleted.
+
+    Args:
+        user_id: The user ID
+        keep_count: Number of future/current workouts to keep (default: 1)
+
+    Returns:
+        Summary of cleanup operation
+    """
+    logger.info(f"[Cleanup] Starting cleanup for user {user_id}, keeping {keep_count} workout(s)")
+
+    try:
+        db = get_supabase_db()
+
+        # Get all workouts for user
+        today = date.today().isoformat()
+        all_workouts = db.client.table("workouts") \
+            .select("id, scheduled_date, is_completed, name") \
+            .eq("user_id", user_id) \
+            .order("scheduled_date", desc=True) \
+            .execute()
+
+        if not all_workouts.data:
+            logger.info(f"[Cleanup] No workouts found for user {user_id}")
+            return {"message": "No workouts to clean up", "deleted_count": 0}
+
+        # Separate completed from incomplete workouts
+        completed = []
+        incomplete_future = []
+        incomplete_past = []
+
+        for w in all_workouts.data:
+            sched = w.get("scheduled_date", "")[:10] if w.get("scheduled_date") else ""
+            if w.get("is_completed"):
+                completed.append(w)
+            elif sched >= today:
+                incomplete_future.append(w)
+            else:
+                incomplete_past.append(w)
+
+        # Sort incomplete future by date ascending (earliest first)
+        incomplete_future.sort(key=lambda x: x.get("scheduled_date", ""))
+
+        # Keep only the first keep_count incomplete future workouts
+        workouts_to_keep = incomplete_future[:keep_count]
+        workouts_to_delete = incomplete_future[keep_count:] + incomplete_past
+
+        # Keep IDs of workouts we're keeping (completed ones are always kept)
+        keep_ids = {w["id"] for w in workouts_to_keep} | {w["id"] for w in completed}
+
+        deleted_count = 0
+        deleted_names = []
+
+        for workout in workouts_to_delete:
+            workout_id = workout["id"]
+            try:
+                # Delete related records first
+                db.delete_workout_changes_by_workout(workout_id)
+                db.delete_workout_logs_by_workout(workout_id)
+                db.delete_workout(workout_id)
+                deleted_count += 1
+                deleted_names.append(workout.get("name", "Unknown"))
+                logger.info(f"[Cleanup] Deleted workout: {workout.get('name')} ({workout_id})")
+            except Exception as e:
+                logger.error(f"[Cleanup] Failed to delete workout {workout_id}: {e}")
+
+        logger.info(f"[Cleanup] Completed for user {user_id}: deleted {deleted_count}, kept {len(workouts_to_keep)} upcoming + {len(completed)} completed")
+
+        return {
+            "message": f"Cleanup complete. Deleted {deleted_count} workout(s).",
+            "deleted_count": deleted_count,
+            "deleted_names": deleted_names[:10],  # Return first 10 names
+            "kept_upcoming": len(workouts_to_keep),
+            "kept_completed": len(completed),
+        }
+
+    except Exception as e:
+        logger.error(f"[Cleanup] Failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/{workout_id}/complete", response_model=WorkoutCompletionResponse)
 async def complete_workout(
     workout_id: str,

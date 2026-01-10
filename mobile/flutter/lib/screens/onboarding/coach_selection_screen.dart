@@ -123,14 +123,15 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
   /// Submits all user preferences (pre-auth quiz data + coach) to backend
   /// This runs in the background without blocking UI navigation
   void _submitUserPreferencesAndFlags() {
+    // Capture refs before async operations to avoid "ref after disposed" errors
+    final apiClient = ref.read(apiClientProvider);
+    final quizData = ref.read(preAuthQuizProvider);
+    final authNotifier = ref.read(authStateProvider.notifier);
+
     Future(() async {
       try {
-        final apiClient = ref.read(apiClientProvider);
         final userId = await apiClient.getUserId();
         if (userId == null) return;
-
-        // Get pre-auth quiz data
-        final quizData = ref.read(preAuthQuizProvider);
 
         // Build preferences payload from quiz data
         final preferencesPayload = <String, dynamic>{
@@ -252,7 +253,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
 
         // Refresh auth state with latest user data from backend
         // This ensures the home screen shows updated preferences
-        await ref.read(authStateProvider.notifier).refreshUser();
+        await authNotifier.refreshUser();
         debugPrint('✅ [CoachSelection] Auth state refreshed with latest user data');
       } catch (e) {
         debugPrint('❌ [CoachSelection] Failed to submit preferences: $e');

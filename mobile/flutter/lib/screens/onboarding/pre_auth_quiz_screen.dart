@@ -2127,6 +2127,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       sleepTime: _sleepTime,
       onWakeTimeChanged: (time) => setState(() => _wakeTime = time),
       onSleepTimeChanged: (time) => setState(() => _sleepTime = time),
+      // Meals per day for validation
+      mealsPerDay: _mealsPerDay,
+      onMealsPerDayChanged: (meals) => setState(() => _mealsPerDay = meals),
     );
   }
 

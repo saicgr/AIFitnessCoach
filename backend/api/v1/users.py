@@ -1820,9 +1820,19 @@ async def sync_fasting_preferences(user_id: str, request: SyncFastingRequest):
 
         data = result.data
 
+        # Handle various RPC response formats
+        import json
+
+        # If data is bytes, decode it first
+        if isinstance(data, bytes):
+            try:
+                data = data.decode('utf-8')
+            except Exception as e:
+                logger.error(f"Failed to decode bytes response: {e}")
+                raise HTTPException(status_code=500, detail="Failed to decode database response")
+
         # Handle case where RPC returns string instead of dict
         if isinstance(data, str):
-            import json
             try:
                 data = json.loads(data)
             except json.JSONDecodeError:

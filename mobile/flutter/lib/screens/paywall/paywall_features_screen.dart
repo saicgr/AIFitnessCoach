@@ -31,8 +31,8 @@ class PaywallFeaturesScreen extends ConsumerWidget {
 
                     // App Icon
                     Container(
-                      width: 100,
-                      height: 100,
+                      width: 72,
+                      height: 72,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -47,25 +47,25 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       child: ClipOval(
                         child: Image.asset(
                           'assets/images/app_icon.png',
-                          width: 100,
-                          height: 100,
+                          width: 72,
+                          height: 72,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) => const Icon(
                             Icons.fitness_center,
-                            size: 48,
+                            size: 36,
                             color: Colors.white,
                           ),
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
                     // Title
                     Text(
                       'Unlock the full',
                       style: TextStyle(
-                        fontSize: 26,
+                        fontSize: 22,
                         fontWeight: FontWeight.w600,
                         color: colors.textPrimary,
                       ),
@@ -73,13 +73,13 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                     Text(
                       'AI Coach experience',
                       style: TextStyle(
-                        fontSize: 26,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: colors.cyan,
                       ),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
 
                     // Feature list - Key differentiators (ordered by impact)
                     _FeatureItem(
@@ -89,7 +89,7 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       subtitle: '23+ equipment types with personalized weights',
                       colors: colors,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _FeatureItem(
                       icon: Icons.location_on_outlined,
                       iconColor: colors.electricBlue,
@@ -97,7 +97,7 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       subtitle: 'Gym, home, hotel, outdoors - adapts to your space',
                       colors: colors,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _FeatureItem(
                       icon: Icons.star_outline,
                       iconColor: Colors.amber,
@@ -105,23 +105,31 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       subtitle: 'Always include favorites, never see exercises you hate',
                       colors: colors,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _FeatureItem(
                       icon: Icons.camera_alt_outlined,
                       iconColor: colors.orange,
                       title: 'AI food photo scanning',
-                      subtitle: 'Snap a photo, get instant macros & inflammation score',
+                      subtitle: 'Snap a photo, get instant calories & macros',
                       colors: colors,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
+                    _FeatureItem(
+                      icon: Icons.text_fields,
+                      iconColor: colors.electricBlue,
+                      title: 'Text to calories',
+                      subtitle: 'Type what you ate, AI estimates instantly',
+                      colors: colors,
+                    ),
+                    const SizedBox(height: 8),
                     _FeatureItem(
                       icon: Icons.restaurant_menu_outlined,
                       iconColor: colors.cyan,
-                      title: 'Full nutrition & macro tracking',
-                      subtitle: 'Cooked food converter & frequent foods',
+                      title: 'Calorie & macro tracking',
+                      subtitle: 'Log meals, hit daily targets, track progress',
                       colors: colors,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _FeatureItem(
                       icon: Icons.healing_outlined,
                       iconColor: colors.coral,
@@ -129,7 +137,7 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       subtitle: 'Report injuries, auto-adapt workouts safely',
                       colors: colors,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _FeatureItem(
                       icon: Icons.elderly,
                       iconColor: colors.teal,
@@ -137,7 +145,7 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       subtitle: 'Safe return after breaks, senior adjustments',
                       colors: colors,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _FeatureItem(
                       icon: Icons.fitness_center,
                       iconColor: colors.success,
@@ -145,7 +153,7 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       subtitle: 'Wall pushups → one-arm, dragon squats & more',
                       colors: colors,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _FeatureItem(
                       icon: Icons.self_improvement,
                       iconColor: const Color(0xFFE91E63),
@@ -154,7 +162,7 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       colors: colors,
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -221,19 +229,19 @@ class _FeatureItem extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 44,
-          height: 44,
+          width: 38,
+          height: 38,
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(12),
+            color: iconColor.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
             icon,
             color: iconColor,
-            size: 22,
+            size: 18,
           ),
         ),
-        const SizedBox(width: 14),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,21 +249,20 @@ class _FeatureItem extends StatelessWidget {
               Text(
                 title,
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: colors.textPrimary,
                 ),
               ),
-              if (subtitle != null) ...[
-                const SizedBox(height: 2),
+              if (subtitle != null)
                 Text(
                   subtitle!,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: colors.textSecondary,
+                    height: 1.3,
                   ),
                 ),
-              ],
             ],
           ),
         ),

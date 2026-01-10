@@ -243,18 +243,8 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                 _buildDobGenderSection(isDark, textPrimary, textSecondary, cardBg, cardBorder),
                 const SizedBox(height: 20),
 
-                // Height input
-                _buildHeightInput(isDark, textPrimary, textSecondary, cardBg, cardBorder),
-                const SizedBox(height: 20),
-
-                // Current weight input with per-field unit toggle
-                _buildWeightInputWithToggle(
-                  isDark,
-                  textPrimary,
-                  textSecondary,
-                  cardBg,
-                  cardBorder,
-                ),
+                // Height and Weight in single row
+                _buildHeightWeightRow(isDark, textPrimary, textSecondary, cardBg, cardBorder),
 
                 // Two-step weight goal (only show if current weight is set)
                 if (widget.weightKg != null) ...[
@@ -385,41 +375,59 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Date of Birth input
+        // Date of Birth input (compact)
         Expanded(
-          flex: 3,
+          flex: 5,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(6),
+                    padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
                       color: AppColors.orange.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Icon(Icons.cake_outlined, color: AppColors.orange, size: 16),
+                    child: Icon(Icons.cake_outlined, color: AppColors.orange, size: 14),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Text(
-                    'Date of Birth',
+                    'DOB',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: textPrimary,
                     ),
                   ),
+                  if (widget.age != null) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.cyan.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '${widget.age}y',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.cyan,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 8),
               GestureDetector(
                 onTap: () => _showDatePicker(isDark),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   decoration: BoxDecoration(
                     color: cardBg,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: cardBorder),
                   ),
                   child: Row(
@@ -428,7 +436,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                         child: Text(
                           dobDisplay,
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: widget.dateOfBirth != null ? FontWeight.w600 : FontWeight.normal,
                             color: widget.dateOfBirth != null
                                 ? textPrimary
@@ -436,29 +444,11 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                           ),
                         ),
                       ),
-                      if (widget.age != null) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.cyan.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '${widget.age} yrs',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.cyan,
-                            ),
-                          ),
-                        ),
-                      ] else ...[
-                        Icon(
-                          Icons.calendar_today_outlined,
-                          color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                          size: 18,
-                        ),
-                      ],
+                      Icon(
+                        Icons.calendar_today_outlined,
+                        color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                        size: 16,
+                      ),
                     ],
                   ),
                 ),
@@ -466,28 +456,28 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
             ],
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         // Gender selection
         Expanded(
-          flex: 2,
+          flex: 4,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(6),
+                    padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
                       color: AppColors.purple.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Icon(Icons.person_outline, color: AppColors.purple, size: 16),
+                    child: Icon(Icons.person_outline, color: AppColors.purple, size: 14),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Text(
                     'Gender',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: textPrimary,
                     ),
@@ -504,7 +494,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                     cardBg: cardBg,
                     cardBorder: cardBorder,
                     id: 'male',
-                    icon: Icons.male,
+                    label: 'M',
                   ),
                   const SizedBox(width: 6),
                   _buildGenderChip(
@@ -513,7 +503,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                     cardBg: cardBg,
                     cardBorder: cardBorder,
                     id: 'female',
-                    icon: Icons.female,
+                    label: 'F',
                   ),
                   const SizedBox(width: 6),
                   _buildGenderChip(
@@ -522,7 +512,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                     cardBg: cardBg,
                     cardBorder: cardBorder,
                     id: 'other',
-                    icon: Icons.more_horiz,
+                    label: 'Other',
                   ),
                 ],
               ),
@@ -531,6 +521,198 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
         ),
       ],
     ).animate().fadeIn(delay: 300.ms).slideX(begin: 0.05);
+  }
+
+  Widget _buildHeightWeightRow(
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+    Color cardBg,
+    Color cardBorder,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Height section
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.cyan.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.height, color: AppColors.cyan, size: 16),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Height',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const Spacer(),
+                  _buildSmallUnitToggle(
+                    isMetric: _heightInMetric,
+                    metricLabel: 'cm',
+                    imperialLabel: 'ft/in',
+                    onChanged: (isMetric) {
+                      _convertHeightUnits(isMetric);
+                      setState(() => _heightInMetric = isMetric);
+                    },
+                    isDark: isDark,
+                    cardBg: cardBg,
+                    cardBorder: cardBorder,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (_heightInMetric)
+                _buildCompactTextField(
+                  controller: _heightController,
+                  hint: 'cm',
+                  onChanged: (_) => _onHeightChanged(),
+                  isDark: isDark,
+                  textPrimary: textPrimary,
+                  cardBg: cardBg,
+                  cardBorder: cardBorder,
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildCompactTextField(
+                        controller: _heightFeetController,
+                        hint: 'ft',
+                        onChanged: (_) => _onHeightChanged(),
+                        isDark: isDark,
+                        textPrimary: textPrimary,
+                        cardBg: cardBg,
+                        cardBorder: cardBorder,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: _buildCompactTextField(
+                        controller: _heightInchesController,
+                        hint: 'in',
+                        onChanged: (_) => _onHeightChanged(),
+                        isDark: isDark,
+                        textPrimary: textPrimary,
+                        cardBg: cardBg,
+                        cardBorder: cardBorder,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Weight section
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.purple.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.monitor_weight_outlined, color: AppColors.purple, size: 16),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Weight',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const Spacer(),
+                  _buildSmallUnitToggle(
+                    isMetric: _weightInMetric,
+                    metricLabel: 'kg',
+                    imperialLabel: 'lbs',
+                    onChanged: (isMetric) {
+                      _convertWeightUnits(isMetric);
+                      setState(() => _weightInMetric = isMetric);
+                    },
+                    isDark: isDark,
+                    cardBg: cardBg,
+                    cardBorder: cardBorder,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _buildCompactTextField(
+                controller: _weightController,
+                hint: _weightInMetric ? 'kg' : 'lbs',
+                onChanged: (_) => _onWeightChanged(),
+                isDark: isDark,
+                textPrimary: textPrimary,
+                cardBg: cardBg,
+                cardBorder: cardBorder,
+                allowDecimal: true,
+              ),
+            ],
+          ),
+        ),
+      ],
+    ).animate().fadeIn(delay: 350.ms).slideX(begin: 0.05);
+  }
+
+  Widget _buildCompactTextField({
+    required TextEditingController controller,
+    required String hint,
+    required Function(String) onChanged,
+    required bool isDark,
+    required Color textPrimary,
+    required Color cardBg,
+    required Color cardBorder,
+    bool allowDecimal = false,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorder),
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: TextInputType.numberWithOptions(decimal: allowDecimal),
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(
+            allowDecimal ? RegExp(r'^\d*\.?\d*') : RegExp(r'\d*'),
+          ),
+        ],
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: textPrimary,
+        ),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(
+            color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+            fontWeight: FontWeight.normal,
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          border: InputBorder.none,
+        ),
+        onChanged: onChanged,
+      ),
+    );
   }
 
   Future<void> _showDatePicker(bool isDark) async {
@@ -578,7 +760,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     required Color cardBg,
     required Color cardBorder,
     required String id,
-    required IconData icon,
+    required String label,
   }) {
     final isSelected = widget.gender == id;
 
@@ -589,7 +771,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           gradient: isSelected ? AppColors.cyanGradient : null,
           color: isSelected ? null : cardBg,
@@ -599,161 +781,16 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
             width: isSelected ? 2 : 1,
           ),
         ),
-        child: Icon(
-          icon,
-          size: 20,
-          color: isSelected ? Colors.white : textPrimary,
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? Colors.white : textPrimary,
+          ),
         ),
       ),
     );
-  }
-
-  Widget _buildHeightInput(
-    bool isDark,
-    Color textPrimary,
-    Color textSecondary,
-    Color cardBg,
-    Color cardBorder,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.cyan.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(Icons.height, color: AppColors.cyan, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Height',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
-            ),
-            const Spacer(),
-            // Per-field unit toggle for height
-            _buildSmallUnitToggle(
-              isMetric: _heightInMetric,
-              metricLabel: 'cm',
-              imperialLabel: 'ft/in',
-              onChanged: (isMetric) {
-                _convertHeightUnits(isMetric);
-                setState(() => _heightInMetric = isMetric);
-              },
-              isDark: isDark,
-              cardBg: cardBg,
-              cardBorder: cardBorder,
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        if (_heightInMetric)
-          _buildTextField(
-            controller: _heightController,
-            hint: 'cm',
-            onChanged: (_) => _onHeightChanged(),
-            isDark: isDark,
-            textPrimary: textPrimary,
-            cardBg: cardBg,
-            cardBorder: cardBorder,
-          )
-        else
-          Row(
-            children: [
-              Expanded(
-                child: _buildTextField(
-                  controller: _heightFeetController,
-                  hint: 'ft',
-                  onChanged: (_) => _onHeightChanged(),
-                  isDark: isDark,
-                  textPrimary: textPrimary,
-                  cardBg: cardBg,
-                  cardBorder: cardBorder,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildTextField(
-                  controller: _heightInchesController,
-                  hint: 'in',
-                  onChanged: (_) => _onHeightChanged(),
-                  isDark: isDark,
-                  textPrimary: textPrimary,
-                  cardBg: cardBg,
-                  cardBorder: cardBorder,
-                ),
-              ),
-            ],
-          ),
-      ],
-    ).animate().fadeIn(delay: 300.ms).slideX(begin: 0.05);
-  }
-
-  Widget _buildWeightInputWithToggle(
-    bool isDark,
-    Color textPrimary,
-    Color textSecondary,
-    Color cardBg,
-    Color cardBorder,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.purple.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(Icons.monitor_weight_outlined, color: AppColors.purple, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Current Weight',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
-            ),
-            const Spacer(),
-            // Per-field unit toggle for weight
-            _buildSmallUnitToggle(
-              isMetric: _weightInMetric,
-              metricLabel: 'kg',
-              imperialLabel: 'lbs',
-              onChanged: (isMetric) {
-                _convertWeightUnits(isMetric);
-                setState(() => _weightInMetric = isMetric);
-              },
-              isDark: isDark,
-              cardBg: cardBg,
-              cardBorder: cardBorder,
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        _buildTextField(
-          controller: _weightController,
-          hint: _weightInMetric ? 'kg' : 'lbs',
-          onChanged: (_) => _onWeightChanged(),
-          isDark: isDark,
-          textPrimary: textPrimary,
-          cardBg: cardBg,
-          cardBorder: cardBorder,
-          allowDecimal: true,
-        ),
-      ],
-    ).animate().fadeIn(delay: 400.ms).slideX(begin: 0.05);
   }
 
   Widget _buildSmallUnitToggle({
@@ -824,54 +861,6 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    required Function(String) onChanged,
-    required bool isDark,
-    required Color textPrimary,
-    required Color cardBg,
-    required Color cardBorder,
-    bool allowDecimal = false,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorder),
-      ),
-      child: TextField(
-        controller: controller,
-        keyboardType: TextInputType.numberWithOptions(decimal: allowDecimal),
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(
-            allowDecimal ? RegExp(r'^\d*\.?\d*') : RegExp(r'\d*'),
-          ),
-        ],
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: textPrimary,
-        ),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(
-            color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-            fontWeight: FontWeight.normal,
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          border: InputBorder.none,
-          suffixText: hint,
-          suffixStyle: TextStyle(
-            color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-            fontSize: 14,
-          ),
-        ),
-        onChanged: onChanged,
       ),
     );
   }

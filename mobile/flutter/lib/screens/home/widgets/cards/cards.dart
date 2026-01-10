@@ -26,3 +26,4 @@ export 'achievements_card.dart';
 export 'quick_log_weight_card.dart';
 export 'quick_log_measurements_card.dart';
 export 'habits_tile_card.dart';
+export 'rest_day_hero_card.dart';

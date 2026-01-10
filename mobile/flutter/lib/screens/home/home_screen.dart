@@ -1323,7 +1323,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 child: WorkoutCategoryPills(isDark: isDark),
               ),
 
-              // Bottom padding
+              // Hero Section - Today's Workout or Rest Day Card
+              SliverToBoxAdapter(
+                child: _buildHeroSectionFixed(
+                  context,
+                  todayWorkoutState,
+                  isAIGenerating,
+                  isDark,
+                ),
+              ),
+
+              // Quick Actions Row
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: QuickActionsRow(),
+                ),
+              ),
+
+              // Trends Section - Fixed progress cards
+              SliverToBoxAdapter(
+                child: _buildTrendsSection(isDark),
+              ),
+
+              // Bottom padding for nav bar
               const SliverToBoxAdapter(
                 child: SizedBox(height: 100),
               ),
@@ -1799,6 +1822,139 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
         return const GeneratingHeroCard(message: 'No workouts scheduled');
       },
+    );
+  }
+
+  /// Build hero section - always shows today's workout or next upcoming workout
+  /// Matches what is displayed in the Workouts tab
+  Widget _buildHeroSectionFixed(
+    BuildContext context,
+    AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
+    bool isAIGenerating,
+    bool isDark,
+  ) {
+    // Show loading during initial app load
+    if (_isInitializing) {
+      return const GeneratingHeroCard(
+        message: 'Loading your workout...',
+      );
+    }
+
+    // Handle loading state
+    if (todayWorkoutState.isLoading) {
+      return const GeneratingHeroCard(
+        message: 'Loading workout...',
+      );
+    }
+
+    // Handle error state - show empty card with retry
+    if (todayWorkoutState.hasError) {
+      debugPrint('⚠️ [Home] todayWorkoutProvider error: ${todayWorkoutState.error}');
+      return EmptyWorkoutCard(
+        onGenerate: () {
+          HapticService.light();
+          context.go('/workouts');
+        },
+      );
+    }
+
+    final response = todayWorkoutState.valueOrNull;
+
+    // Check if generating
+    if (response?.isGenerating == true || isAIGenerating) {
+      return GeneratingHeroCard(
+        message: response?.generationMessage ?? 'Generating your workout...',
+      );
+    }
+
+    // No response - show empty state
+    if (response == null) {
+      return EmptyWorkoutCard(
+        onGenerate: () {
+          HapticService.light();
+          context.go('/workouts');
+        },
+      );
+    }
+
+    // Get today's workout or next upcoming workout (same logic as Workouts tab)
+    final workoutSummary = response.todayWorkout ?? response.nextWorkout;
+
+    if (workoutSummary != null) {
+      final workout = workoutSummary.toWorkout();
+      // Always show the HeroWorkoutCard - whether it's today or upcoming
+      return HeroWorkoutCard(workout: workout);
+    }
+
+    // No workouts available - show empty state to generate
+    return EmptyWorkoutCard(
+      onGenerate: () {
+        HapticService.light();
+        context.go('/workouts');
+      },
+    );
+  }
+
+  /// Check if a workout is scheduled for today
+  bool _isWorkoutScheduledForToday(Workout workout) {
+    final scheduledDate = workout.scheduledDate;
+    if (scheduledDate == null) return false;
+
+    try {
+      final date = DateTime.parse(scheduledDate);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final workoutDate = DateTime(date.year, date.month, date.day);
+
+      return workoutDate == today;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Build fixed trends section with progress cards
+  /// Shows DailyStats, QuickLogWeight, and WeekProgressStrip
+  Widget _buildTrendsSection(bool isDark) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section header
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              'YOUR PROGRESS',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: textMuted,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ),
+
+          // Two half-width cards in a row
+          Row(
+            children: [
+              Expanded(
+                child: DailyStatsCard(size: TileSize.half, isDark: isDark),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: QuickLogWeightCard(size: TileSize.half, isDark: isDark),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Week progress strip
+          const WeekProgressStrip(),
+        ],
+      ),
     );
   }
 

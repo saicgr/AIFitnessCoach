@@ -138,40 +138,22 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     final dateLabel = _getScheduledDateLabel(workout.scheduledDate);
     final isToday = dateLabel == 'Today';
 
+    final accentColor = isToday ? AppColors.cyan : AppColors.purple;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Container(
         decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(20),
-          border: Border(
-            left: BorderSide(
-              color: AppColors.cyan,
-              width: 4,
-            ),
-            top: BorderSide(
-              color: isToday
-                  ? AppColors.cyan.withValues(alpha: 0.4)
-                  : AppColors.purple.withValues(alpha: 0.3),
-              width: isToday ? 2 : 1,
-            ),
-            right: BorderSide(
-              color: isToday
-                  ? AppColors.cyan.withValues(alpha: 0.4)
-                  : AppColors.purple.withValues(alpha: 0.3),
-              width: isToday ? 2 : 1,
-            ),
-            bottom: BorderSide(
-              color: isToday
-                  ? AppColors.cyan.withValues(alpha: 0.4)
-                  : AppColors.purple.withValues(alpha: 0.3),
-              width: isToday ? 2 : 1,
-            ),
+          border: Border.all(
+            color: accentColor.withValues(alpha: isToday ? 0.4 : 0.3),
+            width: isToday ? 2 : 1,
           ),
           boxShadow: [
             // Main colored glow shadow
             BoxShadow(
-              color: (isToday ? AppColors.cyan : AppColors.purple).withValues(alpha: 0.25),
+              color: accentColor.withValues(alpha: 0.25),
               blurRadius: 24,
               offset: const Offset(0, 8),
               spreadRadius: 2,

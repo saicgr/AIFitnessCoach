@@ -609,12 +609,13 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
       }
       final durationMinutes = prefs?.durationMinutes ?? 45;
 
-      // Step 3: Generate new workouts using streaming
+      // Step 3: Generate ONLY 1 workout (JIT generation - rest are generated on completion)
       int generatedCount = 0;
       await for (final progress in repo.generateMonthlyWorkoutsStreaming(
         userId: userId,
         selectedDays: selectedDays,
         durationMinutes: durationMinutes,
+        maxWorkouts: 1, // JIT: Only generate 1 workout at a time
       )) {
         if (!mounted) return;
 

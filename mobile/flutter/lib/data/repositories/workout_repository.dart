@@ -139,6 +139,34 @@ class WorkoutRepository {
     }
   }
 
+  /// Clean up old workouts from database
+  ///
+  /// Deletes all workouts except the most recent [keepCount] upcoming incomplete workouts.
+  /// Completed workouts are always preserved.
+  ///
+  /// This is useful after migrating from batch generation to JIT generation.
+  Future<Map<String, dynamic>?> cleanupOldWorkouts(
+    String userId, {
+    int keepCount = 1,
+  }) async {
+    try {
+      debugPrint('🧹 [Workout] Cleaning up old workouts for user $userId (keeping $keepCount)');
+      final response = await _apiClient.delete(
+        '${ApiConstants.workouts}/cleanup/$userId',
+        queryParameters: {'keep_count': keepCount.toString()},
+      );
+      if (response.statusCode == 200) {
+        final result = response.data as Map<String, dynamic>;
+        debugPrint('✅ [Workout] Cleanup complete: ${result['message']}');
+        return result;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error cleaning up workouts: $e');
+      rethrow;
+    }
+  }
+
   /// Generate monthly workouts with streaming progress updates
   ///
   /// Returns a Stream that emits progress as each workout is generated.
@@ -203,6 +231,8 @@ class WorkoutRepository {
         requestData['max_workouts'] = maxWorkouts;
         debugPrint('🎯 [Workout] On-demand mode: generating max $maxWorkouts workout(s)');
       }
+
+      debugPrint('🔍 [Workout] Request data: $requestData');
 
       final response = await streamingDio.post(
         '${ApiConstants.workouts}/generate-monthly-stream',

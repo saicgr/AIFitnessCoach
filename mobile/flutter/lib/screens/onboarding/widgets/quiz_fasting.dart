@@ -25,6 +25,10 @@ class QuizFasting extends StatefulWidget {
   final ValueChanged<TimeOfDay>? onWakeTimeChanged;
   final ValueChanged<TimeOfDay>? onSleepTimeChanged;
 
+  // Meals per day (for validation and distribution display)
+  final int? mealsPerDay;
+  final ValueChanged<int>? onMealsPerDayChanged;
+
   const QuizFasting({
     super.key,
     required this.interestedInFasting,
@@ -38,6 +42,8 @@ class QuizFasting extends StatefulWidget {
     this.sleepTime,
     this.onWakeTimeChanged,
     this.onSleepTimeChanged,
+    this.mealsPerDay,
+    this.onMealsPerDayChanged,
   });
 
   @override
@@ -198,6 +204,120 @@ class _QuizFastingState extends State<QuizFasting> {
     return 'Balanced approach for your fitness level';
   }
 
+  /// Get personalized benefit message based on user's goals
+  String _getBenefitMessage() {
+    final direction = widget.weightDirection?.toLowerCase() ?? 'maintain';
+
+    if (direction == 'lose') {
+      return 'Studies show intermittent fasting can boost fat burning by up to 14% and help preserve muscle mass while losing weight.';
+    }
+    if (direction == 'gain') {
+      return 'Fasting can increase human growth hormone levels by up to 5x, helping you build lean muscle more efficiently.';
+    }
+    return 'Intermittent fasting improves insulin sensitivity, mental clarity, and can help maintain a healthy metabolism.';
+  }
+
+  /// Get max meals allowed based on eating window hours
+  /// Rule: Need at least 2 hours between meals for digestion
+  int _getMaxMealsForProtocol(String? protocolId) {
+    if (protocolId == null) return 6;
+
+    int eatingHours = 8; // default
+
+    if (protocolId.startsWith('custom:')) {
+      final parts = protocolId.split(':');
+      if (parts.length >= 3) {
+        eatingHours = int.tryParse(parts[2]) ?? 8;
+      }
+    } else {
+      final protocol = allFastingProtocols.firstWhere(
+        (p) => p['id'] == protocolId,
+        orElse: () => {'eatingHours': 8},
+      );
+      eatingHours = protocol['eatingHours'] as int;
+    }
+
+    // OMAD (1 hour eating window) = 1 meal
+    // 4 hour window = max 2 meals (2 hours apart)
+    // 6 hour window = max 3 meals
+    // 8 hour window = max 4 meals
+    // 10+ hour window = max 5-6 meals
+    if (eatingHours <= 1) return 1;
+    if (eatingHours <= 4) return 2;
+    if (eatingHours <= 6) return 3;
+    if (eatingHours <= 8) return 4;
+    if (eatingHours <= 10) return 5;
+    return 6;
+  }
+
+  /// Get eating window hours for a protocol
+  int _getEatingHours(String? protocolId) {
+    if (protocolId == null) return 24;
+
+    if (protocolId.startsWith('custom:')) {
+      final parts = protocolId.split(':');
+      if (parts.length >= 3) {
+        return int.tryParse(parts[2]) ?? 8;
+      }
+    }
+
+    final protocol = allFastingProtocols.firstWhere(
+      (p) => p['id'] == protocolId,
+      orElse: () => {'eatingHours': 24},
+    );
+    return protocol['eatingHours'] as int;
+  }
+
+  /// Get benefit chips based on user's goals
+  List<Widget> _getBenefitChips(bool isDark, Color textSecondary) {
+    final direction = widget.weightDirection?.toLowerCase() ?? 'maintain';
+
+    List<Map<String, dynamic>> benefits;
+
+    if (direction == 'lose') {
+      benefits = [
+        {'icon': Icons.local_fire_department, 'text': 'Burns fat', 'color': AppColors.coral},
+        {'icon': Icons.trending_down, 'text': 'Reduces cravings', 'color': AppColors.purple},
+        {'icon': Icons.bolt, 'text': 'Boosts energy', 'color': AppColors.orange},
+      ];
+    } else if (direction == 'gain') {
+      benefits = [
+        {'icon': Icons.fitness_center, 'text': 'Builds muscle', 'color': AppColors.purple},
+        {'icon': Icons.trending_up, 'text': 'Growth hormone', 'color': AppColors.success},
+        {'icon': Icons.restaurant, 'text': 'Better digestion', 'color': AppColors.teal},
+      ];
+    } else {
+      benefits = [
+        {'icon': Icons.psychology, 'text': 'Mental clarity', 'color': AppColors.cyan},
+        {'icon': Icons.favorite, 'text': 'Heart health', 'color': AppColors.coral},
+        {'icon': Icons.schedule, 'text': 'Simple routine', 'color': AppColors.purple},
+      ];
+    }
+
+    return benefits.map((b) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: (b['color'] as Color).withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(b['icon'] as IconData, size: 12, color: b['color'] as Color),
+          const SizedBox(width: 4),
+          Text(
+            b['text'] as String,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: b['color'] as Color,
+            ),
+          ),
+        ],
+      ),
+    )).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -206,101 +326,119 @@ class _QuizFastingState extends State<QuizFasting> {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final recommendedId = _getRecommendedProtocol();
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Interested in intermittent fasting?',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
-              height: 1.3,
-            ),
-          ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
-          const SizedBox(height: 8),
-          Text(
-            'We can help track your fasting windows',
-            style: TextStyle(
-              fontSize: 14,
-              color: textSecondary,
-            ),
-          ).animate().fadeIn(delay: 200.ms),
-          const SizedBox(height: 24),
+    // Get personalized benefit message based on user's goal
+    final benefitMessage = _getBenefitMessage();
 
-          // Yes/No selection
-          Row(
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          controller: _scrollController,
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: _InterestButton(
-                  label: 'Yes',
-                  icon: Icons.check_circle_outline,
-                  isSelected: widget.interestedInFasting == true,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    widget.onInterestChanged(true);
-                  },
-                  isDark: isDark,
-                  textPrimary: textPrimary,
-                  cardBorder: cardBorder,
+              Text(
+                'Intermittent fasting can help you reach your goals faster',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: textPrimary,
+                  height: 1.3,
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _InterestButton(
-                  label: 'Not now',
-                  icon: Icons.cancel_outlined,
-                  isSelected: widget.interestedInFasting == false,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    widget.onInterestChanged(false);
-                    widget.onProtocolChanged(null);
-                  },
-                  isDark: isDark,
-                  textPrimary: textPrimary,
-                  cardBorder: cardBorder,
-                ),
-              ),
-            ],
-          ).animate(delay: 300.ms).fadeIn().slideY(begin: 0.1),
+              ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
+              const SizedBox(height: 12),
 
-          // Protocol selection (only if interested)
-          if (widget.interestedInFasting == true) ...[
-            const SizedBox(height: 24),
-            Text(
-              'Choose a fasting protocol',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
-            ).animate().fadeIn(delay: 100.ms),
-            const SizedBox(height: 4),
-            Text(
-              'Optional - you can set this later',
-              style: TextStyle(
-                fontSize: 13,
-                color: textSecondary,
-              ),
-            ).animate().fadeIn(delay: 150.ms),
-            const SizedBox(height: 12),
-            Expanded(
-              child: Stack(
+              // Benefits container
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.cyan.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.cyan.withValues(alpha: 0.2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      benefitMessage,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: textPrimary,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: _getBenefitChips(isDark, textSecondary),
+                    ),
+                  ],
+                ),
+              ).animate().fadeIn(delay: 200.ms),
+              const SizedBox(height: 16),
+
+              // Yes/No selection (compact)
+              Row(
                 children: [
-                  ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.only(bottom: 60),
-                    // +1 for the sleep schedule section at the end
-                    itemCount: allFastingProtocols.length + (widget.onWakeTimeChanged != null ? 1 : 0),
-                    itemBuilder: (context, index) {
-                  // Sleep schedule section at the end
-                  if (index == allFastingProtocols.length) {
-                    return _buildSleepScheduleSection(isDark, textPrimary, textSecondary, cardBorder);
-                  }
+                  Expanded(
+                    child: _buildCompactChoiceButton(
+                      label: "Yes, let's try it",
+                      icon: Icons.rocket_launch_outlined,
+                      isSelected: widget.interestedInFasting == true,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        widget.onInterestChanged(true);
+                      },
+                      isDark: isDark,
+                      textPrimary: textPrimary,
+                      cardBorder: cardBorder,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildCompactChoiceButton(
+                      label: 'Maybe later',
+                      icon: Icons.schedule_outlined,
+                      isSelected: widget.interestedInFasting == false,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        widget.onInterestChanged(false);
+                        widget.onProtocolChanged(null);
+                      },
+                      isDark: isDark,
+                      textPrimary: textPrimary,
+                      cardBorder: cardBorder,
+                    ),
+                  ),
+                ],
+              ).animate(delay: 300.ms).fadeIn().slideY(begin: 0.1),
 
-                  final protocol = allFastingProtocols[index];
+              // Protocol selection (only if interested)
+              if (widget.interestedInFasting == true) ...[
+                const SizedBox(height: 20),
+                Text(
+                  'Choose a fasting protocol',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                ).animate().fadeIn(delay: 100.ms),
+                const SizedBox(height: 2),
+                Text(
+                  'Optional - you can set this later',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textSecondary,
+                  ),
+                ).animate().fadeIn(delay: 150.ms),
+                const SizedBox(height: 10),
+
+                // Protocol list (inline, not in ListView)
+                ...allFastingProtocols.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final protocol = entry.value;
                   final id = protocol['id'] as String;
                   final isSelected = widget.selectedProtocol == id ||
                       (id == 'custom' && widget.selectedProtocol?.startsWith('custom:') == true);
@@ -344,7 +482,7 @@ class _QuizFastingState extends State<QuizFasting> {
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                        color: AppColors.cyan.withOpacity(0.3),
+                                        color: AppColors.cyan.withValues(alpha: 0.3),
                                         blurRadius: 8,
                                         spreadRadius: 0,
                                       ),
@@ -358,8 +496,8 @@ class _QuizFastingState extends State<QuizFasting> {
                                   height: 32,
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? Colors.white.withOpacity(0.2)
-                                        : color.withOpacity(0.15),
+                                        ? Colors.white.withValues(alpha: 0.2)
+                                        : color.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
@@ -389,8 +527,8 @@ class _QuizFastingState extends State<QuizFasting> {
                                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                               decoration: BoxDecoration(
                                                 color: isSelected
-                                                    ? Colors.white.withOpacity(0.2)
-                                                    : AppColors.success.withOpacity(0.15),
+                                                    ? Colors.white.withValues(alpha: 0.2)
+                                                    : AppColors.success.withValues(alpha: 0.15),
                                                 borderRadius: BorderRadius.circular(4),
                                               ),
                                               child: Text(
@@ -409,8 +547,8 @@ class _QuizFastingState extends State<QuizFasting> {
                                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                               decoration: BoxDecoration(
                                                 color: isSelected
-                                                    ? Colors.white.withOpacity(0.2)
-                                                    : AppColors.cyan.withOpacity(0.15),
+                                                    ? Colors.white.withValues(alpha: 0.2)
+                                                    : AppColors.cyan.withValues(alpha: 0.15),
                                                 borderRadius: BorderRadius.circular(4),
                                               ),
                                               child: Text(
@@ -471,7 +609,7 @@ class _QuizFastingState extends State<QuizFasting> {
                                   width: 18,
                                   height: 18,
                                   decoration: BoxDecoration(
-                                    color: isSelected ? Colors.white.withOpacity(0.2) : Colors.transparent,
+                                    color: isSelected ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
                                     shape: BoxShape.circle,
                                     border: isSelected
                                         ? null
@@ -494,22 +632,193 @@ class _QuizFastingState extends State<QuizFasting> {
                       ],
                     ),
                   );
-                },
-              ),
-                  ScrollHintArrow(scrollController: _scrollController),
-                ],
+                }),
+
+                // Meal distribution info (show when protocol selected and meals are set)
+                if (widget.selectedProtocol != null && widget.mealsPerDay != null)
+                  _buildMealDistributionInfo(isDark, textPrimary, textSecondary, cardBorder),
+
+                // Sleep schedule section
+                if (widget.onWakeTimeChanged != null)
+                  _buildSleepScheduleSection(isDark, textPrimary, textSecondary, cardBorder),
+              ],
+
+              const SizedBox(height: 60), // Bottom padding for scroll hint
+            ],
+          ),
+        ),
+        ScrollHintArrow(scrollController: _scrollController),
+      ],
+    );
+  }
+
+  Widget _buildCompactChoiceButton({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required bool isDark,
+    required Color textPrimary,
+    required Color cardBorder,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+        decoration: BoxDecoration(
+          gradient: isSelected ? AppColors.cyanGradient : null,
+          color: isSelected
+              ? null
+              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppColors.cyan : cardBorder,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : AppColors.cyan,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? Colors.white : textPrimary,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-          ] else if (widget.interestedInFasting != null) ...[
-            // Show spacer when "Not now" is selected
-            const Spacer(),
-          ] else ...[
-            // Show spacer when nothing is selected yet
-            const Spacer(),
           ],
-        ],
+        ),
       ),
     );
+  }
+
+  Widget _buildMealDistributionInfo(
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+    Color cardBorder,
+  ) {
+    final meals = widget.mealsPerDay ?? 3;
+    final eatingHours = _getEatingHours(widget.selectedProtocol);
+    final maxMeals = _getMaxMealsForProtocol(widget.selectedProtocol);
+    final isValid = meals <= maxMeals;
+
+    // Calculate time between meals
+    final hoursBetweenMeals = meals > 1 ? (eatingHours / (meals - 1)).toStringAsFixed(1) : eatingHours.toString();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 8),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isValid
+              ? AppColors.cyan.withValues(alpha: 0.1)
+              : AppColors.error.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isValid
+                ? AppColors.cyan.withValues(alpha: 0.3)
+                : AppColors.error.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  isValid ? Icons.restaurant_menu : Icons.warning_amber_rounded,
+                  color: isValid ? AppColors.cyan : AppColors.error,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    isValid
+                        ? 'Meal schedule in ${eatingHours}h window'
+                        : 'Too many meals for this window',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isValid ? AppColors.cyan : AppColors.error,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (isValid) ...[
+              Text(
+                '$meals meals spaced ~$hoursBetweenMeals hours apart',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: textSecondary,
+                ),
+              ),
+              if (eatingHours <= 4) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Tip: Consider larger, nutrient-dense meals',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontStyle: FontStyle.italic,
+                    color: AppColors.purple,
+                  ),
+                ),
+              ],
+            ] else ...[
+              Text(
+                'A ${eatingHours}h eating window fits max $maxMeals meals.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  widget.onMealsPerDayChanged?.call(maxMeals);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.cyan.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.auto_fix_high, size: 14, color: AppColors.cyan),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Adjust to $maxMeals meals',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.cyan,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    ).animate().fadeIn(delay: 100.ms);
   }
 
   Widget _buildCustomProtocolInput(
@@ -657,8 +966,8 @@ class _QuizFastingState extends State<QuizFasting> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: (_customFastingHours + _customEatingHours == 24)
-                  ? AppColors.success.withOpacity(0.1)
-                  : AppColors.warning.withOpacity(0.1),
+                  ? AppColors.success.withValues(alpha: 0.1)
+                  : AppColors.warning.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -676,7 +985,7 @@ class _QuizFastingState extends State<QuizFasting> {
                 Expanded(
                   child: Text(
                     (_customFastingHours + _customEatingHours == 24)
-                        ? 'Custom ${_customFastingHours}:${_customEatingHours} protocol'
+                        ? 'Custom $_customFastingHours:$_customEatingHours protocol'
                         : 'Total should equal 24h (currently ${_customFastingHours + _customEatingHours}h)',
                     style: TextStyle(
                       fontSize: 12,
@@ -771,7 +1080,7 @@ class _QuizFastingState extends State<QuizFasting> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.purple.withOpacity(0.15),
+                    color: AppColors.purple.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(Icons.bedtime_outlined, color: AppColors.purple, size: 20),
@@ -981,7 +1290,7 @@ class _QuizFastingState extends State<QuizFasting> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.cyan.withOpacity(0.1),
+        color: AppColors.cyan.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -1002,75 +1311,6 @@ class _QuizFastingState extends State<QuizFasting> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _InterestButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final bool isDark;
-  final Color textPrimary;
-  final Color cardBorder;
-
-  const _InterestButton({
-    required this.label,
-    required this.icon,
-    required this.isSelected,
-    required this.onTap,
-    required this.isDark,
-    required this.textPrimary,
-    required this.cardBorder,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: isSelected ? AppColors.cyanGradient : null,
-          color: isSelected
-              ? null
-              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected ? AppColors.cyan : cardBorder,
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColors.cyan.withOpacity(0.3),
-                    blurRadius: 8,
-                    spreadRadius: 0,
-                  ),
-                ]
-              : null,
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? Colors.white : AppColors.cyan,
-              size: 28,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : textPrimary,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -467,21 +467,25 @@ async def generate_next_workout(
         workouts = db.get_workouts_by_date_range(user_id, str(today), str(future_date))
 
         # Find the latest scheduled date
-        latest_date = today
+        latest_date = None
         if workouts:
             for w in workouts:
                 sched_date = w.get("scheduled_date", "")
                 if sched_date:
                     try:
                         workout_date = datetime.fromisoformat(str(sched_date)[:10]).date()
-                        if workout_date > latest_date:
+                        if latest_date is None or workout_date > latest_date:
                             latest_date = workout_date
                     except ValueError:
                         pass
 
         # Calculate next workout day based on selected_days
-        # Start searching from the day after the latest scheduled workout
-        search_date = latest_date + timedelta(days=1)
+        # If no workouts exist yet, start searching from today (not tomorrow)
+        # If workouts exist, start from the day after the latest scheduled workout
+        if latest_date is None:
+            search_date = today  # No workouts yet - include today as a candidate
+        else:
+            search_date = latest_date + timedelta(days=1)  # Start after last workout
 
         # Find the next day that matches user's workout days (limit search to 14 days)
         next_workout_date = None

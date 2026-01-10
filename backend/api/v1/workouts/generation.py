@@ -2546,6 +2546,10 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
     async def generate_sse() -> AsyncGenerator[str, None]:
         start_time = time.time()
 
+        # Log request parameters for debugging
+        logger.info(f"[STREAM] Request params: user_id={body.user_id}, max_workouts={body.max_workouts}, "
+                   f"selected_days={body.selected_days}, duration={body.duration_minutes}")
+
         def elapsed_ms() -> int:
             return int((time.time() - start_time) * 1000)
 
@@ -2616,9 +2620,12 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                 return
 
             # Apply max_workouts limit if specified (for on-demand generation)
-            if body.max_workouts:
+            logger.info(f"[STREAM] Before limit: {len(workout_dates)} dates calculated, max_workouts={body.max_workouts} (type={type(body.max_workouts).__name__})")
+            if body.max_workouts is not None and body.max_workouts > 0:
                 workout_dates = workout_dates[:body.max_workouts]
-                logger.info(f"[STREAM] Limiting to {body.max_workouts} workout(s) (on-demand mode)")
+                logger.info(f"[STREAM] After limit: {len(workout_dates)} workout(s) (on-demand mode, limited to {body.max_workouts})")
+            else:
+                logger.info(f"[STREAM] No max_workouts limit - generating all {len(workout_dates)} workouts")
 
             total_workouts = len(workout_dates)
             logger.info(f"[STREAM] Will generate {total_workouts} workout(s)")
