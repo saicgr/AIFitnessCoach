@@ -71,24 +71,44 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   Future<void> _skipWorkout() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.elevated,
-        title: const Text('Skip Workout?'),
-        content: const Text(
-          'This workout will be marked as skipped.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+      barrierDismissible: true,
+      barrierColor: Colors.black54,
+      builder: (dialogContext) {
+        final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          surfaceTintColor: Colors.transparent,
+          title: Text(
+            'Skip Workout?',
+            style: TextStyle(
+              color: isDark ? Colors.white : Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Skip'),
+          content: Text(
+            'This workout will be marked as skipped.',
+            style: TextStyle(
+              color: isDark ? Colors.white70 : Colors.black54,
+            ),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: isDark ? Colors.white60 : Colors.black45,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              style: TextButton.styleFrom(foregroundColor: AppColors.error),
+              child: const Text('Skip'),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirm != true) return;

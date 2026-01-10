@@ -28,7 +28,7 @@ class PaywallPricingScreen extends ConsumerStatefulWidget {
 
 class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   String _selectedPlan = 'premium_plus_yearly';
-  String _selectedBillingCycle = 'yearly'; // 'yearly', 'monthly', or 'lifetime'
+  String _selectedBillingCycle = 'yearly'; // 'yearly' or 'monthly'
   bool _hasShownDiscount = false;
 
   @override
@@ -142,7 +142,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                         const SizedBox(height: 20),
                       ],
 
-                      // Billing cycle tabs (Yearly / Monthly / Lifetime)
+                      // Billing cycle tabs (Yearly / Monthly)
                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
@@ -171,17 +171,6 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                               }),
                               colors: colors,
                             ),
-                            if (currentTier != SubscriptionTier.lifetime)
-                              _BillingTab(
-                                label: 'Lifetime',
-                                sublabel: 'One-time',
-                                isSelected: _selectedBillingCycle == 'lifetime',
-                                onTap: () => setState(() {
-                                  _selectedBillingCycle = 'lifetime';
-                                  _selectedPlan = 'lifetime';
-                                }),
-                                colors: colors,
-                              ),
                           ],
                         ),
                       ),
@@ -189,14 +178,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       const SizedBox(height: 14),
 
                       // Plan options based on selected billing cycle
-                      if (_selectedBillingCycle == 'lifetime')
-                        _LifetimePlanCard(
-                          isSelected: _selectedPlan == 'lifetime',
-                          onTap: () => setState(() => _selectedPlan = 'lifetime'),
-                          colors: colors,
-                        )
-                      else
-                        Column(
+                      Column(
                           children: [
                             // Premium Plus plan (with rainbow border if yearly)
                             if (_selectedBillingCycle == 'yearly')
@@ -459,8 +441,6 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         return const Color(0xFF00CC66); // Green
       case 'premium_monthly':
         return const Color(0xFFFF8C42); // Orange
-      case 'lifetime':
-        return const Color(0xFFFFB800); // Gold
       default:
         return const Color(0xFF00D9FF);
     }
@@ -470,7 +450,6 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     if (!isSubscribed) {
       return _selectedPlan.contains('yearly') ? 'Start Free Trial' : 'Subscribe Now';
     }
-    if (_selectedPlan == 'lifetime') return 'Get Lifetime';
     return 'Change Plan';
   }
 
@@ -480,8 +459,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       _hasShownDiscount = true;
       final accepted = await _showDiscountPopup(context);
       if (accepted == true) {
-        // User accepted the discount - purchase lifetime at discounted price
-        final success = await ref.read(subscriptionProvider.notifier).purchase('lifetime_discount');
+        // User accepted the discount - purchase yearly at discounted price
+        final success = await ref.read(subscriptionProvider.notifier).purchase('premium_plus_yearly_discount');
         if (success && context.mounted) {
           await _markPaywallComplete(ref);
           await _navigateAfterPaywall(context, ref);
@@ -590,6 +569,13 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           'period': 'year',
           'monthlyPrice': 6.67,
         };
+      case 'premium_plus_yearly_discount':
+        return {
+          'name': 'Premium Plus Yearly (Discounted)',
+          'price': 49.99,
+          'period': 'year',
+          'monthlyPrice': 4.17,
+        };
       case 'premium_plus_monthly':
         return {
           'name': 'Premium Plus Monthly',
@@ -610,13 +596,6 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           'price': 5.99,
           'period': 'month',
           'monthlyPrice': 5.99,
-        };
-      case 'lifetime':
-        return {
-          'name': 'Lifetime',
-          'price': 99.99,
-          'period': 'one-time',
-          'monthlyPrice': 0.0,
         };
       default:
         return {
@@ -642,8 +621,6 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                 state.subscriptionEndDate!.difference(DateTime.now()).inDays > 60
             ? 'premium_yearly'
             : 'premium_monthly';
-      case SubscriptionTier.lifetime:
-        return 'lifetime';
       default:
         return 'free';
     }
@@ -1078,124 +1055,6 @@ class _TierPlanCard extends StatelessWidget {
   }
 }
 
-/// Lifetime plan card (special design)
-class _LifetimePlanCard extends StatelessWidget {
-  final bool isSelected;
-  final VoidCallback onTap;
-  final ThemeColors colors;
-
-  const _LifetimePlanCard({
-    required this.isSelected,
-    required this.onTap,
-    required this.colors,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const accentColor = Color(0xFFFFB800); // Gold
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              accentColor.withOpacity(0.15),
-              accentColor.withOpacity(0.05),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: accentColor, width: 2),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isSelected ? accentColor : Colors.transparent,
-                    border: Border.all(color: accentColor, width: 2),
-                  ),
-                  child: isSelected
-                    ? const Icon(Icons.check, size: 16, color: Colors.white)
-                    : null,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Lifetime',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: accentColor,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Text(
-                    'ONE-TIME',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '\$99.99',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: accentColor,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Padding(
-              padding: const EdgeInsets.only(left: 36),
-              child: Text(
-                'Pay once, use forever',
-                style: TextStyle(fontSize: 13, color: colors.textSecondary),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.only(left: 36),
-              child: Column(
-                children: [
-                  _featureRow('🏆 Everything in Premium Plus', colors),
-                  _featureRow('♾️ Lifetime updates & features', colors),
-                  _featureRow('💎 Early access to new features', colors),
-                  _featureRow('🎯 No recurring charges ever', colors),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _featureRow(String text, ThemeColors colors) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Text(text, style: TextStyle(fontSize: 14, color: colors.textPrimary)),
-        ],
-      ),
-    );
-  }
-}
-
 /// Current plan status card
 class _CurrentPlanCard extends StatelessWidget {
   final SubscriptionTier tier;
@@ -1308,7 +1167,7 @@ class _CurrentPlanCard extends StatelessWidget {
   }
 }
 
-/// Last-chance discount popup
+/// Last-chance discount popup - offers yearly at discounted price
 class _DiscountPopup extends StatelessWidget {
   final ThemeColors colors;
 
@@ -1316,6 +1175,7 @@ class _DiscountPopup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const accentColor = Color(0xFF00D9FF); // Cyan for yearly
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(24),
@@ -1324,10 +1184,10 @@ class _DiscountPopup extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.elevated,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFFFB800).withOpacity(0.5), width: 2),
+          border: Border.all(color: accentColor.withOpacity(0.5), width: 2),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFFB800).withOpacity(0.3),
+              color: accentColor.withOpacity(0.3),
               blurRadius: 30,
               spreadRadius: 5,
             ),
@@ -1365,7 +1225,7 @@ class _DiscountPopup extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'One-time exclusive discount just for you!',
+              'Exclusive yearly discount just for you!',
               style: TextStyle(
                 fontSize: 14,
                 color: colors.textSecondary,
@@ -1381,23 +1241,23 @@ class _DiscountPopup extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFFFFB800).withOpacity(0.15),
-                    const Color(0xFFFFB800).withOpacity(0.05),
+                    accentColor.withOpacity(0.15),
+                    accentColor.withOpacity(0.05),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFFFB800).withOpacity(0.3)),
+                border: Border.all(color: accentColor.withOpacity(0.3)),
               ),
               child: Column(
                 children: [
                   Text(
-                    'LIFETIME ACCESS',
+                    'PREMIUM PLUS YEARLY',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFFFFB800),
+                      color: accentColor,
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -1408,9 +1268,9 @@ class _DiscountPopup extends StatelessWidget {
                     children: [
                       // Original price crossed out
                       Text(
-                        '\$99',
+                        '\$79.99',
                         style: TextStyle(
-                          fontSize: 28,
+                          fontSize: 24,
                           fontWeight: FontWeight.w500,
                           color: colors.textSecondary,
                           decoration: TextDecoration.lineThrough,
@@ -1422,18 +1282,29 @@ class _DiscountPopup extends StatelessWidget {
                       // Arrow
                       Icon(
                         Icons.arrow_forward,
-                        color: const Color(0xFFFFB800),
+                        color: accentColor,
                         size: 24,
                       ),
                       const SizedBox(width: 16),
                       // Discounted price
-                      Text(
-                        '\$59',
-                        style: TextStyle(
-                          fontSize: 42,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFFFFB800),
-                        ),
+                      Column(
+                        children: [
+                          Text(
+                            '\$49.99',
+                            style: TextStyle(
+                              fontSize: 38,
+                              fontWeight: FontWeight.bold,
+                              color: accentColor,
+                            ),
+                          ),
+                          Text(
+                            '/year',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -1445,12 +1316,20 @@ class _DiscountPopup extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      'SAVE \$40 (40% OFF)',
+                      'SAVE \$30 (38% OFF)',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: Colors.green,
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Just \$4.17/month',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ],
@@ -1462,10 +1341,10 @@ class _DiscountPopup extends StatelessWidget {
             // Features
             Column(
               children: [
-                _discountFeatureRow('✓ Unlimited AI coaching forever', colors),
-                _discountFeatureRow('✓ All future updates included', colors),
-                _discountFeatureRow('✓ No recurring payments', colors),
-                _discountFeatureRow('✓ One-time payment only', colors),
+                _discountFeatureRow('✓ Unlimited AI workout generation', colors),
+                _discountFeatureRow('✓ Full nutrition & food scanning', colors),
+                _discountFeatureRow('✓ Advanced analytics & insights', colors),
+                _discountFeatureRow('✓ 7-day free trial included', colors),
               ],
             ),
 
@@ -1478,15 +1357,15 @@ class _DiscountPopup extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFFB800),
-                  foregroundColor: Colors.black,
+                  backgroundColor: accentColor,
+                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                   elevation: 0,
                 ),
                 child: const Text(
-                  'Get Lifetime for \$59',
+                  'Get Yearly for \$49.99',
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.bold,

@@ -86,7 +86,9 @@ LibraryExercise _$LibraryExerciseFromJson(Map<String, dynamic> json) =>
       bodyPart: json['body_part'] as String?,
       equipmentValue: json['equipment'] as String?,
       targetMuscle: json['target_muscle'] as String?,
-      secondaryMuscles: json['secondary_muscles'] as String?,
+      secondaryMuscles: (json['secondary_muscles'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
       instructionsValue: json['instructions'] as String?,
       difficultyLevelValue: json['difficulty_level'] as String?,
       category: json['category'] as String?,

@@ -8,6 +8,7 @@ import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 import '../home/widgets/edit_program_sheet.dart';
+import 'widgets/nutrition_fasting_card.dart';
 import 'widgets/widgets.dart';
 
 /// Main profile screen displaying user information, stats, and settings.
@@ -58,6 +59,8 @@ class ProfileScreen extends ConsumerWidget {
           _buildFitnessProfileSection(user),
           const SizedBox(height: 24),
           _buildTrainingSetupSection(context, ref, user),
+          const SizedBox(height: 32),
+          _buildNutritionFastingSection(),
           const SizedBox(height: 32),
           _buildAccountSection(context, ref),
           const SizedBox(height: 32),
@@ -175,6 +178,16 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildNutritionFastingSection() {
+    return Column(
+      children: [
+        const SectionHeader(title: 'NUTRITION & FASTING'),
+        const SizedBox(height: 12),
+        const NutritionFastingCard(),
+      ],
+    ).animate().fadeIn(delay: 200.ms);
+  }
+
   Widget _buildAccountSection(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
@@ -225,8 +238,6 @@ class ProfileScreen extends ConsumerWidget {
         children: [
           Expanded(child: _buildTitlePill(context, isDark)),
           const SizedBox(width: 12),
-          _buildAiSettingsButton(context),
-          const SizedBox(width: 12),
           _buildSettingsButton(context, isDark),
         ],
       ),
@@ -260,39 +271,6 @@ class ProfileScreen extends ConsumerWidget {
                 fontWeight: FontWeight.w600,
                 color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
               ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAiSettingsButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticService.selection();
-        context.push('/ai-settings');
-      },
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.purple, AppColors.cyan],
-          ),
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.cyan.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: const Icon(
-          Icons.psychology,
-          color: Colors.white,
-          size: 24,
         ),
       ),
     );

@@ -116,6 +116,12 @@ class WorkoutTimerController {
     _isPaused = paused;
   }
 
+  /// Stop the workout timer (call when workout completes)
+  void stopWorkoutTimer() {
+    _workoutTimer?.cancel();
+    _workoutTimer = null;
+  }
+
   /// Cancel all timers and dispose
   void dispose() {
     _workoutTimer?.cancel();

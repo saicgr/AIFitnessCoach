@@ -9,6 +9,7 @@ import '../../data/providers/live_chat_provider.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/floating_chat/floating_chat_overlay.dart';
+import '../ai_settings/ai_settings_screen.dart';
 import 'widgets/report_message_sheet.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
@@ -99,6 +100,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
+    // Get coach name from AI settings
+    final aiSettings = ref.watch(aiSettingsProvider);
+    final coachName = aiSettings.coachName ?? 'AI Coach';
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -133,9 +138,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'AI Coach',
-                  style: TextStyle(
+                Text(
+                  coachName,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),

@@ -417,13 +417,16 @@ async def get_workout_generation_params(workout_id: str):
         db = get_supabase_db()
 
         # Get the workout
+        logger.info(f"Fetching workout {workout_id} from database")
         result = db.client.table("workouts").select("*").eq("id", workout_id).execute()
 
         if not result.data:
+            logger.warning(f"Workout {workout_id} not found")
             raise HTTPException(status_code=404, detail="Workout not found")
 
         workout_data = result.data[0]
         user_id = workout_data.get("user_id")
+        logger.info(f"Found workout for user {user_id}")
 
         # Get user profile for context
         user_result = db.client.table("users").select(
@@ -462,12 +465,30 @@ async def get_workout_generation_params(workout_id: str):
 
         # Parse workout exercises
         exercises = parse_json_field(workout_data.get("exercises_json"), [])
+        logger.info(f"Parsed {len(exercises)} exercises for workout {workout_id}")
 
         # Build AI reasoning based on the workout parameters
         workout_type = workout_data.get("type", "strength")
         difficulty = workout_data.get("difficulty", "intermediate")
         target_muscles = parse_json_field(workout_data.get("target_muscles"), [])
         workout_name = workout_data.get("name", "Workout")
+
+        # If no exercises, return early with empty reasoning
+        if not exercises:
+            logger.info(f"No exercises found for workout {workout_id}, returning empty reasoning")
+            return {
+                "workout_id": workout_id,
+                "workout_name": workout_name,
+                "workout_type": workout_type,
+                "difficulty": difficulty,
+                "duration_minutes": workout_data.get("duration_minutes"),
+                "generation_method": workout_data.get("generation_method", "ai"),
+                "user_profile": user_profile,
+                "program_preferences": program_preferences,
+                "workout_reasoning": "This workout is being prepared. Check back after exercises are added.",
+                "exercise_reasoning": [],
+                "target_muscles": target_muscles,
+            }
 
         # Try AI-powered reasoning first, fall back to static if it fails
         exercise_reasoning = []
@@ -592,7 +613,9 @@ async def get_workout_generation_params(workout_id: str):
     except HTTPException:
         raise
     except Exception as e:
+        import traceback
         logger.error(f"Failed to get workout generation params: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -524,9 +524,9 @@ async def end_fast(fast_id: str, data: EndFastRequest):
 
         fast = result.data[0]
 
-        # Calculate duration
+        # Calculate duration - ensure both datetimes are timezone-aware
         start_time = datetime.fromisoformat(fast["start_time"].replace("Z", "+00:00"))
-        end_time = datetime.utcnow()
+        end_time = datetime.now(start_time.tzinfo)  # Use same timezone as start_time
         actual_minutes = int((end_time - start_time).total_seconds() / 60)
         goal_minutes = fast["goal_duration_minutes"]
 
@@ -544,7 +544,7 @@ async def end_fast(fast_id: str, data: EndFastRequest):
             "notes": data.notes or fast.get("notes"),
             "mood_after": data.mood_after,
             "energy_level": data.energy_level,
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": end_time.isoformat(),  # Use same timezone-aware datetime
         }
 
         db.client.table("fasting_records").update(update_data).eq("id", fast_id).execute()

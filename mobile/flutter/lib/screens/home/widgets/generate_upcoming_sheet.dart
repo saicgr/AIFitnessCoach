@@ -47,6 +47,7 @@ class _GenerateUpcomingSheet extends ConsumerStatefulWidget {
 
 class _GenerateUpcomingSheetState extends ConsumerState<_GenerateUpcomingSheet> {
   bool _isGenerating = false;
+  bool _isLoadingExisting = true;  // Loading state for existing workouts
   int _currentWorkout = 0;
   int _totalWorkouts = 0;
   String _progressMessage = '';
@@ -66,6 +67,101 @@ class _GenerateUpcomingSheetState extends ConsumerState<_GenerateUpcomingSheet> 
   void initState() {
     super.initState();
     _loadRemainingDays();
+    // Load existing workouts after frame is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadExistingWorkouts();
+    });
+  }
+
+  /// Load any existing workouts for this week's remaining days
+  Future<void> _loadExistingWorkouts() async {
+    final authState = ref.read(authStateProvider);
+    final userId = authState.user?.id;
+    if (userId == null || _remainingDays.isEmpty) {
+      setState(() => _isLoadingExisting = false);
+      return;
+    }
+
+    try {
+      final repo = ref.read(workoutRepositoryProvider);
+      final workouts = await repo.getWorkouts(userId, limit: 20);
+
+      // Get the start of this week (Monday)
+      final now = DateTime.now();
+      final monday = now.subtract(Duration(days: now.weekday - 1));
+      final startOfWeek = DateTime(monday.year, monday.month, monday.day);
+      final endOfWeek = startOfWeek.add(const Duration(days: 7));
+
+      // Filter to workouts scheduled for this week on remaining days
+      final thisWeekWorkouts = workouts.where((w) {
+        if (w.scheduledDate == null) return false;
+        final date = DateTime.tryParse(w.scheduledDate!);
+        if (date == null) return false;
+
+        // Check if within this week
+        if (date.isBefore(startOfWeek) || date.isAfter(endOfWeek)) return false;
+
+        // Check if it's one of the remaining workout days
+        final dayIndex = date.weekday - 1; // 0=Mon, 6=Sun
+        return _remainingDays.contains(dayIndex);
+      }).toList();
+
+      if (mounted) {
+        setState(() {
+          _generatedWorkouts.addAll(thisWeekWorkouts);
+          _isLoadingExisting = false;
+          // If all remaining days have workouts, mark as completed
+          if (_getDaysWithoutWorkouts().isEmpty && _generatedWorkouts.isNotEmpty) {
+            _isCompleted = true;
+            _progressMessage = 'All workouts ready!';
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading existing workouts: $e');
+      if (mounted) {
+        setState(() => _isLoadingExisting = false);
+      }
+    }
+  }
+
+  /// Get list of day indices that don't have workouts yet
+  List<int> _getDaysWithoutWorkouts() {
+    final now = DateTime.now();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final startOfWeek = DateTime(monday.year, monday.month, monday.day);
+
+    return _remainingDays.where((dayIndex) {
+      final targetDate = startOfWeek.add(Duration(days: dayIndex));
+      return !_generatedWorkouts.any((w) {
+        if (w.scheduledDate == null) return false;
+        final date = DateTime.tryParse(w.scheduledDate!);
+        if (date == null) return false;
+        return date.year == targetDate.year &&
+               date.month == targetDate.month &&
+               date.day == targetDate.day;
+      });
+    }).toList();
+  }
+
+  /// Get workout for a specific day index (0=Mon, 6=Sun)
+  Workout? _getWorkoutForDay(int dayIndex) {
+    final now = DateTime.now();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final startOfWeek = DateTime(monday.year, monday.month, monday.day);
+    final targetDate = startOfWeek.add(Duration(days: dayIndex));
+
+    for (final workout in _generatedWorkouts) {
+      if (workout.scheduledDate == null) continue;
+      final date = DateTime.tryParse(workout.scheduledDate!);
+      if (date == null) continue;
+      if (date.year == targetDate.year &&
+          date.month == targetDate.month &&
+          date.day == targetDate.day) {
+        return workout;
+      }
+    }
+    return null;
   }
 
   void _loadRemainingDays() {
@@ -81,13 +177,26 @@ class _GenerateUpcomingSheetState extends ConsumerState<_GenerateUpcomingSheet> 
   Future<void> _startGeneration() async {
     if (_remainingDays.isEmpty) return;
 
+    // Only generate for days that don't have workouts yet
+    final daysToGenerate = _getDaysWithoutWorkouts();
+
+    if (daysToGenerate.isEmpty) {
+      setState(() {
+        _isCompleted = true;
+        _progressMessage = 'All workouts already generated!';
+      });
+      return;
+    }
+
+    // Store existing workouts before clearing for generation tracking
+    final existingWorkouts = List<Workout>.from(_generatedWorkouts);
+
     setState(() {
       _isGenerating = true;
       _currentWorkout = 0;
-      _totalWorkouts = _remainingDays.length;
+      _totalWorkouts = daysToGenerate.length;
       _progressMessage = 'Starting generation...';
       _progressDetail = null;
-      _generatedWorkouts.clear();
       _isCompleted = false;
       _hasError = false;
       _errorMessage = null;
@@ -111,14 +220,14 @@ class _GenerateUpcomingSheetState extends ConsumerState<_GenerateUpcomingSheet> 
       final repo = ref.read(workoutRepositoryProvider);
 
       // Convert 0-indexed days to 1-indexed for API (1=Mon, 7=Sun)
-      final selectedDaysForApi = _remainingDays.map((d) => d + 1).toList();
+      final selectedDaysForApi = daysToGenerate.map((d) => d + 1).toList();
 
       await for (final progress in repo.generateMonthlyWorkoutsStreaming(
         userId: userId,
         selectedDays: selectedDaysForApi,
         durationMinutes: 45,
         monthStartDate: DateTime.now().toIso8601String().split('T')[0],
-        maxWorkouts: _remainingDays.length,
+        maxWorkouts: daysToGenerate.length,
       )) {
         if (!mounted) return;
 
@@ -151,14 +260,18 @@ class _GenerateUpcomingSheetState extends ConsumerState<_GenerateUpcomingSheet> 
           _currentWorkout = progress.currentWorkout;
           _totalWorkouts = progress.totalWorkouts > 0
               ? progress.totalWorkouts
-              : _remainingDays.length;
+              : daysToGenerate.length;
           _progressMessage = progress.message;
           _progressDetail = progress.detail;
 
-          // Add new workouts to our list
-          if (progress.workouts.length > _generatedWorkouts.length) {
-            _generatedWorkouts.clear();
-            _generatedWorkouts.addAll(progress.workouts);
+          // Merge existing workouts with newly generated ones
+          _generatedWorkouts.clear();
+          _generatedWorkouts.addAll(existingWorkouts);
+          // Add new workouts that aren't already in the list
+          for (final newWorkout in progress.workouts) {
+            if (!_generatedWorkouts.any((w) => w.id == newWorkout.id)) {
+              _generatedWorkouts.add(newWorkout);
+            }
           }
         });
       }
@@ -449,6 +562,9 @@ class _GenerateUpcomingSheetState extends ConsumerState<_GenerateUpcomingSheet> 
       );
     }
 
+    // Get days that still need generation
+    final daysWithoutWorkouts = _getDaysWithoutWorkouts();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -464,10 +580,14 @@ class _GenerateUpcomingSheetState extends ConsumerState<_GenerateUpcomingSheet> 
         const SizedBox(height: 12),
         ...List.generate(_remainingDays.length, (index) {
           final dayIndex = _remainingDays[index];
-          final isGenerated = index < _generatedWorkouts.length;
-          final isCurrentlyGenerating =
-              _isGenerating && index == _generatedWorkouts.length;
-          final workout = isGenerated ? _generatedWorkouts[index] : null;
+          // Look up workout by date, not by index
+          final workout = _getWorkoutForDay(dayIndex);
+          final isGenerated = workout != null;
+          // Check if this specific day is currently being generated
+          final isCurrentlyGenerating = _isGenerating &&
+              !isGenerated &&
+              daysWithoutWorkouts.isNotEmpty &&
+              daysWithoutWorkouts.first == dayIndex;
 
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -476,6 +596,7 @@ class _GenerateUpcomingSheetState extends ConsumerState<_GenerateUpcomingSheet> 
               workout: workout,
               isGenerated: isGenerated,
               isCurrentlyGenerating: isCurrentlyGenerating,
+              isWaiting: _isGenerating && !isGenerated && !isCurrentlyGenerating,
               isDark: isDark,
               textPrimary: textPrimary,
               textSecondary: textSecondary,
@@ -492,6 +613,7 @@ class _GenerateUpcomingSheetState extends ConsumerState<_GenerateUpcomingSheet> 
     required Workout? workout,
     required bool isGenerated,
     required bool isCurrentlyGenerating,
+    required bool isWaiting,
     required bool isDark,
     required Color textPrimary,
     required Color textSecondary,
@@ -499,117 +621,149 @@ class _GenerateUpcomingSheetState extends ConsumerState<_GenerateUpcomingSheet> 
   }) {
     final backgroundColor = isDark ? AppColors.surface : AppColorsLight.surface;
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isCurrentlyGenerating
-            ? AppColors.electricBlue.withValues(alpha: 0.1)
-            : backgroundColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
+    // Make row tappable when workout exists
+    return InkWell(
+      onTap: workout != null ? () => _openWorkoutDetail(workout) : null,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
           color: isCurrentlyGenerating
-              ? AppColors.electricBlue.withValues(alpha: 0.3)
-              : cardBorder,
+              ? AppColors.electricBlue.withValues(alpha: 0.1)
+              : isGenerated
+                  ? AppColors.success.withValues(alpha: 0.05)
+                  : backgroundColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isCurrentlyGenerating
+                ? AppColors.electricBlue.withValues(alpha: 0.3)
+                : isGenerated
+                    ? AppColors.success.withValues(alpha: 0.3)
+                    : cardBorder,
+          ),
+        ),
+        child: Row(
+          children: [
+            // Status icon
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: isGenerated
+                    ? AppColors.success.withValues(alpha: 0.15)
+                    : isCurrentlyGenerating
+                        ? AppColors.electricBlue.withValues(alpha: 0.15)
+                        : cardBorder.withValues(alpha: 0.5),
+                shape: BoxShape.circle,
+              ),
+              child: isGenerated
+                  ? const Icon(Icons.check, color: AppColors.success, size: 18)
+                  : isCurrentlyGenerating
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.electricBlue,
+                          ),
+                        )
+                      : Icon(Icons.circle_outlined, color: textSecondary, size: 18),
+            ),
+            const SizedBox(width: 12),
+
+            // Day info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _dayNames[dayIndex],
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  if (workout != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      '${workout.name ?? workout.type ?? 'Workout'} • ${workout.durationMinutes ?? 45} min',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textSecondary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ] else if (isCurrentlyGenerating) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'Generating...',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.electricBlue,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ] else if (isWaiting) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'Waiting...',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textSecondary,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ] else ...[
+                    // Not generating yet - show ready state
+                    const SizedBox(height: 2),
+                    Text(
+                      'Ready to generate',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textSecondary.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            // Exercise count badge or tap hint for generated workouts
+            if (workout != null) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.cyan.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${workout.exercises.length} exercises',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.cyan,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.chevron_right,
+                color: textSecondary.withValues(alpha: 0.5),
+                size: 20,
+              ),
+            ],
+          ],
         ),
       ),
-      child: Row(
-        children: [
-          // Status icon
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: isGenerated
-                  ? AppColors.success.withValues(alpha: 0.15)
-                  : isCurrentlyGenerating
-                      ? AppColors.electricBlue.withValues(alpha: 0.15)
-                      : cardBorder.withValues(alpha: 0.5),
-              shape: BoxShape.circle,
-            ),
-            child: isGenerated
-                ? const Icon(Icons.check, color: AppColors.success, size: 18)
-                : isCurrentlyGenerating
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.electricBlue,
-                        ),
-                      )
-                    : Icon(Icons.circle_outlined, color: textSecondary, size: 18),
-          ),
-          const SizedBox(width: 12),
-
-          // Day info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _dayNames[dayIndex],
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
-                ),
-                if (workout != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    '${workout.name ?? workout.type ?? 'Workout'} • ${workout.durationMinutes ?? 45} min',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textSecondary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ] else if (isCurrentlyGenerating) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    'Generating...',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.electricBlue,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ] else ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    'Waiting...',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textSecondary,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-
-          // Exercise count badge
-          if (workout != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.cyan.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                '${workout.exercises.length} exercises',
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.cyan,
-                ),
-              ),
-            ),
-        ],
-      ),
     );
+  }
+
+  /// Navigate to workout detail screen
+  void _openWorkoutDetail(Workout workout) {
+    if (workout.id == null) return;
+    context.push('/workout/${workout.id}');
   }
 
   Widget _buildActionButton(bool isDark, Color textPrimary) {
@@ -693,6 +847,47 @@ class _GenerateUpcomingSheetState extends ConsumerState<_GenerateUpcomingSheet> 
       );
     }
 
+    // Calculate how many workouts still need to be generated
+    final daysWithoutWorkouts = _getDaysWithoutWorkouts();
+    final workoutsToGenerate = daysWithoutWorkouts.length;
+
+    // If loading existing workouts, show loading state
+    if (_isLoadingExisting) {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.electricBlue,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            disabledBackgroundColor: AppColors.electricBlue.withValues(alpha: 0.6),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(width: 12),
+              Text(
+                'Loading...',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
@@ -731,7 +926,9 @@ class _GenerateUpcomingSheetState extends ConsumerState<_GenerateUpcomingSheet> 
                   const Icon(Icons.auto_awesome, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    'Generate ${_remainingDays.length} Workout${_remainingDays.length == 1 ? '' : 's'}',
+                    workoutsToGenerate > 0
+                        ? 'Generate $workoutsToGenerate Workout${workoutsToGenerate == 1 ? '' : 's'}'
+                        : 'All Workouts Ready',
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ],

@@ -8,6 +8,7 @@ import '../../data/providers/guest_mode_provider.dart';
 import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../../screens/ai_settings/ai_settings_screen.dart';
 import '../../screens/chat/chat_screen.dart';
 import '../guest_upgrade_sheet.dart';
 import '../main_shell.dart';
@@ -182,6 +183,10 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
 
+    // Get coach name from AI settings
+    final aiSettings = ref.watch(aiSettingsProvider);
+    final coachName = aiSettings.coachName ?? 'AI Coach';
+
     // Use Padding to handle keyboard - this is the Flutter-recommended way
     return Padding(
       padding: EdgeInsets.only(bottom: keyboardHeight),
@@ -236,7 +241,7 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'AI Coach',
+                          coachName,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

@@ -100,12 +100,12 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                   ),
                 ],
                 bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(116),
+                  preferredSize: const Size.fromHeight(130),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       // Stats chips row
                       _buildStatsChips(context, isDark, feedDataAsync),
-                      const SizedBox(height: 4),
                       // Modern segmented tab bar
                       _buildSegmentedTabs(context, isDark),
                     ],
@@ -129,14 +129,23 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
   }
 
   Widget _buildSegmentedTabs(BuildContext context, bool isDark) {
+    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
         decoration: BoxDecoration(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.black.withValues(alpha: 0.04),
+          color: cardBg,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: cardBorder),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         padding: const EdgeInsets.all(4),
         child: AnimatedBuilder(
@@ -189,15 +198,16 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
   }) {
     final isSelected = _tabController.index == index;
     final animationValue = _tabController.animation?.value ?? 0.0;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     // Calculate selection progress for smooth animation
     final selectionProgress = (1.0 - (animationValue - index).abs()).clamp(0.0, 1.0);
 
-    // Colors
+    // Colors - use consistent app colors
     final selectedBg = AppColors.cyan;
     final unselectedBg = Colors.transparent;
-    final selectedFg = isDark ? Colors.black : Colors.white;
-    final unselectedFg = AppColors.textMuted;
+    final selectedFg = Colors.white;
+    final unselectedFg = textMuted;
 
     // Interpolate colors based on selection progress
     final bgColor = Color.lerp(unselectedBg, selectedBg, selectionProgress)!;
@@ -219,8 +229,8 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: AppColors.cyan.withValues(alpha: 0.3),
-                      blurRadius: 8,
+                      color: AppColors.cyan.withValues(alpha: 0.4),
+                      blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
                   ]
@@ -268,52 +278,83 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
       });
     }
 
+    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildStatChip(
-              context,
-              isDark: isDark,
-              icon: Icons.people_rounded,
-              value: friendsCount,
-              color: AppColors.cyan,
-              onTap: () {
-                HapticFeedback.lightImpact();
-                _tabController.animateTo(3); // Friends tab
-              },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: cardBorder),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _buildStatChip(
-              context,
-              isDark: isDark,
-              icon: Icons.emoji_events_rounded,
-              value: challengesCount,
-              color: AppColors.orange,
-              onTap: () {
-                HapticFeedback.lightImpact();
-                _tabController.animateTo(1); // Challenges tab
-              },
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: _buildStatChip(
+                context,
+                isDark: isDark,
+                icon: Icons.people_rounded,
+                value: friendsCount,
+                label: 'Friends',
+                color: AppColors.cyan,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  _tabController.animateTo(3); // Friends tab
+                },
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _buildStatChip(
-              context,
-              isDark: isDark,
-              icon: Icons.favorite_rounded,
-              value: reactionsCount,
-              color: AppColors.pink,
-              onTap: () {
-                HapticFeedback.lightImpact();
-                _tabController.animateTo(0); // Feed tab (where reactions are)
-              },
+            Container(
+              width: 1,
+              height: 32,
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              color: cardBorder,
             ),
-          ),
-        ],
+            Expanded(
+              child: _buildStatChip(
+                context,
+                isDark: isDark,
+                icon: Icons.emoji_events_rounded,
+                value: challengesCount,
+                label: 'Challenges',
+                color: AppColors.orange,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  _tabController.animateTo(1); // Challenges tab
+                },
+              ),
+            ),
+            Container(
+              width: 1,
+              height: 32,
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              color: cardBorder,
+            ),
+            Expanded(
+              child: _buildStatChip(
+                context,
+                isDark: isDark,
+                icon: Icons.favorite_rounded,
+                value: reactionsCount,
+                label: 'Likes',
+                color: AppColors.coral,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  _tabController.animateTo(0); // Feed tab (where reactions are)
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -323,37 +364,45 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     required bool isDark,
     required IconData icon,
     required int value,
+    required String label,
     required Color color,
     required VoidCallback onTap,
   }) {
-    final chipBackground = isDark
-        ? color.withValues(alpha: 0.15)
-        : color.withValues(alpha: 0.1);
-    final borderColor = color.withValues(alpha: 0.3);
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            color: chipBackground,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: borderColor, width: 1),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: color, size: 18),
-              const SizedBox(width: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, color: color, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    '$value',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
               Text(
-                '$value',
+                label,
                 style: TextStyle(
-                  fontSize: 14,
-                  color: color,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  color: textMuted,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
@@ -370,6 +419,8 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
   ) {
     final username = user?.username as String?;
     final userId = user?.id as String?;
+    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     // Show username if available, otherwise show truncated user ID
     final displayText = username ?? (userId?.substring(0, 6) ?? '---');
@@ -395,18 +446,13 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
             );
           }
         },
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.cyan.withValues(alpha: 0.15)
-                : AppColors.cyan.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppColors.cyan.withValues(alpha: 0.3),
-              width: 1,
-            ),
+            color: cardBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cardBorder),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

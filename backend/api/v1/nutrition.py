@@ -1624,7 +1624,27 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                 logger.warning(f"[ANALYZE-STREAM] Could not fetch user goals: {e}")
 
             # Step 2: Get RAG context and analyze with AI
-            yield send_progress(2, 3, "Analyzing your food...", "AI is identifying ingredients")
+            # Check if this is a complex/regional food that may take longer
+            description_lower = body.description.lower()
+            regional_keywords = ['biryani', 'curry', 'masala', 'tikka', 'tandoori', 'paneer', 'dosa', 'idli',
+                               'sambar', 'rasam', 'korma', 'vindaloo', 'rogan josh', 'dal', 'chapati', 'naan',
+                               'paratha', 'puri', 'samosa', 'pakora', 'chutney', 'raita', 'lassi', 'kulfi',
+                               'halwa', 'ladoo', 'gulab jamun', 'jalebi', 'kheer', 'payasam', 'upma', 'poha',
+                               'pav bhaji', 'vada pav', 'chole', 'rajma', 'aloo', 'gobi', 'bhindi', 'palak',
+                               'pho', 'banh mi', 'pad thai', 'tom yum', 'rendang', 'satay', 'laksa', 'nasi',
+                               'kimchi', 'bibimbap', 'bulgogi', 'japchae', 'ramen', 'udon', 'sushi', 'tempura',
+                               'dim sum', 'congee', 'char siu', 'kung pao', 'mapo tofu', 'szechuan',
+                               'tacos', 'burrito', 'enchilada', 'tamale', 'mole', 'pozole', 'ceviche',
+                               'falafel', 'shawarma', 'hummus', 'baba ganoush', 'tabouleh', 'fattoush',
+                               'injera', 'doro wat', 'tagine', 'couscous', 'jollof', 'fufu', 'egusi',
+                               'pierogi', 'borscht', 'goulash', 'schnitzel', 'paella', 'tapas', 'risotto',
+                               'gnocchi', 'carbonara', 'bolognese', 'osso buco', 'tiramisu', 'panna cotta']
+            is_complex = any(keyword in description_lower for keyword in regional_keywords)
+
+            if is_complex:
+                yield send_progress(2, 3, "Analyzing regional cuisine...", "🌍 Complex dishes take a bit longer")
+            else:
+                yield send_progress(2, 3, "Analyzing your food...", "AI is identifying ingredients")
 
             rag_context = None
             if user_goals:

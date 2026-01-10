@@ -32,7 +32,7 @@ class CompletedSetData {
 }
 
 /// Set tracking section for active workouts
-class SetTrackingSection extends StatelessWidget {
+class SetTrackingSection extends StatefulWidget {
   /// Current exercise being tracked
   final WorkoutExercise exercise;
 
@@ -126,6 +126,13 @@ class SetTrackingSection extends StatelessWidget {
   });
 
   @override
+  State<SetTrackingSection> createState() => _SetTrackingSectionState();
+}
+
+class _SetTrackingSectionState extends State<SetTrackingSection> {
+  bool _isMinimized = false;
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final headerBg = isDark
@@ -160,45 +167,57 @@ class SetTrackingSection extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header with exercise navigation
+              // Header with exercise navigation and minimize button
               _buildHeader(headerBg, textPrimary, textMuted, isDark),
 
-              // Completed sets summary (compact)
-              if (completedSets.isNotEmpty)
-                _buildCompletedSetsSummary(isDark, textMuted),
+              // Collapsible content
+              AnimatedSize(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                child: _isMinimized
+                    ? const SizedBox.shrink()
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Completed sets summary (compact)
+                          if (widget.completedSets.isNotEmpty)
+                            _buildCompletedSetsSummary(isDark, textMuted),
 
-              // Active set card (FuturisticSetCard)
-              if (isCurrentExercise && currentSetNumber <= totalSets)
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: FuturisticSetCard(
-                    exerciseName: exercise.name,
-                    currentSetNumber: currentSetNumber,
-                    totalSets: totalSets,
-                    weight: currentWeight,
-                    reps: currentReps,
-                    weightStep: weightStep,
-                    useKg: useKg,
-                    previousWeight: _getPreviousWeight(),
-                    previousReps: _getPreviousReps(),
-                    onWeightChanged: onWeightChanged,
-                    onRepsChanged: onRepsChanged,
-                    onComplete: onCompleteSet,
-                    onSkip: onSkipExercise,
-                    completedSets: completedSets
-                        .map((s) => {'weight': s.weight, 'reps': s.reps})
-                        .toList(),
-                    isLastSet: currentSetNumber >= totalSets,
-                    setType: setType,
-                    onSetTypeChanged: onSetTypeChanged,
-                    smartWeightSuggestion: smartWeightSuggestion,
-                    isWeightFromAiSuggestion: isWeightFromAiSuggestion,
-                  ),
-                ),
+                          // Active set card (FuturisticSetCard)
+                          if (widget.isCurrentExercise && widget.currentSetNumber <= widget.totalSets)
+                            Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: FuturisticSetCard(
+                                exerciseName: widget.exercise.name,
+                                currentSetNumber: widget.currentSetNumber,
+                                totalSets: widget.totalSets,
+                                weight: widget.currentWeight,
+                                reps: widget.currentReps,
+                                weightStep: widget.weightStep,
+                                useKg: widget.useKg,
+                                previousWeight: _getPreviousWeight(),
+                                previousReps: _getPreviousReps(),
+                                onWeightChanged: widget.onWeightChanged,
+                                onRepsChanged: widget.onRepsChanged,
+                                onComplete: widget.onCompleteSet,
+                                onSkip: widget.onSkipExercise,
+                                completedSets: widget.completedSets
+                                    .map((s) => {'weight': s.weight, 'reps': s.reps})
+                                    .toList(),
+                                isLastSet: widget.currentSetNumber >= widget.totalSets,
+                                setType: widget.setType,
+                                onSetTypeChanged: widget.onSetTypeChanged,
+                                smartWeightSuggestion: widget.smartWeightSuggestion,
+                                isWeightFromAiSuggestion: widget.isWeightFromAiSuggestion,
+                              ),
+                            ),
 
-              // Exercise completed state
-              if (isCurrentExercise && currentSetNumber > totalSets)
-                _buildExerciseCompleteState(isDark, textPrimary),
+                          // Exercise completed state
+                          if (widget.isCurrentExercise && widget.currentSetNumber > widget.totalSets)
+                            _buildExerciseCompleteState(isDark, textPrimary),
+                        ],
+                      ),
+              ),
             ],
           ),
         ),
@@ -212,57 +231,86 @@ class SetTrackingSection extends StatelessWidget {
     Color textMuted,
     bool isDark,
   ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: headerBg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Row(
-        children: [
-          // Previous exercise button
-          _buildNavButton(
-            icon: Icons.chevron_left,
-            enabled: exerciseIndex > 0,
-            onTap: onPreviousExercise,
-            textMuted: textMuted,
-          ),
-          const SizedBox(width: 8),
-          // Exercise name and position
-          Expanded(
-            child: Column(
-              children: [
-                Text(
-                  exercise.name,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: isCurrentExercise ? AppColors.cyan : textPrimary,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Exercise ${exerciseIndex + 1} of $totalExercises',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: textMuted,
-                  ),
-                ),
-              ],
+    return GestureDetector(
+      onTap: () {
+        setState(() => _isMinimized = !_isMinimized);
+        HapticFeedback.lightImpact();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: headerBg,
+          borderRadius: _isMinimized
+              ? BorderRadius.circular(20)
+              : const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Row(
+          children: [
+            // Minimize/Expand indicator
+            AnimatedRotation(
+              turns: _isMinimized ? 0.5 : 0,
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                Icons.keyboard_arrow_down,
+                color: textMuted,
+                size: 20,
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          // Next exercise button
-          _buildNavButton(
-            icon: Icons.chevron_right,
-            enabled: exerciseIndex < totalExercises - 1,
-            onTap: onNextExercise,
-            textMuted: textMuted,
-          ),
-        ],
+            const SizedBox(width: 4),
+            // Previous exercise button
+            _buildNavButton(
+              icon: Icons.chevron_left,
+              enabled: widget.exerciseIndex > 0,
+              onTap: widget.onPreviousExercise,
+              textMuted: textMuted,
+            ),
+            const SizedBox(width: 4),
+            // Exercise name and position
+            Expanded(
+              child: Column(
+                children: [
+                  Text(
+                    widget.exercise.name,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: widget.isCurrentExercise ? AppColors.cyan : textPrimary,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (!_isMinimized) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'Exercise ${widget.exerciseIndex + 1} of ${widget.totalExercises}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: textMuted,
+                      ),
+                    ),
+                  ] else ...[
+                    Text(
+                      'Set ${widget.currentSetNumber}/${widget.totalSets} • Tap to expand',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: textMuted,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 4),
+            // Next exercise button
+            _buildNavButton(
+              icon: Icons.chevron_right,
+              enabled: widget.exerciseIndex < widget.totalExercises - 1,
+              onTap: widget.onNextExercise,
+              textMuted: textMuted,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -312,13 +360,13 @@ class SetTrackingSection extends StatelessWidget {
             child: Wrap(
               spacing: 12,
               runSpacing: 4,
-              children: completedSets.asMap().entries.map((entry) {
+              children: widget.completedSets.asMap().entries.map((entry) {
                 final index = entry.key;
                 final set = entry.value;
-                final isJustCompleted = justCompletedSetIndex == index;
+                final isJustCompleted = widget.justCompletedSetIndex == index;
 
                 return GestureDetector(
-                  onTap: () => onEditSet?.call(index),
+                  onTap: () => widget.onEditSet?.call(index),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
@@ -331,7 +379,7 @@ class SetTrackingSection extends StatelessWidget {
                           : null,
                     ),
                     child: Text(
-                      'S${index + 1}: ${set.weight.toStringAsFixed(0)}${useKg ? 'kg' : 'lbs'}×${set.reps}',
+                      'S${index + 1}: ${set.weight.toStringAsFixed(0)}${widget.useKg ? 'kg' : 'lbs'}×${set.reps}',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -394,7 +442,7 @@ class SetTrackingSection extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '${completedSets.length} sets completed',
+            '${widget.completedSets.length} sets completed',
             style: TextStyle(
               fontSize: 14,
               color: AppColors.success,
@@ -406,16 +454,16 @@ class SetTrackingSection extends StatelessWidget {
   }
 
   double? _getPreviousWeight() {
-    if (previousSets.isEmpty) return null;
-    final setIndex = currentSetNumber - 1;
-    if (setIndex >= previousSets.length) return null;
-    return (previousSets[setIndex]['weight'] as num?)?.toDouble();
+    if (widget.previousSets.isEmpty) return null;
+    final setIndex = widget.currentSetNumber - 1;
+    if (setIndex >= widget.previousSets.length) return null;
+    return (widget.previousSets[setIndex]['weight'] as num?)?.toDouble();
   }
 
   int? _getPreviousReps() {
-    if (previousSets.isEmpty) return null;
-    final setIndex = currentSetNumber - 1;
-    if (setIndex >= previousSets.length) return null;
-    return previousSets[setIndex]['reps'] as int?;
+    if (widget.previousSets.isEmpty) return null;
+    final setIndex = widget.currentSetNumber - 1;
+    if (setIndex >= widget.previousSets.length) return null;
+    return widget.previousSets[setIndex]['reps'] as int?;
   }
 }

@@ -563,6 +563,25 @@ async def complete_workout(
             # Continue even if PR detection fails
 
         # =====================================================================
+        # Background: Populate performance_logs for efficient history queries
+        # =====================================================================
+        # Get workout_log_id for this workout (needed for performance_logs)
+        workout_log_response = supabase.table("workout_logs").select(
+            "id"
+        ).eq("workout_id", workout_id).order("completed_at", desc=True).limit(1).execute()
+
+        if workout_log_response.data:
+            perf_log_workout_log_id = workout_log_response.data[0].get("id")
+            background_tasks.add_task(
+                populate_performance_logs,
+                user_id=user_id,
+                workout_id=workout_id,
+                workout_log_id=perf_log_workout_log_id,
+                exercises=exercises,
+                supabase=supabase,
+            )
+
+        # =====================================================================
         # Background: Recalculate Strength Scores and Fitness Score
         # =====================================================================
         background_tasks.add_task(
@@ -1178,3 +1197,89 @@ async def _generate_next_workout_for_user(user_id: str, retry_count: int = 0):
             await _generate_next_workout_for_user(user_id, retry_count + 1)
         else:
             logger.error(f"[JIT Generation] All retries exhausted for user {user_id}. User may need to manually generate.")
+
+
+async def populate_performance_logs(
+    user_id: str,
+    workout_id: str,
+    workout_log_id: str,
+    exercises: List[Dict],
+    supabase,
+):
+    """
+    Background task to populate performance_logs table with individual set data.
+
+    This enables efficient exercise history queries for AI weight suggestions
+    instead of parsing large JSON blobs from workout_logs.
+
+    Args:
+        user_id: The user's ID
+        workout_id: The workout's ID
+        workout_log_id: The workout_log's ID
+        exercises: List of exercise dicts with sets data
+        supabase: Supabase client
+    """
+    try:
+        logger.info(f"Background: Populating performance_logs for workout_log {workout_log_id}")
+
+        records_to_insert = []
+        recorded_at = datetime.now().isoformat()
+
+        for exercise in exercises:
+            exercise_name = exercise.get("name", "")
+            exercise_id = exercise.get("id") or exercise.get("exercise_id") or exercise.get("libraryId", "")
+
+            if not exercise_name:
+                continue
+
+            sets = exercise.get("sets", [])
+
+            for set_data in sets:
+                # Only log completed sets
+                if not set_data.get("completed", True):
+                    continue
+
+                set_number = set_data.get("set_number", 1)
+                reps_completed = set_data.get("reps_completed") or set_data.get("reps", 0)
+                weight_kg = set_data.get("weight_kg") or set_data.get("weight", 0)
+                rpe = set_data.get("rpe")
+                rir = set_data.get("rir")
+                set_type = set_data.get("set_type", "working")
+                tempo = set_data.get("tempo")
+                is_completed = set_data.get("completed", True)
+                failed_at_rep = set_data.get("failed_at_rep")
+                notes = set_data.get("notes")
+
+                # Skip sets with no meaningful data
+                if reps_completed <= 0 and weight_kg <= 0:
+                    continue
+
+                record = {
+                    "workout_log_id": workout_log_id,
+                    "user_id": user_id,
+                    "exercise_id": str(exercise_id) if exercise_id else exercise_name.lower().replace(" ", "_"),
+                    "exercise_name": exercise_name,
+                    "set_number": set_number,
+                    "reps_completed": reps_completed,
+                    "weight_kg": float(weight_kg) if weight_kg else 0.0,
+                    "rpe": float(rpe) if rpe is not None else None,
+                    "rir": int(rir) if rir is not None else None,
+                    "set_type": set_type,
+                    "tempo": tempo,
+                    "is_completed": is_completed,
+                    "failed_at_rep": failed_at_rep,
+                    "notes": notes,
+                    "recorded_at": recorded_at,
+                }
+
+                records_to_insert.append(record)
+
+        if records_to_insert:
+            # Batch insert all records
+            supabase.table("performance_logs").insert(records_to_insert).execute()
+            logger.info(f"Background: Inserted {len(records_to_insert)} performance_log records for workout_log {workout_log_id}")
+        else:
+            logger.info(f"Background: No performance_log records to insert for workout_log {workout_log_id}")
+
+    except Exception as e:
+        logger.error(f"Background: Failed to populate performance_logs for workout_log {workout_log_id}: {e}")

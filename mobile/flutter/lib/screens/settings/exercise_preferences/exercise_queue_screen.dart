@@ -5,10 +5,48 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/exercise_queue_provider.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
+import 'widgets/exercise_picker_sheet.dart';
 
 /// Screen for managing the exercise queue
 class ExerciseQueueScreen extends ConsumerWidget {
   const ExerciseQueueScreen({super.key});
+
+  Future<void> _showAddExercisePicker(BuildContext context, WidgetRef ref) async {
+    HapticFeedback.lightImpact();
+
+    final queueState = ref.read(exerciseQueueProvider);
+    final excludeNames = queueState.activeQueue
+        .map((q) => q.exerciseName.toLowerCase())
+        .toSet();
+
+    final result = await showExercisePickerSheet(
+      context,
+      ref,
+      type: ExercisePickerType.queue,
+      excludeExercises: excludeNames,
+    );
+
+    if (result != null) {
+      final success = await ref.read(exerciseQueueProvider.notifier).addToQueue(
+        result.exerciseName,
+        exerciseId: result.exerciseId,
+        targetMuscleGroup: result.targetMuscleGroup,
+      );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              success
+                  ? 'Added "${result.exerciseName}" to queue'
+                  : 'Failed to add exercise',
+            ),
+            backgroundColor: success ? AppColors.success : AppColors.error,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -38,11 +76,18 @@ class ExerciseQueueScreen extends ConsumerWidget {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.add, color: AppColors.cyan),
+            onPressed: () => _showAddExercisePicker(context, ref),
+            tooltip: 'Add to queue',
+          ),
+        ],
       ),
       body: queueState.isLoading
           ? const Center(child: CircularProgressIndicator())
           : activeQueue.isEmpty
-              ? _buildEmptyState(context, textMuted)
+              ? _buildEmptyState(context, ref, textMuted)
               : _buildQueueList(
                   context,
                   ref,
@@ -55,7 +100,7 @@ class ExerciseQueueScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, Color textMuted) {
+  Widget _buildEmptyState(BuildContext context, WidgetRef ref, Color textMuted) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -78,12 +123,26 @@ class ExerciseQueueScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Queue exercises from the Exercise Library and they\'ll be included in your next workout. Queue items expire after 7 days.',
+              'Queued exercises will be included in your next workout. Items expire after 7 days.',
               style: TextStyle(
                 fontSize: 14,
                 color: textMuted.withValues(alpha: 0.7),
               ),
               textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => _showAddExercisePicker(context, ref),
+              icon: const Icon(Icons.add),
+              label: const Text('Add to Queue'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.cyan,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
           ],
         ),

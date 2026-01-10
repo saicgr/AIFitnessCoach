@@ -24,6 +24,9 @@ import 'weekly_checkin_sheet.dart';
 import 'widgets/quick_add_fab.dart';
 import 'widgets/quick_add_sheet.dart';
 import 'widgets/nutrition_goals_card.dart';
+import 'widgets/hydration_summary_block.dart';
+import 'tabs/hydration_tab.dart';
+import '../../data/repositories/hydration_repository.dart';
 
 class NutritionScreen extends ConsumerStatefulWidget {
   const NutritionScreen({super.key});
@@ -45,7 +48,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _loadData();
     // Collapse nav bar labels on this secondary page
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -83,6 +86,9 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
       // Prefetch quick add suggestions for instant access
       ref.invalidate(quickAddSuggestionsProvider(userId));
+
+      // Load hydration data for the Hydration tab
+      ref.read(hydrationProvider.notifier).loadTodaySummary(userId);
     }
   }
 
@@ -319,6 +325,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                 Tab(text: 'Daily'),
                 Tab(text: 'Nutrients'),
                 Tab(text: 'Recipes'),
+                Tab(text: 'Hydration'),
               ],
             ),
           ),
@@ -346,6 +353,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             onLogMeal: (mealType) => _showLogMealSheet(isDark, mealType: mealType),
                             onDeleteMeal: (id) => _deleteMeal(id),
                             onSwitchToNutrientsTab: () => _tabController.animateTo(1), // Switch to Nutrients tab (index 1)
+                            onSwitchToHydrationTab: () => _tabController.animateTo(3), // Switch to Hydration tab (index 3)
                             isDark: isDark,
                             calmMode: calmMode,
                           ),
@@ -378,6 +386,12 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                                 _loadRecipes(_userId!);
                               }
                             },
+                            isDark: isDark,
+                          ),
+
+                          // Hydration Tab
+                          HydrationTab(
+                            userId: _userId ?? '',
                             isDark: isDark,
                           ),
                         ],
@@ -944,6 +958,7 @@ class _DailyTab extends ConsumerStatefulWidget {
   final void Function(String? mealType) onLogMeal;
   final void Function(String) onDeleteMeal;
   final VoidCallback? onSwitchToNutrientsTab;
+  final VoidCallback? onSwitchToHydrationTab;
   final bool isDark;
   final bool calmMode;
 
@@ -956,6 +971,7 @@ class _DailyTab extends ConsumerStatefulWidget {
     required this.onLogMeal,
     required this.onDeleteMeal,
     this.onSwitchToNutrientsTab,
+    this.onSwitchToHydrationTab,
     required this.isDark,
     this.calmMode = false,
   });
@@ -1421,6 +1437,14 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
                   ).animate().fadeIn().scale(),
 
                 if (!widget.calmMode) const SizedBox(height: 12),
+
+                // 1.5. HYDRATION SUMMARY - Quick view of water intake
+                HydrationSummaryBlock(
+                  isDark: widget.isDark,
+                  onTap: widget.onSwitchToHydrationTab,
+                ).animate().fadeIn(delay: 25.ms),
+
+                const SizedBox(height: 12),
 
                 // 2. PINNED NUTRIENTS - Right after goals
                 if (widget.micronutrients != null &&

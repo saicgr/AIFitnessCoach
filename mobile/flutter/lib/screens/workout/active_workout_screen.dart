@@ -3611,6 +3611,16 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
                   onDismissRestSuggestion: () {
                     setState(() => _restSuggestion = null);
                   },
+                  // Last set performance data for display
+                  lastSetReps: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
+                      ? _completedSets[_currentExerciseIndex]!.last.reps
+                      : null,
+                  lastSetTargetReps: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
+                      ? _completedSets[_currentExerciseIndex]!.last.targetReps
+                      : null,
+                  lastSetWeight: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
+                      ? _completedSets[_currentExerciseIndex]!.last.weight
+                      : null,
                 ),
               ),
 

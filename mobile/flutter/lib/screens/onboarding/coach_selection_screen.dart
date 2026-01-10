@@ -221,7 +221,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
               'gender': quizData.gender,
               'activity_level': quizData.activityLevel,
               'weight_direction': quizData.weightDirection,
-              'weight_change_rate': quizData.weightChangeAmount,
+              'weight_change_rate': quizData.weightChangeRate,  // Fixed: was weightChangeAmount (double), now weightChangeRate (string)
               'goal_weight_kg': quizData.goalWeightKg,
               'nutrition_goals': quizData.nutritionGoals,
               'workout_days_per_week': quizData.daysPerWeek,

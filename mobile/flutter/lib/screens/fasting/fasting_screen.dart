@@ -684,9 +684,13 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context);
+              // End fast BEFORE closing dialog to ensure proper context
               final result =
                   await ref.read(fastingProvider.notifier).endFast(userId: userId);
+
+              if (!context.mounted) return;
+              Navigator.pop(context);
+
               if (result != null) {
                 // Cancel scheduled notifications
                 await ref.read(fastingTimerServiceProvider).cancelAllNotifications();
@@ -697,6 +701,17 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
 
                 if (mounted) {
                   _showFastCompletedSnackbar(context, result);
+                }
+              } else {
+                // Show error if endFast failed
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Failed to end fast. Please try again.'),
+                      backgroundColor: AppColors.error,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
                 }
               }
             },

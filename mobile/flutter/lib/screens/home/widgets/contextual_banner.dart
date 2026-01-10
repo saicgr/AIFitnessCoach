@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/models/weekly_plan.dart';
 import '../../../data/providers/fasting_provider.dart';
 import '../../../data/providers/scores_provider.dart';
 import '../../../data/providers/weekly_plan_provider.dart';
@@ -214,10 +215,10 @@ class _ContextualBannerState extends ConsumerState<ContextualBanner>
           int completedCount = 0;
           int plannedCount = 0;
 
-          for (final entry in plan.entries) {
-            if (entry.isWorkoutDay) {
+          for (final entry in plan.dailyEntries) {
+            if (entry.dayType == DayType.training) {
               plannedCount++;
-              if (entry.isCompleted) {
+              if (entry.workoutCompleted) {
                 completedCount++;
               }
             }

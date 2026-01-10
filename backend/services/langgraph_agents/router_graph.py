@@ -71,6 +71,7 @@ class RouterState(TypedDict):
     workout_schedule: Optional[Dict[str, Any]]
     conversation_history: List[Dict[str, str]]
     image_base64: Optional[str]
+    ai_settings: Optional[Dict[str, Any]]  # AI personality settings including coach_name
 
     # Routing
     selected_agent: Optional[str]  # "nutrition", "workout", "injury", "hydration", "coach", "plan"
@@ -262,6 +263,8 @@ def build_agent_state(state: RouterState, agent: str) -> Dict[str, Any]:
         "rag_context_used": state.get("rag_used", False),
         "similar_questions": state.get("similar_questions", []),
         "error": None,
+        # AI personality settings (includes coach_name, coaching_style, etc.)
+        "ai_settings": state.get("ai_settings"),
     }
 
     extraction = state.get("extraction_data", {})

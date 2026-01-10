@@ -113,6 +113,8 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
 
             # Create AISettings model from dict
             ai_settings_model = AISettings(
+                coach_persona_id=ai_settings_dict.get("coach_persona_id"),
+                coach_name=ai_settings_dict.get("coach_name"),
                 coaching_style=ai_settings_dict.get("coaching_style", "motivational"),
                 communication_tone=ai_settings_dict.get("communication_tone", "encouraging"),
                 encouragement_level=ai_settings_dict.get("encouragement_level", 0.7),

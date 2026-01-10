@@ -5,10 +5,49 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/staples_provider.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
+import 'widgets/exercise_picker_sheet.dart';
 
 /// Screen for managing staple exercises (core lifts that never rotate)
 class StapleExercisesScreen extends ConsumerWidget {
   const StapleExercisesScreen({super.key});
+
+  Future<void> _showAddExercisePicker(BuildContext context, WidgetRef ref) async {
+    HapticFeedback.lightImpact();
+
+    final staplesState = ref.read(staplesProvider);
+    final excludeNames = staplesState.staples
+        .map((s) => s.exerciseName.toLowerCase())
+        .toSet();
+
+    final result = await showExercisePickerSheet(
+      context,
+      ref,
+      type: ExercisePickerType.staple,
+      excludeExercises: excludeNames,
+    );
+
+    if (result != null) {
+      final success = await ref.read(staplesProvider.notifier).addStaple(
+        result.exerciseName,
+        libraryId: result.exerciseId,
+        muscleGroup: result.muscleGroup,
+        reason: result.reason,
+      );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              success
+                  ? 'Added "${result.exerciseName}" as a staple'
+                  : 'Failed to add exercise',
+            ),
+            backgroundColor: success ? AppColors.success : AppColors.error,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,11 +76,18 @@ class StapleExercisesScreen extends ConsumerWidget {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.add, color: AppColors.cyan),
+            onPressed: () => _showAddExercisePicker(context, ref),
+            tooltip: 'Add staple',
+          ),
+        ],
       ),
       body: staplesState.isLoading
           ? const Center(child: CircularProgressIndicator())
           : staplesState.staples.isEmpty
-              ? _buildEmptyState(context, textMuted)
+              ? _buildEmptyState(context, ref, textMuted)
               : _buildStaplesList(
                   context,
                   ref,
@@ -54,7 +100,7 @@ class StapleExercisesScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, Color textMuted) {
+  Widget _buildEmptyState(BuildContext context, WidgetRef ref, Color textMuted) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -77,12 +123,26 @@ class StapleExercisesScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Mark exercises as staples from the Exercise Library. Staple exercises are your core lifts (like Squat, Bench Press, Deadlift) that will NEVER be rotated out of your workouts.',
+              'Staple exercises are your core lifts that will NEVER be rotated out of your workouts.',
               style: TextStyle(
                 fontSize: 14,
                 color: textMuted.withValues(alpha: 0.7),
               ),
               textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => _showAddExercisePicker(context, ref),
+              icon: const Icon(Icons.add),
+              label: const Text('Add Staple'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.cyan,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
           ],
         ),

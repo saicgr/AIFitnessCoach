@@ -2854,7 +2854,7 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                     except Exception:
                         pass
 
-                    # Send the workout that was just created
+                    # Send the workout that was just created (include exercises for UI)
                     workout_response = {
                         "id": workout.id,
                         "name": workout.name,
@@ -2862,6 +2862,7 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                         "difficulty": workout.difficulty,
                         "scheduled_date": workout.scheduled_date.isoformat() if workout.scheduled_date else None,
                         "duration_minutes": workout.duration_minutes,
+                        "exercises_json": exercises,  # Include exercises for immediate UI display
                     }
                     yield send_workout(workout_response, current, total_workouts)
 

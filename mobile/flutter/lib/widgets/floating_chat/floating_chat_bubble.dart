@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/repositories/chat_repository.dart';
+import '../../screens/ai_settings/ai_settings_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'floating_chat_provider.dart';
 
@@ -153,6 +154,10 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
 
+    // Get coach name from AI settings
+    final aiSettings = ref.watch(aiSettingsProvider);
+    final coachName = aiSettings.coachName ?? 'AI Coach';
+
     return Container(
       height: screenHeight * 0.7,
       decoration: BoxDecoration(
@@ -203,7 +208,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'AI Coach',
+                        coachName,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

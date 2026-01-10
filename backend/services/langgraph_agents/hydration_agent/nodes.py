@@ -15,8 +15,8 @@ from core.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Hydration expertise base prompt (personality is added dynamically)
-HYDRATION_BASE_PROMPT = """You are Aqua, an expert AI hydration coach. You specialize in:
+# Hydration expertise base prompt template (coach name is inserted dynamically)
+HYDRATION_BASE_PROMPT_TEMPLATE = """You are {coach_name}, an expert AI hydration coach. You specialize in:
 - Helping users track their water intake
 - Providing personalized hydration recommendations
 - Explaining the importance of hydration for fitness
@@ -60,12 +60,19 @@ CAPABILITIES:
 def get_hydration_system_prompt(ai_settings: Dict[str, Any] = None) -> str:
     """Build the full system prompt with personality customization."""
     settings_obj = AISettings(**ai_settings) if ai_settings else None
+
+    # Get the coach name from settings or use default
+    coach_name = settings_obj.coach_name if settings_obj and settings_obj.coach_name else "Aqua"
+
+    # Build the base prompt with the coach name
+    base_prompt = HYDRATION_BASE_PROMPT_TEMPLATE.format(coach_name=coach_name)
+
     personality = build_personality_prompt(
         ai_settings=settings_obj,
-        agent_name="Aqua",
+        agent_name="Aqua",  # Fallback agent name if coach_name not set
         agent_specialty="hydration coaching and wellness"
     )
-    return f"{HYDRATION_BASE_PROMPT}\n\n{personality}"
+    return f"{base_prompt}\n\n{personality}"
 
 
 def extract_hydration_amount(message: str) -> int:

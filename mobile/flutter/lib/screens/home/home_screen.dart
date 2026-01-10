@@ -1942,17 +1942,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ),
 
-          // Two half-width cards in a row
-          Row(
-            children: [
-              Expanded(
-                child: DailyStatsCard(size: TileSize.half, isDark: isDark),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: QuickLogWeightCard(size: TileSize.half, isDark: isDark),
-              ),
-            ],
+          // Two half-width cards in a row - IntrinsicHeight ensures matching heights
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: DailyStatsCard(size: TileSize.half, isDark: isDark),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: QuickLogWeightCard(size: TileSize.half, isDark: isDark),
+                ),
+              ],
+            ),
           ),
 
           const SizedBox(height: 16),

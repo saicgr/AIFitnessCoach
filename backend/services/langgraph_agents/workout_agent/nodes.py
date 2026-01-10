@@ -42,8 +42,8 @@ WORKOUT_TOOLS = [
     generate_quick_workout,
 ]
 
-# Workout expertise base prompt (personality is added dynamically)
-WORKOUT_BASE_PROMPT = """You are Flex, an expert AI personal trainer and workout coach. You specialize in:
+# Workout expertise base prompt template (coach name is inserted dynamically)
+WORKOUT_BASE_PROMPT_TEMPLATE = """You are {coach_name}, an expert AI personal trainer and workout coach. You specialize in:
 - Creating and modifying workout plans
 - Explaining proper exercise form and technique
 - Providing exercise alternatives and progressions
@@ -73,12 +73,19 @@ When you DO need tools:
 def get_workout_system_prompt(ai_settings: Dict[str, Any] = None) -> str:
     """Build the full system prompt with personality customization."""
     settings_obj = AISettings(**ai_settings) if ai_settings else None
+
+    # Get the coach name from settings or use default
+    coach_name = settings_obj.coach_name if settings_obj and settings_obj.coach_name else "Flex"
+
+    # Build the base prompt with the coach name
+    base_prompt = WORKOUT_BASE_PROMPT_TEMPLATE.format(coach_name=coach_name)
+
     personality = build_personality_prompt(
         ai_settings=settings_obj,
-        agent_name="Flex",
+        agent_name="Flex",  # Fallback agent name if coach_name not set
         agent_specialty="personal training and workout coaching"
     )
-    return f"{WORKOUT_BASE_PROMPT}\n\n{personality}"
+    return f"{base_prompt}\n\n{personality}"
 
 
 def format_workout_schedule_context(schedule: Dict[str, Any]) -> str:

@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/animations/app_animations.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/repositories/chat_repository.dart';
+import '../../screens/ai_settings/ai_settings_screen.dart';
 
 /// Global chat overlay that handles the modal chat UI
 /// The AI button is now in main_shell.dart (fixed position beside nav bar)
@@ -102,6 +103,10 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
+    // Get coach name from AI settings
+    final aiSettings = ref.watch(aiSettingsProvider);
+    final coachName = aiSettings.coachName ?? 'AI Coach';
+
     // Wrap in Material to provide the required ancestor for TextField and other Material widgets
     // Use ValueKey to avoid GlobalKey conflicts when theme changes
     return Material(
@@ -159,7 +164,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'AI Coach',
+                        coachName,
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w600,

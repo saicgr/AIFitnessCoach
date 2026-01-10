@@ -274,6 +274,32 @@ class FastingNotifier extends StateNotifier<FastingState> {
       return result;
     } catch (e) {
       debugPrint('❌ [FastingProvider] End fast error: $e');
+
+      // If fast not found (404), it was already ended/cancelled - clear local state
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('404') || errorStr.contains('not found')) {
+        debugPrint('⚠️ [FastingProvider] Fast already ended on server, clearing local state');
+        _stopRefreshTimer();
+
+        // Refresh data from server to sync state
+        try {
+          final streak = await _repository.getStreak(userId);
+          final stats = await _repository.getStats(userId: userId);
+          final history = await _repository.getFastingHistory(userId: userId, limit: 10);
+          state = state.copyWith(
+            clearActiveFast: true,
+            streak: streak,
+            stats: stats,
+            history: history,
+            isLoading: false,
+            clearError: true,
+          );
+        } catch (_) {
+          state = state.copyWith(clearActiveFast: true, isLoading: false, clearError: true);
+        }
+        return null;
+      }
+
       state = state.copyWith(isLoading: false, error: e.toString());
       return null;
     }
@@ -295,6 +321,16 @@ class FastingNotifier extends StateNotifier<FastingState> {
       debugPrint('✅ [FastingProvider] Fast cancelled');
     } catch (e) {
       debugPrint('❌ [FastingProvider] Cancel fast error: $e');
+
+      // If fast not found (404), it was already ended/cancelled - clear local state
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('404') || errorStr.contains('not found')) {
+        debugPrint('⚠️ [FastingProvider] Fast already gone on server, clearing local state');
+        _stopRefreshTimer();
+        state = state.copyWith(clearActiveFast: true, isLoading: false, clearError: true);
+        return;
+      }
+
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }

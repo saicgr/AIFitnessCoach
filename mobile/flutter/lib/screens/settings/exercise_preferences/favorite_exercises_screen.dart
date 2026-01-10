@@ -5,10 +5,47 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/favorites_provider.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
+import 'widgets/exercise_picker_sheet.dart';
 
 /// Screen for managing favorite exercises
 class FavoriteExercisesScreen extends ConsumerWidget {
   const FavoriteExercisesScreen({super.key});
+
+  Future<void> _showAddExercisePicker(BuildContext context, WidgetRef ref) async {
+    HapticFeedback.lightImpact();
+
+    final favoritesState = ref.read(favoritesProvider);
+    final excludeNames = favoritesState.favorites
+        .map((f) => f.exerciseName.toLowerCase())
+        .toSet();
+
+    final result = await showExercisePickerSheet(
+      context,
+      ref,
+      type: ExercisePickerType.favorite,
+      excludeExercises: excludeNames,
+    );
+
+    if (result != null) {
+      final success = await ref.read(favoritesProvider.notifier).addFavorite(
+        result.exerciseName,
+        exerciseId: result.exerciseId,
+      );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              success
+                  ? 'Added "${result.exerciseName}" to favorites'
+                  : 'Failed to add exercise',
+            ),
+            backgroundColor: success ? AppColors.success : AppColors.error,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,11 +74,18 @@ class FavoriteExercisesScreen extends ConsumerWidget {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.add, color: AppColors.error),
+            onPressed: () => _showAddExercisePicker(context, ref),
+            tooltip: 'Add favorite',
+          ),
+        ],
       ),
       body: favoritesState.isLoading
           ? const Center(child: CircularProgressIndicator())
           : favoritesState.favorites.isEmpty
-              ? _buildEmptyState(context, textMuted)
+              ? _buildEmptyState(context, ref, textMuted)
               : _buildFavoritesList(
                   context,
                   ref,
@@ -54,7 +98,7 @@ class FavoriteExercisesScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, Color textMuted) {
+  Widget _buildEmptyState(BuildContext context, WidgetRef ref, Color textMuted) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -77,12 +121,26 @@ class FavoriteExercisesScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Mark exercises as favorites from the Exercise Library and they\'ll appear here. The AI will prioritize your favorites when generating workouts.',
+              'The AI will prioritize your favorites when generating workouts.',
               style: TextStyle(
                 fontSize: 14,
                 color: textMuted.withValues(alpha: 0.7),
               ),
               textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => _showAddExercisePicker(context, ref),
+              icon: const Icon(Icons.add),
+              label: const Text('Add Favorite'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
           ],
         ),

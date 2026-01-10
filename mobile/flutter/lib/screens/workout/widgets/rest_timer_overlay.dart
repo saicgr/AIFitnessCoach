@@ -71,6 +71,23 @@ class RestTimerOverlay extends StatelessWidget {
   /// Callback when user dismisses rest suggestion
   final VoidCallback? onDismissRestSuggestion;
 
+  /// Current RPE value (optional)
+  final int? currentRpe;
+
+  /// Current RIR value (optional)
+  final int? currentRir;
+
+  /// Callback when RPE changes
+  final ValueChanged<int?>? onRpeChanged;
+
+  /// Callback when RIR changes
+  final ValueChanged<int?>? onRirChanged;
+
+  /// Last set performance data for display
+  final int? lastSetReps;
+  final int? lastSetTargetReps;
+  final double? lastSetWeight;
+
   const RestTimerOverlay({
     super.key,
     required this.restSecondsRemaining,
@@ -91,6 +108,13 @@ class RestTimerOverlay extends StatelessWidget {
     this.isLoadingRestSuggestion = false,
     this.onAcceptRestSuggestion,
     this.onDismissRestSuggestion,
+    this.currentRpe,
+    this.currentRir,
+    this.onRpeChanged,
+    this.onRirChanged,
+    this.lastSetReps,
+    this.lastSetTargetReps,
+    this.lastSetWeight,
   });
 
   /// Rest progress (1.0 = full, 0.0 = done)
@@ -168,6 +192,12 @@ class RestTimerOverlay extends StatelessWidget {
                   _buildLoadingWeightSuggestion(cardBg, textColor, subtitleColor, isDark)
                 else if (weightSuggestion != null)
                   _buildWeightSuggestionCard(cardBg, textColor, subtitleColor, isDark),
+              ],
+
+              // RPE/RIR compact input section (optional during rest)
+              if (isRestBetweenSets && onRpeChanged != null) ...[
+                const SizedBox(height: 16),
+                _buildRpeRirSection(cardBg, textColor, subtitleColor, isDark),
               ],
 
               // AI Coach encouragement message (only if no suggestions and not loading)
@@ -380,6 +410,60 @@ class RestTimerOverlay extends StatelessWidget {
                     color: subtitleColor,
                   ),
                 ),
+                // Show target reps and weight for next set
+                if (currentExercise.reps != null || currentExercise.weight != null) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      if (currentExercise.reps != null) ...[
+                        Icon(
+                          Icons.repeat,
+                          size: 12,
+                          color: subtitleColor.withValues(alpha: 0.7),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${currentExercise.reps} reps',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: subtitleColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                      if (currentExercise.reps != null &&
+                          currentExercise.weight != null &&
+                          currentExercise.weight! > 0)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Text(
+                            '·',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: subtitleColor.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ),
+                      if (currentExercise.weight != null &&
+                          currentExercise.weight! > 0) ...[
+                        Icon(
+                          Icons.fitness_center,
+                          size: 12,
+                          color: subtitleColor.withValues(alpha: 0.7),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${currentExercise.weight!.toStringAsFixed(currentExercise.weight! == currentExercise.weight!.roundToDouble() ? 0 : 1)} kg',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: subtitleColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -602,24 +686,67 @@ class RestTimerOverlay extends StatelessWidget {
   ) {
     final suggestion = weightSuggestion!;
 
-    // Determine colors based on suggestion type
+    // Determine colors and labels based on suggestion type
     Color accentColor;
     IconData icon;
     String actionLabel;
+    String actionDescription;
 
     switch (suggestion.type) {
       case SuggestionType.increase:
         accentColor = AppColors.success;
         icon = Icons.trending_up;
         actionLabel = 'Go heavier';
+        actionDescription = 'You can handle more weight';
       case SuggestionType.decrease:
         accentColor = AppColors.orange;
         icon = Icons.trending_down;
         actionLabel = 'Go lighter';
+        actionDescription = 'Reduce to maintain good form';
       case SuggestionType.maintain:
         accentColor = AppColors.cyan;
-        icon = Icons.trending_flat;
-        actionLabel = 'Keep it up';
+        icon = Icons.check_circle_outline;
+        actionLabel = 'Perfect weight';
+        actionDescription = 'This weight is working well';
+    }
+
+    // Build performance summary
+    String? performanceSummary;
+    if (lastSetReps != null && lastSetWeight != null) {
+      final weightStr = lastSetWeight == lastSetWeight!.roundToDouble()
+          ? '${lastSetWeight!.toInt()}kg'
+          : '${lastSetWeight!.toStringAsFixed(1)}kg';
+      if (lastSetTargetReps != null) {
+        performanceSummary = 'You did $lastSetReps/$lastSetTargetReps reps at $weightStr';
+      } else {
+        performanceSummary = 'You did $lastSetReps reps at $weightStr';
+      }
+    }
+
+    // Build RPE/RIR summary
+    String? effortSummary;
+    if (currentRpe != null || currentRir != null) {
+      if (currentRir != null) {
+        final rirDescriptions = {
+          0: 'at failure',
+          1: '1 rep left',
+          2: '2 reps left - ideal zone',
+          3: '3 reps left - good effort',
+          4: '4+ reps left - too easy',
+          5: '5+ reps left - much too easy',
+        };
+        effortSummary = 'RIR $currentRir (${rirDescriptions[currentRir] ?? ''})';
+      } else if (currentRpe != null) {
+        final rpeDescriptions = {
+          5: 'very light',
+          6: 'light effort',
+          7: 'moderate effort',
+          8: 'hard - ideal zone',
+          9: 'very hard',
+          10: 'max effort',
+        };
+        effortSummary = 'RPE $currentRpe (${rpeDescriptions[currentRpe] ?? ''})';
+      }
     }
 
     return Container(
@@ -642,7 +769,7 @@ class RestTimerOverlay extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row
+          // Header row with icon and title
           Row(
             children: [
               Container(
@@ -658,38 +785,6 @@ class RestTimerOverlay extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          suggestion.aiPowered ? 'AI WEIGHT COACH' : 'WEIGHT SUGGESTION',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: accentColor,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        if (suggestion.aiPowered) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: AppColors.purple.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              '✨ AI',
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.purple,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 2),
                     Text(
                       actionLabel,
                       style: TextStyle(
@@ -698,137 +793,184 @@ class RestTimerOverlay extends StatelessWidget {
                         color: textColor,
                       ),
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      actionDescription,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: subtitleColor,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              // Confidence indicator
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${(suggestion.confidence * 100).round()}%',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: accentColor,
+              // AI badge (small, subtle)
+              if (suggestion.aiPowered)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.purple.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.auto_awesome,
+                        size: 12,
+                        color: AppColors.purple,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        'AI',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.purple,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
             ],
           ),
-          const SizedBox(height: 16),
 
-          // Weight change display
-          if (!suggestion.isNoChange)
+          const SizedBox(height: 14),
+
+          // Performance summary section
+          if (performanceSummary != null || effortSummary != null)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.05)
                     : Colors.black.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (performanceSummary != null)
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.fitness_center,
+                          size: 14,
+                          color: subtitleColor,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            performanceSummary,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: textColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  if (performanceSummary != null && effortSummary != null)
+                    const SizedBox(height: 6),
+                  if (effortSummary != null)
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.speed,
+                          size: 14,
+                          color: subtitleColor,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            effortSummary,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: textColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+
+          // Weight change display (for increase/decrease only)
+          if (!suggestion.isNoChange) ...[
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  if (lastSetWeight != null) ...[
+                    Text(
+                      lastSetWeight == lastSetWeight!.roundToDouble()
+                          ? '${lastSetWeight!.toInt()}'
+                          : lastSetWeight!.toStringAsFixed(1),
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                        color: subtitleColor,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.arrow_forward,
+                      color: accentColor,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   Text(
-                    suggestion.formattedDelta,
+                    '${suggestion.suggestedWeight.toStringAsFixed(1)} kg',
                     style: TextStyle(
-                      fontSize: 28,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: accentColor,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Icon(
-                    Icons.arrow_forward,
-                    color: subtitleColor,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    '${suggestion.suggestedWeight.toStringAsFixed(1)} kg',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      suggestion.formattedDelta,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: accentColor,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
+          ],
 
-          const SizedBox(height: 12),
-
-          // Reason text
-          Text(
-            suggestion.reason,
-            style: TextStyle(
-              fontSize: 14,
-              color: subtitleColor,
-              height: 1.4,
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // Encouragement
-          Text(
-            suggestion.encouragement,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-            ),
-          ),
-
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           // Action buttons
           if (onAcceptWeightSuggestion != null || onDismissWeightSuggestion != null)
             Row(
               children: [
-                // Dismiss button
-                if (onDismissWeightSuggestion != null)
+                // For maintain suggestion - single "Got it" button
+                if (suggestion.isNoChange && onDismissWeightSuggestion != null)
                   Expanded(
-                    child: TextButton(
+                    child: ElevatedButton(
                       onPressed: () {
                         HapticFeedback.lightImpact();
                         onDismissWeightSuggestion!();
-                      },
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: BorderSide(
-                            color: subtitleColor.withValues(alpha: 0.3),
-                          ),
-                        ),
-                      ),
-                      child: Text(
-                        'Keep Current',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: subtitleColor,
-                        ),
-                      ),
-                    ),
-                  ),
-                if (onAcceptWeightSuggestion != null &&
-                    onDismissWeightSuggestion != null)
-                  const SizedBox(width: 12),
-                // Accept button
-                if (onAcceptWeightSuggestion != null && !suggestion.isNoChange)
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        HapticFeedback.mediumImpact();
-                        onAcceptWeightSuggestion!(suggestion.suggestedWeight);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: accentColor,
@@ -838,9 +980,10 @@ class RestTimerOverlay extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      icon: const Icon(Icons.check, size: 20),
-                      label: Text(
-                        'Use ${suggestion.suggestedWeight.toStringAsFixed(1)} kg',
+                      child: Text(
+                        lastSetWeight != null
+                            ? 'Keep ${lastSetWeight == lastSetWeight!.roundToDouble() ? lastSetWeight!.toInt() : lastSetWeight!.toStringAsFixed(1)} kg'
+                            : 'Got it',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -848,6 +991,71 @@ class RestTimerOverlay extends StatelessWidget {
                       ),
                     ),
                   ),
+                // For increase/decrease - two buttons
+                if (!suggestion.isNoChange) ...[
+                  if (onDismissWeightSuggestion != null)
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          onDismissWeightSuggestion!();
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: BorderSide(
+                              color: subtitleColor.withValues(alpha: 0.3),
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          lastSetWeight != null
+                              ? 'Keep ${lastSetWeight == lastSetWeight!.roundToDouble() ? lastSetWeight!.toInt() : lastSetWeight!.toStringAsFixed(1)} kg'
+                              : 'Keep Weight',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: subtitleColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (onAcceptWeightSuggestion != null &&
+                      onDismissWeightSuggestion != null)
+                    const SizedBox(width: 12),
+                  if (onAcceptWeightSuggestion != null)
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                          onAcceptWeightSuggestion!(suggestion.suggestedWeight);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: accentColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: Icon(
+                          suggestion.type == SuggestionType.increase
+                              ? Icons.add
+                              : Icons.remove,
+                          size: 18,
+                        ),
+                        label: Text(
+                          'Use ${suggestion.suggestedWeight.toStringAsFixed(1)} kg',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ],
             ),
         ],
@@ -884,5 +1092,216 @@ class RestTimerOverlay extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Compact RPE/RIR input section for rest period
+  Widget _buildRpeRirSection(
+    Color cardBg,
+    Color textColor,
+    Color subtitleColor,
+    bool isDark,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.orange.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.orange.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.speed,
+                  color: AppColors.orange,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Rate Last Set',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                'optional',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: subtitleColor,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // RPE Selection
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'RPE (Rate of Perceived Exertion)',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: subtitleColor,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: List.generate(6, (index) {
+                    final rpe = index + 5; // 5-10 scale
+                    final isSelected = currentRpe == rpe;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          onRpeChanged?.call(isSelected ? null : rpe);
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? _getRpeColor(rpe)
+                                : (isDark
+                                    ? Colors.white.withValues(alpha: 0.08)
+                                    : Colors.black.withValues(alpha: 0.05)),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected
+                                  ? _getRpeColor(rpe)
+                                  : (isDark
+                                      ? Colors.white.withValues(alpha: 0.15)
+                                      : Colors.black.withValues(alpha: 0.1)),
+                              width: isSelected ? 2 : 1,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '$rpe',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: isSelected ? Colors.white : textColor,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // RIR Selection
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'RIR (Reps in Reserve)',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: subtitleColor,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: List.generate(6, (index) {
+                    final rir = 5 - index; // 5-0 (reverse order)
+                    final isSelected = currentRir == rir;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          onRirChanged?.call(isSelected ? null : rir);
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? _getRirColor(rir)
+                                : (isDark
+                                    ? Colors.white.withValues(alpha: 0.08)
+                                    : Colors.black.withValues(alpha: 0.05)),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected
+                                  ? _getRirColor(rir)
+                                  : (isDark
+                                      ? Colors.white.withValues(alpha: 0.15)
+                                      : Colors.black.withValues(alpha: 0.1)),
+                              width: isSelected ? 2 : 1,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '$rir',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: isSelected ? Colors.white : textColor,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    )
+        .animate()
+        .fadeIn(delay: 100.ms, duration: 300.ms)
+        .slideY(begin: 0.1, end: 0);
+  }
+
+  /// Get color for RPE value (5-10 scale)
+  Color _getRpeColor(int rpe) {
+    if (rpe <= 6) return AppColors.success;
+    if (rpe <= 7) return AppColors.cyan;
+    if (rpe <= 8) return AppColors.orange;
+    return AppColors.coral;
+  }
+
+  /// Get color for RIR value (0-5 scale)
+  Color _getRirColor(int rir) {
+    if (rir >= 4) return AppColors.success;
+    if (rir >= 2) return AppColors.cyan;
+    if (rir >= 1) return AppColors.orange;
+    return AppColors.coral;
   }
 }

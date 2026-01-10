@@ -131,14 +131,15 @@ class FastingTimerWidget extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          // Remaining time
+                          // Remaining time (in seconds for live countdown)
                           Text(
                             _formatRemainingTime(
-                                activeFast!.goalDurationMinutes - elapsedMinutes),
+                                (activeFast!.goalDurationMinutes * 60) - elapsedSeconds),
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: purple,
+                              fontFeatures: const [FontFeature.tabularFigures()],
                             ),
                           ),
                           Text(
@@ -272,14 +273,13 @@ class FastingTimerWidget extends ConsumerWidget {
     return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
-  String _formatRemainingTime(int remainingMinutes) {
-    if (remainingMinutes <= 0) return 'Goal reached!';
-    final hours = remainingMinutes ~/ 60;
-    final minutes = remainingMinutes % 60;
-    if (hours > 0) {
-      return '${hours}h ${minutes}m';
-    }
-    return '${minutes}m';
+  String _formatRemainingTime(int remainingSeconds) {
+    if (remainingSeconds <= 0) return 'Goal reached!';
+    final hours = remainingSeconds ~/ 3600;
+    final minutes = (remainingSeconds % 3600) ~/ 60;
+    final seconds = remainingSeconds % 60;
+    // Show HH:MM:SS format for consistency with elapsed time
+    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 }
 

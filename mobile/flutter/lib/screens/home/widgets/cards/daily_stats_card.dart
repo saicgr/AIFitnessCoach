@@ -407,20 +407,24 @@ class _StatItem extends StatelessWidget {
 
     return Column(
       children: [
-        // Large metric number with animation
+        // Large metric number with animation - use FittedBox to prevent overflow
         TweenAnimationBuilder<double>(
           tween: Tween(begin: 0, end: numericValue),
           duration: const Duration(milliseconds: 800),
           curve: Curves.easeOutCubic,
           builder: (context, animatedValue, _) {
             final displayValue = _formatAnimatedValue(animatedValue, value);
-            return Text(
-              displayValue,
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-                height: 1.0,
+            return FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                displayValue,
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                  height: 1.0,
+                ),
+                maxLines: 1,
               ),
             );
           },

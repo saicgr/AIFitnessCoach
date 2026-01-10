@@ -480,8 +480,8 @@ Rules: Use USDA data. Sum totals from items. Account for prep methods (fried add
         last_error = None
         content = ""
 
-        # Timeout for food analysis (10 seconds per attempt - fast UX)
-        FOOD_ANALYSIS_TIMEOUT = 10
+        # Timeout for food analysis (30 seconds per attempt - complex foods need more time)
+        FOOD_ANALYSIS_TIMEOUT = 30
 
         for attempt in range(max_retries):
             try:
@@ -1458,14 +1458,34 @@ Requirements:
 - MUST include AT LEAST 5 exercises (minimum 5, ideally 6-8) appropriate for {fitness_level} fitness level
 - EVERY exercise MUST match the focus area - do NOT include exercises for other muscle groups!
 - ONLY use equipment from this list: {', '.join(equipment) if equipment else 'bodyweight'}
-- ⚠️ CRITICAL EQUIPMENT USAGE: If the user has gym equipment (full_gym, barbell, cable_machine, dumbbells, machines), you MUST include AT LEAST 3-4 exercises that use that equipment! Do NOT generate mostly bodyweight exercises when gym equipment is available. For example:
-  - If user has "full_gym": Include barbell squats, bench press, cable rows, lat pulldowns, leg press, etc.
-  - If user has "barbell": Include deadlifts, squats, overhead press, rows, etc.
-  - If user has "dumbbells": Include dumbbell press, rows, curls, lunges with weights, etc.
-  - If user has "cable_machine": Include cable flies, face pulls, tricep pushdowns, cable rows, etc.
-  Bodyweight exercises should only supplement, not dominate, a gym workout!
-- For beginners: USE ALL AVAILABLE EQUIPMENT listed above! Focus on proper form and include adequate rest. Choose foundational compound movements (squats, bench press, rows, deadlifts) over isolation exercises. Beginners CAN and SHOULD use barbells, dumbbells, and machines - not just bodyweight!
-  ⚠️ CRITICAL FOR BEGINNERS: Do NOT include advanced/elite calisthenics movements like planche push-ups, front levers, muscle-ups, handstand push-ups, one-arm pull-ups, pistol squats, human flags, or L-sits. These require YEARS of training. Stick to basic movements: regular push-ups, squats, lunges, rows, planks, dips (assisted if needed), and standard pull-ups (assisted if needed).
+
+🚨🚨🚨 ABSOLUTE CRITICAL RULE - EQUIPMENT USAGE 🚨🚨🚨
+Available equipment: {', '.join(equipment) if equipment else 'bodyweight only'}
+
+IF THE USER HAS GYM EQUIPMENT, YOU **MUST** USE IT! This is NON-NEGOTIABLE.
+- If "full_gym" OR "dumbbells" OR "barbell" OR "cable_machine" OR "machines" is in the equipment list:
+  → AT LEAST 4-5 exercises (out of 6-8 total) MUST use that equipment
+  → Maximum 1-2 bodyweight exercises allowed
+  → NEVER generate a mostly bodyweight workout when gym equipment is available!
+
+MANDATORY EQUIPMENT-BASED EXERCISES (include these when equipment is available):
+- full_gym/commercial_gym: Barbell Squat, Bench Press, Lat Pulldown, Cable Row, Leg Press, Dumbbell Rows
+- dumbbells: Dumbbell Bench Press, Dumbbell Rows, Dumbbell Lunges, Dumbbell Shoulder Press, Goblet Squats, Dumbbell Curls
+- barbell: Barbell Squat, Deadlift, Bench Press, Barbell Row, Overhead Press
+- cable_machine: Cable Fly, Face Pull, Tricep Pushdown, Cable Row, Lat Pulldown
+- machines: Leg Press, Chest Press Machine, Lat Pulldown, Leg Curl, Shoulder Press Machine
+
+FOR BEGINNERS WITH GYM ACCESS - THIS IS CRITICAL:
+Beginners benefit MORE from weighted exercises than bodyweight! Use machines and dumbbells for:
+- Better muscle activation with controlled resistance
+- Easier to maintain proper form than advanced calisthenics
+- Measurable progressive overload
+EXAMPLE BEGINNER GYM WORKOUT (LEGS): Leg Press, Goblet Squat, Dumbbell Romanian Deadlift, Leg Extension Machine, Lying Leg Curl, Calf Raises on Machine
+EXAMPLE BEGINNER GYM WORKOUT (PUSH): Dumbbell Bench Press, Machine Shoulder Press, Cable Fly, Dumbbell Lateral Raise, Tricep Pushdown
+NOT: Push-ups, Planks, Bodyweight Squats (these are for home/no-equipment only!)
+
+⚠️ CRITICAL FOR BEGINNERS: Do NOT include advanced/elite calisthenics movements like planche push-ups, front levers, muscle-ups, handstand push-ups, one-arm pull-ups, pistol squats, human flags, or L-sits. These require YEARS of training.
+
 - For intermediate: balanced challenge, mix of compound and isolation movements
 - For advanced: higher intensity, complex movements, advanced techniques, less rest
 - For HELL difficulty: MAXIMUM intensity! Supersets, drop sets, minimal rest (30-45s), heavy weights, near-failure reps. This should be the hardest workout possible. Include at least 7-8 exercises with 4-5 sets each.
@@ -1473,10 +1493,16 @@ Requirements:
 - Include variety - don't repeat the same movement pattern
 - Each exercise should have helpful form notes
 
-⚠️ VALIDATION: Before finalizing, verify that ALL exercises match the focus area.
+🚨 FINAL VALIDATION CHECKLIST (You MUST verify before responding):
+1. ✅ Focus area check: ALL exercises match the focus area (legs/push/pull/etc.)
+2. ✅ Equipment check: If gym equipment available, AT LEAST 4-5 exercises use weights/machines
+3. ✅ Beginner check: If beginner + gym, mostly machine/dumbbell exercises (NOT bodyweight)
+4. ✅ No advanced calisthenics for beginners
+
 If focus is "legs" - every exercise should target quads, hamstrings, glutes, or calves.
 If focus is "push" - every exercise should target chest, shoulders, or triceps.
-If focus is "pull" - every exercise should target back or biceps."""
+If focus is "pull" - every exercise should target back or biceps.
+If user has gym equipment - most exercises MUST use that equipment!"""
 
         # Log the full prompt for debugging
         logger.info("=" * 80)
@@ -1652,7 +1678,13 @@ Return ONLY valid JSON (no markdown):
 }}
 
 Include 5-8 exercises for {fitness_level} level using only: {', '.join(equipment) if equipment else 'bodyweight'}
-⚠️ CRITICAL: If user has gym equipment (full_gym, barbell, dumbbells, cable_machine), include AT LEAST 3-4 exercises using that equipment! Do NOT generate mostly bodyweight when gym equipment is available!
+
+🚨🚨 ABSOLUTE REQUIREMENT - EQUIPMENT USAGE 🚨🚨
+If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines):
+- AT LEAST 4-5 exercises MUST use that equipment (NOT bodyweight!)
+- Maximum 1-2 bodyweight exercises allowed
+- For beginners with gym: USE machines & dumbbells (Leg Press, Dumbbell Press, Cable Rows) - NOT just push-ups/squats!
+- NEVER generate mostly bodyweight when gym equipment is available!
 {senior_instruction}{holiday_instruction}{avoid_instruction}{progression_instruction}"""
 
             logger.info(f"[Streaming] Starting workout generation for {fitness_level} user")

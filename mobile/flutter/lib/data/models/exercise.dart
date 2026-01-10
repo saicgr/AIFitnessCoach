@@ -326,7 +326,7 @@ class LibraryExercise extends Equatable {
   @JsonKey(name: 'target_muscle')
   final String? targetMuscle;
   @JsonKey(name: 'secondary_muscles')
-  final String? secondaryMuscles;
+  final List<String>? secondaryMuscles;
   @JsonKey(name: 'instructions')
   final String? instructionsValue;
   @JsonKey(name: 'difficulty_level')
@@ -429,7 +429,7 @@ class LibraryExercise extends Equatable {
       targetMuscle ?? '',
       category ?? '',
       equipmentValue ?? '',
-      secondaryMuscles ?? '',
+      secondaryMuscles?.join(' ') ?? '',
     ];
     return parts.join(' ').toLowerCase();
   }

@@ -251,6 +251,13 @@ IMPORTANT GUIDELINES:
 - Include clear form cues in exercise notes
 - Make it achievable within the time limit
 
+🚨 CRITICAL - EQUIPMENT USAGE:
+If the user has gym equipment (dumbbells, barbell, machines, full_gym, cable_machine):
+- AT LEAST 70% of exercises MUST use that equipment
+- Do NOT generate mostly bodyweight exercises when gym equipment is available
+- For beginners with gym access: Use machines and dumbbells, NOT just push-ups and planks
+- Example: If user has dumbbells → Dumbbell Press, Dumbbell Rows, Goblet Squats, etc.
+
 Return a JSON object with this exact structure:
 {{
     "name": "Creative Workout Name",

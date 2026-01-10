@@ -101,14 +101,84 @@ async def get_exercise_history(
 
     Returns the last N workout sessions where this exercise was performed,
     including weight, reps, and intensity feedback.
+
+    Uses the performance_logs table with efficient indexed queries instead of
+    parsing large JSON blobs from workout_logs.
     """
     try:
         db = get_supabase_db()
 
-        # Query workout_logs joined with workout data to find this exercise
-        # We'll look for exercise performance in the set_logs field
+        # Try the efficient database function first (uses indexed performance_logs)
+        try:
+            result = db.client.rpc(
+                "get_exercise_history",
+                {
+                    "p_user_id": user_id,
+                    "p_exercise_name": exercise_name,
+                    "p_limit": limit,
+                }
+            ).execute()
+
+            if result.data:
+                history = []
+                for row in result.data:
+                    history.append({
+                        "date": row.get("workout_date"),
+                        "weight_kg": row.get("weight_kg", 0),
+                        "reps": row.get("reps", 0),
+                        "sets": row.get("sets_count", 1),
+                        "rpe": row.get("rpe"),
+                        "rir": row.get("rir"),
+                    })
+                return history
+
+        except Exception as rpc_error:
+            logger.debug(f"RPC get_exercise_history not available, falling back to direct query: {rpc_error}")
+
+        # Fallback: Query performance_logs directly (still efficient with index)
+        result = db.client.table("performance_logs").select(
+            "workout_log_id, recorded_at, weight_kg, reps_completed, rpe, rir"
+        ).eq(
+            "user_id", user_id
+        ).ilike(
+            "exercise_name", exercise_name
+        ).eq(
+            "is_completed", True
+        ).order(
+            "recorded_at", desc=True
+        ).limit(limit * 5).execute()  # Get more rows to group by workout
+
+        if result.data:
+            # Group by workout_log_id to get best set per workout
+            from collections import defaultdict
+            by_workout = defaultdict(list)
+            for row in result.data:
+                by_workout[row["workout_log_id"]].append(row)
+
+            history = []
+            for workout_log_id, sets in by_workout.items():
+                # Get best set by weight
+                best_set = max(sets, key=lambda s: s.get("weight_kg", 0))
+                history.append({
+                    "date": best_set.get("recorded_at"),
+                    "weight_kg": best_set.get("weight_kg", 0),
+                    "reps": best_set.get("reps_completed", 0),
+                    "sets": len(sets),
+                    "rpe": best_set.get("rpe"),
+                    "rir": best_set.get("rir"),
+                })
+
+                if len(history) >= limit:
+                    break
+
+            # Sort by date descending
+            history.sort(key=lambda x: x.get("date", ""), reverse=True)
+            return history[:limit]
+
+        # Final fallback: Legacy JSON parsing (for old data not yet migrated)
+        logger.debug(f"No performance_logs found for {exercise_name}, trying legacy JSON parsing")
         result = db.client.table("workout_logs").select(
-            "id, completed_at, set_logs, workout_id"
+            "id, completed_at, sets_json, workout_id"
         ).eq(
             "user_id", user_id
         ).not_.is_(
@@ -119,19 +189,25 @@ async def get_exercise_history(
 
         history = []
         for log in result.data or []:
-            set_logs = log.get("set_logs", {}) or {}
+            sets_json = log.get("sets_json", {}) or {}
 
-            # set_logs structure: {exercise_name: [{reps, weight, rpe, rir, ...}]}
-            if exercise_name.lower() in [k.lower() for k in set_logs.keys()]:
-                # Find the matching key (case-insensitive)
+            # Handle both dict and string formats
+            if isinstance(sets_json, str):
+                import json
+                try:
+                    sets_json = json.loads(sets_json)
+                except:
+                    continue
+
+            # sets_json structure: {exercise_name: [{reps, weight, rpe, rir, ...}]}
+            if exercise_name.lower() in [k.lower() for k in sets_json.keys()]:
                 matching_key = next(
-                    k for k in set_logs.keys()
+                    k for k in sets_json.keys()
                     if k.lower() == exercise_name.lower()
                 )
-                sets_data = set_logs[matching_key]
+                sets_data = sets_json[matching_key]
 
                 if sets_data:
-                    # Get the heaviest set from this session
                     best_set = max(sets_data, key=lambda s: s.get("weight", 0))
                     history.append({
                         "date": log["completed_at"],

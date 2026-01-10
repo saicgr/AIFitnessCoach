@@ -214,7 +214,7 @@ class _NumberStepperState extends State<NumberStepper> {
         // Responsive sizing - scale down buttons and font on small screens
         final isSmallScreen = constraints.maxWidth < 140;
         final buttonSize = isSmallScreen ? 40.0 : widget.buttonSize;
-        final valueFontSize = isSmallScreen ? 22.0 : 28.0;
+        final valueFontSize = isSmallScreen ? 28.0 : 32.0; // Increased for better visibility
         final labelFontSize = isSmallScreen ? 10.0 : 11.0;
 
         return Column(
@@ -243,10 +243,10 @@ class _NumberStepperState extends State<NumberStepper> {
                     onTap: _isEditing ? null : _startEditing,
                     child: Container(
                       constraints: BoxConstraints(
-                        minWidth: isSmallScreen ? 40 : 50,
-                        maxWidth: isSmallScreen ? 60 : 80,
+                        minWidth: isSmallScreen ? 50 : 60,
+                        maxWidth: isSmallScreen ? 80 : 100,
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                       child: _isEditing
                           ? TextField(
                               controller: _controller,

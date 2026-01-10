@@ -26,7 +26,10 @@ class _SkillsTabState extends ConsumerState<SkillsTab>
   @override
   void initState() {
     super.initState();
-    _loadData();
+    // Delay provider modification until after widget tree is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
   }
 
   Future<void> _loadData() async {

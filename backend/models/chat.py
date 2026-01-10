@@ -50,6 +50,10 @@ class CoachIntent(str, Enum):
 
 class AISettings(BaseModel):
     """AI personality and behavior settings."""
+    # Coach Persona
+    coach_persona_id: Optional[str] = Field(default=None, max_length=50)  # e.g., "coach_mike", "coach_sarah", "custom"
+    coach_name: Optional[str] = Field(default=None, max_length=100)  # Display name for the coach (e.g., "Coach Mike")
+
     # Personality & Tone
     coaching_style: str = Field(default="motivational", max_length=50)  # "motivational", "professional", "friendly", "tough-love"
     communication_tone: str = Field(default="encouraging", max_length=50)  # "casual", "encouraging", "formal"

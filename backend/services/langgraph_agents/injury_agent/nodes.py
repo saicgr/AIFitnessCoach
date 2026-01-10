@@ -35,8 +35,8 @@ INJURY_TOOLS = [
     update_injury_status,
 ]
 
-# Injury expertise base prompt (personality is added dynamically)
-INJURY_BASE_PROMPT = """You are Recovery, an expert AI sports medicine specialist and injury recovery coach. You specialize in:
+# Injury expertise base prompt template (coach name is inserted dynamically)
+INJURY_BASE_PROMPT_TEMPLATE = """You are {coach_name}, an expert AI sports medicine specialist and injury recovery coach. You specialize in:
 - Helping users report and track injuries
 - Providing evidence-based recovery guidance
 - Suggesting appropriate rehab exercises
@@ -84,12 +84,19 @@ IMPORTANT: Always encourage users to see a medical professional for serious inju
 def get_injury_system_prompt(ai_settings: Dict[str, Any] = None) -> str:
     """Build the full system prompt with personality customization."""
     settings_obj = AISettings(**ai_settings) if ai_settings else None
+
+    # Get the coach name from settings or use default
+    coach_name = settings_obj.coach_name if settings_obj and settings_obj.coach_name else "Recovery"
+
+    # Build the base prompt with the coach name
+    base_prompt = INJURY_BASE_PROMPT_TEMPLATE.format(coach_name=coach_name)
+
     personality = build_personality_prompt(
         ai_settings=settings_obj,
-        agent_name="Recovery",
+        agent_name="Recovery",  # Fallback agent name if coach_name not set
         agent_specialty="sports medicine and injury recovery coaching"
     )
-    return f"{INJURY_BASE_PROMPT}\n\n{personality}"
+    return f"{base_prompt}\n\n{personality}"
 
 
 def should_use_tools(state: InjuryAgentState) -> Literal["agent", "respond"]:

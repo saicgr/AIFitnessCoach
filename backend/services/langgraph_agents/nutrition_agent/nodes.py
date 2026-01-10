@@ -30,8 +30,8 @@ NUTRITION_TOOLS = [
     get_recent_meals,
 ]
 
-# Nutrition expertise base prompt (personality is added dynamically)
-NUTRITION_BASE_PROMPT = """You are Nutri, an expert AI nutritionist and dietary coach. You specialize in:
+# Nutrition expertise base prompt template (coach name is inserted dynamically)
+NUTRITION_BASE_PROMPT_TEMPLATE = """You are {coach_name}, an expert AI nutritionist and dietary coach. You specialize in:
 - Analyzing food and estimating calories/macros
 - Providing personalized dietary advice based on fitness goals
 - Explaining nutrition concepts (macros, micros, meal timing)
@@ -59,12 +59,19 @@ def get_nutrition_system_prompt(ai_settings: Dict[str, Any] = None) -> str:
     """Build the full system prompt with personality customization."""
     # Convert dict to AISettings if provided
     settings_obj = AISettings(**ai_settings) if ai_settings else None
+
+    # Get the coach name from settings or use default
+    coach_name = settings_obj.coach_name if settings_obj and settings_obj.coach_name else "Nutri"
+
+    # Build the base prompt with the coach name
+    base_prompt = NUTRITION_BASE_PROMPT_TEMPLATE.format(coach_name=coach_name)
+
     personality = build_personality_prompt(
         ai_settings=settings_obj,
-        agent_name="Nutri",
+        agent_name="Nutri",  # Fallback agent name if coach_name not set
         agent_specialty="nutrition and dietary coaching"
     )
-    return f"{NUTRITION_BASE_PROMPT}\n\n{personality}"
+    return f"{base_prompt}\n\n{personality}"
 
 
 def should_use_tools(state: NutritionAgentState) -> Literal["agent", "respond"]:

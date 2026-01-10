@@ -309,10 +309,10 @@ class _ActiveWorkoutScreenState
   }
 
   void _handleStretchComplete() {
-    setState(() {
-      _currentPhase = WorkoutPhase.complete;
-    });
-    _saveWorkoutCompletion();
+    // Stop the workout timer when workout completes
+    _timerController.stopWorkoutTimer();
+    // Start completion process - this will save to backend and navigate
+    _finalizeWorkoutCompletion();
   }
 
   void _handleSkipStretch() {
@@ -346,8 +346,9 @@ class _ActiveWorkoutScreenState
     // Store as pending - we'll finalize after RPE input
     _pendingSetLog = setLog;
 
-    // Show RPE selector immediately
-    _showRpeSelectorSheet();
+    // Skip RPE selector - directly finalize the set
+    // RPE tracking is optional - users can enable it in settings
+    _finalizeSetWithRpe();
 
     HapticFeedback.heavyImpact();
     _lastSetCompletedAt = DateTime.now();
@@ -896,40 +897,222 @@ class _ActiveWorkoutScreenState
     }
   }
 
-  Future<void> _saveWorkoutCompletion() async {
-    // Build completion data
-    final setData = <Map<String, dynamic>>[];
-    _completedSets.forEach((exerciseIndex, sets) {
-      for (int i = 0; i < sets.length; i++) {
-        final set = sets[i];
-        setData.add({
-          'exercise_index': exerciseIndex,
-          'exercise_name': _exercises[exerciseIndex].name,
-          'set_number': i + 1,
-          'reps_completed': set.reps,
-          'weight_kg': set.weight,
-          'set_type': set.setType,
-        });
-      }
-    });
+  /// Finalize workout: save to backend, get PRs, and navigate to complete screen
+  Future<void> _finalizeWorkoutCompletion() async {
+    setState(() => _currentPhase = WorkoutPhase.complete);
 
-    final completionData = {
-      'workout_id': widget.workout.id,
-      'total_time_seconds': _timerController.workoutSeconds,
-      'calories_burned': _totalCaloriesBurned,
-      'drink_intake_ml': _totalDrinkIntakeMl,
-      'sets': setData,
-      'rest_intervals': _restIntervals,
-      'exercise_times': _exerciseTimeSeconds,
-    };
+    // Variables to pass to workout complete screen
+    String? workoutLogId;
+    int totalCompletedSets = 0;
+    int totalReps = 0;
+    double totalVolumeKg = 0.0;
+    int totalRestSeconds = 0;
+    double avgRestSeconds = 0.0;
+    List<PersonalRecordInfo>? personalRecords;
+    PerformanceComparisonInfo? performanceComparison;
 
     try {
-      final repository = ref.read(workoutRepositoryProvider);
-      // Save workout completion
-      debugPrint('Workout completion data: ${jsonEncode(completionData)}');
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (widget.workout.id != null && userId != null) {
+        // 1. Create workout log with all sets
+        debugPrint('🏋️ Saving workout log to backend...');
+        final setsJson = _buildSetsJson();
+        final metadata = _buildWorkoutMetadata();
+
+        final workoutLog = await workoutRepo.createWorkoutLog(
+          workoutId: widget.workout.id!,
+          userId: userId,
+          setsJson: setsJson,
+          totalTimeSeconds: _timerController.workoutSeconds,
+          metadata: jsonEncode(metadata),
+        );
+
+        // 2. Log individual set performances
+        if (workoutLog != null) {
+          debugPrint('✅ Workout log created: ${workoutLog['id']}');
+          workoutLogId = workoutLog['id'] as String;
+          await _logAllSetPerformances(workoutLogId, userId);
+        }
+
+        // 3. Log drink intake if any
+        if (_totalDrinkIntakeMl > 0) {
+          await workoutRepo.logDrinkIntake(
+            workoutId: widget.workout.id!,
+            userId: userId,
+            amountMl: _totalDrinkIntakeMl,
+            drinkType: 'water',
+          );
+          debugPrint('💧 Logged drink intake: ${_totalDrinkIntakeMl}ml');
+        }
+
+        // 4. Calculate stats for workout complete screen
+        totalCompletedSets = _completedSets.values.fold<int>(
+          0, (sum, list) => sum + list.length,
+        );
+        final exercisesWithSets = _completedSets.values.where((l) => l.isNotEmpty).length;
+
+        // Calculate total reps and volume
+        for (final sets in _completedSets.values) {
+          for (final setLog in sets) {
+            totalReps += setLog.reps;
+            totalVolumeKg += setLog.reps * setLog.weight;
+          }
+        }
+
+        // Calculate rest time stats
+        if (_restIntervals.isNotEmpty) {
+          for (final interval in _restIntervals) {
+            totalRestSeconds += (interval['rest_seconds'] as int?) ?? 0;
+          }
+          avgRestSeconds = totalRestSeconds / _restIntervals.length;
+        }
+
+        // 5. Log workout exit
+        await workoutRepo.logWorkoutExit(
+          workoutId: widget.workout.id!,
+          userId: userId,
+          exitReason: 'completed',
+          exercisesCompleted: exercisesWithSets,
+          totalExercises: _exercises.length,
+          setsCompleted: totalCompletedSets,
+          timeSpentSeconds: _timerController.workoutSeconds,
+          progressPercentage: _exercises.isNotEmpty
+              ? (exercisesWithSets / _exercises.length * 100)
+              : 100.0,
+        );
+        debugPrint('✅ Workout exit logged as completed');
+
+        // 6. Mark workout as complete and get PRs
+        final completionResponse = await workoutRepo.completeWorkout(widget.workout.id!);
+        debugPrint('✅ Workout marked as complete');
+
+        if (completionResponse != null && completionResponse.hasPRs) {
+          personalRecords = completionResponse.personalRecords;
+          debugPrint('🏆 Got ${personalRecords.length} PRs from completion API');
+        }
+
+        if (completionResponse != null && completionResponse.performanceComparison != null) {
+          performanceComparison = completionResponse.performanceComparison;
+          debugPrint('📊 Got performance comparison');
+        }
+      }
     } catch (e) {
-      debugPrint('Failed to save workout completion: $e');
+      debugPrint('❌ Failed to complete workout: $e');
     }
+
+    // Build exercises performance data for complete screen
+    final exercisesPerformance = <Map<String, dynamic>>[];
+    for (int i = 0; i < _exercises.length; i++) {
+      final exercise = _exercises[i];
+      final sets = _completedSets[i] ?? [];
+      if (sets.isNotEmpty) {
+        final avgWeight = sets.fold<double>(0, (sum, s) => sum + s.weight) / sets.length;
+        final totalExReps = sets.fold<int>(0, (sum, s) => sum + s.reps);
+        exercisesPerformance.add({
+          'name': exercise.name,
+          'sets': sets.length,
+          'reps': totalExReps,
+          'weight_kg': avgWeight,
+        });
+      }
+    }
+
+    if (mounted) {
+      debugPrint('🏋️ [Complete] Navigating to workout-complete');
+      context.go('/workout-complete', extra: {
+        'workout': widget.workout,
+        'duration': _timerController.workoutSeconds,
+        'calories': _totalCaloriesBurned,
+        'drinkIntakeMl': _totalDrinkIntakeMl,
+        'restIntervals': _restIntervals.length,
+        'workoutLogId': workoutLogId,
+        'exercisesPerformance': exercisesPerformance,
+        'totalRestSeconds': totalRestSeconds,
+        'avgRestSeconds': avgRestSeconds,
+        'totalSets': totalCompletedSets,
+        'totalReps': totalReps,
+        'totalVolumeKg': totalVolumeKg,
+        'challengeId': widget.challengeId,
+        'challengeData': widget.challengeData,
+        'personalRecords': personalRecords,
+        'performanceComparison': performanceComparison,
+      });
+    }
+  }
+
+  /// Build comprehensive JSON string with all workout data
+  String _buildSetsJson() {
+    final List<Map<String, dynamic>> allSets = [];
+
+    for (int i = 0; i < _exercises.length; i++) {
+      final exercise = _exercises[i];
+      final sets = _completedSets[i] ?? [];
+
+      for (int j = 0; j < sets.length; j++) {
+        allSets.add({
+          'exercise_index': i,
+          'exercise_id': exercise.exerciseId ?? exercise.libraryId,
+          'exercise_name': exercise.name,
+          'set_number': j + 1,
+          'reps': sets[j].reps,
+          'weight_kg': sets[j].weight,
+          'completed_at': sets[j].completedAt.toIso8601String(),
+          if (sets[j].rpe != null) 'rpe': sets[j].rpe,
+          if (sets[j].rir != null) 'rir': sets[j].rir,
+        });
+      }
+    }
+
+    return jsonEncode(allSets);
+  }
+
+  /// Build comprehensive workout metadata JSON
+  Map<String, dynamic> _buildWorkoutMetadata() {
+    final exerciseOrder = _exercises.asMap().entries.map((e) => {
+      'index': e.key,
+      'exercise_id': e.value.exerciseId ?? e.value.libraryId,
+      'exercise_name': e.value.name,
+      'time_spent_seconds': _exerciseTimeSeconds[e.key] ?? 0,
+    }).toList();
+
+    return {
+      'exercise_order': exerciseOrder,
+      'rest_intervals': _restIntervals,
+      'drink_intake_ml': _totalDrinkIntakeMl,
+    };
+  }
+
+  /// Log all set performances to backend
+  Future<void> _logAllSetPerformances(String workoutLogId, String userId) async {
+    final workoutRepo = ref.read(workoutRepositoryProvider);
+
+    for (int i = 0; i < _exercises.length; i++) {
+      final exercise = _exercises[i];
+      final sets = _completedSets[i] ?? [];
+
+      for (int j = 0; j < sets.length; j++) {
+        final setLog = sets[j];
+        try {
+          await workoutRepo.logSetPerformance(
+            workoutLogId: workoutLogId,
+            exerciseId: exercise.exerciseId ?? exercise.libraryId ?? exercise.name,
+            exerciseName: exercise.name,
+            setNumber: j + 1,
+            repsCompleted: setLog.reps,
+            weightKg: setLog.weight,
+            userId: userId,
+            rpe: setLog.rpe?.toDouble(),
+            rir: setLog.rir,
+          );
+        } catch (e) {
+          debugPrint('⚠️ Failed to log set performance: $e');
+        }
+      }
+    }
+    debugPrint('💪 Logged ${_completedSets.values.fold<int>(0, (s, l) => s + l.length)} set performances');
   }
 
   // ========================================================================
@@ -1139,6 +1322,21 @@ class _ActiveWorkoutScreenState
                   isLoadingRestSuggestion: _isLoadingRestSuggestion,
                   onAcceptRestSuggestion: _acceptRestSuggestion,
                   onDismissRestSuggestion: _dismissRestSuggestion,
+                  // RPE/RIR input during rest
+                  currentRpe: _lastSetRpe,
+                  currentRir: _lastSetRir,
+                  onRpeChanged: (rpe) => setState(() => _lastSetRpe = rpe),
+                  onRirChanged: (rir) => setState(() => _lastSetRir = rir),
+                  // Last set performance data for display
+                  lastSetReps: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
+                      ? _completedSets[_currentExerciseIndex]!.last.reps
+                      : null,
+                  lastSetTargetReps: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
+                      ? _completedSets[_currentExerciseIndex]!.last.targetReps
+                      : null,
+                  lastSetWeight: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
+                      ? _completedSets[_currentExerciseIndex]!.last.weight
+                      : null,
                 ),
               ),
 
@@ -1301,17 +1499,17 @@ class _ActiveWorkoutScreenState
   }
 
   Widget _buildCompletionScreen(bool isDark, Color backgroundColor) {
+    // This shows briefly while saving to backend before navigating to WorkoutCompleteScreen
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+        child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(
                 Icons.emoji_events,
-                size: 100,
+                size: 80,
                 color: AppColors.cyan,
               )
                   .animate()
@@ -1320,39 +1518,20 @@ class _ActiveWorkoutScreenState
                   .shake(duration: 300.ms),
               const SizedBox(height: 24),
               Text(
-                'Workout Complete!',
+                'Saving workout...',
                 style: TextStyle(
-                  fontSize: 32,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                WorkoutTimerController.formatTime(_timerController.workoutSeconds),
-                style: const TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.w300,
+              SizedBox(
+                width: 40,
+                height: 40,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
                   color: AppColors.cyan,
-                ),
-              ),
-              const SizedBox(height: 32),
-              _buildCompletionStats(isDark),
-              const SizedBox(height: 48),
-              ElevatedButton(
-                onPressed: () => context.pop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
-                  foregroundColor: Colors.black,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: const Text(
-                  'Done',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                 ),
               ),
             ],

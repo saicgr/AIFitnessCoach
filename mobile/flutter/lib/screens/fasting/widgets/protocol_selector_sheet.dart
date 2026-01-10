@@ -303,8 +303,8 @@ class _ProtocolSelectorSheetState extends State<ProtocolSelectorSheet> {
               ),
             ),
 
-            // Safe area bottom padding
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
+            // Safe area bottom padding + extra space for floating nav bar
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 80),
           ],
         ),
       ),

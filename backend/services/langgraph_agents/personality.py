@@ -24,13 +24,16 @@ def build_personality_prompt(
 
     Args:
         ai_settings: User's AI customization settings
-        agent_name: The agent's name (e.g., "Nutri", "Flex", "Recovery")
+        agent_name: The agent's name (e.g., "Nutri", "Flex", "Recovery") - used as fallback
         agent_specialty: The agent's area of expertise
 
     Returns:
         A prompt string that modifies the agent's personality
     """
     settings = ai_settings or DEFAULT_SETTINGS
+
+    # Use the user's selected coach name if available, otherwise use the default agent name
+    display_name = settings.coach_name if settings.coach_name else agent_name
 
     # Build coaching style description
     style_descriptions = {
@@ -119,7 +122,7 @@ def build_personality_prompt(
     # Combine all into personality prompt
     personality_prompt = f"""
 PERSONALITY CUSTOMIZATION:
-You are {agent_name}, a specialized AI assistant for {agent_specialty}.
+You are {display_name}, a specialized AI assistant for {agent_specialty}.
 
 COACHING STYLE ({settings.coaching_style.upper()}):
 {style_prompt}
