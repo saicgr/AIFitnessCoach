@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/avoided_provider.dart';
 import '../../../core/providers/favorites_provider.dart';
 import '../../../core/providers/staples_provider.dart';
 import '../../../core/providers/exercise_queue_provider.dart';
@@ -21,6 +22,15 @@ class _ExercisePreferencesCardState
   bool _isExpanded = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Ensure avoided exercises are loaded (lazy initialization)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(avoidedProvider.notifier).ensureInitialized();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -34,10 +44,12 @@ class _ExercisePreferencesCardState
     final favoritesState = ref.watch(favoritesProvider);
     final staplesState = ref.watch(staplesProvider);
     final queueState = ref.watch(exerciseQueueProvider);
+    final avoidedState = ref.watch(avoidedProvider);
 
     final favoriteCount = favoritesState.favorites.length;
     final stapleCount = staplesState.staples.length;
     final queueCount = queueState.activeQueue.length;
+    final avoidedCount = avoidedState.activeAvoided.length;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -182,7 +194,7 @@ class _ExercisePreferencesCardState
                   icon: Icons.block,
                   title: 'Exercises to Avoid',
                   subtitle: 'Skip specific exercises',
-                  trailing: null,
+                  trailing: avoidedCount > 0 ? '$avoidedCount avoided' : null,
                   onTap: () => context.push('/settings/avoided-exercises'),
                   isDark: isDark,
                   textPrimary: textPrimary,

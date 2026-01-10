@@ -438,66 +438,47 @@ async def generate_next_workout(
                 "job_id": existing_job.get("id")
             }
 
-        # Find the latest scheduled workout date
+        # Find existing workouts and identify the EARLIEST missing workout day
         today = datetime.now().date()
         future_date = today + timedelta(days=60)
 
         workouts = db.get_workouts_by_date_range(user_id, str(today), str(future_date))
 
-        # Find the latest scheduled date
-        latest_date = None
+        # Build a set of dates that already have workouts
+        existing_workout_dates = set()
         if workouts:
             for w in workouts:
                 sched_date = w.get("scheduled_date", "")
                 if sched_date:
                     try:
-                        workout_date = datetime.fromisoformat(str(sched_date)[:10]).date()
-                        if latest_date is None or workout_date > latest_date:
-                            latest_date = workout_date
+                        date_str = str(sched_date)[:10]
+                        existing_workout_dates.add(date_str)
                     except ValueError:
                         pass
 
-        # Calculate next workout day based on selected_days
-        # If no workouts exist yet, start searching from today (not tomorrow)
-        # If workouts exist, start from the day after the latest scheduled workout
-        if latest_date is None:
-            search_date = today  # No workouts yet - include today as a candidate
-        else:
-            search_date = latest_date + timedelta(days=1)  # Start after last workout
+        logger.info(f"[Generate-Next] User {user_id} has workouts on dates: {sorted(existing_workout_dates)}")
 
-        # Find the next day that matches user's workout days (limit search to 14 days)
+        # Find the EARLIEST missing workout day starting from today
+        # This ensures we fill gaps (e.g., if Tuesday exists but Sunday doesn't, generate Sunday first)
         next_workout_date = None
         for i in range(14):
-            check_date = search_date + timedelta(days=i)
+            check_date = today + timedelta(days=i)
             # Python weekday: Monday=0, Sunday=6 (matches our format)
             if check_date.weekday() in selected_days:
-                next_workout_date = check_date
-                break
+                # Check if workout already exists for this date
+                if str(check_date) not in existing_workout_dates:
+                    next_workout_date = check_date
+                    break
 
         if not next_workout_date:
-            logger.warning(f"[Generate-Next] Could not find next workout day for user {user_id}")
+            logger.info(f"[Generate-Next] All workout days covered for next 14 days for user {user_id}")
             return {
-                "success": False,
-                "message": "Could not determine next workout day",
+                "success": True,
+                "message": "All scheduled workout days already have workouts",
                 "needs_generation": False
             }
 
-        logger.info(f"[Generate-Next] Next workout date for user {user_id}: {next_workout_date}")
-
-        # Check if a workout already exists for this date
-        existing_for_date = [
-            w for w in workouts
-            if str(w.get("scheduled_date", ""))[:10] == str(next_workout_date)
-        ]
-
-        if existing_for_date:
-            logger.info(f"[Generate-Next] Workout already exists for {next_workout_date}")
-            return {
-                "success": True,
-                "message": "Workout already exists for next scheduled day",
-                "needs_generation": False,
-                "next_workout_date": str(next_workout_date)
-            }
+        logger.info(f"[Generate-Next] Earliest missing workout date for user {user_id}: {next_workout_date}")
 
         # Create a job to generate 1 workout
         job_id = job_queue.create_job(
@@ -572,15 +553,36 @@ async def generate_more_workouts(
                 "job_id": existing_job.get("id")
             }
 
-        # Get existing workouts to find the latest scheduled date
+        # Get existing workouts and find the earliest missing workout day
         today = datetime.now().date()
         future_date = today + timedelta(days=60)
 
         workouts = db.get_workouts_by_date_range(user_id, str(today), str(future_date))
 
-        # Find the latest scheduled workout date
-        latest_date = today
+        # Build a set of dates that already have workouts
+        existing_workout_dates = set()
         if workouts:
+            for w in workouts:
+                sched_date = w.get("scheduled_date", "")
+                if sched_date:
+                    try:
+                        date_str = str(sched_date)[:10]
+                        existing_workout_dates.add(date_str)
+                    except ValueError:
+                        pass
+
+        # Find the EARLIEST missing workout day starting from today
+        start_date = None
+        for i in range(14):
+            check_date = today + timedelta(days=i)
+            if check_date.weekday() in selected_days:
+                if str(check_date) not in existing_workout_dates:
+                    start_date = str(check_date)
+                    break
+
+        if not start_date:
+            # All days covered, find the next day after the latest workout
+            latest_date = today
             for w in workouts:
                 sched_date = w.get("scheduled_date", "")
                 if sched_date:
@@ -590,9 +592,7 @@ async def generate_more_workouts(
                             latest_date = workout_date
                     except ValueError:
                         pass
-
-        # Start from the day after the latest scheduled workout
-        start_date = str(latest_date + timedelta(days=1))
+            start_date = str(latest_date + timedelta(days=1))
 
         logger.info(f"[Generate-More] User {user_id}: generating 1 workout starting {start_date}")
 

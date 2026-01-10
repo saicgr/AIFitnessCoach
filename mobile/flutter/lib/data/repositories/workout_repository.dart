@@ -1689,11 +1689,20 @@ class WorkoutRepository {
       if (response.statusCode == 200) {
         debugPrint('✅ [Workout] Workout log created successfully');
         return response.data as Map<String, dynamic>;
+      } else if (response.statusCode == 404) {
+        debugPrint('⚠️ [Workout] Workout $workoutId not found in database - may not have been synced');
+        // The workout ID doesn't exist in the database
+        // This can happen if the workout was generated but not saved properly
+        return null;
       }
       debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
       return null;
     } catch (e) {
       debugPrint('❌ [Workout] Error creating workout log: $e');
+      // Log more details about the error for debugging
+      if (e.toString().contains('404')) {
+        debugPrint('⚠️ [Workout] Workout not found - workout may not have been saved to database');
+      }
       return null;
     }
   }

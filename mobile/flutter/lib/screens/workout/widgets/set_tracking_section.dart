@@ -231,42 +231,33 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
     Color textMuted,
     bool isDark,
   ) {
-    return GestureDetector(
-      onTap: () {
-        setState(() => _isMinimized = !_isMinimized);
-        HapticFeedback.lightImpact();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: headerBg,
-          borderRadius: _isMinimized
-              ? BorderRadius.circular(20)
-              : const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Row(
-          children: [
-            // Minimize/Expand indicator
-            AnimatedRotation(
-              turns: _isMinimized ? 0.5 : 0,
-              duration: const Duration(milliseconds: 200),
-              child: Icon(
-                Icons.keyboard_arrow_down,
-                color: textMuted,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 4),
-            // Previous exercise button
-            _buildNavButton(
-              icon: Icons.chevron_left,
-              enabled: widget.exerciseIndex > 0,
-              onTap: widget.onPreviousExercise,
-              textMuted: textMuted,
-            ),
-            const SizedBox(width: 4),
-            // Exercise name and position
-            Expanded(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: headerBg,
+        borderRadius: _isMinimized
+            ? BorderRadius.circular(20)
+            : const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Row(
+        children: [
+          // Previous exercise button
+          _buildNavButton(
+            icon: Icons.chevron_left,
+            enabled: widget.exerciseIndex > 0,
+            onTap: widget.onPreviousExercise,
+            textMuted: textMuted,
+          ),
+          const SizedBox(width: 4),
+          // Exercise name and position (tappable to expand when minimized)
+          Expanded(
+            child: GestureDetector(
+              onTap: _isMinimized
+                  ? () {
+                      setState(() => _isMinimized = false);
+                      HapticFeedback.lightImpact();
+                    }
+                  : null,
               child: Column(
                 children: [
                   Text(
@@ -294,22 +285,59 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
                       'Set ${widget.currentSetNumber}/${widget.totalSets} • Tap to expand',
                       style: TextStyle(
                         fontSize: 10,
-                        color: textMuted,
+                        color: AppColors.cyan,
                       ),
                     ),
                   ],
                 ],
               ),
             ),
-            const SizedBox(width: 4),
-            // Next exercise button
-            _buildNavButton(
-              icon: Icons.chevron_right,
-              enabled: widget.exerciseIndex < widget.totalExercises - 1,
-              onTap: widget.onNextExercise,
-              textMuted: textMuted,
-            ),
-          ],
+          ),
+          const SizedBox(width: 4),
+          // Next exercise button
+          _buildNavButton(
+            icon: Icons.chevron_right,
+            enabled: widget.exerciseIndex < widget.totalExercises - 1,
+            onTap: widget.onNextExercise,
+            textMuted: textMuted,
+          ),
+          const SizedBox(width: 8),
+          // Minimize/Expand button - more visible
+          _buildMinimizeButton(isDark, textMuted),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMinimizeButton(bool isDark, Color textMuted) {
+    return GestureDetector(
+      onTap: () {
+        setState(() => _isMinimized = !_isMinimized);
+        HapticFeedback.mediumImpact();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: _isMinimized
+              ? AppColors.cyan.withOpacity(0.2)
+              : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05)),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: _isMinimized
+                ? AppColors.cyan.withOpacity(0.5)
+                : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1)),
+          ),
+        ),
+        child: AnimatedRotation(
+          turns: _isMinimized ? 0.5 : 0,
+          duration: const Duration(milliseconds: 200),
+          child: Icon(
+            Icons.keyboard_arrow_down,
+            color: _isMinimized ? AppColors.cyan : textMuted,
+            size: 22,
+          ),
         ),
       ),
     );

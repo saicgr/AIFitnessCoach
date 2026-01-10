@@ -39,6 +39,11 @@ class RestMessages {
   }) {
     final style = coachingStyle.toLowerCase();
 
+    // Priority 0: Check if set was skipped (reps == 0)
+    if (context != null && context.reps == 0) {
+      return _getSkippedSetMessage(style);
+    }
+
     // Priority 1: PR/Achievement messages
     if (context?.isPR == true) {
       return _getPRMessage(style, context!);
@@ -91,6 +96,14 @@ class RestMessages {
   static String _getFastCompletionMessage(String style) {
     final messages = _fastCompletionMessagesByStyle[style] ??
         _fastCompletionMessagesByStyle['motivational']!;
+    messages.shuffle();
+    return messages.first;
+  }
+
+  /// Get a message for skipped set (reps == 0)
+  static String _getSkippedSetMessage(String style) {
+    final messages = _skippedSetMessagesByStyle[style] ??
+        _skippedSetMessagesByStyle['motivational']!;
     messages.shuffle();
     return messages.first;
   }
@@ -273,6 +286,67 @@ class RestMessages {
       'Slow it down! Feel the muscle work!',
       'Too fast! No mind-muscle connection there.',
       'Control the weight, don\'t let it control you!',
+    ],
+  };
+
+  // ============================================================
+  // SKIPPED SET MESSAGES (When user doesn't complete reps)
+  // ============================================================
+  static final Map<String, List<String>> _skippedSetMessagesByStyle = {
+    'motivational': [
+      'That set didn\'t count. Let\'s make the next one count!',
+      'Skipped? No problem - refocus and crush the next set!',
+      'Ready to try again? You\'ve got this!',
+    ],
+    'professional': [
+      'Set not recorded. Recommend completing reps for progress tracking.',
+      'No reps logged. Consider attempting the exercise.',
+      'Set skipped. Consistent effort yields results.',
+    ],
+    'friendly': [
+      'Hey, that\'s okay! Let\'s nail the next set together!',
+      'No worries about that one. Ready to try again?',
+      'Skipped? Let\'s make up for it on the next one!',
+    ],
+    'tough-love': [
+      'Skipping sets won\'t build muscle. Step up.',
+      'That was nothing. Time to actually work.',
+      'You\'re wasting your own time. Do the reps.',
+    ],
+    'drill-sergeant': [
+      'THAT SET DIDN\'T COUNT! DROP AND GIVE ME A REAL SET!',
+      'WHAT WAS THAT?! I SAID WORK, NOT SKIP!',
+      'UNACCEPTABLE! THE NEXT SET BETTER BE REAL!',
+    ],
+    'college-coach': [
+      'You call that a set?! My grandma lifts more!',
+      'SKIPPING?! Is that what champions do?! GET IT TOGETHER!',
+      'That doesn\'t count! You\'re here to WORK!',
+    ],
+    'zen-master': [
+      'The skipped step still leaves a mark. Return to the path.',
+      'Rest when needed, but remember why you started.',
+      'A missed set is just a chance to begin again.',
+    ],
+    'hype-beast': [
+      'Yo that didn\'t count! Let\'s actually DO this next time!',
+      'Come on! That was a warm-up at BEST! Let\'s GO!',
+      'Nah we\'re not skipping! Hit it for REAL next set!',
+    ],
+    'scientist': [
+      'No mechanical load applied. Zero training stimulus recorded.',
+      'Set incomplete. No muscle adaptation stimulus delivered.',
+      'Skipping reduces total volume. Recommend completing next set.',
+    ],
+    'comedian': [
+      'Did you just... not do the set? The weights are lonely!',
+      'That was like a workout ghost - nothing there!',
+      'Skipped? Even my couch potato self does more!',
+    ],
+    'old-school': [
+      'Arnold never skipped sets. Neither should you.',
+      'No pain, no gain. You gotta put in the work!',
+      'Skipping? That\'s not how champions are made!',
     ],
   };
 

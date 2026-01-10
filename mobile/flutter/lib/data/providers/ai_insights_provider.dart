@@ -207,8 +207,9 @@ final aiInsightsProvider =
   return AIInsightsNotifier(apiClient);
 });
 
-/// Auto-dispose provider for daily tip (with user ID)
-final dailyTipProvider = FutureProvider.autoDispose<String?>((ref) async {
+/// Provider for daily tip (with user ID)
+/// Note: Removed autoDispose to prevent refetching on navigation
+final dailyTipProvider = FutureProvider<String?>((ref) async {
   final authState = ref.watch(authStateProvider);
   final userId = authState.user?.id;
 
@@ -229,8 +230,9 @@ final dailyTipProvider = FutureProvider.autoDispose<String?>((ref) async {
   return _getFallbackTip();
 });
 
-/// Auto-dispose provider for weight insight
-final weightInsightProvider = FutureProvider.autoDispose<String?>((ref) async {
+/// Provider for weight insight
+/// Note: Removed autoDispose to prevent refetching on navigation
+final weightInsightProvider = FutureProvider<String?>((ref) async {
   final authState = ref.watch(authStateProvider);
   final userId = authState.user?.id;
 

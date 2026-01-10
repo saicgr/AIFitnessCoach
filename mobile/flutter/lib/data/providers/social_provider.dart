@@ -9,7 +9,8 @@ final socialServiceProvider = Provider<SocialService>((ref) {
 });
 
 /// Activity feed provider (paginated)
-final activityFeedProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
+/// Note: Removed autoDispose to prevent refetching on navigation
+final activityFeedProvider = FutureProvider.family<Map<String, dynamic>, String>(
   (ref, userId) async {
     final socialService = ref.watch(socialServiceProvider);
     return await socialService.getActivityFeed(userId: userId);
@@ -17,7 +18,8 @@ final activityFeedProvider = FutureProvider.autoDispose.family<Map<String, dynam
 );
 
 /// User privacy settings provider
-final privacySettingsProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
+/// Note: Removed autoDispose to prevent refetching on navigation
+final privacySettingsProvider = FutureProvider.family<Map<String, dynamic>, String>(
   (ref, userId) async {
     final socialService = ref.watch(socialServiceProvider);
     return await socialService.getPrivacySettings(userId);
@@ -25,7 +27,8 @@ final privacySettingsProvider = FutureProvider.autoDispose.family<Map<String, dy
 );
 
 /// Friends list provider
-final friendsListProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
+/// Note: Removed autoDispose to prevent refetching on navigation
+final friendsListProvider = FutureProvider.family<List<Map<String, dynamic>>, String>(
   (ref, userId) async {
     final socialService = ref.watch(socialServiceProvider);
     return await socialService.getFriends(userId: userId);
@@ -33,7 +36,8 @@ final friendsListProvider = FutureProvider.autoDispose.family<List<Map<String, d
 );
 
 /// Followers list provider
-final followersListProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
+/// Note: Removed autoDispose to prevent refetching on navigation
+final followersListProvider = FutureProvider.family<List<Map<String, dynamic>>, String>(
   (ref, userId) async {
     final socialService = ref.watch(socialServiceProvider);
     return await socialService.getFollowers(userId: userId);
@@ -41,7 +45,8 @@ final followersListProvider = FutureProvider.autoDispose.family<List<Map<String,
 );
 
 /// Following list provider
-final followingListProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
+/// Note: Removed autoDispose to prevent refetching on navigation
+final followingListProvider = FutureProvider.family<List<Map<String, dynamic>>, String>(
   (ref, userId) async {
     final socialService = ref.watch(socialServiceProvider);
     return await socialService.getFollowing(userId: userId);
@@ -49,7 +54,8 @@ final followingListProvider = FutureProvider.autoDispose.family<List<Map<String,
 );
 
 /// Challenges list provider (all challenges with user participation)
-final challengesListProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
+/// Note: Removed autoDispose to prevent refetching on navigation
+final challengesListProvider = FutureProvider.family<List<Map<String, dynamic>>, String>(
   (ref, userId) async {
     final socialService = ref.watch(socialServiceProvider);
     return await socialService.getChallenges(userId: userId);
@@ -57,7 +63,8 @@ final challengesListProvider = FutureProvider.autoDispose.family<List<Map<String
 );
 
 /// User's active challenges (challenges they are participating in)
-final userActiveChallengesProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
+/// Note: Removed autoDispose to prevent refetching on navigation
+final userActiveChallengesProvider = FutureProvider.family<List<Map<String, dynamic>>, String>(
   (ref, userId) async {
     final socialService = ref.watch(socialServiceProvider);
     final allChallenges = await socialService.getChallenges(userId: userId);

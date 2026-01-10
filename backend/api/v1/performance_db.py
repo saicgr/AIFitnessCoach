@@ -17,6 +17,7 @@ ENDPOINTS:
 - GET  /api/v1/performance-db/rest-intervals - List rest intervals
 - GET  /api/v1/performance-db/rest-intervals/stats/{workout_log_id} - Get rest stats
 """
+import json
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import List, Optional
@@ -248,19 +249,34 @@ async def create_workout_log(log: WorkoutLogCreate):
     try:
         db = get_supabase_db()
 
+        # Parse sets_json string to dict for JSONB column
+        try:
+            sets_data = json.loads(log.sets_json)
+        except json.JSONDecodeError as je:
+            logger.error(f"Invalid JSON in sets_json: {je}")
+            raise HTTPException(status_code=400, detail=f"Invalid JSON in sets_json: {je}")
+
         log_data = {
             "workout_id": log.workout_id,
             "user_id": log.user_id,
-            "sets_json": log.sets_json,
+            "sets_json": sets_data,  # Pass as dict, not string
             "total_time_seconds": log.total_time_seconds,
         }
 
+        logger.info(f"Creating workout log: workout_id={log.workout_id}, user_id={log.user_id}")
         created = db.create_workout_log(log_data)
+
+        if created is None:
+            logger.error(f"Failed to create workout log - db returned None: workout_id={log.workout_id}")
+            raise HTTPException(status_code=500, detail="Failed to create workout log in database")
+
         logger.info(f"Workout log created: id={created['id']}, user_id={log.user_id}")
         return row_to_workout_log(created)
 
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error creating workout log: {e}")
+        logger.error(f"Error creating workout log: {e}, workout_id={log.workout_id}, user_id={log.user_id}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -666,14 +666,60 @@ class _ActiveWorkoutScreenState
   }
 
   void _startRest(bool betweenExercises) {
-    final restSeconds =
-        _exercises[_currentExerciseIndex].restSeconds ?? (betweenExercises ? 120 : 90);
+    final exercise = _exercises[_currentExerciseIndex];
+    final restSeconds = exercise.restSeconds ?? (betweenExercises ? 120 : 90);
 
     // Get AI settings for personalized message
     final aiSettings = ref.read(aiSettingsProvider);
+
+    // Build context from the last completed set for intelligent feedback
+    RestContext? context;
+    final exerciseSets = _completedSets[_currentExerciseIndex];
+    if (exerciseSets != null && exerciseSets.isNotEmpty) {
+      final lastSet = exerciseSets.last;
+      final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
+
+      // Check if this was a PR by comparing to exercise history
+      bool isPR = false;
+      final previousMaxWeight = _exerciseMaxWeights[exercise.name] ?? 0.0;
+      if (lastSet.weight > 0 && lastSet.weight > previousMaxWeight) {
+        isPR = true;
+      }
+
+      // Check if weight increased from previous set in this workout
+      double? previousWeight;
+      if (exerciseSets.length > 1) {
+        previousWeight = exerciseSets[exerciseSets.length - 2].weight;
+      }
+
+      context = RestContext(
+        exerciseName: exercise.name,
+        muscleGroup: exercise.muscleGroup,
+        reps: lastSet.reps,
+        weightLifted: lastSet.weight,
+        previousWeight: previousWeight,
+        isLastSet: exerciseSets.length >= totalSets,
+        isLastExercise: _currentExerciseIndex >= _exercises.length - 1,
+        isPR: isPR,
+        // Check if set was completed unusually fast (possible form issue)
+        wasFast: lastSet.reps > 0 &&
+            DateTime.now().difference(lastSet.completedAt).inSeconds.abs() < 5,
+      );
+    } else {
+      // No sets completed - set was skipped
+      context = RestContext(
+        exerciseName: exercise.name,
+        muscleGroup: exercise.muscleGroup,
+        reps: 0, // Indicates skipped set
+        isLastSet: false,
+        isLastExercise: _currentExerciseIndex >= _exercises.length - 1,
+      );
+    }
+
     final message = RestMessages.getMessage(
       aiSettings.coachingStyle,
       aiSettings.encouragementLevel,
+      context: context,
     );
 
     setState(() {

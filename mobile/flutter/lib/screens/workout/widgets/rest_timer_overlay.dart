@@ -207,7 +207,7 @@ class RestTimerOverlay extends StatelessWidget {
                     // RPE/RIR compact input section
                     if (onRpeChanged != null) ...[
                       SizedBox(height: isCompactScreen ? 10 : 16),
-                      _buildRpeRirSection(cardBg, textColor, subtitleColor, isDark, isCompactScreen),
+                      _buildRpeRirSection(context, cardBg, textColor, subtitleColor, isDark, isCompactScreen),
                     ],
 
                     // Coach Review section
@@ -1128,20 +1128,24 @@ class RestTimerOverlay extends StatelessWidget {
     IconData feedbackIcon;
     Color feedbackColor;
 
-    if (currentRir != null) {
-      if (currentRir == 0) {
+    // Use local variables for null safety promotion
+    final rir = currentRir;
+    final rpe = currentRpe;
+
+    if (rir != null) {
+      if (rir == 0) {
         feedback = "You went to failure. Make sure you can recover for the next set.";
         feedbackIcon = Icons.warning_amber_rounded;
         feedbackColor = AppColors.coral;
-      } else if (currentRir == 1) {
+      } else if (rir == 1) {
         feedback = "Great effort! One rep left is solid intensity.";
         feedbackIcon = Icons.check_circle;
         feedbackColor = AppColors.success;
-      } else if (currentRir == 2) {
+      } else if (rir == 2) {
         feedback = "Perfect zone! 2 RIR is ideal for hypertrophy.";
         feedbackIcon = Icons.star;
         feedbackColor = AppColors.cyan;
-      } else if (currentRir == 3) {
+      } else if (rir == 3) {
         feedback = "Good effort. Consider adding weight next set.";
         feedbackIcon = Icons.trending_up;
         feedbackColor = AppColors.success;
@@ -1150,16 +1154,16 @@ class RestTimerOverlay extends StatelessWidget {
         feedbackIcon = Icons.fitness_center;
         feedbackColor = AppColors.orange;
       }
-    } else if (currentRpe != null) {
-      if (currentRpe >= 10) {
+    } else if (rpe != null) {
+      if (rpe >= 10) {
         feedback = "Max effort reached. Ensure adequate rest before the next set.";
         feedbackIcon = Icons.warning_amber_rounded;
         feedbackColor = AppColors.coral;
-      } else if (currentRpe >= 8) {
+      } else if (rpe >= 8) {
         feedback = "Great intensity! This is the ideal training zone.";
         feedbackIcon = Icons.star;
         feedbackColor = AppColors.cyan;
-      } else if (currentRpe >= 7) {
+      } else if (rpe >= 7) {
         feedback = "Moderate effort. You can push a bit harder next set.";
         feedbackIcon = Icons.trending_up;
         feedbackColor = AppColors.success;
@@ -1243,6 +1247,7 @@ class RestTimerOverlay extends StatelessWidget {
 
   /// Compact RPE/RIR input section for rest period
   Widget _buildRpeRirSection(
+    BuildContext context,
     Color cardBg,
     Color textColor,
     Color subtitleColor,

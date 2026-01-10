@@ -101,7 +101,7 @@ class SubjectiveFeedbackNotifier extends StateNotifier<SubjectiveFeedbackState> 
       debugPrint('Creating pre-workout check-in: mood=$moodBefore');
 
       final response = await _apiClient.post(
-        '/v1/subjective-feedback/pre-checkin',
+        '/subjective-feedback/pre-checkin',
         data: {
           'user_id': user.id,
           'workout_id': workoutId,
@@ -148,7 +148,7 @@ class SubjectiveFeedbackNotifier extends StateNotifier<SubjectiveFeedbackState> 
       debugPrint('Creating post-workout check-in: workout=$workoutId, mood=$moodAfter');
 
       final response = await _apiClient.post(
-        '/v1/subjective-feedback/workouts/$workoutId/post-checkin',
+        '/subjective-feedback/workouts/$workoutId/post-checkin',
         data: {
           'user_id': user.id,
           'workout_id': workoutId,
@@ -190,7 +190,7 @@ class SubjectiveFeedbackNotifier extends StateNotifier<SubjectiveFeedbackState> 
       state = state.copyWith(isLoading: true);
 
       final response = await _apiClient.get(
-        '/v1/subjective-feedback/progress/feel-results',
+        '/subjective-feedback/progress/feel-results',
         queryParameters: {'user_id': user.id},
       );
 
@@ -221,7 +221,7 @@ class SubjectiveFeedbackNotifier extends StateNotifier<SubjectiveFeedbackState> 
       state = state.copyWith(isLoading: true);
 
       final response = await _apiClient.get(
-        '/v1/subjective-feedback/progress/subjective-trends',
+        '/subjective-feedback/progress/subjective-trends',
         queryParameters: {
           'user_id': user.id,
           'days': days,
@@ -253,7 +253,7 @@ class SubjectiveFeedbackNotifier extends StateNotifier<SubjectiveFeedbackState> 
       if (user == null) return;
 
       final response = await _apiClient.get(
-        '/v1/subjective-feedback/quick-stats',
+        '/subjective-feedback/quick-stats',
         queryParameters: {'user_id': user.id},
       );
 
@@ -286,7 +286,7 @@ class SubjectiveFeedbackNotifier extends StateNotifier<SubjectiveFeedbackState> 
       state = state.copyWith(isLoading: true);
 
       final response = await _apiClient.get(
-        '/v1/subjective-feedback/history',
+        '/subjective-feedback/history',
         queryParameters: {
           'user_id': user.id,
           'limit': 20,
@@ -325,7 +325,7 @@ class SubjectiveFeedbackNotifier extends StateNotifier<SubjectiveFeedbackState> 
       if (user == null) return null;
 
       final response = await _apiClient.get(
-        '/v1/subjective-feedback/workouts/$workoutId',
+        '/subjective-feedback/workouts/$workoutId',
         queryParameters: {'user_id': user.id},
       );
 
@@ -359,7 +359,7 @@ final feelResultsProvider = FutureProvider<FeelResultsSummary?>((ref) async {
 
   try {
     final response = await apiClient.get(
-      '/v1/subjective-feedback/progress/feel-results',
+      '/subjective-feedback/progress/feel-results',
       queryParameters: {'user_id': user.id},
     );
 
@@ -380,7 +380,7 @@ final subjectiveQuickStatsProvider = FutureProvider<SubjectiveQuickStats?>((ref)
 
   try {
     final response = await apiClient.get(
-      '/v1/subjective-feedback/quick-stats',
+      '/subjective-feedback/quick-stats',
       queryParameters: {'user_id': user.id},
     );
 

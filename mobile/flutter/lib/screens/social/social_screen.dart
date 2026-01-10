@@ -65,69 +65,59 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: SafeArea(
-        child: NestedScrollView(
-          headerSliverBuilder: (context, innerBoxIsScrolled) {
-            return [
-              // App Bar
-              SliverAppBar(
-                backgroundColor: backgroundColor,
-                floating: true,
-                pinned: true,
-                title: Text(
-                  'Social',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                centerTitle: false,
-                actions: [
-                  // Username chip (compact, tap to copy)
-                  _buildCompactUserChip(context, isDark, authState.user),
-                  // Find friends button
-                  IconButton(
-                    icon: Icon(
-                      Icons.person_add_rounded,
-                      color: isDark ? Colors.white : AppColors.pureBlack,
-                    ),
-                    tooltip: 'Find Friends',
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const FriendSearchScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(130),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Stats chips row
-                      _buildStatsChips(context, isDark, feedDataAsync),
-                      // Modern segmented tab bar
-                      _buildSegmentedTabs(context, isDark),
-                    ],
-                  ),
-                ),
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          'Social',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
               ),
-            ];
-          },
-          body: TabBarView(
-            controller: _tabController,
-            children: const [
-              FeedTab(),
-              ChallengesTab(),
-              LeaderboardTab(),
-              FriendsTab(),
-            ],
-          ),
         ),
+        centerTitle: false,
+        actions: [
+          // Username chip (compact, tap to copy)
+          _buildCompactUserChip(context, isDark, authState.user),
+          // Find friends button
+          IconButton(
+            icon: Icon(
+              Icons.person_add_rounded,
+              color: isDark ? Colors.white : AppColors.pureBlack,
+            ),
+            tooltip: 'Find Friends',
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const FriendSearchScreen(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Stats chips row
+          _buildStatsChips(context, isDark, feedDataAsync),
+          // Modern segmented tab bar
+          _buildSegmentedTabs(context, isDark),
+          // Tab content
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: const [
+                FeedTab(),
+                ChallengesTab(),
+                LeaderboardTab(),
+                FriendsTab(),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

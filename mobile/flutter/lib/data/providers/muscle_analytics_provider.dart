@@ -20,32 +20,37 @@ final muscleAnalyticsTabProvider = StateProvider<int>((ref) => 0);
 // ============================================================================
 
 /// Provider for muscle heatmap data
-final muscleHeatmapProvider = FutureProvider.autoDispose<MuscleHeatmapData>((ref) async {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final muscleHeatmapProvider = FutureProvider<MuscleHeatmapData>((ref) async {
   final repository = ref.watch(muscleAnalyticsRepositoryProvider);
   final timeRange = ref.watch(muscleAnalyticsTimeRangeProvider);
   return repository.getMuscleHeatmap(timeRange: timeRange);
 });
 
 /// Provider for muscle training frequency
-final muscleFrequencyProvider = FutureProvider.autoDispose<MuscleTrainingFrequency>((ref) async {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final muscleFrequencyProvider = FutureProvider<MuscleTrainingFrequency>((ref) async {
   final repository = ref.watch(muscleAnalyticsRepositoryProvider);
   return repository.getMuscleFrequency();
 });
 
 /// Provider for muscle balance analysis
-final muscleBalanceProvider = FutureProvider.autoDispose<MuscleBalanceData>((ref) async {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final muscleBalanceProvider = FutureProvider<MuscleBalanceData>((ref) async {
   final repository = ref.watch(muscleAnalyticsRepositoryProvider);
   return repository.getMuscleBalance();
 });
 
 /// Provider for exercises targeting a specific muscle (family provider)
-final muscleExercisesProvider = FutureProvider.autoDispose.family<MuscleExerciseData, String>((ref, muscleGroup) async {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final muscleExercisesProvider = FutureProvider.family<MuscleExerciseData, String>((ref, muscleGroup) async {
   final repository = ref.watch(muscleAnalyticsRepositoryProvider);
   return repository.getExercisesForMuscle(muscleGroup: muscleGroup);
 });
 
 /// Provider for muscle training history (family provider)
-final muscleHistoryProvider = FutureProvider.autoDispose.family<MuscleHistoryData, String>((ref, muscleGroup) async {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final muscleHistoryProvider = FutureProvider.family<MuscleHistoryData, String>((ref, muscleGroup) async {
   final repository = ref.watch(muscleAnalyticsRepositoryProvider);
   final timeRange = ref.watch(muscleAnalyticsTimeRangeProvider);
   return repository.getMuscleHistory(muscleGroup: muscleGroup, timeRange: timeRange);
@@ -56,7 +61,8 @@ final muscleHistoryProvider = FutureProvider.autoDispose.family<MuscleHistoryDat
 // ============================================================================
 
 /// Get list of all muscle groups from heatmap data
-final allMuscleGroupsProvider = Provider.autoDispose<AsyncValue<List<String>>>((ref) {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final allMuscleGroupsProvider = Provider<AsyncValue<List<String>>>((ref) {
   final heatmapAsync = ref.watch(muscleHeatmapProvider);
   return heatmapAsync.whenData((heatmap) {
     return heatmap.muscleIntensities.map((m) => m.muscleId).toList();
@@ -64,7 +70,8 @@ final allMuscleGroupsProvider = Provider.autoDispose<AsyncValue<List<String>>>((
 });
 
 /// Get top trained muscles (top 5)
-final topTrainedMusclesProvider = Provider.autoDispose<AsyncValue<List<MuscleIntensity>>>((ref) {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final topTrainedMusclesProvider = Provider<AsyncValue<List<MuscleIntensity>>>((ref) {
   final heatmapAsync = ref.watch(muscleHeatmapProvider);
   return heatmapAsync.whenData((heatmap) {
     return heatmap.getTopMuscles(5);
@@ -72,7 +79,8 @@ final topTrainedMusclesProvider = Provider.autoDispose<AsyncValue<List<MuscleInt
 });
 
 /// Get neglected muscles (bottom 20% intensity)
-final neglectedMusclesProvider = Provider.autoDispose<AsyncValue<List<MuscleIntensity>>>((ref) {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final neglectedMusclesProvider = Provider<AsyncValue<List<MuscleIntensity>>>((ref) {
   final heatmapAsync = ref.watch(muscleHeatmapProvider);
   return heatmapAsync.whenData((heatmap) {
     return heatmap.getNeglectedMuscles(threshold: 0.2);
@@ -80,7 +88,8 @@ final neglectedMusclesProvider = Provider.autoDispose<AsyncValue<List<MuscleInte
 });
 
 /// Get undertrained muscles from frequency data
-final undertrainedMusclesProvider = Provider.autoDispose<AsyncValue<List<MuscleFrequencyData>>>((ref) {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final undertrainedMusclesProvider = Provider<AsyncValue<List<MuscleFrequencyData>>>((ref) {
   final frequencyAsync = ref.watch(muscleFrequencyProvider);
   return frequencyAsync.whenData((frequency) {
     return frequency.frequencies.where((f) => f.isUndertrained).toList();
@@ -88,7 +97,8 @@ final undertrainedMusclesProvider = Provider.autoDispose<AsyncValue<List<MuscleF
 });
 
 /// Get overtrained muscles from frequency data
-final overtrainedMusclesProvider = Provider.autoDispose<AsyncValue<List<MuscleFrequencyData>>>((ref) {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final overtrainedMusclesProvider = Provider<AsyncValue<List<MuscleFrequencyData>>>((ref) {
   final frequencyAsync = ref.watch(muscleFrequencyProvider);
   return frequencyAsync.whenData((frequency) {
     return frequency.frequencies.where((f) => f.isOvertrained).toList();
@@ -96,7 +106,8 @@ final overtrainedMusclesProvider = Provider.autoDispose<AsyncValue<List<MuscleFr
 });
 
 /// Get balance recommendations
-final balanceRecommendationsProvider = Provider.autoDispose<AsyncValue<List<String>>>((ref) {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final balanceRecommendationsProvider = Provider<AsyncValue<List<String>>>((ref) {
   final balanceAsync = ref.watch(muscleBalanceProvider);
   return balanceAsync.whenData((balance) {
     return balance.recommendations ?? [];
@@ -104,7 +115,8 @@ final balanceRecommendationsProvider = Provider.autoDispose<AsyncValue<List<Stri
 });
 
 /// Check if there are significant imbalances
-final hasSignificantImbalancesProvider = Provider.autoDispose<AsyncValue<bool>>((ref) {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final hasSignificantImbalancesProvider = Provider<AsyncValue<bool>>((ref) {
   final balanceAsync = ref.watch(muscleBalanceProvider);
   return balanceAsync.whenData((balance) {
     return balance.hasImbalances;
@@ -140,7 +152,8 @@ class MuscleAnalyticsSummary {
 }
 
 /// Provider that combines all muscle analytics data
-final muscleAnalyticsSummaryProvider = Provider.autoDispose<MuscleAnalyticsSummary>((ref) {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final muscleAnalyticsSummaryProvider = Provider<MuscleAnalyticsSummary>((ref) {
   final heatmapAsync = ref.watch(muscleHeatmapProvider);
   final frequencyAsync = ref.watch(muscleFrequencyProvider);
   final balanceAsync = ref.watch(muscleBalanceProvider);

@@ -6,7 +6,8 @@ import '../../data/models/nutrition.dart';
 import '../../data/repositories/nutrition_repository.dart';
 
 /// Provider for food-mood analytics data
-final foodMoodAnalyticsProvider = FutureProvider.autoDispose.family<FoodMoodAnalytics, String>((ref, userId) async {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final foodMoodAnalyticsProvider = FutureProvider.family<FoodMoodAnalytics, String>((ref, userId) async {
   // Guard: Return empty analytics if userId is empty
   if (userId.isEmpty) {
     return FoodMoodAnalytics.empty();

@@ -534,7 +534,7 @@ async def get_consistency_patterns(
 @router.get("/calendar", response_model=CalendarHeatmapResponse, tags=["Consistency"])
 async def get_calendar_heatmap(
     user_id: str = Query(..., description="User ID"),
-    weeks: int = Query(4, ge=1, le=12, description="Number of weeks to include"),
+    weeks: int = Query(4, ge=1, le=52, description="Number of weeks to include"),
 ):
     """
     Get calendar heatmap data for visualizing workout consistency.
@@ -621,6 +621,420 @@ async def get_calendar_heatmap(
     except Exception as e:
         logger.error(f"Error fetching calendar heatmap: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch calendar data: {str(e)}")
+
+
+@router.get("/day-detail", tags=["Consistency"])
+async def get_day_detail(
+    user_id: str = Query(..., description="User ID"),
+    date_str: str = Query(..., alias="date", description="Date in YYYY-MM-DD format"),
+):
+    """
+    Get detailed workout information for a specific day.
+
+    Returns comprehensive workout data including:
+    - Workout metadata (name, type, duration)
+    - All exercises with set-by-set data (weight, reps, RPE, RIR)
+    - Personal records achieved
+    - Total volume and stats
+    - Muscles worked
+    """
+    db = get_supabase_db()
+
+    try:
+        target_date = date.fromisoformat(date_str)
+        today = date.today()
+
+        # Determine base status
+        if target_date > today:
+            return {
+                "date": date_str,
+                "status": "future",
+                "workout_id": None,
+                "workout_name": None,
+                "exercises": [],
+                "muscles_worked": [],
+            }
+
+        # Get scheduled workout for this date
+        workout_response = db.client.table("workouts").select(
+            "id, name, type, difficulty, duration_minutes, exercises_json, completed, target_muscles"
+        ).eq("user_id", user_id).eq(
+            "scheduled_date", date_str
+        ).maybe_single().execute()
+
+        if not workout_response.data:
+            return {
+                "date": date_str,
+                "status": "rest",
+                "workout_id": None,
+                "workout_name": None,
+                "exercises": [],
+                "muscles_worked": [],
+            }
+
+        workout = workout_response.data
+        workout_id = workout["id"]
+        is_completed = workout.get("completed", False)
+
+        if not is_completed:
+            # Workout was scheduled but not completed
+            return {
+                "date": date_str,
+                "status": "missed",
+                "workout_id": workout_id,
+                "workout_name": workout.get("name"),
+                "workout_type": workout.get("type"),
+                "difficulty": workout.get("difficulty"),
+                "duration_minutes": workout.get("duration_minutes"),
+                "exercises": [],
+                "muscles_worked": workout.get("target_muscles", []) or [],
+            }
+
+        # Get workout log for completed workout
+        log_response = db.client.table("workout_logs").select(
+            "id, completed_at, total_time_seconds, sets_json, calories_burned"
+        ).eq("workout_id", workout_id).maybe_single().execute()
+
+        log_data = log_response.data or {}
+        workout_log_id = log_data.get("id")
+
+        # Get performance logs for detailed set data
+        exercises_data = []
+        total_volume = 0.0
+        all_rpes = []
+        muscles_set = set()
+
+        if workout_log_id:
+            perf_response = db.client.table("performance_logs").select(
+                "exercise_name, exercise_id, set_number, reps_completed, weight_kg, rpe, rir, set_type, is_pr"
+            ).eq("workout_log_id", workout_log_id).order("exercise_name").order("set_number").execute()
+
+            # Group by exercise
+            exercise_sets = defaultdict(list)
+            for row in (perf_response.data or []):
+                exercise_sets[row["exercise_name"]].append(row)
+
+            # Get exercise details for muscle groups
+            exercise_names = list(exercise_sets.keys())
+            if exercise_names:
+                ex_details_response = db.client.table("exercises").select(
+                    "name, primary_muscles, secondary_muscles"
+                ).in_("name", exercise_names).execute()
+
+                exercise_muscles = {}
+                for ex in (ex_details_response.data or []):
+                    primary = ex.get("primary_muscles", []) or []
+                    exercise_muscles[ex["name"]] = primary[0] if primary else "Other"
+                    muscles_set.update(primary)
+
+            # Get PRs for this workout
+            pr_response = db.client.table("strength_records").select(
+                "exercise_name, is_pr, pr_type"
+            ).eq("workout_log_id", workout_log_id).eq("is_pr", True).execute()
+
+            exercise_prs = {}
+            for pr in (pr_response.data or []):
+                exercise_prs[pr["exercise_name"]] = pr.get("pr_type", "weight")
+
+            # Build exercise data
+            for ex_name, sets in exercise_sets.items():
+                muscle_group = exercise_muscles.get(ex_name, "Other")
+                has_pr = ex_name in exercise_prs
+                pr_type = exercise_prs.get(ex_name)
+
+                set_data = []
+                ex_volume = 0.0
+                best_weight = 0.0
+                best_reps = 0
+
+                for s in sets:
+                    weight = s.get("weight_kg") or 0
+                    reps = s.get("reps_completed") or 0
+                    rpe = s.get("rpe")
+                    rir = s.get("rir")
+
+                    set_data.append({
+                        "set_number": s.get("set_number", 1),
+                        "reps": reps,
+                        "weight_kg": weight,
+                        "rpe": rpe,
+                        "rir": rir,
+                        "is_pr": s.get("is_pr", False),
+                        "set_type": s.get("set_type", "working"),
+                    })
+
+                    set_volume = weight * reps
+                    ex_volume += set_volume
+                    total_volume += set_volume
+
+                    if weight > best_weight:
+                        best_weight = weight
+                        best_reps = reps
+
+                    if rpe:
+                        all_rpes.append(rpe)
+
+                exercises_data.append({
+                    "exercise_name": ex_name,
+                    "exercise_id": sets[0].get("exercise_id") if sets else None,
+                    "muscle_group": muscle_group,
+                    "sets": set_data,
+                    "has_pr": has_pr,
+                    "pr_type": pr_type,
+                    "total_volume": round(ex_volume, 1),
+                    "best_set_weight": best_weight,
+                    "best_set_reps": best_reps,
+                })
+
+        # Calculate duration in minutes
+        duration_mins = None
+        if log_data.get("total_time_seconds"):
+            duration_mins = log_data["total_time_seconds"] // 60
+        elif workout.get("duration_minutes"):
+            duration_mins = workout["duration_minutes"]
+
+        # Average RPE
+        avg_rpe = round(sum(all_rpes) / len(all_rpes), 1) if all_rpes else None
+
+        # Get shared images if any
+        share_response = db.client.table("workout_shares").select(
+            "image_url"
+        ).eq("workout_log_id", workout_log_id).execute()
+
+        shared_images = [s["image_url"] for s in (share_response.data or []) if s.get("image_url")]
+
+        return {
+            "date": date_str,
+            "status": "completed",
+            "workout_id": workout_id,
+            "workout_name": workout.get("name"),
+            "workout_type": workout.get("type"),
+            "difficulty": workout.get("difficulty"),
+            "duration_minutes": duration_mins,
+            "total_volume": round(total_volume, 1),
+            "calories_burned": log_data.get("calories_burned"),
+            "muscles_worked": list(muscles_set),
+            "exercises": exercises_data,
+            "shared_images": shared_images if shared_images else None,
+            "coach_feedback": None,  # TODO: Add coach feedback lookup
+            "completed_at": log_data.get("completed_at"),
+            "average_rpe": avg_rpe,
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid date format: {str(e)}")
+    except Exception as e:
+        logger.error(f"Error fetching day detail: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch day detail: {str(e)}")
+
+
+@router.get("/search-exercise", tags=["Consistency"])
+async def search_exercise_history(
+    user_id: str = Query(..., description="User ID"),
+    exercise_name: str = Query(..., description="Exercise name to search for"),
+    weeks: int = Query(52, ge=1, le=104, description="Number of weeks to search back"),
+):
+    """
+    Search for all occurrences of an exercise in workout history.
+
+    Returns:
+    - List of dates where this exercise was performed
+    - Summary for each occurrence (sets, best weight × reps, PR status)
+    - Matching dates for heatmap highlighting
+    """
+    db = get_supabase_db()
+
+    try:
+        today = date.today()
+        start_date = today - timedelta(days=weeks * 7)
+
+        # Search performance logs for this exercise
+        # Use ILIKE for case-insensitive partial matching
+        perf_response = db.client.table("performance_logs").select(
+            "workout_log_id, exercise_name, exercise_id, set_number, reps_completed, weight_kg, rpe, rir, is_pr, recorded_at"
+        ).eq("user_id", user_id).ilike(
+            "exercise_name", f"%{exercise_name}%"
+        ).gte(
+            "recorded_at", start_date.isoformat()
+        ).order("recorded_at", desc=True).execute()
+
+        if not perf_response.data:
+            return {
+                "exercise_name": exercise_name,
+                "total_results": 0,
+                "results": [],
+                "matching_dates": [],
+            }
+
+        # Get workout log IDs to fetch workout details
+        workout_log_ids = list(set(row["workout_log_id"] for row in perf_response.data if row.get("workout_log_id")))
+
+        # Get workout logs with workout info
+        log_response = db.client.table("workout_logs").select(
+            "id, workout_id, completed_at"
+        ).in_("id", workout_log_ids).execute()
+
+        log_map = {log["id"]: log for log in (log_response.data or [])}
+
+        # Get workout names
+        workout_ids = list(set(log["workout_id"] for log in (log_response.data or []) if log.get("workout_id")))
+        workout_response = db.client.table("workouts").select(
+            "id, name, scheduled_date"
+        ).in_("id", workout_ids).execute()
+
+        workout_map = {w["id"]: w for w in (workout_response.data or [])}
+
+        # Group performance data by workout log
+        by_workout_log = defaultdict(list)
+        for row in perf_response.data:
+            if row.get("workout_log_id"):
+                by_workout_log[row["workout_log_id"]].append(row)
+
+        # Build results
+        results = []
+        matching_dates = set()
+
+        for log_id, sets in by_workout_log.items():
+            log_info = log_map.get(log_id, {})
+            workout_id = log_info.get("workout_id")
+            workout_info = workout_map.get(workout_id, {})
+
+            # Determine date
+            completed_at = log_info.get("completed_at")
+            if completed_at:
+                result_date = completed_at[:10] if "T" in completed_at else completed_at
+            else:
+                scheduled = workout_info.get("scheduled_date", "")
+                result_date = scheduled[:10] if "T" in scheduled else scheduled
+
+            if not result_date:
+                continue
+
+            matching_dates.add(result_date)
+
+            # Calculate stats
+            total_sets = len(sets)
+            best_weight = 0.0
+            best_reps = 0
+            total_volume = 0.0
+            has_pr = False
+            pr_type = None
+            all_rpes = []
+
+            for s in sets:
+                weight = s.get("weight_kg") or 0
+                reps = s.get("reps_completed") or 0
+                total_volume += weight * reps
+
+                if weight > best_weight:
+                    best_weight = weight
+                    best_reps = reps
+
+                if s.get("is_pr"):
+                    has_pr = True
+                    pr_type = "weight"  # Default
+
+                if s.get("rpe"):
+                    all_rpes.append(s["rpe"])
+
+            avg_rpe = round(sum(all_rpes) / len(all_rpes), 1) if all_rpes else None
+
+            # Use the actual exercise name from the first set (might be slightly different due to search)
+            actual_name = sets[0].get("exercise_name", exercise_name)
+
+            results.append({
+                "date": result_date,
+                "workout_id": workout_id or "",
+                "workout_name": workout_info.get("name", "Workout"),
+                "exercise_name": actual_name,
+                "sets_completed": total_sets,
+                "best_weight": best_weight,
+                "best_reps": best_reps,
+                "total_volume": round(total_volume, 1),
+                "has_pr": has_pr,
+                "pr_type": pr_type,
+                "average_rpe": avg_rpe,
+            })
+
+        # Sort by date descending
+        results.sort(key=lambda x: x["date"], reverse=True)
+
+        return {
+            "exercise_name": exercise_name,
+            "total_results": len(results),
+            "results": results,
+            "matching_dates": sorted(list(matching_dates), reverse=True),
+        }
+
+    except Exception as e:
+        logger.error(f"Error searching exercise history: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to search exercise history: {str(e)}")
+
+
+@router.get("/exercise-suggestions", tags=["Consistency"])
+async def get_exercise_suggestions(
+    user_id: str = Query(..., description="User ID"),
+    query: str = Query("", description="Search query for autocomplete"),
+    limit: int = Query(10, ge=1, le=50, description="Max suggestions to return"),
+):
+    """
+    Get exercise name suggestions for autocomplete.
+
+    Returns exercises the user has performed, filtered by query,
+    sorted by frequency of use.
+    """
+    db = get_supabase_db()
+
+    try:
+        # Get distinct exercise names from user's performance logs
+        # with count of how many times performed
+        if query:
+            perf_response = db.client.table("performance_logs").select(
+                "exercise_name, recorded_at"
+            ).eq("user_id", user_id).ilike(
+                "exercise_name", f"%{query}%"
+            ).execute()
+        else:
+            perf_response = db.client.table("performance_logs").select(
+                "exercise_name, recorded_at"
+            ).eq("user_id", user_id).execute()
+
+        if not perf_response.data:
+            return []
+
+        # Count occurrences and track last performed
+        exercise_stats = defaultdict(lambda: {"count": 0, "last": None})
+
+        for row in perf_response.data:
+            name = row["exercise_name"]
+            recorded = row.get("recorded_at")
+
+            exercise_stats[name]["count"] += 1
+
+            if recorded:
+                current_last = exercise_stats[name]["last"]
+                if current_last is None or recorded > current_last:
+                    exercise_stats[name]["last"] = recorded
+
+        # Sort by count (most frequent first)
+        sorted_exercises = sorted(
+            exercise_stats.items(),
+            key=lambda x: x[1]["count"],
+            reverse=True
+        )[:limit]
+
+        return [
+            {
+                "name": name,
+                "times_performed": stats["count"],
+                "last_performed": stats["last"][:10] if stats["last"] and "T" in stats["last"] else stats["last"],
+            }
+            for name, stats in sorted_exercises
+        ]
+
+    except Exception as e:
+        logger.error(f"Error fetching exercise suggestions: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch suggestions: {str(e)}")
 
 
 @router.post("/streak-recovery", response_model=StreakRecoveryResponse, tags=["Consistency"])

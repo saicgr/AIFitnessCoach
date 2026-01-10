@@ -71,7 +71,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                 ),
                 error: (error, _) => _buildErrorState(textSecondary),
                 data: (categoryData) => _buildExerciseList(
-                  categoryData,
+                  categoryData.preview,
                   isDark,
                   textPrimary,
                   textSecondary,

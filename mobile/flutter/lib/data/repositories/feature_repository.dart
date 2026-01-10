@@ -29,7 +29,7 @@ class FeatureRepository {
       if (userId != null) queryParams['user_id'] = userId;
 
       final response = await _apiClient.get(
-        '/v1/features/list',
+        '/features/list',
         queryParameters: queryParams,
       );
 
@@ -57,7 +57,7 @@ class FeatureRepository {
       if (userId != null) queryParams['user_id'] = userId;
 
       final response = await _apiClient.get(
-        '/v1/features/$featureId',
+        '/features/$featureId',
         queryParameters: queryParams,
       );
 
@@ -82,7 +82,7 @@ class FeatureRepository {
       debugPrint('🔍 [Features] Creating feature: $title');
 
       final response = await _apiClient.post(
-        '/v1/features/create',
+        '/features/create',
         data: {
           'title': title,
           'description': description,
@@ -119,7 +119,7 @@ class FeatureRepository {
       debugPrint('🔍 [Features] Toggling vote for feature $featureId');
 
       final response = await _apiClient.post(
-        '/v1/features/vote',
+        '/features/vote',
         data: {
           'feature_id': featureId,
           'user_id': userId,
@@ -145,7 +145,7 @@ class FeatureRepository {
       debugPrint('🔍 [Features] Checking remaining submissions for user $userId');
 
       final response = await _apiClient.get(
-        '/v1/features/user/$userId/remaining',
+        '/features/user/$userId/remaining',
       );
 
       if (response.statusCode == 200) {

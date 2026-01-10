@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/providers/consistency_provider.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/activity_heatmap.dart';
+import '../../widgets/exercise_search_results.dart';
+import '../../widgets/workout_day_detail_sheet.dart';
 
 /// Comprehensive Stats Screen
 /// Combines: Workout stats, achievements, body measurements, progress graphs, nutrition
@@ -34,78 +39,98 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Text(
-                    'Your Stats',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const Spacer(),
-                  // Share/Export button
-                  IconButton(
-                    icon: const Icon(Icons.share_outlined),
-                    onPressed: () {
-                      HapticService.light();
-                      // TODO: Export stats
-                    },
-                  ),
-                ],
-              ),
-            ),
-
-            // Tabs
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: elevatedColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: TabBar(
-                controller: _tabController,
-                indicator: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.purple, AppColors.cyan],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                labelColor: Colors.white,
-                unselectedLabelColor: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                dividerColor: Colors.transparent,
-                tabs: const [
-                  Tab(text: 'Overview'),
-                  Tab(text: 'Progress'),
-                  Tab(text: 'Body'),
-                  Tab(text: 'Nutrition'),
-                ],
-              ),
-            ),
-
-            // Tab content
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _OverviewTab(),
-                  _ProgressTab(),
-                  _BodyTab(),
-                  _NutritionTab(),
-                ],
-              ),
-            ),
-          ],
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        foregroundColor: textPrimary,
+        automaticallyImplyLeading: false,
+        title: Text(
+          'Your Stats',
+          style: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: textPrimary,
+          ),
         ),
+        centerTitle: false,
+        actions: [
+          // Time Range Selector
+          IconButton(
+            icon: Icon(Icons.calendar_month_outlined, color: textPrimary),
+            onPressed: () {
+              HapticService.light();
+              // TODO: Show time range picker
+            },
+            tooltip: 'Time Range',
+          ),
+          // Export/Share
+          IconButton(
+            icon: Icon(Icons.ios_share_outlined, color: textPrimary),
+            onPressed: () {
+              HapticService.light();
+              // TODO: Export stats
+            },
+            tooltip: 'Export',
+          ),
+          // Settings
+          IconButton(
+            icon: Icon(Icons.tune_outlined, color: textPrimary),
+            onPressed: () {
+              HapticService.light();
+              // TODO: Stats settings
+            },
+            tooltip: 'Settings',
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Tab Bar
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: elevated,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicator: BoxDecoration(
+                color: cyan,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              indicatorSize: TabBarIndicatorSize.tab,
+              labelColor: Colors.white,
+              unselectedLabelColor: textMuted,
+              labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              dividerColor: Colors.transparent,
+              tabs: const [
+                Tab(text: 'Overview'),
+                Tab(text: 'Progress'),
+                Tab(text: 'Body'),
+                Tab(text: 'Nutrition'),
+              ],
+            ),
+          ),
+
+          // Tab content
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _OverviewTab(),
+                _ProgressTab(),
+                _BodyTab(),
+                _NutritionTab(),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -115,62 +140,138 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
 // OVERVIEW TAB - Summary stats, recent achievements, weekly progress
 // ═══════════════════════════════════════════════════════════════════
 
-class _OverviewTab extends ConsumerWidget {
+class _OverviewTab extends ConsumerStatefulWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_OverviewTab> createState() => _OverviewTabState();
+}
+
+class _OverviewTabState extends ConsumerState<_OverviewTab> {
+  Set<String> _highlightedDates = {};
+  bool _showSearch = false;
+
+  @override
+  Widget build(BuildContext context) {
     final workoutsNotifier = ref.read(workoutsProvider.notifier);
     final completedCount = workoutsNotifier.completedCount;
     final weeklyProgress = workoutsNotifier.weeklyProgress;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final searchQuery = ref.watch(exerciseSearchQueryProvider);
+    final consistencyState = ref.watch(consistencyProvider);
+    final currentStreak = consistencyState.currentStreak;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    // Update highlighted dates when search query changes
+    _updateHighlightedDates(searchQuery);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Quick Stats Grid
-          Row(
-            children: [
-              Expanded(
-                child: _StatCard(
+          // Activity Heatmap Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: elevated,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+              ),
+            ),
+            child: Column(
+              children: [
+                ActivityHeatmap(
+                  highlightedDates: _highlightedDates,
+                  isSearchActive: _showSearch || (searchQuery != null && searchQuery.isNotEmpty),
+                  onSearchTapped: () {
+                    HapticService.light();
+                    setState(() {
+                      _showSearch = !_showSearch;
+                      if (!_showSearch) {
+                        // Clear search when closing
+                        ref.read(exerciseSearchQueryProvider.notifier).state = null;
+                        _highlightedDates = {};
+                      }
+                    });
+                  },
+                  onDayTapped: (date) {
+                    HapticService.light();
+                    WorkoutDayDetailSheet.show(context, date);
+                  },
+                ),
+                // Expandable Search Bar
+                if (_showSearch) ...[
+                  const SizedBox(height: 12),
+                  ExerciseSearchBar(
+                    onSearch: (exerciseName) {
+                      // Search results will automatically update via provider
+                    },
+                    onClear: () {
+                      setState(() {
+                        _highlightedDates = {};
+                      });
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          // Search Results (shown when search is active)
+          if (searchQuery != null && searchQuery.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ExerciseSearchResults(
+              exerciseName: searchQuery,
+              onResultTapped: (date) {
+                // Optionally highlight the tapped date
+              },
+            ),
+          ],
+
+          const SizedBox(height: 16),
+
+          // Compact Stats Row
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: elevated,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _CompactStat(
                   icon: Icons.fitness_center,
-                  label: 'Total Workouts',
                   value: '$completedCount',
+                  label: 'Total',
                   color: AppColors.cyan,
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatCard(
+                _StatDivider(),
+                _CompactStat(
                   icon: Icons.local_fire_department,
-                  label: 'This Week',
                   value: '${weeklyProgress.$1}/${weeklyProgress.$2}',
+                  label: 'Week',
                   color: AppColors.orange,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _StatCard(
+                _StatDivider(),
+                _CompactStat(
                   icon: Icons.trending_up,
+                  value: currentStreak > 0 ? '$currentStreak' : '0',
                   label: 'Streak',
-                  value: '7 days',
                   color: AppColors.success,
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatCard(
+                _StatDivider(),
+                _CompactStat(
                   icon: Icons.timer_outlined,
-                  label: 'Total Time',
                   value: '12.5h',
+                  label: 'Time',
                   color: AppColors.purple,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
 
           const SizedBox(height: 24),
@@ -211,6 +312,45 @@ class _OverviewTab extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  void _updateHighlightedDates(String? searchQuery) {
+    if (searchQuery == null || searchQuery.isEmpty) {
+      if (_highlightedDates.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {
+              _highlightedDates = {};
+            });
+          }
+        });
+      }
+      return;
+    }
+
+    // Get search results and update highlighted dates
+    final apiClient = ref.read(apiClientProvider);
+    final timeRange = ref.read(heatmapTimeRangeProvider);
+
+    apiClient.getUserId().then((userId) {
+      if (userId != null && mounted) {
+        ref
+            .read(exerciseSearchProvider((
+              userId: userId,
+              exerciseName: searchQuery,
+              weeks: timeRange.weeks,
+            )).future)
+            .then((response) {
+          if (mounted) {
+            setState(() {
+              _highlightedDates = response.matchingDates.toSet();
+            });
+          }
+        }).catchError((_) {
+          // Ignore errors
+        });
+      }
+    });
   }
 }
 
@@ -462,6 +602,63 @@ class _StatCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Compact stat widget for horizontal row display
+class _CompactStat extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+
+  const _CompactStat({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: textMuted,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Vertical divider for compact stats row
+class _StatDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: 1,
+      height: 40,
+      color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
     );
   }
 }

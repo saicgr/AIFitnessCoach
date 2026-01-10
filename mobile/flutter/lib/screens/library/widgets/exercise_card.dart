@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/avoided_provider.dart';
 import '../../../core/providers/exercise_queue_provider.dart';
 import '../../../core/providers/favorites_provider.dart';
+import '../../../core/providers/staples_provider.dart';
 import '../../../core/providers/week_comparison_provider.dart';
 import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/models/exercise.dart';
@@ -86,6 +88,19 @@ class ExerciseCard extends ConsumerWidget {
     );
   }
 
+  void _toggleAvoided(WidgetRef ref) {
+    HapticFeedback.lightImpact();
+    ref.read(avoidedProvider.notifier).toggleAvoided(exercise.name);
+  }
+
+  void _toggleStaple(WidgetRef ref) {
+    HapticFeedback.lightImpact();
+    ref.read(staplesProvider.notifier).toggleStaple(
+      exercise.name,
+      muscleGroup: exercise.muscleGroup,
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -95,11 +110,15 @@ class ExerciseCard extends ConsumerWidget {
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
     final hasVideo = exercise.videoUrl != null && exercise.videoUrl!.isNotEmpty;
 
-    // Watch favorites and queue state
+    // Watch favorites, queue, avoided, and staples state
     final favoritesState = ref.watch(favoritesProvider);
     final queueState = ref.watch(exerciseQueueProvider);
+    final avoidedState = ref.watch(avoidedProvider);
+    final staplesState = ref.watch(staplesProvider);
     final isFavorite = favoritesState.isFavorite(exercise.name);
     final isQueued = queueState.isQueued(exercise.name);
+    final isAvoided = avoidedState.isAvoided(exercise.name);
+    final isStaple = staplesState.isStaple(exercise.name);
 
     return GestureDetector(
       onTap: () => _showExerciseDetail(context),
@@ -285,6 +304,44 @@ class ExerciseCard extends ConsumerWidget {
                     ),
                   ),
                 ),
+                // Avoid button
+                GestureDetector(
+                  onTap: () => _toggleAvoided(ref),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: isAvoided
+                          ? AppColors.orange.withOpacity(0.15)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      isAvoided ? Icons.block : Icons.block_outlined,
+                      color: isAvoided ? AppColors.orange : textMuted,
+                      size: 18,
+                    ),
+                  ),
+                ),
+                // Staple/Pin button
+                GestureDetector(
+                  onTap: () => _toggleStaple(ref),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: isStaple
+                          ? purple.withOpacity(0.15)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      isStaple ? Icons.push_pin : Icons.push_pin_outlined,
+                      color: isStaple ? purple : textMuted,
+                      size: 18,
+                    ),
+                  ),
+                ),
                 // Add to workout button
                 GestureDetector(
                   onTap: () => _showAddToWorkoutSheet(context, ref),
@@ -333,6 +390,95 @@ class _AddToWorkoutSheet extends ConsumerStatefulWidget {
 class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
   bool _isAdding = false;
   String? _selectedWorkoutId;
+
+  void _addToQueue() {
+    HapticService.light();
+    ref.read(exerciseQueueProvider.notifier).addToQueue(widget.exerciseName);
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.playlist_add_check, color: Colors.white, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text('Added "${widget.exerciseName}" to queue'),
+            ),
+          ],
+        ),
+        backgroundColor: AppColors.cyan,
+      ),
+    );
+  }
+
+  Widget _buildQueueOption(
+    BuildContext context, {
+    required Color elevated,
+    required Color textPrimary,
+    required Color textSecondary,
+  }) {
+    final isQueued = ref.watch(exerciseQueueProvider).isQueued(widget.exerciseName);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Material(
+        color: elevated,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: isQueued ? null : _addToQueue,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.cyan.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    isQueued ? Icons.playlist_add_check : Icons.playlist_add,
+                    color: AppColors.cyan,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isQueued ? 'Already in Queue' : 'Add to Queue',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        isQueued
+                            ? 'Will be included in next workout'
+                            : 'AI will include in your next generated workout',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (isQueued)
+                  Icon(Icons.check_circle, color: AppColors.cyan)
+                else
+                  Icon(Icons.chevron_right, color: textSecondary),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   Future<void> _addToWorkout(Workout workout) async {
     setState(() {
@@ -455,6 +601,38 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
               ],
             ),
           ),
+
+          // Add to Queue option
+          _buildQueueOption(
+            context,
+            elevated: elevated,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+          ),
+
+          // Divider with label
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(child: Divider(color: textMuted.withOpacity(0.2))),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    'OR ADD TO WORKOUT',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: textMuted,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                Expanded(child: Divider(color: textMuted.withOpacity(0.2))),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
 
           // Workout list
           Flexible(

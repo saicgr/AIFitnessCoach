@@ -33,7 +33,7 @@ class LiveChatRepository {
       debugPrint('🔍 [LiveChat] Category: $category, Escalated: $escalatedFromAi');
 
       final response = await _apiClient.post(
-        '/v1/support/live-chat/start',
+        '/support/live-chat/start',
         data: {
           'category': category,
           'initial_message': initialMessage,
@@ -78,7 +78,7 @@ class LiveChatRepository {
       debugPrint('🔍 [LiveChat] Sending message to ticket: $ticketId');
 
       final response = await _apiClient.post(
-        '/v1/support/live-chat/$ticketId/message',
+        '/support/live-chat/$ticketId/message',
         data: {
           'message': message,
         },
@@ -116,7 +116,7 @@ class LiveChatRepository {
     try {
       // Don't log every typing indicator to reduce noise
       await _apiClient.post(
-        '/v1/support/live-chat/$ticketId/typing',
+        '/support/live-chat/$ticketId/typing',
         data: {
           'is_typing': isTyping,
         },
@@ -141,7 +141,7 @@ class LiveChatRepository {
       debugPrint('🔍 [LiveChat] Marking ${messageIds.length} messages as read');
 
       await _apiClient.post(
-        '/v1/support/live-chat/$ticketId/read',
+        '/support/live-chat/$ticketId/read',
         data: {
           'message_ids': messageIds,
         },
@@ -166,7 +166,7 @@ class LiveChatRepository {
       debugPrint('🔍 [LiveChat] Ending chat session: $ticketId');
 
       final response = await _apiClient.post(
-        '/v1/support/live-chat/$ticketId/end',
+        '/support/live-chat/$ticketId/end',
         data: {
           if (resolutionNote != null) 'resolution_note': resolutionNote,
         },
@@ -192,7 +192,7 @@ class LiveChatRepository {
       debugPrint('🔍 [LiveChat] Getting queue position for: $ticketId');
 
       final response = await _apiClient.get(
-        '/v1/support/live-chat/$ticketId/queue-position',
+        '/support/live-chat/$ticketId/queue-position',
       );
 
       if (response.statusCode == 200) {
@@ -215,7 +215,7 @@ class LiveChatRepository {
       debugPrint('🔍 [LiveChat] Checking availability...');
 
       final response = await _apiClient.get(
-        '/v1/support/live-chat/availability',
+        '/support/live-chat/availability',
       );
 
       if (response.statusCode == 200) {
@@ -246,7 +246,7 @@ class LiveChatRepository {
       debugPrint('🔍 [LiveChat] Fetching session: $ticketId');
 
       final response = await _apiClient.get(
-        '/v1/support/live-chat/$ticketId',
+        '/support/live-chat/$ticketId',
       );
 
       if (response.statusCode == 200) {
@@ -284,7 +284,7 @@ class LiveChatRepository {
       debugPrint('🔍 [LiveChat] Fetching chat history for: $ticketId');
 
       final response = await _apiClient.get(
-        '/v1/support/live-chat/$ticketId/messages',
+        '/support/live-chat/$ticketId/messages',
         queryParameters: {
           'limit': limit,
           if (beforeId != null) 'before_id': beforeId,
@@ -321,7 +321,7 @@ class LiveChatRepository {
       debugPrint('🔍 [LiveChat] Submitting rating for: $ticketId');
 
       final response = await _apiClient.post(
-        '/v1/support/live-chat/$ticketId/rating',
+        '/support/live-chat/$ticketId/rating',
         data: {
           'rating': rating,
           if (feedback != null) 'feedback': feedback,
@@ -352,7 +352,7 @@ class LiveChatRepository {
       debugPrint('🔍 [LiveChat] Requesting escalation for: $ticketId');
 
       final response = await _apiClient.post(
-        '/v1/support/live-chat/$ticketId/escalate',
+        '/support/live-chat/$ticketId/escalate',
         data: {
           'reason': reason,
         },

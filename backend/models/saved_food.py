@@ -28,6 +28,25 @@ class FoodSourceType(str, Enum):
 # FOOD ITEM WITH RANKING
 # ============================================================
 
+class USDANutrientData(BaseModel):
+    """USDA per-100g nutrient data for accurate portion scaling."""
+    fdc_id: Optional[int] = None
+    calories_per_100g: float = 0.0
+    protein_per_100g: float = 0.0
+    carbs_per_100g: float = 0.0
+    fat_per_100g: float = 0.0
+    fiber_per_100g: float = 0.0
+
+
+class AiPerGramData(BaseModel):
+    """AI-estimated per-gram nutrition data (fallback when USDA has no match)."""
+    calories: float = 0.0
+    protein: float = 0.0
+    carbs: float = 0.0
+    fat: float = 0.0
+    fiber: float = 0.0
+
+
 class SavedFoodItem(BaseModel):
     """Individual food item in a saved meal."""
     name: str = Field(..., max_length=200)
@@ -40,6 +59,10 @@ class SavedFoodItem(BaseModel):
     # Goal-based scoring (cached from when saved)
     goal_score: Optional[int] = Field(default=None, ge=1, le=10)
     goal_alignment: Optional[str] = Field(default=None, max_length=20)  # excellent, good, neutral, poor
+    # Portion scaling fields (for weight adjustment when re-logging)
+    weight_g: Optional[float] = Field(default=None, ge=0, le=10000)
+    usda_data: Optional[USDANutrientData] = None
+    ai_per_gram: Optional[AiPerGramData] = None
 
 
 # ============================================================

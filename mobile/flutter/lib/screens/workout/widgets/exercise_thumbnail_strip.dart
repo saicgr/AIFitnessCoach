@@ -292,7 +292,9 @@ class _ExerciseThumbnailBox extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(right: 12),
         width: 80,
+        height: 110, // Fixed height to prevent overflow
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Thumbnail box - increased to 80px for better tap targets
             AnimatedContainer(
@@ -422,20 +424,24 @@ class _ExerciseThumbnailBox extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 6),
-            // Exercise number with truncated name
-            Text(
-              '${index + 1}',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                color: isActive
-                    ? activeColor
-                    : (isCompleted || isPast)
-                        ? AppColors.glowGreen
-                        : (isDark
-                            ? AppColors.textMuted
-                            : AppColorsLight.textMuted),
+            const SizedBox(height: 4),
+            // Exercise number - constrained to prevent overflow
+            Flexible(
+              child: Text(
+                '${index + 1}',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                  color: isActive
+                      ? activeColor
+                      : (isCompleted || isPast)
+                          ? AppColors.glowGreen
+                          : (isDark
+                              ? AppColors.textMuted
+                              : AppColorsLight.textMuted),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

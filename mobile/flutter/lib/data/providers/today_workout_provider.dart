@@ -8,12 +8,11 @@ import '../repositories/workout_repository.dart';
 /// Returns null if no workout is scheduled or user is not authenticated.
 ///
 /// Features:
-/// - Auto-disposes when no longer in use
+/// - Caches result for the current session (removed autoDispose for faster navigation)
 /// - Auto-refreshes on provider invalidation
-/// - Caches result for the current session
 /// - Auto-polls when is_generating is true (JIT generation in progress)
 final todayWorkoutProvider =
-    FutureProvider.autoDispose<TodayWorkoutResponse?>((ref) async {
+    FutureProvider<TodayWorkoutResponse?>((ref) async {
   final repository = ref.watch(workoutRepositoryProvider);
   final response = await repository.getTodayWorkout();
 

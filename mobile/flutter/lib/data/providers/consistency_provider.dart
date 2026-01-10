@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/consistency.dart';
+import '../models/workout_day_detail.dart';
 import '../repositories/consistency_repository.dart';
 import '../services/api_client.dart';
 
@@ -325,7 +326,8 @@ final consistencyLoadingProvider = Provider<bool>((ref) {
 });
 
 /// Auto-loading provider that loads data when user ID is available
-final consistencyDataProvider = FutureProvider.autoDispose<ConsistencyInsights?>((ref) async {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final consistencyDataProvider = FutureProvider<ConsistencyInsights?>((ref) async {
   final apiClient = ref.watch(apiClientProvider);
   final userId = await apiClient.getUserId();
 
@@ -339,4 +341,100 @@ final consistencyDataProvider = FutureProvider.autoDispose<ConsistencyInsights?>
   await notifier.loadInsights();
 
   return ref.read(consistencyProvider).insights;
+});
+
+// ============================================
+// Activity Heatmap Providers
+// ============================================
+
+/// Parameter for activity heatmap provider
+typedef HeatmapParams = ({String userId, int weeks});
+
+/// Activity heatmap data with configurable time range
+/// Note: Removed autoDispose to prevent refetching on navigation
+final activityHeatmapProvider = FutureProvider
+    .family<CalendarHeatmapResponse, HeatmapParams>((ref, params) async {
+  final repository = ref.watch(consistencyRepositoryProvider);
+  return repository.getCalendarHeatmap(
+    userId: params.userId,
+    weeks: params.weeks,
+  );
+});
+
+// ============================================
+// Day Detail Providers
+// ============================================
+
+/// Parameter for workout day detail provider
+typedef DayDetailParams = ({String userId, String date});
+
+/// Workout day detail for bottom sheet
+/// Note: Removed autoDispose to prevent refetching on navigation
+final workoutDayDetailProvider = FutureProvider
+    .family<WorkoutDayDetail, DayDetailParams>((ref, params) async {
+  final repository = ref.watch(consistencyRepositoryProvider);
+  return repository.getDayDetail(
+    userId: params.userId,
+    date: params.date,
+  );
+});
+
+// ============================================
+// Exercise Search Providers
+// ============================================
+
+/// Parameter for exercise search provider
+typedef ExerciseSearchParams = ({String userId, String exerciseName, int weeks});
+
+/// Exercise search results for heatmap highlighting
+/// Note: Removed autoDispose to prevent refetching on navigation
+final exerciseSearchProvider = FutureProvider
+    .family<ExerciseSearchResponse, ExerciseSearchParams>((ref, params) async {
+  final repository = ref.watch(consistencyRepositoryProvider);
+  return repository.searchExercise(
+    userId: params.userId,
+    exerciseName: params.exerciseName,
+    weeks: params.weeks,
+  );
+});
+
+/// Parameter for exercise suggestions provider
+typedef SuggestionParams = ({String userId, String query});
+
+/// Exercise name suggestions for autocomplete
+/// Note: Removed autoDispose to prevent refetching on navigation
+final exerciseSuggestionsProvider = FutureProvider
+    .family<List<ExerciseSuggestion>, SuggestionParams>((ref, params) async {
+  final repository = ref.watch(consistencyRepositoryProvider);
+  return repository.getExerciseSuggestions(
+    userId: params.userId,
+    query: params.query,
+  );
+});
+
+// ============================================
+// Heatmap Time Range State
+// ============================================
+
+/// Time range options for heatmap
+enum HeatmapTimeRange {
+  week(1, 'Week'),
+  oneMonth(4, '1M'),
+  threeMonths(13, '3M'),
+  sixMonths(26, '6M'),
+  oneYear(52, '1Y');
+
+  final int weeks;
+  final String label;
+  const HeatmapTimeRange(this.weeks, this.label);
+}
+
+/// Selected time range for heatmap
+final heatmapTimeRangeProvider = StateProvider<HeatmapTimeRange>((ref) {
+  return HeatmapTimeRange.threeMonths;
+});
+
+/// Current search query for exercise search
+final exerciseSearchQueryProvider = StateProvider<String?>((ref) {
+  return null;
 });

@@ -4,11 +4,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/avoided_provider.dart';
+import '../../../core/providers/exercise_queue_provider.dart';
+import '../../../core/providers/favorites_provider.dart';
+import '../../../core/providers/staples_provider.dart';
 import '../../../core/providers/video_cache_provider.dart';
 import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/context_logging_service.dart';
+import '../../../data/services/haptic_service.dart';
 import '../../../data/services/video_cache_service.dart';
 import '../../../widgets/log_1rm_sheet.dart';
 import '../../../data/repositories/workout_repository.dart';
@@ -526,6 +531,13 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
                       ),
                   ],
                 ),
+              ),
+
+              // Exercise Action Buttons (Favorite, Queue, Avoid, Staple)
+              const SizedBox(height: 16),
+              _ExerciseActionButtonsRow(
+                exerciseName: exercise.name,
+                muscleGroup: exercise.muscleGroup,
               ),
 
               // Equipment
@@ -1108,6 +1120,152 @@ class _DownloadVideoButton extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Row of action buttons for exercise preferences (Favorite, Queue, Avoid, Staple)
+class _ExerciseActionButtonsRow extends ConsumerWidget {
+  final String exerciseName;
+  final String? muscleGroup;
+
+  const _ExerciseActionButtonsRow({
+    required this.exerciseName,
+    this.muscleGroup,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+
+    // Watch providers for state
+    final isFavorite = ref.watch(favoritesProvider).isFavorite(exerciseName);
+    final isQueued = ref.watch(exerciseQueueProvider).isQueued(exerciseName);
+    final isAvoided = ref.watch(avoidedProvider).isAvoided(exerciseName);
+    final isStaple = ref.watch(staplesProvider).isStaple(exerciseName);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            // Favorite
+            _buildActionButton(
+              context: context,
+              icon: isFavorite ? Icons.favorite : Icons.favorite_border,
+              label: 'Favorite',
+              isActive: isFavorite,
+              activeColor: AppColors.error,
+              inactiveColor: textMuted,
+              onTap: () {
+                HapticService.light();
+                ref.read(favoritesProvider.notifier).toggleFavorite(exerciseName);
+              },
+            ),
+            // Queue
+            _buildActionButton(
+              context: context,
+              icon: isQueued ? Icons.playlist_add_check : Icons.playlist_add,
+              label: 'Queue',
+              isActive: isQueued,
+              activeColor: AppColors.cyan,
+              inactiveColor: textMuted,
+              onTap: () {
+                HapticService.light();
+                ref.read(exerciseQueueProvider.notifier).toggleQueue(
+                  exerciseName,
+                  targetMuscleGroup: muscleGroup,
+                );
+              },
+            ),
+            // Avoid
+            _buildActionButton(
+              context: context,
+              icon: isAvoided ? Icons.block : Icons.block_outlined,
+              label: 'Avoid',
+              isActive: isAvoided,
+              activeColor: AppColors.orange,
+              inactiveColor: textMuted,
+              onTap: () {
+                HapticService.light();
+                ref.read(avoidedProvider.notifier).toggleAvoided(exerciseName);
+              },
+            ),
+            // Staple
+            _buildActionButton(
+              context: context,
+              icon: isStaple ? Icons.push_pin : Icons.push_pin_outlined,
+              label: 'Staple',
+              isActive: isStaple,
+              activeColor: purple,
+              inactiveColor: textMuted,
+              onTap: () {
+                HapticService.light();
+                ref.read(staplesProvider.notifier).toggleStaple(
+                  exerciseName,
+                  muscleGroup: muscleGroup,
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required bool isActive,
+    required Color activeColor,
+    required Color inactiveColor,
+    required VoidCallback onTap,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? activeColor.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 22,
+              color: isActive ? activeColor : inactiveColor,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                color: isActive ? activeColor : textSecondary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -336,6 +336,81 @@ class LogBarcodeResponse {
   Map<String, dynamic> toJson() => _$LogBarcodeResponseToJson(this);
 }
 
+/// USDA per-100g nutrient data for accurate portion scaling
+@JsonSerializable()
+class USDANutrientData {
+  @JsonKey(name: 'fdc_id')
+  final int? fdcId;
+  @JsonKey(name: 'calories_per_100g')
+  final double caloriesPer100g;
+  @JsonKey(name: 'protein_per_100g')
+  final double proteinPer100g;
+  @JsonKey(name: 'carbs_per_100g')
+  final double carbsPer100g;
+  @JsonKey(name: 'fat_per_100g')
+  final double fatPer100g;
+  @JsonKey(name: 'fiber_per_100g')
+  final double fiberPer100g;
+
+  const USDANutrientData({
+    this.fdcId,
+    this.caloriesPer100g = 0,
+    this.proteinPer100g = 0,
+    this.carbsPer100g = 0,
+    this.fatPer100g = 0,
+    this.fiberPer100g = 0,
+  });
+
+  factory USDANutrientData.fromJson(Map<String, dynamic> json) =>
+      _$USDANutrientDataFromJson(json);
+  Map<String, dynamic> toJson() => _$USDANutrientDataToJson(this);
+
+  /// Calculate nutrition for a given weight in grams
+  Map<String, double> getForWeight(double weightG) {
+    final multiplier = weightG / 100.0;
+    return {
+      'calories': caloriesPer100g * multiplier,
+      'protein_g': proteinPer100g * multiplier,
+      'carbs_g': carbsPer100g * multiplier,
+      'fat_g': fatPer100g * multiplier,
+      'fiber_g': fiberPer100g * multiplier,
+    };
+  }
+}
+
+/// AI-estimated per-gram nutrition data (fallback when USDA has no match)
+@JsonSerializable()
+class AiPerGramData {
+  final double calories;
+  final double protein;
+  final double carbs;
+  final double fat;
+  final double fiber;
+
+  const AiPerGramData({
+    this.calories = 0,
+    this.protein = 0,
+    this.carbs = 0,
+    this.fat = 0,
+    this.fiber = 0,
+  });
+
+  factory AiPerGramData.fromJson(Map<String, dynamic> json) =>
+      _$AiPerGramDataFromJson(json);
+  Map<String, dynamic> toJson() => _$AiPerGramDataToJson(this);
+
+  /// Calculate nutrition for a given weight in grams
+  Map<String, double> getForWeight(double weightG) {
+    return {
+      'calories': calories * weightG,
+      'protein_g': protein * weightG,
+      'carbs_g': carbs * weightG,
+      'fat_g': fat * weightG,
+      'fiber_g': fiber * weightG,
+    };
+  }
+}
+
 /// Individual food item with goal-based ranking
 @JsonSerializable()
 class FoodItemRanking {
@@ -357,6 +432,16 @@ class FoodItemRanking {
   final String? goalAlignment;  // "excellent", "good", "neutral", "poor"
   final String? reason;  // Brief explanation
 
+  // Portion scaling fields
+  @JsonKey(name: 'weight_g')
+  final double? weightG;  // Parsed weight in grams
+  @JsonKey(name: 'weight_source')
+  final String? weightSource;  // 'exact' or 'estimated'
+  @JsonKey(name: 'usda_data')
+  final USDANutrientData? usdaData;  // USDA per-100g data for scaling
+  @JsonKey(name: 'ai_per_gram')
+  final AiPerGramData? aiPerGram;  // AI fallback if no USDA match
+
   const FoodItemRanking({
     required this.name,
     this.amount,
@@ -368,6 +453,10 @@ class FoodItemRanking {
     this.goalScore,
     this.goalAlignment,
     this.reason,
+    this.weightG,
+    this.weightSource,
+    this.usdaData,
+    this.aiPerGram,
   });
 
   factory FoodItemRanking.fromJson(Map<String, dynamic> json) =>
@@ -380,6 +469,58 @@ class FoodItemRanking {
     if (goalScore! >= 8) return 'green';
     if (goalScore! >= 5) return 'yellow';
     return 'red';
+  }
+
+  /// Check if this item supports portion scaling
+  bool get canScale => usdaData != null || aiPerGram != null;
+
+  /// Check if weight was estimated (not exact)
+  bool get isWeightEstimated => weightSource == 'estimated';
+
+  /// Calculate nutrition for a new weight
+  /// Returns a new FoodItemRanking with updated values
+  FoodItemRanking withWeight(double newWeightG) {
+    if (!canScale) return this;
+
+    int newCalories;
+    double newProtein, newCarbs, newFat, newFiber;
+
+    if (usdaData != null) {
+      // Use USDA per-100g data
+      final nutrition = usdaData!.getForWeight(newWeightG);
+      newCalories = nutrition['calories']!.round();
+      newProtein = nutrition['protein_g']!;
+      newCarbs = nutrition['carbs_g']!;
+      newFat = nutrition['fat_g']!;
+      newFiber = nutrition['fiber_g']!;
+    } else if (aiPerGram != null) {
+      // Use AI per-gram estimate
+      final nutrition = aiPerGram!.getForWeight(newWeightG);
+      newCalories = nutrition['calories']!.round();
+      newProtein = nutrition['protein_g']!;
+      newCarbs = nutrition['carbs_g']!;
+      newFat = nutrition['fat_g']!;
+      newFiber = nutrition['fiber_g']!;
+    } else {
+      return this;
+    }
+
+    return FoodItemRanking(
+      name: name,
+      amount: '${newWeightG.round()} grams',
+      calories: newCalories,
+      proteinG: double.parse(newProtein.toStringAsFixed(1)),
+      carbsG: double.parse(newCarbs.toStringAsFixed(1)),
+      fatG: double.parse(newFat.toStringAsFixed(1)),
+      fiberG: double.parse(newFiber.toStringAsFixed(1)),
+      goalScore: goalScore,
+      goalAlignment: goalAlignment,
+      reason: reason,
+      weightG: newWeightG,
+      weightSource: 'exact',  // User-specified weight is now exact
+      usdaData: usdaData,
+      aiPerGram: aiPerGram,
+    );
   }
 }
 
@@ -609,6 +750,14 @@ class SavedFoodItem {
   @JsonKey(name: 'goal_alignment')
   final String? goalAlignment;
 
+  // Portion scaling fields (for weight adjustment when re-logging)
+  @JsonKey(name: 'weight_g')
+  final double? weightG;
+  @JsonKey(name: 'usda_data')
+  final USDANutrientData? usdaData;
+  @JsonKey(name: 'ai_per_gram')
+  final AiPerGramData? aiPerGram;
+
   const SavedFoodItem({
     required this.name,
     this.amount,
@@ -619,11 +768,17 @@ class SavedFoodItem {
     this.fiberG,
     this.goalScore,
     this.goalAlignment,
+    this.weightG,
+    this.usdaData,
+    this.aiPerGram,
   });
 
   factory SavedFoodItem.fromJson(Map<String, dynamic> json) =>
       _$SavedFoodItemFromJson(json);
   Map<String, dynamic> toJson() => _$SavedFoodItemToJson(this);
+
+  /// Check if this item supports portion scaling
+  bool get canScale => usdaData != null || aiPerGram != null;
 }
 
 /// Saved food (favorite recipe)

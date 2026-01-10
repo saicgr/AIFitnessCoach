@@ -223,11 +223,29 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
   }
 
   Future<void> _postToFeed() async {
-    if (_isSharing || _userId == null) return;
+    debugPrint('🔍 [ShareWorkout] _postToFeed called');
+    debugPrint('🔍 [ShareWorkout] _isSharing: $_isSharing, _userId: $_userId');
+    debugPrint('🔍 [ShareWorkout] workoutLogId: "${widget.workoutLogId}"');
+
+    // Show immediate feedback
+    HapticFeedback.lightImpact();
+
+    if (_isSharing) {
+      debugPrint('⚠️ [ShareWorkout] Already sharing, returning');
+      _showError('Please wait, another action is in progress...');
+      return;
+    }
+
+    if (_userId == null) {
+      debugPrint('⚠️ [ShareWorkout] User ID is null, showing error');
+      _showError('Please wait, loading user data...');
+      return;
+    }
 
     // Validate workoutLogId before attempting upload
     if (widget.workoutLogId.isEmpty) {
-      _showError('Cannot post: workout data unavailable');
+      debugPrint('❌ [ShareWorkout] workoutLogId is empty');
+      _showError('Cannot post: workout data not saved. Try sharing to Instagram instead.');
       return;
     }
 
@@ -236,13 +254,17 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
     setState(() => _isSharing = true);
 
     try {
+      debugPrint('🔍 [ShareWorkout] Capturing template...');
       final bytes = await _captureCurrentTemplate();
       if (bytes == null) {
+        debugPrint('❌ [ShareWorkout] Failed to capture template');
         _showError('Failed to capture image');
         return;
       }
+      debugPrint('✅ [ShareWorkout] Template captured: ${bytes.length} bytes');
 
       // Upload image and share to feed
+      debugPrint('🔍 [ShareWorkout] Uploading image...');
       final service = ref.read(workoutGalleryServiceProvider);
       final image = await service.uploadImage(
         userId: _userId!,
@@ -262,20 +284,25 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
         achievementsData: widget.achievements,
         userPhotoBytes: _userPhotoBytes,
       );
+      debugPrint('✅ [ShareWorkout] Image uploaded: ${image.id}');
 
       // Share to feed
+      debugPrint('🔍 [ShareWorkout] Sharing to feed...');
       await service.shareToFeed(
         userId: _userId!,
         imageId: image.id,
         caption: 'Just finished my ${widget.workoutName} workout!',
       );
+      debugPrint('✅ [ShareWorkout] Posted to feed successfully');
 
       if (mounted) {
         Navigator.pop(context);
         _showSuccess('Posted to feed!');
       }
-    } catch (e) {
-      _showError('Failed to post to feed');
+    } catch (e, st) {
+      debugPrint('❌ [ShareWorkout] Error posting to feed: $e');
+      debugPrint('❌ [ShareWorkout] Stack trace: $st');
+      _showError('Failed to post to feed: ${e.toString().split(':').last.trim()}');
     } finally {
       if (mounted) {
         setState(() => _isSharing = false);

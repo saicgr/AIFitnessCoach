@@ -222,8 +222,25 @@ async def get_today_workout(
         if has_completed_workout_today:
             logger.info(f"[JIT Safety Net] User {user_id} already completed today's workout. Skipping auto-generation.")
 
-        if not has_workout_today and next_workout is None and not has_completed_workout_today:
-            logger.info(f"[JIT Safety Net] No workouts exist for user {user_id}. Triggering auto-generation.")
+        # Check if today is a scheduled workout day
+        is_today_workout_day = _is_today_a_workout_day(selected_days)
+
+        # Trigger generation if:
+        # 1. No workouts exist at all (original condition), OR
+        # 2. Today IS a scheduled workout day but no workout exists for today
+        # AND user hasn't already completed today's workout
+        should_generate = (
+            not has_completed_workout_today and
+            (
+                (not has_workout_today and next_workout is None) or  # No workouts at all
+                (is_today_workout_day and not has_workout_today)      # Today is workout day but missing
+            )
+        )
+
+        if should_generate:
+            logger.info(f"[JIT Safety Net] Triggering generation for user {user_id}. "
+                       f"is_today_workout_day={is_today_workout_day}, has_workout_today={has_workout_today}, "
+                       f"next_workout_exists={next_workout is not None}")
 
             # Check if we have background_tasks available for async generation
             if background_tasks is not None:

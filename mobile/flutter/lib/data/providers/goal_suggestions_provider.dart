@@ -24,7 +24,8 @@ final goalSocialServiceProvider = Provider<GoalSocialService>((ref) {
 // ============================================================
 
 /// Goal suggestions provider (cached for 24h)
-final goalSuggestionsProvider = FutureProvider.autoDispose.family<GoalSuggestionsResponse, GoalSuggestionsParams>(
+/// Note: Removed autoDispose to prevent refetching on navigation
+final goalSuggestionsProvider = FutureProvider.family<GoalSuggestionsResponse, GoalSuggestionsParams>(
   (ref, params) async {
     final service = ref.watch(personalGoalsServiceProvider);
     return await service.getGoalSuggestions(
@@ -35,7 +36,8 @@ final goalSuggestionsProvider = FutureProvider.autoDispose.family<GoalSuggestion
 );
 
 /// Suggestions summary provider (lightweight)
-final suggestionsSummaryProvider = FutureProvider.autoDispose.family<GoalSuggestionsSummary, String>(
+/// Note: Removed autoDispose to prevent refetching on navigation
+final suggestionsSummaryProvider = FutureProvider.family<GoalSuggestionsSummary, String>(
   (ref, userId) async {
     final service = ref.watch(personalGoalsServiceProvider);
     return await service.getSuggestionsSummary(userId: userId);
@@ -43,7 +45,8 @@ final suggestionsSummaryProvider = FutureProvider.autoDispose.family<GoalSuggest
 );
 
 /// Current goals provider
-final currentGoalsProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
+/// Note: Removed autoDispose to prevent refetching on navigation
+final currentGoalsProvider = FutureProvider.family<Map<String, dynamic>, String>(
   (ref, userId) async {
     final service = ref.watch(personalGoalsServiceProvider);
     return await service.getCurrentGoals(userId: userId);
@@ -51,7 +54,8 @@ final currentGoalsProvider = FutureProvider.autoDispose.family<Map<String, dynam
 );
 
 /// Goals summary provider
-final goalsSummaryProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
+/// Note: Removed autoDispose to prevent refetching on navigation
+final goalsSummaryProvider = FutureProvider.family<Map<String, dynamic>, String>(
   (ref, userId) async {
     final service = ref.watch(personalGoalsServiceProvider);
     return await service.getSummary(userId: userId);
@@ -59,7 +63,8 @@ final goalsSummaryProvider = FutureProvider.autoDispose.family<Map<String, dynam
 );
 
 /// Personal records provider
-final personalRecordsProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
+/// Note: Removed autoDispose to prevent refetching on navigation
+final personalRecordsProvider = FutureProvider.family<Map<String, dynamic>, String>(
   (ref, userId) async {
     final service = ref.watch(personalGoalsServiceProvider);
     return await service.getPersonalRecords(userId: userId);
@@ -71,7 +76,8 @@ final personalRecordsProvider = FutureProvider.autoDispose.family<Map<String, dy
 // ============================================================
 
 /// Goal friends (leaderboard) provider
-final goalFriendsProvider = FutureProvider.autoDispose.family<GoalFriendsResponse, GoalFriendsParams>(
+/// Note: Removed autoDispose to prevent refetching on navigation
+final goalFriendsProvider = FutureProvider.family<GoalFriendsResponse, GoalFriendsParams>(
   (ref, params) async {
     final service = ref.watch(goalSocialServiceProvider);
     return await service.getGoalFriends(
@@ -82,7 +88,8 @@ final goalFriendsProvider = FutureProvider.autoDispose.family<GoalFriendsRespons
 );
 
 /// Pending goal invites provider
-final goalInvitesProvider = FutureProvider.autoDispose.family<List<GoalInviteWithDetails>, String>(
+/// Note: Removed autoDispose to prevent refetching on navigation
+final goalInvitesProvider = FutureProvider.family<List<GoalInviteWithDetails>, String>(
   (ref, userId) async {
     final service = ref.watch(goalSocialServiceProvider);
     return await service.getGoalInvites(userId: userId);
@@ -90,7 +97,8 @@ final goalInvitesProvider = FutureProvider.autoDispose.family<List<GoalInviteWit
 );
 
 /// Pending invites count provider (for badge)
-final pendingInvitesCountProvider = FutureProvider.autoDispose.family<int, String>(
+/// Note: Removed autoDispose to prevent refetching on navigation
+final pendingInvitesCountProvider = FutureProvider.family<int, String>(
   (ref, userId) async {
     final service = ref.watch(goalSocialServiceProvider);
     return await service.getPendingInvitesCount(userId: userId);
@@ -192,7 +200,8 @@ class GoalHistoryParams {
 }
 
 /// Goal history provider
-final goalHistoryProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, GoalHistoryParams>(
+/// Note: Removed autoDispose to prevent refetching on navigation
+final goalHistoryProvider = FutureProvider.family<Map<String, dynamic>, GoalHistoryParams>(
   (ref, params) async {
     final service = ref.watch(personalGoalsServiceProvider);
     return await service.getGoalHistory(

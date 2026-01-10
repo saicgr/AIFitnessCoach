@@ -11,7 +11,8 @@ final workoutGalleryServiceProvider = Provider<WorkoutGalleryService>((ref) {
 });
 
 /// Gallery images list provider (paginated)
-final galleryImagesProvider = FutureProvider.autoDispose
+/// Note: Removed autoDispose to prevent refetching on navigation
+final galleryImagesProvider = FutureProvider
     .family<WorkoutGalleryImageList, GalleryQueryParams>((ref, params) async {
   final service = ref.watch(workoutGalleryServiceProvider);
   return await service.getGalleryImages(
@@ -23,7 +24,8 @@ final galleryImagesProvider = FutureProvider.autoDispose
 });
 
 /// Single gallery image provider
-final galleryImageProvider = FutureProvider.autoDispose
+/// Note: Removed autoDispose to prevent refetching on navigation
+final galleryImageProvider = FutureProvider
     .family<WorkoutGalleryImage, GalleryImageParams>((ref, params) async {
   final service = ref.watch(workoutGalleryServiceProvider);
   return await service.getGalleryImage(
@@ -33,15 +35,17 @@ final galleryImageProvider = FutureProvider.autoDispose
 });
 
 /// Recent gallery images for profile preview (max 4)
-final recentGalleryImagesProvider = FutureProvider.autoDispose
+/// Note: Removed autoDispose to prevent refetching on navigation
+final recentGalleryImagesProvider = FutureProvider
     .family<List<WorkoutGalleryImage>, String>((ref, userId) async {
   final service = ref.watch(workoutGalleryServiceProvider);
   return await service.getRecentImagesForProfile(userId: userId);
 });
 
 /// Check if user has any gallery images
+/// Note: Removed autoDispose to prevent refetching on navigation
 final hasGalleryImagesProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, userId) async {
+    FutureProvider.family<bool, String>((ref, userId) async {
   final service = ref.watch(workoutGalleryServiceProvider);
   return await service.hasGalleryImages(userId);
 });

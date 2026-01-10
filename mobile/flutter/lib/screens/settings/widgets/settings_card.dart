@@ -8,6 +8,7 @@ import '../../../core/providers/environment_equipment_provider.dart';
 import '../../../core/providers/exercise_queue_provider.dart';
 import '../../../core/providers/favorites_provider.dart';
 import '../../../core/providers/staples_provider.dart';
+import '../../../core/providers/avoided_provider.dart';
 import '../../../core/providers/timezone_provider.dart';
 import '../../../core/providers/training_preferences_provider.dart';
 import '../../../core/providers/variation_provider.dart';
@@ -592,6 +593,7 @@ class SettingsCard extends ConsumerWidget {
     final favoritesState = ref.watch(favoritesProvider);
     final queueState = ref.watch(exerciseQueueProvider);
     final staplesState = ref.watch(staplesProvider);
+    final avoidedState = ref.watch(avoidedProvider);
     final variationState = ref.watch(variationProvider);
     final intensityState = ref.watch(trainingIntensityProvider);
     final oneRMsState = ref.watch(userOneRMsProvider);
@@ -955,6 +957,14 @@ class SettingsCard extends ConsumerWidget {
             trailing = Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Text(
+                  '${avoidedState.activeAvoided.length} avoided',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(width: 4),
                 Icon(
                   Icons.chevron_right,
                   color: textMuted,

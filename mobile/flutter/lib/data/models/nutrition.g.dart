@@ -192,6 +192,44 @@ Map<String, dynamic> _$LogBarcodeResponseToJson(LogBarcodeResponse instance) =>
       'fat_g': instance.fatG,
     };
 
+USDANutrientData _$USDANutrientDataFromJson(Map<String, dynamic> json) =>
+    USDANutrientData(
+      fdcId: (json['fdc_id'] as num?)?.toInt(),
+      caloriesPer100g: (json['calories_per_100g'] as num?)?.toDouble() ?? 0,
+      proteinPer100g: (json['protein_per_100g'] as num?)?.toDouble() ?? 0,
+      carbsPer100g: (json['carbs_per_100g'] as num?)?.toDouble() ?? 0,
+      fatPer100g: (json['fat_per_100g'] as num?)?.toDouble() ?? 0,
+      fiberPer100g: (json['fiber_per_100g'] as num?)?.toDouble() ?? 0,
+    );
+
+Map<String, dynamic> _$USDANutrientDataToJson(USDANutrientData instance) =>
+    <String, dynamic>{
+      'fdc_id': instance.fdcId,
+      'calories_per_100g': instance.caloriesPer100g,
+      'protein_per_100g': instance.proteinPer100g,
+      'carbs_per_100g': instance.carbsPer100g,
+      'fat_per_100g': instance.fatPer100g,
+      'fiber_per_100g': instance.fiberPer100g,
+    };
+
+AiPerGramData _$AiPerGramDataFromJson(Map<String, dynamic> json) =>
+    AiPerGramData(
+      calories: (json['calories'] as num?)?.toDouble() ?? 0,
+      protein: (json['protein'] as num?)?.toDouble() ?? 0,
+      carbs: (json['carbs'] as num?)?.toDouble() ?? 0,
+      fat: (json['fat'] as num?)?.toDouble() ?? 0,
+      fiber: (json['fiber'] as num?)?.toDouble() ?? 0,
+    );
+
+Map<String, dynamic> _$AiPerGramDataToJson(AiPerGramData instance) =>
+    <String, dynamic>{
+      'calories': instance.calories,
+      'protein': instance.protein,
+      'carbs': instance.carbs,
+      'fat': instance.fat,
+      'fiber': instance.fiber,
+    };
+
 FoodItemRanking _$FoodItemRankingFromJson(Map<String, dynamic> json) =>
     FoodItemRanking(
       name: json['name'] as String,
@@ -204,6 +242,16 @@ FoodItemRanking _$FoodItemRankingFromJson(Map<String, dynamic> json) =>
       goalScore: (json['goal_score'] as num?)?.toInt(),
       goalAlignment: json['goal_alignment'] as String?,
       reason: json['reason'] as String?,
+      weightG: (json['weight_g'] as num?)?.toDouble(),
+      weightSource: json['weight_source'] as String?,
+      usdaData: json['usda_data'] == null
+          ? null
+          : USDANutrientData.fromJson(
+              json['usda_data'] as Map<String, dynamic>,
+            ),
+      aiPerGram: json['ai_per_gram'] == null
+          ? null
+          : AiPerGramData.fromJson(json['ai_per_gram'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$FoodItemRankingToJson(FoodItemRanking instance) =>
@@ -218,6 +266,10 @@ Map<String, dynamic> _$FoodItemRankingToJson(FoodItemRanking instance) =>
       'goal_score': instance.goalScore,
       'goal_alignment': instance.goalAlignment,
       'reason': instance.reason,
+      'weight_g': instance.weightG,
+      'weight_source': instance.weightSource,
+      'usda_data': instance.usdaData,
+      'ai_per_gram': instance.aiPerGram,
     };
 
 LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
@@ -304,6 +356,15 @@ SavedFoodItem _$SavedFoodItemFromJson(Map<String, dynamic> json) =>
       fiberG: (json['fiber_g'] as num?)?.toDouble(),
       goalScore: (json['goal_score'] as num?)?.toInt(),
       goalAlignment: json['goal_alignment'] as String?,
+      weightG: (json['weight_g'] as num?)?.toDouble(),
+      usdaData: json['usda_data'] == null
+          ? null
+          : USDANutrientData.fromJson(
+              json['usda_data'] as Map<String, dynamic>,
+            ),
+      aiPerGram: json['ai_per_gram'] == null
+          ? null
+          : AiPerGramData.fromJson(json['ai_per_gram'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$SavedFoodItemToJson(SavedFoodItem instance) =>
@@ -317,6 +378,9 @@ Map<String, dynamic> _$SavedFoodItemToJson(SavedFoodItem instance) =>
       'fiber_g': instance.fiberG,
       'goal_score': instance.goalScore,
       'goal_alignment': instance.goalAlignment,
+      'weight_g': instance.weightG,
+      'usda_data': instance.usdaData,
+      'ai_per_gram': instance.aiPerGram,
     };
 
 SavedFood _$SavedFoodFromJson(Map<String, dynamic> json) => SavedFood(

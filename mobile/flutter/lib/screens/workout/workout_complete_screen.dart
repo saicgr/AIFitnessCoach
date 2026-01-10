@@ -13,7 +13,7 @@ import '../../data/services/challenges_service.dart';
 import '../../data/services/personal_goals_service.dart';
 import '../../data/providers/scores_provider.dart';
 import '../../data/providers/subjective_feedback_provider.dart';
-import '../../data/providers/ai_settings_provider.dart';
+import '../ai_settings/ai_settings_screen.dart';
 import '../../data/models/subjective_feedback.dart';
 import '../challenges/widgets/challenge_complete_dialog.dart';
 import '../challenges/widgets/challenge_friends_dialog.dart';
@@ -325,12 +325,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
       debugPrint('🤖 [AI Coach] workoutLogId: ${widget.workoutLogId}');
       debugPrint('🤖 [AI Coach] workoutId: ${widget.workout.id}');
       debugPrint('🤖 [AI Coach] exercisesPerformance: ${widget.exercisesPerformance?.length ?? 0} exercises');
+      debugPrint('🤖 [AI Coach] totalSets: ${widget.totalSets}, totalReps: ${widget.totalReps}');
 
-      // Only call AI Coach API if we have the required data
-      if (userId != null &&
-          widget.workoutLogId != null &&
-          widget.workout.id != null) {
-
+      // Try to call AI Coach API if we have minimum required data (userId and workoutId)
+      // workoutLogId is optional - we can still generate feedback without it
+      if (userId != null && widget.workout.id != null) {
         // Build exercises list from workout exercises or provided performance data
         final exercisesList = widget.exercisesPerformance ??
             widget.workout.exercises.map((e) => {
@@ -343,8 +342,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
         // Get AI settings for coach personality
         final aiSettings = ref.read(aiSettingsProvider);
 
+        // Use actual workoutLogId if available, otherwise use a temp ID (won't be indexed)
+        final effectiveWorkoutLogId = widget.workoutLogId ?? 'temp_${DateTime.now().millisecondsSinceEpoch}';
+
         final feedback = await workoutRepo.getAICoachFeedback(
-          workoutLogId: widget.workoutLogId!,
+          workoutLogId: effectiveWorkoutLogId,
           workoutId: widget.workout.id!,
           userId: userId,
           workoutName: widget.workout.name ?? 'Workout',
@@ -354,8 +356,8 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
           totalRestSeconds: widget.totalRestSeconds ?? 0,
           avgRestSeconds: widget.avgRestSeconds ?? 0.0,
           caloriesBurned: widget.calories,
-          totalSets: widget.totalSets ?? exercisesList.length * 3,
-          totalReps: widget.totalReps ?? exercisesList.length * 30,
+          totalSets: widget.totalSets ?? 0, // Use actual value, don't fake it
+          totalReps: widget.totalReps ?? 0, // Use actual value, don't fake it
           totalVolumeKg: widget.totalVolumeKg ?? 0.0,
           // Pass coach personality settings
           coachName: aiSettings.coachName,
@@ -371,12 +373,14 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
             _isLoadingSummary = false;
           });
           return;
+        } else {
+          debugPrint('🤖 [AI Coach] API returned null feedback, using fallback');
         }
       } else {
         debugPrint('🤖 [AI Coach] Skipping API call - missing required data');
         debugPrint('🤖 [AI Coach] userId is null: ${userId == null}');
-        debugPrint('🤖 [AI Coach] workoutLogId is null: ${widget.workoutLogId == null}');
         debugPrint('🤖 [AI Coach] workoutId is null: ${widget.workout.id == null}');
+        debugPrint('🤖 [AI Coach] workout.id value: "${widget.workout.id}"');
       }
 
       // Fallback to generated summary if API call fails
@@ -385,8 +389,9 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
         _aiSummary = _generateFallbackSummary();
         _isLoadingSummary = false;
       });
-    } catch (e) {
-      debugPrint('Error loading AI Coach feedback: $e');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [AI Coach] Error loading feedback: $e');
+      debugPrint('❌ [AI Coach] Stack trace: $stackTrace');
       setState(() {
         _aiSummary = _generateFallbackSummary();
         _isLoadingSummary = false;
@@ -395,18 +400,97 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   }
 
   String _generateFallbackSummary() {
-    final workout = widget.workout;
     final minutes = widget.duration ~/ 60;
-    final exercises = workout.exercises.length;
+    final totalSets = widget.totalSets ?? 0;
+    final totalReps = widget.totalReps ?? 0;
+    final totalVolume = widget.totalVolumeKg ?? 0.0;
 
-    final summaries = [
-      "Great workout! You crushed $exercises exercises in $minutes minutes. Your consistency is building real strength.",
-      "Solid session! You're making progress every time you show up. Keep pushing, and the results will follow.",
-      "Another workout in the books! Your dedication is paying off. Recovery is just as important - rest well tonight.",
-      "Well done! You completed all $exercises exercises. Focus on form next time to maximize gains.",
-    ];
+    // Get the current coach settings
+    final aiSettings = ref.read(aiSettingsProvider);
+    final coach = ref.read(aiSettingsProvider.notifier).getCurrentCoach();
+    final coachName = coach?.name ?? aiSettings.coachName ?? 'Coach';
+    final coachEmoji = coach?.emoji ?? '💪';
 
-    return summaries[DateTime.now().second % summaries.length];
+    // Determine workout quality based on actual metrics
+    final bool wasMinimalEffort = totalSets == 0 || totalReps == 0 || minutes < 5;
+    final bool wasShortWorkout = minutes >= 5 && minutes < 15 && totalSets < 6;
+
+    // Generate honest feedback based on actual performance
+    if (wasMinimalEffort) {
+      // Honest feedback for minimal effort - vary by coach personality
+      return _getMinimalEffortFeedback(coachName, coachEmoji, minutes, totalSets);
+    } else if (wasShortWorkout) {
+      // Acknowledge effort but encourage more
+      return _getShortWorkoutFeedback(coachName, coachEmoji, minutes, totalSets, totalReps);
+    } else {
+      // Good workout - give appropriate recognition
+      return _getGoodWorkoutFeedback(coachName, coachEmoji, minutes, totalSets, totalReps, totalVolume);
+    }
+  }
+
+  String _getMinimalEffortFeedback(String coachName, String emoji, int minutes, int totalSets) {
+    final aiSettings = ref.read(aiSettingsProvider);
+    final tone = aiSettings.communicationTone;
+    final coachId = aiSettings.coachPersonaId;
+
+    switch (coachId) {
+      case 'coach_mike':
+        return "$emoji Hey champ, looks like today was a quick one. That's okay - what matters is showing up! Ready to go harder next time?";
+      case 'dr_sarah':
+        return "Session data: $minutes min, $totalSets sets. For optimal results, aim for 20+ minutes and progressive overload. We'll build from here.";
+      case 'sergeant_max':
+        return "💥 Soldier, that was barely a warm-up! $totalSets sets won't build a warrior. I expect you back here giving 100% next time!";
+      case 'zen_maya':
+        return "🧘 Sometimes we need lighter days. If today wasn't your full practice, that's okay. Honor where you are and return when ready.";
+      case 'hype_danny':
+        return "🔥 Yo that was a quick sesh! No worries tho, we all have off days. Come back tomorrow and we go CRAZY fr fr!!";
+      default:
+        if (tone == 'tough-love') {
+          return "Let's be real - $totalSets sets in $minutes minutes isn't a full workout. Show up stronger next time.";
+        }
+        return "Quick session today! Every bit counts, but aim for more next time to see real progress. You've got this!";
+    }
+  }
+
+  String _getShortWorkoutFeedback(String coachName, String emoji, int minutes, int totalSets, int totalReps) {
+    final aiSettings = ref.read(aiSettingsProvider);
+    final coachId = aiSettings.coachPersonaId;
+
+    switch (coachId) {
+      case 'coach_mike':
+        return "$emoji Good effort showing up! $totalSets sets, $totalReps reps - that's a start. Push for a few more sets next time and watch the gains roll in!";
+      case 'dr_sarah':
+        return "Recorded: $totalSets sets, $totalReps reps in $minutes min. Research suggests 10+ working sets per muscle group weekly for hypertrophy. Consider extending future sessions.";
+      case 'sergeant_max':
+        return "💥 $totalSets sets done. It's something, recruit! But I know you've got more in the tank. Next session - no holding back!";
+      case 'zen_maya':
+        return "🧘 $minutes minutes of mindful movement. Every rep is a step on your journey. When you're ready, we can deepen the practice together.";
+      case 'hype_danny':
+        return "🔥 Ayo $totalSets sets logged! Not bad but we're just warming up bestie!! Next time we go FULL SEND!! 💪";
+      default:
+        return "Nice work getting $totalSets sets in! A solid foundation - try adding a couple more sets next session to level up.";
+    }
+  }
+
+  String _getGoodWorkoutFeedback(String coachName, String emoji, int minutes, int totalSets, int totalReps, double totalVolume) {
+    final aiSettings = ref.read(aiSettingsProvider);
+    final coachId = aiSettings.coachPersonaId;
+    final volumeStr = totalVolume > 0 ? ' ${totalVolume.toStringAsFixed(0)}kg total volume!' : '';
+
+    switch (coachId) {
+      case 'coach_mike':
+        return "$emoji BOOM! $totalSets sets, $totalReps reps in $minutes minutes! That's what I'm talking about, champ!$volumeStr Keep this energy!";
+      case 'dr_sarah':
+        return "Excellent session. $totalSets sets, $totalReps reps, $minutes min.$volumeStr This volume supports progressive overload. Prioritize protein and sleep for recovery.";
+      case 'sergeant_max':
+        return "💥 NOW we're talking! $totalSets sets, $totalReps reps - that's soldier material!$volumeStr Hit the rack and recover. DISMISSED!";
+      case 'zen_maya':
+        return "🧘 Beautiful practice today. $totalSets sets completed with intention.$volumeStr Honor your body with rest and nourishment now.";
+      case 'hype_danny':
+        return "🔥🔥 YOOOO $totalSets sets and $totalReps reps?! You're literally built different no cap!!$volumeStr That's my GOAT!! 🐐";
+      default:
+        return "Great workout! $totalSets sets, $totalReps reps in $minutes minutes.$volumeStr Your consistency is building real results!";
+    }
   }
 
   Future<void> _loadAchievements() async {
@@ -889,7 +973,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
         // Submit workout feedback to backend
         debugPrint('[Feedback] Submitting workout feedback: rating=$_rating, difficulty=$_difficulty');
         await apiClient.post(
-          '/v1/feedback/workout/${widget.workout.id}',
+          '/feedback/workout/${widget.workout.id}',
           data: {
             'user_id': userId,
             'workout_id': widget.workout.id,

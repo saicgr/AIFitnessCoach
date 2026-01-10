@@ -113,12 +113,12 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
 
   NutritionNotifier(this._repository) : super(const NutritionState());
 
-  /// Check if we should skip loading (data is fresh - less than 30 seconds old)
+  /// Check if we should skip loading (data is fresh - less than 5 minutes old)
   bool _shouldSkipLoad(String userId) {
     if (_lastLoadedUserId != userId) return false;
     if (_lastLoadTime == null) return false;
     final elapsed = DateTime.now().difference(_lastLoadTime!);
-    return elapsed.inSeconds < 30;  // Cache for 30 seconds
+    return elapsed.inMinutes < 5;  // Cache for 5 minutes to improve navigation speed
   }
 
   /// Load today's nutrition summary
@@ -1127,15 +1127,35 @@ class NutritionRepository {
     required String userId,
     required SaveFoodRequest request,
   }) async {
+    debugPrint('⭐ [NutritionRepo] saveFood called for user: $userId');
     try {
+      final requestJson = request.toJson();
+      debugPrint('⭐ [NutritionRepo] Request data: $requestJson');
+
       final response = await _client.post(
         '/nutrition/saved-foods/save',
         queryParameters: {'user_id': userId},
-        data: request.toJson(),
+        data: requestJson,
       );
+
+      debugPrint('✅ [NutritionRepo] Save food response: ${response.data}');
       return SavedFood.fromJson(response.data);
+    } on DioException catch (e) {
+      debugPrint('❌ [NutritionRepo] DioException saving food: ${e.message}');
+      debugPrint('❌ [NutritionRepo] Response status: ${e.response?.statusCode}');
+      debugPrint('❌ [NutritionRepo] Response data: ${e.response?.data}');
+
+      if (e.response?.statusCode == 422) {
+        // Validation error from backend
+        final detail = e.response?.data?['detail'];
+        throw Exception('Validation error: $detail');
+      } else if (e.response?.statusCode == 500) {
+        final detail = e.response?.data?['detail'] ?? 'Server error';
+        throw Exception('Server error: $detail');
+      }
+      throw Exception('Failed to save food: ${e.message}');
     } catch (e) {
-      debugPrint('Error saving food: $e');
+      debugPrint('❌ [NutritionRepo] Error saving food: $e');
       rethrow;
     }
   }

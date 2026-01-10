@@ -155,6 +155,19 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
         color: elevatedColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.cyan.withValues(alpha: 0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+            spreadRadius: 1,
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: widget.isDark ? 0.2 : 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

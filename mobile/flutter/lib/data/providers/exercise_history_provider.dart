@@ -22,13 +22,15 @@ final exerciseChartTypeProvider = StateProvider<String>((ref) => 'weight');
 // ============================================================================
 
 /// Provider for most performed exercises list
-final mostPerformedExercisesProvider = FutureProvider.autoDispose<List<MostPerformedExercise>>((ref) async {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final mostPerformedExercisesProvider = FutureProvider<List<MostPerformedExercise>>((ref) async {
   final repository = ref.watch(exerciseHistoryRepositoryProvider);
   return repository.getMostPerformedExercises(limit: 30);
 });
 
 /// Provider for exercise history data (family provider with exercise name parameter)
-final exerciseHistoryProvider = FutureProvider.autoDispose.family<ExerciseHistoryData, String>((ref, exerciseName) async {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final exerciseHistoryProvider = FutureProvider.family<ExerciseHistoryData, String>((ref, exerciseName) async {
   final repository = ref.watch(exerciseHistoryRepositoryProvider);
   final timeRange = ref.watch(exerciseHistoryTimeRangeProvider);
 
@@ -39,7 +41,8 @@ final exerciseHistoryProvider = FutureProvider.autoDispose.family<ExerciseHistor
 });
 
 /// Provider for exercise chart data
-final exerciseChartDataProvider = FutureProvider.autoDispose.family<List<ExerciseChartDataPoint>, String>((ref, exerciseName) async {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final exerciseChartDataProvider = FutureProvider.family<List<ExerciseChartDataPoint>, String>((ref, exerciseName) async {
   final repository = ref.watch(exerciseHistoryRepositoryProvider);
   final timeRange = ref.watch(exerciseHistoryTimeRangeProvider);
 
@@ -50,7 +53,8 @@ final exerciseChartDataProvider = FutureProvider.autoDispose.family<List<Exercis
 });
 
 /// Provider for exercise personal records
-final exercisePRsProvider = FutureProvider.autoDispose.family<List<ExercisePersonalRecord>, String>((ref, exerciseName) async {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final exercisePRsProvider = FutureProvider.family<List<ExercisePersonalRecord>, String>((ref, exerciseName) async {
   final repository = ref.watch(exerciseHistoryRepositoryProvider);
   return repository.getExercisePRs(exerciseName: exerciseName);
 });
@@ -166,7 +170,8 @@ class ExerciseHistoryNotifier extends StateNotifier<ExerciseHistoryState> {
 }
 
 /// Provider for paginated exercise history notifier
-final paginatedExerciseHistoryProvider = StateNotifierProvider.autoDispose
+/// Note: Removed autoDispose to prevent refetching on navigation
+final paginatedExerciseHistoryProvider = StateNotifierProvider
     .family<ExerciseHistoryNotifier, ExerciseHistoryState, String>((ref, exerciseName) {
   final repository = ref.watch(exerciseHistoryRepositoryProvider);
   final timeRange = ref.watch(exerciseHistoryTimeRangeProvider);
@@ -181,7 +186,8 @@ final paginatedExerciseHistoryProvider = StateNotifierProvider.autoDispose
 final exerciseSearchQueryProvider = StateProvider<String>((ref) => '');
 
 /// Filtered most performed exercises based on search query
-final filteredExercisesProvider = Provider.autoDispose<AsyncValue<List<MostPerformedExercise>>>((ref) {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final filteredExercisesProvider = Provider<AsyncValue<List<MostPerformedExercise>>>((ref) {
   final exercisesAsync = ref.watch(mostPerformedExercisesProvider);
   final query = ref.watch(exerciseSearchQueryProvider).toLowerCase();
 

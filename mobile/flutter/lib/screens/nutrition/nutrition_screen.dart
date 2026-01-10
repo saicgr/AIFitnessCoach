@@ -69,28 +69,30 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
       final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
 
-      // Fire ALL data loads in parallel - don't block on preferences init
-      // This dramatically improves perceived load time
+      // Phase 1: Load essential data for immediate display (blocking)
       await Future.wait([
-        // Initialize nutrition preferences (non-blocking for UI)
-        ref.read(nutritionPreferencesProvider.notifier).initialize(userId),
-        // Core nutrition data - these can load independently
         ref.read(nutritionProvider.notifier).loadTodaySummary(userId),
         ref.read(nutritionProvider.notifier).loadTargets(userId),
+      ], eagerError: false);
+
+      // Phase 2: Load secondary data in background (non-blocking)
+      // These run without await to not block UI
+      Future.wait([
+        ref.read(nutritionPreferencesProvider.notifier).initialize(userId),
         ref.read(nutritionProvider.notifier).loadRecentLogs(userId),
-        // Micronutrients and recipes
-        _loadMicronutrients(userId, dateStr),
-        _loadRecipes(userId),
-        // Hydration data for Hydration tab
         ref.read(hydrationProvider.notifier).loadTodaySummary(userId),
-      ], eagerError: false); // Don't fail fast - let all complete
+      ], eagerError: false);
+
+      // Phase 3: Lazy load micronutrients and recipes (non-blocking)
+      _loadMicronutrients(userId, dateStr);
+      _loadRecipes(userId);
 
       // Log state after initialization for debugging
       final initState = ref.read(nutritionPreferencesProvider);
       debugPrint('🥗 [NutritionScreen] After init: prefs=${initState.preferences != null}, calories=${initState.preferences?.targetCalories}');
 
-      // Prefetch quick add suggestions in background (low priority)
-      ref.invalidate(quickAddSuggestionsProvider(userId));
+      // Note: Removed ref.invalidate(quickAddSuggestionsProvider) to prevent unnecessary refetching
+      // Quick add suggestions will be loaded on-demand when the sheet opens
     }
   }
 

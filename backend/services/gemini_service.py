@@ -16,6 +16,7 @@ import logging
 import asyncio
 from core.config import get_settings
 from models.chat import IntentExtraction, CoachIntent
+import re as regex_module  # For weight parsing
 
 settings = get_settings()
 logger = logging.getLogger("gemini")
@@ -36,6 +37,195 @@ class GeminiService:
     def __init__(self):
         self.model = settings.gemini_model
         self.embedding_model = settings.gemini_embedding_model
+
+    def _parse_weight_from_amount(self, amount: str) -> tuple[float, str]:
+        """
+        Parse weight in grams from amount string.
+        Returns (weight_g, weight_source) where weight_source is 'exact' or 'estimated'.
+
+        Examples:
+            "59 grams" -> (59.0, "exact")
+            "150g" -> (150.0, "exact")
+            "1 cup" -> (240.0, "estimated")
+            "handful" -> (30.0, "estimated")
+        """
+        if not amount:
+            return (100.0, "estimated")  # Default to 100g
+
+        amount_lower = amount.lower().strip()
+
+        # Try to extract explicit gram weight
+        gram_patterns = [
+            r'(\d+(?:\.\d+)?)\s*(?:g|grams?|gram)\b',  # "59g", "59 grams", "59.5 grams"
+            r'(\d+(?:\.\d+)?)\s*(?:gr)\b',  # "59gr"
+        ]
+        for pattern in gram_patterns:
+            match = regex_module.search(pattern, amount_lower)
+            if match:
+                return (float(match.group(1)), "exact")
+
+        # Convert common measurements to grams (estimates)
+        conversion_estimates = {
+            # Cups
+            'cup': 240.0,
+            'cups': 240.0,
+            '1/2 cup': 120.0,
+            'half cup': 120.0,
+            '1/4 cup': 60.0,
+            'quarter cup': 60.0,
+            # Spoons
+            'tablespoon': 15.0,
+            'tbsp': 15.0,
+            'teaspoon': 5.0,
+            'tsp': 5.0,
+            # Informal
+            'handful': 30.0,
+            'small handful': 20.0,
+            'large handful': 45.0,
+            # Portions
+            'small': 100.0,
+            'medium': 150.0,
+            'large': 200.0,
+            'small bowl': 150.0,
+            'medium bowl': 250.0,
+            'large bowl': 350.0,
+            # Slices
+            'slice': 30.0,
+            'slices': 60.0,
+            '1 slice': 30.0,
+            '2 slices': 60.0,
+            # Pieces
+            'piece': 50.0,
+            '1 piece': 50.0,
+            '2 pieces': 100.0,
+        }
+
+        for term, grams in conversion_estimates.items():
+            if term in amount_lower:
+                return (grams, "estimated")
+
+        # Try to extract oz/ounces and convert
+        oz_match = regex_module.search(r'(\d+(?:\.\d+)?)\s*(?:oz|ounce|ounces)\b', amount_lower)
+        if oz_match:
+            oz = float(oz_match.group(1))
+            return (oz * 28.35, "exact")  # 1 oz = 28.35g
+
+        # Try to extract numeric value (assume grams if unit unclear)
+        numeric_match = regex_module.search(r'^(\d+(?:\.\d+)?)\s*$', amount_lower)
+        if numeric_match:
+            return (float(numeric_match.group(1)), "estimated")
+
+        # Default fallback
+        return (100.0, "estimated")
+
+    async def _lookup_single_usda(self, usda_service, food_name: str) -> Optional[Dict]:
+        """Look up a single food in USDA database. Returns usda_data dict or None."""
+        if not usda_service or not food_name:
+            return None
+        try:
+            search_result = await usda_service.search_foods(
+                query=food_name,
+                page_size=1,  # Just need top match
+            )
+            if search_result.foods:
+                top_food = search_result.foods[0]
+                nutrients = top_food.nutrients
+                print(f"✅ [USDA] Found '{top_food.description}' for '{food_name}' ({nutrients.calories_per_100g} cal/100g)")
+                return {
+                    'fdc_id': top_food.fdc_id,
+                    'calories_per_100g': nutrients.calories_per_100g,
+                    'protein_per_100g': nutrients.protein_per_100g,
+                    'carbs_per_100g': nutrients.carbs_per_100g,
+                    'fat_per_100g': nutrients.fat_per_100g,
+                    'fiber_per_100g': nutrients.fiber_per_100g,
+                }
+        except Exception as e:
+            logger.warning(f"USDA lookup failed for '{food_name}': {e}")
+        return None
+
+    async def _enhance_food_items_with_usda(self, food_items: List[Dict]) -> List[Dict]:
+        """
+        Enhance food items with USDA per-100g nutrition data for accurate scaling.
+        Uses parallel lookups for faster performance.
+
+        For each food item:
+        1. Look up in USDA database (in parallel)
+        2. If found: Add usda_data with per-100g values
+        3. If not found: Calculate ai_per_gram from AI's estimate
+        """
+        try:
+            from services.usda_food_service import get_usda_food_service
+            usda_service = get_usda_food_service()
+        except Exception as e:
+            logger.warning(f"Could not initialize USDA service: {e}")
+            usda_service = None
+
+        # Parse weights first (synchronous, fast)
+        parsed_items = []
+        for item in food_items:
+            enhanced_item = dict(item)
+            amount = item.get('amount', '')
+            weight_g, weight_source = self._parse_weight_from_amount(amount)
+            enhanced_item['weight_g'] = weight_g
+            enhanced_item['weight_source'] = weight_source
+            parsed_items.append(enhanced_item)
+
+        # Run all USDA lookups in parallel (async)
+        food_names = [item.get('name', '') for item in food_items]
+        print(f"🔍 [USDA] Looking up {len(food_names)} items in parallel...")
+
+        usda_results = await asyncio.gather(
+            *[self._lookup_single_usda(usda_service, name) for name in food_names],
+            return_exceptions=True  # Don't fail if one lookup fails
+        )
+
+        # Process results
+        enhanced_items = []
+        for i, (item, usda_data) in enumerate(zip(parsed_items, usda_results)):
+            # Handle exceptions from gather
+            if isinstance(usda_data, Exception):
+                logger.warning(f"USDA lookup exception for '{food_names[i]}': {usda_data}")
+                usda_data = None
+
+            weight_g = item['weight_g']
+
+            if usda_data:
+                item['usda_data'] = usda_data
+                item['ai_per_gram'] = None
+
+                # Recalculate nutrition using USDA data
+                if weight_g > 0:
+                    multiplier = weight_g / 100.0
+                    item['calories'] = round(usda_data['calories_per_100g'] * multiplier)
+                    item['protein_g'] = round(usda_data['protein_per_100g'] * multiplier, 1)
+                    item['carbs_g'] = round(usda_data['carbs_per_100g'] * multiplier, 1)
+                    item['fat_g'] = round(usda_data['fat_per_100g'] * multiplier, 1)
+                    item['fiber_g'] = round(usda_data['fiber_per_100g'] * multiplier, 1)
+            else:
+                # Fallback: Calculate per-gram from AI estimate
+                item['usda_data'] = None
+                original_item = food_items[i]
+                ai_calories = original_item.get('calories', 0)
+                ai_protein = original_item.get('protein_g', 0)
+                ai_carbs = original_item.get('carbs_g', 0)
+                ai_fat = original_item.get('fat_g', 0)
+                ai_fiber = original_item.get('fiber_g', 0)
+
+                if weight_g > 0:
+                    item['ai_per_gram'] = {
+                        'calories': round(ai_calories / weight_g, 3),
+                        'protein': round(ai_protein / weight_g, 4),
+                        'carbs': round(ai_carbs / weight_g, 4),
+                        'fat': round(ai_fat / weight_g, 4),
+                        'fiber': round(ai_fiber / weight_g, 4) if ai_fiber else 0,
+                    }
+                    print(f"⚠️ [USDA] No match for '{food_names[i]}', using AI per-gram estimate")
+                else:
+                    item['ai_per_gram'] = None
+
+            enhanced_items.append(item)
+
+        return enhanced_items
 
     async def chat(
         self,
@@ -382,7 +572,32 @@ IMPORTANT:
             if content.endswith("```"):
                 content = content[:-3]
 
-            return json.loads(content.strip())
+            result = json.loads(content.strip())
+
+            # Enhance food items with USDA per-100g data for accurate scaling
+            if result and result.get('food_items'):
+                try:
+                    enhanced_items = await self._enhance_food_items_with_usda(result['food_items'])
+                    result['food_items'] = enhanced_items
+
+                    # Recalculate totals based on enhanced items
+                    total_calories = sum(item.get('calories', 0) or 0 for item in enhanced_items)
+                    total_protein = sum(item.get('protein_g', 0) or 0 for item in enhanced_items)
+                    total_carbs = sum(item.get('carbs_g', 0) or 0 for item in enhanced_items)
+                    total_fat = sum(item.get('fat_g', 0) or 0 for item in enhanced_items)
+                    total_fiber = sum(item.get('fiber_g', 0) or 0 for item in enhanced_items)
+
+                    result['total_calories'] = total_calories
+                    result['protein_g'] = round(total_protein, 1)
+                    result['carbs_g'] = round(total_carbs, 1)
+                    result['fat_g'] = round(total_fat, 1)
+                    result['fiber_g'] = round(total_fiber, 1)
+
+                    print(f"✅ [USDA] Enhanced {len(enhanced_items)} image items, total: {total_calories} cal")
+                except Exception as e:
+                    logger.warning(f"USDA enhancement failed for image analysis, using AI estimates: {e}")
+
+            return result
 
         except Exception as e:
             logger.error(f"Food image analysis failed: {e}")
@@ -450,7 +665,10 @@ SCORING (1-10): Be strict. Restaurant/fast food: 4-6. Whole foods: 7-8. Score 9-
   "fat_g": 15,
   "fiber_g": 5,
   "overall_meal_score": 7,
-  "ai_suggestion": "Brief feedback"
+  "encouragements": ["What's good about this meal for their goals"],
+  "warnings": ["Any concerns - skip if none"],
+  "ai_suggestion": "Next time: specific actionable tip",
+  "recommended_swap": "Healthier alternative if applicable"
 }}'''
         else:
             response_format = '''{{
@@ -462,16 +680,39 @@ SCORING (1-10): Be strict. Restaurant/fast food: 4-6. Whole foods: 7-8. Score 9-
   "carbs_g": 40,
   "fat_g": 15,
   "fiber_g": 5,
-  "ai_suggestion": "Brief feedback"
+  "encouragements": ["What's good about this meal"],
+  "warnings": ["Any concerns - skip if none"],
+  "ai_suggestion": "Next time: specific actionable tip",
+  "recommended_swap": "Healthier alternative if applicable"
 }}'''
+
+        # Build actionable tip guidance based on user goals
+        tip_guidance = ""
+        if user_goals or nutrition_targets:
+            tip_guidance = """
+COACH TIP STRUCTURE - Use these fields:
+- encouragements: 1-2 short points on what's GOOD for their goals (e.g., "Great protein source for muscle building")
+- warnings: Only if there are real concerns (high sodium, low fiber, etc.) - skip if meal is fine
+- ai_suggestion: Start with "Next time:" then give ONE specific actionable tip (e.g., "Next time: Add spinach for iron and fiber")
+- recommended_swap: Only if there's a clear healthier swap (e.g., "Swap white rice for brown rice +3g fiber")"""
 
         prompt = f'''Parse food and return nutrition JSON. Be fast and accurate.
 
 Food: "{description}"
-{user_context}{rag_section}{scoring_criteria if user_goals else ""}
+{user_context}{rag_section}{scoring_criteria if user_goals else ""}{tip_guidance}
 
 Return ONLY JSON (no markdown):
 {response_format}
+
+CRITICAL PORTION SIZE RULES:
+- If no size/portion specified, ALWAYS assume MEDIUM/REGULAR serving (not large)
+- For restaurant foods without size: use their "regular" or "medium" option
+- For packaged foods: use single serving from nutrition label
+- For homemade: use standard single serving
+- Movie popcorn (AMC/Regal/etc) without size = medium (~600-730 cal with butter, NOT large 1000+)
+- Coffee drinks without size = medium (16oz)
+- Fast food without size = regular/medium combo
+- Pizza without count = assume 2 slices
 
 Rules: Use USDA data. Sum totals from items. Account for prep methods (fried adds fat).'''
 
@@ -518,6 +759,30 @@ Rules: Use USDA data. Sum totals from items. Account for prep methods (fried add
                 result = self._extract_json_robust(content)
                 if result and result.get('food_items'):
                     print(f"✅ [Gemini] Parsed {len(result.get('food_items', []))} food items")
+
+                    # Enhance food items with USDA per-100g data for accurate scaling
+                    try:
+                        enhanced_items = await self._enhance_food_items_with_usda(result['food_items'])
+                        result['food_items'] = enhanced_items
+
+                        # Recalculate totals based on enhanced items
+                        total_calories = sum(item.get('calories', 0) or 0 for item in enhanced_items)
+                        total_protein = sum(item.get('protein_g', 0) or 0 for item in enhanced_items)
+                        total_carbs = sum(item.get('carbs_g', 0) or 0 for item in enhanced_items)
+                        total_fat = sum(item.get('fat_g', 0) or 0 for item in enhanced_items)
+                        total_fiber = sum(item.get('fiber_g', 0) or 0 for item in enhanced_items)
+
+                        result['total_calories'] = total_calories
+                        result['protein_g'] = round(total_protein, 1)
+                        result['carbs_g'] = round(total_carbs, 1)
+                        result['fat_g'] = round(total_fat, 1)
+                        result['fiber_g'] = round(total_fiber, 1)
+
+                        print(f"✅ [USDA] Enhanced {len(enhanced_items)} items, total: {total_calories} cal")
+                    except Exception as e:
+                        logger.warning(f"USDA enhancement failed, using AI estimates: {e}")
+                        # Continue with original AI estimates if enhancement fails
+
                     return result
                 else:
                     print(f"⚠️ [Gemini] Failed to extract valid JSON with food_items (attempt {attempt + 1})")

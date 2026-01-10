@@ -1802,6 +1802,66 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
     });
   }
 
+  /// Handle weight change for a food item - recalculates totals
+  void _handleFoodItemWeightChange(int index, FoodItemRanking updatedItem) {
+    if (_analyzedResponse == null) return;
+
+    // Update the food item in the list
+    final currentItems = List<Map<String, dynamic>>.from(_analyzedResponse!.foodItems);
+    if (index < 0 || index >= currentItems.length) return;
+
+    currentItems[index] = updatedItem.toJson();
+
+    // Recalculate totals from all items
+    int totalCalories = 0;
+    double totalProtein = 0;
+    double totalCarbs = 0;
+    double totalFat = 0;
+    double totalFiber = 0;
+
+    for (final item in currentItems) {
+      totalCalories += (item['calories'] as num?)?.toInt() ?? 0;
+      totalProtein += (item['protein_g'] as num?)?.toDouble() ?? 0;
+      totalCarbs += (item['carbs_g'] as num?)?.toDouble() ?? 0;
+      totalFat += (item['fat_g'] as num?)?.toDouble() ?? 0;
+      totalFiber += (item['fiber_g'] as num?)?.toDouble() ?? 0;
+    }
+
+    // Create updated response with new values
+    setState(() {
+      _analyzedResponse = LogFoodResponse(
+        success: _analyzedResponse!.success,
+        foodLogId: _analyzedResponse!.foodLogId,
+        foodItems: currentItems,
+        totalCalories: totalCalories,
+        proteinG: totalProtein,
+        carbsG: totalCarbs,
+        fatG: totalFat,
+        fiberG: totalFiber,
+        overallMealScore: _analyzedResponse!.overallMealScore,
+        healthScore: _analyzedResponse!.healthScore,
+        goalAlignmentPercentage: _analyzedResponse!.goalAlignmentPercentage,
+        aiSuggestion: _analyzedResponse!.aiSuggestion,
+        encouragements: _analyzedResponse!.encouragements,
+        warnings: _analyzedResponse!.warnings,
+        recommendedSwap: _analyzedResponse!.recommendedSwap,
+        confidenceScore: _analyzedResponse!.confidenceScore,
+        confidenceLevel: _analyzedResponse!.confidenceLevel,
+        sourceType: _analyzedResponse!.sourceType,
+        sodiumMg: _analyzedResponse!.sodiumMg,
+        sugarG: _analyzedResponse!.sugarG,
+        saturatedFatG: _analyzedResponse!.saturatedFatG,
+        cholesterolMg: _analyzedResponse!.cholesterolMg,
+        potassiumMg: _analyzedResponse!.potassiumMg,
+        vitaminAIu: _analyzedResponse!.vitaminAIu,
+        vitaminCMg: _analyzedResponse!.vitaminCMg,
+        vitaminDIu: _analyzedResponse!.vitaminDIu,
+        calciumMg: _analyzedResponse!.calciumMg,
+        ironMg: _analyzedResponse!.ironMg,
+      );
+    });
+  }
+
   Future<void> _handleLog() async {
     if (_analyzedResponse == null) return;
 
@@ -1840,13 +1900,36 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
   }
 
   Future<void> _handleSaveAsFavorite() async {
-    if (_analyzedResponse == null || _isSaving) return;
+    debugPrint('⭐ [SaveFood] _handleSaveAsFavorite called');
+    debugPrint('⭐ [SaveFood] _analyzedResponse: ${_analyzedResponse != null ? "present" : "NULL"}');
+    debugPrint('⭐ [SaveFood] _isSaving: $_isSaving');
+
+    if (_isSaving) {
+      debugPrint('⭐ [SaveFood] Already saving, returning');
+      return;
+    }
+
+    if (_analyzedResponse == null) {
+      debugPrint('❌ [SaveFood] No analyzed response to save');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please analyze the food first before saving'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
 
     setState(() => _isSaving = true);
 
     try {
       final repository = ref.read(nutritionRepositoryProvider);
       final description = widget.controller.text.trim();
+
+      debugPrint('⭐ [SaveFood] Creating SaveFoodRequest...');
+      debugPrint('⭐ [SaveFood] Food items count: ${_analyzedResponse!.foodItems.length}');
 
       final request = SaveFoodRequest.fromLogResponse(
         _analyzedResponse!,
@@ -1857,10 +1940,15 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
         imageUrl: widget.imageUrl,
       );
 
+      debugPrint('⭐ [SaveFood] Request created, calling saveFood API...');
+      debugPrint('⭐ [SaveFood] Request JSON: ${request.toJson()}');
+
       await repository.saveFood(
         userId: widget.userId,
         request: request,
       );
+
+      debugPrint('✅ [SaveFood] Food saved successfully!');
 
       if (mounted) {
         setState(() {
@@ -1882,8 +1970,9 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
           ),
         );
       }
-    } catch (e) {
-      debugPrint('Error saving food: $e');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [SaveFood] Error saving food: $e');
+      debugPrint('❌ [SaveFood] Stack trace: $stackTrace');
       if (mounted) {
         setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -2042,7 +2131,47 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Compact header row
+                // Food description at top with Goal Score
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Food description
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: elevated,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.restaurant, size: 18, color: textMuted),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                description,
+                                style: TextStyle(color: textPrimary, fontSize: 15, fontWeight: FontWeight.w500),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Goal Score (if available)
+                    if (response.overallMealScore != null) ...[
+                      const SizedBox(width: 10),
+                      _CompactGoalScore(
+                        score: response.overallMealScore!,
+                        isDark: isDark,
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // AI Estimated header row
                 Row(
                   children: [
                     const Icon(Icons.auto_awesome, color: Color(0xFFFFD93D), size: 20),
@@ -2060,20 +2189,27 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
                       ),
                     ],
                     const Spacer(),
-                    // Star button
+                    // Star button - larger tap area for better UX
                     GestureDetector(
-                      onTap: _isSaved || _isSaving ? null : _handleSaveAsFavorite,
-                      child: _isSaving
-                          ? SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: const Color(0xFFFFD93D)),
-                            )
-                          : Icon(
-                              _isSaved ? Icons.star : Icons.star_border,
-                              size: 20,
-                              color: _isSaved ? const Color(0xFFFFD93D) : textMuted,
-                            ),
+                      behavior: HitTestBehavior.opaque,
+                      onTap: _isSaved || _isSaving ? null : () {
+                        debugPrint('⭐ [StarButton] Tapped! _isSaved=$_isSaved, _isSaving=$_isSaving');
+                        _handleSaveAsFavorite();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        child: _isSaving
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFFFD93D)),
+                              )
+                            : Icon(
+                                _isSaved ? Icons.star : Icons.star_border,
+                                size: 24,
+                                color: _isSaved ? const Color(0xFFFFD93D) : textMuted,
+                              ),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     GestureDetector(
@@ -2127,46 +2263,6 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
                 ),
                 const SizedBox(height: 12),
 
-                // Food description with inline Goal Score
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Food description
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: elevated,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.restaurant, size: 16, color: textMuted),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                description,
-                                style: TextStyle(color: textPrimary, fontSize: 13),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Compact Goal Score (if available)
-                    if (response.overallMealScore != null) ...[
-                      const SizedBox(width: 8),
-                      _CompactGoalScore(
-                        score: response.overallMealScore!,
-                        isDark: isDark,
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 12),
-
                 // Mood tracking (compact)
                 _MoodTrackingSection(
                   moodBefore: _moodBefore,
@@ -2184,6 +2280,9 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
                   _CollapsibleFoodItemsSection(
                     foodItems: response.foodItemsRanked,
                     isDark: isDark,
+                    onItemWeightChanged: (index, updatedItem) {
+                      _handleFoodItemWeightChange(index, updatedItem);
+                    },
                   ),
                 if (response.foodItems.isNotEmpty)
                   const SizedBox(height: 12),
@@ -3032,6 +3131,126 @@ class _QuickTabState extends ConsumerState<_QuickTab> {
       }
     }
 
+    // Load saved foods based on filter
+    if (_selectedFilter == 'saved' || _selectedFilter == 'all') {
+      return FutureBuilder<SavedFoodsResponse>(
+        future: ref.read(nutritionRepositoryProvider).getSavedFoods(
+          userId: widget.userId,
+          limit: 20,
+        ),
+        builder: (context, snapshot) {
+          final savedFoods = snapshot.data?.items ?? [];
+
+          // Build the list based on filter
+          final List<Widget> children = [];
+
+          // Add saved foods section
+          if ((_selectedFilter == 'all' || _selectedFilter == 'saved') && savedFoods.isNotEmpty) {
+            children.add(
+              Text(
+                'SAVED FOODS',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 1.5),
+              ),
+            );
+            children.add(const SizedBox(height: 12));
+            children.addAll(savedFoods.take(10).map((food) => _QuickFoodItem(
+              name: food.name,
+              calories: food.totalCalories ?? 0,
+              subtitle: food.description,
+              onTap: () async {
+                final repository = ref.read(nutritionRepositoryProvider);
+                try {
+                  await repository.logFoodFromText(
+                    userId: widget.userId,
+                    description: food.name,
+                    mealType: widget.mealType.value,
+                  );
+                  widget.onLogged();
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to log: $e')),
+                    );
+                  }
+                }
+              },
+              isDark: widget.isDark,
+            )));
+            if (_selectedFilter == 'all' && recentItems.isNotEmpty) {
+              children.add(const SizedBox(height: 24));
+            }
+          }
+
+          // Add recent items section
+          if ((_selectedFilter == 'all' || _selectedFilter == 'recent') && recentItems.isNotEmpty) {
+            children.add(
+              Text(
+                'RECENT ITEMS',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 1.5),
+              ),
+            );
+            children.add(const SizedBox(height: 12));
+            children.addAll(recentItems.values.take(10).map((item) => _QuickFoodItem(
+              name: item['name'] as String,
+              calories: item['calories'] as int,
+              onTap: () async {
+                final repository = ref.read(nutritionRepositoryProvider);
+                try {
+                  await repository.logFoodFromText(
+                    userId: widget.userId,
+                    description: item['name'] as String,
+                    mealType: widget.mealType.value,
+                  );
+                  widget.onLogged();
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to log: $e')),
+                    );
+                  }
+                }
+              },
+              isDark: widget.isDark,
+            )));
+          }
+
+          // Empty state
+          if (children.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    _selectedFilter == 'saved' ? Icons.star_border : Icons.history,
+                    size: 64,
+                    color: textMuted,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _selectedFilter == 'saved' ? 'No saved foods' : 'No recent items',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textSecondary),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _selectedFilter == 'saved'
+                      ? 'Star foods after logging to save them here'
+                      : 'Log some meals to see them here',
+                    style: TextStyle(fontSize: 14, color: textMuted),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            children: children,
+          );
+        },
+      );
+    }
+
+    // Recent only filter
     if (recentItems.isEmpty) {
       return Center(
         child: Column(
@@ -3523,35 +3742,52 @@ class _CompactGoalScore extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scoreColor = _getScoreColor();
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: scoreColor.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: scoreColor, width: 2),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            '$score',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: scoreColor,
-            ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: scoreColor.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: scoreColor, width: 2),
           ),
-          Text(
-            '/10',
-            style: TextStyle(
-              fontSize: 8,
-              color: scoreColor.withValues(alpha: 0.7),
-            ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '$score',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: scoreColor,
+                  height: 1,
+                ),
+              ),
+              Text(
+                '/10',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: scoreColor.withValues(alpha: 0.7),
+                  height: 1.2,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Goal Score',
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w500,
+            color: textMuted,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -3706,10 +3942,12 @@ class _OverallMealScoreCard extends StatelessWidget {
 class _CollapsibleFoodItemsSection extends StatefulWidget {
   final List<FoodItemRanking> foodItems;
   final bool isDark;
+  final void Function(int index, FoodItemRanking updatedItem)? onItemWeightChanged;
 
   const _CollapsibleFoodItemsSection({
     required this.foodItems,
     required this.isDark,
+    this.onItemWeightChanged,
   });
 
   @override
@@ -3786,9 +4024,12 @@ class _CollapsibleFoodItemsSectionState extends State<_CollapsibleFoodItemsSecti
             secondChild: Column(
               children: [
                 Divider(height: 1, color: cardBorder),
-                ...widget.foodItems.map((item) => _FoodItemRankingCard(
-                  item: item,
+                ...widget.foodItems.asMap().entries.map((entry) => _FoodItemRankingCard(
+                  item: entry.value,
                   isDark: widget.isDark,
+                  onWeightChanged: widget.onItemWeightChanged != null
+                      ? (updatedItem) => widget.onItemWeightChanged!(entry.key, updatedItem)
+                      : null,
                 )),
               ],
             ),
@@ -3801,102 +4042,241 @@ class _CollapsibleFoodItemsSectionState extends State<_CollapsibleFoodItemsSecti
   }
 }
 
-class _FoodItemRankingCard extends StatelessWidget {
+class _FoodItemRankingCard extends StatefulWidget {
   final FoodItemRanking item;
   final bool isDark;
+  final void Function(FoodItemRanking updatedItem)? onWeightChanged;
 
-  const _FoodItemRankingCard({required this.item, required this.isDark});
+  const _FoodItemRankingCard({
+    required this.item,
+    required this.isDark,
+    this.onWeightChanged,
+  });
+
+  @override
+  State<_FoodItemRankingCard> createState() => _FoodItemRankingCardState();
+}
+
+class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
+  late TextEditingController _weightController;
+  late double _currentWeight;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentWeight = widget.item.weightG ?? 100.0;
+    _weightController = TextEditingController(text: _currentWeight.round().toString());
+  }
+
+  @override
+  void dispose() {
+    _weightController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(_FoodItemRankingCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.item.weightG != widget.item.weightG) {
+      _currentWeight = widget.item.weightG ?? 100.0;
+      _weightController.text = _currentWeight.round().toString();
+    }
+  }
 
   Color _getScoreColor() {
-    if (item.goalScore == null) return Colors.grey;
-    if (item.goalScore! >= 8) return const Color(0xFF6BCB77);  // Green
-    if (item.goalScore! >= 5) return const Color(0xFF5DADE2);  // Blue (was yellow - hard to see)
+    if (widget.item.goalScore == null) return Colors.grey;
+    if (widget.item.goalScore! >= 8) return const Color(0xFF6BCB77);  // Green
+    if (widget.item.goalScore! >= 5) return const Color(0xFF5DADE2);  // Blue
     return const Color(0xFFFF6B6B);  // Red
+  }
+
+  void _updateWeight(double newWeight) {
+    if (newWeight <= 0 || newWeight > 5000) return;
+    setState(() {
+      _currentWeight = newWeight;
+      _weightController.text = newWeight.round().toString();
+    });
+    if (widget.onWeightChanged != null && widget.item.canScale) {
+      final updatedItem = widget.item.withWeight(newWeight);
+      widget.onWeightChanged!(updatedItem);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+    final glassSurface = widget.isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
     final scoreColor = _getScoreColor();
+
+    final canScale = widget.item.canScale;
+    final isEstimated = widget.item.isWeightEstimated;
 
     return Padding(
       padding: const EdgeInsets.all(12),
-      child: Row(
+      child: Column(
         children: [
-          // Score badge
-          if (item.goalScore != null)
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: scoreColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: scoreColor.withValues(alpha: 0.3)),
-              ),
-              child: Center(
-                child: Text(
-                  '${item.goalScore}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: scoreColor,
+          Row(
+            children: [
+              // Score badge
+              if (widget.item.goalScore != null)
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: scoreColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: scoreColor.withValues(alpha: 0.3)),
                   ),
-                ),
-              ),
-            )
-          else
-            const SizedBox(width: 36),
-          const SizedBox(width: 12),
-          // Food info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.name,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: textPrimary,
-                  ),
-                ),
-                if (item.amount != null)
-                  Text(
-                    item.amount!,
-                    style: TextStyle(fontSize: 12, color: textMuted),
-                  ),
-                if (item.reason != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
+                  child: Center(
                     child: Text(
-                      item.reason!,
+                      '${widget.item.goalScore}',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
                         color: scoreColor,
-                        fontStyle: FontStyle.italic,
                       ),
                     ),
                   ),
-              ],
-            ),
-          ),
-          // Calories
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${item.calories ?? 0}',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
+                )
+              else
+                const SizedBox(width: 36),
+              const SizedBox(width: 12),
+              // Food info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.item.name,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: textPrimary,
+                      ),
+                    ),
+                    // Weight editing row (if scalable)
+                    if (canScale)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Row(
+                          children: [
+                            // Decrease weight button
+                            GestureDetector(
+                              onTap: () => _updateWeight(_currentWeight - 10),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: glassSurface,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Icon(Icons.remove, size: 14, color: textMuted),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            // Weight input
+                            SizedBox(
+                              width: 50,
+                              child: TextField(
+                                controller: _weightController,
+                                keyboardType: TextInputType.number,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: textPrimary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 4,
+                                  ),
+                                  filled: true,
+                                  fillColor: glassSurface,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                                onSubmitted: (value) {
+                                  final newWeight = double.tryParse(value);
+                                  if (newWeight != null) {
+                                    _updateWeight(newWeight);
+                                  }
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              'g${isEstimated ? ' ~' : ''}',
+                              style: TextStyle(fontSize: 12, color: textMuted),
+                            ),
+                            const SizedBox(width: 6),
+                            // Increase weight button
+                            GestureDetector(
+                              onTap: () => _updateWeight(_currentWeight + 10),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: glassSurface,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Icon(Icons.add, size: 14, color: textMuted),
+                              ),
+                            ),
+                            if (isEstimated) ...[
+                              const SizedBox(width: 8),
+                              Tooltip(
+                                message: 'Weight estimated from "${widget.item.amount}"',
+                                child: Icon(
+                                  Icons.info_outline,
+                                  size: 14,
+                                  color: teal.withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      )
+                    else if (widget.item.amount != null)
+                      Text(
+                        widget.item.amount!,
+                        style: TextStyle(fontSize: 12, color: textMuted),
+                      ),
+                    if (widget.item.reason != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          widget.item.reason!,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: scoreColor,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              Text(
-                'kcal',
-                style: TextStyle(fontSize: 10, color: textMuted),
+              // Calories
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${widget.item.calories ?? 0}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
+                  ),
+                  Text(
+                    'kcal',
+                    style: TextStyle(fontSize: 10, color: textMuted),
+                  ),
+                ],
               ),
             ],
           ),

@@ -26,6 +26,17 @@ class StaplesState {
       error: error,
     );
   }
+
+  /// Check if an exercise is a staple by name
+  bool isStaple(String exerciseName) {
+    return staples.any(
+      (s) => s.exerciseName.toLowerCase() == exerciseName.toLowerCase(),
+    );
+  }
+
+  /// Get the set of staple exercise names for quick lookup
+  Set<String> get stapleNames =>
+      staples.map((s) => s.exerciseName.toLowerCase()).toSet();
 }
 
 /// Provider for managing staple exercises
@@ -117,4 +128,31 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
       (s) => s.exerciseName.toLowerCase() == exerciseName.toLowerCase(),
     );
   }
+
+  /// Toggle staple status for an exercise
+  Future<bool> toggleStaple(
+    String exerciseName, {
+    String? libraryId,
+    String? muscleGroup,
+    String? reason,
+  }) async {
+    if (isStaple(exerciseName)) {
+      // Find the staple to remove
+      final staple = state.staples.firstWhere(
+        (s) => s.exerciseName.toLowerCase() == exerciseName.toLowerCase(),
+      );
+      return await removeStaple(staple.id);
+    } else {
+      return await addStaple(
+        exerciseName,
+        libraryId: libraryId,
+        muscleGroup: muscleGroup,
+        reason: reason,
+      );
+    }
+  }
+
+  /// Get the set of staple exercise names for quick lookup
+  Set<String> get stapleNames =>
+      state.staples.map((s) => s.exerciseName.toLowerCase()).toSet();
 }

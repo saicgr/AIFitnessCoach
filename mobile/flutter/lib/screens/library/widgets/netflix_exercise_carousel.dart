@@ -1,8 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/avoided_provider.dart';
+import '../../../core/providers/exercise_queue_provider.dart';
+import '../../../core/providers/favorites_provider.dart';
+import '../../../core/providers/staples_provider.dart';
 import '../../../core/providers/video_cache_provider.dart';
 import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/models/exercise.dart';
@@ -552,10 +557,8 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
               ],
             ),
           ),
-        ), // End Container (AnimatedBuilder child)
-        ), // End AnimatedBuilder
-        ), // End GestureDetector
-
+        ),
+        ),
         // Page indicators
         if (widget.exercises.length > 1)
           Padding(
@@ -745,7 +748,7 @@ class _HeroButton extends StatelessWidget {
 }
 
 /// Netflix-style small card (poster style) with smooth animations
-class _NetflixCard extends StatefulWidget {
+class _NetflixCard extends ConsumerStatefulWidget {
   final LibraryExercise exercise;
   final int index;
 
@@ -755,10 +758,10 @@ class _NetflixCard extends StatefulWidget {
   });
 
   @override
-  State<_NetflixCard> createState() => _NetflixCardState();
+  ConsumerState<_NetflixCard> createState() => _NetflixCardState();
 }
 
-class _NetflixCardState extends State<_NetflixCard>
+class _NetflixCardState extends ConsumerState<_NetflixCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
@@ -807,14 +810,47 @@ class _NetflixCardState extends State<_NetflixCard>
     _scaleController.reverse();
   }
 
+  void _toggleFavorite() {
+    HapticFeedback.lightImpact();
+    ref.read(favoritesProvider.notifier).toggleFavorite(widget.exercise.name);
+  }
+
+  void _toggleQueue() {
+    HapticFeedback.lightImpact();
+    ref.read(exerciseQueueProvider.notifier).toggleQueue(
+      widget.exercise.name,
+      targetMuscleGroup: widget.exercise.muscleGroup,
+    );
+  }
+
+  void _toggleAvoided() {
+    HapticFeedback.lightImpact();
+    ref.read(avoidedProvider.notifier).toggleAvoided(widget.exercise.name);
+  }
+
+  void _toggleStaple() {
+    HapticFeedback.lightImpact();
+    ref.read(staplesProvider.notifier).toggleStaple(
+      widget.exercise.name,
+      muscleGroup: widget.exercise.muscleGroup,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+
+    // Watch providers for state
+    final isFavorite = ref.watch(favoritesProvider).isFavorite(widget.exercise.name);
+    final isQueued = ref.watch(exerciseQueueProvider).isQueued(widget.exercise.name);
+    final isAvoided = ref.watch(avoidedProvider).isAvoided(widget.exercise.name);
+    final isStaple = ref.watch(staplesProvider).isStaple(widget.exercise.name);
 
     return GestureDetector(
       onTap: () => _showExerciseDetail(context),
@@ -899,6 +935,63 @@ class _NetflixCardState extends State<_NetflixCard>
                             ),
                           ),
                         ),
+                      // Action buttons overlay at bottom
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withValues(alpha: 0.7),
+                              ],
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            mainAxisSize: MainAxisSize.max,
+                            children: [
+                              // Favorite
+                              _buildCompactActionButton(
+                                icon: isFavorite ? Icons.favorite : Icons.favorite_border,
+                                isActive: isFavorite,
+                                activeColor: AppColors.error,
+                                inactiveColor: Colors.white70,
+                                onTap: _toggleFavorite,
+                              ),
+                              // Queue
+                              _buildCompactActionButton(
+                                icon: isQueued ? Icons.playlist_add_check : Icons.playlist_add,
+                                isActive: isQueued,
+                                activeColor: cyan,
+                                inactiveColor: Colors.white70,
+                                onTap: _toggleQueue,
+                              ),
+                              // Avoid
+                              _buildCompactActionButton(
+                                icon: isAvoided ? Icons.block : Icons.block_outlined,
+                                isActive: isAvoided,
+                                activeColor: AppColors.orange,
+                                inactiveColor: Colors.white70,
+                                onTap: _toggleAvoided,
+                              ),
+                              // Staple
+                              _buildCompactActionButton(
+                                icon: isStaple ? Icons.push_pin : Icons.push_pin_outlined,
+                                isActive: isStaple,
+                                activeColor: purple,
+                                inactiveColor: Colors.white70,
+                                onTap: _toggleStaple,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -919,6 +1012,27 @@ class _NetflixCardState extends State<_NetflixCard>
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactActionButton({
+    required IconData icon,
+    required bool isActive,
+    required Color activeColor,
+    required Color inactiveColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Icon(
+          icon,
+          size: 14,
+          color: isActive ? activeColor : inactiveColor,
         ),
       ),
     );

@@ -25,7 +25,7 @@ class SupportRepository {
       if (userId != null) queryParams['user_id'] = userId;
 
       final response = await _apiClient.get(
-        '/v1/support/tickets',
+        '/support/tickets',
         queryParameters: queryParams,
       );
 
@@ -49,7 +49,7 @@ class SupportRepository {
     try {
       debugPrint('🔍 [Support] Fetching ticket: $ticketId');
 
-      final response = await _apiClient.get('/v1/support/tickets/$ticketId');
+      final response = await _apiClient.get('/support/tickets/$ticketId');
 
       if (response.statusCode == 200) {
         final ticket =
@@ -77,7 +77,7 @@ class SupportRepository {
       debugPrint('🔍 [Support] Creating ticket: $subject');
 
       final response = await _apiClient.post(
-        '/v1/support/tickets',
+        '/support/tickets',
         data: {
           'user_id': userId,
           'subject': subject,
@@ -119,7 +119,7 @@ class SupportRepository {
       debugPrint('🔍 [Support] Adding reply to ticket: $ticketId');
 
       final response = await _apiClient.post(
-        '/v1/support/tickets/$ticketId/reply',
+        '/support/tickets/$ticketId/reply',
         data: {
           'user_id': userId,
           'content': content,
@@ -147,7 +147,7 @@ class SupportRepository {
       debugPrint('🔍 [Support] Closing ticket: $ticketId');
 
       final response = await _apiClient.post(
-        '/v1/support/tickets/$ticketId/close',
+        '/support/tickets/$ticketId/close',
       );
 
       if (response.statusCode == 200) {
@@ -169,7 +169,7 @@ class SupportRepository {
     try {
       debugPrint('🔍 [Support] Marking ticket as read: $ticketId');
 
-      await _apiClient.post('/v1/support/tickets/$ticketId/read');
+      await _apiClient.post('/support/tickets/$ticketId/read');
 
       debugPrint('✅ [Support] Ticket marked as read');
     } catch (e) {
@@ -184,7 +184,7 @@ class SupportRepository {
       debugPrint('🔍 [Support] Getting unread count for user: $userId');
 
       final response = await _apiClient.get(
-        '/v1/support/tickets/unread-count',
+        '/support/tickets/unread-count',
         queryParameters: {'user_id': userId},
       );
 

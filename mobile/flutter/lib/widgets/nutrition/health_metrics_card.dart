@@ -6,19 +6,22 @@ import '../../core/constants/app_colors.dart';
 import '../../data/services/health_service.dart';
 
 /// Provider for blood glucose data
-final bloodGlucoseDataProvider = FutureProvider.autoDispose<List<BloodGlucoseReading>>((ref) async {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final bloodGlucoseDataProvider = FutureProvider<List<BloodGlucoseReading>>((ref) async {
   final healthService = ref.watch(healthServiceProvider);
   return await healthService.getBloodGlucoseData(days: 7);
 });
 
 /// Provider for insulin data
-final insulinDataProvider = FutureProvider.autoDispose<List<InsulinDose>>((ref) async {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final insulinDataProvider = FutureProvider<List<InsulinDose>>((ref) async {
   final healthService = ref.watch(healthServiceProvider);
   return await healthService.getInsulinData(days: 7);
 });
 
 /// Provider for daily glucose summary
-final dailyGlucoseSummaryProvider = FutureProvider.autoDispose<BloodGlucoseSummary>((ref) async {
+/// Note: Removed autoDispose to prevent refetching on navigation
+final dailyGlucoseSummaryProvider = FutureProvider<BloodGlucoseSummary>((ref) async {
   final healthService = ref.watch(healthServiceProvider);
   return await healthService.getDailyGlucoseSummary();
 });
