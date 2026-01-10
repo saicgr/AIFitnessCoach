@@ -192,8 +192,8 @@ async def search_exercises_node(state: ExerciseSuggestionState) -> Dict[str, Any
         search_query = " ".join(search_parts)
         logger.info(f"[Search Node] Semantic search query: {search_query[:100]}...")
 
-        # Get embedding for the search query
-        query_embedding = gemini_service.get_embedding(search_query)
+        # Get embedding for the search query (use async version)
+        query_embedding = await gemini_service.get_embedding_async(search_query)
 
         # Search ChromaDB for similar exercises
         results = rag_service.collection.query(
@@ -414,5 +414,17 @@ IMPORTANT: Only suggest exercises from the provided list. Match names exactly.""
         }
 
     except Exception as e:
-        logger.error(f"[Generate Node] Error: {e}")
-        raise  # No fallback - let errors propagate
+        logger.error(f"[Generate Node] Error generating AI suggestions: {e}")
+        # Fallback: return top candidates without AI ranking
+        fallback_suggestions = []
+        for candidate in candidates[:5]:
+            fallback_suggestions.append({
+                **candidate,
+                "reason": f"Similar exercise targeting the same muscle group ({candidate.get('body_part', 'unknown')})",
+                "tip": "This exercise was selected based on similarity to your current exercise.",
+            })
+        logger.warning(f"[Generate Node] Returning {len(fallback_suggestions)} fallback suggestions")
+        return {
+            "suggestions": fallback_suggestions,
+            "response_message": "Here are some alternative exercises based on similarity:",
+        }

@@ -8,6 +8,7 @@ import '../../../../data/services/api_client.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../widgets/main_shell.dart';
 import '../../../nutrition/log_meal_sheet.dart';
+import '../generate_upcoming_sheet.dart';
 
 /// A compact row of quick action buttons for common tasks
 class QuickActionsRow extends ConsumerWidget {
@@ -62,6 +63,10 @@ class QuickActionsRow extends ConsumerWidget {
             _buildDivider(isDark),
             Expanded(
               child: _WaterQuickActionButton(isDark: isDark),
+            ),
+            _buildDivider(isDark),
+            Expanded(
+              child: _GenerateQuickActionButton(isDark: isDark),
             ),
           ],
         ),
@@ -509,6 +514,53 @@ class _WaterSizeOption extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                   color: textColor,
                 ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Generate quick action button - opens the generate upcoming workouts sheet
+class _GenerateQuickActionButton extends ConsumerWidget {
+  final bool isDark;
+
+  const _GenerateQuickActionButton({required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticService.light();
+          showGenerateUpcomingSheet(context, ref);
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.auto_awesome,
+                size: 22,
+                color: AppColors.electricBlue,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Generate',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: textMuted,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

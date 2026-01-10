@@ -10,6 +10,7 @@ import '../../data/services/haptic_service.dart';
 import '../../widgets/main_shell.dart';
 import '../home/widgets/cards/next_workout_card.dart';
 import '../home/widgets/cards/weekly_progress_card.dart';
+import '../home/widgets/generate_upcoming_sheet.dart';
 import 'widgets/exercise_preferences_card.dart';
 
 /// Workouts screen - central hub for all workout-related content
@@ -351,17 +352,17 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          // Schedule
+          // Generate Upcoming Workouts
           Expanded(
             child: _buildQuickActionButton(
               context,
-              icon: Icons.calendar_today_outlined,
-              label: 'Schedule',
-              color: AppColors.orange,
+              icon: Icons.auto_awesome,
+              label: 'Upcoming',
+              color: AppColors.electricBlue,
               isDark: isDark,
               onTap: () {
                 HapticService.light();
-                context.push('/schedule');
+                showGenerateUpcomingSheet(context, ref);
               },
             ),
           ),

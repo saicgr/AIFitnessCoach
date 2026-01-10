@@ -26,6 +26,7 @@ import 'widgets/cards/cards.dart';
 import 'widgets/daily_activity_card.dart';
 import 'widgets/renewal_reminder_banner.dart';
 import 'widgets/missed_workout_banner.dart';
+import 'widgets/contextual_banner.dart';
 import 'widgets/tile_factory.dart';
 import 'widgets/my_program_summary_card.dart';
 import 'widgets/hero_workout_card.dart';
@@ -1321,6 +1322,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // Category Pills - Workout Filtering
               SliverToBoxAdapter(
                 child: WorkoutCategoryPills(isDark: isDark),
+              ),
+
+              // Contextual Banner - Personalized, dismissible tips
+              SliverToBoxAdapter(
+                child: ContextualBanner(isDark: isDark),
               ),
 
               // Hero Section - Today's Workout or Rest Day Card
