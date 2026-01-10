@@ -86,7 +86,10 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                   _buildCompactUserChip(context, isDark, authState.user),
                   // Find friends button
                   IconButton(
-                    icon: const Icon(Icons.person_add_rounded),
+                    icon: Icon(
+                      Icons.person_add_rounded,
+                      color: isDark ? Colors.white : AppColors.pureBlack,
+                    ),
                     tooltip: 'Find Friends',
                     onPressed: () {
                       HapticFeedback.lightImpact();
@@ -98,6 +101,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                       );
                     },
                   ),
+                  const SizedBox(width: 8),
                 ],
                 bottom: PreferredSize(
                   preferredSize: const Size.fromHeight(130),
@@ -423,7 +427,15 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     // Show username if available, otherwise show truncated user ID
-    final displayText = username ?? (userId?.substring(0, 6) ?? '---');
+    String displayText;
+    if (username != null && username.isNotEmpty) {
+      // Truncate long usernames
+      displayText = username.length > 10 ? '${username.substring(0, 10)}...' : username;
+    } else if (userId != null && userId.length >= 6) {
+      displayText = userId.substring(0, 6);
+    } else {
+      displayText = '---';
+    }
     final copyText = username ?? userId ?? '';
 
     return Material(
@@ -448,6 +460,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
         },
         borderRadius: BorderRadius.circular(12),
         child: Container(
+          constraints: const BoxConstraints(maxWidth: 140),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             color: cardBg,
@@ -457,12 +470,16 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                '@$displayText',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: AppColors.cyan,
-                  fontWeight: FontWeight.w600,
+              Flexible(
+                child: Text(
+                  '@$displayText',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.cyan,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ),
               const SizedBox(width: 4),

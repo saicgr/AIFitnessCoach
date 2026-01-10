@@ -19,6 +19,8 @@ import json
 from core.config import get_settings
 from core.chroma_cloud import get_chroma_cloud_client
 from services.gemini_service import GeminiService
+from services.langgraph_agents.personality import build_personality_prompt
+from models.chat import AISettings
 
 settings = get_settings()
 
@@ -688,6 +690,10 @@ async def generate_workout_feedback(
     rag_service: WorkoutFeedbackRAGService,
     user_id: str,
     current_session: Dict[str, Any],
+    coach_name: Optional[str] = None,
+    coaching_style: Optional[str] = None,
+    communication_tone: Optional[str] = None,
+    encouragement_level: Optional[float] = None,
 ) -> str:
     """
     Generate AI Coach feedback for a completed workout.
@@ -697,6 +703,10 @@ async def generate_workout_feedback(
         rag_service: Workout feedback RAG service
         user_id: User ID
         current_session: Current workout session data
+        coach_name: Name of the coach (e.g., "Danny", "Coach Mike")
+        coaching_style: Style of coaching (e.g., "motivational", "drill_sergeant", "buddy")
+        communication_tone: Tone of communication (e.g., "encouraging", "direct", "friendly")
+        encouragement_level: Level of encouragement (0.0-1.0)
 
     Returns:
         Short, personalized AI Coach feedback
@@ -721,38 +731,43 @@ async def generate_workout_feedback(
         current_session, past_sessions, weight_progressions
     )
 
-    # Generate feedback using Gemini
-    system_prompt = """You are a TOUGH military drill sergeant FitWiz. You give SHORT, HONEST, no-BS feedback after workouts.
+    # Build AI settings from provided parameters
+    ai_settings = AISettings(
+        coach_name=coach_name or "Coach",
+        coaching_style=coaching_style or "motivational",
+        communication_tone=communication_tone or "encouraging",
+        encouragement_level=encouragement_level if encouragement_level is not None else 0.5,
+        response_length="concise",  # Always concise for workout feedback
+        use_emojis=True,  # Let personality module decide based on style
+        include_tips=False,  # Keep feedback focused
+    )
 
-YOUR PERSONALITY:
-- Direct and blunt like a drill sergeant
-- Call out laziness, short workouts, and lack of effort
-- Respect REAL effort and achievement
-- No fake praise or generic encouragement
+    # Get personality prompt from centralized personality module
+    personality_prompt = build_personality_prompt(
+        ai_settings=ai_settings,
+        agent_name="Coach",
+        agent_specialty="workout feedback"
+    )
+
+    # Build workout-specific system prompt
+    system_prompt = f"""{personality_prompt}
+
+WORKOUT FEEDBACK SPECIFIC INSTRUCTIONS:
+You are providing SHORT, HONEST feedback after a completed workout.
 
 CRITICAL RULES:
 1. Keep feedback to 2-3 short sentences MAX
-2. If workout was under 5 minutes, total sets is 0, or total reps is 0 → CALL IT OUT harshly. They didn't actually work out.
-3. If workout was 5-15 minutes with minimal work → be skeptical and push them to do more
-4. If they actually put in real effort (20+ min, real sets/reps) → acknowledge it with tough respect
-5. If they improved weights → give brief, earned praise
-6. Be specific about what was lacking or what was good
-
-Examples of GOOD feedback for LAZY workouts:
-- "20 seconds and 0 reps? That's not a workout, that's pressing buttons. Get back in there and actually move some weight!"
-- "Under 2 minutes with zero sets completed? Come on, recruit! My grandmother works harder getting out of her chair."
-- "You logged a workout but didn't do any actual work. Don't waste my time or yours. Come back when you're ready to sweat."
-
-Examples of GOOD feedback for REAL workouts:
-- "45 minutes, 28 sets, solid volume. That's what I'm talking about. Now recover and come back stronger."
-- "You added 2.5kg to your bench? Earned. Keep stacking those plates."
-- "Decent effort today - 35 minutes of work. Push the intensity next time and you'll see real gains."
+2. If workout was under 5 minutes with minimal sets/reps → they didn't really work out. Be honest about it.
+3. If workout was 5-15 minutes → acknowledge the effort but push for more next time
+4. If they put in real effort (20+ min, solid sets/reps) → give appropriate recognition
+5. If they improved weights → acknowledge it
+6. Be specific about what was done or what was lacking
 
 DO NOT:
-- Praise lazy/fake workouts
-- Be generic or sappy
+- Give fake praise for lazy workouts
+- Be generic (e.g., "Great job!" with no specifics)
 - Write long paragraphs
-- Use emojis"""
+- Ignore the actual workout data"""
 
     user_prompt = f"""Based on this workout data, provide SHORT personalized feedback (2-3 sentences max):
 

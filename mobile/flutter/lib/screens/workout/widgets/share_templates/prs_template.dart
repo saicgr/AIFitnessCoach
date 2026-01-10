@@ -24,7 +24,7 @@ class PrsTemplate extends StatelessWidget {
   Widget build(BuildContext context) {
     // Calculate responsive height based on available space
     final screenHeight = MediaQuery.of(context).size.height;
-    final templateHeight = (screenHeight * 0.55).clamp(400.0, 580.0);
+    final templateHeight = (screenHeight * 0.48).clamp(360.0, 480.0);
 
     return Container(
       width: 320,
@@ -52,32 +52,32 @@ class PrsTemplate extends StatelessWidget {
 
           // Main content
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(20),
             child: Column(
               children: [
                 // Trophy icon
                 _buildTrophyHeader(),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // Title
                 const Text(
                   'NEW PERSONAL RECORDS',
                   style: TextStyle(
                     color: Color(0xFFFFD700),
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 2,
                   ),
                 ),
 
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
 
                 Text(
                   workoutName,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
@@ -85,7 +85,7 @@ class PrsTemplate extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
 
                 // PRs list
                 Expanded(
@@ -96,10 +96,11 @@ class PrsTemplate extends StatelessWidget {
                 if (achievementsData != null && achievementsData!.isNotEmpty)
                   _buildAchievementsRow(),
 
-                const SizedBox(height: 12),
-
-                // Watermark
-                if (showWatermark) const AppWatermark(),
+                if (showWatermark) ...[
+                  const SizedBox(height: 10),
+                  const AppWatermark(),
+                ] else
+                  const SizedBox(height: 6),
               ],
             ),
           ),

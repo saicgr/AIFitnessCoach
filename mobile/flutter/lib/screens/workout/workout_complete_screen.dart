@@ -13,6 +13,7 @@ import '../../data/services/challenges_service.dart';
 import '../../data/services/personal_goals_service.dart';
 import '../../data/providers/scores_provider.dart';
 import '../../data/providers/subjective_feedback_provider.dart';
+import '../../data/providers/ai_settings_provider.dart';
 import '../../data/models/subjective_feedback.dart';
 import '../challenges/widgets/challenge_complete_dialog.dart';
 import '../challenges/widgets/challenge_friends_dialog.dart';
@@ -339,6 +340,9 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
               'weight_kg': e.weight ?? 0.0,
             }).toList();
 
+        // Get AI settings for coach personality
+        final aiSettings = ref.read(aiSettingsProvider);
+
         final feedback = await workoutRepo.getAICoachFeedback(
           workoutLogId: widget.workoutLogId!,
           workoutId: widget.workout.id!,
@@ -353,6 +357,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
           totalSets: widget.totalSets ?? exercisesList.length * 3,
           totalReps: widget.totalReps ?? exercisesList.length * 30,
           totalVolumeKg: widget.totalVolumeKg ?? 0.0,
+          // Pass coach personality settings
+          coachName: aiSettings.coachName,
+          coachingStyle: aiSettings.coachingStyle,
+          communicationTone: aiSettings.communicationTone,
+          encouragementLevel: aiSettings.encouragementLevel,
         );
 
         debugPrint('🤖 [AI Coach] API call completed, feedback: ${feedback != null ? "received (${feedback.length} chars)" : "null"}');

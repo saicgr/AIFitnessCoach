@@ -494,6 +494,280 @@ class SocialService {
   }
 
   // ============================================================
+  // CHALLENGES
+  // ============================================================
+
+  /// Get challenges (public and user's challenges)
+  Future<List<Map<String, dynamic>>> getChallenges({
+    String? userId,
+    String? challengeType,
+    bool? isPublic,
+    bool activeOnly = true,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'active_only': activeOnly.toString(),
+      };
+      if (userId != null) queryParams['user_id'] = userId;
+      if (challengeType != null) queryParams['challenge_type'] = challengeType;
+      if (isPublic != null) queryParams['is_public'] = isPublic.toString();
+
+      final response = await _apiClient.get(
+        '/social/challenges',
+        queryParameters: queryParams,
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Got challenges');
+        return List<Map<String, dynamic>>.from(response.data);
+      } else {
+        throw Exception('Failed to get challenges: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting challenges: $e');
+      rethrow;
+    }
+  }
+
+  /// Create a new challenge
+  Future<Map<String, dynamic>> createChallenge({
+    required String userId,
+    required String title,
+    required String description,
+    required String challengeType,
+    required double goalValue,
+    required String goalUnit,
+    required DateTime startDate,
+    required DateTime endDate,
+    bool isPublic = true,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/social/challenges',
+        queryParameters: {'user_id': userId},
+        data: {
+          'title': title,
+          'description': description,
+          'challenge_type': challengeType,
+          'goal_value': goalValue,
+          'goal_unit': goalUnit,
+          'start_date': startDate.toIso8601String(),
+          'end_date': endDate.toIso8601String(),
+          'is_public': isPublic,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Created challenge: $title');
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to create challenge: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error creating challenge: $e');
+      rethrow;
+    }
+  }
+
+  /// Join a challenge
+  Future<Map<String, dynamic>> joinChallenge({
+    required String userId,
+    required String challengeId,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/social/challenges/participate',
+        queryParameters: {'user_id': userId},
+        data: {
+          'challenge_id': challengeId,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Joined challenge: $challengeId');
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to join challenge: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error joining challenge: $e');
+      rethrow;
+    }
+  }
+
+  /// Update challenge progress
+  Future<Map<String, dynamic>> updateChallengeProgress({
+    required String userId,
+    required String challengeId,
+    required double currentValue,
+  }) async {
+    try {
+      final response = await _apiClient.put(
+        '/social/challenges/participate/$challengeId',
+        queryParameters: {'user_id': userId},
+        data: {
+          'current_value': currentValue,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Updated challenge progress');
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to update challenge progress: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error updating challenge progress: $e');
+      rethrow;
+    }
+  }
+
+  /// Get challenge leaderboard
+  Future<Map<String, dynamic>> getChallengeLeaderboard({
+    required String challengeId,
+    String? userId,
+    int limit = 100,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'limit': limit.toString(),
+      };
+      if (userId != null) queryParams['user_id'] = userId;
+
+      final response = await _apiClient.get(
+        '/social/challenges/$challengeId/leaderboard',
+        queryParameters: queryParams,
+      );
+
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to get challenge leaderboard: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting challenge leaderboard: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================================
+  // CONNECTIONS (Friends, Followers, Following)
+  // ============================================================
+
+  /// Get friends (mutual connections)
+  Future<List<Map<String, dynamic>>> getFriends({
+    required String userId,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/social/connections/friends/$userId',
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Got friends for user: $userId');
+        return List<Map<String, dynamic>>.from(response.data);
+      } else {
+        throw Exception('Failed to get friends: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting friends: $e');
+      rethrow;
+    }
+  }
+
+  /// Get followers
+  Future<List<Map<String, dynamic>>> getFollowers({
+    required String userId,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/social/connections/followers/$userId',
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Got followers for user: $userId');
+        return List<Map<String, dynamic>>.from(response.data);
+      } else {
+        throw Exception('Failed to get followers: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting followers: $e');
+      rethrow;
+    }
+  }
+
+  /// Get following
+  Future<List<Map<String, dynamic>>> getFollowing({
+    required String userId,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/social/connections/following/$userId',
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Got following for user: $userId');
+        return List<Map<String, dynamic>>.from(response.data);
+      } else {
+        throw Exception('Failed to get following: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting following: $e');
+      rethrow;
+    }
+  }
+
+  /// Follow a user
+  Future<Map<String, dynamic>> followUser({
+    required String userId,
+    required String followingId,
+    String connectionType = 'follow',
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/social/connections',
+        queryParameters: {'user_id': userId},
+        data: {
+          'following_id': followingId,
+          'connection_type': connectionType,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Followed user: $followingId');
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to follow user: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error following user: $e');
+      rethrow;
+    }
+  }
+
+  /// Unfollow a user
+  Future<void> unfollowUser({
+    required String userId,
+    required String followingId,
+  }) async {
+    try {
+      final response = await _apiClient.delete(
+        '/social/connections/$followingId',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Unfollowed user: $followingId');
+      } else {
+        throw Exception('Failed to unfollow user: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error unfollowing user: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================================
   // USER SEARCH
   // ============================================================
 

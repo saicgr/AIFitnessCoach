@@ -916,11 +916,16 @@ class _ActiveWorkoutScreenState
       final apiClient = ref.read(apiClientProvider);
       final userId = await apiClient.getUserId();
 
+      // Debug logging to trace workoutLogId issues
+      debugPrint('🔍 [Complete] workout.id: ${widget.workout.id}');
+      debugPrint('🔍 [Complete] userId: $userId');
+
       if (widget.workout.id != null && userId != null) {
         // 1. Create workout log with all sets
         debugPrint('🏋️ Saving workout log to backend...');
         final setsJson = _buildSetsJson();
         final metadata = _buildWorkoutMetadata();
+        debugPrint('🔍 [Complete] setsJson length: ${setsJson.length}');
 
         final workoutLog = await workoutRepo.createWorkoutLog(
           workoutId: widget.workout.id!,
@@ -935,6 +940,8 @@ class _ActiveWorkoutScreenState
           debugPrint('✅ Workout log created: ${workoutLog['id']}');
           workoutLogId = workoutLog['id'] as String;
           await _logAllSetPerformances(workoutLogId, userId);
+        } else {
+          debugPrint('❌ [Complete] createWorkoutLog returned null - workoutLogId will be null');
         }
 
         // 3. Log drink intake if any
@@ -998,6 +1005,8 @@ class _ActiveWorkoutScreenState
           performanceComparison = completionResponse.performanceComparison;
           debugPrint('📊 Got performance comparison');
         }
+      } else {
+        debugPrint('❌ [Complete] Skipping workout log creation: workout.id=${widget.workout.id}, userId=$userId');
       }
     } catch (e) {
       debugPrint('❌ Failed to complete workout: $e');
@@ -1021,7 +1030,7 @@ class _ActiveWorkoutScreenState
     }
 
     if (mounted) {
-      debugPrint('🏋️ [Complete] Navigating to workout-complete');
+      debugPrint('🏋️ [Complete] Navigating to workout-complete with workoutLogId: $workoutLogId');
       context.go('/workout-complete', extra: {
         'workout': widget.workout,
         'duration': _timerController.workoutSeconds,

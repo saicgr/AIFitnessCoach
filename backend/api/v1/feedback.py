@@ -463,6 +463,11 @@ class AICoachFeedbackRequest(BaseModel):
     total_sets: int = 0
     total_reps: int = 0
     total_volume_kg: float = 0.0
+    # Coach personality settings
+    coach_name: Optional[str] = None
+    coaching_style: Optional[str] = None  # "motivational", "drill_sergeant", "buddy", "zen_master"
+    communication_tone: Optional[str] = None  # "encouraging", "direct", "friendly"
+    encouragement_level: Optional[float] = None  # 0.0-1.0
 
 
 class AICoachFeedbackResponse(BaseModel):
@@ -543,12 +548,16 @@ async def generate_ai_coach_feedback(request: AICoachFeedbackRequest):
             "completed_at": datetime.utcnow().isoformat(),
         }
 
-        # Generate AI feedback
+        # Generate AI feedback with coach personality
         feedback = await generate_workout_feedback(
             gemini_service=gemini_service,
             rag_service=rag_service,
             user_id=request.user_id,
             current_session=current_session,
+            coach_name=request.coach_name,
+            coaching_style=request.coaching_style,
+            communication_tone=request.communication_tone,
+            encouragement_level=request.encouragement_level,
         )
 
         # Index the workout session for future RAG retrieval

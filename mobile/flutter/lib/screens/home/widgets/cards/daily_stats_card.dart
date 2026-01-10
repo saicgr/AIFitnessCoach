@@ -6,11 +6,12 @@ import '../../../../data/models/home_layout.dart';
 import '../../../../data/repositories/nutrition_repository.dart';
 import '../../../../data/services/health_service.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../data/services/api_client.dart';
 
 /// Daily Stats Tile - Shows steps and calorie deficit
 /// Steps from HealthKit/Google Fit
 /// Deficit = target - consumed + exercise burned
-class DailyStatsCard extends ConsumerWidget {
+class DailyStatsCard extends ConsumerStatefulWidget {
   final TileSize size;
   final bool isDark;
 
@@ -21,7 +22,33 @@ class DailyStatsCard extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DailyStatsCard> createState() => _DailyStatsCardState();
+}
+
+class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
+  bool _hasTriggeredLoad = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTargetsIfNeeded();
+  }
+
+  Future<void> _loadTargetsIfNeeded() async {
+    if (_hasTriggeredLoad) return;
+    _hasTriggeredLoad = true;
+
+    final apiClient = ref.read(apiClientProvider);
+    final userId = await apiClient.getUserId();
+    if (userId != null && mounted) {
+      await ref.read(nutritionProvider.notifier).loadTargets(userId);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    final size = widget.size;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -154,7 +181,7 @@ class DailyStatsCard extends ConsumerWidget {
               spreadRadius: 1,
             ),
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+              color: Colors.black.withOpacity(widget.isDark ? 0.2 : 0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -298,7 +325,7 @@ class DailyStatsCard extends ConsumerWidget {
         ),
 
         // Full size additional info
-        if (size == TileSize.full) ...[
+        if (widget.size == TileSize.full) ...[
           const SizedBox(height: 16),
 
           // Steps progress bar

@@ -137,96 +137,117 @@ class RestTimerOverlay extends StatelessWidget {
     final subtitleColor =
         isDark ? Colors.white70 : AppColorsLight.textSecondary;
 
+    // Check if screen is compact (small height)
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isCompactScreen = screenHeight < 750;
+
     return Container(
       color: bgColor,
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(flex: 2),
+        child: Column(
+          children: [
+            // Fixed header: REST label, timer, progress bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  SizedBox(height: isCompactScreen ? 8 : 16),
+                  _buildRestLabel(),
+                  const SizedBox(height: 8),
+                  _buildTimer(textColor),
+                  const SizedBox(height: 12),
+                  _buildProgressBar(isDark),
+                  SizedBox(height: isCompactScreen ? 12 : 20),
+                ],
+              ),
+            ),
 
-              // REST label
-              _buildRestLabel(),
+            // Scrollable content area
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: isCompactScreen ? 4 : 8,
+                ),
+                child: Column(
+                  children: [
+                    // Rest suggestion section (loading or card)
+                    if (isRestBetweenSets) ...[
+                      if (isLoadingRestSuggestion)
+                        const RestSuggestionLoadingCard()
+                      else if (restSuggestion != null)
+                        RestSuggestionCard(
+                          suggestion: restSuggestion!,
+                          onAcceptSuggestion: (seconds) {
+                            HapticFeedback.mediumImpact();
+                            onAcceptRestSuggestion?.call(seconds);
+                          },
+                          onQuickRest: (seconds) {
+                            HapticFeedback.mediumImpact();
+                            onAcceptRestSuggestion?.call(seconds);
+                          },
+                          onDismiss: onDismissRestSuggestion,
+                          isCompact: isCompactScreen,
+                        ),
+                    ],
 
-              const SizedBox(height: 12),
+                    // Spacing between rest and weight suggestions
+                    if (isRestBetweenSets && (restSuggestion != null || isLoadingRestSuggestion))
+                      SizedBox(height: isCompactScreen ? 10 : 16),
 
-              // Large timer
-              _buildTimer(textColor),
+                    // Weight suggestion section (loading or card)
+                    if (isRestBetweenSets) ...[
+                      if (isLoadingWeightSuggestion)
+                        _buildLoadingWeightSuggestion(cardBg, textColor, subtitleColor, isDark)
+                      else if (weightSuggestion != null)
+                        _buildWeightSuggestionCard(cardBg, textColor, subtitleColor, isDark, isCompactScreen),
+                    ],
 
-              const SizedBox(height: 16),
+                    // RPE/RIR compact input section
+                    if (onRpeChanged != null) ...[
+                      SizedBox(height: isCompactScreen ? 10 : 16),
+                      _buildRpeRirSection(cardBg, textColor, subtitleColor, isDark, isCompactScreen),
+                    ],
 
-              // Progress bar
-              _buildProgressBar(isDark),
+                    // Coach Review section
+                    if ((currentRpe != null || currentRir != null) && lastSetReps != null) ...[
+                      SizedBox(height: isCompactScreen ? 10 : 16),
+                      _buildCoachReviewSection(cardBg, textColor, subtitleColor, isDark),
+                    ],
 
-              const SizedBox(height: 32),
+                    // AI Coach encouragement message
+                    if (restMessage.isNotEmpty &&
+                        weightSuggestion == null &&
+                        !isLoadingWeightSuggestion &&
+                        restSuggestion == null &&
+                        !isLoadingRestSuggestion)
+                      _buildEncouragementMessage(cardBg, textColor),
 
-              // Rest suggestion section (loading or card) - shown first if available
-              if (isRestBetweenSets) ...[
-                if (isLoadingRestSuggestion)
-                  const RestSuggestionLoadingCard()
-                else if (restSuggestion != null)
-                  RestSuggestionCard(
-                    suggestion: restSuggestion!,
-                    onAcceptSuggestion: (seconds) {
-                      HapticFeedback.mediumImpact();
-                      onAcceptRestSuggestion?.call(seconds);
-                    },
-                    onQuickRest: (seconds) {
-                      HapticFeedback.mediumImpact();
-                      onAcceptRestSuggestion?.call(seconds);
-                    },
-                    onDismiss: onDismissRestSuggestion,
-                    isCompact: MediaQuery.of(context).size.height < 700,
-                  ),
-              ],
+                    SizedBox(height: isCompactScreen ? 12 : 20),
 
-              // Spacing between rest and weight suggestions
-              if (isRestBetweenSets && (restSuggestion != null || isLoadingRestSuggestion))
-                const SizedBox(height: 16),
+                    // Next up section
+                    _buildNextUpSection(cardBg, textColor, subtitleColor),
 
-              // Weight suggestion section (loading or card)
-              if (isRestBetweenSets) ...[
-                if (isLoadingWeightSuggestion)
-                  _buildLoadingWeightSuggestion(cardBg, textColor, subtitleColor, isDark)
-                else if (weightSuggestion != null)
-                  _buildWeightSuggestionCard(cardBg, textColor, subtitleColor, isDark),
-              ],
+                    SizedBox(height: isCompactScreen ? 10 : 16),
 
-              // RPE/RIR compact input section (optional during rest)
-              if (isRestBetweenSets && onRpeChanged != null) ...[
-                const SizedBox(height: 16),
-                _buildRpeRirSection(cardBg, textColor, subtitleColor, isDark),
-              ],
+                    // Log 1RM button
+                    if (onLog1RM != null)
+                      _build1RMPrompt(cardBg, textColor, subtitleColor),
 
-              // AI Coach encouragement message (only if no suggestions and not loading)
-              if (restMessage.isNotEmpty &&
-                  weightSuggestion == null &&
-                  !isLoadingWeightSuggestion &&
-                  restSuggestion == null &&
-                  !isLoadingRestSuggestion)
-                _buildEncouragementMessage(cardBg, textColor),
+                    // Extra padding at bottom for scroll
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
 
-              const SizedBox(height: 24),
-
-              // Next up section
-              _buildNextUpSection(cardBg, textColor, subtitleColor),
-
-              const SizedBox(height: 16),
-
-              // Log 1RM button
-              if (onLog1RM != null)
-                _build1RMPrompt(cardBg, textColor, subtitleColor),
-
-              const Spacer(flex: 2),
-
-              // Skip Rest button
-              _buildSkipButton(isDark),
-
-              const SizedBox(height: 32),
-            ],
-          ),
+            // Fixed footer: Skip Rest button
+            Padding(
+              padding: EdgeInsets.fromLTRB(24, 8, 24, isCompactScreen ? 12 : 24),
+              child: _buildSkipButton(isDark),
+            ),
+          ],
         ),
       ),
     ).animate().fadeIn(duration: 200.ms);
@@ -683,6 +704,7 @@ class RestTimerOverlay extends StatelessWidget {
     Color textColor,
     Color subtitleColor,
     bool isDark,
+    [bool isCompact = false]
   ) {
     final suggestion = weightSuggestion!;
 
@@ -1094,15 +1116,141 @@ class RestTimerOverlay extends StatelessWidget {
     );
   }
 
+  /// Coach Review section - provides AI feedback based on RPE/RIR
+  Widget _buildCoachReviewSection(
+    Color cardBg,
+    Color textColor,
+    Color subtitleColor,
+    bool isDark,
+  ) {
+    // Generate coach feedback based on RPE/RIR values
+    String feedback;
+    IconData feedbackIcon;
+    Color feedbackColor;
+
+    if (currentRir != null) {
+      if (currentRir == 0) {
+        feedback = "You went to failure. Make sure you can recover for the next set.";
+        feedbackIcon = Icons.warning_amber_rounded;
+        feedbackColor = AppColors.coral;
+      } else if (currentRir == 1) {
+        feedback = "Great effort! One rep left is solid intensity.";
+        feedbackIcon = Icons.check_circle;
+        feedbackColor = AppColors.success;
+      } else if (currentRir == 2) {
+        feedback = "Perfect zone! 2 RIR is ideal for hypertrophy.";
+        feedbackIcon = Icons.star;
+        feedbackColor = AppColors.cyan;
+      } else if (currentRir == 3) {
+        feedback = "Good effort. Consider adding weight next set.";
+        feedbackIcon = Icons.trending_up;
+        feedbackColor = AppColors.success;
+      } else {
+        feedback = "Plenty left in the tank. Try increasing the weight.";
+        feedbackIcon = Icons.fitness_center;
+        feedbackColor = AppColors.orange;
+      }
+    } else if (currentRpe != null) {
+      if (currentRpe >= 10) {
+        feedback = "Max effort reached. Ensure adequate rest before the next set.";
+        feedbackIcon = Icons.warning_amber_rounded;
+        feedbackColor = AppColors.coral;
+      } else if (currentRpe >= 8) {
+        feedback = "Great intensity! This is the ideal training zone.";
+        feedbackIcon = Icons.star;
+        feedbackColor = AppColors.cyan;
+      } else if (currentRpe >= 7) {
+        feedback = "Moderate effort. You can push a bit harder next set.";
+        feedbackIcon = Icons.trending_up;
+        feedbackColor = AppColors.success;
+      } else {
+        feedback = "Light effort. Consider increasing weight or reps.";
+        feedbackIcon = Icons.fitness_center;
+        feedbackColor = AppColors.orange;
+      }
+    } else {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: feedbackColor.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: feedbackColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              feedbackIcon,
+              color: feedbackColor,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.auto_awesome,
+                      size: 12,
+                      color: AppColors.purple,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'COACH REVIEW',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.purple,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  feedback,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: textColor,
+                    fontWeight: FontWeight.w500,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    )
+        .animate()
+        .fadeIn(delay: 200.ms, duration: 300.ms)
+        .slideY(begin: 0.1, end: 0);
+  }
+
   /// Compact RPE/RIR input section for rest period
   Widget _buildRpeRirSection(
     Color cardBg,
     Color textColor,
     Color subtitleColor,
     bool isDark,
+    [bool isCompact = false]
   ) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isCompact ? 12 : 16),
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16),
@@ -1149,29 +1297,61 @@ class RestTimerOverlay extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: isCompact ? 10 : 16),
 
           // RPE Selection
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'RPE (Rate of Perceived Exertion)',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: subtitleColor,
-                ),
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      isCompact ? 'RPE' : 'RPE (Rate of Perceived Exertion)',
+                      style: TextStyle(
+                        fontSize: isCompact ? 11 : 12,
+                        fontWeight: FontWeight.w500,
+                        color: subtitleColor,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: () => _showInfoDialog(
+                      context,
+                      'RPE - Rate of Perceived Exertion',
+                      'RPE is a scale from 5-10 that measures how hard you feel you\'re working during exercise.\n\n'
+                      '• 5-6: Easy, could talk normally\n'
+                      '• 7: Moderate, slightly breathless\n'
+                      '• 8: Hard, difficult to talk\n'
+                      '• 9: Very hard, near max effort\n'
+                      '• 10: Maximum effort\n\n'
+                      'Why it matters:\n'
+                      '• Ensures you\'re training at the right intensity\n'
+                      '• Prevents overtraining and injury\n'
+                      '• Helps AI suggest better weights for your next set\n'
+                      '• Enables smarter workout adjustments over time',
+                      isDark,
+                    ),
+                    child: Icon(
+                      Icons.info_outline_rounded,
+                      size: isCompact ? 14 : 16,
+                      color: subtitleColor.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: isCompact ? 6 : 8),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: List.generate(6, (index) {
                     final rpe = index + 5; // 5-10 scale
                     final isSelected = currentRpe == rpe;
+                    final buttonSize = isCompact ? 38.0 : 44.0;
                     return Padding(
-                      padding: const EdgeInsets.only(right: 8),
+                      padding: EdgeInsets.only(right: isCompact ? 6 : 8),
                       child: GestureDetector(
                         onTap: () {
                           HapticFeedback.selectionClick();
@@ -1179,15 +1359,15 @@ class RestTimerOverlay extends StatelessWidget {
                         },
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 150),
-                          width: 44,
-                          height: 44,
+                          width: buttonSize,
+                          height: buttonSize,
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? _getRpeColor(rpe)
                                 : (isDark
                                     ? Colors.white.withValues(alpha: 0.08)
                                     : Colors.black.withValues(alpha: 0.05)),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(isCompact ? 10 : 12),
                             border: Border.all(
                               color: isSelected
                                   ? _getRpeColor(rpe)
@@ -1201,7 +1381,7 @@ class RestTimerOverlay extends StatelessWidget {
                             child: Text(
                               '$rpe',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: isCompact ? 14 : 16,
                                 fontWeight: FontWeight.w700,
                                 color: isSelected ? Colors.white : textColor,
                               ),
@@ -1215,29 +1395,61 @@ class RestTimerOverlay extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: isCompact ? 10 : 14),
 
           // RIR Selection
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'RIR (Reps in Reserve)',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: subtitleColor,
-                ),
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      isCompact ? 'RIR' : 'RIR (Reps in Reserve)',
+                      style: TextStyle(
+                        fontSize: isCompact ? 11 : 12,
+                        fontWeight: FontWeight.w500,
+                        color: subtitleColor,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: () => _showInfoDialog(
+                      context,
+                      'RIR - Reps in Reserve',
+                      'RIR tells you how many more reps you could have done before reaching failure.\n\n'
+                      '• 5: Very easy, many reps left\n'
+                      '• 3-4: Moderate effort\n'
+                      '• 2: Hard, close to failure\n'
+                      '• 1: Very hard, 1 rep left\n'
+                      '• 0: Failure, no more reps possible\n\n'
+                      'Why it matters:\n'
+                      '• For muscle growth, aim for 1-3 RIR\n'
+                      '• For strength, 2-4 RIR is often optimal\n'
+                      '• AI uses this to suggest weight adjustments\n'
+                      '• Helps detect fatigue and prevent overtraining',
+                      isDark,
+                    ),
+                    child: Icon(
+                      Icons.info_outline_rounded,
+                      size: isCompact ? 14 : 16,
+                      color: subtitleColor.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: isCompact ? 6 : 8),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: List.generate(6, (index) {
                     final rir = 5 - index; // 5-0 (reverse order)
                     final isSelected = currentRir == rir;
+                    final buttonSize = isCompact ? 38.0 : 44.0;
                     return Padding(
-                      padding: const EdgeInsets.only(right: 8),
+                      padding: EdgeInsets.only(right: isCompact ? 6 : 8),
                       child: GestureDetector(
                         onTap: () {
                           HapticFeedback.selectionClick();
@@ -1245,15 +1457,15 @@ class RestTimerOverlay extends StatelessWidget {
                         },
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 150),
-                          width: 44,
-                          height: 44,
+                          width: buttonSize,
+                          height: buttonSize,
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? _getRirColor(rir)
                                 : (isDark
                                     ? Colors.white.withValues(alpha: 0.08)
                                     : Colors.black.withValues(alpha: 0.05)),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(isCompact ? 10 : 12),
                             border: Border.all(
                               color: isSelected
                                   ? _getRirColor(rir)
@@ -1267,7 +1479,7 @@ class RestTimerOverlay extends StatelessWidget {
                             child: Text(
                               '$rir',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: isCompact ? 14 : 16,
                                 fontWeight: FontWeight.w700,
                                 color: isSelected ? Colors.white : textColor,
                               ),
@@ -1287,6 +1499,76 @@ class RestTimerOverlay extends StatelessWidget {
         .animate()
         .fadeIn(delay: 100.ms, duration: 300.ms)
         .slideY(begin: 0.1, end: 0);
+  }
+
+  /// Show info dialog for RPE/RIR explanation
+  void _showInfoDialog(
+    BuildContext context,
+    String title,
+    String content,
+    bool isDark,
+  ) {
+    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final subtitleColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: backgroundColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.info_outline_rounded,
+              color: cyan,
+              size: 24,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.5,
+          ),
+          child: SingleChildScrollView(
+            child: Text(
+              content,
+              style: TextStyle(
+                fontSize: 14,
+                color: subtitleColor,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Got it',
+              style: TextStyle(
+                color: cyan,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Get color for RPE value (5-10 scale)

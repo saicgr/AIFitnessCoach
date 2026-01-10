@@ -223,6 +223,18 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
           );
         }
 
+        // Check if user completed today's workout - show next workout with completion banner
+        if (response?.completedToday == true &&
+            response?.completedWorkout != null &&
+            response?.nextWorkout != null) {
+          debugPrint('🏠 [SwipeableHero] Showing CompletedWorkoutHeroCard (completedToday)');
+          return CompletedWorkoutHeroCard(
+            completedWorkout: response!.completedWorkout!.toWorkout(),
+            nextWorkout: response.nextWorkout!.toWorkout(),
+            daysUntilNext: response.daysUntilNext ?? 1,
+          );
+        }
+
         // Get workout: today's OR next (ALWAYS show a workout, never rest day)
         final workoutSummary = response?.todayWorkout ?? response?.nextWorkout;
         debugPrint('🏠 [SwipeableHero] workoutSummary: $workoutSummary');

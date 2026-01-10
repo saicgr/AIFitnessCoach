@@ -5,7 +5,7 @@ import '../../../core/constants/app_colors.dart';
 class FriendCard extends StatelessWidget {
   final String name;
   final String? avatarUrl;
-  final String bio;
+  final String? bio;
   final int currentStreak;
   final int totalWorkouts;
   final int totalAchievements;
@@ -18,7 +18,7 @@ class FriendCard extends StatelessWidget {
     super.key,
     required this.name,
     this.avatarUrl,
-    required this.bio,
+    this.bio,
     required this.currentStreak,
     required this.totalWorkouts,
     required this.totalAchievements,
@@ -104,14 +104,16 @@ class FriendCard extends StatelessWidget {
                               ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          bio,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textMuted,
+                        if (bio != null && bio!.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            bio!,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textMuted,
+                            ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),

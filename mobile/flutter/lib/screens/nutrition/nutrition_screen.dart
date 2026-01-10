@@ -67,28 +67,30 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     if (userId != null) {
       setState(() => _userId = userId);
 
-      // Initialize nutrition preferences and check onboarding status
-      await ref.read(nutritionPreferencesProvider.notifier).initialize(userId);
+      final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+
+      // Fire ALL data loads in parallel - don't block on preferences init
+      // This dramatically improves perceived load time
+      await Future.wait([
+        // Initialize nutrition preferences (non-blocking for UI)
+        ref.read(nutritionPreferencesProvider.notifier).initialize(userId),
+        // Core nutrition data - these can load independently
+        ref.read(nutritionProvider.notifier).loadTodaySummary(userId),
+        ref.read(nutritionProvider.notifier).loadTargets(userId),
+        ref.read(nutritionProvider.notifier).loadRecentLogs(userId),
+        // Micronutrients and recipes
+        _loadMicronutrients(userId, dateStr),
+        _loadRecipes(userId),
+        // Hydration data for Hydration tab
+        ref.read(hydrationProvider.notifier).loadTodaySummary(userId),
+      ], eagerError: false); // Don't fail fast - let all complete
 
       // Log state after initialization for debugging
       final initState = ref.read(nutritionPreferencesProvider);
       debugPrint('🥗 [NutritionScreen] After init: prefs=${initState.preferences != null}, calories=${initState.preferences?.targetCalories}');
 
-      // NOTE: Weekly check-in auto-popup removed - user can trigger via Settings
-      // The check-in is now manual-only to avoid annoying users every time they open the tab
-
-      final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
-      ref.read(nutritionProvider.notifier).loadTodaySummary(userId);
-      ref.read(nutritionProvider.notifier).loadTargets(userId);
-      ref.read(nutritionProvider.notifier).loadRecentLogs(userId);
-      _loadMicronutrients(userId, dateStr);
-      _loadRecipes(userId);
-
-      // Prefetch quick add suggestions for instant access
+      // Prefetch quick add suggestions in background (low priority)
       ref.invalidate(quickAddSuggestionsProvider(userId));
-
-      // Load hydration data for the Hydration tab
-      ref.read(hydrationProvider.notifier).loadTodaySummary(userId);
     }
   }
 
@@ -4319,54 +4321,144 @@ class _NutritionLoadingSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final glassSurface =
-        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final shimmerBase = isDark
+        ? AppColors.elevated.withValues(alpha: 0.6)
+        : AppColorsLight.elevated;
+    final shimmerHighlight = isDark
+        ? AppColors.glassSurface.withValues(alpha: 0.3)
+        : Colors.white.withValues(alpha: 0.5);
 
     return SingleChildScrollView(
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Energy card skeleton
-          Container(
+          // Energy card skeleton with shimmer
+          _ShimmerContainer(
             height: 140,
-            decoration: BoxDecoration(
-              color: elevated,
-              borderRadius: BorderRadius.circular(20),
-            ),
+            borderRadius: 20,
+            baseColor: shimmerBase,
+            highlightColor: shimmerHighlight,
           ),
           const SizedBox(height: 16),
-          // Macros row skeleton
+          // Macros row skeleton with staggered shimmer
           Row(
             children: List.generate(
               4,
-              (_) => Expanded(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: elevated,
-                    borderRadius: BorderRadius.circular(12),
+              (index) => Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: _ShimmerContainer(
+                    height: 100,
+                    borderRadius: 12,
+                    baseColor: shimmerBase,
+                    highlightColor: shimmerHighlight,
+                    delay: Duration(milliseconds: index * 100),
                   ),
                 ),
               ),
             ),
           ),
           const SizedBox(height: 16),
-          // Meal sections skeleton
+          // Meal sections skeleton with staggered shimmer
           ...List.generate(
             4,
-            (_) => Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              height: 60,
-              decoration: BoxDecoration(
-                color: elevated,
-                borderRadius: BorderRadius.circular(16),
+            (index) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _ShimmerContainer(
+                height: 60,
+                borderRadius: 16,
+                baseColor: shimmerBase,
+                highlightColor: shimmerHighlight,
+                delay: Duration(milliseconds: 400 + index * 100),
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Shimmer container with smooth animation
+class _ShimmerContainer extends StatefulWidget {
+  final double height;
+  final double? width;
+  final double borderRadius;
+  final Color baseColor;
+  final Color highlightColor;
+  final Duration delay;
+
+  const _ShimmerContainer({
+    required this.height,
+    this.width,
+    required this.borderRadius,
+    required this.baseColor,
+    required this.highlightColor,
+    this.delay = Duration.zero,
+  });
+
+  @override
+  State<_ShimmerContainer> createState() => _ShimmerContainerState();
+}
+
+class _ShimmerContainerState extends State<_ShimmerContainer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    _animation = Tween<double>(begin: -1.0, end: 2.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    // Start with delay for staggered effect
+    Future.delayed(widget.delay, () {
+      if (mounted) {
+        _controller.repeat();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Container(
+          height: widget.height,
+          width: widget.width,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(widget.borderRadius),
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                widget.baseColor,
+                widget.highlightColor,
+                widget.baseColor,
+              ],
+              stops: [
+                (_animation.value - 0.3).clamp(0.0, 1.0),
+                _animation.value.clamp(0.0, 1.0),
+                (_animation.value + 0.3).clamp(0.0, 1.0),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

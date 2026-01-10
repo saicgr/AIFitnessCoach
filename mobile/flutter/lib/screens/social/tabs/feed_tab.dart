@@ -182,7 +182,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
       final socialService = ref.read(socialServiceProvider);
 
       // Toggle reaction: if already reacted with this type, remove it; otherwise add/update
-      final activity = ref.read(activityFeedProvider(userId)).value?['activities']
+      final activity = ref.read(activityFeedProvider(userId)).value?['items']
           ?.firstWhere((a) => a['id'] == activityId, orElse: () => null);
 
       if (activity != null &&

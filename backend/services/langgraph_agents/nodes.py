@@ -323,6 +323,10 @@ EXAMPLES:
 - "How's my injury recovery going?" → Use get_active_injuries(user_id={state['user_id']})
 
 NUTRITION TRACKING TOOLS:
+- log_food_from_text(user_id="{state['user_id']}", food_description="...", meal_type="breakfast|lunch|dinner|snack") - Log food from text description
+  * IMPORTANT: When user describes food they ate (e.g., "I ate biryani", "had 2 eggs for breakfast"), you MUST call this tool
+  * This will analyze the food, estimate calories/macros, save it to the database, and provide coaching feedback
+  * meal_type is optional - it will auto-detect based on time if not provided
 - analyze_food_image(user_id="{state['user_id']}", image_base64="...", user_message="...") - Analyze food image to log calories and macros
   * IMPORTANT: When user sends a food image, you MUST call this tool
   * The image_base64 is provided in the HAS_IMAGE indicator below
@@ -335,6 +339,8 @@ FOOD IMAGE HANDLING:
 {f'IMAGE_BASE64: {state["image_base64"][:100]}...' if state.get('image_base64') else ''}
 
 NUTRITION EXAMPLES:
+- "I ate thalapakattu mutton biryani" → Use log_food_from_text(user_id="{state['user_id']}", food_description="thalapakattu mutton biryani")
+- "Had 2 eggs and toast for breakfast" → Use log_food_from_text(user_id="{state['user_id']}", food_description="2 eggs and toast", meal_type="breakfast")
 - User sends food image → Use analyze_food_image(user_id="{state['user_id']}", image_base64="<the image>", user_message="<user's message>")
 - "What did I eat today?" → Use get_nutrition_summary(user_id="{state['user_id']}", period="day")
 - "Show my recent meals" → Use get_recent_meals(user_id="{state['user_id']}")

@@ -91,6 +91,9 @@ class TodayWorkoutResponse {
   final TodayWorkoutSummary? nextWorkout;
   final int? daysUntilNext;
   final String? restDayMessage;
+  // Completed workout info (if user already completed today's workout)
+  final bool completedToday;
+  final TodayWorkoutSummary? completedWorkout;
   // Generation status fields - used when auto-generating workout
   final bool isGenerating;
   final String? generationMessage;
@@ -101,6 +104,8 @@ class TodayWorkoutResponse {
     this.nextWorkout,
     this.daysUntilNext,
     this.restDayMessage,
+    this.completedToday = false,
+    this.completedWorkout,
     this.isGenerating = false,
     this.generationMessage,
   });
@@ -118,6 +123,11 @@ class TodayWorkoutResponse {
           : null,
       daysUntilNext: json['days_until_next'] as int?,
       restDayMessage: json['rest_day_message'] as String?,
+      completedToday: json['completed_today'] as bool? ?? false,
+      completedWorkout: json['completed_workout'] != null
+          ? TodayWorkoutSummary.fromJson(
+              json['completed_workout'] as Map<String, dynamic>)
+          : null,
       isGenerating: json['is_generating'] as bool? ?? false,
       generationMessage: json['generation_message'] as String?,
     );
@@ -129,6 +139,8 @@ class TodayWorkoutResponse {
         'next_workout': nextWorkout?.toJson(),
         'days_until_next': daysUntilNext,
         'rest_day_message': restDayMessage,
+        'completed_today': completedToday,
+        'completed_workout': completedWorkout?.toJson(),
         'is_generating': isGenerating,
         'generation_message': generationMessage,
       };

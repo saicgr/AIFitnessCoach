@@ -86,8 +86,8 @@ const List<GlossaryTerm> _glossaryTerms = [
 
   // R
   GlossaryTerm('ROM', 'Range of Motion - full movement path of a joint.'),
-  GlossaryTerm('RPE', 'Rate of Perceived Exertion - 1-10 scale of how hard exercise feels.'),
-  GlossaryTerm('RIR', 'Reps in Reserve - how many more reps you could have done.'),
+  GlossaryTerm('RPE', 'Rate of Perceived Exertion - 1-10 scale of how hard exercise feels. Used by AI to suggest weight adjustments and detect fatigue.'),
+  GlossaryTerm('RIR', 'Reps in Reserve - how many more reps you could have done. AI uses this to personalize your workout intensity.'),
   GlossaryTerm('Recomp', 'Body Recomposition - simultaneously losing fat and gaining muscle.'),
   GlossaryTerm('Rep', 'One complete movement of an exercise from start to finish.'),
   GlossaryTerm('Rest-Pause', 'Brief rest (10-15 sec) mid-set to squeeze out more reps.'),

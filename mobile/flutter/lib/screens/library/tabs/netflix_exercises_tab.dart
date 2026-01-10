@@ -229,7 +229,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
         );
       },
       data: (categoryData) {
-        if (categoryData.isEmpty) {
+        if (categoryData.preview.isEmpty) {
           return const Center(
             child: Text('No exercises available'),
           );
@@ -247,36 +247,40 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
         ];
 
         // Build ordered list of categories (excluding Popular for hero)
-        final orderedCategories = <MapEntry<String, List<LibraryExercise>>>[];
-        final popularExercises = categoryData['Popular'] ?? [];
+        final orderedCategories = <String>[];
+        final popularExercises = categoryData.preview['Popular'] ?? [];
 
         for (final category in categoryOrder) {
           if (category == 'Popular') continue; // Skip - used for hero
-          final exercises = categoryData[category];
+          final exercises = categoryData.preview[category];
           if (exercises != null && exercises.isNotEmpty) {
-            orderedCategories.add(MapEntry(category, exercises));
+            orderedCategories.add(category);
           }
         }
 
         // Add any remaining categories not in the predefined order
-        for (final entry in categoryData.entries) {
-          if (!categoryOrder.contains(entry.key) && entry.value.isNotEmpty) {
-            orderedCategories.add(entry);
+        for (final category in categoryData.preview.keys) {
+          if (!categoryOrder.contains(category) &&
+              categoryData.preview[category]?.isNotEmpty == true &&
+              !orderedCategories.contains(category)) {
+            orderedCategories.add(category);
           }
         }
 
         return ListView(
           controller: _scrollController,
           padding: const EdgeInsets.only(bottom: 100),
+          physics: const BouncingScrollPhysics(),
           children: [
             // Featured Hero Section at top
             if (popularExercises.isNotEmpty)
               NetflixHeroSection(exercises: popularExercises.take(8).toList()),
 
             // Category rows (Netflix style with multiple cards per row)
-            ...orderedCategories.map((entry) => NetflixExerciseCarousel(
-              categoryTitle: entry.key,
-              exercises: entry.value,
+            ...orderedCategories.map((category) => NetflixExerciseCarousel(
+              categoryTitle: category,
+              exercises: categoryData.preview[category] ?? [],
+              allExercises: categoryData.all[category],
             )),
           ],
         );

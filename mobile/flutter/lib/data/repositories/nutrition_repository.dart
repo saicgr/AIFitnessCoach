@@ -144,7 +144,6 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
   Future<void> loadTargets(String userId, {bool forceRefresh = false}) async {
     // Skip if data is fresh
     if (!forceRefresh && _shouldSkipLoad(userId) && state.targets != null) {
-      debugPrint('🥗 [NutritionProvider] Skipping loadTargets - data is fresh');
       return;
     }
 

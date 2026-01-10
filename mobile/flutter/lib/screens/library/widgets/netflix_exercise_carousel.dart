@@ -9,18 +9,52 @@ import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import '../components/exercise_detail_sheet.dart';
+import '../screens/category_exercises_screen.dart';
 
 /// Netflix-style horizontal carousel for a category of exercises
 /// Shows multiple small cards per row that scroll horizontally
 class NetflixExerciseCarousel extends StatelessWidget {
   final String categoryTitle;
   final List<LibraryExercise> exercises;
+  /// Optional: all exercises for this category (for See All screen)
+  final List<LibraryExercise>? allExercises;
+  /// Whether to show the See All button
+  final bool showSeeAll;
 
   const NetflixExerciseCarousel({
     super.key,
     required this.categoryTitle,
     required this.exercises,
+    this.allExercises,
+    this.showSeeAll = true,
   });
+
+  void _navigateToSeeAll(BuildContext context) {
+    HapticService.light();
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            CategoryExercisesScreen(
+          categoryName: categoryTitle,
+          initialExercises: allExercises ?? exercises,
+        ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.easeOutCubic;
+          var tween = Tween(begin: begin, end: end).chain(
+            CurveTween(curve: curve),
+          );
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,57 +70,82 @@ class NetflixExerciseCarousel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Category title with "See All" button
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    categoryTitle,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: cyan.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      '${exercises.length}',
+        GestureDetector(
+          onTap: showSeeAll ? () => _navigateToSeeAll(context) : null,
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      categoryTitle,
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: cyan,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: cyan.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '${exercises.length}${(allExercises?.length ?? exercises.length) > exercises.length ? '+' : ''}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: cyan,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (showSeeAll)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'See All',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: cyan,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.chevron_right,
+                        color: cyan,
+                        size: 20,
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              Icon(
-                Icons.chevron_right,
-                color: textMuted,
-                size: 24,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
 
-        // Horizontal scrolling row of cards (Netflix style - multiple visible)
+        // Horizontal scrolling row of cards with improved physics
         SizedBox(
           height: 180,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
+            physics: const BouncingScrollPhysics(
+              decelerationRate: ScrollDecelerationRate.fast,
+            ),
             itemCount: exercises.length,
             itemBuilder: (context, index) {
-              return _NetflixCard(exercise: exercises[index]);
+              return _NetflixCard(
+                exercise: exercises[index],
+                index: index,
+              );
             },
           ),
         ),
@@ -109,7 +168,7 @@ class NetflixHeroSection extends ConsumerStatefulWidget {
 }
 
 class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   int _currentPage = 0;
   VideoPlayerController? _videoController;
   bool _videoInitialized = false;
@@ -119,8 +178,16 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
+  /// Animation controller for page transitions
+  late AnimationController _slideController;
+  late Animation<Offset> _slideAnimation;
+  int _slideDirection = 0; // -1 = left, 1 = right, 0 = none
+
   /// Whether reduced motion is enabled
   bool _reducedMotion = false;
+
+  /// Drag state for swipe gesture
+  double _dragOffset = 0;
 
   @override
   void initState() {
@@ -135,6 +202,19 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
       parent: _fadeController,
       curve: Curves.easeOut,
     );
+
+    // Initialize slide animation
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: Offset.zero,
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOutCubic,
+    ));
 
     // Check accessibility and load video after frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -155,6 +235,7 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
   @override
   void dispose() {
     _fadeController.dispose();
+    _slideController.dispose();
     _videoController?.dispose();
     super.dispose();
   }
@@ -246,6 +327,15 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
     );
   }
 
+  void _animateToPage(int newPage, int direction) {
+    HapticService.selection();
+    setState(() {
+      _currentPage = newPage;
+      _dragOffset = 0;
+    });
+    _loadVideoForExercise(widget.exercises[newPage]);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -261,26 +351,51 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
 
     return Column(
       children: [
-        // Hero card with swipe support
+        // Hero card with smooth swipe support
         GestureDetector(
           onTap: () => _showExerciseDetail(currentExercise),
+          onHorizontalDragStart: (_) {
+            _dragOffset = 0;
+          },
+          onHorizontalDragUpdate: (details) {
+            setState(() {
+              _dragOffset += details.delta.dx;
+            });
+          },
           onHorizontalDragEnd: (details) {
-            if (details.primaryVelocity != null) {
-              if (details.primaryVelocity! < -200 &&
-                  _currentPage < widget.exercises.length - 1) {
-                // Swipe left - next
-                setState(() => _currentPage++);
-                HapticService.selection();
-                _loadVideoForExercise(widget.exercises[_currentPage]);
-              } else if (details.primaryVelocity! > 200 && _currentPage > 0) {
-                // Swipe right - previous
-                setState(() => _currentPage--);
-                HapticService.selection();
-                _loadVideoForExercise(widget.exercises[_currentPage]);
-              }
+            final velocity = details.primaryVelocity ?? 0;
+            final screenWidth = MediaQuery.of(context).size.width;
+            final threshold = screenWidth * 0.2;
+
+            // Determine if we should change page
+            if ((velocity < -300 || _dragOffset < -threshold) &&
+                _currentPage < widget.exercises.length - 1) {
+              // Swipe left - next
+              _animateToPage(_currentPage + 1, -1);
+            } else if ((velocity > 300 || _dragOffset > threshold) &&
+                _currentPage > 0) {
+              // Swipe right - previous
+              _animateToPage(_currentPage - 1, 1);
+            } else {
+              // Snap back
+              setState(() => _dragOffset = 0);
             }
           },
-          child: Container(
+          child: AnimatedBuilder(
+            animation: _slideController,
+            builder: (context, child) {
+              // Calculate offset based on drag or animation
+              double offset = _dragOffset;
+              if (_slideController.isAnimating) {
+                offset = _slideAnimation.value.dx * MediaQuery.of(context).size.width;
+              }
+
+              return Transform.translate(
+                offset: Offset(offset * 0.3, 0), // Parallax effect
+                child: child,
+              );
+            },
+            child: Container(
             height: 280,
             margin: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
@@ -437,7 +552,9 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
               ],
             ),
           ),
-        ),
+        ), // End Container (AnimatedBuilder child)
+        ), // End AnimatedBuilder
+        ), // End GestureDetector
 
         // Page indicators
         if (widget.exercises.length > 1)
@@ -627,11 +744,43 @@ class _HeroButton extends StatelessWidget {
   }
 }
 
-/// Netflix-style small card (poster style)
-class _NetflixCard extends StatelessWidget {
+/// Netflix-style small card (poster style) with smooth animations
+class _NetflixCard extends StatefulWidget {
   final LibraryExercise exercise;
+  final int index;
 
-  const _NetflixCard({required this.exercise});
+  const _NetflixCard({
+    required this.exercise,
+    this.index = 0,
+  });
+
+  @override
+  State<_NetflixCard> createState() => _NetflixCardState();
+}
+
+class _NetflixCardState extends State<_NetflixCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
+  bool _isPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    super.dispose();
+  }
 
   void _showExerciseDetail(BuildContext context) {
     HapticService.light();
@@ -639,8 +788,23 @@ class _NetflixCard extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => ExerciseDetailSheet(exercise: exercise),
+      builder: (context) => ExerciseDetailSheet(exercise: widget.exercise),
     );
+  }
+
+  void _onTapDown(TapDownDetails details) {
+    setState(() => _isPressed = true);
+    _scaleController.forward();
+  }
+
+  void _onTapUp(TapUpDetails details) {
+    setState(() => _isPressed = false);
+    _scaleController.reverse();
+  }
+
+  void _onTapCancel() {
+    setState(() => _isPressed = false);
+    _scaleController.reverse();
   }
 
   @override
@@ -654,86 +818,107 @@ class _NetflixCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () => _showExerciseDetail(context),
-      child: Container(
-        width: 120, // Netflix poster width
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: BorderRadius.circular(8),
-          border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
-        ),
-        clipBehavior: Clip.hardEdge,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Thumbnail (poster area)
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      purple.withValues(alpha: 0.3),
-                      cyan.withValues(alpha: 0.2),
-                    ],
-                  ),
-                ),
-                child: Stack(
-                  children: [
-                    // Icon
-                    Center(
-                      child: Icon(
-                        _getBodyPartIcon(exercise.bodyPart),
-                        size: 36,
-                        color: purple.withValues(alpha: 0.6),
-                      ),
+      onTapDown: _onTapDown,
+      onTapUp: _onTapUp,
+      onTapCancel: _onTapCancel,
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: child,
+          );
+        },
+        child: Container(
+          width: 120, // Netflix poster width
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          decoration: BoxDecoration(
+            color: elevated,
+            borderRadius: BorderRadius.circular(8),
+            border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
+            boxShadow: _isPressed
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                    // Difficulty badge (first letter of display name)
-                    if (exercise.difficulty != null)
-                      Positioned(
-                        top: 6,
-                        left: 6,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: DifficultyUtils.getColor(exercise.difficulty!)
-                                .withValues(alpha: 0.9),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            DifficultyUtils.getDisplayName(exercise.difficulty!)[0], // First letter: B, M, C, E
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                  ],
+          ),
+          clipBehavior: Clip.hardEdge,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Thumbnail (poster area)
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        purple.withValues(alpha: 0.3),
+                        cyan.withValues(alpha: 0.2),
+                      ],
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      // Icon
+                      Center(
+                        child: Icon(
+                          _getBodyPartIcon(widget.exercise.bodyPart),
+                          size: 36,
+                          color: purple.withValues(alpha: 0.6),
+                        ),
+                      ),
+                      // Difficulty badge (first letter of display name)
+                      if (widget.exercise.difficulty != null)
+                        Positioned(
+                          top: 6,
+                          left: 6,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: DifficultyUtils.getColor(widget.exercise.difficulty!)
+                                  .withValues(alpha: 0.9),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              DifficultyUtils.getDisplayName(widget.exercise.difficulty!)[0], // First letter: B, M, C, E
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            // Title area
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Text(
-                exercise.name,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
+              // Title area
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Text(
+                  widget.exercise.name,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

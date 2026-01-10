@@ -329,16 +329,30 @@ void clearSearchAndFilters(WidgetRef ref) {
 // CATEGORY EXERCISES PROVIDER (for Netflix carousel)
 // ============================================================================
 
+/// Category exercises data with preview (20) and all exercises for See All
+class CategoryExercisesData {
+  /// Preview exercises for carousel (limited to 20)
+  final Map<String, List<LibraryExercise>> preview;
+  /// All exercises for each category (for See All screen)
+  final Map<String, List<LibraryExercise>> all;
+
+  const CategoryExercisesData({
+    required this.preview,
+    required this.all,
+  });
+}
+
 /// Fetches exercises grouped by body part for Netflix-style carousel
 final categoryExercisesProvider =
-    FutureProvider<Map<String, List<LibraryExercise>>>((ref) async {
+    FutureProvider<CategoryExercisesData>((ref) async {
   final apiClient = ref.read(apiClientProvider);
-  final result = <String, List<LibraryExercise>>{};
+  final preview = <String, List<LibraryExercise>>{};
+  final all = <String, List<LibraryExercise>>{};
 
   try {
-    // Fetch exercises from API
+    // Fetch more exercises from API for better See All experience
     final response = await apiClient.get(
-      '${ApiConstants.library}/exercises?limit=200&offset=0',
+      '${ApiConstants.library}/exercises?limit=500&offset=0',
     );
 
     if (response.statusCode != 200) {
@@ -354,11 +368,12 @@ final categoryExercisesProvider =
         .toList();
 
     if (allExercises.isEmpty) {
-      return result;
+      return CategoryExercisesData(preview: preview, all: all);
     }
 
-    // Popular = first 20 exercises
-    result['Popular'] = allExercises.take(20).toList();
+    // Popular = first exercises
+    all['Popular'] = allExercises.take(50).toList();
+    preview['Popular'] = allExercises.take(20).toList();
 
     // Group by body part
     final Map<String, List<LibraryExercise>> byBodyPart = {};
@@ -374,7 +389,8 @@ final categoryExercisesProvider =
       armExercises.addAll(byBodyPart[key] ?? []);
     }
     if (armExercises.isNotEmpty) {
-      result['Arms'] = armExercises.take(20).toList();
+      all['Arms'] = armExercises;
+      preview['Arms'] = armExercises.take(20).toList();
     }
 
     // Combine leg muscles into "Legs"
@@ -383,24 +399,29 @@ final categoryExercisesProvider =
       legExercises.addAll(byBodyPart[key] ?? []);
     }
     if (legExercises.isNotEmpty) {
-      result['Legs'] = legExercises.take(20).toList();
+      all['Legs'] = legExercises;
+      preview['Legs'] = legExercises.take(20).toList();
     }
 
     // Direct mappings for other categories
     if (byBodyPart['Chest']?.isNotEmpty == true) {
-      result['Chest'] = byBodyPart['Chest']!.take(20).toList();
+      all['Chest'] = byBodyPart['Chest']!;
+      preview['Chest'] = byBodyPart['Chest']!.take(20).toList();
     }
     if (byBodyPart['Back']?.isNotEmpty == true) {
-      result['Back'] = byBodyPart['Back']!.take(20).toList();
+      all['Back'] = byBodyPart['Back']!;
+      preview['Back'] = byBodyPart['Back']!.take(20).toList();
     }
     if (byBodyPart['Shoulders']?.isNotEmpty == true) {
-      result['Shoulders'] = byBodyPart['Shoulders']!.take(20).toList();
+      all['Shoulders'] = byBodyPart['Shoulders']!;
+      preview['Shoulders'] = byBodyPart['Shoulders']!.take(20).toList();
     }
     if (byBodyPart['Core']?.isNotEmpty == true) {
-      result['Core'] = byBodyPart['Core']!.take(20).toList();
+      all['Core'] = byBodyPart['Core']!;
+      preview['Core'] = byBodyPart['Core']!.take(20).toList();
     }
 
-    return result;
+    return CategoryExercisesData(preview: preview, all: all);
   } catch (e) {
     if (e is AppException) rethrow;
     debugPrint('❌ [CategoryExercises] Error: $e');

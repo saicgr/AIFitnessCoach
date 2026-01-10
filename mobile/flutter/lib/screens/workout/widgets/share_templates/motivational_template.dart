@@ -77,7 +77,7 @@ class MotivationalTemplate extends StatelessWidget {
   Widget build(BuildContext context) {
     // Calculate responsive height based on available space
     final screenHeight = MediaQuery.of(context).size.height;
-    final templateHeight = (screenHeight * 0.55).clamp(400.0, 580.0);
+    final templateHeight = (screenHeight * 0.48).clamp(360.0, 480.0);
 
     return Container(
       width: 320,
@@ -106,7 +106,7 @@ class MotivationalTemplate extends StatelessWidget {
 
           // Main content
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(20),
             child: Column(
               children: [
                 // Top section with date
@@ -130,23 +130,23 @@ class MotivationalTemplate extends StatelessWidget {
                     _motivationalQuote,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 40,
+                      fontSize: 34,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 3,
+                      letterSpacing: 2,
                       height: 1.0,
                     ),
                     textAlign: TextAlign.center,
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
 
                 // Workout name
                 Text(
                   workoutName,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.w600,
                   ),
                   textAlign: TextAlign.center,
@@ -154,12 +154,12 @@ class MotivationalTemplate extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // Stats row
                 _buildQuickStats(),
 
-                const Spacer(flex: 3),
+                const Spacer(flex: 2),
 
                 // Watermark
                 if (showWatermark) const AppWatermark(),

@@ -5,15 +5,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../data/models/coach_persona.dart';
 import '../../../data/providers/workout_gallery_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/share_service.dart';
 import '../../../data/services/workout_gallery_service.dart';
+import '../../../screens/ai_settings/ai_settings_screen.dart';
 import '../../../utils/image_capture_utils.dart';
 import 'share_templates/stats_template.dart';
 import 'share_templates/prs_template.dart';
 import 'share_templates/photo_overlay_template.dart';
 import 'share_templates/motivational_template.dart';
+import 'share_templates/coach_review_template.dart';
+import 'share_templates/progress_template.dart';
 
 /// Share Workout Bottom Sheet
 ///
@@ -65,8 +69,8 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
   String? _userId;
   bool _showWatermark = true;
 
-  // Capture keys for each template
-  final List<GlobalKey> _captureKeys = List.generate(4, (_) => GlobalKey());
+  // Capture keys for each template (6 templates now)
+  final List<GlobalKey> _captureKeys = List.generate(6, (_) => GlobalKey());
 
   @override
   void initState() {
@@ -90,6 +94,8 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
   List<String> get _templateNames => [
         'Stats',
         'PRs',
+        'Coach',
+        'Progress',
         'Photo',
         'Motivational',
       ];
@@ -101,8 +107,12 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
       case 1:
         return GalleryTemplateType.prs;
       case 2:
-        return GalleryTemplateType.photoOverlay;
+        return GalleryTemplateType.stats; // Coach review uses stats type
       case 3:
+        return GalleryTemplateType.stats; // Progress uses stats type
+      case 4:
+        return GalleryTemplateType.photoOverlay;
+      case 5:
         return GalleryTemplateType.motivational;
       default:
         return GalleryTemplateType.stats;
@@ -125,9 +135,9 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
         final bytes = await pickedFile.readAsBytes();
         setState(() => _userPhotoBytes = bytes);
 
-        // Switch to photo overlay template
+        // Switch to photo overlay template (index 4)
         _pageController.animateToPage(
-          2,
+          4,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
         );
@@ -214,6 +224,13 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
 
   Future<void> _postToFeed() async {
     if (_isSharing || _userId == null) return;
+
+    // Validate workoutLogId before attempting upload
+    if (widget.workoutLogId.isEmpty) {
+      _showError('Cannot post: workout data unavailable');
+      return;
+    }
+
     HapticFeedback.mediumImpact();
 
     setState(() => _isSharing = true);
@@ -315,6 +332,12 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
     bool trackExternal = false,
   }) async {
     if (_userId == null) return;
+
+    // Skip backend upload if workoutLogId is missing
+    if (widget.workoutLogId.isEmpty) {
+      debugPrint('⚠️ [ShareWorkout] Skipping backend upload: workoutLogId is empty');
+      return;
+    }
 
     final service = ref.read(workoutGalleryServiceProvider);
     final image = await service.uploadImage(
@@ -495,49 +518,52 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
             child: _buildTemplateCarousel(),
           ),
 
-          // Page indicators
+          // Page indicators - scrollable for 6 templates
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(4, (index) {
-                final isActive = _currentPage == index;
-                return GestureDetector(
-                  onTap: () {
-                    _pageController.animateToPage(
-                      index,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isActive ? 12 : 8,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isActive
-                          ? AppColors.cyan
-                          : Colors.grey.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      _templateNames[index],
-                      style: TextStyle(
-                        color: isActive ? Colors.white : Colors.grey,
-                        fontSize: 12,
-                        fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(6, (index) {
+                  final isActive = _currentPage == index;
+                  return GestureDetector(
+                    onTap: () {
+                      _pageController.animateToPage(
+                        index,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isActive ? 10 : 8,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? AppColors.cyan
+                            : Colors.grey.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        _templateNames[index],
+                        style: TextStyle(
+                          color: isActive ? Colors.white : Colors.grey,
+                          fontSize: 11,
+                          fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                        ),
                       ),
                     ),
-                  ),
-                );
-              }),
+                  );
+                }),
+              ),
             ),
           ),
 
-          // Add photo button (for photo overlay template)
-          if (_currentPage == 2)
+          // Add photo button (for photo overlay template - now index 4)
+          if (_currentPage == 4)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: OutlinedButton.icon(
@@ -721,6 +747,75 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
           ),
         ),
 
+        // Coach Review Template
+        Center(
+          child: GestureDetector(
+            onTap: _showImagePreview,
+            child: Stack(
+              children: [
+                Consumer(
+                  builder: (context, ref, _) {
+                    final aiSettings = ref.watch(aiSettingsProvider);
+                    final coach = CoachPersona.findById(aiSettings.coachPersonaId)
+                        ?? CoachPersona.defaultCoach;
+                    return CapturableWidget(
+                      captureKey: _captureKeys[2],
+                      child: CoachReviewTemplate(
+                        workoutName: widget.workoutName,
+                        durationSeconds: widget.durationSeconds,
+                        calories: widget.calories,
+                        totalVolumeKg: widget.totalVolumeKg,
+                        exercisesCount: widget.exercisesCount,
+                        totalSets: widget.totalSets,
+                        totalReps: widget.totalReps,
+                        coach: coach,
+                        performanceRating: _calculatePerformanceRating(),
+                        completedAt: now,
+                        showWatermark: _showWatermark,
+                      ),
+                    );
+                  },
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: _buildPreviewHint(),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Progress Template
+        Center(
+          child: GestureDetector(
+            onTap: _showImagePreview,
+            child: Stack(
+              children: [
+                CapturableWidget(
+                  captureKey: _captureKeys[3],
+                  child: ProgressTemplate(
+                    workoutName: widget.workoutName,
+                    durationSeconds: widget.durationSeconds,
+                    exercisesCount: widget.exercisesCount,
+                    totalWorkouts: widget.totalWorkouts,
+                    currentStreak: widget.currentStreak,
+                    sessionVolume: widget.totalVolumeKg,
+                    prsThisMonth: widget.newPRs?.length ?? 0,
+                    completedAt: now,
+                    showWatermark: _showWatermark,
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: _buildPreviewHint(),
+                ),
+              ],
+            ),
+          ),
+        ),
+
         // Photo Overlay Template
         Center(
           child: GestureDetector(
@@ -728,7 +823,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
             child: Stack(
               children: [
                 CapturableWidget(
-                  captureKey: _captureKeys[2],
+                  captureKey: _captureKeys[4],
                   child: PhotoOverlayTemplate(
                     workoutName: widget.workoutName,
                     durationSeconds: widget.durationSeconds,
@@ -757,7 +852,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
             child: Stack(
               children: [
                 CapturableWidget(
-                  captureKey: _captureKeys[3],
+                  captureKey: _captureKeys[5],
                   child: MotivationalTemplate(
                     workoutName: widget.workoutName,
                     currentStreak: widget.currentStreak,
@@ -778,6 +873,32 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
         ),
       ],
     );
+  }
+
+  /// Calculate a performance rating based on workout stats
+  double _calculatePerformanceRating() {
+    double rating = 0.7; // Base rating
+
+    // Bonus for longer workouts
+    if (widget.durationSeconds >= 3600) rating += 0.1; // 1+ hour
+    else if (widget.durationSeconds >= 2700) rating += 0.07; // 45+ min
+    else if (widget.durationSeconds >= 1800) rating += 0.05; // 30+ min
+
+    // Bonus for more exercises
+    if (widget.exercisesCount >= 8) rating += 0.1;
+    else if (widget.exercisesCount >= 5) rating += 0.05;
+
+    // Bonus for PRs
+    if (widget.newPRs != null && widget.newPRs!.isNotEmpty) {
+      rating += 0.1 * (widget.newPRs!.length.clamp(0, 3) / 3);
+    }
+
+    // Bonus for volume
+    if (widget.totalVolumeKg != null && widget.totalVolumeKg! > 5000) {
+      rating += 0.05;
+    }
+
+    return rating.clamp(0.5, 1.0);
   }
 
   Widget _buildPreviewHint() {

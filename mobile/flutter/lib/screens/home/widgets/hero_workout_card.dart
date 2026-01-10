@@ -390,6 +390,192 @@ class _StatChip extends StatelessWidget {
   }
 }
 
+/// Card shown when today's workout is already completed
+/// Shows completion status and the next scheduled workout
+class CompletedWorkoutHeroCard extends ConsumerWidget {
+  final Workout completedWorkout;
+  final Workout nextWorkout;
+  final int daysUntilNext;
+
+  const CompletedWorkoutHeroCard({
+    super.key,
+    required this.completedWorkout,
+    required this.nextWorkout,
+    required this.daysUntilNext,
+  });
+
+  String _getNextWorkoutLabel() {
+    if (daysUntilNext == 1) return 'Tomorrow';
+    if (daysUntilNext == 2) return 'In 2 days';
+    return 'In $daysUntilNext days';
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppColors.purple.withValues(alpha: 0.3),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.purple.withValues(alpha: 0.2),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+              spreadRadius: 2,
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // Completed workout banner
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.15),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(19)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.check_circle_rounded,
+                    size: 18,
+                    color: AppColors.success,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Today\'s workout complete!',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.success,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Next workout content
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Date badge for next workout
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.purple.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _getNextWorkoutLabel().toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.purple,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Next workout name - tappable
+                  GestureDetector(
+                    onTap: () {
+                      HapticService.selection();
+                      GoRouter.of(context).push('/workout/${nextWorkout.id}');
+                    },
+                    child: Text(
+                      nextWorkout.name ?? 'Workout',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Stats row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _StatChip(
+                        icon: Icons.timer_outlined,
+                        label: '${nextWorkout.durationMinutes ?? 45} min',
+                        isDark: isDark,
+                      ),
+                      const SizedBox(width: 16),
+                      _StatChip(
+                        icon: Icons.fitness_center,
+                        label: '${nextWorkout.exerciseCount} exercises',
+                        isDark: isDark,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Preview button (not start since it's not today)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        HapticService.medium();
+                        GoRouter.of(context).push('/workout/${nextWorkout.id}');
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.purple, width: 2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.visibility_outlined, size: 22, color: AppColors.purple),
+                          const SizedBox(width: 8),
+                          Text(
+                            'PREVIEW',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1,
+                              color: AppColors.purple,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Card shown when generating workouts
 class GeneratingHeroCard extends StatelessWidget {
   final String? message;

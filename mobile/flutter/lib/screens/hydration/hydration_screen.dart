@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/hydration.dart';
 import '../../data/repositories/hydration_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/main_shell.dart';
 
 class HydrationScreen extends ConsumerStatefulWidget {
   const HydrationScreen({super.key});
@@ -147,6 +148,9 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
     final electricBlue =
         isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
 
+    // Hide floating nav bar when sheet opens
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
@@ -260,6 +264,9 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
       ),
     );
 
+    // Show floating nav bar when sheet closes
+    ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+
     if (result != null && _userId != null) {
       final success = await ref.read(hydrationProvider.notifier).logHydration(
             userId: _userId!,
@@ -295,6 +302,9 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final electricBlue =
         isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
+
+    // Hide floating nav bar when sheet opens
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
     showModalBottomSheet(
       context: context,
@@ -363,7 +373,10 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
           ],
         ),
       ),
-    );
+    ).whenComplete(() {
+      // Show floating nav bar when sheet closes
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    });
   }
 }
 

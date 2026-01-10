@@ -13,7 +13,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 
 from .state import NutritionAgentState
-from ..tools import analyze_food_image, get_nutrition_summary, get_recent_meals
+from ..tools import analyze_food_image, get_nutrition_summary, get_recent_meals, log_food_from_text
 from ..personality import build_personality_prompt
 from models.chat import AISettings
 from services.gemini_service import GeminiService
@@ -28,6 +28,7 @@ NUTRITION_TOOLS = [
     analyze_food_image,
     get_nutrition_summary,
     get_recent_meals,
+    log_food_from_text,
 ]
 
 # Nutrition expertise base prompt template (coach name is inserted dynamically)
@@ -80,6 +81,7 @@ def should_use_tools(state: NutritionAgentState) -> Literal["agent", "respond"]:
 
     Routes to tools if:
     - There's an image (for food analysis)
+    - User describes food they ate (for logging)
     - User asks about their logged data (summaries, recent meals)
 
     Routes to autonomous response for:
@@ -95,6 +97,20 @@ def should_use_tools(state: NutritionAgentState) -> Literal["agent", "respond"]:
     if has_image:
         logger.info("[Nutrition Router] Image present -> agent (food analysis)")
         return "agent"
+
+    # Check for food logging intent (user describing what they ate)
+    food_logging_patterns = [
+        "i ate", "i had", "i just ate", "i just had",
+        "ate for", "had for", "eating", "just finished eating",
+        "had some", "ate some", "had a", "ate a",
+        "for breakfast", "for lunch", "for dinner", "for snack",
+        "my breakfast", "my lunch", "my dinner",
+        "log this", "log my", "track this",
+    ]
+    for pattern in food_logging_patterns:
+        if pattern in message:
+            logger.info(f"[Nutrition Router] Food logging intent detected: '{pattern}' -> agent")
+            return "agent"
 
     # Check for data queries that need tools
     data_keywords = [
@@ -167,9 +183,17 @@ CONTEXT:
 {context}
 
 AVAILABLE TOOLS:
+- log_food_from_text(user_id, food_description, meal_type) - Log food from text description
+  * IMPORTANT: When user describes food they ate (e.g., "I ate biryani", "had eggs for breakfast"), call this tool
+  * food_description: the food the user mentioned
+  * meal_type: optional (breakfast/lunch/dinner/snack), auto-detected if not provided
 - analyze_food_image(user_id, image_base64, user_message) - Analyze food image to log calories and macros
 - get_nutrition_summary(user_id, date, period) - Get nutrition totals for a day or week
 - get_recent_meals(user_id, limit) - Get recent meal logs
+
+EXAMPLES:
+- "I ate thalapakattu mutton biryani" → Call log_food_from_text(user_id="{state['user_id']}", food_description="thalapakattu mutton biryani")
+- "Had 2 eggs for breakfast" → Call log_food_from_text(user_id="{state['user_id']}", food_description="2 eggs", meal_type="breakfast")
 
 {f'HAS_IMAGE: true - User sent a food image. Call analyze_food_image.' if state.get('image_base64') else 'HAS_IMAGE: false'}
 {f'IMAGE_BASE64: {state["image_base64"][:100]}...' if state.get('image_base64') else ''}

@@ -47,6 +47,9 @@ class TodayWorkoutResponse(BaseModel):
     today_workout: Optional[TodayWorkoutSummary] = None
     next_workout: Optional[TodayWorkoutSummary] = None
     days_until_next: Optional[int] = None
+    # Completed workout info (if user already completed today's workout)
+    completed_today: bool = False
+    completed_workout: Optional[TodayWorkoutSummary] = None
     # Generation status fields
     is_generating: bool = False
     generation_message: Optional[str] = None
@@ -204,7 +207,22 @@ async def get_today_workout(
 
         # JIT Generation Safety Net: If no workouts exist, trigger generation automatically
         # This ensures a workout ALWAYS exists for the user
-        if not has_workout_today and next_workout is None:
+        # BUT: Don't generate if today's workout was already completed (user already did their workout!)
+
+        # Check if a completed workout exists for today
+        completed_today_rows = db.list_workouts(
+            user_id=user_id,
+            from_date=today_str,
+            to_date=today_str,
+            is_completed=True,
+            limit=1,
+        )
+        has_completed_workout_today = len(completed_today_rows) > 0
+
+        if has_completed_workout_today:
+            logger.info(f"[JIT Safety Net] User {user_id} already completed today's workout. Skipping auto-generation.")
+
+        if not has_workout_today and next_workout is None and not has_completed_workout_today:
             logger.info(f"[JIT Safety Net] No workouts exist for user {user_id}. Triggering auto-generation.")
 
             # Check if we have background_tasks available for async generation
@@ -245,11 +263,19 @@ async def get_today_workout(
         except Exception as log_error:
             logger.warning(f"Failed to log quick_start_viewed event: {log_error}")
 
+        # Build completed workout summary if user completed today's workout
+        completed_workout_summary: Optional[TodayWorkoutSummary] = None
+        if has_completed_workout_today:
+            completed_workout_summary = _row_to_summary(completed_today_rows[0])
+            logger.info(f"User completed today's workout: {completed_workout_summary.name}")
+
         return TodayWorkoutResponse(
             has_workout_today=has_workout_today,
             today_workout=today_workout,
             next_workout=next_workout,
             days_until_next=days_until_next,
+            completed_today=has_completed_workout_today,
+            completed_workout=completed_workout_summary,
             is_generating=is_generating,
             generation_message=generation_message,
         )

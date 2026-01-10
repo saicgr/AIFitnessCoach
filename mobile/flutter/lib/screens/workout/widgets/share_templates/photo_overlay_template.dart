@@ -51,7 +51,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
   Widget build(BuildContext context) {
     // Calculate responsive height based on available space
     final screenHeight = MediaQuery.of(context).size.height;
-    final templateHeight = (screenHeight * 0.55).clamp(400.0, 580.0);
+    final templateHeight = (screenHeight * 0.48).clamp(360.0, 480.0);
 
     return Container(
       width: 320,
@@ -93,7 +93,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
               top: 0,
               left: 0,
               right: 0,
-              height: 120,
+              height: 100,
               child: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -110,7 +110,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
 
             // Content overlay
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -124,19 +124,19 @@ class PhotoOverlayTemplate extends StatelessWidget {
                     'WORKOUT COMPLETE',
                     style: TextStyle(
                       color: AppColors.cyan,
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 2,
                     ),
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
 
                   Text(
                     workoutName,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 28,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                       height: 1.1,
                     ),
@@ -144,15 +144,16 @@ class PhotoOverlayTemplate extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
                   // Stats row
                   _buildStatsRow(),
 
-                  const SizedBox(height: 24),
-
-                  // Watermark
-                  if (showWatermark) const AppWatermark(),
+                  if (showWatermark) ...[
+                    const SizedBox(height: 16),
+                    const AppWatermark(),
+                  ] else
+                    const SizedBox(height: 8),
                 ],
               ),
             ),

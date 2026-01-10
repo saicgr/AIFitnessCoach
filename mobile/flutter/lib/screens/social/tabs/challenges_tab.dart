@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/providers/social_provider.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import '../widgets/challenge_card.dart';
 import '../widgets/empty_state.dart';
@@ -17,12 +19,21 @@ class ChallengesTab extends ConsumerStatefulWidget {
 class _ChallengesTabState extends ConsumerState<ChallengesTab>
     with SingleTickerProviderStateMixin {
   late TabController _challengeTabController;
+  String? _userId;
 
   @override
   void initState() {
     super.initState();
     _challengeTabController = TabController(length: 2, vsync: this);
-    // TODO: Load challenges from API
+
+    // Get userId from authStateProvider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+      if (mounted && userId != null) {
+        setState(() => _userId = userId);
+      }
+    });
   }
 
   @override
@@ -34,7 +45,6 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
     return Column(
       children: [
@@ -63,95 +73,158 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
   }
 
   Widget _buildMyChallenges(BuildContext context, bool isDark) {
-    // TODO: Replace with actual data from provider
-    final hasActiveChallenges = false;
-
-    if (!hasActiveChallenges) {
-      return SocialEmptyState(
-        icon: Icons.emoji_events_outlined,
-        title: 'No Active Challenges',
-        description: 'Join a challenge to compete with\nfriends and reach your fitness goals!',
-        actionLabel: 'Browse Challenges',
-        onAction: () {
-          _challengeTabController.animateTo(1);
-        },
-      );
+    if (_userId == null) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 3, // TODO: Replace with actual count
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: ChallengeCard(
-            title: '30-Day Workout Streak',
-            description: 'Complete at least one workout every day for 30 days',
-            challengeType: 'workout_streak',
-            goalValue: 30,
-            goalUnit: 'days',
-            currentValue: 15,
-            progressPercentage: 50,
-            participantCount: 24,
-            daysRemaining: 15,
-            isActive: true,
-            onTap: () => _handleChallengeDetails(),
-          ),
+    final activeChallengesAsync = ref.watch(userActiveChallengesProvider(_userId!));
+
+    return activeChallengesAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) {
+        debugPrint('Error loading active challenges: $error');
+        return SocialEmptyState(
+          icon: Icons.cloud_off_rounded,
+          title: 'Failed to Load Challenges',
+          description: 'Could not load your challenges.\nPlease try again.',
+          actionLabel: 'Retry',
+          onAction: () {
+            ref.invalidate(userActiveChallengesProvider(_userId!));
+          },
+        );
+      },
+      data: (challenges) {
+        if (challenges.isEmpty) {
+          return SocialEmptyState(
+            icon: Icons.emoji_events_outlined,
+            title: 'No Active Challenges',
+            description: 'Join a challenge to compete with\nfriends and reach your fitness goals!',
+            actionLabel: 'Browse Challenges',
+            onAction: () {
+              _challengeTabController.animateTo(1);
+            },
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: challenges.length,
+          itemBuilder: (context, index) {
+            final challenge = challenges[index];
+            final participation = challenge['user_participation'] as Map<String, dynamic>?;
+            final endDate = DateTime.tryParse(challenge['end_date'] as String? ?? '');
+            final daysRemaining = endDate != null
+                ? endDate.difference(DateTime.now()).inDays
+                : 0;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: ChallengeCard(
+                title: challenge['title'] as String? ?? 'Challenge',
+                description: challenge['description'] as String? ?? '',
+                challengeType: challenge['challenge_type'] as String? ?? 'workout_count',
+                goalValue: (challenge['goal_value'] as num?)?.toDouble() ?? 0,
+                goalUnit: challenge['goal_unit'] as String? ?? '',
+                currentValue: (participation?['current_value'] as num?)?.toDouble() ?? 0,
+                progressPercentage: (participation?['progress_percentage'] as num?)?.toDouble() ?? 0,
+                participantCount: challenge['participant_count'] as int? ?? 0,
+                daysRemaining: daysRemaining,
+                isActive: true,
+                onTap: () => _handleChallengeDetails(challenge['id'] as String?),
+              ),
+            );
+          },
         );
       },
     );
   }
 
   Widget _buildDiscoverChallenges(BuildContext context, bool isDark) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        // Create Challenge Button
-        _buildCreateChallengeButton(context, isDark),
+    if (_userId == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-        const SizedBox(height: 16),
+    final challengesAsync = ref.watch(challengesListProvider(_userId!));
 
-        // Section: Popular Challenges
-        Text(
-          'Popular Challenges',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        const SizedBox(height: 12),
+    return challengesAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) {
+        debugPrint('Error loading challenges: $error');
+        return SocialEmptyState(
+          icon: Icons.cloud_off_rounded,
+          title: 'Failed to Load Challenges',
+          description: 'Could not load challenges.\nPlease try again.',
+          actionLabel: 'Retry',
+          onAction: () {
+            ref.invalidate(challengesListProvider(_userId!));
+          },
+        );
+      },
+      data: (challenges) {
+        // Filter out challenges user is already participating in
+        final availableChallenges = challenges
+            .where((c) => c['user_participation'] == null)
+            .toList();
 
-        // TODO: Replace with actual data
-        ...List.generate(5, (index) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: ChallengeCard(
-              title: index.isEven ? 'Push-Up Challenge' : 'Weekly Cardio Goal',
-              description: index.isEven
-                  ? 'Reach 500 total push-ups this month'
-                  : 'Complete 150 minutes of cardio per week',
-              challengeType: index.isEven ? 'total_volume' : 'workout_count',
-              goalValue: index.isEven ? 500 : 150,
-              goalUnit: index.isEven ? 'reps' : 'minutes',
-              currentValue: 0,
-              progressPercentage: 0,
-              participantCount: index * 10 + 50,
-              daysRemaining: 30,
-              isActive: false,
-              onTap: () => _handleJoinChallenge(),
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // Create Challenge Button
+            _buildCreateChallengeButton(context, isDark),
+
+            const SizedBox(height: 16),
+
+            // Section: Popular Challenges
+            Text(
+              'Popular Challenges',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
-          );
-        }),
+            const SizedBox(height: 12),
 
-        // Bottom spacing
-        const SizedBox(height: 100),
-      ],
+            if (availableChallenges.isEmpty)
+              SocialEmptyState(
+                icon: Icons.search_off_rounded,
+                title: 'No Challenges Found',
+                description: 'Be the first to create a challenge!',
+                actionLabel: null,
+                onAction: null,
+              )
+            else
+              ...availableChallenges.map((challenge) {
+                final endDate = DateTime.tryParse(challenge['end_date'] as String? ?? '');
+                final daysRemaining = endDate != null
+                    ? endDate.difference(DateTime.now()).inDays
+                    : 0;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: ChallengeCard(
+                    title: challenge['title'] as String? ?? 'Challenge',
+                    description: challenge['description'] as String? ?? '',
+                    challengeType: challenge['challenge_type'] as String? ?? 'workout_count',
+                    goalValue: (challenge['goal_value'] as num?)?.toDouble() ?? 0,
+                    goalUnit: challenge['goal_unit'] as String? ?? '',
+                    currentValue: 0,
+                    progressPercentage: 0,
+                    participantCount: challenge['participant_count'] as int? ?? 0,
+                    daysRemaining: daysRemaining,
+                    isActive: false,
+                    onTap: () => _handleJoinChallenge(challenge['id'] as String?),
+                  ),
+                );
+              }),
+
+            // Bottom spacing
+            const SizedBox(height: 100),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildCreateChallengeButton(BuildContext context, bool isDark) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -220,18 +293,49 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
     );
   }
 
-  void _handleChallengeDetails() {
+  void _handleChallengeDetails(String? challengeId) {
+    if (challengeId == null) return;
     HapticFeedback.lightImpact();
     // TODO: Navigate to challenge details screen
+    debugPrint('Navigate to challenge details: $challengeId');
   }
 
-  void _handleJoinChallenge() {
+  Future<void> _handleJoinChallenge(String? challengeId) async {
+    if (challengeId == null || _userId == null) return;
     HapticFeedback.mediumImpact();
-    // TODO: Show join challenge dialog
+
+    try {
+      final socialService = ref.read(socialServiceProvider);
+      await socialService.joinChallenge(
+        userId: _userId!,
+        challengeId: challengeId,
+      );
+      _showSnackBar('Joined challenge!');
+      // Refresh both lists
+      ref.invalidate(challengesListProvider(_userId!));
+      ref.invalidate(userActiveChallengesProvider(_userId!));
+      // Switch to My Challenges tab
+      _challengeTabController.animateTo(0);
+    } catch (e) {
+      debugPrint('Error joining challenge: $e');
+      _showSnackBar('Failed to join challenge');
+    }
   }
 
   void _handleCreateChallenge() {
     HapticFeedback.mediumImpact();
     // TODO: Navigate to create challenge screen
+    _showSnackBar('Create challenge feature coming soon!');
+  }
+
+  void _showSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 }

@@ -1863,6 +1863,11 @@ class WorkoutRepository {
     int totalSets = 0,
     int totalReps = 0,
     double totalVolumeKg = 0.0,
+    // Coach personality settings
+    String? coachName,
+    String? coachingStyle,
+    String? communicationTone,
+    double? encouragementLevel,
   }) async {
     try {
       debugPrint('🤖 [Workout] Requesting AI Coach feedback for: $workoutName');
@@ -1875,23 +1880,31 @@ class WorkoutRepository {
         'weight_kg': (ex['weight_kg'] ?? ex['weight'] ?? 0.0).toDouble(),
       }).toList();
 
+      final requestData = {
+        'user_id': userId,
+        'workout_log_id': workoutLogId,
+        'workout_id': workoutId,
+        'workout_name': workoutName,
+        'workout_type': workoutType,
+        'exercises': exercisesList,
+        'total_time_seconds': totalTimeSeconds,
+        'total_rest_seconds': totalRestSeconds,
+        'avg_rest_seconds': avgRestSeconds,
+        'calories_burned': caloriesBurned,
+        'total_sets': totalSets,
+        'total_reps': totalReps,
+        'total_volume_kg': totalVolumeKg,
+      };
+
+      // Add coach personality settings if provided
+      if (coachName != null) requestData['coach_name'] = coachName;
+      if (coachingStyle != null) requestData['coaching_style'] = coachingStyle;
+      if (communicationTone != null) requestData['communication_tone'] = communicationTone;
+      if (encouragementLevel != null) requestData['encouragement_level'] = encouragementLevel;
+
       final response = await _apiClient.post(
         '/feedback/ai-coach',
-        data: {
-          'user_id': userId,
-          'workout_log_id': workoutLogId,
-          'workout_id': workoutId,
-          'workout_name': workoutName,
-          'workout_type': workoutType,
-          'exercises': exercisesList,
-          'total_time_seconds': totalTimeSeconds,
-          'total_rest_seconds': totalRestSeconds,
-          'avg_rest_seconds': avgRestSeconds,
-          'calories_burned': caloriesBurned,
-          'total_sets': totalSets,
-          'total_reps': totalReps,
-          'total_volume_kg': totalVolumeKg,
-        },
+        data: requestData,
         options: Options(
           receiveTimeout: const Duration(seconds: 60), // AI generation can take time
         ),

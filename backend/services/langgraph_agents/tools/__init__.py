@@ -28,6 +28,7 @@ from .nutrition_tools import (
     analyze_food_image,
     get_nutrition_summary,
     get_recent_meals,
+    log_food_from_text,
 )
 
 from .base import get_vision_service
@@ -51,6 +52,7 @@ ALL_TOOLS = [
     analyze_food_image,
     get_nutrition_summary,
     get_recent_meals,
+    log_food_from_text,
 ]
 
 # Tool name to function mapping
@@ -74,6 +76,7 @@ __all__ = [
     "analyze_food_image",
     "get_nutrition_summary",
     "get_recent_meals",
+    "log_food_from_text",
     # Utilities
     "get_vision_service",
     # Registry

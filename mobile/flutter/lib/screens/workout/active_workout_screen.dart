@@ -2681,19 +2681,14 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     }
 
     if (mounted) {
-      // Log what we're passing to workout complete screen
-      debugPrint('🏋️ [Complete] Navigating to workout-complete with:');
-      debugPrint('🏋️ [Complete] workoutLogId: $workoutLogId');
-      debugPrint('🏋️ [Complete] workoutId: ${widget.workout.id}');
-      debugPrint('🏋️ [Complete] exercisesPerformance: ${exercisesPerformance.length} exercises');
-      debugPrint('🏋️ [Complete] totalSets: $totalCompletedSets, totalReps: $totalReps, totalVolumeKg: $totalVolumeKg');
-      debugPrint('🏋️ [Complete] personalRecords: ${personalRecords?.length ?? 0} PRs');
-      debugPrint('🏋️ [Complete] performanceComparison: ${performanceComparison != null ? "${performanceComparison.improvedCount} improved, ${performanceComparison.declinedCount} declined" : "null"}');
+      // Calculate final calories burned (6 kcal/min as baseline, adjusted for intensity)
+      // For strength training: ~6 kcal/min for moderate intensity
+      final finalCaloriesBurned = (_workoutSeconds / 60 * 6).round();
 
       context.go('/workout-complete', extra: {
         'workout': widget.workout,
         'duration': _workoutSeconds,
-        'calories': _totalCaloriesBurned,
+        'calories': finalCaloriesBurned,
         'drinkIntakeMl': _totalDrinkIntakeMl,
         'restIntervals': _restIntervals.length,
         // AI Coach feedback data
@@ -3784,12 +3779,15 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
             SizedBox(height: spacing),
           ],
 
-          // Top row: Close, title, pause - more compact
+          // Top row: Minimize, title, pause - more compact
           Row(
             children: [
               _GlassButton(
-                icon: Icons.close,
-                onTap: _showQuitDialog,
+                icon: Icons.keyboard_arrow_down,
+                onTap: () {
+                  // Minimize workout - go back but keep timer running
+                  Navigator.of(context).pop();
+                },
                 size: isCompact ? 28.0 : 32.0,
                 isSubdued: true,
               ),

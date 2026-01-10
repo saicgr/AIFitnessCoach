@@ -238,111 +238,176 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
   }
 
   Widget _buildFriendsList(BuildContext context, bool isDark) {
-    // TODO: Replace with actual data from provider
-    final hasFriends = false;
-
-    if (!hasFriends) {
-      return SocialEmptyState(
-        icon: Icons.people_rounded,
-        title: 'No Friends Yet',
-        description: 'Add friends to see their workouts\nand compete in challenges together!',
-        actionLabel: 'Find Friends',
-        onAction: () => _handleFindFriends(),
-      );
+    if (_userId == null) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 10, // TODO: Replace with actual count
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: FriendCard(
-            name: 'John Doe',
-            avatarUrl: null,
-            bio: 'Fitness enthusiast',
-            currentStreak: 15,
-            totalWorkouts: 150,
-            totalAchievements: 24,
-            isFriend: true,
-            isFollowing: true,
-            onTap: () => _handleUserProfile(),
-            onFollow: () => _handleFollow(),
-          ),
+    final friendsAsync = ref.watch(friendsListProvider(_userId!));
+
+    return friendsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) {
+        debugPrint('Error loading friends: $error');
+        return SocialEmptyState(
+          icon: Icons.cloud_off_rounded,
+          title: 'Failed to Load Friends',
+          description: 'Could not load your friends list.\nPlease try again.',
+          actionLabel: 'Retry',
+          onAction: () {
+            ref.invalidate(friendsListProvider(_userId!));
+          },
+        );
+      },
+      data: (friends) {
+        if (friends.isEmpty) {
+          return SocialEmptyState(
+            icon: Icons.people_rounded,
+            title: 'No Friends Yet',
+            description: 'Add friends to see their workouts\nand compete in challenges together!',
+            actionLabel: 'Find Friends',
+            onAction: () => _handleFindFriends(),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: friends.length,
+          itemBuilder: (context, index) {
+            final friend = friends[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: FriendCard(
+                name: friend['name'] as String? ?? 'Unknown',
+                avatarUrl: friend['avatar_url'] as String?,
+                bio: friend['bio'] as String?,
+                currentStreak: friend['current_streak'] as int? ?? 0,
+                totalWorkouts: friend['total_workouts'] as int? ?? 0,
+                totalAchievements: friend['total_achievements'] as int? ?? 0,
+                isFriend: true,
+                isFollowing: true,
+                onTap: () => _handleUserProfile(friend['id'] as String?),
+                onFollow: () {}, // Already friends
+              ),
+            );
+          },
         );
       },
     );
   }
 
   Widget _buildFollowersList(BuildContext context, bool isDark) {
-    // TODO: Replace with actual data
-    final hasFollowers = false;
-
-    if (!hasFollowers) {
-      return SocialEmptyState(
-        icon: Icons.person_add_outlined,
-        title: 'No Followers Yet',
-        description: 'Keep crushing your workouts!\nFriends will want to follow your progress.',
-        actionLabel: null,
-        onAction: null,
-      );
+    if (_userId == null) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 5,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: FriendCard(
-            name: 'Jane Smith',
-            avatarUrl: null,
-            bio: 'Beginner',
-            currentStreak: 7,
-            totalWorkouts: 20,
-            totalAchievements: 5,
-            isFriend: false,
-            isFollowing: false,
-            onTap: () => _handleUserProfile(),
-            onFollow: () => _handleFollow(),
-          ),
+    final followersAsync = ref.watch(followersListProvider(_userId!));
+
+    return followersAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) {
+        debugPrint('Error loading followers: $error');
+        return SocialEmptyState(
+          icon: Icons.cloud_off_rounded,
+          title: 'Failed to Load Followers',
+          description: 'Could not load your followers list.\nPlease try again.',
+          actionLabel: 'Retry',
+          onAction: () {
+            ref.invalidate(followersListProvider(_userId!));
+          },
+        );
+      },
+      data: (followers) {
+        if (followers.isEmpty) {
+          return SocialEmptyState(
+            icon: Icons.person_add_outlined,
+            title: 'No Followers Yet',
+            description: 'Keep crushing your workouts!\nFriends will want to follow your progress.',
+            actionLabel: null,
+            onAction: null,
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: followers.length,
+          itemBuilder: (context, index) {
+            final follower = followers[index];
+            final userProfile = follower['user_profile'] as Map<String, dynamic>?;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: FriendCard(
+                name: userProfile?['name'] as String? ?? 'Unknown',
+                avatarUrl: userProfile?['avatar_url'] as String?,
+                bio: follower['bio'] as String?,
+                currentStreak: follower['current_streak'] as int? ?? 0,
+                totalWorkouts: follower['total_workouts'] as int? ?? 0,
+                totalAchievements: follower['total_achievements'] as int? ?? 0,
+                isFriend: false,
+                isFollowing: false,
+                onTap: () => _handleUserProfile(userProfile?['id'] as String?),
+                onFollow: () => _handleFollow(userProfile?['id'] as String?),
+              ),
+            );
+          },
         );
       },
     );
   }
 
   Widget _buildFollowingList(BuildContext context, bool isDark) {
-    // TODO: Replace with actual data
-    final hasFollowing = false;
-
-    if (!hasFollowing) {
-      return SocialEmptyState(
-        icon: Icons.person_search_outlined,
-        title: 'Not Following Anyone',
-        description: 'Follow friends to see their workouts\nand stay motivated together!',
-        actionLabel: 'Find Friends',
-        onAction: () => _handleFindFriends(),
-      );
+    if (_userId == null) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 8,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: FriendCard(
-            name: 'Alex Johnson',
-            avatarUrl: null,
-            bio: 'Powerlifter',
-            currentStreak: 45,
-            totalWorkouts: 300,
-            totalAchievements: 50,
-            isFriend: index.isEven,
-            isFollowing: true,
-            onTap: () => _handleUserProfile(),
-            onFollow: () => _handleUnfollow(),
-          ),
+    final followingAsync = ref.watch(followingListProvider(_userId!));
+
+    return followingAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) {
+        debugPrint('Error loading following: $error');
+        return SocialEmptyState(
+          icon: Icons.cloud_off_rounded,
+          title: 'Failed to Load Following',
+          description: 'Could not load users you follow.\nPlease try again.',
+          actionLabel: 'Retry',
+          onAction: () {
+            ref.invalidate(followingListProvider(_userId!));
+          },
+        );
+      },
+      data: (following) {
+        if (following.isEmpty) {
+          return SocialEmptyState(
+            icon: Icons.person_search_outlined,
+            title: 'Not Following Anyone',
+            description: 'Follow friends to see their workouts\nand stay motivated together!',
+            actionLabel: 'Find Friends',
+            onAction: () => _handleFindFriends(),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: following.length,
+          itemBuilder: (context, index) {
+            final follow = following[index];
+            final userProfile = follow['user_profile'] as Map<String, dynamic>?;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: FriendCard(
+                name: userProfile?['name'] as String? ?? 'Unknown',
+                avatarUrl: userProfile?['avatar_url'] as String?,
+                bio: follow['bio'] as String?,
+                currentStreak: follow['current_streak'] as int? ?? 0,
+                totalWorkouts: follow['total_workouts'] as int? ?? 0,
+                totalAchievements: follow['total_achievements'] as int? ?? 0,
+                isFriend: false,
+                isFollowing: true,
+                onTap: () => _handleUserProfile(userProfile?['id'] as String?),
+                onFollow: () => _handleUnfollow(userProfile?['id'] as String?),
+              ),
+            );
+          },
         );
       },
     );
@@ -356,18 +421,52 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
     );
   }
 
-  void _handleUserProfile() {
+  void _handleUserProfile(String? targetUserId) {
+    if (targetUserId == null) return;
     HapticFeedback.lightImpact();
     // TODO: Navigate to user profile screen
+    debugPrint('Navigate to user profile: $targetUserId');
   }
 
-  void _handleFollow() {
+  Future<void> _handleFollow(String? targetUserId) async {
+    if (targetUserId == null || _userId == null) return;
     HapticFeedback.mediumImpact();
-    // TODO: Send follow request to API
+
+    try {
+      final socialService = ref.read(socialServiceProvider);
+      await socialService.followUser(
+        userId: _userId!,
+        followingId: targetUserId,
+      );
+      _showSnackBar('Now following user');
+      // Refresh the lists
+      ref.invalidate(followersListProvider(_userId!));
+      ref.invalidate(followingListProvider(_userId!));
+      ref.invalidate(friendsListProvider(_userId!));
+    } catch (e) {
+      debugPrint('Error following user: $e');
+      _showSnackBar('Failed to follow user');
+    }
   }
 
-  void _handleUnfollow() {
+  Future<void> _handleUnfollow(String? targetUserId) async {
+    if (targetUserId == null || _userId == null) return;
     HapticFeedback.mediumImpact();
-    // TODO: Unfollow user via API
+
+    try {
+      final socialService = ref.read(socialServiceProvider);
+      await socialService.unfollowUser(
+        userId: _userId!,
+        followingId: targetUserId,
+      );
+      _showSnackBar('Unfollowed user');
+      // Refresh the lists
+      ref.invalidate(followersListProvider(_userId!));
+      ref.invalidate(followingListProvider(_userId!));
+      ref.invalidate(friendsListProvider(_userId!));
+    } catch (e) {
+      debugPrint('Error unfollowing user: $e');
+      _showSnackBar('Failed to unfollow user');
+    }
   }
 }
