@@ -98,6 +98,9 @@ dependencies:
   # Muscle Selector (Human Body Diagram)
   muscle_selector: ^1.0.4
 
+  # Liquid Progress Indicator (for hydration body animation)
+  liquid_progress_indicator_v2: ^0.5.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

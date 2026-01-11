@@ -3,28 +3,37 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/exercise_preferences_repository.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 
 /// State for staple exercises
 class StaplesState {
   final List<StapleExercise> staples;
   final bool isLoading;
+  final bool isRegenerating;
+  final String? regenerationMessage;
   final String? error;
 
   const StaplesState({
     this.staples = const [],
     this.isLoading = false,
+    this.isRegenerating = false,
+    this.regenerationMessage,
     this.error,
   });
 
   StaplesState copyWith({
     List<StapleExercise>? staples,
     bool? isLoading,
+    bool? isRegenerating,
+    String? regenerationMessage,
     String? error,
   }) {
     return StaplesState(
       staples: staples ?? this.staples,
       isLoading: isLoading ?? this.isLoading,
+      isRegenerating: isRegenerating ?? this.isRegenerating,
+      regenerationMessage: regenerationMessage ?? this.regenerationMessage,
       error: error,
     );
   }
@@ -100,16 +109,65 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
         staples: [...state.staples, staple],
       );
 
-      // Invalidate workout providers to trigger reload with new staple
-      // The backend clears future incomplete workouts, so this will regenerate them
+      debugPrint('⭐ Staple added: $exerciseName - triggering workout regeneration');
+
+      // Auto-regenerate workouts with the new staple
+      await _regenerateUpcomingWorkouts(userId);
+
+      // Invalidate providers to refresh UI with new workouts
       _ref.invalidate(todayWorkoutProvider);
       _ref.invalidate(workoutsProvider);
-      debugPrint('⭐ Staple added - invalidated workout providers for regeneration');
 
       return true;
     } catch (e) {
       debugPrint('Error adding staple: $e');
+      state = state.copyWith(isRegenerating: false, regenerationMessage: null);
       return false;
+    }
+  }
+
+  /// Regenerate upcoming workouts to include the new staple exercise
+  Future<void> _regenerateUpcomingWorkouts(String userId) async {
+    try {
+      state = state.copyWith(
+        isRegenerating: true,
+        regenerationMessage: 'Regenerating workouts with staple...',
+      );
+
+      // Get user's selected workout days from preferences
+      final authState = _ref.read(authStateProvider);
+      final user = authState.user;
+      final selectedDays = user?.workoutDays ?? [0, 1, 2, 3, 4]; // Default Mon-Fri
+
+      // Convert from 0=Mon to 1=Mon format if needed by API
+      final apiDays = selectedDays.map((d) => d + 1).toList();
+
+      final workoutRepo = _ref.read(workoutRepositoryProvider);
+
+      // Generate workouts for upcoming days (max 7)
+      await for (final progress in workoutRepo.generateMonthlyWorkoutsStreaming(
+        userId: userId,
+        selectedDays: apiDays,
+        maxWorkouts: 7,
+      )) {
+        debugPrint('🏋️ Regeneration: ${progress.message}');
+        state = state.copyWith(
+          regenerationMessage: progress.message,
+        );
+      }
+
+      debugPrint('✅ Workouts regenerated with new staple');
+      state = state.copyWith(
+        isRegenerating: false,
+        regenerationMessage: null,
+      );
+    } catch (e) {
+      debugPrint('❌ Failed to regenerate workouts: $e');
+      state = state.copyWith(
+        isRegenerating: false,
+        regenerationMessage: null,
+      );
+      // Don't fail the staple addition if regeneration fails
     }
   }
 

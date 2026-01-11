@@ -79,24 +79,79 @@ class StapleExercisesScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.add, color: AppColors.cyan),
-            onPressed: () => _showAddExercisePicker(context, ref),
+            onPressed: staplesState.isRegenerating
+                ? null
+                : () => _showAddExercisePicker(context, ref),
             tooltip: 'Add staple',
           ),
         ],
       ),
-      body: staplesState.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : staplesState.staples.isEmpty
-              ? _buildEmptyState(context, ref, textMuted)
-              : _buildStaplesList(
-                  context,
-                  ref,
-                  staplesState.staples,
-                  isDark,
-                  textPrimary,
-                  textMuted,
-                  elevated,
+      body: Stack(
+        children: [
+          staplesState.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : staplesState.staples.isEmpty
+                  ? _buildEmptyState(context, ref, textMuted)
+                  : _buildStaplesList(
+                      context,
+                      ref,
+                      staplesState.staples,
+                      isDark,
+                      textPrimary,
+                      textMuted,
+                      elevated,
+                    ),
+          // Regeneration overlay
+          if (staplesState.isRegenerating)
+            _buildRegenerationOverlay(context, staplesState.regenerationMessage, isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRegenerationOverlay(BuildContext context, String? message, bool isDark) {
+    return Container(
+      color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.85),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.cyan),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Regenerating Workouts',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                message ?? 'Adding staple to upcoming workouts...',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
                 ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'This may take a moment',
+              style: TextStyle(
+                fontSize: 12,
+                color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted)
+                    .withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

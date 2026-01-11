@@ -219,7 +219,13 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     label: 'Home',
                     isSelected: selectedIndex == 0,
                     labelsExpanded: labelsExpanded,
-                    onTap: () => onItemTapped(0),
+                    onTap: () {
+                      // Reset labels to expanded when navigating to Home
+                      if (!labelsExpanded) {
+                        ref.read(navBarLabelsExpandedProvider.notifier).state = true;
+                      }
+                      onItemTapped(0);
+                    },
                     itemHeight: itemHeight,
                     selectedColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
                   ),

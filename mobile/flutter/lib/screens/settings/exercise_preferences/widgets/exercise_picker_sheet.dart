@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/repositories/library_repository.dart';
+import '../../../../widgets/exercise_image.dart';
 
 /// The type of exercise preference being selected
 enum ExercisePickerType {
@@ -126,12 +126,27 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
     }
   }
 
+  /// Icon for the header badge
   IconData get _icon {
     switch (widget.type) {
       case ExercisePickerType.favorite:
         return Icons.favorite_border;
       case ExercisePickerType.staple:
-        return Icons.lock_outline;
+        return Icons.push_pin_outlined; // Different from action icon to avoid confusion
+      case ExercisePickerType.queue:
+        return Icons.add_circle_outline;
+      case ExercisePickerType.avoided:
+        return Icons.block_outlined;
+    }
+  }
+
+  /// Icon shown on each exercise card's action button (unselected/add state)
+  IconData get _actionIcon {
+    switch (widget.type) {
+      case ExercisePickerType.favorite:
+        return Icons.favorite_border;
+      case ExercisePickerType.staple:
+        return Icons.lock_open; // Open lock = tap to lock in
       case ExercisePickerType.queue:
         return Icons.add_circle_outline;
       case ExercisePickerType.avoided:
@@ -183,13 +198,8 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
   void _selectExercise(LibraryExerciseItem exercise) {
     HapticFeedback.lightImpact();
 
-    // For staples, show reason picker first
-    if (widget.type == ExercisePickerType.staple) {
-      _showStapleReasonPicker(exercise);
-      return;
-    }
-
-    // For other types, return immediately
+    // Return result directly - staples no longer need reason picker
+    // Staples are now always included in every workout regardless of reason
     Navigator.pop(
       context,
       ExercisePickerResult(
@@ -197,6 +207,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
         exerciseId: exercise.id,
         muscleGroup: exercise.targetMuscle ?? exercise.bodyPart,
         targetMuscleGroup: exercise.targetMuscle ?? exercise.bodyPart,
+        reason: widget.type == ExercisePickerType.staple ? 'staple' : null,
       ),
     );
   }
@@ -478,7 +489,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                               return _ExerciseCard(
                                 exercise: exercise,
                                 accentColor: _accentColor,
-                                actionIcon: _icon,
+                                actionIcon: _actionIcon,
                                 textPrimary: textPrimary,
                                 textMuted: textMuted,
                                 onTap: () => _selectExercise(exercise),
@@ -558,31 +569,14 @@ class _ExerciseCard extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                // GIF
-                Container(
+                // Exercise image (fetches presigned URL from API)
+                ExerciseImage(
+                  exerciseName: exercise.name,
                   width: 60,
                   height: 60,
-                  decoration: BoxDecoration(
-                    color: glassSurface,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  clipBehavior: Clip.hardEdge,
-                  child: (exercise.gifUrl != null || exercise.imageUrl != null)
-                      ? CachedNetworkImage(
-                          imageUrl: exercise.gifUrl ?? exercise.imageUrl!,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) => const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                          errorWidget: (_, __, ___) => Icon(
-                            Icons.fitness_center,
-                            color: textMuted,
-                          ),
-                        )
-                      : Icon(
-                          Icons.fitness_center,
-                          color: textMuted,
-                        ),
+                  borderRadius: 8,
+                  backgroundColor: glassSurface,
+                  iconColor: textMuted,
                 ),
                 const SizedBox(width: 12),
 

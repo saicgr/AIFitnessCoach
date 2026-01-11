@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/models/exercise.dart';
@@ -8,6 +7,7 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/repositories/library_repository.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/exercise_image.dart';
 
 /// Shows exercise swap sheet with AI suggestions
 Future<Workout?> showExerciseSwapSheet(
@@ -237,22 +237,13 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                   ),
                   child: Row(
                     children: [
-                      Container(
+                      ExerciseImage(
+                        exerciseName: widget.exercise.name,
                         width: 50,
                         height: 50,
-                        decoration: BoxDecoration(
-                          color: glassSurface,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        clipBehavior: Clip.hardEdge,
-                        child: widget.exercise.gifUrl != null && widget.exercise.gifUrl!.isNotEmpty
-                            ? CachedNetworkImage(
-                                imageUrl: widget.exercise.gifUrl!,
-                                fit: BoxFit.cover,
-                                placeholder: (_, __) => Icon(Icons.fitness_center, color: textMuted),
-                                errorWidget: (_, __, ___) => Icon(Icons.fitness_center, color: textMuted),
-                              )
-                            : Icon(Icons.fitness_center, color: textMuted),
+                        borderRadius: 8,
+                        backgroundColor: glassSurface,
+                        iconColor: textMuted,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -413,7 +404,6 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         final rank = suggestion['rank'] ?? (index + 1);
         final equipment = suggestion['equipment'] ?? '';
         final targetMuscle = suggestion['target_muscle'] ?? suggestion['body_part'] ?? '';
-        final gifUrl = suggestion['gif_url'] as String?;
 
         // Create subtitle from reason or equipment/muscle info
         final subtitle = reason.isNotEmpty
@@ -437,7 +427,6 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         return _ExerciseOptionCard(
           name: name,
           subtitle: subtitle,
-          gifUrl: gifUrl,
           badge: badge,
           badgeColor: badgeColor,
           onTap: () => _swapExercise(name),
@@ -495,7 +484,6 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                         return _ExerciseOptionCard(
                           name: exercise.name,
                           subtitle: exercise.targetMuscle ?? exercise.bodyPart ?? '',
-                          gifUrl: exercise.gifUrl,
                           badge: exercise.equipment ?? 'Bodyweight',
                           badgeColor: AppColors.purple,
                           onTap: () => _swapExercise(exercise.name),
@@ -510,10 +498,9 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
   }
 }
 
-class _ExerciseOptionCard extends StatelessWidget {
+class _ExerciseOptionCard extends ConsumerWidget {
   final String name;
   final String subtitle;
-  final String? gifUrl;
   final String badge;
   final Color badgeColor;
   final VoidCallback onTap;
@@ -523,7 +510,6 @@ class _ExerciseOptionCard extends StatelessWidget {
   const _ExerciseOptionCard({
     required this.name,
     required this.subtitle,
-    this.gifUrl,
     required this.badge,
     required this.badgeColor,
     required this.onTap,
@@ -532,7 +518,7 @@ class _ExerciseOptionCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBackground = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
@@ -549,31 +535,14 @@ class _ExerciseOptionCard extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                // GIF
-                Container(
+                // Exercise image (fetches presigned URL from API)
+                ExerciseImage(
+                  exerciseName: name,
                   width: 60,
                   height: 60,
-                  decoration: BoxDecoration(
-                    color: glassSurface,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  clipBehavior: Clip.hardEdge,
-                  child: gifUrl != null
-                      ? CachedNetworkImage(
-                          imageUrl: gifUrl!,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) => const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                          errorWidget: (_, __, ___) => Icon(
-                            Icons.fitness_center,
-                            color: textMuted,
-                          ),
-                        )
-                      : Icon(
-                          Icons.fitness_center,
-                          color: textMuted,
-                        ),
+                  borderRadius: 8,
+                  backgroundColor: glassSurface,
+                  iconColor: textMuted,
                 ),
                 const SizedBox(width: 12),
 

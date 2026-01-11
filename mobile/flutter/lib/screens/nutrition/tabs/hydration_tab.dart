@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/hydration.dart';
 import '../../../data/repositories/hydration_repository.dart';
-import '../widgets/body_hydration_animation.dart';
+import '../widgets/liquid_body_hydration.dart';
 
 /// Hydration unit for display conversion
 enum HydrationUnit {
@@ -226,10 +226,11 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
     final percentage = goalMl > 0 ? (currentMl / goalMl).clamp(0.0, 1.0) : 0.0;
 
     return Center(
-      child: BodyHydrationAnimation(
+      child: LiquidBodyHydration(
         fillPercentage: percentage,
         isDark: widget.isDark,
-        size: 160,
+        width: 180,
+        height: 260,
       ),
     );
   }

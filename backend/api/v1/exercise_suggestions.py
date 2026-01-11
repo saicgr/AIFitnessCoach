@@ -80,7 +80,7 @@ class SuggestionResponse(BaseModel):
 
 @router.post("/suggest", response_model=SuggestionResponse)
 @limiter.limit("5/minute")
-async def get_exercise_suggestions(http_request: Request, request: SuggestionRequest):
+async def get_exercise_suggestions(request: Request, body: SuggestionRequest):
     """
     Get AI-powered exercise suggestions.
 
@@ -95,20 +95,20 @@ async def get_exercise_suggestions(http_request: Request, request: SuggestionReq
     - "I want something easier" -> finds lower difficulty alternatives
     - "Give me variety" -> finds different exercises targeting same muscle
     """
-    logger.info(f"Exercise suggestion request: {request.message[:50]}...")
+    logger.info(f"Exercise suggestion request: {body.message[:50]}...")
 
     try:
         graph = get_suggestion_graph()
 
         # Build initial state
         initial_state: ExerciseSuggestionState = {
-            "user_id": request.user_id,
-            "user_message": request.message,
-            "current_exercise": request.current_exercise.model_dump(),
-            "user_equipment": request.user_equipment,
-            "user_injuries": request.user_injuries,
-            "user_fitness_level": request.user_fitness_level,
-            "avoided_exercises": request.avoided_exercises,  # Pass avoided exercises to filter
+            "user_id": body.user_id,
+            "user_message": body.message,
+            "current_exercise": body.current_exercise.model_dump(),
+            "user_equipment": body.user_equipment,
+            "user_injuries": body.user_injuries,
+            "user_fitness_level": body.user_fitness_level,
+            "avoided_exercises": body.avoided_exercises,  # Pass avoided exercises to filter
             # Will be filled by nodes
             "swap_reason": None,
             "target_muscle_group": None,

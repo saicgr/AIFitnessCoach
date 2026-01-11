@@ -1560,39 +1560,18 @@ The user prefers to minimize exercises for these muscle groups:
 
 Include at most 1 exercise targeting these muscles, and prefer compound movements over isolation."""
 
-        # Staple exercises - exercises user wants to always include when appropriate
+        # Staple exercises - exercises user wants to ALWAYS include in every workout
         if staple_exercises and len(staple_exercises) > 0:
             staple_names = [s.get("name", s) if isinstance(s, dict) else s for s in staple_exercises]
-            logger.info(f"⭐ [Gemini Service] User has {len(staple_exercises)} staple exercises: {staple_names}")
-
-            # Format staples with reasons for better AI understanding
-            staple_lines = []
-            for s in staple_exercises:
-                if isinstance(s, dict):
-                    name = s.get("name", "Unknown")
-                    reason = s.get("reason", "favorite")
-                    reason_label = {
-                        "core_compound": "Core Compound - ALWAYS include when targeting this muscle group",
-                        "favorite": "Personal Favorite",
-                        "rehab": "Rehab/Recovery - use controlled form",
-                        "strength_focus": "Strength Focus - prioritize for progressive overload",
-                        "other": "User Preference",
-                    }.get(reason, reason)
-                    staple_lines.append(f"  - {name} ({reason_label})")
-                else:
-                    staple_lines.append(f"  - {s}")
+            logger.info(f"⭐ [Gemini Service] User has {len(staple_exercises)} MANDATORY staple exercises: {staple_names}")
 
             preference_constraints_instruction += f"""
 
-⭐ USER'S STAPLE EXERCISES:
-The user has marked these as their preferred exercises with specific reasons. Include them when they match the workout focus:
-{chr(10).join(staple_lines)}
+⭐ USER'S STAPLE EXERCISES - MANDATORY INCLUSION:
+The user has marked these exercises as STAPLES. You MUST include ALL of them in EVERY workout:
+{chr(10).join(f'  - {name}' for name in staple_names)}
 
-STAPLE PRIORITIZATION:
-- "Core Compound" staples: MUST be included if the workout targets that muscle group
-- "Strength Focus" staples: Prioritize for compound movements
-- "Rehab/Recovery" staples: Include with lower intensity and focus on form
-- Other staples: Include when appropriate for variety"""
+CRITICAL: Staple exercises are NON-NEGOTIABLE. Include every staple exercise listed above, regardless of the workout's target muscle group or training split."""
 
         # Build comeback instruction for users returning from extended breaks
         comeback_instruction = ""
@@ -1955,8 +1934,8 @@ If user has gym equipment - most exercises MUST use that equipment!"""
                     preference_constraints += f"\n⚠️ MUSCLES TO MINIMIZE: {', '.join(reduce_usage)}"
 
             if staple_exercises and len(staple_exercises) > 0:
-                logger.info(f"⭐ [Streaming] User has {len(staple_exercises)} staple exercises")
-                preference_constraints += f"\n⭐ USER'S PREFERRED EXERCISES (include if matching focus): {', '.join(staple_exercises[:5])}"
+                logger.info(f"⭐ [Streaming] User has {len(staple_exercises)} MANDATORY staple exercises")
+                preference_constraints += f"\n⭐ MANDATORY STAPLE EXERCISES - MUST include ALL: {', '.join(staple_exercises)}"
 
             # Add progression philosophy if provided
             progression_instruction = ""
