@@ -214,7 +214,25 @@ async def log_window_mode(user_id: str, request: WindowModeLogRequest):
     except HTTPException:
         raise
     except Exception as e:
+        error_str = str(e)
         logger.error(f"Failed to log window mode for user {user_id}: {e}")
+
+        # Handle FK violation gracefully - user doesn't exist in users table
+        # This is analytics-only data, so we should not return 500 to the client
+        if "foreign key constraint" in error_str.lower() or "23503" in error_str:
+            logger.warning(f"User {user_id} not found in users table - skipping window mode log")
+            # Return a fake success response since this is just analytics
+            # The client doesn't need to know about this data integrity issue
+            return WindowModeLogResponse(
+                id="skipped",
+                user_id=user_id,
+                mode=request.mode,
+                window_width=request.width,
+                window_height=request.height,
+                logged_at=datetime.utcnow().isoformat(),
+                success=False,  # Indicate it wasn't actually saved
+            )
+
         await log_user_error(
             user_id=user_id,
             action="window_mode_log",
