@@ -130,17 +130,17 @@ def get_all_equipment(user: dict) -> List[str]:
 
 def enrich_exercises_with_video_urls(exercises: List[Dict], db=None) -> List[Dict]:
     """
-    Enrich exercises with video URLs from the exercise library.
+    Enrich exercises with video/image URLs from the exercise library.
 
     This function looks up each exercise by name in the exercise_library_cleaned view
-    and populates gif_url and video_url if missing.
+    and populates gif_url, video_url, and image_s3_path if missing.
 
     Args:
         exercises: List of exercise dictionaries
         db: Optional Supabase database connection (will create if not provided)
 
     Returns:
-        List of exercises with video URLs populated
+        List of exercises with media URLs populated
     """
     if not exercises:
         return exercises
@@ -163,14 +163,14 @@ def enrich_exercises_with_video_urls(exercises: List[Dict], db=None) -> List[Dic
         return exercises
 
     try:
-        # Fetch video URLs from exercise_library_cleaned view
-        # Use ilike for case-insensitive matching
+        # Fetch media URLs from exercise_library_cleaned view
+        # image_url in the view is from image_s3_path column
         result = db.client.table("exercise_library_cleaned").select(
-            "name, gif_url, video_url"
+            "name, gif_url, video_url, image_url"
         ).execute()
 
         if not result.data:
-            logger.debug("No exercises found in library for video enrichment")
+            logger.debug("No exercises found in library for media enrichment")
             return exercises
 
         # Build a lookup map (lowercase name -> urls)
@@ -181,6 +181,7 @@ def enrich_exercises_with_video_urls(exercises: List[Dict], db=None) -> List[Dic
                 url_map[lib_name] = {
                     "gif_url": row.get("gif_url"),
                     "video_url": row.get("video_url"),
+                    "image_s3_path": row.get("image_url"),  # Map image_url to image_s3_path
                 }
 
         # Enrich exercises
@@ -196,12 +197,15 @@ def enrich_exercises_with_video_urls(exercises: List[Dict], db=None) -> List[Dic
                 if not ex.get("video_url") and urls.get("video_url"):
                     ex["video_url"] = urls["video_url"]
                     enriched_count += 1
+                if not ex.get("image_s3_path") and urls.get("image_s3_path"):
+                    ex["image_s3_path"] = urls["image_s3_path"]
+                    enriched_count += 1
 
         if enriched_count > 0:
-            logger.info(f"✅ Enriched {enriched_count} exercise URLs from library")
+            logger.info(f"✅ Enriched {enriched_count} exercise media URLs from library")
 
     except Exception as e:
-        logger.warning(f"⚠️ Failed to enrich exercises with video URLs: {e}")
+        logger.warning(f"⚠️ Failed to enrich exercises with media URLs: {e}")
         # Don't fail - just return exercises without enrichment
 
     return exercises

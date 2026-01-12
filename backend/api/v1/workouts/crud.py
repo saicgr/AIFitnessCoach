@@ -434,10 +434,13 @@ async def complete_workout(
 
         user_id = existing.get("user_id")
 
-        # Mark workout as completed
+        # Mark workout as completed with timestamp
+        from datetime import timezone
+        now = datetime.now(timezone.utc)
         update_data = {
             "is_completed": True,
-            "last_modified_at": datetime.now().isoformat(),
+            "completed_at": now.isoformat(),
+            "last_modified_at": now.isoformat(),
             "last_modified_method": "completed",
         }
         updated = db.update_workout(workout_id, update_data)
@@ -630,6 +633,9 @@ async def complete_workout(
             exercises_performance = []
             for ex in exercises:
                 sets = ex.get("sets", [])
+                # Handle case where sets is an integer count instead of a list
+                if isinstance(sets, int) or not isinstance(sets, list):
+                    sets = []
                 completed_sets = [s for s in sets if s.get("completed", True)]
                 ex_volume = sum(
                     (s.get("reps", 0) or s.get("reps_completed", 0)) * s.get("weight_kg", 0)
@@ -907,7 +913,7 @@ async def recalculate_user_strength_scores(user_id: str, supabase):
         start_date = (date.today() - timedelta(days=90)).isoformat()
 
         workouts_response = supabase.table("workouts").select(
-            "id, exercises, completed_at"
+            "id, exercises_json, completed_at"
         ).eq(
             "user_id", user_id
         ).eq(
@@ -919,12 +925,15 @@ async def recalculate_user_strength_scores(user_id: str, supabase):
         # Extract exercise performances
         workout_data = []
         for workout in (workouts_response.data or []):
-            exercises = workout.get("exercises", [])
+            exercises = workout.get("exercises_json", [])
             if isinstance(exercises, str):
                 exercises = json.loads(exercises)
             for exercise in exercises:
                 if isinstance(exercise, dict):
                     sets = exercise.get("sets", [])
+                    # Handle case where sets is an integer count instead of a list
+                    if isinstance(sets, int) or not isinstance(sets, list):
+                        continue
                     if sets:
                         best_set = max(
                             (s for s in sets if s.get("completed", True)),

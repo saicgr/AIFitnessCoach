@@ -40,6 +40,10 @@ WorkoutExercise _$WorkoutExerciseFromJson(Map<String, dynamic> json) =>
       isDropSet: json['is_drop_set'] as bool?,
       dropSetCount: (json['drop_set_count'] as num?)?.toInt(),
       dropSetPercentage: (json['drop_set_percentage'] as num?)?.toInt(),
+      isChallenge: json['is_challenge'] as bool?,
+      progressionFrom: json['progression_from'] as String?,
+      difficulty: json['difficulty'] as String?,
+      difficultyNum: (json['difficulty_num'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$WorkoutExerciseToJson(WorkoutExercise instance) =>
@@ -76,6 +80,10 @@ Map<String, dynamic> _$WorkoutExerciseToJson(WorkoutExercise instance) =>
       'is_drop_set': instance.isDropSet,
       'drop_set_count': instance.dropSetCount,
       'drop_set_percentage': instance.dropSetPercentage,
+      'is_challenge': instance.isChallenge,
+      'progression_from': instance.progressionFrom,
+      'difficulty': instance.difficulty,
+      'difficulty_num': instance.difficultyNum,
     };
 
 LibraryExercise _$LibraryExerciseFromJson(Map<String, dynamic> json) =>

@@ -20,6 +20,7 @@ import '../../data/services/deep_link_service.dart';
 import '../../data/services/health_service.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../widgets/main_shell.dart';
+import '../../widgets/pill_swipe_navigation.dart';
 import '../nutrition/log_meal_sheet.dart';
 import 'widgets/components/components.dart';
 import 'widgets/cards/cards.dart';
@@ -27,6 +28,7 @@ import 'widgets/daily_activity_card.dart';
 import 'widgets/renewal_reminder_banner.dart';
 import 'widgets/missed_workout_banner.dart';
 import 'widgets/contextual_banner.dart';
+import 'widgets/watch_install_banner.dart';
 import 'widgets/tile_factory.dart';
 import 'widgets/my_program_summary_card.dart';
 import 'widgets/hero_workout_card.dart';
@@ -178,7 +180,11 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen>
-    with SingleTickerProviderStateMixin, ResponsiveMixin, WidgetsBindingObserver {
+    with SingleTickerProviderStateMixin, ResponsiveMixin, WidgetsBindingObserver, PillSwipeNavigationMixin {
+  // PillSwipeNavigationMixin: Home is index 0 (For You)
+  @override
+  int get currentPillIndex => 0;
+
   bool _isInitializing = true; // True until first workout check completes
   bool _isCheckingWorkouts = false;
   bool _isStreamingGeneration = false;
@@ -1293,20 +1299,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: RefreshIndicator(
-        onRefresh: () async {
-          debugPrint('🔄 [Home] Pull-to-refresh triggered');
-          _lastRefreshTime = DateTime.now();
-          // Invalidate todayWorkoutProvider to refetch
-          ref.invalidate(todayWorkoutProvider);
-          // Also refresh layout in case it changed
-          ref.invalidate(activeLayoutProvider);
-          debugPrint('✅ [Home] Pull-to-refresh complete');
-        },
-        color: AppColors.cyan,
-        backgroundColor: elevatedColor,
-        child: SafeArea(
-          child: CustomScrollView(
+      body: wrapWithSwipeDetector(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            debugPrint('🔄 [Home] Pull-to-refresh triggered');
+            _lastRefreshTime = DateTime.now();
+            // Invalidate todayWorkoutProvider to refetch
+            ref.invalidate(todayWorkoutProvider);
+            // Also refresh layout in case it changed
+            ref.invalidate(activeLayoutProvider);
+            debugPrint('✅ [Home] Pull-to-refresh complete');
+          },
+          color: AppColors.cyan,
+          backgroundColor: elevatedColor,
+          child: SafeArea(
+            child: CustomScrollView(
             slivers: [
               // Header - compact in split screen
               SliverToBoxAdapter(
@@ -1328,6 +1335,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               SliverToBoxAdapter(
                 child: ContextualBanner(isDark: isDark),
               ),
+
+              // Watch Install Banner - One-time prompt for WearOS (Android only)
+              // COMING SOON: Uncomment when WearOS app is ready for release
+              // SliverToBoxAdapter(
+              //   child: WatchInstallBanner(isDark: isDark),
+              // ),
 
               // Hero Section - Today's Workout or Rest Day Card
               SliverToBoxAdapter(
@@ -1358,6 +1371,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ),
             ],
           ),
+        ),
         ),
       ),
     );

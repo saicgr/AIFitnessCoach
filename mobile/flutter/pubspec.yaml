@@ -89,6 +89,9 @@ dependencies:
   # Audio Session (for mixing with music apps like Spotify)
   audio_session: ^0.1.21
 
+  # Audio Playback (for workout chimes and sound effects)
+  audioplayers: ^6.1.0
+
   # Home Screen Widgets
   home_widget: ^0.7.0
 
@@ -132,4 +135,8 @@ flutter:
     - assets/icon/
     - assets/images/
     - assets/lottie/
+    - assets/audio/countdown/
+    - assets/audio/exercise_complete/
+    - assets/audio/workout_complete/
+    - assets/audio/rest_end/
     - packages/muscle_selector/assets/maps/

@@ -326,8 +326,8 @@ class _ActivityCardState extends State<ActivityCard> {
               },
             ),
 
-            // Bottom padding for safe area
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
+            // Bottom padding for safe area + floating nav bar (80px nav + 16px extra)
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 96),
           ],
         ),
       ),

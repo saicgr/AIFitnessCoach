@@ -67,115 +67,59 @@ class UserSearchResultCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Name and badges
+                // Name
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                // Stats row
                 Row(
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            name,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (username != null && username.isNotEmpty)
-                            Text(
-                              '@$username',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppColors.textMuted,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    if (isSelf)
-                      _buildBadge('YOU', AppColors.green)
-                    else if (isFriend)
-                      _buildBadge('FRIEND', AppColors.cyan),
-                    if (!isSelf && isFollower && !isFriend)
-                      _buildBadge('FOLLOWS YOU', AppColors.purple),
-                    if (!isSelf && requiresApproval && !isFriend && !hasPendingRequest)
-                      const Icon(
-                        Icons.lock_outline_rounded,
-                        size: 16,
-                        color: AppColors.textMuted,
-                      ),
-                  ],
-                ),
-
-                const SizedBox(height: 4),
-
-                // Bio or stats
-                if (bio != null && bio.isNotEmpty) ...[
-                  Text(
-                    bio,
-                    style: TextStyle(
-                      fontSize: 13,
+                    Icon(
+                      Icons.fitness_center_rounded,
+                      size: 12,
                       color: AppColors.textMuted,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ] else ...[
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.fitness_center_rounded,
-                        size: 12,
-                        color: AppColors.textMuted,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
                         '$totalWorkouts workouts',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textMuted,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      if (currentStreak > 0) ...[
-                        const SizedBox(width: 12),
-                        Icon(
-                          Icons.local_fire_department,
-                          size: 12,
-                          color: AppColors.orange,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$currentStreak day streak',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textMuted,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
 
                 // Suggestion reason
                 if (showSuggestionReason && suggestionReason != null) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Row(
                     children: [
                       Icon(
-                        mutualFriendsCount > 0
-                            ? Icons.people_outline_rounded
-                            : Icons.star_outline_rounded,
+                        Icons.star_outline_rounded,
                         size: 12,
                         color: AppColors.cyan,
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        suggestionReason,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppColors.cyan,
+                      Flexible(
+                        child: Text(
+                          suggestionReason,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.cyan,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -185,7 +129,7 @@ class UserSearchResultCard extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
 
           // Action button (not shown for self)
           if (!isSelf)

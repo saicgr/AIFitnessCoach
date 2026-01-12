@@ -8,9 +8,11 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/main_shell.dart';
+import '../../widgets/pill_swipe_navigation.dart';
 import '../home/widgets/cards/next_workout_card.dart';
 import '../home/widgets/cards/weekly_progress_card.dart';
 import '../home/widgets/generate_upcoming_sheet.dart';
+import '../home/widgets/hero_workout_card.dart';
 import 'widgets/exercise_preferences_card.dart';
 
 /// Workouts screen - central hub for all workout-related content
@@ -25,7 +27,12 @@ class WorkoutsScreen extends ConsumerStatefulWidget {
   ConsumerState<WorkoutsScreen> createState() => _WorkoutsScreenState();
 }
 
-class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
+class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
+    with PillSwipeNavigationMixin {
+  // PillSwipeNavigationMixin: Workouts is index 1
+  @override
+  int get currentPillIndex => 1;
+
   @override
   void initState() {
     super.initState();
@@ -54,8 +61,9 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: CustomScrollView(
-        slivers: [
+      body: wrapWithSwipeDetector(
+        child: CustomScrollView(
+          slivers: [
           // App Bar with Library and Settings buttons
           SliverAppBar(
             floating: true,
@@ -140,7 +148,8 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
               ),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -217,22 +226,13 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
         // Today's/Next Workout Section (using todayWorkoutProvider - same as Home)
         if (todayWorkoutState.isLoading) ...[
           _buildSectionHeader(
-            'LOADING WORKOUT...',
+            'YOUR WORKOUT',
             textSecondary,
           ),
           const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              height: 150,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
+          const GeneratingHeroCard(
+            message: 'Loading your workout...',
+            subtitle: 'Fetching your personalized plan',
           ),
           const SizedBox(height: 24),
         ] else if (todayOrNextWorkout != null) ...[
@@ -264,31 +264,9 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
             textSecondary,
           ),
           const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              height: 150,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Preparing your workout...',
-                      style: TextStyle(
-                        color: textSecondary,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          const GeneratingHeroCard(
+            message: 'Preparing your workout...',
+            subtitle: 'Your personalized plan is being created',
           ),
           const SizedBox(height: 24),
         ],
@@ -304,6 +282,20 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
             isDark: isDark,
           ),
         ),
+        const SizedBox(height: 24),
+
+        // Previous Sessions
+        _buildSectionHeader(
+          'PREVIOUS SESSIONS',
+          textSecondary,
+          actionText: 'View All',
+          onAction: () {
+            HapticService.light();
+            context.push('/schedule');
+          },
+        ),
+        const SizedBox(height: 8),
+        _buildPreviousSessions(context, workouts, isDark, textPrimary, textSecondary),
         const SizedBox(height: 24),
 
         // JIT Generation: No "Generate More" button needed
@@ -468,6 +460,214 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Build previous sessions section - shows last 3 completed workouts
+  Widget _buildPreviousSessions(
+    BuildContext context,
+    List<Workout> workouts,
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
+    // Get completed workouts, sorted by completion/scheduled date (most recent first)
+    final completedWorkouts = workouts
+        .where((w) => w.isCompleted == true)
+        .toList()
+      ..sort((a, b) {
+        final dateA = DateTime.tryParse(a.scheduledDate ?? '') ?? DateTime(1900);
+        final dateB = DateTime.tryParse(b.scheduledDate ?? '') ?? DateTime(1900);
+        return dateB.compareTo(dateA); // Most recent first
+      });
+
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    if (completedWorkouts.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: elevatedColor,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Center(
+            child: Column(
+              children: [
+                Icon(Icons.history, size: 32, color: textSecondary),
+                const SizedBox(height: 8),
+                Text(
+                  'No completed workouts yet',
+                  style: TextStyle(color: textSecondary),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Complete your first workout to see it here',
+                  style: TextStyle(
+                    color: textSecondary.withValues(alpha: 0.7),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Show last 3 completed workouts
+    final recentWorkouts = completedWorkouts.take(3).toList();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: recentWorkouts.map((workout) {
+          return _PreviousSessionCard(
+            workout: workout,
+            isDark: isDark,
+            onTap: () {
+              HapticService.light();
+              context.push('/workout/${workout.id}');
+            },
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+/// Card widget for displaying a previous workout session
+class _PreviousSessionCard extends StatelessWidget {
+  final Workout workout;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _PreviousSessionCard({
+    required this.workout,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final typeColor = AppColors.getWorkoutTypeColor(workout.type ?? 'strength');
+
+    // Format the date
+    String dateText = '';
+    if (workout.scheduledDate != null) {
+      final date = DateTime.tryParse(workout.scheduledDate!);
+      if (date != null) {
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final workoutDate = DateTime(date.year, date.month, date.day);
+        final difference = today.difference(workoutDate).inDays;
+
+        if (difference == 0) {
+          dateText = 'Today';
+        } else if (difference == 1) {
+          dateText = 'Yesterday';
+        } else if (difference < 7) {
+          dateText = '$difference days ago';
+        } else {
+          dateText = '${date.day}/${date.month}/${date.year}';
+        }
+      }
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: elevatedColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.success.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            // Completed checkmark icon
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.check_circle,
+                color: AppColors.success,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Workout details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    workout.name ?? 'Workout',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: typeColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          workout.type?.toUpperCase() ?? 'STRENGTH',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            color: typeColor,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(Icons.timer_outlined, size: 12, color: textSecondary),
+                      const SizedBox(width: 2),
+                      Text(
+                        '${workout.durationMinutes ?? 45}m',
+                        style: TextStyle(fontSize: 12, color: textSecondary),
+                      ),
+                      if (dateText.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          dateText,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: textSecondary.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // Arrow
+            Icon(Icons.chevron_right, color: textSecondary, size: 20),
+          ],
+        ),
       ),
     );
   }

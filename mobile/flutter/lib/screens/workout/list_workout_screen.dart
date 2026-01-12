@@ -217,9 +217,22 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
           'sets': completedSets.length,
           'reps': exTotalReps,
           'weight_kg': avgWeight,
+          'time_seconds': 0, // List workout screen doesn't track per-exercise timing
+          'set_details': completedSets.map((s) => {
+            'reps': s.reps,
+            'weight_kg': _useKg ? s.weight : s.weight * 0.453592,
+          }).toList(),
         });
       }
     }
+
+    // Build planned exercises list for skip detection
+    final plannedExercises = widget.workout.exercises.map((e) => {
+      'name': e.name,
+      'target_sets': e.sets ?? 3,
+      'target_reps': e.reps ?? 10,
+      'target_weight_kg': e.weight ?? 0.0,
+    }).toList();
 
     // Navigate to completion screen
     if (mounted) {
@@ -230,6 +243,8 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
         // AI Coach feedback data
         'workoutLogId': workoutLogId,
         'exercisesPerformance': exercisesPerformance,
+        'plannedExercises': plannedExercises, // For skip detection
+        'exerciseTimeSeconds': <int, int>{}, // List workout screen doesn't track per-exercise timing
         'totalRestSeconds': 0, // List workout screen doesn't track rest
         'avgRestSeconds': 0.0,
         'totalSets': totalCompletedSets,

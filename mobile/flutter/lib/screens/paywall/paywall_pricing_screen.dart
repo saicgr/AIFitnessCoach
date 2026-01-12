@@ -1178,9 +1178,10 @@ class _DiscountPopup extends StatelessWidget {
     const accentColor = Color(0xFF00D9FF); // Cyan for yearly
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(24),
-      child: Container(
-        padding: const EdgeInsets.all(24),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: SingleChildScrollView(
+        child: Container(
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: colors.elevated,
           borderRadius: BorderRadius.circular(24),
@@ -1213,31 +1214,31 @@ class _DiscountPopup extends StatelessWidget {
             ),
 
             // Fire emoji and title
-            const Text('🔥', style: TextStyle(fontSize: 48)),
-            const SizedBox(height: 12),
+            const Text('🔥', style: TextStyle(fontSize: 40)),
+            const SizedBox(height: 8),
             Text(
               'Wait! Special Offer',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               'Exclusive yearly discount just for you!',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 color: colors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
             // Price comparison
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -1270,7 +1271,7 @@ class _DiscountPopup extends StatelessWidget {
                       Text(
                         '\$79.99',
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 18,
                           fontWeight: FontWeight.w500,
                           color: colors.textSecondary,
                           decoration: TextDecoration.lineThrough,
@@ -1278,33 +1279,38 @@ class _DiscountPopup extends StatelessWidget {
                           decorationThickness: 2.5,
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 8),
                       // Arrow
                       Icon(
                         Icons.arrow_forward,
                         color: accentColor,
-                        size: 24,
+                        size: 18,
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 8),
                       // Discounted price
-                      Column(
-                        children: [
-                          Text(
-                            '\$49.99',
-                            style: TextStyle(
-                              fontSize: 38,
-                              fontWeight: FontWeight.bold,
-                              color: accentColor,
+                      Flexible(
+                        child: Column(
+                          children: [
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                '\$49.99',
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: accentColor,
+                                ),
+                              ),
                             ),
-                          ),
-                          Text(
-                            '/year',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: colors.textSecondary,
+                            Text(
+                              '/year',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colors.textSecondary,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -1336,7 +1342,7 @@ class _DiscountPopup extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
 
             // Features
             Column(
@@ -1348,12 +1354,12 @@ class _DiscountPopup extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
             // CTA Button
             SizedBox(
               width: double.infinity,
-              height: 54,
+              height: 48,
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
@@ -1367,14 +1373,14 @@ class _DiscountPopup extends StatelessWidget {
                 child: const Text(
                   'Get Yearly for \$49.99',
                   style: TextStyle(
-                    fontSize: 17,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
 
             // No thanks link
             GestureDetector(
@@ -1382,7 +1388,7 @@ class _DiscountPopup extends StatelessWidget {
               child: Text(
                 'No thanks, I\'ll pass',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   color: colors.textSecondary,
                   decoration: TextDecoration.underline,
                 ),
@@ -1390,6 +1396,7 @@ class _DiscountPopup extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

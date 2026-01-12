@@ -9,6 +9,7 @@ from google.genai import types
 from core.config import get_settings
 from core.supabase_client import get_supabase
 from core.logger import get_logger
+from models.gemini_schemas import WarmupResponse, StretchResponse
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -498,21 +499,14 @@ Return ONLY valid JSON."""
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
+                    response_schema=WarmupResponse,
                     max_output_tokens=3000,  # Increased for thinking models
                     temperature=0.9,  # Higher temperature for more variety
                 ),
             )
 
             content = response.text.strip()
-            # Clean markdown if present
-            if content.startswith("```json"):
-                content = content[7:]
-            elif content.startswith("```"):
-                content = content[3:]
-            if content.endswith("```"):
-                content = content[:-3]
-
-            result = json.loads(content.strip())
+            result = json.loads(content)
             warmups = result.get("exercises", [])
 
             # Order warmups: static holds first, then dynamic movements
@@ -628,21 +622,14 @@ Return ONLY valid JSON."""
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
+                    response_schema=StretchResponse,
                     max_output_tokens=3000,  # Increased for thinking models
                     temperature=0.9,  # Higher temperature for more variety
                 ),
             )
 
             content = response.text.strip()
-            # Clean markdown if present
-            if content.startswith("```json"):
-                content = content[7:]
-            elif content.startswith("```"):
-                content = content[3:]
-            if content.endswith("```"):
-                content = content[:-3]
-
-            result = json.loads(content.strip())
+            result = json.loads(content)
             stretches = result.get("exercises", [])
 
             logger.info(f"✅ Generated {len(stretches)} cool-down stretches")

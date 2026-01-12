@@ -20,6 +20,7 @@ from google.genai import types
 from core.config import get_settings
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from models.gemini_schemas import CustomGoalKeywordsResponse
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -113,20 +114,14 @@ Example for "Improve box jump height":
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
+                    response_schema=CustomGoalKeywordsResponse,
                     temperature=0.3,
                     max_output_tokens=2000,
                 ),
             )
 
             content = response.text.strip()
-
-            # Clean up markdown code blocks if present
-            if content.startswith("```"):
-                content = content.split("\n", 1)[1] if "\n" in content else content[3:]
-            if content.endswith("```"):
-                content = content[:-3]
-
-            result = json.loads(content.strip())
+            result = json.loads(content)
             logger.info(f"Generated {len(result.get('keywords', []))} keywords for goal: {goal_text[:50]}...")
             return result
 

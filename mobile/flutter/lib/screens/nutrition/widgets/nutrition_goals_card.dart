@@ -88,33 +88,36 @@ class NutritionGoalsCard extends ConsumerWidget {
           // Header row with title, training indicator, and actions
           Row(
             children: [
-              Icon(Icons.track_changes, color: teal, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                'Daily Goals',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
+              Icon(Icons.track_changes, color: teal, size: 18),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  'Daily Goals',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: textPrimary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               if (isTrainingDay) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: teal.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.fitness_center, size: 12, color: teal),
-                      const SizedBox(width: 4),
+                      Icon(Icons.fitness_center, size: 10, color: teal),
+                      const SizedBox(width: 3),
                       Text(
-                        'Training Day',
+                        'Training',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 9,
                           fontWeight: FontWeight.w600,
                           color: teal,
                         ),
@@ -127,16 +130,16 @@ class NutritionGoalsCard extends ConsumerWidget {
               // Edit button
               IconButton(
                 onPressed: onEdit,
-                icon: Icon(Icons.edit_outlined, size: 20, color: textMuted),
+                icon: Icon(Icons.edit_outlined, size: 18, color: textMuted),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
                 tooltip: 'Edit Goals',
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               // Recalculate button
               IconButton(
                 onPressed: onRecalculate,
-                icon: Icon(Icons.refresh, size: 20, color: textMuted),
+                icon: Icon(Icons.refresh, size: 18, color: textMuted),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
                 tooltip: 'Recalculate',

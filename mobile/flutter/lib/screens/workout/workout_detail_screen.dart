@@ -8,6 +8,7 @@ import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/difficulty_utils.dart';
 import '../../data/models/workout.dart';
+import '../../data/models/exercise.dart';
 import '../../data/models/workout_generation_params.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -36,6 +37,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   bool _isLoadingSummary = true;  // Start as true to show loading immediately
   bool _isWarmupExpanded = false;  // For warmup section
   bool _isStretchesExpanded = false;  // For stretches section
+  bool _isChallengeExpanded = false;  // For challenge exercise section
   String? _trainingSplit;  // Training program type from user preferences
   WorkoutGenerationParams? _generationParams;  // AI reasoning and parameters
   bool _isLoadingParams = false;  // Loading state for generation params
@@ -560,6 +562,33 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
               childCount: exercises.length,
             ),
           ),
+
+          // ─────────────────────────────────────────────────────────────────
+          // CHALLENGE SECTION (Collapsible) - Only for beginners
+          // ─────────────────────────────────────────────────────────────────
+          if (workout.hasChallenge)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: _buildCollapsibleSectionHeader(
+                  title: 'WANT A CHALLENGE?',
+                  icon: Icons.local_fire_department,
+                  color: Colors.orange,
+                  isExpanded: _isChallengeExpanded,
+                  onTap: () => setState(() => _isChallengeExpanded = !_isChallengeExpanded),
+                  itemCount: 1,
+                  subtitle: workout.challengeExercise?.progressionFrom != null
+                      ? 'Progression from ${workout.challengeExercise!.progressionFrom}'
+                      : 'Try this advanced exercise',
+                ),
+              ),
+            ),
+
+          // Challenge exercise item (shown when expanded)
+          if (workout.hasChallenge && _isChallengeExpanded)
+            SliverToBoxAdapter(
+              child: _buildChallengeExerciseCard(workout.challengeExercise!),
+            ),
 
           // ─────────────────────────────────────────────────────────────────
           // STRETCHES SECTION (Collapsible)
@@ -1874,6 +1903,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     required bool isExpanded,
     required VoidCallback onTap,
     required int itemCount,
+    String? subtitle,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -1902,32 +1932,52 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
               child: Icon(icon, color: color, size: 16),
             ),
             const SizedBox(width: 12),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: textMuted,
-                letterSpacing: 1.5,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: textMuted,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '$itemCount',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: color,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: textMuted.withOpacity(0.8),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '$itemCount',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-            ),
-            const Spacer(),
             Icon(
               isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
               color: textMuted,
@@ -1962,6 +2012,171 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   }
 
   /// Build warmup/stretch item
+  /// Build challenge exercise card for beginners
+  Widget _buildChallengeExerciseCard(WorkoutExercise exercise) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final color = Colors.orange;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.15),
+            color.withOpacity(0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          // Exercise header
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Exercise thumbnail/icon
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: exercise.gifUrl != null && exercise.gifUrl!.isNotEmpty
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            exercise.gifUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.local_fire_department,
+                              color: color,
+                              size: 28,
+                            ),
+                          ),
+                        )
+                      : Icon(
+                          Icons.local_fire_department,
+                          color: color,
+                          size: 28,
+                        ),
+                ),
+                const SizedBox(width: 16),
+                // Exercise info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'CHALLENGE',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: color,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ),
+                          if (exercise.difficulty != null) ...[
+                            const SizedBox(width: 8),
+                            Text(
+                              exercise.difficulty!.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: textMuted,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        exercise.name,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.repeat, size: 14, color: textMuted),
+                          const SizedBox(width: 4),
+                          Text(
+                            exercise.setsRepsDisplay,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: textMuted,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          if (exercise.restSeconds != null) ...[
+                            Icon(Icons.timer_outlined, size: 14, color: textMuted),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${exercise.restSeconds}s rest',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: textMuted,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Note about challenge
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.black12 : Colors.white24,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(16),
+                bottomRight: Radius.circular(16),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 16, color: textMuted),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'This is an optional advanced exercise. Try it when you feel ready!',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textMuted,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildWarmupStretchItem(Map<String, String> item, Color color) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;

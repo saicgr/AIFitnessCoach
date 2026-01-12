@@ -747,6 +747,10 @@ async def update_user(user_id: str, user: UserUpdate):
             update_data["active_injuries"] = json.loads(user.active_injuries) if isinstance(user.active_injuries, str) else user.active_injuries
         if user.onboarding_completed is not None:
             update_data["onboarding_completed"] = user.onboarding_completed
+            # Set timestamp when onboarding is marked as completed
+            if user.onboarding_completed:
+                from datetime import datetime, timezone
+                update_data["onboarding_completed_at"] = datetime.now(timezone.utc).isoformat()
         if user.coach_selected is not None:
             update_data["coach_selected"] = user.coach_selected
         if user.paywall_completed is not None:
@@ -1808,48 +1812,62 @@ async def sync_fasting_preferences(user_id: str, request: SyncFastingRequest):
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        # Call the Supabase function to sync fasting preferences
-        result = db.client.rpc(
-            'sync_fasting_from_onboarding',
-            {
-                'p_user_id': user_id,
-                'p_interested_in_fasting': request.interested_in_fasting,
-                'p_fasting_protocol': request.fasting_protocol,
-            }
+        # If not interested in fasting, don't create preferences
+        if not request.interested_in_fasting:
+            return SyncFastingResponse(
+                success=True,
+                message="User not interested in fasting",
+                created=False,
+                protocol=None,
+            )
+
+        # Normalize protocol format
+        protocol = request.fasting_protocol or "16:8"
+
+        # Handle custom protocol format from onboarding (e.g., "custom:16:8")
+        if protocol.startswith("custom:"):
+            protocol = "16:8"  # Default for custom
+
+        now = datetime.now().isoformat()
+
+        # Check if fasting_preferences already exists
+        existing = db.client.table("fasting_preferences").select("id").eq(
+            "user_id", user_id
         ).execute()
 
-        if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to sync fasting preferences")
+        if existing.data:
+            # Update existing record
+            db.client.table("fasting_preferences").update({
+                "default_protocol": protocol,
+                "fasting_onboarding_completed": True,
+                "updated_at": now,
+            }).eq("user_id", user_id).execute()
 
-        data = result.data
+            logger.info(f"Updated fasting preferences for user {user_id}: protocol={protocol}")
+            return SyncFastingResponse(
+                success=True,
+                message="Fasting preferences updated from onboarding",
+                created=False,
+                protocol=protocol,
+            )
+        else:
+            # Insert new record
+            db.client.table("fasting_preferences").insert({
+                "user_id": user_id,
+                "default_protocol": protocol,
+                "fasting_onboarding_completed": True,
+                "onboarding_completed_at": now,
+                "experience_level": "beginner",
+                "updated_at": now,
+            }).execute()
 
-        # Handle various RPC response formats
-        import json
-
-        # If data is bytes, decode it first
-        if isinstance(data, bytes):
-            try:
-                data = data.decode('utf-8')
-            except Exception as e:
-                logger.error(f"Failed to decode bytes response: {e}")
-                raise HTTPException(status_code=500, detail="Failed to decode database response")
-
-        # Handle case where RPC returns string instead of dict
-        if isinstance(data, str):
-            try:
-                data = json.loads(data)
-            except json.JSONDecodeError:
-                logger.error(f"Failed to parse RPC response: {data}")
-                raise HTTPException(status_code=500, detail="Invalid response from database function")
-
-        logger.info(f"Synced fasting preferences for user {user_id}: {data}")
-
-        return SyncFastingResponse(
-            success=data.get('success', False),
-            message=data.get('message', ''),
-            created=data.get('created', False),
-            protocol=data.get('protocol'),
-        )
+            logger.info(f"Created fasting preferences for user {user_id}: protocol={protocol}")
+            return SyncFastingResponse(
+                success=True,
+                message="Fasting preferences synced from onboarding",
+                created=True,
+                protocol=protocol,
+            )
 
     except HTTPException:
         raise

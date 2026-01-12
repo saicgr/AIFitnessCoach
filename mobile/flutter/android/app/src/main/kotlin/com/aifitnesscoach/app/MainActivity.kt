@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import com.aifitnesscoach.app.wearable.WearableMethodChannel
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.FlutterEngineCache
@@ -17,6 +18,7 @@ class MainActivity : FlutterActivity() {
     }
 
     private var methodChannel: MethodChannel? = null
+    private var wearableChannel: WearableMethodChannel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +55,17 @@ class MainActivity : FlutterActivity() {
 
         methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
         Log.d("MainActivity", "MethodChannel configured for widget actions")
+
+        // Initialize wearable communication channel
+        // Pass activity provider lambda for methods that need Activity context (like promptWatchAppInstall)
+        wearableChannel = WearableMethodChannel(this, flutterEngine) { this }
+        Log.d("MainActivity", "✅ WearableMethodChannel initialized for watch sync")
+    }
+
+    override fun onDestroy() {
+        wearableChannel?.dispose()
+        wearableChannel = null
+        super.onDestroy()
     }
 
     override fun onNewIntent(intent: Intent) {

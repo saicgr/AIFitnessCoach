@@ -164,3 +164,41 @@ class CapturableWidget extends StatelessWidget {
     );
   }
 }
+
+/// Wrapper that creates Instagram Stories-sized canvas (9:16 ratio)
+/// with opaque background to prevent black corners when sharing
+///
+/// This ensures the captured image fills the entire Instagram Story canvas
+/// with a gradient background that matches the template's theme.
+class InstagramStoryWrapper extends StatelessWidget {
+  final Widget child;
+  final List<Color> backgroundGradient;
+
+  const InstagramStoryWrapper({
+    super.key,
+    required this.child,
+    this.backgroundGradient = const [
+      Color(0xFF1A2634),
+      Color(0xFF0F1922),
+      Color(0xFF0A0F14),
+    ],
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Use 9:16 aspect ratio (Instagram Stories)
+    return AspectRatio(
+      aspectRatio: 9 / 16,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: backgroundGradient,
+          ),
+        ),
+        child: Center(child: child),
+      ),
+    );
+  }
+}

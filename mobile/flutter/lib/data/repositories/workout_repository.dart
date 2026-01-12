@@ -1877,17 +1877,36 @@ class WorkoutRepository {
     String? coachingStyle,
     String? communicationTone,
     double? encouragementLevel,
+    // Enhanced context for skip detection and timing
+    List<Map<String, dynamic>>? plannedExercises,
+    Map<int, int>? exerciseTimeSeconds,
   }) async {
     try {
       debugPrint('🤖 [Workout] Requesting AI Coach feedback for: $workoutName');
+      debugPrint('🤖 [Workout] Completed exercises: ${exercises.length}');
+      debugPrint('🤖 [Workout] Planned exercises: ${plannedExercises?.length ?? 0}');
 
-      // Format exercises for the API
-      final exercisesList = exercises.map((ex) => {
-        'name': ex['name'] ?? ex['exercise_name'] ?? 'Unknown',
-        'sets': ex['sets'] ?? ex['total_sets'] ?? 1,
-        'reps': ex['reps'] ?? ex['total_reps'] ?? 10,
-        'weight_kg': (ex['weight_kg'] ?? ex['weight'] ?? 0.0).toDouble(),
+      // Format exercises for the API with enhanced data (time_seconds, set_details)
+      final exercisesList = exercises.asMap().entries.map((entry) {
+        final idx = entry.key;
+        final ex = entry.value;
+        return {
+          'name': ex['name'] ?? ex['exercise_name'] ?? 'Unknown',
+          'sets': ex['sets'] ?? ex['total_sets'] ?? 1,
+          'reps': ex['reps'] ?? ex['total_reps'] ?? 10,
+          'weight_kg': (ex['weight_kg'] ?? ex['weight'] ?? 0.0).toDouble(),
+          'time_seconds': ex['time_seconds'] ?? exerciseTimeSeconds?[idx] ?? 0,
+          'set_details': ex['set_details'] ?? [],
+        };
       }).toList();
+
+      // Format planned exercises for skip detection
+      final plannedList = plannedExercises?.map((ex) => {
+        'name': ex['name'] ?? 'Unknown',
+        'target_sets': ex['target_sets'] ?? ex['sets'] ?? 3,
+        'target_reps': ex['target_reps'] ?? ex['reps'] ?? 10,
+        'target_weight_kg': (ex['target_weight_kg'] ?? ex['weight'] ?? 0.0).toDouble(),
+      }).toList() ?? [];
 
       final requestData = {
         'user_id': userId,
@@ -1896,6 +1915,7 @@ class WorkoutRepository {
         'workout_name': workoutName,
         'workout_type': workoutType,
         'exercises': exercisesList,
+        'planned_exercises': plannedList,
         'total_time_seconds': totalTimeSeconds,
         'total_rest_seconds': totalRestSeconds,
         'avg_rest_seconds': avgRestSeconds,

@@ -23,6 +23,7 @@ from google.genai import types
 from core.logger import get_logger
 from core.config import get_settings
 from core.supabase_db import get_supabase_db
+from models.gemini_schemas import FastingInsightResponse
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -205,6 +206,7 @@ Guidelines:
                     contents=prompt,
                     config=types.GenerateContentConfig(
                         response_mime_type="application/json",
+                        response_schema=FastingInsightResponse,
                         max_output_tokens=1000,
                         temperature=0.3,  # Lower temperature for consistent analysis
                         # Safety settings for fitness content
@@ -226,8 +228,8 @@ Guidelines:
 
             logger.info(f"Gemini API response received for fasting insight")
 
-            # Parse response with robust JSON extraction
-            parsed_response = self._extract_json_from_response(response.text)
+            # Parse JSON directly - structured output guarantees valid JSON
+            parsed_response = json.loads(response.text.strip())
 
             # Validate required fields
             required_fields = ["insight_type", "title", "message", "recommendation"]

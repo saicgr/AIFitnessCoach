@@ -148,9 +148,12 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
   }
 
   Future<Uint8List?> _captureCurrentTemplate() async {
-    return await ImageCaptureUtils.captureWidget(
+    // Use Instagram Stories optimal size (1080x1920) for proper aspect ratio
+    return await ImageCaptureUtils.captureWidgetWithSize(
       _captureKeys[_currentPage],
-      pixelRatio: 3.0,
+      width: ImageCaptureUtils.instagramStoriesSize.width,
+      height: ImageCaptureUtils.instagramStoriesSize.height,
+      pixelRatio: 1.0,
     );
   }
 
@@ -708,6 +711,26 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
     );
   }
 
+  /// Get background gradient colors for Instagram Story wrapper based on template
+  List<Color> _getGradientForTemplate(int index) {
+    switch (index) {
+      case 0: // Stats - dark blue gradient
+        return const [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)];
+      case 1: // PRs - gold/dark gradient
+        return const [Color(0xFF2D1F00), Color(0xFF1A1200), Color(0xFF0D0A00)];
+      case 2: // Coach Review - dark gray
+        return const [Color(0xFF1A1A1A), Color(0xFF0D0D0D), Color(0xFF000000)];
+      case 3: // Progress - teal/dark gradient
+        return const [Color(0xFF1A2634), Color(0xFF0F1922), Color(0xFF0A0F14)];
+      case 4: // Photo Overlay - near black
+        return const [Color(0xFF0A0A0A), Color(0xFF050505), Color(0xFF000000)];
+      case 5: // Motivational - black
+        return const [Color(0xFF0A0A0A), Color(0xFF000000), Color(0xFF000000)];
+      default:
+        return const [Color(0xFF1A2634), Color(0xFF0F1922), Color(0xFF0A0F14)];
+    }
+  }
+
   Widget _buildTemplateCarousel() {
     final now = DateTime.now();
 
@@ -726,16 +749,19 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
               children: [
                 CapturableWidget(
                   captureKey: _captureKeys[0],
-                  child: StatsTemplate(
-                    workoutName: widget.workoutName,
-                    durationSeconds: widget.durationSeconds,
-                    calories: widget.calories,
-                    totalVolumeKg: widget.totalVolumeKg,
-                    totalSets: widget.totalSets,
-                    totalReps: widget.totalReps,
-                    exercisesCount: widget.exercisesCount,
-                    completedAt: now,
-                    showWatermark: _showWatermark,
+                  child: InstagramStoryWrapper(
+                    backgroundGradient: _getGradientForTemplate(0),
+                    child: StatsTemplate(
+                      workoutName: widget.workoutName,
+                      durationSeconds: widget.durationSeconds,
+                      calories: widget.calories,
+                      totalVolumeKg: widget.totalVolumeKg,
+                      totalSets: widget.totalSets,
+                      totalReps: widget.totalReps,
+                      exercisesCount: widget.exercisesCount,
+                      completedAt: now,
+                      showWatermark: _showWatermark,
+                    ),
                   ),
                 ),
                 Positioned(
@@ -756,12 +782,15 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
               children: [
                 CapturableWidget(
                   captureKey: _captureKeys[1],
-                  child: PrsTemplate(
-                    workoutName: widget.workoutName,
-                    prsData: widget.newPRs ?? [],
-                    achievementsData: widget.achievements,
-                    completedAt: now,
-                    showWatermark: _showWatermark,
+                  child: InstagramStoryWrapper(
+                    backgroundGradient: _getGradientForTemplate(1),
+                    child: PrsTemplate(
+                      workoutName: widget.workoutName,
+                      prsData: widget.newPRs ?? [],
+                      achievementsData: widget.achievements,
+                      completedAt: now,
+                      showWatermark: _showWatermark,
+                    ),
                   ),
                 ),
                 Positioned(
@@ -787,18 +816,21 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                         ?? CoachPersona.defaultCoach;
                     return CapturableWidget(
                       captureKey: _captureKeys[2],
-                      child: CoachReviewTemplate(
-                        workoutName: widget.workoutName,
-                        durationSeconds: widget.durationSeconds,
-                        calories: widget.calories,
-                        totalVolumeKg: widget.totalVolumeKg,
-                        exercisesCount: widget.exercisesCount,
-                        totalSets: widget.totalSets,
-                        totalReps: widget.totalReps,
-                        coach: coach,
-                        performanceRating: _calculatePerformanceRating(),
-                        completedAt: now,
-                        showWatermark: _showWatermark,
+                      child: InstagramStoryWrapper(
+                        backgroundGradient: _getGradientForTemplate(2),
+                        child: CoachReviewTemplate(
+                          workoutName: widget.workoutName,
+                          durationSeconds: widget.durationSeconds,
+                          calories: widget.calories,
+                          totalVolumeKg: widget.totalVolumeKg,
+                          exercisesCount: widget.exercisesCount,
+                          totalSets: widget.totalSets,
+                          totalReps: widget.totalReps,
+                          coach: coach,
+                          performanceRating: _calculatePerformanceRating(),
+                          completedAt: now,
+                          showWatermark: _showWatermark,
+                        ),
                       ),
                     );
                   },
@@ -821,16 +853,19 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
               children: [
                 CapturableWidget(
                   captureKey: _captureKeys[3],
-                  child: ProgressTemplate(
-                    workoutName: widget.workoutName,
-                    durationSeconds: widget.durationSeconds,
-                    exercisesCount: widget.exercisesCount,
-                    totalWorkouts: widget.totalWorkouts,
-                    currentStreak: widget.currentStreak,
-                    sessionVolume: widget.totalVolumeKg,
-                    prsThisMonth: widget.newPRs?.length ?? 0,
-                    completedAt: now,
-                    showWatermark: _showWatermark,
+                  child: InstagramStoryWrapper(
+                    backgroundGradient: _getGradientForTemplate(3),
+                    child: ProgressTemplate(
+                      workoutName: widget.workoutName,
+                      durationSeconds: widget.durationSeconds,
+                      exercisesCount: widget.exercisesCount,
+                      totalWorkouts: widget.totalWorkouts,
+                      currentStreak: widget.currentStreak,
+                      sessionVolume: widget.totalVolumeKg,
+                      prsThisMonth: widget.newPRs?.length ?? 0,
+                      completedAt: now,
+                      showWatermark: _showWatermark,
+                    ),
                   ),
                 ),
                 Positioned(
@@ -851,15 +886,18 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
               children: [
                 CapturableWidget(
                   captureKey: _captureKeys[4],
-                  child: PhotoOverlayTemplate(
-                    workoutName: widget.workoutName,
-                    durationSeconds: widget.durationSeconds,
-                    calories: widget.calories,
-                    totalVolumeKg: widget.totalVolumeKg,
-                    exercisesCount: widget.exercisesCount,
-                    userPhotoBytes: _userPhotoBytes,
-                    completedAt: now,
-                    showWatermark: _showWatermark,
+                  child: InstagramStoryWrapper(
+                    backgroundGradient: _getGradientForTemplate(4),
+                    child: PhotoOverlayTemplate(
+                      workoutName: widget.workoutName,
+                      durationSeconds: widget.durationSeconds,
+                      calories: widget.calories,
+                      totalVolumeKg: widget.totalVolumeKg,
+                      exercisesCount: widget.exercisesCount,
+                      userPhotoBytes: _userPhotoBytes,
+                      completedAt: now,
+                      showWatermark: _showWatermark,
+                    ),
                   ),
                 ),
                 Positioned(
@@ -880,13 +918,16 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
               children: [
                 CapturableWidget(
                   captureKey: _captureKeys[5],
-                  child: MotivationalTemplate(
-                    workoutName: widget.workoutName,
-                    currentStreak: widget.currentStreak,
-                    totalWorkouts: widget.totalWorkouts ?? 1,
-                    durationSeconds: widget.durationSeconds,
-                    completedAt: now,
-                    showWatermark: _showWatermark,
+                  child: InstagramStoryWrapper(
+                    backgroundGradient: _getGradientForTemplate(5),
+                    child: MotivationalTemplate(
+                      workoutName: widget.workoutName,
+                      currentStreak: widget.currentStreak,
+                      totalWorkouts: widget.totalWorkouts ?? 1,
+                      durationSeconds: widget.durationSeconds,
+                      completedAt: now,
+                      showWatermark: _showWatermark,
+                    ),
                   ),
                 ),
                 Positioned(

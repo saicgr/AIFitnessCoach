@@ -63,6 +63,10 @@ class NutritionDB(BaseDB):
         choline_mg: Optional[float] = None,
         omega3_g: Optional[float] = None,
         omega6_g: Optional[float] = None,
+        # Image storage fields
+        image_url: Optional[str] = None,
+        image_storage_key: Optional[str] = None,
+        source_type: str = "text",
     ) -> Optional[Dict[str, Any]]:
         """
         Create a food log entry from AI analysis.
@@ -79,6 +83,9 @@ class NutritionDB(BaseDB):
             ai_feedback: AI-generated feedback on the meal
             health_score: Health score (0-100)
             + micronutrients: vitamins, minerals, etc.
+            image_url: S3 URL of the food image (for image-based logs)
+            image_storage_key: S3 storage key for the image
+            source_type: 'text' or 'image' indicating how the food was logged
 
         Returns:
             Created food log record or None
@@ -94,7 +101,14 @@ class NutritionDB(BaseDB):
             "fiber_g": fiber_g,
             "ai_feedback": ai_feedback,
             "health_score": health_score,
+            "source_type": source_type,
         }
+
+        # Add image fields if provided
+        if image_url:
+            data["image_url"] = image_url
+        if image_storage_key:
+            data["image_storage_key"] = image_storage_key
 
         # Add micronutrients if provided (only include non-None values)
         micronutrients = {

@@ -63,6 +63,13 @@ class WorkoutExercise extends Equatable {
   final int? dropSetCount; // Number of drop sets (typically 2-3)
   @JsonKey(name: 'drop_set_percentage')
   final int? dropSetPercentage; // Percentage to reduce weight each drop (typically 20-25%)
+  @JsonKey(name: 'is_challenge')
+  final bool? isChallenge; // Whether this is an optional challenge exercise for beginners
+  @JsonKey(name: 'progression_from')
+  final String? progressionFrom; // Name of the main exercise this progresses from
+  final String? difficulty; // Exercise difficulty level (e.g., "intermediate", "advanced")
+  @JsonKey(name: 'difficulty_num')
+  final int? difficultyNum; // Numeric difficulty (1-10)
 
   const WorkoutExercise({
     this.id,
@@ -97,6 +104,10 @@ class WorkoutExercise extends Equatable {
     this.isDropSet,
     this.dropSetCount,
     this.dropSetPercentage,
+    this.isChallenge,
+    this.progressionFrom,
+    this.difficulty,
+    this.difficultyNum,
   });
 
   /// Whether the weight is based on user's past workout history

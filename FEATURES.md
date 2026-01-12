@@ -1,6 +1,6 @@
 # FitWiz - Complete Feature List
 <!-- you are in control of equipment mix and availability. -->
-> **Total Features: 1044+** across 26 user-facing categories and 7 technical categories (includes Break Detection/Comeback, Age-Based Safety Caps, Skill Progressions, Cardio/Endurance with HR Zones & Session Logging, Flexibility/Mobility Assessment, AI Consistency, Voice Guidance, Adaptive Difficulty, Dynamic Set Management, Pre-Auth Previews, Email Preferences, Leverage-Based Progressions, Rep Range Preferences, Rep Accuracy Tracking, User-Customizable Sets/Reps Limits, Compound Exercise Muscle Mapping, History-Based Workout Generation, Background Music/Audio Session Management, Warmup Exercise Ordering, Customizable Sound Effects, Exercise Swap Tracking, HIIT/Interval Workout Safety, **Full Plan Preview Before Paywall**, **Try One Workout Free**, **Pre-Signup Pricing Transparency**, **Subscription Journey AI Context**, **Quick Start Today Widget**, **Visual Progress Charts**, **Subjective Results Tracking**, **Consistency Insights Dashboard**, **Smart Rescheduling**, **Progress Milestones & ROI**, **Split Screen/Multi-Window Support**, **Branded Workout Programs**, **Responsive Window Mode Detection**, **Lifetime Member Tiers & Benefits**, **Subscription Pause/Resume**, **Retention Offers System**, **NEAT Improvement System with Progressive Step Goals, Hourly Movement Reminders, Gamification & 35+ Achievements**, **Strength Calibration/Test Workout System with AI Analysis**, **Gradual Cardio Progression (Couch-to-5K)**, **Strain/Overuse Injury Prevention with 10% Rule**, **Injury Tracking & Body Part Exclusion**, **User-Controlled Progression Pace Settings**, **Senior-Aware Recovery Scaling**, **Enhanced Nutrition with Cooked Food Converter, Frequent Foods, Barcode Fuzzy Fallback**, **Per-Exercise Workout History & Muscle Analytics with Body Heatmap, Balance Analysis, Training Frequency**, **Hormonal Health Tracking with Testosterone/Estrogen Optimization, Menstrual Cycle Phase Tracking, Cycle-Aware Workout Intensity**, **Kegel/Pelvic Floor Exercises with 16 Gender-Specific Exercises, Warmup/Cooldown Integration, Streak Tracking**, **Hormonal Diet Recommendations with 50+ Foods for Testosterone, Estrogen, PCOS, Menopause, Fertility, Postpartum**, **AI-Powered Food Inflammation Analysis with Color-Coded Ingredient Display, Inflammation Score, Scan History & Favorites**, and **Simple Habit Tracking with Templates, Streaks, AI Suggestions, Positive/Negative Habits, Category Organization**)
+> **Total Features: 1070+** across 27 user-facing categories and 7 technical categories (includes Break Detection/Comeback, Age-Based Safety Caps, Skill Progressions, Cardio/Endurance with HR Zones & Session Logging, Flexibility/Mobility Assessment, AI Consistency, Voice Guidance, Adaptive Difficulty, Dynamic Set Management, Pre-Auth Previews, Email Preferences, Leverage-Based Progressions, Rep Range Preferences, Rep Accuracy Tracking, User-Customizable Sets/Reps Limits, Compound Exercise Muscle Mapping, History-Based Workout Generation, Background Music/Audio Session Management, Warmup Exercise Ordering, Customizable Sound Effects, Exercise Swap Tracking, HIIT/Interval Workout Safety, **Full Plan Preview Before Paywall**, **Try One Workout Free**, **Pre-Signup Pricing Transparency**, **Subscription Journey AI Context**, **Quick Start Today Widget**, **Visual Progress Charts**, **Subjective Results Tracking**, **Consistency Insights Dashboard**, **Smart Rescheduling**, **Progress Milestones & ROI**, **Split Screen/Multi-Window Support**, **Branded Workout Programs**, **Responsive Window Mode Detection**, **Lifetime Member Tiers & Benefits**, **Subscription Pause/Resume**, **Retention Offers System**, **NEAT Improvement System with Progressive Step Goals, Hourly Movement Reminders, Gamification & 35+ Achievements**, **Strength Calibration/Test Workout System with AI Analysis**, **Gradual Cardio Progression (Couch-to-5K)**, **Strain/Overuse Injury Prevention with 10% Rule**, **Injury Tracking & Body Part Exclusion**, **User-Controlled Progression Pace Settings**, **Senior-Aware Recovery Scaling**, **Enhanced Nutrition with Cooked Food Converter, Frequent Foods, Barcode Fuzzy Fallback**, **Per-Exercise Workout History & Muscle Analytics with Body Heatmap, Balance Analysis, Training Frequency**, **Hormonal Health Tracking with Testosterone/Estrogen Optimization, Menstrual Cycle Phase Tracking, Cycle-Aware Workout Intensity**, **Kegel/Pelvic Floor Exercises with 16 Gender-Specific Exercises, Warmup/Cooldown Integration, Streak Tracking**, **Hormonal Diet Recommendations with 50+ Foods for Testosterone, Estrogen, PCOS, Menopause, Fertility, Postpartum**, **AI-Powered Food Inflammation Analysis with Color-Coded Ingredient Display, Inflammation Score, Scan History & Favorites**, **Simple Habit Tracking with Templates, Streaks, AI Suggestions, Positive/Negative Habits, Category Organization**, **MacroFactor-Style Adaptive TDEE with EMA Smoothing, Confidence Intervals, Metabolic Adaptation Detection, Adherence Tracking, Sustainability Scores, Multi-Option Recommendations**, and **WearOS Companion App with Workout Tracking, Voice Food Logging via Gemini, Fasting Timer, Heart Rate Monitoring, and Hybrid Phone/Direct Sync**)
 
 ---
 
@@ -87,13 +87,42 @@ This app specifically addresses issues commonly reported in competitor apps:
 ✅ **SOLVED**: Text-to-speech voice announcements available. When enabled, app announces "Get ready for [exercise name]" during transitions and "Congratulations! Workout complete!" at the end. Abbreviations are expanded (DB→dumbbell, BB→barbell) for clearer speech. Includes rest period countdown notifications and configurable voice guidance. Toggle in Settings > Voice Announcements.
 
 ### 8b. "Countdown timer sux plus cheesy applause smh. sounds should be customizable"
-✅ **SOLVED**: Complete sound customization system with NO applause option (since users hate it):
-- **Countdown Sounds**: Choose from Beep, Chime, Voice, Tick, or None
-- **Completion Sounds**: Choose from Chime, Bell, Success, Fanfare, or None (NO applause!)
-- **Rest Timer Sounds**: Configurable sounds when rest period ends
-- **Volume Control**: 0-100% slider for all sound effects
-- Settings available at: Settings > Sound Effects
-- Preferences stored in `sound_preferences` table with full RLS security
+✅ **SOLVED**: Complete sound customization with 4 distinct sound categories and NO applause option:
+
+**Sound Categories:**
+1. **Countdown (3, 2, 1)**: Beep, Chime, Voice, Tick, or None - plays at 3, 2, 1 seconds before rest ends
+2. **Rest Timer End**: Beep, Chime, Gong, or None - plays when rest period completes
+3. **Exercise Complete**: Chime, Bell, Ding, Pop, Whoosh, or None - plays when all sets of an exercise are done
+4. **Workout Complete**: Chime, Bell, Success, Fanfare, or None (NO applause!) - plays when entire workout finishes
+
+**User Flow:**
+1. Navigate to Settings > Sound Effects
+2. Toggle each sound category on/off independently
+3. Select preferred sound type from selection chips (with preview on tap)
+4. Adjust master volume with slider (0-100%)
+5. Preferences sync to cloud automatically
+
+**Technical Implementation:**
+- **Flutter Package**: `audioplayers ^6.1.0`
+- **Audio Session**: Ducks Spotify/Apple Music during playback
+- **Preloaded Sounds**: Instant playback with no delay
+- **Backend API**: `GET/PUT /api/v1/sound-preferences`
+- **Database**: `sound_preferences` table with exercise_completion fields (migration 093, 145)
+- **Local Caching**: SharedPreferences for offline access
+
+**Sound Triggers:**
+- Countdown: 3, 2, 1 seconds before rest ends (active_workout_screen.dart)
+- Rest End: When rest timer reaches 0 (active_workout_screen.dart)
+- Exercise Complete: When user finishes all sets of an exercise (active_workout_screen.dart)
+- Workout Complete: When all exercises in workout are done (workout_complete_screen.dart)
+
+**Files:**
+- Migration: `backend/migrations/093_sound_preferences.sql`, `145_exercise_completion_sounds.sql`
+- Backend API: `backend/api/v1/sound_preferences.py`
+- Flutter Service: `lib/data/services/sound_service.dart`
+- Flutter Provider: `lib/core/providers/sound_preferences_provider.dart`
+- Settings UI: `lib/screens/settings/sections/sound_settings_section.dart`
+- Audio Assets: `assets/audio/countdown/`, `assets/audio/exercise_complete/`, `assets/audio/workout_complete/`, `assets/audio/rest_end/`
 
 ### 9. "Can't reset or change week's settings after starting"
 ✅ **SOLVED**: Program menu with "Regenerate This Week" option allows one-tap workout regeneration with current settings. "Customize Program" opens full wizard to change days, equipment, or difficulty. Edit Program Sheet now includes info tooltip explaining that changes regenerate workouts.
@@ -2729,7 +2758,7 @@ A comprehensive feature allowing users to set weekly challenges like "How many p
 | 29 | Workout Modification | Modify today's workout via chat | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | Fully Implemented | User | Active Workout |
 | 30 | Nutrition Logging via Chat | Log meals by describing in chat | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | Fully Implemented | User | Backend system |
 
-### 8. Nutrition Tracking (85 Features)
+### 8. Nutrition Tracking (99 Features)
 
 **Tier Availability:**
 | Feature | Free | Premium | Premium Plus/Lifetime |
@@ -2748,7 +2777,7 @@ A comprehensive feature allowing users to set weekly challenges like "How many p
 | 3 | Micronutrient Tracking | 40+ vitamins, minerals, fatty acids | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User | Backend system |
 | 4 | Three-Tier Nutrient Goals | Floor/Target/Ceiling per nutrient | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
 | 5 | Text Food Logging | Describe meal in natural language | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User | Backend system |
-| 6 | Photo Food Logging | AI analyzes food photos | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User | Backend system |
+| 6 | Photo Food Logging | AI analyzes food photos with S3 storage and USDA nutrition enhancement | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User | Backend system |
 | 7 | Voice Food Logging | Speech-to-text meal logging | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User | Backend system |
 | 8 | Barcode Scanning | Scan packaged foods with fuzzy fallback | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → Scan |
 | 9 | Meal Types | Breakfast, lunch, dinner, snack | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Nutrition |
@@ -2828,6 +2857,20 @@ A comprehensive feature allowing users to set weekly challenges like "How many p
 | 83 | Portion Size Editing | Quick presets (½, ¾, 1x, 1¼, 1½, 2x) + custom % input | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Nutrition → Log Food |
 | 84 | Real-time Nutrition Preview | Live calorie/macro calculation as portion is adjusted | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Nutrition → Log Food |
 | 85 | Weekly Check-in Reminders | Toggle for weekly target review prompt with auto-trigger | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Nutrition → Settings |
+| 86 | Food Image S3 Storage | Store food photos in S3 with parallel upload (no user delay) | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev | Backend system |
+| 87 | Image Portion Editing | Weight/count fields (weight_g, unit, count, weight_per_unit_g) for image-based portion adjustment | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → Log Food |
+| 88 | USDA Nutrition Enhancement | Parallel USDA FoodData Central API lookup for accurate nutrition data | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ | Fully Implemented | Dev | Backend system |
+| 89 | MacroFactor-Style TDEE | EMA-smoothed weight trends with confidence intervals (±X cal) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Nutrition → Weekly Check-in |
+| 90 | TDEE Confidence Display | Shows "2,150 ±120 cal" format with data quality indicator | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Nutrition → Weekly Check-in |
+| 91 | Metabolic Adaptation Detection | Detects TDEE drops >10% indicating metabolic slowdown | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Nutrition → Weekly Check-in |
+| 92 | Plateau Detection | Detects <0.2kg change over 3+ weeks despite deficit | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Nutrition → Weekly Check-in |
+| 93 | Adherence Tracking | Per-macro adherence % (Calories 40%, Protein 35%, Carbs 15%, Fat 10%) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Nutrition → Weekly Check-in |
+| 94 | Sustainability Score | Overall sustainability rating (High/Medium/Low) based on adherence + consistency | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Nutrition → Weekly Check-in |
+| 95 | Multi-Option Recommendations | Choose between Aggressive/Moderate/Conservative target options | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Nutrition → Weekly Check-in |
+| 96 | Diet Break Suggestions | Auto-suggests 1-2 week maintenance phase when adaptation detected | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Nutrition → Weekly Check-in |
+| 97 | Refeed Day Suggestions | Auto-suggests high-carb refeed days for moderate adaptation | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Nutrition → Weekly Check-in |
+| 98 | Weight Trend Analysis | EMA-smoothed weight direction (losing/gaining/stable) with weekly rate | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Nutrition → Weekly Check-in |
+| 99 | Adaptive TDEE Context Logging | Full event tracking for analytics and AI personalization | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev | Backend system |
 
 ### 9. Hydration Tracking (8 Features)
 
@@ -3547,6 +3590,81 @@ Comprehensive diabetes management for Type 1, Type 2, and other diabetes types. 
 | `weekly_goal_volume_logs` | Volume additions for weekly_volume goals |
 | `personal_records` | All-time PRs per exercise and goal type |
 | `goal_suggestions` | Cached AI-generated suggestions |
+
+---
+
+### 27. Wear OS Companion App (15 Features) — 🚧 COMING SOON
+
+> **⏳ COMING SOON:** The WearOS companion app is currently under development. All features listed below are built and tested but not yet released to the Play Store. Stay tuned for updates!
+
+**Tier Availability:**
+| Feature | Free | Premium | Premium Plus/Lifetime |
+|---------|:----:|:-------:|:--------------:|
+| All WearOS Features | Yes | Yes | Yes |
+
+> **Note:** WearOS companion app will be FREE for all tiers - helps users track workouts from their wrist.
+
+| # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus | Navigation |
+|---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|-------|
+| 1 | Today's Workout on Wrist | View current workout directly from watch | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Watch → Home → Today's Workout |
+| 2 | Set Logging | Log reps, weight, RPE with crown navigation | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Watch → Workout → Log Set |
+| 3 | Voice Food Logging | Say "log 2 eggs for breakfast" - Gemini analyzes nutrition | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User | Watch → Nutrition → Voice Log |
+| 4 | Fasting Timer | Start/stop fasting sessions with watch complications | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Watch → Fasting → Start/Stop |
+| 5 | Passive Step Tracking | Real-time steps with Health Connect integration | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Watch → Home → Steps |
+| 6 | Heart Rate Monitoring | Continuous HR during workouts with sample storage | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Watch → Workout → Heart Rate |
+| 7 | Phone-Watch Sync | Automatic credential and workout sync via Data Layer API | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | Dev | Automatic on login |
+| 8 | Direct Backend Sync | Fallback sync via WiFi when phone unavailable | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev | Automatic |
+| 9 | Batch Sync Endpoint | Single API call syncs all pending watch data | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev | POST /watch-sync/sync |
+| 10 | Activity Goals Display | Show steps, active minutes, calories goals on watch | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Watch → Home → Goals |
+| 11 | Workout Tile | Quick access tile for today's workout | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Watch → Tiles → Workout |
+| 12 | Calories Tile | Today's calorie intake at a glance | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Watch → Tiles → Calories |
+| 13 | Fasting Tile | Current fast status and elapsed time | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Watch → Tiles → Fasting |
+| 14 | Device Source Tracking | All watch data tagged with device_source='watch' | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev | Automatic |
+| 15 | AI Context Integration | Watch activity included in AI coaching context | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev | Automatic |
+
+#### User Flow
+
+1. **Setup**
+   - Install FitWiz WearOS from Play Store
+   - Login on phone app - credentials automatically sync to watch
+   - Watch receives today's workout and nutrition summary
+
+2. **Daily Workout Use**
+   - Open watch app → See today's workout
+   - Start workout → Log each set with crown/touch
+   - Complete workout → Data syncs to phone and backend
+
+3. **Nutrition Logging**
+   - Open nutrition screen on watch
+   - Tap microphone → Say "log 400 calories chicken salad"
+   - Gemini AI analyzes and logs nutrition
+
+4. **Fasting**
+   - Start fast from watch → Timer runs with complication
+   - End fast → Duration logged to backend
+
+5. **Sync Architecture**
+   - **Connected to phone**: Data syncs via Google Data Layer API
+   - **Phone unavailable**: Watch syncs directly to backend via WiFi
+   - All data includes device_source='watch' for analytics
+
+#### API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/watch-sync/sync` | POST | Batch sync all pending watch data |
+| `/api/v1/watch-sync/goals/{user_id}` | GET | Get user's activity goals for watch display |
+
+#### Database Tables
+
+| Table | Purpose |
+|-------|---------|
+| `wearos_sync_events` | Tracks sync events from watch |
+| `workout_completions` | Workout completion records with heart rate |
+| `heart_rate_samples` | HR readings from watch sensors |
+| `workout_logs.device_source` | Column to track data origin (watch/phone) |
+| `food_logs.device_source` | Column to track data origin |
+| `fasting_sessions.device_source` | Column to track data origin |
 
 ---
 
@@ -4931,6 +5049,231 @@ All tiles are optimized for small screens (iPhone SE, older Androids):
 │                                                                   │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Active Workout Screen UX Improvements (January 2026)
+
+### Implemented Features
+
+1. **Skip Exercise Button** - Prominent orange outlined button with icon (was underlined text)
+2. **Direct Unit Toggle** - Tap the "KG" or "LBS" label to toggle units instantly (shows swap icon)
+3. **Add Set Button** - [+] circle button after completed sets to add more sets on-the-fly
+4. **Larger Input Controls** - 56px buttons (was 48px), 40sp font size (was 32sp) for easier logging
+5. **Next Exercise Preview** - Shows "NEXT: [Exercise Name] • X sets" at bottom of set card
+6. **Full-Screen Background Video** - Exercise video/GIF now shows as full-screen background instead of corner PiP
+7. **Tap-to-Minimize Set Card** - Tap outside the set card to hide it and see the exercise video clearly
+8. **"Tap to Log Set" Indicator** - Floating pill button appears when card is minimized
+
+### Coming Soon
+
+- **Floating Music Mini Player** - Draggable, transparent music controls to play/pause/skip tracks from Spotify, Apple Music, or YouTube Music during workouts. Requires `audio_service` package integration for cross-platform media control.
+
+---
+
+## MacroFactor-Style Adaptive TDEE System (January 2026)
+
+### Overview
+
+FitWiz now includes a sophisticated metabolic adaptation detection and algorithm-driven recommendation system, matching the industry-leading approach used by MacroFactor. This system provides:
+
+- **EMA-smoothed weight trends** for noise reduction
+- **TDEE with confidence intervals** (e.g., "2,150 ±120 cal")
+- **Metabolic adaptation detection** (plateau + TDEE drop alerts)
+- **Adherence tracking** with sustainability scores
+- **Multi-option recommendations** (aggressive/moderate/conservative)
+
+### How It Works
+
+#### Weight Trend Smoothing (EMA)
+```
+Raw Weight Data:     85.2 → 86.0 → 84.8 → 85.5 → 84.9 → 85.1
+                     (daily fluctuations from water, food, etc.)
+
+EMA Smoothed:        85.2 → 85.32 → 85.24 → 85.28 → 85.22 → 85.20
+                     (alpha = 0.15, filters noise)
+
+Result: -0.02 kg net change (stable, not the wild swings raw data shows)
+```
+
+#### TDEE Calculation with Confidence
+```
+Energy Balance Equation:
+TDEE = Calories In - (Weight Change × Caloric Content)
+
+Where:
+- Caloric Content = 75% fat (7700 kcal/kg) + 25% lean (1800 kcal/kg)
+- Weight Change = EMA-smoothed end weight - EMA-smoothed start weight
+
+Confidence Interval:
+- Base uncertainty: ±300 cal
+- Adjusted by data quality: more logs = tighter confidence
+- Example: 2,150 ±120 cal (high data quality)
+```
+
+### User Flow
+
+#### Weekly Check-In Trigger
+
+```
+1. USER OPENS NUTRITION SCREEN
+   └─> System checks days since last check-in
+   └─> If ≥7 days → Auto-prompt for weekly check-in
+
+2. OR: MANUAL TRIGGER
+   └─> Nutrition → Settings → "Run Weekly Check-In"
+   └─> Nutrition → Action Menu → "Weekly Check-In"
+```
+
+#### Weekly Check-In Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  📊 WEEKLY CHECK-IN                                     [X]    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  🔥 YOUR CALCULATED TDEE                                  │  │
+│  │                                                           │  │
+│  │       2,150 cal/day          ±120 cal                    │  │
+│  │       ═══════════════        ─────────                   │  │
+│  │         calculated           uncertainty                  │  │
+│  │                                                           │  │
+│  │  Range: 2,030 - 2,270 cal   Data Quality: ████████░░ 80%  │  │
+│  │                                                           │  │
+│  │  📉 Weight Trend: -0.45 kg/week (Losing)                  │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  ⚠️ METABOLIC ADAPTATION ALERT                     [!]    │  │
+│  │                                                           │  │
+│  │  Your TDEE has dropped 12% over the past 4 weeks.        │  │
+│  │  This may indicate metabolic adaptation.                  │  │
+│  │                                                           │  │
+│  │  Suggested Action: Consider a 1-2 week diet break        │  │
+│  │  at maintenance calories to restore metabolic rate.       │  │
+│  │                                                           │  │
+│  │  [Learn More]                    [Acknowledge]            │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  📈 ADHERENCE & SUSTAINABILITY                            │  │
+│  │                                                           │  │
+│  │    ┌─────────────┐        ┌─────────────┐                │  │
+│  │    │   72%       │        │   0.68      │                │  │
+│  │    │  Adherence  │        │ Sustainability│               │  │
+│  │    │   ○○○○○     │        │     HIGH     │                │  │
+│  │    └─────────────┘        └─────────────┘                │  │
+│  │                                                           │  │
+│  │  4 weeks analyzed | Consistency: 0.75 | Logging: 0.85    │  │
+│  │                                                           │  │
+│  │  💡 "Your adherence is good. Keep up the consistent      │  │
+│  │      tracking for better TDEE accuracy."                  │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  🎯 RECOMMENDATION OPTIONS                                │  │
+│  │                                                           │  │
+│  │  Choose your target intensity:                            │  │
+│  │                                                           │  │
+│  │  ○ 🔥 AGGRESSIVE         -0.68 kg/week                   │  │
+│  │    1,400 cal | P: 140g C: 100g F: 47g                    │  │
+│  │    "Faster results, requires strict adherence"            │  │
+│  │    Sustainability: LOW                                    │  │
+│  │                                                           │  │
+│  │  ◉ ⚖️ MODERATE (Recommended)    -0.45 kg/week            │  │
+│  │    1,650 cal | P: 155g C: 140g F: 55g                    │  │
+│  │    "Balanced approach for sustainable progress"           │  │
+│  │    Sustainability: MEDIUM                                 │  │
+│  │                                                           │  │
+│  │  ○ 🐢 CONSERVATIVE       -0.23 kg/week                   │  │
+│  │    1,900 cal | P: 165g C: 180g F: 63g                    │  │
+│  │    "Slower but more sustainable"                          │  │
+│  │    Sustainability: HIGH                                   │  │
+│  │                                                           │  │
+│  │  [─────────────── Apply Selected ───────────────]         │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Adherence Calculation
+
+Adherence is calculated per-macro with weighted importance:
+
+| Macro | Weight | Rationale |
+|-------|--------|-----------|
+| Calories | 40% | Most important for weight goals |
+| Protein | 35% | Critical for body composition |
+| Carbs | 15% | Energy and performance |
+| Fat | 10% | Hormone function and satiety |
+
+```
+Per-Macro Adherence:
+- Within ±5% of target: 100% adherence
+- Beyond tolerance: Linear decrease to 0% at 2x deviation
+
+Overall Adherence = (Cal × 0.40) + (Pro × 0.35) + (Carb × 0.15) + (Fat × 0.10)
+```
+
+### Sustainability Score
+
+Sustainability Score = (Adherence × 0.60) + (Consistency × 0.25) + (Logging × 0.15)
+
+| Score | Rating | Meaning |
+|-------|--------|---------|
+| ≥0.70 | HIGH | User can maintain current targets long-term |
+| 0.50-0.69 | MEDIUM | Some adjustments may help |
+| <0.50 | LOW | Targets may be too aggressive |
+
+### Metabolic Adaptation Detection
+
+#### Plateau Detection
+```
+Trigger: <0.2 kg total change over 3+ weeks despite 300+ cal deficit
+
+Action: Suggest diet break (1-2 weeks at maintenance)
+```
+
+#### TDEE Drop Detection
+```
+Moderate (10-15% drop): Suggest refeed days (2-3 high carb days)
+Severe (15-20% drop): Suggest reducing deficit
+Critical (>20% drop): Suggest diet break
+```
+
+### Technical Implementation
+
+#### Backend Services
+- [adaptive_tdee_service.py](backend/services/adaptive_tdee_service.py) - EMA smoothing, TDEE calculation, confidence intervals
+- [metabolic_adaptation_service.py](backend/services/metabolic_adaptation_service.py) - Plateau and adaptation detection
+- [adherence_tracking_service.py](backend/services/adherence_tracking_service.py) - Adherence and sustainability calculations
+
+#### Database Tables
+- `tdee_calculation_history` - Historical TDEE calculations with confidence metrics
+- `metabolic_adaptation_events` - Detected adaptation/plateau events
+- `daily_adherence_logs` - Per-day adherence metrics
+- `sustainability_scores` - Periodic sustainability assessments
+- `weekly_adherence_summary` (view) - Pre-aggregated weekly adherence data
+
+#### API Endpoints
+- `GET /nutrition/tdee/{user_id}/detailed` - TDEE with confidence intervals
+- `GET /nutrition/adherence/{user_id}/summary` - Adherence summary with sustainability
+- `GET /nutrition/recommendations/{user_id}/options` - Multi-option recommendations
+- `POST /nutrition/recommendations/{user_id}/select` - Apply selected option
+
+#### Event Logging
+Full context logging for analytics and AI personalization:
+- `weekly_checkin_started/completed/dismissed`
+- `detailed_tdee_viewed`
+- `adherence_summary_viewed`
+- `metabolic_adaptation_detected/acknowledged`
+- `recommendation_options_viewed/selected`
+- `sustainability_score_calculated`
+- `weight_trend_analyzed`
+- `plateau_detected`
+- `diet_break_suggested`
+- `refeed_suggested`
 
 ---
 

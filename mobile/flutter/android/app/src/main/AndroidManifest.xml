@@ -267,6 +267,25 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/ai_coach_widget_info" />
         </receiver>
+
+        <!-- Wearable Data Layer Listener Service for Watch Sync -->
+        <service
+            android:name=".wearable.PhoneDataLayerListenerService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/fitwiz"
+                    android:scheme="wear" />
+            </intent-filter>
+        </service>
+
+        <!-- Declare capability for watch discovery -->
+        <meta-data
+            android:name="com.google.android.gms.wearable.capability"
+            android:value="fitwiz_phone" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

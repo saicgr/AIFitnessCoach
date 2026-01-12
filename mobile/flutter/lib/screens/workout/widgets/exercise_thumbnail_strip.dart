@@ -78,8 +78,8 @@ class _ExerciseThumbnailStripState extends State<ExerciseThumbnailStrip> {
   void _scrollToCurrentExercise() {
     if (!_scrollController.hasClients) return;
 
-    // Each box is ~92 wide (80 + 12 margin) - increased for better tap targets
-    const itemWidth = 92.0;
+    // Each box is ~82 wide (70 + 12 margin)
+    const itemWidth = 82.0;
     final targetOffset = (widget.currentIndex * itemWidth) -
         (MediaQuery.of(context).size.width / 2) + (itemWidth / 2);
 
@@ -103,7 +103,7 @@ class _ExerciseThumbnailStripState extends State<ExerciseThumbnailStrip> {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(0, 12, 0, 8 + bottomPadding),
+      padding: EdgeInsets.fromLTRB(0, 8, 0, 8 + bottomPadding),
       decoration: BoxDecoration(
           color: isDark
               ? AppColors.nearBlack.withOpacity(0.95)
@@ -194,10 +194,10 @@ class _ExerciseThumbnailStripState extends State<ExerciseThumbnailStrip> {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
-            // Horizontal scrollable exercise thumbnails - increased height for 80px boxes
+            const SizedBox(height: 6),
+            // Horizontal scrollable exercise thumbnails
             SizedBox(
-              height: 110,
+              height: 75,
               child: ListView.builder(
                 controller: _scrollController,
                 scrollDirection: Axis.horizontal,
@@ -291,16 +291,16 @@ class _ExerciseThumbnailBox extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(right: 12),
-        width: 80,
-        height: 110, // Fixed height to prevent overflow
+        width: 70,
+        height: 72, // Fixed height to prevent overflow
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Thumbnail box - increased to 80px for better tap targets
+            // Thumbnail box
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: 80,
-              height: 80,
+              width: 70,
+              height: 70,
               decoration: BoxDecoration(
                 color: bgColor,
                 borderRadius: BorderRadius.circular(14),
@@ -329,15 +329,15 @@ class _ExerciseThumbnailBox extends StatelessWidget {
                 children: [
                   // Exercise image or placeholder
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     child: imageUrl != null && imageUrl.isNotEmpty
                         ? Opacity(
                             opacity: opacity,
                             child: CachedNetworkImage(
                               imageUrl: imageUrl,
                               fit: BoxFit.cover,
-                              width: 80,
-                              height: 80,
+                              width: 70,
+                              height: 70,
                               placeholder: (context, url) => _buildPlaceholder(isDark),
                               errorWidget: (context, url, error) => _buildPlaceholder(isDark),
                             ),
@@ -350,18 +350,53 @@ class _ExerciseThumbnailBox extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           color: AppColors.glowGreen.withOpacity(0.4),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Center(
                           child: Icon(
                             Icons.check_rounded,
                             color: Colors.white,
-                            size: 32,
+                            size: 28,
                           ),
                         ),
                       ),
                     ),
-                  // Active indicator dot with glow
+                  // Exercise number badge (top-left)
+                  Positioned(
+                    top: 4,
+                    left: 4,
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? activeColor
+                            : (isCompleted || isPast)
+                                ? AppColors.glowGreen
+                                : Colors.black.withOpacity(0.6),
+                        shape: BoxShape.circle,
+                        boxShadow: isActive
+                            ? [
+                                BoxShadow(
+                                  color: activeColor.withOpacity(0.5),
+                                  blurRadius: 4,
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${index + 1}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Active indicator dot with glow (top-right)
                   if (isActive)
                     Positioned(
                       top: 4,
@@ -424,26 +459,6 @@ class _ExerciseThumbnailBox extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 4),
-            // Exercise number - constrained to prevent overflow
-            Flexible(
-              child: Text(
-                '${index + 1}',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                  color: isActive
-                      ? activeColor
-                      : (isCompleted || isPast)
-                          ? AppColors.glowGreen
-                          : (isDark
-                              ? AppColors.textMuted
-                              : AppColorsLight.textMuted),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
           ],
         ),
       ),
@@ -452,14 +467,14 @@ class _ExerciseThumbnailBox extends StatelessWidget {
 
   Widget _buildPlaceholder(bool isDark) {
     return Container(
-      width: 80,
-      height: 80,
+      width: 70,
+      height: 70,
       color: isDark
           ? Colors.white.withOpacity(0.05)
           : Colors.black.withOpacity(0.03),
       child: Icon(
         Icons.fitness_center,
-        size: 28,
+        size: 24,
         color: isDark
             ? Colors.white.withOpacity(0.3)
             : Colors.black.withOpacity(0.2),

@@ -708,6 +708,175 @@ async def _find_next_exercise_variant(
         return None
 
 
+async def record_challenge_exercise_completion(
+    user_id: str,
+    exercise_name: str,
+    difficulty_felt: str,
+    completed: bool,
+    workout_id: Optional[str] = None,
+    performance_data: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """
+    Record completion (or skip) of a challenge exercise.
+
+    This tracks challenge exercise performance separately to determine:
+    1. If user is ready to have this exercise in main workout
+    2. If difficulty level should be adjusted for future challenges
+
+    Args:
+        user_id: The user's ID
+        exercise_name: Name of the challenge exercise
+        difficulty_felt: "too_easy", "just_right", or "too_hard"
+        completed: Whether the user actually completed the challenge
+        workout_id: Optional workout ID for tracking
+        performance_data: Optional dict with sets, reps, weight, etc.
+
+    Returns:
+        Dict with updated challenge mastery status
+    """
+    try:
+        db = get_supabase_db()
+        now = datetime.now()
+
+        # Get or create challenge mastery record
+        existing = db.client.table("user_challenge_mastery").select("*").eq(
+            "user_id", user_id
+        ).ilike("exercise_name", exercise_name).execute()
+
+        if existing.data:
+            mastery = existing.data[0]
+            total_attempts = mastery.get("total_attempts", 0) + 1
+            successful_completions = mastery.get("successful_completions", 0)
+            consecutive_successes = mastery.get("consecutive_successes", 0)
+
+            if completed:
+                successful_completions += 1
+                if difficulty_felt in ["too_easy", "just_right"]:
+                    consecutive_successes += 1
+                else:
+                    consecutive_successes = 0  # Reset if too hard
+            else:
+                consecutive_successes = 0  # Reset on skip/fail
+
+            # Check if ready to move to main workout (2-3 successful completions)
+            ready_for_main_workout = consecutive_successes >= 2
+
+            update_data = {
+                "total_attempts": total_attempts,
+                "successful_completions": successful_completions,
+                "consecutive_successes": consecutive_successes,
+                "last_difficulty_felt": difficulty_felt,
+                "ready_for_main_workout": ready_for_main_workout,
+                "last_attempted_at": now.isoformat(),
+                "updated_at": now.isoformat(),
+            }
+
+            db.client.table("user_challenge_mastery").update(
+                update_data
+            ).eq("id", mastery["id"]).execute()
+
+            logger.info(
+                f"[Challenge] Updated {exercise_name} for user {user_id}: "
+                f"attempts={total_attempts}, successes={successful_completions}, "
+                f"consecutive={consecutive_successes}, ready_for_main={ready_for_main_workout}"
+            )
+
+            return {
+                "exercise_name": exercise_name,
+                "total_attempts": total_attempts,
+                "successful_completions": successful_completions,
+                "consecutive_successes": consecutive_successes,
+                "ready_for_main_workout": ready_for_main_workout,
+                "was_updated": True,
+            }
+        else:
+            # Create new challenge mastery record
+            successful_completions = 1 if completed else 0
+            consecutive_successes = 1 if (completed and difficulty_felt != "too_hard") else 0
+
+            insert_data = {
+                "user_id": user_id,
+                "exercise_name": exercise_name,
+                "total_attempts": 1,
+                "successful_completions": successful_completions,
+                "consecutive_successes": consecutive_successes,
+                "last_difficulty_felt": difficulty_felt,
+                "ready_for_main_workout": False,
+                "first_attempted_at": now.isoformat(),
+                "last_attempted_at": now.isoformat(),
+                "created_at": now.isoformat(),
+                "updated_at": now.isoformat(),
+            }
+
+            db.client.table("user_challenge_mastery").insert(insert_data).execute()
+
+            logger.info(
+                f"[Challenge] Created mastery record for {exercise_name}, user {user_id}"
+            )
+
+            return {
+                "exercise_name": exercise_name,
+                "total_attempts": 1,
+                "successful_completions": successful_completions,
+                "consecutive_successes": consecutive_successes,
+                "ready_for_main_workout": False,
+                "was_updated": True,
+            }
+
+    except Exception as e:
+        logger.error(f"Failed to record challenge exercise completion: {e}")
+        return {
+            "exercise_name": exercise_name,
+            "error": str(e),
+            "was_updated": False,
+        }
+
+
+async def get_challenges_ready_for_main_workout(
+    user_id: str,
+) -> List[Dict[str, Any]]:
+    """
+    Get challenge exercises that the user has mastered and are ready
+    to be included in their main workout.
+
+    These are exercises where the user has completed the challenge
+    successfully 2+ times consecutively with "just_right" or "too_easy" feedback.
+
+    Args:
+        user_id: The user's ID
+
+    Returns:
+        List of exercises ready to move to main workout
+    """
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("user_challenge_mastery").select("*").eq(
+            "user_id", user_id
+        ).eq("ready_for_main_workout", True).execute()
+
+        ready_exercises = []
+        for mastery in result.data or []:
+            ready_exercises.append({
+                "exercise_name": mastery.get("exercise_name"),
+                "consecutive_successes": mastery.get("consecutive_successes", 0),
+                "total_attempts": mastery.get("total_attempts", 0),
+                "successful_completions": mastery.get("successful_completions", 0),
+                "last_difficulty_felt": mastery.get("last_difficulty_felt"),
+            })
+
+        logger.info(
+            f"[Challenge] Found {len(ready_exercises)} challenge exercises "
+            f"ready for main workout for user {user_id}"
+        )
+
+        return ready_exercises
+
+    except Exception as e:
+        logger.error(f"Failed to get challenges ready for main workout: {e}")
+        return []
+
+
 async def record_progression_response(
     user_id: str,
     exercise_name: str,

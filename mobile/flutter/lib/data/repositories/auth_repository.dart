@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -6,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/api_constants.dart';
 import '../models/user.dart' as app_user;
 import '../services/api_client.dart';
+import '../services/wearable_service.dart';
 
 /// Auth state
 enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
@@ -117,6 +119,15 @@ class AuthRepository {
         await _apiClient.setUserId(user.id);
         await _apiClient.setAuthToken(supabaseAccessToken);
 
+        // Sync credentials to watch (Android only, non-blocking)
+        if (Platform.isAndroid) {
+          _syncCredentialsToWatch(
+            userId: user.id,
+            authToken: supabaseAccessToken,
+            refreshToken: response.session?.refreshToken,
+          );
+        }
+
         return user;
       } else {
         throw Exception('Backend authentication failed');
@@ -153,6 +164,28 @@ class AuthRepository {
     return supabaseSession != null || hasStoredToken;
   }
 
+  /// Sync credentials to watch (fire-and-forget, non-blocking)
+  void _syncCredentialsToWatch({
+    required String userId,
+    required String authToken,
+    String? refreshToken,
+  }) {
+    // Fire and forget - don't block login flow
+    WearableService.instance.syncUserCredentials(
+      userId: userId,
+      authToken: authToken,
+      refreshToken: refreshToken,
+    ).then((success) {
+      if (success) {
+        debugPrint('✅ [Auth] Credentials synced to watch');
+      } else {
+        debugPrint('⚠️ [Auth] Watch credential sync skipped (not connected)');
+      }
+    }).catchError((e) {
+      debugPrint('⚠️ [Auth] Watch credential sync failed: $e');
+    });
+  }
+
   /// Get current user from backend
   Future<app_user.User?> getCurrentUser() async {
     try {
@@ -184,7 +217,18 @@ class AuthRepository {
         await _apiClient.setAuthToken(session.accessToken);
 
         // Get user from backend
-        return getCurrentUser();
+        final user = await getCurrentUser();
+
+        // Sync credentials to watch on session restore (Android only)
+        if (user != null && Platform.isAndroid) {
+          _syncCredentialsToWatch(
+            userId: user.id,
+            authToken: session.accessToken,
+            refreshToken: session.refreshToken,
+          );
+        }
+
+        return user;
       }
 
       // Fall back to stored token

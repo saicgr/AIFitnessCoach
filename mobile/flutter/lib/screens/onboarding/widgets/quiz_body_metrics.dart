@@ -456,10 +456,10 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
             ],
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         // Gender selection
         Expanded(
-          flex: 4,
+          flex: 3,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -485,8 +485,9 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                 ],
               ),
               const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
                 children: [
                   _buildGenderChip(
                     isDark: isDark,
@@ -496,7 +497,6 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                     id: 'male',
                     label: 'M',
                   ),
-                  const SizedBox(width: 6),
                   _buildGenderChip(
                     isDark: isDark,
                     textPrimary: textPrimary,
@@ -505,14 +505,13 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                     id: 'female',
                     label: 'F',
                   ),
-                  const SizedBox(width: 6),
                   _buildGenderChip(
                     isDark: isDark,
                     textPrimary: textPrimary,
                     cardBg: cardBg,
                     cardBorder: cardBorder,
                     id: 'other',
-                    label: 'Other',
+                    label: 'Oth',
                   ),
                 ],
               ),
@@ -541,18 +540,18 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(6),
+                    padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
                       color: AppColors.cyan.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(Icons.height, color: AppColors.cyan, size: 16),
+                    child: Icon(Icons.height, color: AppColors.cyan, size: 14),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Text(
                     'Height',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: textPrimary,
                     ),
@@ -561,7 +560,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                   _buildSmallUnitToggle(
                     isMetric: _heightInMetric,
                     metricLabel: 'cm',
-                    imperialLabel: 'ft/in',
+                    imperialLabel: 'ft',
                     onChanged: (isMetric) {
                       _convertHeightUnits(isMetric);
                       setState(() => _heightInMetric = isMetric);
@@ -597,7 +596,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                         cardBorder: cardBorder,
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                     Expanded(
                       child: _buildCompactTextField(
                         controller: _heightInchesController,
@@ -614,7 +613,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
             ],
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         // Weight section
         Expanded(
           child: Column(
@@ -623,18 +622,18 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(6),
+                    padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
                       color: AppColors.purple.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(Icons.monitor_weight_outlined, color: AppColors.purple, size: 16),
+                    child: Icon(Icons.monitor_weight_outlined, color: AppColors.purple, size: 14),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Text(
                     'Weight',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: textPrimary,
                     ),
@@ -643,7 +642,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                   _buildSmallUnitToggle(
                     isMetric: _weightInMetric,
                     metricLabel: 'kg',
-                    imperialLabel: 'lbs',
+                    imperialLabel: 'lb',
                     onChanged: (isMetric) {
                       _convertWeightUnits(isMetric);
                       setState(() => _weightInMetric = isMetric);
@@ -771,7 +770,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           gradient: isSelected ? AppColors.cyanGradient : null,
           color: isSelected ? null : cardBg,
@@ -784,7 +783,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: FontWeight.w600,
             color: isSelected ? Colors.white : textPrimary,
           ),
@@ -806,7 +805,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: cardBorder),
       ),
       child: Row(
@@ -819,15 +818,15 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               decoration: BoxDecoration(
                 gradient: isMetric ? AppColors.cyanGradient : null,
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
                 metricLabel,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 10,
                   fontWeight: FontWeight.w600,
                   color: isMetric
                       ? Colors.white
@@ -843,15 +842,15 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               decoration: BoxDecoration(
                 gradient: !isMetric ? AppColors.cyanGradient : null,
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
                 imperialLabel,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 10,
                   fontWeight: FontWeight.w600,
                   color: !isMetric
                       ? Colors.white

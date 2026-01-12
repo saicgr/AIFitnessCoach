@@ -32,6 +32,7 @@ elif [ "$RUN_CRITICAL_ONLY" = "true" ]; then
         tests/services/exercise_rag/test_filters.py \
         tests/test_workout_generation.py \
         tests/test_one_at_a_time_generation.py \
+        tests/test_gemini_schemas.py \
         -v --tb=short -x -m "not slow" \
         --ignore=tests/test_quick_replies_e2e.py
 else

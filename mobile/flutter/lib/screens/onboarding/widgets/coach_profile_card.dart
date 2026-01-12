@@ -67,26 +67,10 @@ class CoachProfileCard extends StatelessWidget {
             // Header with gradient and icon
             _buildHeader(isDark, textPrimary, textSecondary),
 
-            // Content section
+            // Content section - just sample message, no traits/specialization to save space
             Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Sample message bubble
-                  _buildSampleMessage(isDark, textPrimary, textSecondary),
-
-                  const SizedBox(height: 16),
-
-                  // Personality traits
-                  _buildPersonalityTraits(isDark, textSecondary),
-
-                  const SizedBox(height: 16),
-
-                  // Specialization
-                  _buildSpecialization(isDark, textSecondary),
-                ],
-              ),
+              padding: const EdgeInsets.all(12),
+              child: _buildSampleMessage(isDark, textPrimary, textSecondary),
             ),
           ],
         ),
@@ -97,7 +81,7 @@ class CoachProfileCard extends StatelessWidget {
   Widget _buildHeader(bool isDark, Color textPrimary, Color textSecondary) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -113,11 +97,12 @@ class CoachProfileCard extends StatelessWidget {
         ),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Coach icon
           Container(
-            width: 72,
-            height: 72,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.2),
               shape: BoxShape.circle,
@@ -125,51 +110,52 @@ class CoachProfileCard extends StatelessWidget {
             child: Icon(
               coach.icon,
               color: Colors.white,
-              size: 36,
+              size: 26,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
 
           // Coach name
           Text(
             coach.name,
             style: const TextStyle(
-              fontSize: 22,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
           ),
 
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
 
           // Tagline
           Text(
             coach.tagline,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 12,
               color: Colors.white.withValues(alpha: 0.9),
               fontWeight: FontWeight.w500,
             ),
+            textAlign: TextAlign.center,
           ),
 
           // Selected badge
           if (isSelected) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 6),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.check_circle, color: Colors.white, size: 14),
-                  SizedBox(width: 4),
+                  Icon(Icons.check_circle, color: Colors.white, size: 11),
+                  SizedBox(width: 3),
                   Text(
                     'Selected',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
@@ -186,34 +172,35 @@ class CoachProfileCard extends StatelessWidget {
   Widget _buildSampleMessage(bool isDark, Color textPrimary, Color textSecondary) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           children: [
             Icon(
               Icons.chat_bubble_outline,
-              size: 14,
+              size: 11,
               color: textSecondary,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 4),
             Text(
               'How they talk',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 10,
                 fontWeight: FontWeight.w600,
                 color: textSecondary,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: isDark
                 ? AppColors.glassSurface
                 : AppColorsLight.glassSurface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: coach.primaryColor.withValues(alpha: 0.3),
             ),
@@ -221,11 +208,13 @@ class CoachProfileCard extends StatelessWidget {
           child: Text(
             coach.sampleMessage,
             style: TextStyle(
-              fontSize: 14,
-              height: 1.4,
+              fontSize: 12,
+              height: 1.25,
               color: textPrimary,
               fontStyle: FontStyle.italic,
             ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
@@ -234,14 +223,14 @@ class CoachProfileCard extends StatelessWidget {
 
   Widget _buildPersonalityTraits(bool isDark, Color textSecondary) {
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: coach.personalityTraits.map((trait) {
+      spacing: 6,
+      runSpacing: 6,
+      children: coach.personalityTraits.take(4).map((trait) {
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: coach.primaryColor.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: coach.primaryColor.withValues(alpha: 0.3),
             ),
@@ -249,7 +238,7 @@ class CoachProfileCard extends StatelessWidget {
           child: Text(
             trait,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
               color: coach.primaryColor,
             ),
@@ -264,16 +253,20 @@ class CoachProfileCard extends StatelessWidget {
       children: [
         Icon(
           Icons.star,
-          size: 16,
+          size: 14,
           color: coach.accentColor,
         ),
-        const SizedBox(width: 6),
-        Text(
-          coach.specialization,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: textSecondary,
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            coach.specialization,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: textSecondary,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

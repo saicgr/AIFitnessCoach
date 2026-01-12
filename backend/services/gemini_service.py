@@ -16,6 +16,18 @@ import logging
 import asyncio
 from core.config import get_settings
 from models.chat import IntentExtraction, CoachIntent
+from models.gemini_schemas import (
+    IntentExtractionResponse,
+    ExerciseListResponse,
+    GeneratedWorkoutResponse,
+    WorkoutNamesResponse,
+    ExerciseReasoningResponse,
+    FoodAnalysisResponse,
+    InflammationAnalysisGeminiResponse,
+    DailyMealPlanResponse,
+    MealSuggestionsResponse,
+    SnackSuggestionsResponse,
+)
 import re as regex_module  # For weight parsing
 
 settings = get_settings()
@@ -37,6 +49,90 @@ class GeminiService:
     def __init__(self):
         self.model = settings.gemini_model
         self.embedding_model = settings.gemini_embedding_model
+
+    def _try_recover_truncated_json(self, content: str) -> Optional[Dict]:
+        """
+        Attempt to recover a truncated JSON response by closing open structures.
+        Returns parsed dict if successful, None otherwise.
+        """
+        if not content:
+            return None
+
+        # Count open brackets/braces
+        open_braces = content.count('{') - content.count('}')
+        open_brackets = content.count('[') - content.count(']')
+
+        # If severely truncated (missing many closers), give up
+        if open_braces > 5 or open_brackets > 5:
+            logger.warning(f"JSON too severely truncated to recover: {open_braces} braces, {open_brackets} brackets open")
+            return None
+
+        recovered = content
+
+        # Try to find a reasonable truncation point (end of a complete field)
+        # Look for last complete string or number value
+        last_comma = recovered.rfind(',')
+        last_colon = recovered.rfind(':')
+
+        if last_comma > last_colon:
+            # Truncated after a complete value, remove trailing comma
+            recovered = recovered[:last_comma]
+        elif last_colon > last_comma:
+            # Truncated mid-value, remove incomplete field
+            last_good_comma = recovered.rfind(',', 0, last_colon)
+            if last_good_comma > 0:
+                recovered = recovered[:last_good_comma]
+
+        # Close open structures
+        recovered += ']' * open_brackets
+        recovered += '}' * open_braces
+
+        try:
+            result = json.loads(recovered)
+            logger.info("Successfully recovered truncated JSON")
+            return result
+        except json.JSONDecodeError:
+            # Try more aggressive recovery - cut to last complete object
+            try:
+                # Find the last complete array element or object
+                brace_depth = 0
+                bracket_depth = 0
+                last_complete = -1
+
+                for i, char in enumerate(content):
+                    if char == '{':
+                        brace_depth += 1
+                    elif char == '}':
+                        brace_depth -= 1
+                        if brace_depth == 0:
+                            last_complete = i
+                    elif char == '[':
+                        bracket_depth += 1
+                    elif char == ']':
+                        bracket_depth -= 1
+
+                if last_complete > 0:
+                    recovered = content[:last_complete + 1]
+                    # Close any remaining brackets
+                    open_brackets = recovered.count('[') - recovered.count(']')
+                    recovered += ']' * open_brackets
+                    return json.loads(recovered)
+            except json.JSONDecodeError:
+                pass
+
+            logger.warning("Failed to recover truncated JSON")
+            return None
+
+    def _fix_trailing_commas(self, json_str: str) -> str:
+        """
+        Fix trailing commas in JSON which are invalid but commonly returned by LLMs.
+        Handles cases like: {"a": 1,} or [1, 2,]
+        """
+        import re
+        # Remove trailing commas before closing braces/brackets
+        # Handles: ,} ,] with optional whitespace/newlines between
+        fixed = re.sub(r',(\s*[}\]])', r'\1', json_str)
+        return fixed
 
     def _parse_weight_from_amount(self, amount: str) -> tuple[float, str]:
         """
@@ -161,13 +257,23 @@ class GeminiService:
             usda_service = None
 
         # Parse weights first (synchronous, fast)
+        # Use Gemini's weight_g if provided, otherwise parse from amount string
         parsed_items = []
         for item in food_items:
             enhanced_item = dict(item)
-            amount = item.get('amount', '')
-            weight_g, weight_source = self._parse_weight_from_amount(amount)
-            enhanced_item['weight_g'] = weight_g
-            enhanced_item['weight_source'] = weight_source
+
+            # First check if Gemini provided a valid weight_g
+            gemini_weight = item.get('weight_g')
+            if gemini_weight and gemini_weight > 0:
+                enhanced_item['weight_g'] = float(gemini_weight)
+                enhanced_item['weight_source'] = 'gemini'
+            else:
+                # Fall back to parsing the amount string
+                amount = item.get('amount', '')
+                weight_g, weight_source = self._parse_weight_from_amount(amount)
+                enhanced_item['weight_g'] = weight_g
+                enhanced_item['weight_source'] = weight_source
+
             parsed_items.append(enhanced_item)
 
         # Run all USDA lookups in parallel (async)
@@ -336,22 +442,14 @@ User message: "''' + user_message + '"'
                 contents=extraction_prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
+                    response_schema=IntentExtractionResponse,
                     max_output_tokens=2000,  # Increased for thinking models
                     temperature=0.1,  # Low temp for consistent extraction
                 ),
             )
 
             content = response.text.strip()
-
-            # Clean markdown if present (shouldn't be needed with response_mime_type)
-            if content.startswith("```json"):
-                content = content[7:]
-            elif content.startswith("```"):
-                content = content[3:]
-            if content.endswith("```"):
-                content = content[:-3]
-
-            data = json.loads(content.strip())
+            data = json.loads(content)
 
             return IntentExtraction(
                 intent=CoachIntent(data.get("intent", "question")),
@@ -380,13 +478,13 @@ User message: "''' + user_message + '"'
 
 Response: "{ai_response}"
 
-Return ONLY a JSON array of exercise names (no explanation, no markdown):
-["Exercise 1", "Exercise 2", ...]
+Return a JSON object with an "exercises" array containing the exercise names:
+{{"exercises": ["Exercise 1", "Exercise 2", ...]}}
 
 IMPORTANT:
 - Include ALL exercises mentioned, including compound names like "Cable Woodchoppers"
 - Keep the exact exercise names as written
-- If no exercises are mentioned, return an empty array: []'''
+- If no exercises are mentioned, return: {{"exercises": []}}'''
 
         try:
             response = await client.aio.models.generate_content(
@@ -394,22 +492,15 @@ IMPORTANT:
                 contents=extraction_prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
+                    response_schema=ExerciseListResponse,
                     max_output_tokens=2000,  # Increased for thinking models
                     temperature=0.1,
                 ),
             )
 
             content = response.text.strip()
-
-            # Clean markdown if present
-            if content.startswith("```json"):
-                content = content[7:]
-            elif content.startswith("```"):
-                content = content[3:]
-            if content.endswith("```"):
-                content = content[:-3]
-
-            exercises = json.loads(content.strip())
+            data = json.loads(content)
+            exercises = data.get("exercises", [])
 
             if isinstance(exercises, list) and len(exercises) > 0:
                 return exercises
@@ -482,60 +573,44 @@ IMPORTANT:
         Returns:
             Dictionary with food_items, total_calories, protein_g, carbs_g, fat_g, fiber_g, feedback
         """
-        prompt = '''Analyze this food image and provide detailed nutrition information including micronutrients.
+        # Prompt with weight/count fields for portion editing (like text describe feature)
+        prompt = '''Analyze this food image and identify the foods with their nutrition.
 
-Return ONLY valid JSON in this exact format (no markdown, no explanation):
+Return ONLY valid JSON (no markdown):
 {
   "food_items": [
-    {
-      "name": "Food item name",
-      "amount": "Estimated portion (e.g., '1 cup', '200g', '1 medium')",
-      "calories": 150,
-      "protein_g": 10.0,
-      "carbs_g": 15.0,
-      "fat_g": 5.0,
-      "fiber_g": 2.0,
-      "sodium_mg": 200,
-      "sugar_g": 5.0,
-      "saturated_fat_g": 2.0,
-      "cholesterol_mg": 50,
-      "potassium_mg": 300,
-      "vitamin_a_iu": 500,
-      "vitamin_c_mg": 10,
-      "vitamin_d_iu": 40,
-      "calcium_mg": 100,
-      "iron_mg": 2.0
-    }
+    {"name": "Food name", "amount": "portion size", "calories": 150, "protein_g": 10.0, "carbs_g": 15.0, "fat_g": 5.0, "fiber_g": 2.0, "weight_g": 100, "unit": "g", "count": null, "weight_per_unit_g": null}
   ],
   "total_calories": 450,
   "protein_g": 25.0,
   "carbs_g": 40.0,
   "fat_g": 15.0,
   "fiber_g": 5.0,
-  "sodium_mg": 400,
-  "sugar_g": 10.0,
-  "saturated_fat_g": 4.0,
-  "cholesterol_mg": 100,
-  "potassium_mg": 600,
-  "vitamin_a_iu": 1000,
-  "vitamin_c_mg": 20,
-  "vitamin_d_iu": 80,
-  "calcium_mg": 200,
-  "iron_mg": 4.0,
-  "feedback": "Brief nutritional feedback about the meal"
+  "feedback": "Brief nutritional feedback"
 }
 
-IMPORTANT:
-- Identify ALL visible food items in the image
-- Estimate realistic portion sizes based on visual cues
-- Use standard USDA nutrition data for calorie/macro estimates
-- Include micronutrients (sodium, sugar, saturated fat, cholesterol, potassium, vitamins, calcium, iron)
-- If you cannot identify the food, make your best educated guess
-- Total values should be the sum of individual items
-- Provide helpful feedback about the nutritional quality of the meal'''
+CRITICAL RULES:
+- Identify ALL visible food items specifically (max 10 items)
+- Be SPECIFIC with dish names: "Butter Chicken" not "Indian Curry", "Chicken Tikka Masala" not "Curry"
+- For Indian food: identify specific dishes (dal makhani, paneer butter masala, chicken curry, biryani, etc.)
+- RESTAURANT PORTIONS are large! Use realistic weights:
+  - Naan bread: 80-100g EACH
+  - Bowl of curry: 200-300g per bowl
+  - Rice portion: 150-250g
+  - Pakoras/samosas: 40-50g each
+  - Roti/chapati: 40-50g each
 
-        # Timeout for image analysis (20 seconds - images take longer)
-        IMAGE_ANALYSIS_TIMEOUT = 20
+WEIGHT/COUNT FIELDS (required for portion editing):
+- weight_g: Total weight in grams for this item (be realistic for restaurant portions!)
+- unit: "g" (solids), "ml" (liquids), "oz", "cups", "tsp", "tbsp"
+- For COUNTABLE items (eggs, cookies, nuggets, slices, pieces, naan, roti):
+  - count: Number of pieces visible
+  - weight_per_unit_g: Weight of ONE piece (e.g., naan=90g, roti=45g, pakora=45g, samosa=80g)
+  - weight_g = count × weight_per_unit_g
+- For non-countable items (curry, rice, dal): count=null, weight_per_unit_g=null'''
+
+        # Timeout for image analysis - needs to be generous for complex images
+        IMAGE_ANALYSIS_TIMEOUT = 60  # 60 seconds for images with many food items
 
         try:
             # Create image part from base64
@@ -552,7 +627,8 @@ IMPORTANT:
                         contents=[prompt, image_part],
                         config=types.GenerateContentConfig(
                             response_mime_type="application/json",
-                            max_output_tokens=2000,
+                            response_schema=FoodAnalysisResponse,
+                            max_output_tokens=8192,  # High limit to prevent truncation with micronutrients
                             temperature=0.3,
                         ),
                     ),
@@ -563,16 +639,7 @@ IMPORTANT:
                 return None
 
             content = response.text.strip()
-
-            # Clean markdown if present
-            if content.startswith("```json"):
-                content = content[7:]
-            elif content.startswith("```"):
-                content = content[3:]
-            if content.endswith("```"):
-                content = content[:-3]
-
-            result = json.loads(content.strip())
+            result = json.loads(content)
 
             # Enhance food items with USDA per-100g data for accurate scaling
             if result and result.get('food_items'):
@@ -754,7 +821,8 @@ Rules: Use USDA data. Sum totals from items. Account for prep methods (fried add
                             contents=prompt,
                             config=types.GenerateContentConfig(
                                 response_mime_type="application/json",
-                                max_output_tokens=2500,  # Increased to handle multiple food items with full nutrition
+                                response_schema=FoodAnalysisResponse,
+                                max_output_tokens=4096,  # Increased to handle multiple food items with full nutrition and coaching fields
                                 temperature=0.2,  # Lower = faster, more deterministic
                             ),
                         ),
@@ -773,8 +841,8 @@ Rules: Use USDA data. Sum totals from items. Account for prep methods (fried add
                     last_error = "Empty response"
                     continue
 
-                # Parse with robust JSON extraction
-                result = self._extract_json_robust(content)
+                # Parse JSON directly - structured output guarantees valid JSON
+                result = json.loads(content)
                 if result and result.get('food_items'):
                     print(f"✅ [Gemini] Parsed {len(result.get('food_items', []))} food items")
 
@@ -936,12 +1004,14 @@ Rules: Use USDA data. Sum totals from items. Account for prep methods (fried add
 
                 # If structured pattern failed, try simpler pattern for complete objects
                 if not food_objects:
+                    print(f"🔍 [Gemini] Trying simple pattern for complete objects...")
                     simple_pattern = r'\{[^{}]+\}'
                     for obj_match in re.finditer(simple_pattern, items_str):
                         try:
                             obj = json.loads(obj_match.group())
                             if 'name' in obj and 'calories' in obj:
                                 food_objects.append(obj)
+                                print(f"✅ [Gemini] Simple pattern matched: {obj.get('name')}")
                         except json.JSONDecodeError:
                             obj_str = obj_match.group()
                             obj_str = re.sub(r',\s*([}\]])', r'\1', obj_str)
@@ -949,8 +1019,49 @@ Rules: Use USDA data. Sum totals from items. Account for prep methods (fried add
                                 obj = json.loads(obj_str)
                                 if 'name' in obj and 'calories' in obj:
                                     food_objects.append(obj)
+                                    print(f"✅ [Gemini] Simple pattern (fixed) matched: {obj.get('name')}")
                             except:
                                 pass
+
+                # Step 6b: Try to recover truncated objects by extracting key-value pairs
+                # Always try this if we don't have food_objects yet
+                if not food_objects:
+                    print(f"🔍 [Gemini] Attempting field-by-field recovery for truncated objects...")
+                    print(f"🔍 [Gemini] items_str preview: {items_str[:300] if items_str else 'None'}...")
+                    # Find all objects that start but may not end
+                    obj_starts = list(re.finditer(r'\{', items_str))
+                    for i, start_match in enumerate(obj_starts):
+                        start_pos = start_match.start()
+                        # Find the next object start or end of string
+                        if i + 1 < len(obj_starts):
+                            end_pos = obj_starts[i + 1].start()
+                        else:
+                            end_pos = len(items_str)
+
+                        obj_str = items_str[start_pos:end_pos]
+
+                        # Extract fields using regex - flexible order
+                        name_match = re.search(r'"name"\s*:\s*"([^"]+)"', obj_str)
+                        amount_match = re.search(r'"amount"\s*:\s*"([^"]+)"', obj_str)
+                        calories_match = re.search(r'"calories"\s*:\s*(\d+(?:\.\d+)?)', obj_str)
+                        protein_match = re.search(r'"protein_g"\s*:\s*(\d+(?:\.\d+)?)', obj_str)
+                        carbs_match = re.search(r'"carbs_g"\s*:\s*(\d+(?:\.\d+)?)', obj_str)
+                        fat_match = re.search(r'"fat_g"\s*:\s*(\d+(?:\.\d+)?)', obj_str)
+                        fiber_match = re.search(r'"fiber_g"\s*:\s*(\d+(?:\.\d+)?)', obj_str)
+
+                        # Must have at least name and calories
+                        if name_match and calories_match:
+                            recovered_obj = {
+                                "name": name_match.group(1),
+                                "amount": amount_match.group(1) if amount_match else "1 serving",
+                                "calories": float(calories_match.group(1)),
+                                "protein_g": float(protein_match.group(1)) if protein_match else 0,
+                                "carbs_g": float(carbs_match.group(1)) if carbs_match else 0,
+                                "fat_g": float(fat_match.group(1)) if fat_match else 0,
+                                "fiber_g": float(fiber_match.group(1)) if fiber_match else 0,
+                            }
+                            food_objects.append(recovered_obj)
+                            print(f"✅ [Gemini] Recovered truncated item: {recovered_obj['name']}")
 
                 if food_objects:
                     # Calculate totals from individual items
@@ -1080,6 +1191,7 @@ IMPORTANT RULES:
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
+                    response_schema=InflammationAnalysisGeminiResponse,
                     max_output_tokens=4000,
                     temperature=0.2,  # Low temperature for consistent classification
                 ),
@@ -1091,12 +1203,8 @@ IMPORTANT RULES:
                 print("⚠️ [Gemini] Empty response from inflammation analysis")
                 return None
 
-            # Parse with robust JSON extraction
-            result = self._extract_json_robust(content)
-
-            if not result:
-                print(f"⚠️ [Gemini] Failed to parse inflammation response: {content[:200]}")
-                return None
+            # Parse JSON directly - structured output guarantees valid JSON
+            result = json.loads(content)
 
             # Validate and fix overall_category
             valid_categories = [
@@ -1806,22 +1914,14 @@ If user has gym equipment - most exercises MUST use that equipment!"""
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
+                    response_schema=GeneratedWorkoutResponse,
                     temperature=0.7,  # Higher creativity for unique workout names
                     max_output_tokens=4000  # Increased for detailed workout plans
                 ),
             )
 
             content = response.text.strip()
-
-            # Clean markdown code blocks if present (shouldn't be needed with response_mime_type)
-            if content.startswith("```json"):
-                content = content[7:]
-            elif content.startswith("```"):
-                content = content[3:]
-            if content.endswith("```"):
-                content = content[:-3]
-
-            workout_data = json.loads(content.strip())
+            workout_data = json.loads(content)
 
             # Validate required fields
             if "exercises" not in workout_data or not workout_data["exercises"]:
@@ -2161,22 +2261,14 @@ Return a JSON object with:
                 config=types.GenerateContentConfig(
                     system_instruction="You are a creative fitness coach. Generate motivating workout names. Return ONLY valid JSON.",
                     response_mime_type="application/json",
+                    response_schema=GeneratedWorkoutResponse,
                     temperature=0.8,
                     max_output_tokens=2000  # Increased for thinking models
                 ),
             )
 
             content = response.text.strip()
-
-            # Clean markdown
-            if content.startswith("```json"):
-                content = content[7:]
-            elif content.startswith("```"):
-                content = content[3:]
-            if content.endswith("```"):
-                content = content[:-3]
-
-            ai_response = json.loads(content.strip())
+            ai_response = json.loads(content)
 
             # Combine AI response with our exercises
             return {
@@ -2322,33 +2414,54 @@ RULES:
 5. Avoid generic phrases like "great exercise" or "builds strength"
 """
 
-            response = await client.aio.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    temperature=0.7,
-                    max_output_tokens=1000,
-                ),
-            )
+            # Retry logic for intermittent failures
+            max_retries = 2
+            last_error = None
+            content = ""
 
-            content = response.text.strip()
+            for attempt in range(max_retries + 1):
+                try:
+                    response = await client.aio.models.generate_content(
+                        model=self.model,
+                        contents=prompt,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                            response_schema=ExerciseReasoningResponse,
+                            temperature=0.7,
+                            max_output_tokens=4000,  # Increased to prevent truncation
+                        ),
+                    )
 
-            # Extract JSON from response
-            if "```json" in content:
-                content = content.split("```json")[1].split("```")[0].strip()
-            elif "```" in content:
-                parts = content.split("```")
-                if len(parts) >= 2:
-                    content = parts[1].strip()
-                    if content.startswith(("json", "JSON")):
-                        content = content[4:].strip()
+                    content = response.text.strip() if response.text else ""
 
-            import json
-            result = json.loads(content)
+                    if not content:
+                        print(f"⚠️ [Exercise Reasoning] Empty response (attempt {attempt + 1})")
+                        last_error = "Empty response from Gemini"
+                        continue
 
+                    # Parse JSON directly - structured output guarantees valid JSON
+                    result = json.loads(content)
+
+                    if result.get("workout_reasoning") and result.get("exercise_reasoning"):
+                        return {
+                            "workout_reasoning": result.get("workout_reasoning", ""),
+                            "exercise_reasoning": result.get("exercise_reasoning", []),
+                        }
+                    else:
+                        print(f"⚠️ [Exercise Reasoning] Incomplete result (attempt {attempt + 1})")
+                        last_error = "Incomplete result from Gemini"
+                        continue
+
+                except json.JSONDecodeError as e:
+                    print(f"⚠️ [Exercise Reasoning] JSON parse failed (attempt {attempt + 1}): {e}")
+                    print(f"   Content preview: {content[:200] if content else 'empty'}...")
+                    last_error = str(e)
+                    continue
+
+            print(f"❌ [Exercise Reasoning] All {max_retries + 1} attempts failed. Last error: {last_error}")
             return {
-                "workout_reasoning": result.get("workout_reasoning", ""),
-                "exercise_reasoning": result.get("exercise_reasoning", []),
+                "workout_reasoning": "",
+                "exercise_reasoning": [],
             }
 
         except Exception as e:

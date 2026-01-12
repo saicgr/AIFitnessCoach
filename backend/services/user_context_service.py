@@ -310,6 +310,31 @@ class EventType(str, Enum):
     INFLAMMATION_HISTORY_VIEWED = "inflammation_history_viewed"
     INFLAMMATION_SCAN_FAVORITED = "inflammation_scan_favorited"
     INFLAMMATION_SCAN_NOTES_UPDATED = "inflammation_scan_notes_updated"
+    # MacroFactor-style adaptive TDEE events - for metabolic tracking
+    WEEKLY_CHECKIN_STARTED = "weekly_checkin_started"
+    WEEKLY_CHECKIN_COMPLETED = "weekly_checkin_completed"
+    WEEKLY_CHECKIN_DISMISSED = "weekly_checkin_dismissed"
+    DETAILED_TDEE_VIEWED = "detailed_tdee_viewed"
+    ADHERENCE_SUMMARY_VIEWED = "adherence_summary_viewed"
+    METABOLIC_ADAPTATION_DETECTED = "metabolic_adaptation_detected"
+    METABOLIC_ADAPTATION_ACKNOWLEDGED = "metabolic_adaptation_acknowledged"
+    RECOMMENDATION_OPTIONS_VIEWED = "recommendation_options_viewed"
+    RECOMMENDATION_OPTION_SELECTED = "recommendation_option_selected"
+    SUSTAINABILITY_SCORE_CALCULATED = "sustainability_score_calculated"
+    TDEE_CONFIDENCE_VIEWED = "tdee_confidence_viewed"
+    WEIGHT_TREND_ANALYZED = "weight_trend_analyzed"
+    PLATEAU_DETECTED = "plateau_detected"
+    DIET_BREAK_SUGGESTED = "diet_break_suggested"
+    REFEED_SUGGESTED = "refeed_suggested"
+    # WearOS watch sync events - for tracking data from smartwatch
+    WATCH_SYNC_COMPLETED = "watch_sync_completed"
+    WATCH_WORKOUT_LOGGED = "watch_workout_logged"
+    WATCH_SET_LOGGED = "watch_set_logged"
+    WATCH_FOOD_LOGGED = "watch_food_logged"
+    WATCH_FASTING_EVENT = "watch_fasting_event"
+    WATCH_ACTIVITY_SYNCED = "watch_activity_synced"
+    WATCH_CONNECTED = "watch_connected"
+    WATCH_DISCONNECTED = "watch_disconnected"
 
 
 @dataclass
@@ -7232,6 +7257,782 @@ class UserContextService:
         return await self.log_event(
             user_id=user_id,
             event_type=EventType.KEGEL_STREAK_MILESTONE,
+            event_data=event_data,
+            context=context,
+        )
+
+    # =========================================================================
+    # ADAPTIVE TDEE / MACROFACTOR-STYLE EVENTS
+    # =========================================================================
+
+    async def log_weekly_checkin_started(
+        self,
+        user_id: str,
+        trigger_source: str,  # 'auto', 'manual_settings', 'manual_menu'
+        days_since_last_checkin: Optional[int] = None,
+        device: Optional[str] = None,
+        app_version: Optional[str] = None,
+    ) -> Optional[str]:
+        """Log when a user starts the weekly check-in flow."""
+        event_data = {
+            "trigger_source": trigger_source,
+            "days_since_last_checkin": days_since_last_checkin,
+            "started_at": datetime.now().isoformat(),
+        }
+
+        context = self._build_context(
+            device=device,
+            app_version=app_version,
+        )
+
+        logger.info(
+            f"[Weekly Check-In Started] User {user_id}, "
+            f"source: {trigger_source}, days_since_last: {days_since_last_checkin}"
+        )
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.WEEKLY_CHECKIN_STARTED,
+            event_data=event_data,
+            context=context,
+        )
+
+    async def log_weekly_checkin_completed(
+        self,
+        user_id: str,
+        option_selected: Optional[str] = None,  # 'aggressive', 'moderate', 'conservative', 'custom'
+        new_calories: Optional[int] = None,
+        new_protein_g: Optional[int] = None,
+        has_metabolic_adaptation: bool = False,
+        sustainability_rating: Optional[str] = None,
+        device: Optional[str] = None,
+        app_version: Optional[str] = None,
+    ) -> Optional[str]:
+        """Log when a user completes the weekly check-in and accepts new targets."""
+        event_data = {
+            "option_selected": option_selected,
+            "new_calories": new_calories,
+            "new_protein_g": new_protein_g,
+            "has_metabolic_adaptation": has_metabolic_adaptation,
+            "sustainability_rating": sustainability_rating,
+            "completed_at": datetime.now().isoformat(),
+        }
+
+        context = self._build_context(
+            device=device,
+            app_version=app_version,
+        )
+
+        logger.info(
+            f"[Weekly Check-In Completed] User {user_id}, "
+            f"option: {option_selected}, calories: {new_calories}"
+        )
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.WEEKLY_CHECKIN_COMPLETED,
+            event_data=event_data,
+            context=context,
+        )
+
+    async def log_weekly_checkin_dismissed(
+        self,
+        user_id: str,
+        reason: Optional[str] = None,  # 'later', 'skip', 'closed'
+        time_spent_seconds: Optional[int] = None,
+        device: Optional[str] = None,
+        app_version: Optional[str] = None,
+    ) -> Optional[str]:
+        """Log when a user dismisses the weekly check-in without completing."""
+        event_data = {
+            "reason": reason,
+            "time_spent_seconds": time_spent_seconds,
+            "dismissed_at": datetime.now().isoformat(),
+        }
+
+        context = self._build_context(
+            device=device,
+            app_version=app_version,
+        )
+
+        logger.info(f"[Weekly Check-In Dismissed] User {user_id}, reason: {reason}")
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.WEEKLY_CHECKIN_DISMISSED,
+            event_data=event_data,
+            context=context,
+        )
+
+    async def log_detailed_tdee_viewed(
+        self,
+        user_id: str,
+        tdee: int,
+        confidence_low: int,
+        confidence_high: int,
+        uncertainty_calories: int,
+        data_quality_score: float,
+        device: Optional[str] = None,
+        app_version: Optional[str] = None,
+    ) -> Optional[str]:
+        """Log when a user views their detailed TDEE with confidence intervals."""
+        event_data = {
+            "tdee": tdee,
+            "confidence_low": confidence_low,
+            "confidence_high": confidence_high,
+            "uncertainty_calories": uncertainty_calories,
+            "data_quality_score": round(data_quality_score, 2),
+            "confidence_range": f"{confidence_low}-{confidence_high}",
+            "viewed_at": datetime.now().isoformat(),
+        }
+
+        context = self._build_context(
+            device=device,
+            app_version=app_version,
+        )
+
+        logger.info(
+            f"[Detailed TDEE Viewed] User {user_id}, "
+            f"TDEE: {tdee} ±{uncertainty_calories} cal"
+        )
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.DETAILED_TDEE_VIEWED,
+            event_data=event_data,
+            context=context,
+        )
+
+    async def log_adherence_summary_viewed(
+        self,
+        user_id: str,
+        average_adherence: float,
+        sustainability_score: float,
+        sustainability_rating: str,
+        weeks_analyzed: int,
+        device: Optional[str] = None,
+        app_version: Optional[str] = None,
+    ) -> Optional[str]:
+        """Log when a user views their adherence summary."""
+        event_data = {
+            "average_adherence": round(average_adherence, 1),
+            "sustainability_score": round(sustainability_score, 2),
+            "sustainability_rating": sustainability_rating,
+            "weeks_analyzed": weeks_analyzed,
+            "viewed_at": datetime.now().isoformat(),
+        }
+
+        context = self._build_context(
+            device=device,
+            app_version=app_version,
+        )
+
+        logger.info(
+            f"[Adherence Summary Viewed] User {user_id}, "
+            f"avg: {average_adherence:.1f}%, sustainability: {sustainability_rating}"
+        )
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.ADHERENCE_SUMMARY_VIEWED,
+            event_data=event_data,
+            context=context,
+        )
+
+    async def log_metabolic_adaptation_detected(
+        self,
+        user_id: str,
+        event_type_detected: str,  # 'plateau' or 'adaptation'
+        severity: str,  # 'low', 'medium', 'high'
+        suggested_action: str,  # 'diet_break', 'refeed', etc.
+        tdee_drop_percent: Optional[float] = None,
+        plateau_weeks: Optional[int] = None,
+        device: Optional[str] = None,
+        app_version: Optional[str] = None,
+    ) -> Optional[str]:
+        """Log when metabolic adaptation or plateau is detected."""
+        event_data = {
+            "event_type_detected": event_type_detected,
+            "severity": severity,
+            "suggested_action": suggested_action,
+            "tdee_drop_percent": round(tdee_drop_percent, 1) if tdee_drop_percent else None,
+            "plateau_weeks": plateau_weeks,
+            "detected_at": datetime.now().isoformat(),
+        }
+
+        context = self._build_context(
+            device=device,
+            app_version=app_version,
+        )
+
+        logger.info(
+            f"[Metabolic Adaptation Detected] User {user_id}, "
+            f"type: {event_type_detected}, severity: {severity}"
+        )
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.METABOLIC_ADAPTATION_DETECTED,
+            event_data=event_data,
+            context=context,
+        )
+
+    async def log_metabolic_adaptation_acknowledged(
+        self,
+        user_id: str,
+        event_type_detected: str,
+        action_taken: str,  # 'accepted_suggestion', 'dismissed', 'custom_action'
+        device: Optional[str] = None,
+        app_version: Optional[str] = None,
+    ) -> Optional[str]:
+        """Log when a user acknowledges a metabolic adaptation alert."""
+        event_data = {
+            "event_type_detected": event_type_detected,
+            "action_taken": action_taken,
+            "acknowledged_at": datetime.now().isoformat(),
+        }
+
+        context = self._build_context(
+            device=device,
+            app_version=app_version,
+        )
+
+        logger.info(
+            f"[Metabolic Adaptation Acknowledged] User {user_id}, "
+            f"action: {action_taken}"
+        )
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.METABOLIC_ADAPTATION_ACKNOWLEDGED,
+            event_data=event_data,
+            context=context,
+        )
+
+    async def log_recommendation_options_viewed(
+        self,
+        user_id: str,
+        options_count: int,
+        options_available: List[str],  # ['aggressive', 'moderate', 'conservative']
+        recommended_option: Optional[str] = None,
+        has_adaptation: bool = False,
+        adherence_score: Optional[float] = None,
+        device: Optional[str] = None,
+        app_version: Optional[str] = None,
+    ) -> Optional[str]:
+        """Log when a user views the multi-option recommendations."""
+        event_data = {
+            "options_count": options_count,
+            "options_available": options_available,
+            "recommended_option": recommended_option,
+            "has_adaptation": has_adaptation,
+            "adherence_score": round(adherence_score, 2) if adherence_score else None,
+            "viewed_at": datetime.now().isoformat(),
+        }
+
+        context = self._build_context(
+            device=device,
+            app_version=app_version,
+        )
+
+        logger.info(
+            f"[Recommendation Options Viewed] User {user_id}, "
+            f"options: {options_available}, recommended: {recommended_option}"
+        )
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.RECOMMENDATION_OPTIONS_VIEWED,
+            event_data=event_data,
+            context=context,
+        )
+
+    async def log_recommendation_option_selected(
+        self,
+        user_id: str,
+        option_type: str,  # 'aggressive', 'moderate', 'conservative'
+        was_recommended: bool,
+        new_calories: int,
+        new_protein_g: int,
+        new_carbs_g: int,
+        new_fat_g: int,
+        expected_weekly_change_kg: float,
+        previous_calories: Optional[int] = None,
+        device: Optional[str] = None,
+        app_version: Optional[str] = None,
+    ) -> Optional[str]:
+        """Log when a user selects a recommendation option."""
+        event_data = {
+            "option_type": option_type,
+            "was_recommended": was_recommended,
+            "new_calories": new_calories,
+            "new_protein_g": new_protein_g,
+            "new_carbs_g": new_carbs_g,
+            "new_fat_g": new_fat_g,
+            "expected_weekly_change_kg": round(expected_weekly_change_kg, 2),
+            "previous_calories": previous_calories,
+            "calorie_change": new_calories - previous_calories if previous_calories else None,
+            "selected_at": datetime.now().isoformat(),
+        }
+
+        context = self._build_context(
+            device=device,
+            app_version=app_version,
+        )
+
+        logger.info(
+            f"[Recommendation Option Selected] User {user_id}, "
+            f"option: {option_type}, calories: {new_calories}"
+        )
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.RECOMMENDATION_OPTION_SELECTED,
+            event_data=event_data,
+            context=context,
+        )
+
+    async def log_sustainability_score_calculated(
+        self,
+        user_id: str,
+        score: float,
+        rating: str,
+        avg_adherence: float,
+        consistency_score: float,
+        logging_score: float,
+        weeks_analyzed: int,
+        device: Optional[str] = None,
+        app_version: Optional[str] = None,
+    ) -> Optional[str]:
+        """Log when a sustainability score is calculated for the user."""
+        event_data = {
+            "score": round(score, 2),
+            "rating": rating,
+            "avg_adherence": round(avg_adherence, 1),
+            "consistency_score": round(consistency_score, 2),
+            "logging_score": round(logging_score, 2),
+            "weeks_analyzed": weeks_analyzed,
+            "calculated_at": datetime.now().isoformat(),
+        }
+
+        context = self._build_context(
+            device=device,
+            app_version=app_version,
+        )
+
+        logger.info(
+            f"[Sustainability Score Calculated] User {user_id}, "
+            f"score: {score:.2f}, rating: {rating}"
+        )
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.SUSTAINABILITY_SCORE_CALCULATED,
+            event_data=event_data,
+            context=context,
+        )
+
+    async def log_weight_trend_analyzed(
+        self,
+        user_id: str,
+        change_kg: float,
+        weekly_rate: float,
+        direction: str,  # 'losing', 'gaining', 'stable'
+        start_weight: Optional[float] = None,
+        end_weight: Optional[float] = None,
+        days_analyzed: int = 14,
+        device: Optional[str] = None,
+        app_version: Optional[str] = None,
+    ) -> Optional[str]:
+        """Log when a weight trend analysis is performed."""
+        event_data = {
+            "change_kg": round(change_kg, 2),
+            "weekly_rate": round(weekly_rate, 2),
+            "direction": direction,
+            "start_weight": round(start_weight, 1) if start_weight else None,
+            "end_weight": round(end_weight, 1) if end_weight else None,
+            "days_analyzed": days_analyzed,
+            "analyzed_at": datetime.now().isoformat(),
+        }
+
+        context = self._build_context(
+            device=device,
+            app_version=app_version,
+        )
+
+        logger.info(
+            f"[Weight Trend Analyzed] User {user_id}, "
+            f"direction: {direction}, rate: {weekly_rate:.2f} kg/week"
+        )
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.WEIGHT_TREND_ANALYZED,
+            event_data=event_data,
+            context=context,
+        )
+
+    async def log_plateau_detected(
+        self,
+        user_id: str,
+        plateau_weeks: int,
+        expected_weight_change_kg: float,
+        actual_weight_change_kg: float,
+        current_deficit: int,
+        device: Optional[str] = None,
+        app_version: Optional[str] = None,
+    ) -> Optional[str]:
+        """Log when a weight plateau is detected."""
+        event_data = {
+            "plateau_weeks": plateau_weeks,
+            "expected_weight_change_kg": round(expected_weight_change_kg, 2),
+            "actual_weight_change_kg": round(actual_weight_change_kg, 2),
+            "difference_kg": round(expected_weight_change_kg - actual_weight_change_kg, 2),
+            "current_deficit": current_deficit,
+            "detected_at": datetime.now().isoformat(),
+        }
+
+        context = self._build_context(
+            device=device,
+            app_version=app_version,
+        )
+
+        logger.info(
+            f"[Plateau Detected] User {user_id}, "
+            f"weeks: {plateau_weeks}, expected: {expected_weight_change_kg:.2f}kg, "
+            f"actual: {actual_weight_change_kg:.2f}kg"
+        )
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.PLATEAU_DETECTED,
+            event_data=event_data,
+            context=context,
+        )
+
+    async def log_diet_break_suggested(
+        self,
+        user_id: str,
+        reason: str,  # 'plateau', 'adaptation', 'low_adherence'
+        tdee_drop_percent: Optional[float] = None,
+        suggested_duration_weeks: int = 1,
+        maintenance_calories: Optional[int] = None,
+        device: Optional[str] = None,
+        app_version: Optional[str] = None,
+    ) -> Optional[str]:
+        """Log when a diet break is suggested to the user."""
+        event_data = {
+            "reason": reason,
+            "tdee_drop_percent": round(tdee_drop_percent, 1) if tdee_drop_percent else None,
+            "suggested_duration_weeks": suggested_duration_weeks,
+            "maintenance_calories": maintenance_calories,
+            "suggested_at": datetime.now().isoformat(),
+        }
+
+        context = self._build_context(
+            device=device,
+            app_version=app_version,
+        )
+
+        logger.info(
+            f"[Diet Break Suggested] User {user_id}, "
+            f"reason: {reason}, duration: {suggested_duration_weeks} weeks"
+        )
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.DIET_BREAK_SUGGESTED,
+            event_data=event_data,
+            context=context,
+        )
+
+    async def log_refeed_suggested(
+        self,
+        user_id: str,
+        reason: str,  # 'moderate_adaptation', 'energy_low'
+        tdee_drop_percent: Optional[float] = None,
+        refeed_days: int = 2,
+        refeed_calories: Optional[int] = None,
+        device: Optional[str] = None,
+        app_version: Optional[str] = None,
+    ) -> Optional[str]:
+        """Log when refeed days are suggested to the user."""
+        event_data = {
+            "reason": reason,
+            "tdee_drop_percent": round(tdee_drop_percent, 1) if tdee_drop_percent else None,
+            "refeed_days": refeed_days,
+            "refeed_calories": refeed_calories,
+            "suggested_at": datetime.now().isoformat(),
+        }
+
+        context = self._build_context(
+            device=device,
+            app_version=app_version,
+        )
+
+        logger.info(
+            f"[Refeed Suggested] User {user_id}, "
+            f"reason: {reason}, days: {refeed_days}"
+        )
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.REFEED_SUGGESTED,
+            event_data=event_data,
+            context=context,
+        )
+
+    # ==================== WearOS Watch Context Methods ====================
+
+    async def get_watch_activity_context(
+        self,
+        user_id: str,
+        days: int = 7,
+    ) -> Dict[str, Any]:
+        """
+        Get WearOS watch activity context for AI personalization.
+
+        This helps the AI understand how the user is interacting with their
+        smartwatch for fitness tracking.
+
+        Args:
+            user_id: User ID
+            days: Number of days to analyze
+
+        Returns:
+            Dictionary with watch activity data
+        """
+        try:
+            db = get_supabase_db()
+            cutoff = (datetime.now() - timedelta(days=days)).isoformat()
+
+            # Get watch sync events
+            sync_response = db.client.table("wearos_sync_events").select(
+                "sync_type, items_synced, synced_at"
+            ).eq(
+                "user_id", user_id
+            ).gte(
+                "synced_at", cutoff
+            ).order(
+                "synced_at", desc=True
+            ).execute()
+
+            sync_events = sync_response.data or []
+
+            # Get workout logs from watch
+            workout_logs_response = db.client.table("workout_logs").select(
+                "id, logged_at"
+            ).eq(
+                "user_id", user_id
+            ).eq(
+                "device_source", "watch"
+            ).gte(
+                "logged_at", cutoff
+            ).execute()
+
+            watch_workout_logs = workout_logs_response.data or []
+
+            # Get food logs from watch
+            food_logs_response = db.client.table("food_logs").select(
+                "id, logged_at"
+            ).eq(
+                "user_id", user_id
+            ).eq(
+                "device_source", "watch"
+            ).gte(
+                "logged_at", cutoff
+            ).execute()
+
+            watch_food_logs = food_logs_response.data or []
+
+            # Get daily activity with steps from watch
+            activity_response = db.client.table("daily_activity").select(
+                "steps, active_minutes, calories_burned, activity_date"
+            ).eq(
+                "user_id", user_id
+            ).eq(
+                "source", "watch"
+            ).gte(
+                "activity_date", cutoff[:10]  # Just the date part
+            ).order(
+                "activity_date", desc=True
+            ).limit(1).execute()
+
+            today_activity = activity_response.data[0] if activity_response.data else None
+
+            # Calculate summary stats
+            total_syncs = len(sync_events)
+            last_sync = sync_events[0]["synced_at"] if sync_events else None
+            workouts_logged_on_watch = len(watch_workout_logs)
+            foods_logged_on_watch = len(watch_food_logs)
+
+            # Determine if watch is actively used
+            watch_active = total_syncs >= 3 or workouts_logged_on_watch >= 1
+
+            return {
+                "watch_connected": watch_active,
+                "last_watch_sync": last_sync,
+                "total_syncs_this_week": total_syncs,
+                "workouts_logged_on_watch": workouts_logged_on_watch,
+                "foods_logged_on_watch": foods_logged_on_watch,
+                "watch_step_count": today_activity["steps"] if today_activity else None,
+                "watch_active_minutes": today_activity["active_minutes"] if today_activity else None,
+                "watch_calories_burned": today_activity["calories_burned"] if today_activity else None,
+            }
+
+        except Exception as e:
+            logger.error(f"Error getting watch activity context: {e}")
+            return {
+                "watch_connected": False,
+                "last_watch_sync": None,
+                "total_syncs_this_week": 0,
+                "workouts_logged_on_watch": 0,
+                "foods_logged_on_watch": 0,
+            }
+
+    async def get_watch_context_for_ai(
+        self,
+        user_id: str,
+        days: int = 7,
+    ) -> str:
+        """
+        Get formatted WearOS watch context string for AI prompts.
+
+        Args:
+            user_id: User ID
+            days: Number of days to analyze
+
+        Returns:
+            Formatted context string for AI prompts
+        """
+        context = await self.get_watch_activity_context(user_id, days)
+
+        if not context.get("watch_connected"):
+            return ""
+
+        parts = []
+
+        parts.append("User has a WearOS smartwatch connected.")
+
+        if context.get("last_watch_sync"):
+            parts.append(f"Last sync: {context['last_watch_sync']}")
+
+        if context.get("workouts_logged_on_watch", 0) > 0:
+            parts.append(
+                f"They have logged {context['workouts_logged_on_watch']} workout(s) "
+                "directly from their watch this week."
+            )
+
+        if context.get("foods_logged_on_watch", 0) > 0:
+            parts.append(
+                f"They have logged {context['foods_logged_on_watch']} food item(s) "
+                "via voice input on their watch."
+            )
+
+        if context.get("watch_step_count"):
+            parts.append(
+                f"Today's step count from watch: {context['watch_step_count']:,} steps."
+            )
+
+        if context.get("watch_active_minutes"):
+            parts.append(
+                f"Today's active minutes: {context['watch_active_minutes']} minutes."
+            )
+
+        return " ".join(parts)
+
+    async def log_watch_workout_logged(
+        self,
+        user_id: str,
+        workout_id: Optional[str],
+        session_id: str,
+        sets_count: int,
+        total_volume_kg: Optional[float] = None,
+        device_id: Optional[str] = None,
+    ) -> Optional[str]:
+        """Log when a workout is logged from WearOS watch."""
+        event_data = {
+            "workout_id": workout_id,
+            "session_id": session_id,
+            "sets_count": sets_count,
+            "total_volume_kg": total_volume_kg,
+            "device_id": device_id,
+            "logged_at": datetime.now().isoformat(),
+        }
+
+        context = self._build_context(device="wearos")
+
+        logger.info(f"[Watch Workout Logged] User {user_id}, sets: {sets_count}")
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.WATCH_WORKOUT_LOGGED,
+            event_data=event_data,
+            context=context,
+        )
+
+    async def log_watch_food_logged(
+        self,
+        user_id: str,
+        food_name: str,
+        calories: int,
+        input_type: str,  # 'VOICE', 'MANUAL'
+        meal_type: str,
+        device_id: Optional[str] = None,
+    ) -> Optional[str]:
+        """Log when food is logged from WearOS watch via voice or manual input."""
+        event_data = {
+            "food_name": food_name,
+            "calories": calories,
+            "input_type": input_type,
+            "meal_type": meal_type,
+            "device_id": device_id,
+            "logged_at": datetime.now().isoformat(),
+        }
+
+        context = self._build_context(device="wearos")
+
+        logger.info(
+            f"[Watch Food Logged] User {user_id}, "
+            f"food: {food_name}, calories: {calories}, input: {input_type}"
+        )
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.WATCH_FOOD_LOGGED,
+            event_data=event_data,
+            context=context,
+        )
+
+    async def log_watch_activity_synced(
+        self,
+        user_id: str,
+        steps: int,
+        calories_burned: int,
+        active_minutes: int,
+        hr_samples_count: int = 0,
+        device_id: Optional[str] = None,
+    ) -> Optional[str]:
+        """Log when activity data is synced from WearOS watch."""
+        event_data = {
+            "steps": steps,
+            "calories_burned": calories_burned,
+            "active_minutes": active_minutes,
+            "hr_samples_count": hr_samples_count,
+            "device_id": device_id,
+            "synced_at": datetime.now().isoformat(),
+        }
+
+        context = self._build_context(device="wearos")
+
+        logger.info(
+            f"[Watch Activity Synced] User {user_id}, "
+            f"steps: {steps}, active_minutes: {active_minutes}"
+        )
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.WATCH_ACTIVITY_SYNCED,
             event_data=event_data,
             context=context,
         )

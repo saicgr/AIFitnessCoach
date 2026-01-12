@@ -28,7 +28,7 @@ Future<void> showWeeklyCheckinSheet(BuildContext context, WidgetRef ref) async {
   ref.read(floatingNavBarVisibleProvider.notifier).state = true;
 }
 
-/// Weekly check-in sheet with adaptive TDEE and recommendations
+/// Weekly check-in sheet with MacroFactor-style adaptive TDEE and recommendations
 class WeeklyCheckinSheet extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
@@ -42,9 +42,15 @@ class WeeklyCheckinSheet extends ConsumerStatefulWidget {
 class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet> {
   bool _isLoading = true;
   String? _error;
+
+  // Legacy data
   WeeklyRecommendation? _recommendation;
   AdaptiveCalculation? _adaptiveCalc;
   WeeklySummaryData? _weeklySummary;
+
+  // New MacroFactor-style data
+  WeeklyCheckinData? _checkinData;
+  String? _selectedOption;
 
   @override
   void initState() {
@@ -61,22 +67,60 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet> {
     try {
       final repository = ref.read(nutritionRepositoryProvider);
 
-      // Trigger calculation of adaptive TDEE
+      // Try to load enhanced MacroFactor-style data first
+      final checkinData = await repository.getWeeklyCheckinData(widget.userId);
+
+      // Also load legacy data for fallback
       final adaptiveCalc = await repository.calculateAdaptiveTdee(widget.userId);
-
-      // Get weekly summary
       final weeklySummary = await repository.getWeeklySummary(widget.userId);
-
-      // Get any pending recommendation or generate one
       final recommendation = await repository.getWeeklyRecommendation(widget.userId);
 
       if (mounted) {
         setState(() {
+          _checkinData = checkinData;
           _adaptiveCalc = adaptiveCalc;
           _weeklySummary = weeklySummary;
           _recommendation = recommendation;
           _isLoading = false;
+
+          // Pre-select the recommended option
+          if (checkinData?.recommendationOptions?.recommendedOption != null) {
+            _selectedOption = checkinData!.recommendationOptions!.recommendedOption;
+          }
         });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _selectRecommendationOption(String optionType) async {
+    setState(() => _isLoading = true);
+
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      final success = await repository.selectRecommendationOption(
+        userId: widget.userId,
+        optionType: optionType,
+      );
+
+      if (success) {
+        // Record the weekly check-in completion
+        await ref.read(nutritionPreferencesProvider.notifier).recordWeeklyCheckin(
+          userId: widget.userId,
+        );
+
+        if (mounted) {
+          Navigator.pop(context);
+          _showSuccessSnackbar('Targets updated! Your new $optionType plan is active.');
+        }
+      } else {
+        throw Exception('Failed to apply recommendation');
       }
     } catch (e) {
       if (mounted) {
@@ -190,7 +234,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet> {
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
+      height: MediaQuery.of(context).size.height * 0.9,
       decoration: BoxDecoration(
         color: nearBlack,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -237,7 +281,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet> {
                         ),
                       ),
                       Text(
-                        'Review your progress & adjust targets',
+                        'Review progress & choose your path',
                         style: TextStyle(fontSize: 14, color: textMuted),
                       ),
                     ],
@@ -282,16 +326,54 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet> {
                               ),
                             const SizedBox(height: 20),
 
-                            // Adaptive TDEE Section
-                            if (_adaptiveCalc != null)
+                            // Enhanced TDEE Section with Confidence Intervals
+                            if (_checkinData?.detailedTdee != null)
+                              _DetailedTdeeCard(
+                                detailedTdee: _checkinData!.detailedTdee!,
+                                isDark: isDark,
+                              )
+                            else if (_adaptiveCalc != null)
                               _AdaptiveTdeeCard(
                                 calculation: _adaptiveCalc!,
                                 isDark: isDark,
                               ),
                             const SizedBox(height: 20),
 
-                            // Recommendation Section
-                            if (_recommendation != null)
+                            // Metabolic Adaptation Alert (if detected)
+                            if (_checkinData?.hasMetabolicAdaptation ?? false)
+                              _MetabolicAdaptationAlert(
+                                adaptation: _checkinData!.detailedTdee!.metabolicAdaptation!,
+                                isDark: isDark,
+                              ),
+                            if (_checkinData?.hasMetabolicAdaptation ?? false)
+                              const SizedBox(height: 20),
+
+                            // Adherence & Sustainability Section
+                            if (_checkinData?.adherenceSummary != null)
+                              _AdherenceCard(
+                                adherence: _checkinData!.adherenceSummary!,
+                                isDark: isDark,
+                              ),
+                            if (_checkinData?.adherenceSummary != null)
+                              const SizedBox(height: 20),
+
+                            // Multi-Option Recommendations (MacroFactor-style)
+                            if (_checkinData?.hasMultipleOptions ?? false)
+                              _MultiOptionRecommendationCard(
+                                options: _checkinData!.recommendationOptions!,
+                                selectedOption: _selectedOption,
+                                onOptionSelected: (option) {
+                                  setState(() => _selectedOption = option);
+                                },
+                                onApply: () {
+                                  if (_selectedOption != null) {
+                                    _selectRecommendationOption(_selectedOption!);
+                                  }
+                                },
+                                isDark: isDark,
+                              )
+                            // Fallback to single recommendation
+                            else if (_recommendation != null)
                               _RecommendationCard(
                                 recommendation: _recommendation!,
                                 isDark: isDark,
@@ -523,7 +605,918 @@ class _SummaryMetric extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Adaptive TDEE Card
+// Detailed TDEE Card (MacroFactor-style with confidence intervals)
+// ─────────────────────────────────────────────────────────────────
+
+class _DetailedTdeeCard extends StatelessWidget {
+  final DetailedTDEE detailedTdee;
+  final bool isDark;
+
+  const _DetailedTdeeCard({required this.detailedTdee, required this.isDark});
+
+  /// Check if we have insufficient data for meaningful calculation
+  bool get hasInsufficientData =>
+      detailedTdee.tdee == 0 || !detailedTdee.hasReliableData;
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+
+    // Show insufficient data state for first-time users
+    if (hasInsufficientData) {
+      return _buildInsufficientDataState(textPrimary, textMuted, textSecondary, teal);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            teal.withValues(alpha: 0.15),
+            teal.withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: teal.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: teal.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.auto_graph, size: 20, color: teal),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Your Adaptive TDEE',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'EMA-smoothed calculation',
+                      style: TextStyle(fontSize: 12, color: textMuted),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Center(
+            child: Column(
+              children: [
+                Text(
+                  '${detailedTdee.tdee}',
+                  style: TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                    color: teal,
+                  ),
+                ),
+                // Confidence interval
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: teal.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    detailedTdee.uncertaintyDisplay,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: teal,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'calories/day',
+                  style: TextStyle(fontSize: 14, color: textSecondary),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Confidence range bar
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.black26 : Colors.white24,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${detailedTdee.confidenceLow}',
+                      style: TextStyle(fontSize: 12, color: textMuted),
+                    ),
+                    Text(
+                      'Confidence Range',
+                      style: TextStyle(fontSize: 12, color: textSecondary),
+                    ),
+                    Text(
+                      '${detailedTdee.confidenceHigh}',
+                      style: TextStyle(fontSize: 12, color: textMuted),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: detailedTdee.dataQualityScore,
+                    backgroundColor: textMuted.withValues(alpha: 0.2),
+                    valueColor: AlwaysStoppedAnimation(teal),
+                    minHeight: 6,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Weight trend
+          Row(
+            children: [
+              Text(
+                detailedTdee.weightTrend.directionEmoji,
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Weight trend: ${detailedTdee.weightTrend.formattedWeeklyRate}',
+                  style: TextStyle(fontSize: 13, color: textSecondary),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInsufficientDataState(
+    Color textPrimary,
+    Color textMuted,
+    Color textSecondary,
+    Color teal,
+  ) {
+    final dataQualityPercent = (detailedTdee.dataQualityScore * 100).round();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: (isDark ? AppColors.elevated : AppColorsLight.elevated),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          // Header with icon
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.hourglass_empty, size: 32, color: Colors.orange),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Building Your Profile',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Keep logging your meals and weight to unlock personalized TDEE calculations.',
+            style: TextStyle(fontSize: 14, color: textSecondary),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          // Progress indicator
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: (isDark ? AppColors.nearBlack : AppColorsLight.nearWhite).withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Data Quality', style: TextStyle(fontSize: 13, color: textPrimary)),
+                    Text(
+                      '$dataQualityPercent%',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: dataQualityPercent >= 60 ? const Color(0xFF6BCB77) : Colors.orange,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: detailedTdee.dataQualityScore,
+                    backgroundColor: Colors.orange.withValues(alpha: 0.2),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      dataQualityPercent >= 60 ? const Color(0xFF6BCB77) : Colors.orange,
+                    ),
+                    minHeight: 8,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Need 60% data quality for accurate calculations',
+                  style: TextStyle(fontSize: 11, color: textMuted),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Tips
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.lightbulb_outline, size: 16, color: teal),
+              const SizedBox(width: 8),
+              Text(
+                'Log meals consistently for best results',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: teal,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Metabolic Adaptation Alert
+// ─────────────────────────────────────────────────────────────────
+
+class _MetabolicAdaptationAlert extends StatelessWidget {
+  final MetabolicAdaptationInfo adaptation;
+  final bool isDark;
+
+  const _MetabolicAdaptationAlert({required this.adaptation, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    // Color based on severity
+    Color alertColor;
+    switch (adaptation.severity) {
+      case 'high':
+        alertColor = const Color(0xFFFF6B6B);
+        break;
+      case 'medium':
+        alertColor = const Color(0xFFFF9800);
+        break;
+      default:
+        alertColor = const Color(0xFFFFD93D);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: alertColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: alertColor.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                adaptation.isPlateau ? Icons.pause_circle : Icons.trending_down,
+                color: alertColor,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  adaptation.isPlateau
+                      ? 'Plateau Detected'
+                      : 'Metabolic Adaptation Detected',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            adaptation.actionDescription,
+            style: TextStyle(fontSize: 13, color: textSecondary),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: alertColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.lightbulb_outline, size: 16, color: alertColor),
+                const SizedBox(width: 8),
+                Text(
+                  'Suggested: ${adaptation.actionDisplayName}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: alertColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Adherence & Sustainability Card
+// ─────────────────────────────────────────────────────────────────
+
+class _AdherenceCard extends StatelessWidget {
+  final AdherenceSummary adherence;
+  final bool isDark;
+
+  const _AdherenceCard({required this.adherence, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    // Sustainability color
+    Color sustainColor;
+    switch (adherence.sustainabilityRating) {
+      case 'high':
+        sustainColor = const Color(0xFF6BCB77);
+        break;
+      case 'medium':
+        sustainColor = const Color(0xFFFF9800);
+        break;
+      default:
+        sustainColor = const Color(0xFFFF6B6B);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.analytics_outlined, size: 20, color: textMuted),
+              const SizedBox(width: 12),
+              Text(
+                'Adherence & Sustainability',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Adherence and Sustainability scores side by side
+          Row(
+            children: [
+              Expanded(
+                child: _ScoreCircle(
+                  label: 'Adherence',
+                  value: adherence.averageAdherence,
+                  color: const Color(0xFF4D96FF),
+                  isDark: isDark,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _ScoreCircle(
+                  label: 'Sustainability',
+                  value: adherence.sustainabilityScore * 100,
+                  color: sustainColor,
+                  isDark: isDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Rating chip
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: sustainColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: sustainColor.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    adherence.ratingEmoji,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${adherence.sustainabilityRating.toUpperCase()} SUSTAINABILITY',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: sustainColor,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Recommendation text
+          if (adherence.recommendation.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.black12 : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.tips_and_updates, size: 16, color: textMuted),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      adherence.recommendation,
+                      style: TextStyle(fontSize: 12, color: textSecondary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScoreCircle extends StatelessWidget {
+  final String label;
+  final double value;
+  final Color color;
+  final bool isDark;
+
+  const _ScoreCircle({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 80,
+          width: 80,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                height: 80,
+                width: 80,
+                child: CircularProgressIndicator(
+                  value: value / 100,
+                  strokeWidth: 8,
+                  backgroundColor: color.withValues(alpha: 0.2),
+                  valueColor: AlwaysStoppedAnimation(color),
+                ),
+              ),
+              Text(
+                '${value.round()}%',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(fontSize: 12, color: textMuted),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Multi-Option Recommendation Card (MacroFactor-style)
+// ─────────────────────────────────────────────────────────────────
+
+class _MultiOptionRecommendationCard extends StatelessWidget {
+  final RecommendationOptions options;
+  final String? selectedOption;
+  final ValueChanged<String> onOptionSelected;
+  final VoidCallback onApply;
+  final bool isDark;
+
+  const _MultiOptionRecommendationCard({
+    required this.options,
+    required this.selectedOption,
+    required this.onOptionSelected,
+    required this.onApply,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: teal.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.route, size: 20, color: teal),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Choose Your Path',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'Select a recommendation based on your preference',
+                      style: TextStyle(fontSize: 12, color: textMuted),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Option cards
+          ...options.options.map((option) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _RecommendationOptionCard(
+              option: option,
+              isSelected: selectedOption == option.optionType,
+              isRecommended: options.recommendedOption == option.optionType,
+              onTap: () => onOptionSelected(option.optionType),
+              isDark: isDark,
+            ),
+          )),
+
+          const SizedBox(height: 8),
+
+          // Apply button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: selectedOption != null ? onApply : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: teal,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: teal.withValues(alpha: 0.3),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text(
+                selectedOption != null
+                    ? 'Apply ${_getOptionDisplayName(selectedOption!)} Plan'
+                    : 'Select a Plan',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getOptionDisplayName(String optionType) {
+    switch (optionType) {
+      case 'aggressive':
+        return 'Aggressive';
+      case 'moderate':
+        return 'Moderate';
+      case 'conservative':
+        return 'Conservative';
+      default:
+        return optionType;
+    }
+  }
+}
+
+class _RecommendationOptionCard extends StatelessWidget {
+  final RecommendationOption option;
+  final bool isSelected;
+  final bool isRecommended;
+  final VoidCallback onTap;
+  final bool isDark;
+
+  const _RecommendationOptionCard({
+    required this.option,
+    required this.isSelected,
+    required this.isRecommended,
+    required this.onTap,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+
+    // Option-specific colors
+    Color optionColor;
+    switch (option.optionType) {
+      case 'aggressive':
+        optionColor = const Color(0xFFFF6B6B);
+        break;
+      case 'conservative':
+        optionColor = const Color(0xFF6BCB77);
+        break;
+      default:
+        optionColor = const Color(0xFF4D96FF);
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? optionColor.withValues(alpha: 0.15)
+              : isDark
+                  ? Colors.black12
+                  : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? optionColor
+                : isDark
+                    ? Colors.white10
+                    : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  option.emoji,
+                  style: const TextStyle(fontSize: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            option.displayName,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary,
+                            ),
+                          ),
+                          if (isRecommended) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: teal.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                'RECOMMENDED',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  color: teal,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      Text(
+                        option.formattedWeeklyChange,
+                        style: TextStyle(fontSize: 12, color: textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                // Radio indicator
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? optionColor : textMuted,
+                      width: 2,
+                    ),
+                  ),
+                  child: isSelected
+                      ? Center(
+                          child: Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: optionColor,
+                            ),
+                          ),
+                        )
+                      : null,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Macros row
+            Row(
+              children: [
+                _MacroChip(
+                  label: '${option.calories} cal',
+                  color: const Color(0xFFFF6B6B),
+                  isDark: isDark,
+                ),
+                const SizedBox(width: 8),
+                _MacroChip(
+                  label: '${option.proteinG}g P',
+                  color: const Color(0xFFFFD93D),
+                  isDark: isDark,
+                ),
+                const SizedBox(width: 8),
+                _MacroChip(
+                  label: '${option.carbsG}g C',
+                  color: const Color(0xFF6BCB77),
+                  isDark: isDark,
+                ),
+                const SizedBox(width: 8),
+                _MacroChip(
+                  label: '${option.fatG}g F',
+                  color: const Color(0xFF4D96FF),
+                  isDark: isDark,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // Description
+            Text(
+              option.description,
+              style: TextStyle(fontSize: 12, color: textSecondary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MacroChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final bool isDark;
+
+  const _MacroChip({
+    required this.label,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Adaptive TDEE Card (Legacy fallback)
 // ─────────────────────────────────────────────────────────────────
 
 class _AdaptiveTdeeCard extends StatelessWidget {
@@ -532,12 +1525,21 @@ class _AdaptiveTdeeCard extends StatelessWidget {
 
   const _AdaptiveTdeeCard({required this.calculation, required this.isDark});
 
+  /// Check if we have insufficient data for meaningful calculation
+  bool get hasInsufficientData =>
+      calculation.calculatedTdee == 0 || calculation.daysLogged < 6 || calculation.weightEntries < 2;
+
   @override
   Widget build(BuildContext context) {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+
+    // Show insufficient data state
+    if (hasInsufficientData) {
+      return _buildInsufficientDataState(textPrimary, textMuted, textSecondary, teal);
+    }
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -634,6 +1636,153 @@ class _AdaptiveTdeeCard extends StatelessWidget {
     );
   }
 
+  Widget _buildInsufficientDataState(
+    Color textPrimary,
+    Color textMuted,
+    Color textSecondary,
+    Color teal,
+  ) {
+    final daysNeeded = 6 - calculation.daysLogged;
+    final weightsNeeded = 2 - calculation.weightEntries;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: (isDark ? AppColors.elevated : AppColorsLight.elevated),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          // Header with icon
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.hourglass_empty, size: 32, color: Colors.orange),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Keep Logging!',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'We need a bit more data to calculate your personalized TDEE.',
+            style: TextStyle(fontSize: 14, color: textSecondary),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          // Progress indicators
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: (isDark ? AppColors.nearBlack : AppColorsLight.nearWhite).withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                // Food logging progress
+                _buildProgressRow(
+                  icon: Icons.restaurant,
+                  label: 'Food Logging',
+                  current: calculation.daysLogged,
+                  target: 6,
+                  color: calculation.daysLogged >= 6 ? const Color(0xFF6BCB77) : Colors.orange,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+                const SizedBox(height: 12),
+                // Weight logging progress
+                _buildProgressRow(
+                  icon: Icons.monitor_weight_outlined,
+                  label: 'Weight Logs',
+                  current: calculation.weightEntries,
+                  target: 2,
+                  color: calculation.weightEntries >= 2 ? const Color(0xFF6BCB77) : Colors.orange,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Helpful tips
+          Text(
+            daysNeeded > 0 && weightsNeeded > 0
+                ? 'Log meals for $daysNeeded more day${daysNeeded > 1 ? 's' : ''} and add $weightsNeeded weight${weightsNeeded > 1 ? 's' : ''}'
+                : daysNeeded > 0
+                    ? 'Log meals for $daysNeeded more day${daysNeeded > 1 ? 's' : ''} to unlock insights'
+                    : 'Add $weightsNeeded more weight log${weightsNeeded > 1 ? 's' : ''} to unlock insights',
+            style: TextStyle(
+              fontSize: 13,
+              color: teal,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressRow({
+    required IconData icon,
+    required String label,
+    required int current,
+    required int target,
+    required Color color,
+    required Color textPrimary,
+    required Color textMuted,
+  }) {
+    final progress = (current / target).clamp(0.0, 1.0);
+    final isComplete = current >= target;
+
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(label, style: TextStyle(fontSize: 13, color: textPrimary)),
+                  Text(
+                    isComplete ? 'Complete!' : '$current / $target days',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isComplete ? const Color(0xFF6BCB77) : textMuted,
+                      fontWeight: isComplete ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: color.withValues(alpha: 0.2),
+                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                  minHeight: 6,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   String _getConfidenceMessage(double score) {
     if (score >= 0.8) {
       return 'High confidence - Based on ${(score * 100).round()}% data quality';
@@ -646,7 +1795,7 @@ class _AdaptiveTdeeCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Recommendation Card
+// Recommendation Card (Legacy fallback)
 // ─────────────────────────────────────────────────────────────────
 
 class _RecommendationCard extends StatelessWidget {
@@ -1011,8 +2160,3 @@ class _TipItem extends StatelessWidget {
     );
   }
 }
-
-// Models imported from '../../data/models/nutrition_preferences.dart':
-// - WeeklySummaryData
-// - AdaptiveCalculation
-// - WeeklyRecommendation

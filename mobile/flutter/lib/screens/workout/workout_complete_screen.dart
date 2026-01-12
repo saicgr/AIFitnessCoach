@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:confetti/confetti.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/sound_preferences_provider.dart';
 import '../../widgets/lottie_animations.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
@@ -18,6 +19,8 @@ import '../../data/models/subjective_feedback.dart';
 import '../challenges/widgets/challenge_complete_dialog.dart';
 import '../challenges/widgets/challenge_friends_dialog.dart';
 import 'widgets/share_workout_sheet.dart';
+import '../../widgets/heart_rate_chart.dart';
+import '../../core/providers/heart_rate_provider.dart';
 
 class WorkoutCompleteScreen extends ConsumerStatefulWidget {
   final Workout workout;
@@ -26,6 +29,8 @@ class WorkoutCompleteScreen extends ConsumerStatefulWidget {
   // Additional workout performance data for AI Coach feedback
   final String? workoutLogId;
   final List<Map<String, dynamic>>? exercisesPerformance;
+  final List<Map<String, dynamic>>? plannedExercises; // NEW: For skip detection
+  final Map<int, int>? exerciseTimeSeconds; // NEW: Per-exercise timing
   final int? totalRestSeconds;
   final double? avgRestSeconds;
   final int? totalSets;
@@ -42,6 +47,12 @@ class WorkoutCompleteScreen extends ConsumerStatefulWidget {
   // Performance comparison data - improvements/setbacks vs previous session
   final PerformanceComparisonInfo? performanceComparison;
 
+  // Heart rate data from watch during workout
+  final List<HeartRateReadingData>? heartRateReadings;
+  final int? avgHeartRate;
+  final int? maxHeartRate;
+  final int? minHeartRate;
+
   const WorkoutCompleteScreen({
     super.key,
     required this.workout,
@@ -49,6 +60,8 @@ class WorkoutCompleteScreen extends ConsumerStatefulWidget {
     required this.calories,
     this.workoutLogId,
     this.exercisesPerformance,
+    this.plannedExercises,
+    this.exerciseTimeSeconds,
     this.totalRestSeconds,
     this.avgRestSeconds,
     this.totalSets,
@@ -58,6 +71,10 @@ class WorkoutCompleteScreen extends ConsumerStatefulWidget {
     this.challengeData,
     this.personalRecords,
     this.performanceComparison,
+    this.heartRateReadings,
+    this.avgHeartRate,
+    this.maxHeartRate,
+    this.minHeartRate,
   });
 
   @override
@@ -110,7 +127,14 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint('🏁 [Complete] Workout complete screen loaded: ${widget.workout.id}');
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+
+    // Play workout completion sound
+    Future.microtask(() {
+      ref.read(soundPreferencesProvider.notifier).playWorkoutCompletion();
+    });
+
     _loadAICoachFeedback();
 
     // Use API-provided PRs if available (preferred as they're more accurate)
@@ -127,22 +151,130 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
         'is_all_time_pr': pr.isAllTimePr,
       }).toList();
       _isLoadingAchievements = false;
-      // Play confetti for PRs
-      Future.microtask(() => _confettiController.play());
-      debugPrint('🏆 [Complete] Using ${_newPRs.length} PRs from API');
+      // Play confetti and show PR dialog as popup overlay
+      Future.microtask(() {
+        _confettiController.play();
+        _showPRCelebrationDialog();
+      });
+      debugPrint('🏆 [Complete] Using ${_newPRs.length} PRs from API - showing popup');
     } else {
       // Fall back to client-side detection
       _loadAchievements();
     }
 
-    _loadExerciseProgress();
-    _loadProgressionSuggestions();
+    // Skip loading these for simplified single-screen layout
+    // _loadExerciseProgress();
+    // _loadProgressionSuggestions();
     _syncWorkoutWithGoals();
 
     // Complete challenge if this workout was from a challenge
     if (widget.challengeId != null && widget.workoutLogId != null) {
       _completeChallenge();
     }
+  }
+
+  /// Show PR celebration as a popup dialog overlay
+  void _showPRCelebrationDialog() {
+    if (_newPRs.isEmpty || !mounted) return;
+
+    debugPrint('🏆 [Complete] Showing PR celebration popup: ${_newPRs.length} PRs');
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.success.withOpacity(0.95),
+                AppColors.cyan.withOpacity(0.9),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.emoji_events,
+                size: 60,
+                color: Colors.white,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'NEW PERSONAL RECORDS!',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 1.2,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              ..._newPRs.take(3).map((pr) {
+                final reps = pr['reps'] as int?;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.star, color: Colors.amber, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '${pr['exercise_name']}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${(pr['weight_kg'] as num).toStringAsFixed(1)}kg${reps != null ? ' x $reps' : ''}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              if (_newPRs.length > 3)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    '+${_newPRs.length - 3} more PRs!',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.success,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                ),
+                child: const Text(
+                  'Awesome!',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   /// Complete challenge and show result dialog
@@ -325,6 +457,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
       debugPrint('🤖 [AI Coach] workoutLogId: ${widget.workoutLogId}');
       debugPrint('🤖 [AI Coach] workoutId: ${widget.workout.id}');
       debugPrint('🤖 [AI Coach] exercisesPerformance: ${widget.exercisesPerformance?.length ?? 0} exercises');
+      debugPrint('🤖 [AI Coach] plannedExercises: ${widget.plannedExercises?.length ?? 0} exercises');
       debugPrint('🤖 [AI Coach] totalSets: ${widget.totalSets}, totalReps: ${widget.totalReps}');
 
       // Try to call AI Coach API if we have minimum required data (userId and workoutId)
@@ -337,6 +470,15 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
               'sets': e.sets ?? 3,
               'reps': e.reps ?? 10,
               'weight_kg': e.weight ?? 0.0,
+            }).toList();
+
+        // Build planned exercises list for skip detection (from widget or from workout definition)
+        final plannedExercisesList = widget.plannedExercises ??
+            widget.workout.exercises.map((e) => {
+              'name': e.name,
+              'target_sets': e.sets ?? 3,
+              'target_reps': e.reps ?? 10,
+              'target_weight_kg': e.weight ?? 0.0,
             }).toList();
 
         // Get AI settings for coach personality
@@ -364,6 +506,9 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
           coachingStyle: aiSettings.coachingStyle,
           communicationTone: aiSettings.communicationTone,
           encouragementLevel: aiSettings.encouragementLevel,
+          // Pass enhanced context for skip detection and timing
+          plannedExercises: plannedExercisesList,
+          exerciseTimeSeconds: widget.exerciseTimeSeconds,
         );
 
         debugPrint('🤖 [AI Coach] API call completed, feedback: ${feedback != null ? "received (${feedback.length} chars)" : "null"}');
@@ -936,7 +1081,13 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   }
 
   Future<void> _submitFeedback() async {
+    debugPrint('📝 [Feedback] Starting feedback submission...');
+    debugPrint('📝 [Feedback] Rating: $_rating, Difficulty: $_difficulty');
+    debugPrint('📝 [Feedback] Exercise ratings count: ${_exerciseRatings.length}');
+    debugPrint('📝 [Feedback] Workout ID: ${widget.workout.id}');
+
     if (_rating == 0) {
+      debugPrint('⚠️ [Feedback] Rating is 0 - prompting user');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please rate your workout'),
@@ -951,6 +1102,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     try {
       final apiClient = ref.read(apiClientProvider);
       final userId = await apiClient.getUserId();
+      debugPrint('📝 [Feedback] User ID: $userId');
 
       if (userId != null && widget.workout.id != null) {
         // Build exercise feedback list
@@ -969,10 +1121,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
             });
           }
         }
+        debugPrint('📝 [Feedback] Exercise feedback list: ${exerciseFeedbackList.length} exercises');
 
         // Submit workout feedback to backend
-        debugPrint('[Feedback] Submitting workout feedback: rating=$_rating, difficulty=$_difficulty');
-        await apiClient.post(
+        debugPrint('📝 [Feedback] Calling POST /feedback/workout/${widget.workout.id}...');
+        final response = await apiClient.post(
           '/feedback/workout/${widget.workout.id}',
           data: {
             'user_id': userId,
@@ -984,10 +1137,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
             'exercise_feedback': exerciseFeedbackList,
           },
         );
+        debugPrint('✅ [Feedback] Workout feedback API response: ${response.statusCode}');
 
         // Submit subjective feedback (mood, energy, confidence) if provided
         if (_moodAfter != null) {
-          debugPrint('[Subjective Feedback] Submitting: mood=$_moodAfter, energy=$_energyAfter, stronger=$_feelingStronger');
+          debugPrint('📝 [Subjective Feedback] Submitting: mood=$_moodAfter, energy=$_energyAfter, stronger=$_feelingStronger');
           try {
             final notifier = ref.read(subjectiveFeedbackProvider.notifier);
             await notifier.createPostCheckin(
@@ -997,13 +1151,15 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
               confidenceLevel: _confidenceLevel,
               feelingStronger: _feelingStronger,
             );
-            debugPrint('[Subjective Feedback] Successfully submitted');
+            debugPrint('✅ [Subjective Feedback] Successfully submitted');
           } catch (e) {
-            debugPrint('[Subjective Feedback] Error (non-blocking): $e');
+            debugPrint('⚠️ [Subjective Feedback] Error (non-blocking): $e');
             // Non-blocking - don't fail the whole submission
           }
         }
-        debugPrint('✅ [Feedback] Workout feedback submitted successfully');
+        debugPrint('✅ [Feedback] All feedback submitted successfully');
+      } else {
+        debugPrint('⚠️ [Feedback] Missing userId or workoutId - skipping submission');
       }
 
       // Refresh workouts and invalidate provider to force UI update
@@ -1073,495 +1229,309 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    debugPrint('🏁 [Complete] Building workout complete screen');
 
     return Scaffold(
       backgroundColor: backgroundColor,
       body: Stack(
         children: [
           SafeArea(
-            child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                const SizedBox(height: 24),
-
-                // Success Icon
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.success.withOpacity(0.3),
-                        AppColors.cyan.withOpacity(0.2),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const LottieSuccess(
-                    size: 64,
-                    color: AppColors.success,
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Title
-                Text(
-                  'Workout Complete!',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
-
-                const SizedBox(height: 8),
-
-                Text(
-                  widget.workout.name ?? 'Workout',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ).animate().fadeIn(delay: 300.ms),
-
-                const SizedBox(height: 32),
-
-                // Stats Grid - Row 1
-                Row(
-                  children: [
-                    Expanded(
-                      child: _StatTile(
-                        icon: Icons.timer,
-                        value: _formatDuration(widget.duration),
-                        label: 'Duration',
-                        color: AppColors.cyan,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Column(
+                children: [
+                  // Title Row (compact)
+                  Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.check_circle,
+                          color: AppColors.success,
+                          size: 24,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _StatTile(
-                        icon: Icons.fitness_center,
-                        value: '${widget.workout.exercises.length}',
-                        label: 'Exercises',
-                        color: AppColors.purple,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Workout Complete!',
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              widget.workout.name ?? 'Workout',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _StatTile(
-                        icon: Icons.local_fire_department,
-                        value: '${widget.calories}',
-                        label: 'Calories',
-                        color: AppColors.orange,
-                      ),
-                    ),
+                    ],
+                  ).animate().fadeIn(delay: 100.ms),
+
+                  const SizedBox(height: 16),
+
+                  // Compact Stats Grid (2 rows x 3 cols)
+                  _buildCompactStatsGrid().animate().fadeIn(delay: 200.ms),
+
+                  // Heart Rate Section (if watch data available)
+                  if (widget.heartRateReadings != null && widget.heartRateReadings!.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    _buildHeartRateSection(elevated).animate().fadeIn(delay: 250.ms),
                   ],
-                ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
 
-                const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-                // Stats Grid - Row 2 (Total Weight)
-                Row(
-                  children: [
-                    Expanded(
-                      child: _StatTile(
-                        icon: Icons.scale,
-                        value: '${(widget.totalVolumeKg ?? 0).toStringAsFixed(0)} kg',
-                        label: 'Total Weight',
+                  // AI Feedback (compact, max 3 lines)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: elevated,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.auto_awesome,
+                          size: 18,
+                          color: AppColors.cyan,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _isLoadingSummary
+                              ? const SizedBox(
+                                  height: 40,
+                                  child: Center(
+                                    child: LottieLoading(size: 24, color: AppColors.cyan),
+                                  ),
+                                )
+                              : Text(
+                                  _aiSummary ?? 'Great workout! Keep up the momentum.',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    height: 1.4,
+                                  ),
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                        ),
+                      ],
+                    ),
+                  ).animate().fadeIn(delay: 300.ms),
+
+                  const SizedBox(height: 16),
+
+                  // Rating Section
+                  Text(
+                    'How was your workout?',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      final starIndex = index + 1;
+                      return GestureDetector(
+                        onTap: () => setState(() => _rating = starIndex),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Icon(
+                            starIndex <= _rating ? Icons.star : Icons.star_border,
+                            size: 36,
+                            color: starIndex <= _rating ? AppColors.orange : AppColors.textMuted,
+                          ),
+                        ),
+                      );
+                    }),
+                  ).animate().fadeIn(delay: 400.ms),
+                  if (_rating > 0)
+                    Text(
+                      _getRatingLabel(_rating),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.orange,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+
+                  const SizedBox(height: 16),
+
+                  // Difficulty Section
+                  Text(
+                    'How was the difficulty?',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _DifficultyOption(
+                        label: 'Too Easy',
+                        icon: Icons.sentiment_very_satisfied,
+                        isSelected: _difficulty == 'too_easy',
+                        onTap: () => setState(() => _difficulty = 'too_easy'),
                         color: AppColors.success,
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _StatTile(
-                        icon: Icons.repeat,
-                        value: '${widget.totalSets ?? 0}',
-                        label: 'Sets',
+                      const SizedBox(width: 8),
+                      _DifficultyOption(
+                        label: 'Just Right',
+                        icon: Icons.sentiment_satisfied,
+                        isSelected: _difficulty == 'just_right',
+                        onTap: () => setState(() => _difficulty = 'just_right'),
                         color: AppColors.cyan,
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _StatTile(
-                        icon: Icons.format_list_numbered,
-                        value: '${widget.totalReps ?? 0}',
-                        label: 'Reps',
-                        color: AppColors.purple,
+                      const SizedBox(width: 8),
+                      _DifficultyOption(
+                        label: 'Too Hard',
+                        icon: Icons.sentiment_dissatisfied,
+                        isSelected: _difficulty == 'too_hard',
+                        onTap: () => setState(() => _difficulty = 'too_hard'),
+                        color: AppColors.error,
                       ),
-                    ),
-                  ],
-                ).animate().fadeIn(delay: 450.ms).slideY(begin: 0.1),
-
-                const SizedBox(height: 24),
-
-                // AI Summary
-                Builder(
-                  builder: (context) {
-                    final isDarkAI = Theme.of(context).brightness == Brightness.dark;
-                    final elevatedAI = isDarkAI ? AppColors.elevated : AppColorsLight.elevated;
-                    return Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: elevatedAI,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.cyan.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.auto_awesome,
-                              size: 16,
-                              color: AppColors.cyan,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Text(
-                            'AI Coach Feedback',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.cyan,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      _isLoadingSummary
-                          ? const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(8),
-                                child: LottieLoading(
-                                  size: 48,
-                                  color: AppColors.cyan,
-                                ),
-                              ),
-                            )
-                          : Text(
-                              _aiSummary ?? 'Great workout! Keep up the momentum.',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                height: 1.5,
-                              ),
-                            ),
                     ],
-                  ),
-                );
-                  },
-                ).animate().fadeIn(delay: 500.ms),
+                  ).animate().fadeIn(delay: 500.ms),
 
-                // Share Workout Button
-                const SizedBox(height: 16),
-                OutlinedButton.icon(
-                  onPressed: _showShareSheet,
-                  icon: const Icon(Icons.share_rounded, size: 20),
-                  label: const Text('Share Workout'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.cyan,
-                    side: BorderSide(color: AppColors.cyan.withValues(alpha: 0.5)),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ).animate().fadeIn(delay: 520.ms),
+                  const Spacer(),
 
-                // Post-Workout Subjective Feedback Section
-                const SizedBox(height: 24),
-                _buildSubjectiveFeedbackSection(),
-
-                // Progression Suggestions Section
-                if (_progressionSuggestions.isNotEmpty) ...[
-                  const SizedBox(height: 24),
-                  _buildProgressionSuggestionsSection(),
-                ],
-
-                // New PRs / Achievements Section
-                if (_newPRs.isNotEmpty) ...[
-                  const SizedBox(height: 24),
-                  _buildNewPRsSection(),
-                ],
-
-                // Performance Comparison Section - Improvements/Setbacks
-                if (widget.performanceComparison != null) ...[
-                  const SizedBox(height: 24),
-                  _buildPerformanceComparisonSection(),
-                ],
-
-                // Exercise Progress Section (Minimizable graphs)
-                if (_exerciseProgressData.isNotEmpty) ...[
-                  const SizedBox(height: 24),
-                  _buildExerciseProgressSection(),
-                ],
-
-                const SizedBox(height: 32),
-
-                // Feedback importance banner
-                Builder(
-                  builder: (context) {
-                    final isDarkBanner = Theme.of(context).brightness == Brightness.dark;
-                    final elevatedBanner = isDarkBanner ? AppColors.elevated : AppColorsLight.elevated;
-                    final textSecondaryBanner = isDarkBanner ? AppColors.textSecondary : AppColorsLight.textSecondary;
-
-                    return Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: elevatedBanner,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.purple.withOpacity(0.3),
+                  // Primary Actions
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _showShareSheet,
+                          icon: const Icon(Icons.share_rounded, size: 18),
+                          label: const Text('Share'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.cyan,
+                            side: BorderSide(color: AppColors.cyan.withOpacity(0.5)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.purple.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.insights_rounded,
-                              color: AppColors.purple,
-                              size: 20,
-                            ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: _isSubmitting ? null : _submitFeedback,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Your feedback matters!',
+                          child: _isSubmitting
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: LottieLoading(size: 20, useDots: true),
+                                )
+                              : const Text(
+                                  'Done',
                                   style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.purple,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Ratings help the AI personalize future workouts to better match your preferences and abilities.',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: textSecondaryBanner,
-                                    height: 1.3,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ).animate().fadeIn(delay: 580.ms),
-
-                const SizedBox(height: 24),
-
-                // Rating Section
-                Text(
-                  'How was your workout?',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(5, (index) {
-                    final starIndex = index + 1;
-                    return GestureDetector(
-                      onTap: () => setState(() => _rating = starIndex),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Icon(
-                          starIndex <= _rating
-                              ? Icons.star
-                              : Icons.star_border,
-                          size: 40,
-                          color: starIndex <= _rating
-                              ? AppColors.orange
-                              : AppColors.textMuted,
                         ),
                       ),
-                    );
-                  }),
-                ).animate().fadeIn(delay: 600.ms),
+                    ],
+                  ).animate().fadeIn(delay: 600.ms),
 
-                // Rating label
-                const SizedBox(height: 8),
-                Text(
-                  _getRatingLabel(_rating),
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: _rating > 0 ? AppColors.orange : AppColors.textMuted,
-                    fontWeight: _rating > 0 ? FontWeight.w500 : FontWeight.normal,
-                  ),
-                ).animate().fadeIn(delay: 650.ms),
+                  const SizedBox(height: 12),
 
-                const SizedBox(height: 24),
+                  // Secondary Actions Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      TextButton.icon(
+                        onPressed: _isExtendingWorkout ? null : _extendWorkout,
+                        icon: _isExtendingWorkout
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: LottieLoading(size: 14, useDots: true),
+                              )
+                            : const Icon(Icons.add, size: 16),
+                        label: Text(
+                          _isExtendingWorkout ? 'Adding...' : 'Do More',
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.cyan,
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 20,
+                        color: textSecondary.withOpacity(0.3),
+                      ),
+                      TextButton.icon(
+                        onPressed: _showChallengeFriendsDialog,
+                        icon: const Icon(Icons.emoji_events, size: 16),
+                        label: const Text(
+                          'Challenge',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.orange,
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 20,
+                        color: textSecondary.withOpacity(0.3),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => setState(() => _showExerciseFeedback = !_showExerciseFeedback),
+                        icon: Icon(
+                          _showExerciseFeedback ? Icons.expand_less : Icons.expand_more,
+                          size: 16,
+                        ),
+                        label: const Text(
+                          'Rate Exercises',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.purple,
+                        ),
+                      ),
+                    ],
+                  ).animate().fadeIn(delay: 700.ms),
 
-                // Difficulty Feedback
-                Text(
-                  'How was the difficulty?',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                Row(
-                  children: [
-                    _DifficultyOption(
-                      label: 'Too Easy',
-                      icon: Icons.sentiment_very_satisfied,
-                      isSelected: _difficulty == 'too_easy',
-                      onTap: () => setState(() => _difficulty = 'too_easy'),
-                      color: AppColors.success,
-                    ),
-                    const SizedBox(width: 12),
-                    _DifficultyOption(
-                      label: 'Just Right',
-                      icon: Icons.sentiment_satisfied,
-                      isSelected: _difficulty == 'just_right',
-                      onTap: () => setState(() => _difficulty = 'just_right'),
-                      color: AppColors.cyan,
-                    ),
-                    const SizedBox(width: 12),
-                    _DifficultyOption(
-                      label: 'Too Hard',
-                      icon: Icons.sentiment_dissatisfied,
-                      isSelected: _difficulty == 'too_hard',
-                      onTap: () => setState(() => _difficulty = 'too_hard'),
-                      color: AppColors.error,
+                  // Expandable Exercise Feedback (shown in bottom sheet if tapped)
+                  if (_showExerciseFeedback) ...[
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: elevated,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: _buildCompactExerciseFeedback(),
+                      ),
                     ),
                   ],
-                ).animate().fadeIn(delay: 700.ms),
 
-                const SizedBox(height: 24),
-
-                // Per-Exercise Feedback Section (expandable)
-                _buildExerciseFeedbackSection(),
-
-                const SizedBox(height: 24),
-
-                // "Do More" Button - Extend Workout with AI-generated exercises
-                // Addresses complaint: "Those few little baby exercises weren't enough"
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _isExtendingWorkout ? null : _extendWorkout,
-                    icon: _isExtendingWorkout
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: LottieLoading(size: 20, useDots: true),
-                          )
-                        : const Icon(Icons.add_circle_outline, size: 20),
-                    label: Text(
-                      _isExtendingWorkout ? 'Generating...' : 'Do More',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      backgroundColor: AppColors.cyan,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ).animate().fadeIn(delay: 720.ms).slideY(begin: 0.1),
-
-                const SizedBox(height: 12),
-
-                // Explanation text for "Do More"
-                Text(
-                  'Not enough? AI will add 3 more exercises',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.textSecondary
-                        : AppColorsLight.textSecondary,
-                  ),
-                  textAlign: TextAlign.center,
-                ).animate().fadeIn(delay: 730.ms),
-
-                const SizedBox(height: 24),
-
-                // Challenge Friends Button
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _showChallengeFriendsDialog,
-                    icon: const Icon(Icons.emoji_events, size: 20),
-                    label: const Text(
-                      'Challenge Friends',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      foregroundColor: AppColors.orange,
-                      side: BorderSide(color: AppColors.orange.withValues(alpha: 0.5), width: 2),
-                    ),
-                  ),
-                ).animate().fadeIn(delay: 750.ms).slideY(begin: 0.1),
-
-                const SizedBox(height: 16),
-
-                // Done Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _submitFeedback,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: LottieLoading(
-                              size: 24,
-                              useDots: true,
-                            ),
-                          )
-                        : const Text(
-                            'Done',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
-                ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.1),
-
-                const SizedBox(height: 16),
-
-                TextButton(
-                  onPressed: () => context.go('/home'),
-                  child: const Text('Skip Feedback'),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                ],
+              ),
             ),
-          ),
-        ),
           ),
           // Confetti overlay for achievements
           Align(
@@ -1585,6 +1555,193 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Compact stats grid for single-screen layout
+  Widget _buildCompactStatsGrid() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _CompactStatTile(
+                icon: Icons.timer,
+                value: _formatDuration(widget.duration),
+                label: 'Time',
+                color: AppColors.cyan,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _CompactStatTile(
+                icon: Icons.fitness_center,
+                value: '${widget.workout.exercises.length}',
+                label: 'Exercises',
+                color: AppColors.purple,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _CompactStatTile(
+                icon: Icons.local_fire_department,
+                value: '${widget.calories}',
+                label: 'Cal',
+                color: AppColors.orange,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _CompactStatTile(
+                icon: Icons.scale,
+                value: '${(widget.totalVolumeKg ?? 0).toStringAsFixed(0)}kg',
+                label: 'Volume',
+                color: AppColors.success,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _CompactStatTile(
+                icon: Icons.repeat,
+                value: '${widget.totalSets ?? 0}',
+                label: 'Sets',
+                color: AppColors.cyan,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _CompactStatTile(
+                icon: Icons.tag,
+                value: '${widget.totalReps ?? 0}',
+                label: 'Reps',
+                color: AppColors.purple,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Heart rate section with chart and stats from watch data
+  Widget _buildHeartRateSection(Color elevated) {
+    final readings = widget.heartRateReadings!
+        .map((r) => r.toReading())
+        .toList();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFF44336).withOpacity(0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF44336).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.favorite,
+                  size: 18,
+                  color: Color(0xFFF44336),
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Heart Rate',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Spacer(),
+              // Quick stats
+              if (widget.avgHeartRate != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF44336).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'Avg: ${widget.avgHeartRate} bpm',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFF44336),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Heart rate chart
+          HeartRateChart(
+            readings: readings,
+            avgBpm: widget.avgHeartRate,
+            maxBpm: widget.maxHeartRate,
+            minBpm: widget.minHeartRate,
+            height: 150,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Compact exercise feedback list for inline display
+  Widget _buildCompactExerciseFeedback() {
+    final exercises = widget.workout.exercises;
+    return ListView.builder(
+      padding: const EdgeInsets.all(8),
+      itemCount: exercises.length,
+      itemBuilder: (context, index) {
+        final exercise = exercises[index];
+        final rating = _exerciseRatings[index] ?? 0;
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  exercise.name,
+                  style: const TextStyle(fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(5, (starIdx) {
+                  return GestureDetector(
+                    onTap: () => setState(() => _exerciseRatings[index] = starIdx + 1),
+                    child: Icon(
+                      (starIdx + 1) <= rating ? Icons.star : Icons.star_border,
+                      size: 18,
+                      color: (starIdx + 1) <= rating ? AppColors.orange : AppColors.textMuted,
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -3162,6 +3319,69 @@ class _StatTile extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Compact Stat Tile (for single-screen layout)
+// ─────────────────────────────────────────────────────────────────
+
+class _CompactStatTile extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+
+  const _CompactStatTile({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      decoration: BoxDecoration(
+        color: elevatedColor,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: color, size: 16),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Difficulty Option
 // ─────────────────────────────────────────────────────────────────
 
@@ -3270,6 +3490,34 @@ class _MiniDifficultyButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Heart rate reading data for workout completion screen.
+/// This is a simplified version of HeartRateReading for passing between screens.
+class HeartRateReadingData {
+  final int bpm;
+  final DateTime timestamp;
+
+  const HeartRateReadingData({
+    required this.bpm,
+    required this.timestamp,
+  });
+
+  /// Convert from HeartRateReading provider model
+  factory HeartRateReadingData.fromReading(HeartRateReading reading) {
+    return HeartRateReadingData(
+      bpm: reading.bpm,
+      timestamp: reading.timestamp,
+    );
+  }
+
+  /// Convert to HeartRateReading for chart widget
+  HeartRateReading toReading() {
+    return HeartRateReading(
+      bpm: bpm,
+      timestamp: timestamp,
     );
   }
 }

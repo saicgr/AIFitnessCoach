@@ -17,6 +17,7 @@ from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.weight_utils import get_starting_weight, detect_equipment_type
 from services.gemini_service import GeminiService
+from models.gemini_schemas import ExerciseIndicesResponse
 
 from .utils import clean_exercise_name_for_display, infer_equipment_from_name
 from .filters import (
@@ -33,13 +34,18 @@ logger = get_logger(__name__)
 
 # Difficulty ceiling by fitness level (prevents advanced exercises for beginners)
 # Scale: beginner exercises=1-3, intermediate=4-6, advanced=7-10
-# NOTE: These ceilings are now used for RANKING, not hard filtering.
-# All exercises are available to all users, but exercises matching
-# the user's level are scored higher in selection.
+# NOTE: For beginners, this ceiling is STRICTLY enforced to prevent advanced exercises.
+# For intermediate/advanced users, exercises are ranked by difficulty match.
 DIFFICULTY_CEILING = {
-    "beginner": 3,       # Prefers easy exercises (1-3)
-    "intermediate": 6,   # Prefers medium exercises (1-6)
-    "advanced": 10,      # Prefers all difficulties
+    "beginner": 6,       # Beginner + intermediate exercises (1-6), strict filtering
+    "intermediate": 8,   # Up to most advanced (1-8)
+    "advanced": 10,      # All difficulties including elite
+}
+
+# Challenge exercise difficulty range for beginners (separate "Want a Challenge?" section)
+CHALLENGE_DIFFICULTY_RANGE = {
+    "min": 7,  # Minimum difficulty for challenge exercises
+    "max": 8,  # Maximum difficulty for challenge exercises (not elite 9-10)
 }
 
 # Difficulty preference ratios for workout generation
@@ -697,13 +703,17 @@ class ExerciseRAGService:
                 # Default to "beginner" so exercises without explicit difficulty are available to all
                 exercise_difficulty = meta.get("difficulty", "beginner")
 
-                # Use permissive filtering for all fitness levels (only blocks Elite for beginners)
-                # Difficulty is used for RANKING, not hard filtering (see DIFFICULTY_RATIOS)
-                # This allows beginners to access beginner/intermediate/advanced exercises
-                # while still protecting them from Elite (10) exercises
-                if is_exercise_too_difficult(exercise_difficulty, validated_fitness_level, difficulty_adjustment):
-                    logger.debug(f"Filtered out '{meta.get('name')}' - too difficult ({exercise_difficulty}) for {validated_fitness_level}")
-                    continue
+                # Use STRICT filtering for beginners (ceiling of 6, only beginner+intermediate exercises)
+                # Use permissive filtering for intermediate/advanced users (more variety)
+                # difficulty_adjustment from user feedback can increase the ceiling
+                if validated_fitness_level == "beginner":
+                    if is_exercise_too_difficult_strict(exercise_difficulty, validated_fitness_level, difficulty_adjustment):
+                        logger.debug(f"Filtered out '{meta.get('name')}' - too difficult ({exercise_difficulty}) for beginner (strict, adjustment={difficulty_adjustment})")
+                        continue
+                else:
+                    if is_exercise_too_difficult(exercise_difficulty, validated_fitness_level, difficulty_adjustment):
+                        logger.debug(f"Filtered out '{meta.get('name')}' - too difficult ({exercise_difficulty}) for {validated_fitness_level}")
+                        continue
 
                 # Clean name for display
                 raw_name = meta.get("name", "Unknown")
@@ -1190,8 +1200,8 @@ SELECTION CRITERIA:
 
 IMPORTANT: You MUST select {count} DIFFERENT exercises. Each number in your response must be unique.
 
-Return ONLY a JSON array of {count} UNIQUE exercise numbers (1-indexed), in the order they should be performed.
-Example: [1, 5, 3, 8, 2, 6] - notice all numbers are different
+Return a JSON object with "selected_indices" array containing {count} UNIQUE exercise numbers (1-indexed), in the order they should be performed.
+Example: {{"selected_indices": [1, 5, 3, 8, 2, 6]}} - notice all numbers are different
 
 Select exactly {count} UNIQUE exercises that are SAFE for this user."""
 
@@ -1199,7 +1209,7 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
             system_content = "You are a fitness expert"
             if injuries:
                 system_content += " and certified physical therapist. SAFETY IS YOUR TOP PRIORITY."
-            system_content += ". Select exercises wisely. Return ONLY a JSON array of numbers."
+            system_content += ". Select exercises wisely. Return ONLY valid JSON."
 
             from google import genai
             from google.genai import types
@@ -1210,19 +1220,15 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
                 contents=f"{system_content}\n\n{prompt}",
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
+                    response_schema=ExerciseIndicesResponse,
                     temperature=0.3,
                     max_output_tokens=2000,
                 ),
             )
 
             content = response.text.strip()
-
-            if content.startswith("```"):
-                content = content.split("\n", 1)[1] if "\n" in content else content[3:]
-            if content.endswith("```"):
-                content = content[:-3]
-
-            selected_indices = json.loads(content.strip())
+            data = json.loads(content)
+            selected_indices = data.get("selected_indices", [])
 
             # Get selected exercises - ensure no duplicates
             selected = []
@@ -1391,6 +1397,234 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
             "is_staple": exercise.get("is_staple", False),  # User's core lifts that never rotate
             "from_queue": exercise.get("from_queue", False),  # From exercise queue
         }
+
+    async def select_challenge_exercise(
+        self,
+        main_exercises: List[Dict],
+        focus_area: str,
+        equipment: List[str],
+        fitness_level: str = "beginner",
+        injuries: Optional[List[str]] = None,
+        avoided_muscles: Optional[Dict[str, List[str]]] = None,
+        workout_params: Optional[Dict] = None,
+        strength_history: Optional[Dict[str, Dict]] = None,
+    ) -> Optional[Dict]:
+        """
+        Select exactly 1 challenge exercise for beginners.
+
+        This provides a "Want a Challenge?" section with a harder exercise
+        that beginners can optionally try. The challenge exercise:
+        - Has difficulty 7-8 (harder than main workout ceiling of 6)
+        - Is NOT in the main_exercises (no duplicates)
+        - Should be a progression of an exercise in main workout if possible
+        - Uses RAG to find the best match
+
+        Args:
+            main_exercises: Main workout exercises (to avoid duplicates)
+            focus_area: Target muscle group/body part
+            equipment: Available equipment list
+            fitness_level: User's fitness level (only returns for beginners)
+            injuries: List of injuries to avoid
+            avoided_muscles: Muscles to avoid/reduce
+            workout_params: Workout parameters (sets/reps/rest)
+            strength_history: User's strength history for weight recommendations
+
+        Returns:
+            A single challenge exercise dict, or None if not applicable/found
+        """
+        # Only provide challenge exercises for beginners
+        if fitness_level != "beginner":
+            logger.debug("Challenge exercise only for beginners, skipping")
+            return None
+
+        # Get names of main exercises to exclude (no duplicates)
+        main_exercise_names = {ex.get("name", "").lower() for ex in main_exercises}
+        logger.info(f"🔥 Selecting challenge exercise for beginner, excluding: {main_exercise_names}")
+
+        try:
+            # Build search query for challenge exercises
+            search_query = f"advanced {focus_area} exercise progression challenge"
+
+            # Query ChromaDB for exercises matching the focus area
+            results = self.collection.query(
+                query_texts=[search_query],
+                n_results=50,  # Get more candidates to filter
+                include=["metadatas", "distances"],
+            )
+
+            if not results or not results["metadatas"] or not results["metadatas"][0]:
+                logger.warning("No challenge exercise candidates found in ChromaDB")
+                return None
+
+            metadatas = results["metadatas"][0]
+            distances = results["distances"][0] if results["distances"] else []
+
+            # Filter candidates for challenge exercises
+            challenge_candidates = []
+
+            for i, meta in enumerate(metadatas):
+                exercise_name = meta.get("name", "Unknown")
+                exercise_name_lower = exercise_name.lower()
+
+                # Skip if in main exercises (no duplicates)
+                if exercise_name_lower in main_exercise_names:
+                    continue
+
+                # Check difficulty is in challenge range (7-8)
+                exercise_difficulty = meta.get("difficulty", "beginner")
+                difficulty_num = get_difficulty_numeric(exercise_difficulty)
+
+                if difficulty_num < CHALLENGE_DIFFICULTY_RANGE["min"] or difficulty_num > CHALLENGE_DIFFICULTY_RANGE["max"]:
+                    continue
+
+                # Check equipment compatibility
+                ex_equipment = (meta.get("equipment", "") or "").lower()
+                equipment_lower = [e.lower() for e in equipment] if equipment else []
+
+                if ex_equipment and ex_equipment not in ["bodyweight", "body weight", "none", ""]:
+                    if not any(eq in ex_equipment for eq in equipment_lower):
+                        continue
+
+                # Filter by injuries
+                if injuries:
+                    primary_muscle = (meta.get("target_muscle", "") or "").lower()
+                    secondary_muscles = parse_secondary_muscles(meta.get("secondary_muscles", []))
+
+                    is_safe = pre_filter_by_injuries(
+                        exercise_name=exercise_name,
+                        primary_muscle=primary_muscle,
+                        secondary_muscles=secondary_muscles,
+                        injuries=injuries
+                    )
+                    if not is_safe:
+                        continue
+
+                # Filter by avoided muscles
+                if avoided_muscles:
+                    primary_muscle = (meta.get("target_muscle", "") or "").lower()
+                    secondary_muscles = parse_secondary_muscles(meta.get("secondary_muscles", []))
+
+                    avoid_list = avoided_muscles.get("avoid", [])
+                    if any(am.lower() in primary_muscle for am in avoid_list):
+                        continue
+
+                # Must have media
+                has_media = bool(meta.get("gif_url") or meta.get("video_url") or meta.get("image_url"))
+                if not has_media:
+                    continue
+
+                # Calculate similarity score
+                similarity = 1 - distances[i] if i < len(distances) else 0.5
+
+                # Check if this is a progression of a main exercise
+                progression_from = None
+                for main_ex in main_exercises:
+                    main_name = main_ex.get("name", "").lower()
+                    # Check if exercise names are related (e.g., "Push-up" -> "Diamond Push-up")
+                    if self._is_progression_of(exercise_name_lower, main_name):
+                        progression_from = main_ex.get("name")
+                        # Boost similarity for progression exercises
+                        similarity = min(1.0, similarity * 1.5)
+                        break
+
+                challenge_candidates.append({
+                    "id": meta.get("exercise_id", ""),
+                    "name": clean_exercise_name_for_display(exercise_name),
+                    "body_part": meta.get("body_part", ""),
+                    "equipment": meta.get("equipment", "bodyweight"),
+                    "target_muscle": meta.get("target_muscle", ""),
+                    "secondary_muscles": meta.get("secondary_muscles", []),
+                    "difficulty": exercise_difficulty,
+                    "difficulty_num": difficulty_num,
+                    "gif_url": meta.get("gif_url", ""),
+                    "video_url": meta.get("video_url", ""),
+                    "image_url": meta.get("image_url", ""),
+                    "instructions": meta.get("instructions", ""),
+                    "similarity": similarity,
+                    "progression_from": progression_from,
+                    "is_challenge": True,
+                })
+
+            if not challenge_candidates:
+                logger.info("No valid challenge exercise candidates after filtering")
+                return None
+
+            # Sort by similarity (prefer progressions which got boosted)
+            challenge_candidates.sort(key=lambda x: x["similarity"], reverse=True)
+
+            # Select the best challenge exercise
+            best_challenge = challenge_candidates[0]
+
+            # Format for workout
+            formatted = self._format_exercise_for_workout(
+                best_challenge,
+                fitness_level,
+                workout_params,
+                strength_history,
+                progression_pace="slow",  # Conservative for challenge exercises
+            )
+
+            # Add challenge-specific fields
+            formatted["is_challenge"] = True
+            formatted["progression_from"] = best_challenge.get("progression_from")
+            formatted["difficulty"] = best_challenge.get("difficulty")
+            formatted["difficulty_num"] = best_challenge.get("difficulty_num")
+
+            logger.info(f"🔥 Selected challenge exercise: {formatted['name']} (difficulty: {best_challenge['difficulty_num']}, progression_from: {best_challenge.get('progression_from', 'N/A')})")
+
+            return formatted
+
+        except Exception as e:
+            logger.error(f"Error selecting challenge exercise: {e}")
+            return None
+
+    def _is_progression_of(self, challenge_name: str, main_name: str) -> bool:
+        """
+        Check if the challenge exercise is a progression of a main exercise.
+
+        Examples:
+        - "diamond push-up" is a progression of "push-up"
+        - "archer pull-up" is a progression of "pull-up"
+        - "jump squat" is a progression of "squat"
+        """
+        challenge_lower = challenge_name.lower()
+        main_lower = main_name.lower()
+
+        # Direct progression patterns
+        progression_patterns = [
+            # Push-up progressions
+            ("push-up", ["diamond push-up", "decline push-up", "archer push-up", "chest tap push-up", "pike push-up", "clap push-up"]),
+            ("push up", ["diamond push up", "decline push up", "archer push up", "chest tap push up", "pike push up", "clap push up"]),
+            # Pull-up progressions
+            ("pull-up", ["archer pull-up", "wide grip pull-up", "l-sit pull-up", "muscle-up"]),
+            ("pull up", ["archer pull up", "wide grip pull up", "l-sit pull up", "muscle up"]),
+            # Squat progressions
+            ("squat", ["jump squat", "pistol squat", "shrimp squat", "bulgarian split squat"]),
+            ("goblet squat", ["front squat", "barbell squat"]),
+            # Row progressions
+            ("row", ["one-arm row", "archer row", "explosive row"]),
+            # Plank progressions
+            ("plank", ["side plank", "plank to push-up", "commando plank"]),
+            # Lunge progressions
+            ("lunge", ["jump lunge", "walking lunge", "reverse lunge"]),
+        ]
+
+        for base_exercise, progressions in progression_patterns:
+            if base_exercise in main_lower:
+                if any(prog in challenge_lower for prog in progressions):
+                    return True
+
+        # Check if challenge contains main exercise name (generic progression)
+        # e.g., "incline dumbbell press" -> "decline dumbbell press"
+        main_words = set(main_lower.split())
+        challenge_words = set(challenge_lower.split())
+        common_words = main_words & challenge_words
+
+        # If they share significant words but challenge has modifiers
+        if len(common_words) >= 2 and challenge_words != main_words:
+            return True
+
+        return False
 
     def get_stats(self) -> Dict[str, Any]:
         """Get exercise RAG statistics."""

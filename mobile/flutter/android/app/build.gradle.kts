@@ -68,4 +68,14 @@ dependencies {
 
     // Guava for ListenableFuture (required by CameraX)
     implementation("com.google.guava:guava:31.1-android")
+
+    // Wearable Data Layer API for watch sync
+    implementation("com.google.android.gms:play-services-wearable:19.0.0")
+
+    // Coroutines for async operations
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+
+    // Gson for JSON serialization
+    implementation("com.google.code.gson:gson:2.10.1")
 }

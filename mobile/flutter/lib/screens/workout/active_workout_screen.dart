@@ -16,6 +16,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/challenges_service.dart';
 import '../../data/providers/social_provider.dart';
 import '../../core/providers/tts_provider.dart';
+import '../../core/providers/sound_preferences_provider.dart';
 import '../../data/rest_messages.dart';
 import '../../widgets/log_1rm_sheet.dart';
 import '../../widgets/responsive_layout.dart';
@@ -37,6 +38,9 @@ import 'mixins/exercise_management_mixin.dart';
 import '../../data/models/rest_suggestion.dart';
 import '../../data/models/smart_weight_suggestion.dart';
 import '../../core/services/fatigue_service.dart';
+import '../../core/providers/heart_rate_provider.dart';
+import '../../widgets/heart_rate_display.dart';
+import 'workout_complete_screen.dart' show HeartRateReadingData;
 
 /// Log for a single set
 class SetLog {
@@ -97,6 +101,13 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     {'name': 'Leg Swings', 'duration': 30, 'icon': Icons.swap_horiz},
     {'name': 'Light Cardio', 'duration': 120, 'icon': Icons.favorite},
   ];
+
+  // Challenge exercise phase (after main workout, before stretches - for beginners)
+  bool _isInChallengePhase = false;
+  bool _challengeAccepted = false;
+  bool _challengeCompleted = false;
+  int _challengeCurrentSet = 1;
+  final List<SetLog> _challengeSets = [];
 
   // Stretch phase state (after workout, before completion)
   bool _isInStretchPhase = false;
@@ -224,6 +235,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
 
   // Fatigue service instance
   FatigueService? _fatigueService;
+
+  // Heart rate tracking - clear history when starting new workout
+  bool _heartRateHistoryCleared = false;
 
   @override
   void initState() {
@@ -789,6 +803,305 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
   }
 
   /// Build the stretch screen UI (shown after workout, before completion)
+  /// Build the challenge exercise screen (for beginners trying an advanced exercise)
+  Widget _buildChallengeExerciseScreen(BuildContext context, bool isDark, Color backgroundColor) {
+    final challengeExercise = widget.workout.challengeExercise!;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    return WillPopScope(
+      onWillPop: () async {
+        // Confirm skip challenge
+        final shouldSkip = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Skip Challenge?'),
+            content: const Text('Are you sure you want to skip the challenge exercise?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Continue'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Skip'),
+              ),
+            ],
+          ),
+        );
+        if (shouldSkip == true) {
+          _skipChallengeExercise();
+        }
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: backgroundColor,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Top bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Skip button
+                    TextButton.icon(
+                      onPressed: _skipChallengeExercise,
+                      icon: const Icon(Icons.skip_next, size: 18),
+                      label: const Text('Skip'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: textSecondary,
+                      ),
+                    ),
+                    // Challenge badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.orange.withOpacity(0.3),
+                            Colors.deepOrange.withOpacity(0.3),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.orange.withOpacity(0.5)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.local_fire_department, size: 16, color: Colors.orange),
+                          const SizedBox(width: 6),
+                          Text(
+                            'CHALLENGE',
+                            style: TextStyle(
+                              color: Colors.orange.shade300,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Set counter
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: elevatedColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'Set $_challengeCurrentSet/${challengeExercise.sets}',
+                        style: TextStyle(
+                          color: textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Progress indicator
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: _challengeCurrentSet / challengeExercise.sets,
+                    backgroundColor: elevatedColor,
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
+                    minHeight: 4,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Video/GIF area
+              Expanded(
+                flex: 3,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: _isLoadingMedia
+                        ? const Center(
+                            child: CircularProgressIndicator(color: Colors.orange),
+                          )
+                        : _isVideoInitialized && _videoController != null
+                            ? AspectRatio(
+                                aspectRatio: _videoController!.value.aspectRatio,
+                                child: VideoPlayer(_videoController!),
+                              )
+                            : Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.fitness_center,
+                                      size: 64,
+                                      color: Colors.orange.withOpacity(0.5),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      challengeExercise.name,
+                                      style: TextStyle(
+                                        color: textSecondary,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                  ),
+                ),
+              ),
+
+              // Exercise info
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Text(
+                      challengeExercise.name,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (challengeExercise.progressionFrom != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Progression from ${challengeExercise.progressionFrom}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.orange.shade300,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Text(
+                      '${challengeExercise.reps} reps',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Completed sets display
+              if (_challengeSets.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: elevatedColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: _challengeSets.asMap().entries.map((entry) {
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                        ),
+                        child: Text(
+                          '${entry.value.reps} reps',
+                          style: const TextStyle(
+                            color: Colors.orange,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+
+              const SizedBox(height: 16),
+
+              // Action buttons
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    // Too Hard button
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => _showChallengeDifficultyDialog('too_hard'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red.shade300,
+                          side: BorderSide(color: Colors.red.shade300.withOpacity(0.5)),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: const Text('Too Hard'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Complete Set button
+                    Expanded(
+                      flex: 2,
+                      child: FilledButton.icon(
+                        onPressed: () => _completeChallengeSet(
+                          challengeExercise.reps,
+                          0, // Bodyweight
+                        ),
+                        icon: const Icon(Icons.check),
+                        label: const Text('Done'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Show dialog to rate challenge difficulty when giving up
+  void _showChallengeDifficultyDialog(String difficulty) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('How was the challenge?'),
+        content: const Text(
+          'Your feedback helps us suggest better exercises next time.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _finishChallengeExercise(difficultyFelt: difficulty);
+            },
+            child: const Text('Submit & Continue'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildStretchScreen(BuildContext context, bool isDark, Color backgroundColor) {
     final currentStretch = _stretchExercises[_currentStretchIndex];
     final stretchProgress = (_currentStretchIndex + 1) / _stretchExercises.length;
@@ -1244,6 +1557,21 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     HapticFeedback.lightImpact();
   }
 
+  /// Toggle weight unit between kg and lbs
+  void _toggleUnit() {
+    setState(() => _useKg = !_useKg);
+    HapticFeedback.selectionClick();
+  }
+
+  /// Add an additional set to the current exercise
+  void _addSetToCurrentExercise() {
+    final currentTotal = _totalSetsPerExercise[_viewingExerciseIndex] ?? 3;
+    setState(() {
+      _totalSetsPerExercise[_viewingExerciseIndex] = currentTotal + 1;
+    });
+    HapticFeedback.mediumImpact();
+  }
+
   void _startWorkoutTimer() {
     _workoutTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!_isPaused) {
@@ -1286,12 +1614,16 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
           HapticFeedback.mediumImpact();
           // Voice countdown for last 3 seconds
           ref.read(voiceAnnouncementsProvider.notifier).announceCountdownIfEnabled(3);
+          // Play countdown sound
+          ref.read(soundPreferencesProvider.notifier).playCountdown(3);
         } else if (_restSecondsRemaining == 2) {
           HapticFeedback.mediumImpact();
           ref.read(voiceAnnouncementsProvider.notifier).announceCountdownIfEnabled(2);
+          ref.read(soundPreferencesProvider.notifier).playCountdown(2);
         } else if (_restSecondsRemaining == 1) {
           HapticFeedback.mediumImpact();
           ref.read(voiceAnnouncementsProvider.notifier).announceCountdownIfEnabled(1);
+          ref.read(soundPreferencesProvider.notifier).playCountdown(1);
         }
 
         if (_restSecondsRemaining == 0) _endRest();
@@ -1315,6 +1647,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
 
     // Voice announcement for rest end
     ref.read(voiceAnnouncementsProvider.notifier).announceRestEndIfEnabled();
+
+    // Play rest timer end sound
+    ref.read(soundPreferencesProvider.notifier).playRestTimerEnd();
 
     // Strong haptic feedback when rest ends
     HapticFeedback.heavyImpact();
@@ -1962,6 +2297,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
   }
 
   void _moveToNextExercise() {
+    // Play exercise completion sound when finishing all sets of an exercise
+    ref.read(soundPreferencesProvider.notifier).playExerciseCompletion();
+
     // Track time spent on current exercise
     if (_currentExerciseStartTime != null) {
       final elapsed = DateTime.now().difference(_currentExerciseStartTime!).inSeconds;
@@ -2509,8 +2847,245 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
           (_exerciseTimeSeconds[_currentExerciseIndex] ?? 0) + elapsed;
     }
 
-    // Start stretch phase instead of immediately completing
+    // Check if workout has a challenge exercise to offer
+    final challengeExercise = widget.workout.challengeExercise;
+    if (challengeExercise != null && !_challengeAccepted && !_challengeCompleted) {
+      // Show challenge offer before stretches
+      _showChallengeOffer(challengeExercise);
+    } else {
+      // Start stretch phase instead of immediately completing
+      _startStretchPhase();
+    }
+  }
+
+  /// Show a dialog offering the challenge exercise
+  void _showChallengeOffer(WorkoutExercise challengeExercise) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.local_fire_department, color: Colors.orange, size: 28),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Ready for a Challenge?',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Great workout! Want to try an advanced exercise?',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.orange.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.fitness_center, color: Colors.orange),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          challengeExercise.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        if (challengeExercise.progressionFrom != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Progression from ${challengeExercise.progressionFrom}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                          ),
+                        ],
+                        Text(
+                          '${challengeExercise.sets} sets × ${challengeExercise.reps} reps',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'This is optional - skip if you\'re tired!',
+              style: TextStyle(
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              setState(() => _challengeCompleted = true);
+              _startStretchPhase();
+            },
+            child: const Text('Skip'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _startChallengePhase(challengeExercise);
+            },
+            icon: const Icon(Icons.local_fire_department, size: 18),
+            label: const Text('Let\'s Go!'),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Start the challenge exercise phase
+  void _startChallengePhase(WorkoutExercise challengeExercise) {
+    setState(() {
+      _isInChallengePhase = true;
+      _challengeAccepted = true;
+      _challengeCurrentSet = 1;
+      _challengeSets.clear();
+    });
+    HapticFeedback.heavyImpact();
+
+    // Load video for challenge exercise
+    _loadChallengeExerciseMedia(challengeExercise);
+  }
+
+  /// Load media for challenge exercise
+  Future<void> _loadChallengeExerciseMedia(WorkoutExercise exercise) async {
+    setState(() => _isLoadingMedia = true);
+
+    final videoUrl = exercise.gifUrl ?? exercise.videoUrl;
+    if (videoUrl != null && videoUrl.isNotEmpty) {
+      try {
+        _videoController?.dispose();
+        _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
+        await _videoController!.initialize();
+        await _videoController!.setLooping(true);
+        await _videoController!.play();
+        setState(() {
+          _isVideoInitialized = true;
+          _isVideoPlaying = true;
+          _videoUrl = videoUrl;
+          _isLoadingMedia = false;
+        });
+      } catch (e) {
+        debugPrint('⚠️ Failed to load challenge exercise video: $e');
+        setState(() {
+          _isVideoInitialized = false;
+          _isLoadingMedia = false;
+        });
+      }
+    } else {
+      setState(() => _isLoadingMedia = false);
+    }
+  }
+
+  /// Complete a set in the challenge exercise
+  void _completeChallengeSet(int reps, double weight) {
+    final challengeExercise = widget.workout.challengeExercise;
+    if (challengeExercise == null) return;
+
+    setState(() {
+      _challengeSets.add(SetLog(
+        reps: reps,
+        weight: weight,
+        targetReps: challengeExercise.reps,
+      ));
+    });
+
+    HapticFeedback.mediumImpact();
+
+    if (_challengeCurrentSet < challengeExercise.sets) {
+      // More sets to go
+      setState(() => _challengeCurrentSet++);
+    } else {
+      // Challenge complete!
+      _finishChallengeExercise(difficultyFelt: 'just_right');
+    }
+  }
+
+  /// Finish challenge exercise and submit feedback
+  Future<void> _finishChallengeExercise({required String difficultyFelt}) async {
+    final challengeExercise = widget.workout.challengeExercise;
+    if (challengeExercise == null) return;
+
+    setState(() {
+      _isInChallengePhase = false;
+      _challengeCompleted = true;
+    });
+
+    // Submit challenge feedback to backend
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId != null) {
+        await apiClient.dio.post(
+          '${ApiConstants.baseUrl}/api/v1/feedback/challenge-exercise',
+          data: {
+            'user_id': userId,
+            'exercise_name': challengeExercise.name,
+            'difficulty_felt': difficultyFelt,
+            'completed': _challengeSets.isNotEmpty,
+            'workout_id': widget.workout.id,
+            'performance_data': {
+              'sets_completed': _challengeSets.length,
+              'total_reps': _challengeSets.fold<int>(0, (sum, s) => sum + s.reps),
+              'avg_weight': _challengeSets.isEmpty
+                  ? 0
+                  : _challengeSets.fold<double>(0, (sum, s) => sum + s.weight) /
+                      _challengeSets.length,
+            },
+          },
+        );
+        debugPrint('✅ Challenge exercise feedback submitted');
+      }
+    } catch (e) {
+      debugPrint('⚠️ Failed to submit challenge feedback: $e');
+    }
+
+    // Now start stretch phase
     _startStretchPhase();
+  }
+
+  /// Skip challenge exercise without attempting
+  void _skipChallengeExercise() {
+    _finishChallengeExercise(difficultyFelt: 'too_hard');
   }
 
   Future<void> _finalizeWorkoutCompletion() async {
@@ -2663,6 +3238,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     }
 
     // Build exercises performance data for AI Coach feedback
+    // Includes per-exercise timing and set details for context-aware feedback
     final exercisesPerformance = <Map<String, dynamic>>[];
     for (int i = 0; i < _exercises.length; i++) {
       final exercise = _exercises[i];
@@ -2676,14 +3252,34 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
           'sets': sets.length,
           'reps': totalExReps,
           'weight_kg': avgWeight,
+          'time_seconds': _exerciseTimeSeconds[i] ?? 0, // Per-exercise timing
+          'set_details': sets.map((s) => {
+            'reps': s.reps,
+            'weight_kg': s.weight,
+          }).toList(), // Individual set data
         });
       }
     }
+
+    // Build planned exercises list for skip detection
+    final plannedExercises = widget.workout.exercises.map((e) => {
+      'name': e.name,
+      'target_sets': e.sets ?? 3,
+      'target_reps': e.reps ?? 10,
+      'target_weight_kg': e.weight ?? 0.0,
+    }).toList();
+
+    debugPrint('📊 [Complete] Exercises completed: ${exercisesPerformance.length}/${widget.workout.exercises.length}');
+    debugPrint('📊 [Complete] Per-exercise timing available for ${_exerciseTimeSeconds.length} exercises');
 
     if (mounted) {
       // Calculate final calories burned (6 kcal/min as baseline, adjusted for intensity)
       // For strength training: ~6 kcal/min for moderate intensity
       final finalCaloriesBurned = (_workoutSeconds / 60 * 6).round();
+
+      // Get heart rate data from watch (accumulated during workout)
+      final hrStats = ref.read(workoutHeartRateHistoryProvider.notifier).getStats();
+      final heartRateReadings = hrStats?.samples.map((r) => HeartRateReadingData.fromReading(r)).toList();
 
       context.go('/workout-complete', extra: {
         'workout': widget.workout,
@@ -2694,6 +3290,8 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
         // AI Coach feedback data
         'workoutLogId': workoutLogId,
         'exercisesPerformance': exercisesPerformance,
+        'plannedExercises': plannedExercises, // NEW: For skip detection
+        'exerciseTimeSeconds': Map.from(_exerciseTimeSeconds), // NEW: Per-exercise timing map
         'totalRestSeconds': totalRestSeconds,
         'avgRestSeconds': avgRestSeconds,
         'totalSets': totalCompletedSets,
@@ -2706,6 +3304,11 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
         'personalRecords': personalRecords,
         // Performance comparison (improvements/setbacks vs previous sessions)
         'performanceComparison': performanceComparison,
+        // Heart rate data from watch (if available)
+        'heartRateReadings': heartRateReadings,
+        'avgHeartRate': hrStats?.avg,
+        'maxHeartRate': hrStats?.max,
+        'minHeartRate': hrStats?.min,
       });
     }
   }
@@ -3457,6 +4060,12 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Clear heart rate history on first build (start of new workout)
+    if (!_heartRateHistoryCleared) {
+      _heartRateHistoryCleared = true;
+      ref.read(workoutHeartRateHistoryProvider.notifier).clear();
+    }
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
@@ -3493,6 +4102,11 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
       return _buildStretchScreen(context, isDark, backgroundColor);
     }
 
+    // Show challenge exercise screen if in challenge phase
+    if (_isInChallengePhase && widget.workout.challengeExercise != null) {
+      return _buildChallengeExerciseScreen(context, isDark, backgroundColor);
+    }
+
     final currentExercise = _exercises[_currentExerciseIndex];
     final nextExercise = _currentExerciseIndex < _exercises.length - 1
         ? _exercises[_currentExerciseIndex + 1]
@@ -3508,21 +4122,52 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
         backgroundColor: backgroundColor,
         body: Stack(
           children: [
-            // Dark gradient background (instead of full-screen video)
-            Positioned.fill(
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color(0xFF0A0A0A),
-                      AppColors.pureBlack,
-                      AppColors.pureBlack,
-                      Color(0xFF0A0A0A),
-                    ],
-                    stops: [0.0, 0.3, 0.7, 1.0],
+            // Full-screen video/GIF background
+            if (_isVideoInitialized && _videoController != null)
+              Positioned.fill(
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  child: SizedBox(
+                    width: _videoController!.value.size.width,
+                    height: _videoController!.value.size.height,
+                    child: VideoPlayer(_videoController!),
                   ),
+                ),
+              )
+            else if (_imageUrl != null)
+              Positioned.fill(
+                child: Image.network(
+                  _imageUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(color: AppColors.pureBlack),
+                ),
+              )
+            else
+              // Fallback: Dark gradient background
+              Positioned.fill(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0xFF0A0A0A),
+                        AppColors.pureBlack,
+                        AppColors.pureBlack,
+                        Color(0xFF0A0A0A),
+                      ],
+                      stops: [0.0, 0.3, 0.7, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+
+            // Semi-transparent overlay (adjustable opacity based on card visibility)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  color: Colors.black.withOpacity(_showSetOverlay ? 0.6 : 0.3),
                 ),
               ),
             ),
@@ -3701,6 +4346,74 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
                     // Open edit sheet for completed set
                     _editCompletedSet(_viewingExerciseIndex, index);
                   },
+                  onAddSet: _addSetToCurrentExercise,
+                  onUnitToggle: _toggleUnit,
+                  nextExercise: _viewingExerciseIndex < _exercises.length - 1
+                      ? _exercises[_viewingExerciseIndex + 1]
+                      : null,
+                ),
+              ),
+
+            // "Tap to log set" indicator when card is hidden
+            if (!_showSetOverlay && !_isResting && !_isInTransition)
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 180,
+                left: 0,
+                right: 0,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() => _showSetOverlay = true);
+                    HapticFeedback.lightImpact();
+                  },
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.elevated.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.cyan.withOpacity(0.2),
+                            blurRadius: 12,
+                            spreadRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: AppColors.cyan),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Tap to log set',
+                            style: TextStyle(
+                              color: AppColors.cyan,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            // Tap outside to minimize set card
+            if (_showSetOverlay && !_isResting && !_isInTransition)
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 140,
+                left: 0,
+                right: 0,
+                height: 30,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    setState(() => _showSetOverlay = false);
+                    HapticFeedback.lightImpact();
+                  },
+                  child: Container(color: Colors.transparent),
                 ),
               ),
 
@@ -3712,24 +4425,8 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
               child: _buildBottomSection(currentExercise, nextExercise),
             ),
 
-            // PiP Video (corner floating video)
-            if (!_isResting && !_isInTransition && (_isVideoInitialized || _imageUrl != null))
-              VideoPip(
-                videoController: _videoController,
-                isVideoInitialized: _isVideoInitialized,
-                isVideoPlaying: _isVideoPlaying,
-                imageUrl: _imageUrl,
-                isLoading: _isLoadingMedia,
-                onTogglePlay: _toggleVideoPlayPause,
-                isVisible: _showVideoPip,
-                onVisibilityChanged: (visible) {
-                  setState(() => _showVideoPip = visible);
-                },
-                onTap: () {
-                  // Show full-screen video modal
-                  _showFullScreenVideo();
-                },
-              ),
+            // Video is now full-screen background - PiP removed
+            // Music mini player - Coming Soon (requires audio_service integration)
           ],
         ),
       ),
@@ -3964,36 +4661,11 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
                         ],
                       ),
                       Container(width: 1, height: 16, color: dividerColor),
-                      // Water - tappable
-                      GestureDetector(
-                        onTap: () async {
-                          HapticFeedback.lightImpact();
-                          final amount = await showHydrationDialog(
-                            context: context,
-                            totalIntakeMl: _totalDrinkIntakeMl,
-                          );
-                          if (amount != null) {
-                            _logDrinkIntake(amount);
-                          }
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.water_drop_outlined, size: 14, color: Colors.blue),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${(_totalDrinkIntakeMl / 1000).toStringAsFixed(2)}L',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'monospace',
-                                color: Colors.blue,
-                              ),
-                            ),
-                            const SizedBox(width: 2),
-                            Icon(Icons.add_circle_outline, size: 12, color: Colors.blue.withOpacity(0.5)),
-                          ],
-                        ),
+                      // Heart Rate from watch
+                      const HeartRateDisplay(
+                        iconSize: 14,
+                        fontSize: 13,
+                        showZoneLabel: false,
                       ),
                     ],
                   ),

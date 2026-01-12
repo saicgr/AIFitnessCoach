@@ -54,6 +54,9 @@ class NumberStepper extends StatefulWidget {
   /// Callback when long-press ends
   final VoidCallback? onLongPressEnd;
 
+  /// Callback when label is tapped (e.g., to toggle units)
+  final VoidCallback? onLabelTap;
+
   const NumberStepper({
     super.key,
     required this.value,
@@ -66,10 +69,11 @@ class NumberStepper extends StatefulWidget {
     this.color = AppColors.glowCyan,
     this.showDecimals = false,
     this.decimalPlaces = 1,
-    this.buttonSize = 48,
+    this.buttonSize = 56,
     this.isDisabled = false,
     this.onLongPressStart,
     this.onLongPressEnd,
+    this.onLabelTap,
   });
 
   /// Factory for weight input (kg)
@@ -80,6 +84,7 @@ class NumberStepper extends StatefulWidget {
     double step = 2.5,
     bool useKg = true,
     bool isDisabled = false,
+    VoidCallback? onUnitToggle,
   }) {
     return NumberStepper(
       key: key,
@@ -93,6 +98,7 @@ class NumberStepper extends StatefulWidget {
       minValue: 0,
       maxValue: 500,
       isDisabled: isDisabled,
+      onLabelTap: onUnitToggle,
     );
   }
 
@@ -212,10 +218,29 @@ class _NumberStepperState extends State<NumberStepper> {
     return LayoutBuilder(
       builder: (context, constraints) {
         // Responsive sizing - scale down buttons and font on small screens
-        final isSmallScreen = constraints.maxWidth < 140;
-        final buttonSize = isSmallScreen ? 40.0 : widget.buttonSize;
-        final valueFontSize = isSmallScreen ? 28.0 : 32.0; // Increased for better visibility
-        final labelFontSize = isSmallScreen ? 10.0 : 11.0;
+        // Small: < 150px, Medium: 150-180px, Large: >= 180px
+        final availableWidth = constraints.maxWidth;
+        final isSmallScreen = availableWidth < 150;
+        final isMediumScreen = availableWidth >= 150 && availableWidth < 180;
+
+        // Progressive scaling for button sizes
+        final double buttonSize;
+        final double valueFontSize;
+        final double labelFontSize;
+
+        if (isSmallScreen) {
+          buttonSize = 40.0;
+          valueFontSize = 28.0;
+          labelFontSize = 10.0;
+        } else if (isMediumScreen) {
+          buttonSize = 48.0;
+          valueFontSize = 34.0;
+          labelFontSize = 11.0;
+        } else {
+          buttonSize = widget.buttonSize; // 56.0 default
+          valueFontSize = 40.0;
+          labelFontSize = 13.0;
+        }
 
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -243,8 +268,8 @@ class _NumberStepperState extends State<NumberStepper> {
                     onTap: _isEditing ? null : _startEditing,
                     child: Container(
                       constraints: BoxConstraints(
-                        minWidth: isSmallScreen ? 50 : 60,
-                        maxWidth: isSmallScreen ? 80 : 100,
+                        minWidth: isSmallScreen ? 44 : (isMediumScreen ? 52 : 60),
+                        maxWidth: isSmallScreen ? 70 : (isMediumScreen ? 85 : 100),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                       child: _isEditing
@@ -309,16 +334,53 @@ class _NumberStepperState extends State<NumberStepper> {
               ],
             ),
 
-            // Label
+            // Label (tappable if onLabelTap provided)
             if (widget.label.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                widget.label,
-                style: TextStyle(
-                  fontSize: labelFontSize,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1,
-                  color: widget.isDisabled ? mutedColor.withOpacity(0.5) : widget.color.withOpacity(0.8),
+              const SizedBox(height: 6),
+              GestureDetector(
+                onTap: widget.onLabelTap != null
+                    ? () {
+                        HapticFeedback.selectionClick();
+                        widget.onLabelTap!();
+                      }
+                    : null,
+                child: Container(
+                  padding: widget.onLabelTap != null
+                      ? const EdgeInsets.symmetric(horizontal: 12, vertical: 6)
+                      : EdgeInsets.zero,
+                  decoration: widget.onLabelTap != null
+                      ? BoxDecoration(
+                          color: widget.color.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: widget.color.withOpacity(0.3),
+                          ),
+                        )
+                      : null,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.label,
+                        style: TextStyle(
+                          fontSize: labelFontSize,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1,
+                          color: widget.isDisabled
+                              ? mutedColor.withOpacity(0.5)
+                              : widget.color,
+                        ),
+                      ),
+                      if (widget.onLabelTap != null) ...[
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.swap_horiz_rounded,
+                          size: 14,
+                          color: widget.color.withOpacity(0.7),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
             ],

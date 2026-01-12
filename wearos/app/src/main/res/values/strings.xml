@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FitWiz</string>
+
+    <!-- Tiles -->
+    <string name="workout_tile_label">Workout</string>
+    <string name="fasting_tile_label">Fasting</string>
+    <string name="calories_tile_label">Calories</string>
+
+    <!-- Home Screen -->
+    <string name="workout">Workout</string>
+    <string name="food">Food</string>
+    <string name="fasting">Fasting</string>
+    <string name="water">Water</string>
+    <string name="start">Start</string>
+
+    <!-- Workout -->
+    <string name="complete_set">Complete Set</string>
+    <string name="rest">Rest</string>
+    <string name="skip">Skip</string>
+    <string name="done">Done</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
+    <string name="end_workout">End Workout</string>
+
+    <!-- Nutrition -->
+    <string name="log_food">Log Food</string>
+    <string name="voice">Voice</string>
+    <string name="type">Type</string>
+    <string name="quick_add">Quick Add</string>
+    <string name="confirm">Confirm</string>
+    <string name="redo">Redo</string>
+    <string name="log">Log</string>
+
+    <!-- Fasting -->
+    <string name="start_fast">Start Fast</string>
+    <string name="end_fast">End Fast</string>
+    <string name="pause_fast">Pause</string>
+    <string name="elapsed">Elapsed</string>
+    <string name="remaining">Remaining</string>
+
+    <!-- Water -->
+    <string name="cups">cups</string>
+
+    <!-- General -->
+    <string name="loading">Loading...</string>
+    <string name="error">Error</string>
+    <string name="retry">Retry</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="synced">Synced</string>
+    <string name="offline">Offline</string>
+</resources>

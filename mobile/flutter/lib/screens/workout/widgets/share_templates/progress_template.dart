@@ -203,7 +203,7 @@ class ProgressTemplate extends StatelessWidget {
                 label: 'Day Streak',
                 color: AppColors.orange,
               )),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Expanded(child: _buildStatCard(
                 icon: Icons.calendar_month_rounded,
                 value: '${weeklyWorkouts ?? 0}',
@@ -213,7 +213,7 @@ class ProgressTemplate extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         Expanded(
           child: Column(
             children: [
@@ -223,7 +223,7 @@ class ProgressTemplate extends StatelessWidget {
                 label: 'PRs This Month',
                 color: AppColors.success,
               )),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Expanded(child: _buildStatCard(
                 icon: Icons.scale_rounded,
                 value: _formattedTotalVolume,
@@ -244,7 +244,7 @@ class ProgressTemplate extends StatelessWidget {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
@@ -254,31 +254,33 @@ class ProgressTemplate extends StatelessWidget {
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(height: 4),
+          Icon(icon, size: 14, color: color),
+          const SizedBox(height: 1),
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
               value,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 18,
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.5),
-              fontSize: 9,
-              fontWeight: FontWeight.w500,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 7,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
             ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

@@ -13,6 +13,7 @@ import '../../data/repositories/nutrition_repository.dart';
 import '../../data/repositories/nutrition_preferences_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/main_shell.dart';
+import '../../widgets/pill_swipe_navigation.dart';
 import '../../widgets/nutrition/health_metrics_card.dart';
 import '../../widgets/nutrition/food_mood_analytics_card.dart';
 import 'log_meal_sheet.dart';
@@ -35,7 +36,11 @@ class NutritionScreen extends ConsumerStatefulWidget {
 }
 
 class _NutritionScreenState extends ConsumerState<NutritionScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, PillSwipeNavigationMixin {
+  // PillSwipeNavigationMixin: Nutrition is index 2
+  @override
+  int get currentPillIndex => 2;
+
   String? _userId;
   DateTime _selectedDate = DateTime.now();
   late TabController _tabController;
@@ -52,7 +57,23 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     // Collapse nav bar labels on this secondary page
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(navBarLabelsExpandedProvider.notifier).state = false;
+      // Listen for preferences to become available, then check for weekly check-in
+      _setupWeeklyCheckinListener();
     });
+  }
+
+  /// Set up listener to trigger weekly check-in when preferences are loaded
+  void _setupWeeklyCheckinListener() {
+    // Use listen to detect when preferences become available
+    ref.listenManual(nutritionPreferencesProvider, (previous, next) {
+      // Only trigger once: when preferences first become available
+      if (!_hasCheckedWeeklyCheckin &&
+          next.preferences != null &&
+          (previous?.preferences == null || previous!.isLoading)) {
+        _hasCheckedWeeklyCheckin = true;
+        _checkAndShowWeeklyCheckin();
+      }
+    }, fireImmediately: true);
   }
 
   @override
@@ -303,11 +324,12 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Tab Bar
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      body: wrapWithSwipeDetector(
+        child: Column(
+          children: [
+            // Tab Bar
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: elevated,
               borderRadius: BorderRadius.circular(12),
@@ -400,7 +422,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                         ],
                       ),
           ),
-        ],
+          ],
+        ),
       ),
       // FAB removed - using compact meal row and app bar icons instead
     );

@@ -279,8 +279,8 @@ async def generate_structured_insights_node(state: WorkoutInsightsState) -> Dict
 
     llm = ChatGoogleGenerativeAI(
         model=settings.gemini_model,
-        temperature=0.85,  # Higher for more variety
-        max_tokens=1200,  # Increased to prevent truncation of JSON response
+        temperature=0.7,
+        max_tokens=512,  # Reduced - only need 2 short sections now
         google_api_key=settings.gemini_api_key,
     )
 
@@ -288,58 +288,31 @@ async def generate_structured_insights_node(state: WorkoutInsightsState) -> Dict
     exercise_list = [e.get("name", "") for e in exercises[:5] if e.get("name")]
     exercises_str = ", ".join(exercise_list) if exercise_list else "various exercises"
 
-    system_prompt = """You are a knowledgeable fitness coach giving personalized workout insights. Generate JSON.
+    system_prompt = """You are a fitness coach. Generate SHORT workout insights as JSON.
 
 RULES:
-1. Headline: 4-6 words, reference the SPECIFIC workout or key exercise
-2. Each content: 10-15 words. Be SPECIFIC about exercises/muscles mentioned
-3. Avoid generic phrases like "boost your fitness" or "stay consistent"
-4. Reference ACTUAL exercises from this workout when possible
-5. Give practical, specific advice that applies to THIS workout
+1. Headline: 3-5 words max
+2. Each content: 6-10 words max. Be direct.
+3. Only 2 sections total.
 
-Return ONLY valid JSON with 3 sections. Choose section types from this variety:
-- 🎯 Focus: What this workout specifically builds
-- 💪 Key Move: Highlight the most impactful exercise
-- 🔥 Why It Works: Science/benefit behind the workout
-- ⚡ Form Tip: Specific technique for an exercise in this workout
-- 🧠 Mind-Muscle: Connection cue for better engagement
-- ⏱️ Pacing: How to approach rest/intensity
-- 🏆 Challenge: Optional way to push harder
-
+Return ONLY valid JSON:
 {
-  "headline": "4-6 word headline about THIS workout",
+  "headline": "3-5 word headline",
   "sections": [
-    {
-      "icon": "emoji",
-      "title": "Short Title",
-      "content": "10-15 words - specific to this workout",
-      "color": "cyan|purple|orange"
-    }
+    {"icon": "💪", "title": "2-3 words", "content": "6-10 words max", "color": "cyan"},
+    {"icon": "🎯", "title": "2-3 words", "content": "6-10 words max", "color": "purple"}
   ]
 }
 
-GOOD EXAMPLES (specific):
-- "Bench Press builds chest thickness and anterior shoulder strength"
-- "On Rows: squeeze shoulder blades together at peak contraction"
-- "Squats paired with lunges create complete quad development"
+Icons to use: 💪 🎯 🔥 ⚡
+Colors: cyan, purple, orange"""
 
-BAD EXAMPLES (too generic):
-- "Great workout for building strength"
-- "Stay consistent and give your best effort"
-- "Push through and you'll see results" """
+    user_prompt = f"""Workout: {workout_name}
+Focus: {workout_focus}
+Exercises: {exercises_str}
+Duration: {duration} min
 
-    user_prompt = f"""Create 3 personalized insights for this specific workout:
-
-Workout Name: {workout_name}
-Focus Type: {workout_focus}
-Target Muscles: {', '.join(target_muscles[:4]) if target_muscles else 'full body'}
-Exercises Include: {exercises_str}
-Duration: {duration} minutes
-Total Sets: {total_sets}
-User Level: {fitness_level}
-User Goals: {', '.join(user_goals[:2]) if user_goals else 'general fitness'}
-
-Make each insight SPECIFIC to these exercises and muscles. Avoid generic motivational phrases."""
+Generate 2 short insights."""
 
     max_retries = 2
     last_error = None
@@ -407,17 +380,15 @@ Make each insight SPECIFIC to these exercises and muscles. Avoid generic motivat
                     continue  # Retry
                 raise last_error
 
-            # Truncate headline if too long (max 7 words)
-            if len(headline.split()) > 7:
-                headline = " ".join(headline.split()[:7])
-                if not headline.endswith(("!", "?")):
-                    headline += "!"
+            # Truncate headline if too long (max 5 words)
+            if len(headline.split()) > 5:
+                headline = " ".join(headline.split()[:5])
 
-            # Truncate section content if too long (max 20 words)
+            # Truncate section content if too long (max 10 words)
             for section in sections:
                 words = section.get("content", "").split()
-                if len(words) > 20:
-                    section["content"] = " ".join(words[:20]) + "..."
+                if len(words) > 10:
+                    section["content"] = " ".join(words[:10])
 
             logger.info(f"[Generate Node] Generated {len(sections)} sections (attempt {attempt})")
 

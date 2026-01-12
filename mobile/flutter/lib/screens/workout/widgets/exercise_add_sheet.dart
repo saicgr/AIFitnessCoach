@@ -418,7 +418,6 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
         return _ExerciseOptionCard(
           name: name,
           subtitle: subtitle,
-          gifUrl: gifUrl,
           badge: badge,
           badgeColor: badgeColor,
           onTap: () => _addExercise(name),

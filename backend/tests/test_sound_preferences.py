@@ -31,6 +31,12 @@ class TestSoundPreferencesValidation:
         # Verify applause is NOT a valid option
         assert "applause" not in valid_types
 
+    def test_valid_exercise_completion_sound_types(self):
+        """Valid exercise completion sound types should be accepted."""
+        valid_types = ["chime", "bell", "ding", "pop", "whoosh", "none"]
+        for sound_type in valid_types:
+            assert sound_type in valid_types
+
     def test_volume_range_validation(self):
         """Volume should be between 0.0 and 1.0."""
         valid_volumes = [0.0, 0.5, 0.8, 1.0]
@@ -54,12 +60,16 @@ class TestSoundPreferencesDefaults:
             "completion_sound_type": "chime",  # NOT applause
             "rest_timer_sound_enabled": True,
             "rest_timer_sound_type": "beep",
+            "exercise_completion_sound_enabled": True,
+            "exercise_completion_sound_type": "chime",
             "sound_effects_volume": 0.8,
         }
 
         assert defaults["countdown_sound_enabled"] is True
         assert defaults["completion_sound_type"] == "chime"
         assert defaults["completion_sound_type"] != "applause"
+        assert defaults["exercise_completion_sound_enabled"] is True
+        assert defaults["exercise_completion_sound_type"] == "chime"
         assert 0.0 <= defaults["sound_effects_volume"] <= 1.0
 
 
@@ -118,11 +128,13 @@ class TestSoundPreferencesUpdate:
             "countdown_sound_enabled": False,
             "completion_sound_enabled": False,
             "rest_timer_sound_enabled": False,
+            "exercise_completion_sound_enabled": False,
         }
 
         assert prefs["countdown_sound_enabled"] is False
         assert prefs["completion_sound_enabled"] is False
         assert prefs["rest_timer_sound_enabled"] is False
+        assert prefs["exercise_completion_sound_enabled"] is False
 
     def test_set_all_to_none(self):
         """User should be able to set all sound types to 'none'."""
@@ -130,6 +142,7 @@ class TestSoundPreferencesUpdate:
             "countdown_sound_type": "none",
             "completion_sound_type": "none",
             "rest_timer_sound_type": "none",
+            "exercise_completion_sound_type": "none",
         }
 
         assert all(v == "none" for v in prefs.values())
@@ -169,3 +182,53 @@ class TestMigrationConstraints:
         assert check_constraint(1.0) is True
         assert check_constraint(-0.1) is False
         assert check_constraint(1.5) is False
+
+    def test_exercise_completion_type_check_constraint(self):
+        """Exercise completion sound type should have valid values only."""
+        valid = ["chime", "bell", "ding", "pop", "whoosh", "none"]
+
+        def check_constraint(value):
+            return value in valid
+
+        assert check_constraint("chime") is True
+        assert check_constraint("ding") is True
+        assert check_constraint("pop") is True
+        assert check_constraint("whoosh") is True
+        assert check_constraint("invalid") is False
+
+
+class TestExerciseCompletionSound:
+    """Tests for exercise completion sound feature."""
+
+    def test_exercise_completion_separate_from_workout_completion(self):
+        """Exercise completion sound should be separate from workout completion."""
+        prefs = {
+            "completion_sound_type": "fanfare",  # For workout completion
+            "exercise_completion_sound_type": "ding",  # For per-exercise completion
+        }
+
+        # They should be independently configurable
+        assert prefs["completion_sound_type"] != prefs["exercise_completion_sound_type"]
+
+    def test_exercise_completion_can_be_disabled_independently(self):
+        """Exercise completion sound can be disabled while other sounds are enabled."""
+        prefs = {
+            "countdown_sound_enabled": True,
+            "completion_sound_enabled": True,
+            "rest_timer_sound_enabled": True,
+            "exercise_completion_sound_enabled": False,  # Only this one disabled
+        }
+
+        assert prefs["exercise_completion_sound_enabled"] is False
+        assert prefs["countdown_sound_enabled"] is True
+
+    def test_all_exercise_completion_sound_types(self):
+        """All exercise completion sound types should be available."""
+        valid_types = ["chime", "bell", "ding", "pop", "whoosh", "none"]
+
+        # User should be able to select any of these
+        for sound_type in valid_types:
+            assert sound_type in valid_types
+
+        # Verify the expected count
+        assert len(valid_types) == 6

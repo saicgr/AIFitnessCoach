@@ -36,11 +36,13 @@ COOKING CONVERSION ENDPOINTS:
 - POST /api/v1/nutrition/convert-weight - Convert between raw and cooked weight
 """
 from datetime import datetime, timedelta
-from typing import List, Optional, AsyncGenerator
+from typing import List, Optional, AsyncGenerator, Tuple
 import uuid
 import base64
 import json
 import time
+import asyncio
+import boto3
 from fastapi import APIRouter, HTTPException, Query, UploadFile, File, Form, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, validator
@@ -97,6 +99,76 @@ from models.recipe import (
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+
+# ============================================================================
+# S3 Upload Helper for Food Images
+# ============================================================================
+
+def get_s3_client():
+    """Get S3 client with configured credentials."""
+    from core.config import get_settings
+    settings = get_settings()
+    return boto3.client(
+        's3',
+        aws_access_key_id=settings.aws_access_key_id,
+        aws_secret_access_key=settings.aws_secret_access_key,
+        region_name=settings.aws_default_region,
+    )
+
+
+async def upload_food_image_to_s3(
+    file_bytes: bytes,
+    user_id: str,
+    content_type: str = "image/jpeg",
+    source: str = "camera",
+    meal_type: str = "meal",
+) -> Tuple[str, str]:
+    """
+    Upload food image to S3 in parallel with Gemini analysis.
+
+    Args:
+        file_bytes: Raw image bytes
+        user_id: User's UUID
+        content_type: MIME type of the image
+        source: Source of image ("camera" or "barcode")
+        meal_type: Type of meal (breakfast, lunch, dinner, snack)
+
+    Returns:
+        Tuple of (image_url, storage_key)
+
+    Path format: images/{source}/{user_id}/{date_timestamp}/{meal_type}_{uuid}.{ext}
+    Example: images/camera/abc123/2026-01-11_143052/breakfast_a1b2c3d4.jpg
+    """
+    from core.config import get_settings
+    settings = get_settings()
+
+    # Generate unique storage key with organized path
+    date_timestamp = datetime.utcnow().strftime('%Y-%m-%d_%H%M%S')
+    ext = content_type.split('/')[-1] if content_type else 'jpeg'
+    if ext not in ['jpeg', 'jpg', 'png', 'webp', 'gif']:
+        ext = 'jpeg'
+    unique_id = uuid.uuid4().hex[:8]
+    storage_key = f"images/{source}/{user_id}/{date_timestamp}/{meal_type}_{unique_id}.{ext}"
+
+    # Upload to S3 (runs in thread pool to not block event loop)
+    def _upload():
+        s3 = get_s3_client()
+        s3.put_object(
+            Bucket=settings.s3_bucket_name,
+            Key=storage_key,
+            Body=file_bytes,
+            ContentType=content_type,
+        )
+
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, _upload)
+
+    # Generate public URL
+    image_url = f"https://{settings.s3_bucket_name}.s3.{settings.aws_default_region}.amazonaws.com/{storage_key}"
+
+    logger.info(f"Uploaded food image to S3: {storage_key}")
+    return image_url, storage_key
 
 
 # Response models
@@ -585,18 +657,29 @@ async def update_nutrition_targets(user_id: str, request: UpdateNutritionTargets
 async def lookup_barcode(barcode: str):
     """
     Look up a product by barcode using Open Food Facts API.
-    
+
     Returns product information including:
     - Product name and brand
     - Nutritional information (per 100g and per serving)
     - Nutri-Score grade
     - Ingredients and allergens
     """
-    logger.info(f"Looking up barcode: {barcode}")
-    
+    import re
+
+    # Validate barcode format BEFORE lookup
+    cleaned = barcode.strip().replace(" ", "").replace("-", "")
+    if not re.match(r'^\d{8,14}$', cleaned):
+        logger.warning(f"Invalid barcode format rejected: {barcode[:50]}...")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid barcode. Product barcodes must be 8-14 digits."
+        )
+
+    logger.info(f"Looking up barcode: {cleaned}")
+
     try:
         service = get_food_database_service()
-        product = await service.lookup_barcode(barcode)
+        product = await service.lookup_barcode(cleaned)
         
         if not product:
             raise HTTPException(
@@ -993,9 +1076,9 @@ async def log_food_from_image(
     Log food from an image using Gemini Vision.
 
     This endpoint:
-    1. Analyzes the food image with Gemini Vision
-    2. Extracts food items and estimates nutrition
-    3. Creates a food log entry
+    1. Uploads image to S3 and analyzes with Gemini Vision IN PARALLEL (no delay)
+    2. Extracts food items with weight/count fields for portion editing
+    3. Creates a food log entry with image URL
     """
     logger.info(f"Logging food from image for user {user_id}, meal_type={meal_type}")
 
@@ -1007,14 +1090,26 @@ async def log_food_from_image(
         # Determine mime type
         content_type = image.content_type or 'image/jpeg'
 
-        # Analyze image with Gemini
-        logger.info(f"Analyzing image: size={len(image_bytes)} bytes, mime_type={content_type}")
+        # Run Gemini analysis and S3 upload IN PARALLEL (no added delay for user)
+        logger.info(f"Analyzing image + uploading to S3: size={len(image_bytes)} bytes, mime_type={content_type}")
         gemini_service = GeminiService()
-        food_analysis = await gemini_service.analyze_food_image(
-            image_base64=image_base64,
-            mime_type=content_type,
+
+        # Both tasks run concurrently - total time = max(gemini_time, s3_time)
+        food_analysis, (image_url, storage_key) = await asyncio.gather(
+            gemini_service.analyze_food_image(
+                image_base64=image_base64,
+                mime_type=content_type,
+            ),
+            upload_food_image_to_s3(
+                file_bytes=image_bytes,
+                user_id=user_id,
+                content_type=content_type,
+                source="camera",
+                meal_type=meal_type,
+            ),
         )
         logger.info(f"Gemini analysis result: {food_analysis}")
+        logger.info(f"S3 upload complete: {image_url}")
 
         if not food_analysis or not food_analysis.get('food_items'):
             logger.warning(f"No food items identified in image. Analysis result: {food_analysis}")
@@ -1023,7 +1118,7 @@ async def log_food_from_image(
                 detail="Could not identify any food items in the image"
             )
 
-        # Extract data from analysis
+        # Extract data from analysis (includes weight_g, unit, count, weight_per_unit_g)
         food_items = food_analysis.get('food_items', [])
         total_calories = food_analysis.get('total_calories', 0)
         protein_g = food_analysis.get('protein_g', 0.0)
@@ -1031,10 +1126,9 @@ async def log_food_from_image(
         fat_g = food_analysis.get('fat_g', 0.0)
         fiber_g = food_analysis.get('fiber_g', 0.0)
 
-        # Create food log
+        # Create food log with image URL
         db = get_supabase_db()
 
-        # Save to database using positional arguments
         created_log = db.create_food_log(
             user_id=user_id,
             meal_type=meal_type,
@@ -1046,6 +1140,9 @@ async def log_food_from_image(
             fiber_g=fiber_g,
             ai_feedback=food_analysis.get('feedback'),
             health_score=None,
+            image_url=image_url,
+            image_storage_key=storage_key,
+            source_type="image",
         )
 
         food_log_id = created_log.get('id') if created_log else "unknown"
@@ -1596,7 +1693,7 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
 
         try:
             # Step 1: Load user profile and goals
-            yield send_progress(1, 3, "Loading your profile...", "Fetching nutrition goals")
+            yield send_progress(1, 6, "Loading your profile...", "Fetching nutrition goals")
 
             db = get_supabase_db()
 
@@ -1641,10 +1738,8 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                                'gnocchi', 'carbonara', 'bolognese', 'osso buco', 'tiramisu', 'panna cotta']
             is_complex = any(keyword in description_lower for keyword in regional_keywords)
 
-            if is_complex:
-                yield send_progress(2, 3, "Analyzing regional cuisine...", "🌍 Complex dishes take a bit longer")
-            else:
-                yield send_progress(2, 3, "Analyzing your food...", "AI is identifying ingredients")
+            # Step 2: Prepare AI analysis
+            yield send_progress(2, 6, "Preparing AI analysis...", "Building context")
 
             rag_context = None
             if user_goals:
@@ -1658,6 +1753,16 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                 except Exception as e:
                     logger.warning(f"[ANALYZE-STREAM] Could not fetch RAG context: {e}")
 
+            # Step 3: Identify ingredients
+            desc_preview = body.description[:30] + "..." if len(body.description) > 30 else body.description
+            if is_complex:
+                yield send_progress(3, 6, "Analyzing regional cuisine...", f"🌍 {desc_preview}")
+            else:
+                yield send_progress(3, 6, "Identifying ingredients...", f"Analyzing: {desc_preview}")
+
+            # Step 4: AI portion estimation
+            yield send_progress(4, 6, "Calculating portions...", "AI is estimating serving sizes")
+
             gemini_service = GeminiService()
             food_analysis = await gemini_service.parse_food_description(
                 description=body.description,
@@ -1670,8 +1775,11 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                 yield send_error("Could not identify any food items from your description")
                 return
 
-            # Step 3: Calculate nutrition (analysis complete - NO SAVE)
-            yield send_progress(3, 3, "Calculating nutrition...", f"Found {len(food_analysis.get('food_items', []))} items")
+            # Step 5: Fetch nutrition data
+            yield send_progress(5, 6, "Fetching nutrition data...", f"Found {len(food_analysis.get('food_items', []))} items")
+
+            # Step 6: Finalize results
+            yield send_progress(6, 6, "Finalizing results...", "Almost ready!")
 
             food_items = food_analysis.get('food_items', [])
             total_calories = food_analysis.get('total_calories', 0)
@@ -1801,14 +1909,24 @@ async def log_food_from_image_streaming(
 
             image_base64 = base64.b64encode(image_bytes).decode('utf-8')
 
-            # Step 2: Analyze with AI
+            # Step 2: Analyze with AI + Upload to S3 (in parallel)
             yield send_progress(2, 4, "Analyzing your food...", "AI is identifying ingredients")
 
             gemini_service = GeminiService()
-            food_analysis = await gemini_service.analyze_food_image(
-                image_base64=image_base64,
-                mime_type=content_type,
+
+            # Run Gemini analysis and S3 upload concurrently (no added delay)
+            food_analysis, (image_url, storage_key) = await asyncio.gather(
+                gemini_service.analyze_food_image(
+                    image_base64=image_base64,
+                    mime_type=content_type,
+                ),
+                upload_food_image_to_s3(
+                    file_bytes=image_bytes,
+                    user_id=user_id,
+                    content_type=content_type,
+                ),
             )
+            logger.info(f"[STREAM] S3 upload complete: {image_url}")
 
             if not food_analysis or not food_analysis.get('food_items'):
                 yield send_error("Could not identify any food items in the image")
@@ -1858,6 +1976,9 @@ async def log_food_from_image_streaming(
                 fiber_g=fiber_g,
                 ai_feedback=food_analysis.get('feedback'),
                 health_score=None,
+                image_url=image_url,
+                image_storage_key=storage_key,
+                source_type="image",
                 **micronutrients,
             )
 
@@ -5338,4 +5459,654 @@ async def convert_food_weight(request: ConvertWeightRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to convert food weight: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# MACROFACTOR-STYLE ADAPTIVE TDEE ENDPOINTS
+# ============================================================================
+
+from services.adaptive_tdee_service import (
+    get_adaptive_tdee_service,
+    TDEECalculation,
+    WeightLog as ServiceWeightLog,
+    FoodLogSummary,
+)
+from services.metabolic_adaptation_service import (
+    get_metabolic_adaptation_service,
+    TDEEHistoryEntry,
+    MetabolicAdaptationEvent,
+    AdaptationEventType,
+)
+from services.adherence_tracking_service import (
+    get_adherence_tracking_service,
+    NutritionTargets as ServiceNutritionTargets,
+    NutritionActuals,
+    DailyAdherence,
+    WeeklyAdherenceSummary,
+    SustainabilityScore,
+)
+
+
+class DetailedTDEEResponse(BaseModel):
+    """Response model for detailed TDEE with confidence intervals."""
+    tdee: int
+    confidence_low: int
+    confidence_high: int
+    uncertainty_display: str  # e.g., "±150"
+    uncertainty_calories: int
+    data_quality_score: float
+    weight_change_kg: float
+    avg_daily_intake: int
+    start_weight_kg: float
+    end_weight_kg: float
+    days_analyzed: int
+    food_logs_count: int
+    weight_logs_count: int
+    weight_trend: dict
+    metabolic_adaptation: Optional[dict] = None
+
+
+class AdherenceSummaryResponse(BaseModel):
+    """Response model for adherence summary."""
+    weekly_adherence: List[dict]
+    average_adherence: float
+    sustainability_score: float
+    sustainability_rating: str
+    recommendation: str
+    weeks_analyzed: int
+
+
+class RecommendationOption(BaseModel):
+    """Single recommendation option."""
+    option_type: str  # 'aggressive', 'moderate', 'conservative', 'maintenance'
+    calories: int
+    protein_g: int
+    carbs_g: int
+    fat_g: int
+    expected_weekly_change_kg: float
+    sustainability_rating: str
+    description: str
+    is_recommended: bool = False
+
+
+class RecommendationOptionsResponse(BaseModel):
+    """Response model for multiple recommendation options."""
+    current_tdee: int
+    current_goal: str
+    adherence_score: float
+    has_adaptation: bool
+    adaptation_details: Optional[dict] = None
+    options: List[RecommendationOption]
+    recommended_option: str
+
+
+class SelectRecommendationRequest(BaseModel):
+    """Request to select a recommendation option."""
+    option_type: str
+
+
+@router.get("/tdee/{user_id}/detailed", response_model=DetailedTDEEResponse)
+async def get_detailed_tdee(user_id: str, days: int = Query(default=14, ge=7, le=30)):
+    """
+    Get TDEE with confidence intervals, weight trend, and metabolic adaptation status.
+
+    This endpoint provides MacroFactor-style detailed TDEE calculation:
+    - EMA-smoothed weight trends
+    - Confidence intervals (e.g., "2,150 ±120 cal")
+    - Metabolic adaptation detection
+    - Data quality scoring
+    """
+    logger.info(f"Getting detailed TDEE for user {user_id} over {days} days")
+
+    try:
+        db = get_supabase_db()
+        tdee_service = get_adaptive_tdee_service()
+        adaptation_service = get_metabolic_adaptation_service()
+
+        # Get food logs for the period
+        end_date = datetime.utcnow().date()
+        start_date = end_date - timedelta(days=days)
+
+        food_logs_result = db.client.table("food_logs")\
+            .select("logged_at, total_calories, total_macros")\
+            .eq("user_id", user_id)\
+            .gte("logged_at", start_date.isoformat())\
+            .lte("logged_at", end_date.isoformat())\
+            .execute()
+
+        # Aggregate food logs by day
+        daily_calories = {}
+        for log in food_logs_result.data or []:
+            log_date = datetime.fromisoformat(str(log["logged_at"]).replace("Z", "+00:00")).date()
+            if log_date not in daily_calories:
+                daily_calories[log_date] = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}
+            daily_calories[log_date]["calories"] += log.get("total_calories", 0) or 0
+            macros = log.get("total_macros") or {}
+            daily_calories[log_date]["protein"] += macros.get("protein_g", 0) or 0
+            daily_calories[log_date]["carbs"] += macros.get("carbs_g", 0) or 0
+            daily_calories[log_date]["fat"] += macros.get("fat_g", 0) or 0
+
+        food_logs = [
+            FoodLogSummary(
+                date=d,
+                total_calories=int(data["calories"]),
+                protein_g=data["protein"],
+                carbs_g=data["carbs"],
+                fat_g=data["fat"],
+            )
+            for d, data in daily_calories.items()
+        ]
+
+        # Get weight logs
+        weight_logs_result = db.client.table("weight_logs")\
+            .select("id, user_id, weight_kg, logged_at")\
+            .eq("user_id", user_id)\
+            .gte("logged_at", start_date.isoformat())\
+            .order("logged_at")\
+            .execute()
+
+        weight_logs = [
+            ServiceWeightLog(
+                id=log["id"],
+                user_id=log["user_id"],
+                weight_kg=float(log["weight_kg"]),
+                logged_at=datetime.fromisoformat(str(log["logged_at"]).replace("Z", "+00:00")),
+            )
+            for log in weight_logs_result.data or []
+        ]
+
+        # Calculate TDEE with confidence intervals
+        calculation = tdee_service.calculate_tdee_with_confidence(food_logs, weight_logs, days)
+
+        if not calculation:
+            raise HTTPException(
+                status_code=400,
+                detail="Insufficient data for TDEE calculation. Need at least 5 food logs and 2 weight entries."
+            )
+
+        # Get weight trend
+        trend = tdee_service.get_weight_trend(weight_logs)
+
+        # Check for metabolic adaptation
+        # Get historical TDEE calculations
+        history_result = db.client.table("adaptive_nutrition_calculations")\
+            .select("id, user_id, calculated_at, calculated_tdee, weight_change_kg, avg_daily_intake, data_quality_score")\
+            .eq("user_id", user_id)\
+            .order("calculated_at", desc=True)\
+            .limit(8)\
+            .execute()
+
+        tdee_history = [
+            TDEEHistoryEntry(
+                id=h["id"],
+                user_id=h["user_id"],
+                calculated_at=datetime.fromisoformat(str(h["calculated_at"]).replace("Z", "+00:00")),
+                calculated_tdee=h.get("calculated_tdee", 0),
+                weight_change_kg=float(h.get("weight_change_kg", 0) or 0),
+                avg_daily_intake=h.get("avg_daily_intake", 0),
+                data_quality_score=float(h.get("data_quality_score", 0) or 0),
+            )
+            for h in history_result.data or []
+        ]
+
+        # Get user's current goal
+        prefs_result = db.client.table("nutrition_preferences")\
+            .select("nutrition_goal, target_calories")\
+            .eq("user_id", user_id)\
+            .maybe_single()\
+            .execute()
+
+        current_goal = prefs_result.data.get("nutrition_goal", "maintain") if prefs_result.data else "maintain"
+        current_deficit = 500  # Default deficit
+
+        if prefs_result.data and prefs_result.data.get("target_calories"):
+            current_deficit = calculation.tdee - prefs_result.data.get("target_calories", calculation.tdee)
+
+        # Detect metabolic adaptation
+        adaptation = adaptation_service.detect_metabolic_adaptation(
+            tdee_history, current_goal, abs(current_deficit)
+        )
+
+        # Store this calculation in history
+        try:
+            db.client.table("tdee_calculation_history").insert({
+                "user_id": user_id,
+                "period_start": start_date.isoformat(),
+                "period_end": end_date.isoformat(),
+                "days_analyzed": calculation.days_analyzed,
+                "food_logs_count": calculation.food_logs_count,
+                "weight_logs_count": calculation.weight_logs_count,
+                "start_weight_kg": calculation.start_weight_kg,
+                "end_weight_kg": calculation.end_weight_kg,
+                "weight_change_kg": calculation.weight_change_kg,
+                "avg_daily_intake": calculation.avg_daily_intake,
+                "calculated_tdee": calculation.tdee,
+                "confidence_low": calculation.confidence_low,
+                "confidence_high": calculation.confidence_high,
+                "uncertainty_calories": calculation.uncertainty_calories,
+                "data_quality_score": calculation.data_quality_score,
+            }).execute()
+        except Exception as e:
+            logger.warning(f"Failed to store TDEE history: {e}")
+
+        return DetailedTDEEResponse(
+            tdee=calculation.tdee,
+            confidence_low=calculation.confidence_low,
+            confidence_high=calculation.confidence_high,
+            uncertainty_display=f"±{calculation.uncertainty_calories}",
+            uncertainty_calories=calculation.uncertainty_calories,
+            data_quality_score=calculation.data_quality_score,
+            weight_change_kg=calculation.weight_change_kg,
+            avg_daily_intake=calculation.avg_daily_intake,
+            start_weight_kg=calculation.start_weight_kg,
+            end_weight_kg=calculation.end_weight_kg,
+            days_analyzed=calculation.days_analyzed,
+            food_logs_count=calculation.food_logs_count,
+            weight_logs_count=calculation.weight_logs_count,
+            weight_trend={
+                "smoothed_weight_kg": trend.smoothed_weight if trend else None,
+                "raw_weight_kg": trend.raw_weight if trend else None,
+                "direction": trend.trend_direction if trend else "stable",
+                "weekly_rate_kg": trend.weekly_rate_kg if trend else 0,
+                "confidence": trend.confidence if trend else "low",
+            },
+            metabolic_adaptation=adaptation.to_dict() if adaptation else None,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get detailed TDEE: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/adherence/{user_id}/summary", response_model=AdherenceSummaryResponse)
+async def get_adherence_summary(user_id: str, weeks: int = Query(default=4, ge=1, le=12)):
+    """
+    Get adherence summary with sustainability score.
+
+    Returns:
+    - Weekly adherence breakdown
+    - Overall sustainability rating (high/medium/low)
+    - Recommendations based on adherence patterns
+    """
+    logger.info(f"Getting adherence summary for user {user_id} over {weeks} weeks")
+
+    try:
+        db = get_supabase_db()
+        adherence_service = get_adherence_tracking_service()
+
+        # Get user's nutrition targets
+        prefs_result = db.client.table("nutrition_preferences")\
+            .select("target_calories, target_protein_g, target_carbs_g, target_fat_g, nutrition_goal")\
+            .eq("user_id", user_id)\
+            .maybe_single()\
+            .execute()
+
+        if not prefs_result.data:
+            raise HTTPException(status_code=404, detail="Nutrition preferences not found")
+
+        prefs = prefs_result.data
+        targets = ServiceNutritionTargets(
+            calories=prefs.get("target_calories", 2000),
+            protein_g=prefs.get("target_protein_g", 150),
+            carbs_g=prefs.get("target_carbs_g", 200),
+            fat_g=prefs.get("target_fat_g", 65),
+        )
+
+        # Get daily nutrition summaries for the period
+        end_date = datetime.utcnow().date()
+        start_date = end_date - timedelta(weeks=weeks * 7)
+
+        # Get food logs aggregated by day
+        food_logs_result = db.client.table("food_logs")\
+            .select("logged_at, total_calories, total_macros")\
+            .eq("user_id", user_id)\
+            .gte("logged_at", start_date.isoformat())\
+            .lte("logged_at", end_date.isoformat())\
+            .execute()
+
+        # Aggregate by day
+        daily_totals = {}
+        for log in food_logs_result.data or []:
+            log_date = datetime.fromisoformat(str(log["logged_at"]).replace("Z", "+00:00")).date()
+            if log_date not in daily_totals:
+                daily_totals[log_date] = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0, "meals": 0}
+            daily_totals[log_date]["calories"] += log.get("total_calories", 0) or 0
+            macros = log.get("total_macros") or {}
+            daily_totals[log_date]["protein"] += macros.get("protein_g", 0) or 0
+            daily_totals[log_date]["carbs"] += macros.get("carbs_g", 0) or 0
+            daily_totals[log_date]["fat"] += macros.get("fat_g", 0) or 0
+            daily_totals[log_date]["meals"] += 1
+
+        # Calculate daily adherence
+        daily_adherences = []
+        for log_date, totals in daily_totals.items():
+            actuals = NutritionActuals(
+                date=log_date,
+                calories=int(totals["calories"]),
+                protein_g=totals["protein"],
+                carbs_g=totals["carbs"],
+                fat_g=totals["fat"],
+                meals_logged=totals["meals"],
+            )
+            adherence = adherence_service.calculate_daily_adherence(targets, actuals)
+            daily_adherences.append(adherence)
+
+        # Group by week and calculate summaries
+        weekly_summaries = []
+        current_week_start = start_date - timedelta(days=start_date.weekday())  # Monday
+
+        while current_week_start <= end_date:
+            week_end = current_week_start + timedelta(days=6)
+            week_adherences = [
+                a for a in daily_adherences
+                if current_week_start <= a.date <= week_end
+            ]
+            summary = adherence_service.calculate_weekly_summary(week_adherences, current_week_start)
+            weekly_summaries.append(summary)
+            current_week_start += timedelta(days=7)
+
+        # Calculate sustainability score
+        sustainability = adherence_service.calculate_sustainability_score(weekly_summaries)
+
+        return AdherenceSummaryResponse(
+            weekly_adherence=[s.to_dict() for s in weekly_summaries[-weeks:]],
+            average_adherence=sustainability.avg_adherence,
+            sustainability_score=sustainability.score,
+            sustainability_rating=sustainability.rating.value,
+            recommendation=sustainability.recommendation,
+            weeks_analyzed=len(weekly_summaries),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get adherence summary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/recommendations/{user_id}/options", response_model=RecommendationOptionsResponse)
+async def get_recommendation_options(user_id: str):
+    """
+    Get multiple recommendation options for user to choose from.
+
+    MacroFactor-style multi-option recommendations:
+    - Aggressive (if adherence >80% and no adaptation)
+    - Moderate (always shown, recommended)
+    - Conservative (if adherence <70% or adaptation detected)
+    """
+    logger.info(f"Getting recommendation options for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+        adherence_service = get_adherence_tracking_service()
+        adaptation_service = get_metabolic_adaptation_service()
+
+        # Get latest adaptive TDEE
+        tdee_result = db.client.table("adaptive_nutrition_calculations")\
+            .select("calculated_tdee, data_quality_score")\
+            .eq("user_id", user_id)\
+            .order("calculated_at", desc=True)\
+            .limit(1)\
+            .maybe_single()\
+            .execute()
+
+        if not tdee_result.data or not tdee_result.data.get("calculated_tdee"):
+            # Fall back to nutrition preferences TDEE
+            prefs = db.client.table("nutrition_preferences")\
+                .select("calculated_tdee, nutrition_goal")\
+                .eq("user_id", user_id)\
+                .maybe_single()\
+                .execute()
+
+            if not prefs.data or not prefs.data.get("calculated_tdee"):
+                raise HTTPException(
+                    status_code=400,
+                    detail="No TDEE available. Please log food and weight data first."
+                )
+
+            current_tdee = prefs.data.get("calculated_tdee", 2000)
+            current_goal = prefs.data.get("nutrition_goal", "maintain")
+        else:
+            current_tdee = tdee_result.data.get("calculated_tdee", 2000)
+            # Get goal from preferences
+            prefs = db.client.table("nutrition_preferences")\
+                .select("nutrition_goal")\
+                .eq("user_id", user_id)\
+                .maybe_single()\
+                .execute()
+            current_goal = prefs.data.get("nutrition_goal", "maintain") if prefs.data else "maintain"
+
+        # Get adherence summary
+        adherence_response = await get_adherence_summary(user_id, weeks=4)
+        adherence_score = adherence_response.sustainability_score
+
+        # Get TDEE history for adaptation detection
+        history_result = db.client.table("adaptive_nutrition_calculations")\
+            .select("id, user_id, calculated_at, calculated_tdee, weight_change_kg, avg_daily_intake, data_quality_score")\
+            .eq("user_id", user_id)\
+            .order("calculated_at", desc=True)\
+            .limit(8)\
+            .execute()
+
+        tdee_history = [
+            TDEEHistoryEntry(
+                id=h["id"],
+                user_id=h["user_id"],
+                calculated_at=datetime.fromisoformat(str(h["calculated_at"]).replace("Z", "+00:00")),
+                calculated_tdee=h.get("calculated_tdee", 0),
+                weight_change_kg=float(h.get("weight_change_kg", 0) or 0),
+                avg_daily_intake=h.get("avg_daily_intake", 0),
+                data_quality_score=float(h.get("data_quality_score", 0) or 0),
+            )
+            for h in history_result.data or []
+        ]
+
+        # Detect metabolic adaptation
+        adaptation = adaptation_service.detect_metabolic_adaptation(tdee_history, current_goal, 500)
+
+        # Generate recommendation options
+        options = _generate_recommendation_options(
+            current_tdee=current_tdee,
+            goal=current_goal,
+            adherence_score=adherence_score,
+            has_adaptation=adaptation is not None,
+        )
+
+        return RecommendationOptionsResponse(
+            current_tdee=current_tdee,
+            current_goal=current_goal,
+            adherence_score=adherence_score,
+            has_adaptation=adaptation is not None,
+            adaptation_details=adaptation.to_dict() if adaptation else None,
+            options=options,
+            recommended_option=next((o.option_type for o in options if o.is_recommended), "moderate"),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get recommendation options: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def _generate_recommendation_options(
+    current_tdee: int,
+    goal: str,
+    adherence_score: float,
+    has_adaptation: bool,
+) -> List[RecommendationOption]:
+    """Generate 2-3 recommendation options based on user context."""
+    options = []
+
+    if goal in ["lose_fat", "lose_weight"]:
+        # Aggressive option (only if high adherence and no adaptation)
+        if adherence_score >= 0.8 and not has_adaptation:
+            aggressive_cals = current_tdee - 750
+            options.append(RecommendationOption(
+                option_type="aggressive",
+                calories=aggressive_cals,
+                protein_g=int((aggressive_cals * 0.35) / 4),
+                carbs_g=int((aggressive_cals * 0.35) / 4),
+                fat_g=int((aggressive_cals * 0.30) / 9),
+                expected_weekly_change_kg=-0.68,
+                sustainability_rating="low",
+                description="Faster results, requires strict adherence. Best for short-term pushes.",
+                is_recommended=False,
+            ))
+
+        # Moderate option (always shown, usually recommended)
+        moderate_cals = current_tdee - 500
+        options.append(RecommendationOption(
+            option_type="moderate",
+            calories=moderate_cals,
+            protein_g=int((moderate_cals * 0.30) / 4),
+            carbs_g=int((moderate_cals * 0.40) / 4),
+            fat_g=int((moderate_cals * 0.30) / 9),
+            expected_weekly_change_kg=-0.45,
+            sustainability_rating="medium",
+            description="Balanced approach. Steady progress without extreme restriction.",
+            is_recommended=not has_adaptation and adherence_score >= 0.6,
+        ))
+
+        # Conservative option (for low adherence or adaptation)
+        if adherence_score < 0.7 or has_adaptation:
+            conservative_cals = current_tdee - 250
+            options.append(RecommendationOption(
+                option_type="conservative",
+                calories=conservative_cals,
+                protein_g=int((conservative_cals * 0.30) / 4),
+                carbs_g=int((conservative_cals * 0.40) / 4),
+                fat_g=int((conservative_cals * 0.30) / 9),
+                expected_weekly_change_kg=-0.23,
+                sustainability_rating="high",
+                description="Slower but more sustainable. Better for long-term success.",
+                is_recommended=has_adaptation or adherence_score < 0.6,
+            ))
+
+    elif goal == "build_muscle":
+        # Lean bulk
+        lean_cals = current_tdee + 250
+        options.append(RecommendationOption(
+            option_type="lean_bulk",
+            calories=lean_cals,
+            protein_g=int((lean_cals * 0.30) / 4),
+            carbs_g=int((lean_cals * 0.45) / 4),
+            fat_g=int((lean_cals * 0.25) / 9),
+            expected_weekly_change_kg=0.20,
+            sustainability_rating="high",
+            description="Minimize fat gain while building muscle. Slow and steady.",
+            is_recommended=True,
+        ))
+
+        # Standard bulk
+        standard_cals = current_tdee + 400
+        options.append(RecommendationOption(
+            option_type="standard_bulk",
+            calories=standard_cals,
+            protein_g=int((standard_cals * 0.28) / 4),
+            carbs_g=int((standard_cals * 0.47) / 4),
+            fat_g=int((standard_cals * 0.25) / 9),
+            expected_weekly_change_kg=0.35,
+            sustainability_rating="medium",
+            description="Faster muscle gain, some fat gain expected.",
+            is_recommended=False,
+        ))
+
+    else:  # maintain
+        options.append(RecommendationOption(
+            option_type="maintenance",
+            calories=current_tdee,
+            protein_g=int((current_tdee * 0.25) / 4),
+            carbs_g=int((current_tdee * 0.45) / 4),
+            fat_g=int((current_tdee * 0.30) / 9),
+            expected_weekly_change_kg=0.0,
+            sustainability_rating="high",
+            description="Maintain current weight and body composition.",
+            is_recommended=True,
+        ))
+
+    # Ensure at least one option is recommended
+    if not any(o.is_recommended for o in options) and options:
+        options[0].is_recommended = True
+
+    return options
+
+
+@router.post("/recommendations/{user_id}/select")
+async def select_recommendation(user_id: str, request: SelectRecommendationRequest):
+    """
+    User selects a recommendation option to apply.
+
+    This updates the user's nutrition targets to match the selected option.
+    """
+    logger.info(f"User {user_id} selecting recommendation: {request.option_type}")
+
+    try:
+        # Get available options
+        options_response = await get_recommendation_options(user_id)
+
+        # Find selected option
+        selected = None
+        for opt in options_response.options:
+            if opt.option_type == request.option_type:
+                selected = opt
+                break
+
+        if not selected:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Option '{request.option_type}' not found. Available options: {[o.option_type for o in options_response.options]}"
+            )
+
+        db = get_supabase_db()
+
+        # Update user's nutrition targets
+        db.client.table("nutrition_preferences")\
+            .update({
+                "target_calories": selected.calories,
+                "target_protein_g": selected.protein_g,
+                "target_carbs_g": selected.carbs_g,
+                "target_fat_g": selected.fat_g,
+                "last_recalculated_at": datetime.utcnow().isoformat(),
+            })\
+            .eq("user_id", user_id)\
+            .execute()
+
+        # Log the decision for analytics
+        await log_user_activity(
+            user_id=user_id,
+            action="recommendation_selected",
+            endpoint="/api/v1/nutrition/recommendations/select",
+            message=f"Selected {request.option_type} plan: {selected.calories} cal",
+            metadata={
+                "option_type": request.option_type,
+                "calories": selected.calories,
+                "protein_g": selected.protein_g,
+                "carbs_g": selected.carbs_g,
+                "fat_g": selected.fat_g,
+                "expected_weekly_change_kg": selected.expected_weekly_change_kg,
+            },
+            status_code=200
+        )
+
+        return {
+            "success": True,
+            "message": f"Applied {request.option_type} plan",
+            "applied": {
+                "option_type": selected.option_type,
+                "calories": selected.calories,
+                "protein_g": selected.protein_g,
+                "carbs_g": selected.carbs_g,
+                "fat_g": selected.fat_g,
+                "description": selected.description,
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to select recommendation: {e}")
         raise HTTPException(status_code=500, detail=str(e))

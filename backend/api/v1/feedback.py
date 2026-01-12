@@ -48,7 +48,10 @@ async def submit_workout_feedback(workout_id: str, feedback: WorkoutFeedbackCrea
 
     Also stores exercise ratings in ChromaDB for AI workout adaptation.
     """
-    logger.info(f"Submitting workout feedback: workout_id={workout_id}, rating={feedback.overall_rating}")
+    logger.info(f"📝 [Feedback] Received feedback submission for workout={workout_id}")
+    logger.info(f"📝 [Feedback] User: {feedback.user_id}")
+    logger.info(f"📝 [Feedback] Overall rating: {feedback.overall_rating}/5, difficulty: {feedback.overall_difficulty}")
+    logger.info(f"📝 [Feedback] Exercise feedback count: {len(feedback.exercise_feedback or [])}")
 
     try:
         db = get_supabase_db()
@@ -81,14 +84,17 @@ async def submit_workout_feedback(workout_id: str, feedback: WorkoutFeedbackCrea
                 workout_feedback_record
             ).eq("id", existing.data[0]["id"]).execute()
             workout_feedback_id = existing.data[0]["id"]
+            logger.info(f"✅ [Feedback] Updated existing workout_feedback record: {workout_feedback_id}")
         else:
             # Insert new feedback
             result = db.client.table("workout_feedback").insert(
                 workout_feedback_record
             ).execute()
             if not result.data:
+                logger.error(f"❌ [Feedback] Failed to insert workout_feedback")
                 raise HTTPException(status_code=500, detail="Failed to create workout feedback")
             workout_feedback_id = result.data[0]["id"]
+            logger.info(f"✅ [Feedback] Inserted new workout_feedback record: {workout_feedback_id}")
 
         # Process individual exercise feedback if provided
         exercise_feedback_list = []
@@ -119,11 +125,13 @@ async def submit_workout_feedback(workout_id: str, feedback: WorkoutFeedbackCrea
                     ex_result = db.client.table("exercise_feedback").update(
                         ex_record
                     ).eq("id", existing_ex.data[0]["id"]).execute()
+                    logger.debug(f"✅ [Feedback] Updated exercise_feedback for {ex_feedback.exercise_name}")
                 else:
                     # Insert new
                     ex_result = db.client.table("exercise_feedback").insert(
                         ex_record
                     ).execute()
+                    logger.debug(f"✅ [Feedback] Inserted exercise_feedback for {ex_feedback.exercise_name}")
 
                 if ex_result.data:
                     exercise_feedback_list.append(ExerciseFeedback(
@@ -440,12 +448,28 @@ async def get_exercise_feedback_stats(exercise_name: str, user_id: str = None):
 # AI Coach Feedback Endpoints (RAG-powered)
 # ============================================
 
+class SetDetail(BaseModel):
+    """Individual set detail for an exercise."""
+    reps: int
+    weight_kg: float
+
+
 class ExercisePerformance(BaseModel):
     """Exercise performance data for a workout session."""
     name: str
     sets: int
     reps: int
     weight_kg: float
+    time_seconds: int = 0  # Time spent on this exercise
+    set_details: List[SetDetail] = []  # Individual set data
+
+
+class PlannedExercise(BaseModel):
+    """Planned exercise from workout definition (for skip detection)."""
+    name: str
+    target_sets: int = 3
+    target_reps: int = 10
+    target_weight_kg: float = 0.0
 
 
 class AICoachFeedbackRequest(BaseModel):
@@ -456,6 +480,7 @@ class AICoachFeedbackRequest(BaseModel):
     workout_name: str
     workout_type: str = "strength"
     exercises: List[ExercisePerformance]
+    planned_exercises: List[PlannedExercise] = []  # For skip detection
     total_time_seconds: int
     total_rest_seconds: int = 0
     avg_rest_seconds: float = 0.0
@@ -514,21 +539,36 @@ async def generate_ai_coach_feedback(request: AICoachFeedbackRequest):
     - Rest pattern analysis
     - Motivational note
     """
-    logger.info(f"Generating AI Coach feedback for user {request.user_id}, workout {request.workout_name}")
+    logger.info(f"📝 [AI Coach] Generating feedback for user {request.user_id}, workout {request.workout_name}")
+    logger.info(f"📝 [AI Coach] Completed exercises: {len(request.exercises)}")
+    logger.info(f"📝 [AI Coach] Planned exercises: {len(request.planned_exercises)}")
 
     try:
         gemini_service = get_gemini_service()
         rag_service = get_feedback_rag_service()
 
-        # Convert exercises to dict format
+        # Convert exercises to dict format with enhanced data
         exercises_data = [
             {
                 "name": ex.name,
                 "sets": ex.sets,
                 "reps": ex.reps,
                 "weight_kg": ex.weight_kg,
+                "time_seconds": ex.time_seconds,
+                "set_details": [{"reps": s.reps, "weight_kg": s.weight_kg} for s in ex.set_details],
             }
             for ex in request.exercises
+        ]
+
+        # Convert planned exercises to dict format
+        planned_exercises_data = [
+            {
+                "name": ex.name,
+                "target_sets": ex.target_sets,
+                "target_reps": ex.target_reps,
+                "target_weight_kg": ex.target_weight_kg,
+            }
+            for ex in request.planned_exercises
         ]
 
         # Prepare current session data
@@ -538,6 +578,7 @@ async def generate_ai_coach_feedback(request: AICoachFeedbackRequest):
             "workout_name": request.workout_name,
             "workout_type": request.workout_type,
             "exercises": exercises_data,
+            "planned_exercises": planned_exercises_data,  # For skip detection
             "total_time_seconds": request.total_time_seconds,
             "total_rest_seconds": request.total_rest_seconds,
             "avg_rest_seconds": request.avg_rest_seconds,
@@ -913,4 +954,171 @@ async def respond_to_progression(request: ProgressionResponseRequest):
             },
             status_code=500
         )
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================
+# Challenge Exercise Feedback Endpoints
+# ============================================
+
+class ChallengeExerciseFeedbackRequest(BaseModel):
+    """Request body for challenge exercise feedback."""
+    user_id: str
+    exercise_name: str
+    difficulty_felt: str  # "too_easy", "just_right", "too_hard"
+    completed: bool
+    workout_id: Optional[str] = None
+    performance_data: Optional[dict] = None  # {sets_completed, total_reps, avg_weight}
+
+
+class ChallengeExerciseFeedbackResponse(BaseModel):
+    """Response from challenge exercise feedback submission."""
+    success: bool
+    exercise_name: str
+    consecutive_successes: int
+    ready_for_main_workout: bool
+    message: str
+
+
+@router.post("/challenge-exercise", response_model=ChallengeExerciseFeedbackResponse)
+async def submit_challenge_exercise_feedback(request: ChallengeExerciseFeedbackRequest):
+    """
+    Submit feedback for a challenge exercise completion.
+
+    This endpoint tracks beginner users' progress with challenge exercises.
+    When they complete challenges successfully 2+ times consecutively,
+    the exercise becomes ready to be included in their main workouts.
+
+    Flow:
+    1. User completes (or skips) a challenge exercise during workout
+    2. Frontend calls this endpoint with completion status and difficulty felt
+    3. Backend updates user_challenge_mastery table
+    4. If 2+ consecutive successes with "just_right" or "too_easy" feedback,
+       the exercise is marked as ready_for_main_workout
+    5. Future workout generation can include this exercise in main workout
+
+    Args:
+        request: Challenge exercise feedback data
+
+    Returns:
+        Updated mastery status including whether exercise is ready for main workout
+    """
+    logger.info(
+        f"Recording challenge exercise feedback: {request.exercise_name} "
+        f"for user {request.user_id}, completed={request.completed}, "
+        f"difficulty={request.difficulty_felt}"
+    )
+
+    try:
+        from services.feedback_analysis_service import record_challenge_exercise_completion
+
+        result = await record_challenge_exercise_completion(
+            user_id=request.user_id,
+            exercise_name=request.exercise_name,
+            difficulty_felt=request.difficulty_felt,
+            completed=request.completed,
+            workout_id=request.workout_id,
+            performance_data=request.performance_data,
+        )
+
+        if not result.get("was_updated", False):
+            error_msg = result.get("error", "Unknown error")
+            logger.warning(f"Failed to update challenge mastery: {error_msg}")
+
+        # Build response message
+        if result.get("ready_for_main_workout", False):
+            message = f"Great progress! {request.exercise_name} can now appear in your regular workouts."
+        elif request.completed and request.difficulty_felt != "too_hard":
+            remaining = 2 - result.get("consecutive_successes", 0)
+            if remaining > 0:
+                message = f"Keep it up! {remaining} more successful attempt{'s' if remaining > 1 else ''} to master this exercise."
+            else:
+                message = "You're mastering this challenge!"
+        elif not request.completed:
+            message = "No worries! Challenge exercises are optional. Try again next time!"
+        else:
+            message = "Thanks for the feedback! We'll adjust future challenges accordingly."
+
+        # Log activity
+        await log_user_activity(
+            user_id=request.user_id,
+            action="challenge_exercise_feedback",
+            endpoint="/api/v1/feedback/challenge-exercise",
+            message=f"Challenge: {request.exercise_name} - {'completed' if request.completed else 'skipped'}",
+            metadata={
+                "exercise_name": request.exercise_name,
+                "difficulty_felt": request.difficulty_felt,
+                "completed": request.completed,
+                "consecutive_successes": result.get("consecutive_successes", 0),
+                "ready_for_main": result.get("ready_for_main_workout", False),
+                "performance_data": request.performance_data,
+            },
+            status_code=200
+        )
+
+        return ChallengeExerciseFeedbackResponse(
+            success=True,
+            exercise_name=request.exercise_name,
+            consecutive_successes=result.get("consecutive_successes", 0),
+            ready_for_main_workout=result.get("ready_for_main_workout", False),
+            message=message,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to submit challenge exercise feedback: {e}")
+        await log_user_error(
+            user_id=request.user_id,
+            action="challenge_exercise_feedback",
+            error=e,
+            endpoint="/api/v1/feedback/challenge-exercise",
+            metadata={"exercise_name": request.exercise_name},
+            status_code=500
+        )
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/challenge-mastery/{user_id}")
+async def get_user_challenge_mastery(user_id: str):
+    """
+    Get all challenge exercise mastery data for a user.
+
+    Returns which challenge exercises the user has attempted,
+    their success rates, and which ones are ready for main workouts.
+    """
+    logger.info(f"Getting challenge mastery for user {user_id}")
+
+    try:
+        from services.feedback_analysis_service import get_challenges_ready_for_main_workout
+
+        ready_exercises = await get_challenges_ready_for_main_workout(user_id)
+
+        # Also get all challenge mastery records
+        db = get_supabase_db()
+        all_mastery = db.client.table("user_challenge_mastery").select("*").eq(
+            "user_id", user_id
+        ).order("last_attempted_at", desc=True).execute()
+
+        mastery_list = []
+        for m in all_mastery.data or []:
+            mastery_list.append({
+                "exercise_name": m.get("exercise_name"),
+                "total_attempts": m.get("total_attempts", 0),
+                "successful_completions": m.get("successful_completions", 0),
+                "consecutive_successes": m.get("consecutive_successes", 0),
+                "last_difficulty_felt": m.get("last_difficulty_felt"),
+                "ready_for_main_workout": m.get("ready_for_main_workout", False),
+                "first_attempted_at": m.get("first_attempted_at"),
+                "last_attempted_at": m.get("last_attempted_at"),
+            })
+
+        return {
+            "user_id": user_id,
+            "total_challenges_attempted": len(mastery_list),
+            "ready_for_main_workout_count": len(ready_exercises),
+            "ready_exercises": [e["exercise_name"] for e in ready_exercises],
+            "mastery_records": mastery_list,
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get challenge mastery: {e}")
         raise HTTPException(status_code=500, detail=str(e))

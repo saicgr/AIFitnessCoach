@@ -576,11 +576,35 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
   }
 }
 
-/// Card shown when generating workouts
-class GeneratingHeroCard extends StatelessWidget {
+/// Card shown when generating/loading workouts
+class GeneratingHeroCard extends StatefulWidget {
   final String? message;
+  final String? subtitle;
 
-  const GeneratingHeroCard({super.key, this.message});
+  const GeneratingHeroCard({super.key, this.message, this.subtitle});
+
+  @override
+  State<GeneratingHeroCard> createState() => _GeneratingHeroCardState();
+}
+
+class _GeneratingHeroCardState extends State<GeneratingHeroCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _shimmerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _shimmerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _shimmerController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -592,7 +616,8 @@ class GeneratingHeroCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Container(
-        padding: const EdgeInsets.all(32),
+        constraints: const BoxConstraints(minHeight: 180),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(20),
@@ -604,20 +629,50 @@ class GeneratingHeroCard extends StatelessWidget {
           ),
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(
-              width: 48,
-              height: 48,
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                color: AppColors.cyan,
-              ),
+            // Animated loading indicator with glow effect
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                // Glow effect
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.cyan.withValues(alpha: 0.3),
+                        blurRadius: 20,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                ),
+                // Spinner
+                SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 4,
+                    color: AppColors.cyan,
+                    backgroundColor: AppColors.cyan.withValues(alpha: 0.2),
+                  ),
+                ),
+                // Center icon
+                Icon(
+                  Icons.fitness_center_rounded,
+                  color: AppColors.cyan,
+                  size: 24,
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             Text(
-              message ?? 'Generating your workout...',
+              widget.message ?? 'Loading your workout...',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: textPrimary,
               ),
@@ -625,11 +680,50 @@ class GeneratingHeroCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'This may take a moment',
+              widget.subtitle ?? 'This may take a moment',
               style: TextStyle(
                 fontSize: 14,
                 color: textSecondary,
               ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            // Shimmer loading bar
+            AnimatedBuilder(
+              animation: _shimmerController,
+              builder: (context, child) {
+                return Container(
+                  height: 4,
+                  width: 120,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(2),
+                    color: AppColors.cyan.withValues(alpha: 0.2),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(2),
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          left: _shimmerController.value * 140 - 40,
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.transparent,
+                                  AppColors.cyan,
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),

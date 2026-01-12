@@ -1,6 +1,10 @@
 import 'dart:async';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/providers/wearable_provider.dart';
 import '../repositories/workout_repository.dart';
+import '../services/wearable_service.dart';
 
 /// Provider for today's workout data
 ///
@@ -11,6 +15,7 @@ import '../repositories/workout_repository.dart';
 /// - Caches result for the current session (removed autoDispose for faster navigation)
 /// - Auto-refreshes on provider invalidation
 /// - Auto-polls when is_generating is true (JIT generation in progress)
+/// - Auto-syncs to WearOS watch when workout is available (Android only)
 final todayWorkoutProvider =
     FutureProvider<TodayWorkoutResponse?>((ref) async {
   final repository = ref.watch(workoutRepositoryProvider);
@@ -30,8 +35,54 @@ final todayWorkoutProvider =
     });
   }
 
+  // Sync today's workout to WearOS watch (Android only, non-blocking)
+  if (Platform.isAndroid && response?.todayWorkout != null && !response!.isGenerating) {
+    _syncWorkoutToWatch(response.todayWorkout!, ref);
+  }
+
   return response;
 });
+
+/// Syncs the workout to watch in the background (non-blocking)
+void _syncWorkoutToWatch(TodayWorkoutSummary workout, FutureProviderRef ref) {
+  // Fire and forget - don't block the provider
+  Future(() async {
+    try {
+      final wearableSync = ref.read(wearableSyncProvider);
+
+      // Check if watch is connected
+      await wearableSync.refreshConnection();
+      if (!wearableSync.isConnected) {
+        debugPrint('⌚ [Watch] Not connected, skipping workout sync');
+        return;
+      }
+
+      // Format workout for watch
+      final watchWorkout = WearableService.instance.createWorkoutForWatch(
+        id: workout.id,
+        name: workout.name,
+        type: workout.type,
+        exercises: workout.exercises.map((e) => {
+          'id': e.id,
+          'name': e.name,
+          'targetSets': e.sets,
+          'targetReps': e.reps.toString(),
+          'targetWeightKg': e.suggestedWeight,
+          'restSeconds': e.restSeconds ?? 60,
+          'videoUrl': e.videoUrl,
+          'thumbnailUrl': e.thumbnailUrl,
+        }).toList(),
+        estimatedDuration: workout.durationMinutes,
+        targetMuscleGroups: workout.primaryMuscles,
+        scheduledDate: workout.scheduledDate,
+      );
+
+      await wearableSync.syncWorkoutToWatch(watchWorkout);
+    } catch (e) {
+      debugPrint('⚠️ [Watch] Error syncing workout: $e');
+    }
+  });
+}
 
 /// Provider to track if the quick start was used
 /// This helps with analytics and can be used to show different UI states

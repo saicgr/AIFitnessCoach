@@ -10,6 +10,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/services/fasting_timer_service.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/main_shell.dart';
+import '../../widgets/pill_swipe_navigation.dart';
 import 'widgets/fasting_timer_widget.dart';
 import 'widgets/fasting_zone_timeline.dart';
 import 'widgets/fasting_stats_card.dart';
@@ -30,7 +31,11 @@ class FastingScreen extends ConsumerStatefulWidget {
 }
 
 class _FastingScreenState extends ConsumerState<FastingScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, PillSwipeNavigationMixin {
+  // PillSwipeNavigationMixin: Fasting is index 3
+  @override
+  int get currentPillIndex => 3;
+
   late TabController _tabController;
   bool _initialized = false;
 
@@ -193,9 +198,10 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: SafeArea(
-        child: NestedScrollView(
-          headerSliverBuilder: (context, innerBoxScrolled) {
+      body: wrapWithSwipeDetector(
+        child: SafeArea(
+          child: NestedScrollView(
+            headerSliverBuilder: (context, innerBoxScrolled) {
             return [
               // App bar with tabs
               SliverAppBar(
@@ -327,6 +333,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
               ),
             ],
           ),
+        ),
         ),
       ),
       // FAB removed - Start Fast button is now in the center of the timer dial

@@ -334,15 +334,86 @@ Total Reps: {current_session.get('total_reps', 0)}
 Total Volume: {current_session.get('total_volume_kg', 0):.1f} kg
 """)
 
-        # Current exercises
+        # Get completed exercises and planned exercises
         exercises = current_session.get('exercises', [])
+        planned_exercises = current_session.get('planned_exercises', [])
+
+        # Detect skipped exercises
+        completed_names = {ex.get('name', '').lower() for ex in exercises if ex.get('name')}
+        planned_names = {ex.get('name', '').lower() for ex in planned_exercises if ex.get('name')}
+        skipped_names = planned_names - completed_names
+
+        # Calculate completion rate
+        total_planned = len(planned_exercises) if planned_exercises else len(exercises)
+        total_completed = len(exercises)
+        completion_rate = (total_completed / total_planned * 100) if total_planned > 0 else 100.0
+
+        # Add skip analysis to context
+        if planned_exercises and skipped_names:
+            context_parts.append(f"""
+WORKOUT COMPLETION ANALYSIS:
+- Planned: {len(planned_exercises)} exercises
+- Completed: {len(exercises)} exercises
+- Skipped: {len(skipped_names)} exercises ({', '.join(skipped_names)})
+- Completion Rate: {completion_rate:.0f}%
+""")
+        elif planned_exercises:
+            context_parts.append(f"""
+WORKOUT COMPLETION ANALYSIS:
+- Planned: {len(planned_exercises)} exercises
+- Completed: {len(exercises)} exercises
+- Completion Rate: {completion_rate:.0f}%
+""")
+
+        # Current exercises with enhanced details (timing, weight per set)
         if exercises:
-            context_parts.append("\nExercises Performed:")
+            context_parts.append("\nPER-EXERCISE BREAKDOWN:")
+            rushed_exercises = []
             for ex in exercises:
-                context_parts.append(
-                    f"  - {ex.get('name', 'Unknown')}: "
-                    f"{ex.get('sets', 0)} sets x {ex.get('reps', 0)} reps @ {ex.get('weight_kg', 0)}kg"
-                )
+                ex_name = ex.get('name', 'Unknown')
+                ex_sets = ex.get('sets', 0)
+                ex_reps = ex.get('reps', 0)
+                ex_weight = ex.get('weight_kg', 0)
+                ex_time = ex.get('time_seconds', 0)
+                ex_time_min = ex_time / 60 if ex_time > 0 else 0
+
+                # Find target weight if available
+                target_weight = None
+                for planned in planned_exercises:
+                    if planned.get('name', '').lower() == ex_name.lower():
+                        target_weight = planned.get('target_weight_kg', 0)
+                        break
+
+                # Build exercise line
+                ex_line = f"  - {ex_name}: {ex_sets} sets x {ex_reps} reps @ {ex_weight}kg"
+
+                # Add timing info
+                if ex_time > 0:
+                    ex_line += f" ({ex_time_min:.1f} min spent)"
+                    if ex_time < 180:  # Less than 3 minutes = rushed
+                        rushed_exercises.append(ex_name)
+
+                # Add weight comparison to target
+                if target_weight and target_weight > 0:
+                    weight_diff = ex_weight - target_weight
+                    if weight_diff > 0:
+                        ex_line += f" [+{weight_diff:.1f}kg above target - nice progression!]"
+                    elif weight_diff < 0:
+                        ex_line += f" [{weight_diff:.1f}kg below target]"
+
+                context_parts.append(ex_line)
+
+                # Add set details if available
+                set_details = ex.get('set_details', [])
+                if set_details and len(set_details) > 1:
+                    weights = [s.get('weight_kg', 0) for s in set_details]
+                    if max(weights) != min(weights):
+                        set_strs = [f"{s.get('reps')}x{s.get('weight_kg')}kg" for s in set_details]
+                        context_parts.append(f"      Sets: {', '.join(set_strs)}")
+
+            # Note rushed exercises
+            if rushed_exercises:
+                context_parts.append(f"\nRUSHED EXERCISES (< 3 min): {', '.join(rushed_exercises)}")
 
         # Weight progressions
         if weight_progressions:
@@ -762,12 +833,27 @@ CRITICAL RULES:
 4. If they put in real effort (20+ min, solid sets/reps) → give appropriate recognition
 5. If they improved weights → acknowledge it
 6. Be specific about what was done or what was lacking
+7. REACT TO SKIPPED EXERCISES according to your coaching style:
+   - If completion rate < 50% → this needs to be called out, express concern/disappointment
+   - If completion rate 50-80% → acknowledge but push for full workout next time
+   - If completion rate > 80% → can praise if workout was solid
+8. Call out RUSHED exercises (< 3 min): "You blew through X pretty fast - slow down!"
+9. Note weight progression: If they increased weight → acknowledge the growth
+10. Note if weight was BELOW target: "Your squat weight was down - feeling tired?"
+
+COMPLETION RATE GUIDELINES:
+- < 30%: "You skipped most of the workout. What happened?"
+- 30-50%: "Only half done? Push through the whole thing next time."
+- 50-70%: "Decent, but you left some exercises on the table."
+- 70-90%: "Almost complete! Just a few more exercises to crush it fully."
+- 90-100%: Can give praise if effort was real.
 
 DO NOT:
-- Give fake praise for lazy workouts
-- Be generic (e.g., "Great job!" with no specifics)
+- Give fake praise for lazy or incomplete workouts
+- Say "Great job!" when they skipped half the exercises
+- Be generic with no specifics
 - Write long paragraphs
-- Ignore the actual workout data"""
+- Ignore skipped exercises in the data"""
 
     user_prompt = f"""Based on this workout data, provide SHORT personalized feedback (2-3 sentences max):
 

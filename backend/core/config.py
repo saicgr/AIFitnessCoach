@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     gemini_api_key: str
     gemini_model: str = "gemini-2.5-flash"  # Can be overridden by GEMINI_MODEL env var
     gemini_embedding_model: str = "text-embedding-004"
-    gemini_max_tokens: int = 2000
+    gemini_max_tokens: int = 2500
     gemini_temperature: float = 0.7
 
     # Server Configuration

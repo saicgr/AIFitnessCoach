@@ -159,6 +159,11 @@ class PersonalRecordsService:
             exercise_name = exercise.get("exercise_name", "")
             sets = exercise.get("sets", [])
 
+            # Handle case where sets is an integer count instead of a list
+            if isinstance(sets, int):
+                # Skip if sets is just a count, not actual set data
+                continue
+
             if not sets:
                 continue
 

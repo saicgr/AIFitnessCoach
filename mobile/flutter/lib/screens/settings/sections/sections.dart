@@ -25,3 +25,4 @@ export 'warmup_settings_section.dart';
 export 'subscription_section.dart';
 export 'superset_settings_section.dart';
 export 'kegel_settings_section.dart';
+export 'wear_os_section.dart';

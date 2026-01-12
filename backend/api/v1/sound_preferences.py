@@ -20,6 +20,9 @@ class SoundPreferences(BaseModel):
     # NOTE: No "applause" option - user specifically hated it
     rest_timer_sound_enabled: bool = True
     rest_timer_sound_type: Literal["beep", "chime", "voice", "tick", "none"] = "beep"
+    # Exercise completion sound - plays when all sets of an exercise are done
+    exercise_completion_sound_enabled: bool = True
+    exercise_completion_sound_type: Literal["chime", "bell", "ding", "pop", "whoosh", "none"] = "chime"
     sound_effects_volume: float = Field(default=0.8, ge=0.0, le=1.0)
 
 
@@ -31,6 +34,8 @@ class SoundPreferencesUpdate(BaseModel):
     completion_sound_type: Optional[Literal["chime", "bell", "success", "fanfare", "none"]] = None
     rest_timer_sound_enabled: Optional[bool] = None
     rest_timer_sound_type: Optional[Literal["beep", "chime", "voice", "tick", "none"]] = None
+    exercise_completion_sound_enabled: Optional[bool] = None
+    exercise_completion_sound_type: Optional[Literal["chime", "bell", "ding", "pop", "whoosh", "none"]] = None
     sound_effects_volume: Optional[float] = Field(default=None, ge=0.0, le=1.0)
 
 
@@ -52,6 +57,8 @@ async def get_sound_preferences(user=Depends(get_current_user)):
                 completion_sound_type=prefs.get("completion_sound_type", "chime"),
                 rest_timer_sound_enabled=prefs.get("rest_timer_sound_enabled", True),
                 rest_timer_sound_type=prefs.get("rest_timer_sound_type", "beep"),
+                exercise_completion_sound_enabled=prefs.get("exercise_completion_sound_enabled", True),
+                exercise_completion_sound_type=prefs.get("exercise_completion_sound_type", "chime"),
                 sound_effects_volume=prefs.get("sound_effects_volume", 0.8),
             )
 

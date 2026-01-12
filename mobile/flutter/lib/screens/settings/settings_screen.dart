@@ -91,12 +91,21 @@ const Map<String, List<String>> _settingsSearchIndex = {
   'health_sync': [
     // Direct keywords
     'health', 'sync', 'connect', 'apple health', 'health connect',
-    'google fit', 'fitness tracker', 'watch', 'wearable',
+    'google fit', 'fitness tracker', 'wearable',
     // Natural language
     'connect health app', 'sync with apple', 'sync with google',
     'track steps', 'heart rate', 'calories burned', 'activity data',
-    'smartwatch', 'fitbit', 'garmin', 'samsung health',
+    'fitbit', 'garmin', 'samsung health',
     'import health data', 'export to health',
+  ],
+  'wear_os': [
+    // Direct keywords
+    'wear os', 'wearos', 'watch', 'smartwatch', 'wearable',
+    'watch app', 'wear', 'galaxy watch', 'pixel watch',
+    // Natural language
+    'install watch', 'install on watch', 'connect watch', 'sync watch',
+    'watch connection', 'watch status', 'track on watch', 'wrist',
+    'workout on watch', 'log from watch',
   ],
   'notifications': [
     // Direct keywords
@@ -374,9 +383,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       id: 'connections',
       icon: Icons.sync_alt,
       title: 'Connections',
-      subtitle: 'Health sync, email preferences',
+      subtitle: 'Health sync, watch, email',
       color: const Color(0xFF5AC8FA),
-      sectionKeys: ['health_sync', 'email_preferences'],
+      sectionKeys: ['health_sync', 'wear_os', 'email_preferences'],
     ),
     _SettingsGroup(
       id: 'shop',
@@ -682,6 +691,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return const Column(
           children: [
             HealthSyncSection(),
+            SizedBox(height: 16),
+            WearOSSection(),
             SizedBox(height: 16),
             EmailPreferencesSection(),
           ],

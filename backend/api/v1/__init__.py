@@ -64,6 +64,7 @@ from api.v1 import live_chat  # Live chat support with human agents
 from api.v1 import inflammation  # Food inflammation analysis from barcode scans
 from api.v1 import admin  # Admin backend for live chat management and support
 from api.v1 import habits  # Simple habit tracking (not eating outside, no doordash, etc.)
+from api.v1 import watch_sync  # WearOS watch sync (batch sync, activity goals)
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -296,3 +297,6 @@ router.include_router(admin.router, prefix="/admin", tags=["Admin"])
 
 # Simple habit tracking (not eating outside, no doordash, walking 10k steps, etc.)
 router.include_router(habits.router, prefix="/habits", tags=["Habits"])
+
+# WearOS watch sync (batch sync, activity goals)
+router.include_router(watch_sync.router, tags=["Watch Sync"])

@@ -23,6 +23,8 @@ class Workout extends Equatable {
   final int? durationMinutes;
   @JsonKey(name: 'generation_method')
   final String? generationMethod;
+  @JsonKey(name: 'generation_metadata')
+  final Map<String, dynamic>? generationMetadata; // Contains challenge_exercise for beginners
   @JsonKey(name: 'created_at')
   final String? createdAt;
   @JsonKey(name: 'updated_at')
@@ -39,6 +41,7 @@ class Workout extends Equatable {
     this.exercisesJson,
     this.durationMinutes,
     this.generationMethod,
+    this.generationMetadata,
     this.createdAt,
     this.updatedAt,
   });
@@ -66,8 +69,23 @@ class Workout extends Equatable {
     }
   }
 
-  /// Get exercise count
+  /// Get exercise count (excluding challenge exercise)
   int get exerciseCount => exercises.length;
+
+  /// Get challenge exercise from generation metadata (for beginners)
+  WorkoutExercise? get challengeExercise {
+    if (generationMetadata == null) return null;
+    final challengeData = generationMetadata!['challenge_exercise'];
+    if (challengeData == null) return null;
+    try {
+      return WorkoutExercise.fromJson(challengeData as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Check if workout has a challenge exercise
+  bool get hasChallenge => challengeExercise != null;
 
   /// Calculate estimated calories (6 cal/min)
   int get estimatedCalories => (durationMinutes ?? 0) * 6;
@@ -142,6 +160,7 @@ class Workout extends Equatable {
         scheduledDate,
         isCompleted,
         durationMinutes,
+        generationMetadata,
       ];
 
   Workout copyWith({
@@ -155,6 +174,7 @@ class Workout extends Equatable {
     dynamic exercisesJson,
     int? durationMinutes,
     String? generationMethod,
+    Map<String, dynamic>? generationMetadata,
     String? createdAt,
     String? updatedAt,
   }) {
@@ -169,6 +189,7 @@ class Workout extends Equatable {
       exercisesJson: exercisesJson ?? this.exercisesJson,
       durationMinutes: durationMinutes ?? this.durationMinutes,
       generationMethod: generationMethod ?? this.generationMethod,
+      generationMetadata: generationMetadata ?? this.generationMetadata,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

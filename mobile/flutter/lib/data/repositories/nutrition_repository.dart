@@ -1582,4 +1582,148 @@ class NutritionRepository {
       return null;
     }
   }
+
+  // ============================================
+  // MacroFactor-Style Enhanced Methods
+  // ============================================
+
+  /// Get detailed TDEE with confidence intervals and metabolic adaptation detection
+  Future<DetailedTDEE?> getDetailedTDEE(String userId) async {
+    try {
+      debugPrint('📊 [Nutrition] Getting detailed TDEE for $userId');
+      final response = await _client.get('/nutrition/tdee/$userId/detailed');
+
+      if (response.data == null) {
+        return null;
+      }
+
+      return DetailedTDEE.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ [Nutrition] Error getting detailed TDEE: $e');
+      return null;
+    }
+  }
+
+  /// Get adherence summary with sustainability score
+  Future<AdherenceSummary?> getAdherenceSummary(
+    String userId, {
+    int weeks = 4,
+  }) async {
+    try {
+      debugPrint('📈 [Nutrition] Getting adherence summary for $userId (${weeks}w)');
+      final response = await _client.get(
+        '/nutrition/adherence/$userId/summary',
+        queryParameters: {'weeks': weeks},
+      );
+
+      if (response.data == null) {
+        return null;
+      }
+
+      return AdherenceSummary.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ [Nutrition] Error getting adherence summary: $e');
+      return null;
+    }
+  }
+
+  /// Get multi-option recommendations (aggressive, moderate, conservative)
+  Future<RecommendationOptions?> getRecommendationOptions(String userId) async {
+    try {
+      debugPrint('🎯 [Nutrition] Getting recommendation options for $userId');
+      final response = await _client.get('/nutrition/recommendations/$userId/options');
+
+      if (response.data == null) {
+        return null;
+      }
+
+      return RecommendationOptions.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ [Nutrition] Error getting recommendation options: $e');
+      return null;
+    }
+  }
+
+  /// Select a recommendation option (aggressive, moderate, conservative)
+  Future<bool> selectRecommendationOption({
+    required String userId,
+    required String optionType,
+  }) async {
+    try {
+      debugPrint('✅ [Nutrition] Selecting recommendation option: $optionType for $userId');
+      await _client.post(
+        '/nutrition/recommendations/$userId/select',
+        queryParameters: {'option_type': optionType},
+      );
+
+      return true;
+    } catch (e) {
+      debugPrint('❌ [Nutrition] Error selecting recommendation option: $e');
+      return false;
+    }
+  }
+
+  /// Get all data needed for the enhanced weekly check-in
+  /// Returns combined data: DetailedTDEE, AdherenceSummary, RecommendationOptions
+  Future<WeeklyCheckinData?> getWeeklyCheckinData(String userId) async {
+    try {
+      debugPrint('📊 [Nutrition] Loading weekly check-in data for $userId');
+
+      // Fetch all data in parallel for performance
+      final results = await Future.wait([
+        getDetailedTDEE(userId),
+        getAdherenceSummary(userId),
+        getRecommendationOptions(userId),
+        getWeeklySummary(userId),
+      ]);
+
+      final detailedTdee = results[0] as DetailedTDEE?;
+      final adherence = results[1] as AdherenceSummary?;
+      final options = results[2] as RecommendationOptions?;
+      final summary = results[3] as WeeklySummaryData?;
+
+      return WeeklyCheckinData(
+        detailedTdee: detailedTdee,
+        adherenceSummary: adherence,
+        recommendationOptions: options,
+        weeklySummary: summary,
+      );
+    } catch (e) {
+      debugPrint('❌ [Nutrition] Error loading weekly check-in data: $e');
+      return null;
+    }
+  }
+}
+
+/// Combined data for the enhanced weekly check-in screen
+class WeeklyCheckinData {
+  final DetailedTDEE? detailedTdee;
+  final AdherenceSummary? adherenceSummary;
+  final RecommendationOptions? recommendationOptions;
+  final WeeklySummaryData? weeklySummary;
+
+  const WeeklyCheckinData({
+    this.detailedTdee,
+    this.adherenceSummary,
+    this.recommendationOptions,
+    this.weeklySummary,
+  });
+
+  /// Check if we have enough data for a meaningful check-in
+  bool get hasEnoughData =>
+      detailedTdee != null ||
+      adherenceSummary != null ||
+      recommendationOptions != null;
+
+  /// Check if metabolic adaptation was detected
+  bool get hasMetabolicAdaptation =>
+      detailedTdee?.hasAdaptation ?? false;
+
+  /// Get the current sustainability rating
+  String? get sustainabilityRating =>
+      adherenceSummary?.sustainabilityRating;
+
+  /// Check if there are multiple recommendation options
+  bool get hasMultipleOptions =>
+      (recommendationOptions?.options.length ?? 0) > 1;
 }

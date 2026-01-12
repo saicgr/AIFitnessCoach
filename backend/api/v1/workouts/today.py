@@ -163,7 +163,21 @@ async def get_today_workout(
 
         day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
         today_day_name = day_names[date.today().weekday()]
-        logger.info(f"Today is {today_day_name} (weekday={date.today().weekday()}), workout days: {[day_names[d] for d in selected_days]}")
+        is_today_workout_day = _is_today_a_workout_day(selected_days)
+
+        # Enhanced user context logging for debugging
+        user_preferences = parse_json_field(user.get("preferences"), {})
+        user_timezone = user.get("timezone") or user_preferences.get("timezone") or "Not set"
+        user_created_at = user.get("created_at", "Unknown")
+        onboarding_completed = user.get("onboarding_completed", False)
+        onboarding_completed_at = user.get("onboarding_completed_at", "Not recorded")
+        user_name = user.get("name") or user.get("username") or "Unknown"
+
+        logger.info(f"[USER CONTEXT] user_id={user_id}, name={user_name}")
+        logger.info(f"[USER CONTEXT] timezone={user_timezone}, created_at={user_created_at}")
+        logger.info(f"[USER CONTEXT] onboarding_completed={onboarding_completed}, onboarding_at={onboarding_completed_at}")
+        logger.info(f"[TODAY DEBUG] server_date={today_str}, server_weekday={date.today().weekday()} ({today_day_name})")
+        logger.info(f"[TODAY DEBUG] selected_days={selected_days} ({[day_names[d] for d in selected_days]}), is_workout_day={is_today_workout_day}")
 
         # Get today's workout (not completed)
         today_rows = db.list_workouts(
@@ -173,6 +187,13 @@ async def get_today_workout(
             is_completed=False,
             limit=1,
         )
+
+        # Debug: log query result and all user workouts if none found today
+        logger.info(f"[TODAY DEBUG] Query result: {len(today_rows)} workout(s) for today ({today_str})")
+        if not today_rows:
+            all_user_workouts = db.list_workouts(user_id=user_id, from_date=None, to_date=None, limit=5)
+            dates = [w.get('scheduled_date', 'N/A')[:10] if w.get('scheduled_date') else 'N/A' for w in all_user_workouts]
+            logger.info(f"[TODAY DEBUG] No workout for today. User's first 5 workout dates: {dates}")
 
         today_workout: Optional[TodayWorkoutSummary] = None
         next_workout: Optional[TodayWorkoutSummary] = None
@@ -184,7 +205,7 @@ async def get_today_workout(
         if today_rows:
             today_workout = _row_to_summary(today_rows[0])
             has_workout_today = True
-            logger.info(f"Found today's workout: {today_workout.name}")
+            logger.info(f"[TODAY DEBUG] Found today's workout: {today_workout.name}, scheduled_date={today_workout.scheduled_date}")
 
         # Always look for next upcoming workout (for "Your Next Workout" label)
         tomorrow_str = (date.today() + timedelta(days=1)).isoformat()
@@ -203,7 +224,8 @@ async def get_today_workout(
             next_workout = _row_to_summary(future_rows[0])
             next_date = datetime.strptime(next_workout.scheduled_date, "%Y-%m-%d").date()
             days_until_next = (next_date - date.today()).days
-            logger.info(f"Found next workout in {days_until_next} days: {next_workout.name}")
+            next_weekday = next_date.weekday()
+            logger.info(f"[TODAY DEBUG] Found next workout: {next_workout.name}, date={next_workout.scheduled_date} ({day_names[next_weekday]}), in {days_until_next} days")
 
         # JIT Generation Safety Net: If no workouts exist, trigger generation automatically
         # This ensures a workout ALWAYS exists for the user

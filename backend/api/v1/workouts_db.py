@@ -28,6 +28,7 @@ import asyncio
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.rate_limiter import limiter
+from models.gemini_schemas import WorkoutSuggestionsResponse
 from core.activity_logger import log_user_activity, log_user_error
 from models.schemas import (
     Workout, WorkoutCreate, WorkoutUpdate, GenerateWorkoutRequest,
@@ -1992,7 +1993,7 @@ Generate 4 different workout suggestions that:
 2. Follow the user's specific requests if any
 3. Consider injuries and fitness level
 
-Return a JSON array with exactly 4 suggestions, each containing:
+Return a JSON object with a "suggestions" array containing exactly 4 suggestions, each containing:
 - name: Creative workout name that reflects the equipment/sport if specified (e.g., "Dumbbell Power Circuit", "Cricket Athlete Conditioning")
 - type: One of [Strength, HIIT, Cardio, Flexibility, Full Body, Upper Body, Lower Body, Core]
 - difficulty: One of [easy, medium, hard]
@@ -2001,7 +2002,7 @@ Return a JSON array with exactly 4 suggestions, each containing:
 - focus_areas: Array of 1-3 body areas targeted
 - sample_exercises: Array of 4-5 exercise names that would be included (e.g., ["Bench Press", "Rows", "Squats"])
 
-IMPORTANT: Return ONLY the JSON array, no markdown or explanations."""
+Example format: {{"suggestions": [...]}}"""
 
         user_prompt = request.prompt if request.prompt else "Give me some workout alternatives"
 
@@ -2016,32 +2017,15 @@ IMPORTANT: Return ONLY the JSON array, no markdown or explanations."""
             contents=f"{system_prompt}\n\nUser request: {user_prompt}",
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
+                response_schema=WorkoutSuggestionsResponse,
                 temperature=0.7,
                 max_output_tokens=4000,  # Increased for thinking models
             ),
         )
 
         content = response.text.strip()
-
-        # Parse JSON response
-        if "```" in content:
-            # Extract from code block
-            parts = content.split("```")
-            for part in parts:
-                part = part.strip()
-                if part.startswith("json"):
-                    part = part[4:].strip()
-                if part.startswith("["):
-                    content = part
-                    break
-
-        # Find JSON array
-        start_idx = content.find("[")
-        end_idx = content.rfind("]") + 1
-        if start_idx != -1 and end_idx > start_idx:
-            content = content[start_idx:end_idx]
-
-        suggestions_data = json.loads(content)
+        data = json.loads(content)
+        suggestions_data = data.get("suggestions", [])
 
         # Validate and convert to response format
         suggestions = []

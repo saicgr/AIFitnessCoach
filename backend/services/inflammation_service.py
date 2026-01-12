@@ -145,13 +145,18 @@ class InflammationService:
         """Get cached analysis if exists and not expired."""
         try:
             client = get_supabase().client
+            # Use limit(1) instead of maybe_single() to avoid 406 error when
+            # multiple rows match (shouldn't happen with unique barcode, but safer)
             result = client.table("food_inflammation_analyses")\
                 .select("*")\
                 .eq("barcode", barcode)\
                 .gt("expires_at", datetime.utcnow().isoformat())\
-                .maybe_single()\
+                .limit(1)\
                 .execute()
-            return result.data
+
+            if result.data and len(result.data) > 0:
+                return result.data[0]
+            return None
         except Exception as e:
             logger.error(f"Error fetching cached analysis: {e}")
             return None

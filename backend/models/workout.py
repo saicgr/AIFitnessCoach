@@ -16,6 +16,11 @@ class WorkoutExercise(BaseModel):
     muscle_groups: List[str] = []
     equipment: Optional[str] = None
     gif_url: Optional[str] = None
+    # Challenge exercise fields
+    is_challenge: bool = False  # True if this is an optional challenge exercise
+    progression_from: Optional[str] = None  # Name of the main exercise this progresses from
+    difficulty: Optional[str] = None  # Exercise difficulty level
+    difficulty_num: Optional[int] = None  # Numeric difficulty (1-10)
 
 
 class Workout(BaseModel):
@@ -27,6 +32,7 @@ class Workout(BaseModel):
     scheduled_date: datetime
     is_completed: bool = False
     exercises: List[WorkoutExercise] = []
+    challenge_exercise: Optional[WorkoutExercise] = None  # Optional challenge exercise for beginners
     metadata: Dict[str, Any] = {}
 
 

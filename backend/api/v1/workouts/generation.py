@@ -2022,6 +2022,26 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                 workout_type = workout_data.get("type", "strength")
                 difficulty = workout_data.get("difficulty", intensity_preference)
 
+                # Select challenge exercise for beginners (optional "Want a Challenge?" section)
+                challenge_exercise = None
+                if fitness_level == "beginner" and exercises:
+                    try:
+                        challenge_exercise = await exercise_rag.select_challenge_exercise(
+                            main_exercises=exercises,
+                            focus_area=focus,
+                            equipment=equipment if isinstance(equipment, list) else [],
+                            fitness_level=fitness_level,
+                            injuries=active_injuries,
+                            avoided_muscles=avoided_muscles,
+                            workout_params=adaptive_params,
+                            strength_history=strength_history,
+                        )
+                        if challenge_exercise:
+                            logger.info(f"🔥 [Challenge] Selected challenge exercise for beginner: {challenge_exercise.get('name')}")
+                    except Exception as ce:
+                        logger.warning(f"⚠️ [Challenge] Failed to select challenge exercise: {ce}")
+                        challenge_exercise = None
+
             except Exception as e:
                 logger.error(f"Error generating workout: {e}")
                 # Fitness-level-appropriate fallback exercises
@@ -2075,6 +2095,10 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                         exercise_patterns=exercise_patterns,
                     )
 
+            # Add challenge exercise to workout if available (for beginners)
+            # Store as separate field in exercises_json for frontend to display in separate section
+            challenge_ex = challenge_exercise if 'challenge_exercise' in dir() else None
+
             workout_db_data = {
                 "user_id": request.user_id,
                 "name": workout_name,
@@ -2086,6 +2110,13 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                 "generation_method": "ai",
                 "generation_source": "weekly_generation",
             }
+
+            # Store challenge exercise in generation_metadata for frontend
+            if challenge_ex:
+                workout_db_data["generation_metadata"] = {
+                    "challenge_exercise": challenge_ex,
+                }
+                logger.info(f"🔥 [Challenge] Storing challenge exercise in workout metadata: {challenge_ex.get('name')}")
 
             created = db.create_workout(workout_db_data)
             workout = row_to_workout(created)
@@ -2448,6 +2479,26 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     logger.error(f"RAG returned no exercises for {focus}")
                     raise ValueError(f"RAG returned no exercises for focus={focus}")
 
+                # Select challenge exercise for beginners
+                challenge_exercise = None
+                exercises_list = workout_data.get("exercises", [])
+                if fitness_level == "beginner" and exercises_list:
+                    try:
+                        challenge_exercise = await exercise_rag.select_challenge_exercise(
+                            main_exercises=exercises_list,
+                            focus_area=focus,
+                            equipment=equipment if isinstance(equipment, list) else [],
+                            fitness_level=fitness_level,
+                            injuries=active_injuries,
+                            avoided_muscles=avoided_muscles,
+                            workout_params=adaptive_params,
+                            strength_history=strength_history,
+                        )
+                        if challenge_exercise:
+                            logger.info(f"🔥 [Challenge] Selected challenge for {focus}: {challenge_exercise.get('name')}")
+                    except Exception as ce:
+                        logger.warning(f"⚠️ [Challenge] Failed to select challenge: {ce}")
+
                 return {
                     "success": True,
                     "workout_date": workout_date,
@@ -2455,9 +2506,10 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     "name": workout_data.get("name", f"{focus.title()} Workout"),
                     "type": workout_data.get("type", "strength"),
                     "difficulty": workout_data.get("difficulty", intensity_preference),
-                    "exercises": workout_data.get("exercises", []),
+                    "exercises": exercises_list,
                     "exercises_used": exercises_used,
                     "queued_used": queued_used,  # Track queued exercises to mark as used
+                    "challenge_exercise": challenge_exercise,  # Optional challenge for beginners
                 }
 
             except Exception as e:
@@ -2545,6 +2597,14 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     "generation_method": "ai",
                     "generation_source": "monthly_generation",
                 }
+
+                # Store challenge exercise in generation_metadata for frontend
+                challenge_ex = result.get("challenge_exercise")
+                if challenge_ex:
+                    workout_db_data["generation_metadata"] = {
+                        "challenge_exercise": challenge_ex,
+                    }
+                    logger.info(f"🔥 [Challenge] Storing challenge in metadata: {challenge_ex.get('name')}")
 
                 created = db.create_workout(workout_db_data)
                 workout = row_to_workout(created)
@@ -2670,7 +2730,30 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
             today = datetime.now().date()
             max_horizon = today + timedelta(days=14)
 
+            # Enhanced user context logging for debugging
+            user_timezone = user.get("timezone") or preferences.get("timezone") or "Not set"
+            user_created_at = user.get("created_at", "Unknown")
+            onboarding_completed = user.get("onboarding_completed", False)
+            onboarding_completed_at = user.get("onboarding_completed_at", "Not recorded")
+            user_name = user.get("name") or user.get("username") or "Unknown"
+
+            day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            selected_day_names = [day_names[d] for d in body.selected_days] if body.selected_days else []
+
+            logger.info(f"[USER CONTEXT] user_id={body.user_id}, name={user_name}")
+            logger.info(f"[USER CONTEXT] timezone={user_timezone}, created_at={user_created_at}")
+            logger.info(f"[USER CONTEXT] onboarding_completed={onboarding_completed}, onboarding_at={onboarding_completed_at}")
+            logger.info(f"[USER CONTEXT] fitness_level={fitness_level}, training_split={training_split}")
+            logger.info(f"[GEN DEBUG] month_start_date={body.month_start_date}, selected_days={body.selected_days} ({selected_day_names})")
+            logger.info(f"[GEN DEBUG] Server datetime.now()={datetime.now()}, Server date.today()={today}, weekday={today.weekday()} ({day_names[today.weekday()]})")
+
             workout_dates = calculate_monthly_dates(body.month_start_date, body.selected_days, weeks)
+
+            # Debug: log first calculated date before filtering
+            if workout_dates:
+                first_date = workout_dates[0]
+                logger.info(f"[GEN DEBUG] First calculated date: {first_date.strftime('%Y-%m-%d %A')} (weekday={first_date.weekday()})")
+
             workout_dates = [d for d in workout_dates if d.date() <= max_horizon]
 
             if not workout_dates:
@@ -3609,7 +3692,6 @@ Generate exactly {request.additional_exercises} exercises that complement the ex
         update_data = {
             "exercises_json": json.dumps(combined_exercises),
             "duration_minutes": new_duration,
-            "updated_at": datetime.now().isoformat(),
         }
 
         updated_result = db.client.table("workouts").update(

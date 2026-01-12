@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from models.schemas import Workout
+from models.gemini_schemas import GeneratedWorkoutResponse
 from services.gemini_service import GeminiService
 from services.user_context_service import user_context_service
 
@@ -244,6 +245,7 @@ async def generate_quick_workout(request: QuickWorkoutRequest):
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
+                    response_schema=GeneratedWorkoutResponse,
                     max_output_tokens=4096,
                     temperature=0.7,
                 ),
@@ -254,16 +256,8 @@ async def generate_quick_workout(request: QuickWorkoutRequest):
             if not content:
                 raise HTTPException(status_code=500, detail="Empty response from AI")
 
-            # Parse the response
-            # Clean markdown if present
-            if content.startswith("```json"):
-                content = content[7:]
-            elif content.startswith("```"):
-                content = content[3:]
-            if content.endswith("```"):
-                content = content[:-3]
-
-            workout_data = json.loads(content.strip())
+            # Parse the response - structured output guarantees valid JSON
+            workout_data = json.loads(content)
 
             exercises = workout_data.get("exercises", [])
             workout_name = workout_data.get("name", f"Quick {request.duration}min Workout")

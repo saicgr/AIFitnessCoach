@@ -16,6 +16,7 @@ from google.genai import types
 
 from core.config import get_settings
 from core.logger import get_logger
+from models.gemini_schemas import CalibrationWorkoutResponse, PerformanceAnalysisResponse
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -344,22 +345,14 @@ IMPORTANT:
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
+                    response_schema=CalibrationWorkoutResponse,
                     max_output_tokens=4000,
                     temperature=0.3,  # Lower temperature for consistent, accurate recommendations
                 ),
             )
 
             content = response.text.strip()
-
-            # Clean markdown if present
-            if content.startswith("```json"):
-                content = content[7:]
-            elif content.startswith("```"):
-                content = content[3:]
-            if content.endswith("```"):
-                content = content[:-3]
-
-            workout_data = json.loads(content.strip())
+            workout_data = json.loads(content)
 
             # Validate structure
             if "exercises" not in workout_data or not workout_data["exercises"]:
@@ -477,22 +470,14 @@ Return ONLY valid JSON:
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
+                    response_schema=PerformanceAnalysisResponse,
                     max_output_tokens=2000,
                     temperature=0.2,  # Very low for consistent analysis
                 ),
             )
 
             content = response.text.strip()
-
-            # Clean markdown if present
-            if content.startswith("```json"):
-                content = content[7:]
-            elif content.startswith("```"):
-                content = content[3:]
-            if content.endswith("```"):
-                content = content[:-3]
-
-            analysis_data = json.loads(content.strip())
+            analysis_data = json.loads(content)
 
             analysis = CalibrationAnalysis(
                 reported_fitness_level=analysis_data.get("reported_fitness_level", reported_level),

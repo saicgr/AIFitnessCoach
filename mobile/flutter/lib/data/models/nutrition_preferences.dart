@@ -1574,3 +1574,612 @@ class FoodSearchResult {
     return parts.join(' | ');
   }
 }
+
+// ============================================
+// MacroFactor-Style Adaptive TDEE Models
+// ============================================
+
+/// Detailed TDEE calculation with confidence intervals
+/// Based on EMA-smoothed weight trends and energy balance
+class DetailedTDEE {
+  final int tdee;
+  final int confidenceLow;
+  final int confidenceHigh;
+  final int uncertaintyCalories;
+  final double dataQualityScore;
+  final String confidenceLevel;
+  final WeightTrendInfo weightTrend;
+  final MetabolicAdaptationInfo? metabolicAdaptation;
+
+  const DetailedTDEE({
+    required this.tdee,
+    required this.confidenceLow,
+    required this.confidenceHigh,
+    required this.uncertaintyCalories,
+    required this.dataQualityScore,
+    required this.confidenceLevel,
+    required this.weightTrend,
+    this.metabolicAdaptation,
+  });
+
+  /// Get uncertainty display string (e.g., "±120 cal")
+  String get uncertaintyDisplay => '±$uncertaintyCalories cal';
+
+  /// Get TDEE range display (e.g., "2,030 - 2,270")
+  String get rangeDisplay =>
+      '${_formatNumber(confidenceLow)} - ${_formatNumber(confidenceHigh)}';
+
+  /// Check if we have enough data for reliable estimates
+  bool get hasReliableData => dataQualityScore >= 0.6;
+
+  /// Check if metabolic adaptation was detected
+  bool get hasAdaptation => metabolicAdaptation != null;
+
+  static String _formatNumber(int n) {
+    if (n >= 1000) {
+      return '${n ~/ 1000},${(n % 1000).toString().padLeft(3, '0')}';
+    }
+    return n.toString();
+  }
+
+  factory DetailedTDEE.fromJson(Map<String, dynamic> json) {
+    return DetailedTDEE(
+      tdee: json['tdee'] as int? ?? 0,
+      confidenceLow: json['confidence_low'] as int? ?? 0,
+      confidenceHigh: json['confidence_high'] as int? ?? 0,
+      uncertaintyCalories: json['uncertainty_calories'] as int? ?? 0,
+      dataQualityScore: (json['data_quality_score'] as num?)?.toDouble() ?? 0.0,
+      confidenceLevel: json['confidence_level'] as String? ?? 'low',
+      weightTrend: WeightTrendInfo.fromJson(
+          json['weight_trend'] as Map<String, dynamic>? ?? {}),
+      metabolicAdaptation: json['metabolic_adaptation'] != null
+          ? MetabolicAdaptationInfo.fromJson(
+              json['metabolic_adaptation'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'tdee': tdee,
+        'confidence_low': confidenceLow,
+        'confidence_high': confidenceHigh,
+        'uncertainty_calories': uncertaintyCalories,
+        'data_quality_score': dataQualityScore,
+        'confidence_level': confidenceLevel,
+        'weight_trend': weightTrend.toJson(),
+        if (metabolicAdaptation != null)
+          'metabolic_adaptation': metabolicAdaptation!.toJson(),
+      };
+}
+
+/// Weight trend information from EMA smoothing
+class WeightTrendInfo {
+  final double changeKg;
+  final double weeklyRate;
+  final String direction;
+  final double? startWeight;
+  final double? endWeight;
+
+  const WeightTrendInfo({
+    required this.changeKg,
+    required this.weeklyRate,
+    required this.direction,
+    this.startWeight,
+    this.endWeight,
+  });
+
+  /// Get formatted weekly rate (e.g., "-0.45 kg/week")
+  String get formattedWeeklyRate {
+    if (weeklyRate.abs() < 0.05) return 'Stable';
+    final sign = weeklyRate > 0 ? '+' : '';
+    return '$sign${weeklyRate.toStringAsFixed(2)} kg/week';
+  }
+
+  /// Get direction emoji
+  String get directionEmoji {
+    switch (direction) {
+      case 'losing':
+        return '📉';
+      case 'gaining':
+        return '📈';
+      default:
+        return '➡️';
+    }
+  }
+
+  factory WeightTrendInfo.fromJson(Map<String, dynamic> json) {
+    return WeightTrendInfo(
+      changeKg: (json['change_kg'] as num?)?.toDouble() ?? 0.0,
+      weeklyRate: (json['weekly_rate'] as num?)?.toDouble() ?? 0.0,
+      direction: json['direction'] as String? ?? 'stable',
+      startWeight: (json['start_weight'] as num?)?.toDouble(),
+      endWeight: (json['end_weight'] as num?)?.toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'change_kg': changeKg,
+        'weekly_rate': weeklyRate,
+        'direction': direction,
+        if (startWeight != null) 'start_weight': startWeight,
+        if (endWeight != null) 'end_weight': endWeight,
+      };
+}
+
+/// Metabolic adaptation event information
+class MetabolicAdaptationInfo {
+  final String eventType;
+  final String severity;
+  final int? plateauWeeks;
+  final double? expectedWeightChangeKg;
+  final double? actualWeightChangeKg;
+  final int? previousTdee;
+  final int? currentTdee;
+  final double? tdeeDropPercent;
+  final int? tdeeDropCalories;
+  final String suggestedAction;
+  final String actionDescription;
+
+  const MetabolicAdaptationInfo({
+    required this.eventType,
+    required this.severity,
+    this.plateauWeeks,
+    this.expectedWeightChangeKg,
+    this.actualWeightChangeKg,
+    this.previousTdee,
+    this.currentTdee,
+    this.tdeeDropPercent,
+    this.tdeeDropCalories,
+    required this.suggestedAction,
+    required this.actionDescription,
+  });
+
+  /// Check if this is a plateau event
+  bool get isPlateau => eventType == 'plateau';
+
+  /// Check if this is a metabolic adaptation event
+  bool get isAdaptation => eventType == 'adaptation';
+
+  /// Get severity color
+  String get severityColor {
+    switch (severity) {
+      case 'high':
+        return 'red';
+      case 'medium':
+        return 'orange';
+      default:
+        return 'yellow';
+    }
+  }
+
+  /// Get action display name
+  String get actionDisplayName {
+    switch (suggestedAction) {
+      case 'diet_break':
+        return 'Diet Break';
+      case 'refeed':
+        return 'Refeed Days';
+      case 'increase_activity':
+        return 'Increase Activity';
+      case 'reduce_deficit':
+        return 'Reduce Deficit';
+      default:
+        return 'Be Patient';
+    }
+  }
+
+  factory MetabolicAdaptationInfo.fromJson(Map<String, dynamic> json) {
+    return MetabolicAdaptationInfo(
+      eventType: json['event_type'] as String? ?? 'unknown',
+      severity: json['severity'] as String? ?? 'low',
+      plateauWeeks: json['plateau_weeks'] as int?,
+      expectedWeightChangeKg:
+          (json['expected_weight_change_kg'] as num?)?.toDouble(),
+      actualWeightChangeKg:
+          (json['actual_weight_change_kg'] as num?)?.toDouble(),
+      previousTdee: json['previous_tdee'] as int?,
+      currentTdee: json['current_tdee'] as int?,
+      tdeeDropPercent: (json['tdee_drop_percent'] as num?)?.toDouble(),
+      tdeeDropCalories: json['tdee_drop_calories'] as int?,
+      suggestedAction: json['suggested_action'] as String? ?? 'patience',
+      actionDescription: json['action_description'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'event_type': eventType,
+        'severity': severity,
+        if (plateauWeeks != null) 'plateau_weeks': plateauWeeks,
+        if (expectedWeightChangeKg != null)
+          'expected_weight_change_kg': expectedWeightChangeKg,
+        if (actualWeightChangeKg != null)
+          'actual_weight_change_kg': actualWeightChangeKg,
+        if (previousTdee != null) 'previous_tdee': previousTdee,
+        if (currentTdee != null) 'current_tdee': currentTdee,
+        if (tdeeDropPercent != null) 'tdee_drop_percent': tdeeDropPercent,
+        if (tdeeDropCalories != null) 'tdee_drop_calories': tdeeDropCalories,
+        'suggested_action': suggestedAction,
+        'action_description': actionDescription,
+      };
+}
+
+// ============================================
+// Adherence Tracking Models
+// ============================================
+
+/// Daily adherence metrics
+class DailyAdherence {
+  final DateTime date;
+  final double calorieAdherencePct;
+  final double proteinAdherencePct;
+  final double carbsAdherencePct;
+  final double fatAdherencePct;
+  final double overallAdherencePct;
+  final bool caloriesOver;
+  final bool proteinOver;
+
+  const DailyAdherence({
+    required this.date,
+    required this.calorieAdherencePct,
+    required this.proteinAdherencePct,
+    required this.carbsAdherencePct,
+    required this.fatAdherencePct,
+    required this.overallAdherencePct,
+    this.caloriesOver = false,
+    this.proteinOver = false,
+  });
+
+  /// Check if meeting calorie target (>95%)
+  bool get onTargetCalories => calorieAdherencePct >= 95;
+
+  /// Check if meeting protein target (>95%)
+  bool get onTargetProtein => proteinAdherencePct >= 95;
+
+  factory DailyAdherence.fromJson(Map<String, dynamic> json) {
+    return DailyAdherence(
+      date: DateTime.parse(json['date'] as String),
+      calorieAdherencePct:
+          (json['calorie_adherence_pct'] as num?)?.toDouble() ?? 0.0,
+      proteinAdherencePct:
+          (json['protein_adherence_pct'] as num?)?.toDouble() ?? 0.0,
+      carbsAdherencePct:
+          (json['carbs_adherence_pct'] as num?)?.toDouble() ?? 0.0,
+      fatAdherencePct: (json['fat_adherence_pct'] as num?)?.toDouble() ?? 0.0,
+      overallAdherencePct:
+          (json['overall_adherence_pct'] as num?)?.toDouble() ?? 0.0,
+      caloriesOver: json['calories_over'] as bool? ?? false,
+      proteinOver: json['protein_over'] as bool? ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'date': date.toIso8601String().split('T').first,
+        'calorie_adherence_pct': calorieAdherencePct,
+        'protein_adherence_pct': proteinAdherencePct,
+        'carbs_adherence_pct': carbsAdherencePct,
+        'fat_adherence_pct': fatAdherencePct,
+        'overall_adherence_pct': overallAdherencePct,
+        'calories_over': caloriesOver,
+        'protein_over': proteinOver,
+      };
+}
+
+/// Adherence summary with sustainability score
+class AdherenceSummary {
+  final List<WeeklyAdherenceData> weeklyAdherence;
+  final double averageAdherence;
+  final double sustainabilityScore;
+  final String sustainabilityRating;
+  final String recommendation;
+  final int weeksAnalyzed;
+  final double consistencyScore;
+  final double loggingScore;
+
+  const AdherenceSummary({
+    required this.weeklyAdherence,
+    required this.averageAdherence,
+    required this.sustainabilityScore,
+    required this.sustainabilityRating,
+    required this.recommendation,
+    required this.weeksAnalyzed,
+    required this.consistencyScore,
+    required this.loggingScore,
+  });
+
+  /// Check if sustainability is high
+  bool get isHighSustainability => sustainabilityRating == 'high';
+
+  /// Check if sustainability is low
+  bool get isLowSustainability => sustainabilityRating == 'low';
+
+  /// Get rating color
+  String get ratingColor {
+    switch (sustainabilityRating) {
+      case 'high':
+        return 'green';
+      case 'medium':
+        return 'orange';
+      default:
+        return 'red';
+    }
+  }
+
+  /// Get rating emoji
+  String get ratingEmoji {
+    switch (sustainabilityRating) {
+      case 'high':
+        return '🟢';
+      case 'medium':
+        return '🟡';
+      default:
+        return '🔴';
+    }
+  }
+
+  factory AdherenceSummary.fromJson(Map<String, dynamic> json) {
+    final weeklyList = (json['weekly_adherence'] as List?)
+            ?.map((w) => WeeklyAdherenceData.fromJson(w as Map<String, dynamic>))
+            .toList() ??
+        [];
+
+    return AdherenceSummary(
+      weeklyAdherence: weeklyList,
+      averageAdherence: (json['average_adherence'] as num?)?.toDouble() ?? 0.0,
+      sustainabilityScore:
+          (json['sustainability_score'] as num?)?.toDouble() ?? 0.0,
+      sustainabilityRating:
+          json['sustainability_rating'] as String? ?? 'medium',
+      recommendation: json['recommendation'] as String? ?? '',
+      weeksAnalyzed: json['weeks_analyzed'] as int? ?? 0,
+      consistencyScore: (json['consistency_score'] as num?)?.toDouble() ?? 0.0,
+      loggingScore: (json['logging_score'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'weekly_adherence': weeklyAdherence.map((w) => w.toJson()).toList(),
+        'average_adherence': averageAdherence,
+        'sustainability_score': sustainabilityScore,
+        'sustainability_rating': sustainabilityRating,
+        'recommendation': recommendation,
+        'weeks_analyzed': weeksAnalyzed,
+        'consistency_score': consistencyScore,
+        'logging_score': loggingScore,
+      };
+}
+
+/// Weekly adherence data
+class WeeklyAdherenceData {
+  final DateTime weekStart;
+  final DateTime weekEnd;
+  final int daysLogged;
+  final int daysInWeek;
+  final double avgCalorieAdherence;
+  final double avgProteinAdherence;
+  final double avgCarbsAdherence;
+  final double avgFatAdherence;
+  final double avgOverallAdherence;
+  final double adherenceVariance;
+  final int daysOnTargetCalories;
+  final int daysOnTargetProtein;
+
+  const WeeklyAdherenceData({
+    required this.weekStart,
+    required this.weekEnd,
+    required this.daysLogged,
+    this.daysInWeek = 7,
+    required this.avgCalorieAdherence,
+    required this.avgProteinAdherence,
+    required this.avgCarbsAdherence,
+    required this.avgFatAdherence,
+    required this.avgOverallAdherence,
+    required this.adherenceVariance,
+    required this.daysOnTargetCalories,
+    required this.daysOnTargetProtein,
+  });
+
+  /// Get logging rate as percentage
+  double get loggingRatePct => (daysLogged / daysInWeek) * 100;
+
+  factory WeeklyAdherenceData.fromJson(Map<String, dynamic> json) {
+    return WeeklyAdherenceData(
+      weekStart: DateTime.parse(json['week_start'] as String),
+      weekEnd: DateTime.parse(json['week_end'] as String),
+      daysLogged: json['days_logged'] as int? ?? 0,
+      daysInWeek: json['days_in_week'] as int? ?? 7,
+      avgCalorieAdherence:
+          (json['avg_calorie_adherence'] as num?)?.toDouble() ?? 0.0,
+      avgProteinAdherence:
+          (json['avg_protein_adherence'] as num?)?.toDouble() ?? 0.0,
+      avgCarbsAdherence:
+          (json['avg_carbs_adherence'] as num?)?.toDouble() ?? 0.0,
+      avgFatAdherence: (json['avg_fat_adherence'] as num?)?.toDouble() ?? 0.0,
+      avgOverallAdherence:
+          (json['avg_overall_adherence'] as num?)?.toDouble() ?? 0.0,
+      adherenceVariance:
+          (json['adherence_variance'] as num?)?.toDouble() ?? 0.0,
+      daysOnTargetCalories: json['days_on_target_calories'] as int? ?? 0,
+      daysOnTargetProtein: json['days_on_target_protein'] as int? ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'week_start': weekStart.toIso8601String().split('T').first,
+        'week_end': weekEnd.toIso8601String().split('T').first,
+        'days_logged': daysLogged,
+        'days_in_week': daysInWeek,
+        'avg_calorie_adherence': avgCalorieAdherence,
+        'avg_protein_adherence': avgProteinAdherence,
+        'avg_carbs_adherence': avgCarbsAdherence,
+        'avg_fat_adherence': avgFatAdherence,
+        'avg_overall_adherence': avgOverallAdherence,
+        'adherence_variance': adherenceVariance,
+        'days_on_target_calories': daysOnTargetCalories,
+        'days_on_target_protein': daysOnTargetProtein,
+      };
+}
+
+// ============================================
+// Multi-Option Recommendation Models
+// ============================================
+
+/// A single recommendation option (aggressive, moderate, conservative)
+class RecommendationOption {
+  final String optionType;
+  final int calories;
+  final int proteinG;
+  final int carbsG;
+  final int fatG;
+  final double expectedWeeklyChangeKg;
+  final String sustainabilityRating;
+  final String description;
+
+  const RecommendationOption({
+    required this.optionType,
+    required this.calories,
+    required this.proteinG,
+    required this.carbsG,
+    required this.fatG,
+    required this.expectedWeeklyChangeKg,
+    required this.sustainabilityRating,
+    required this.description,
+  });
+
+  /// Get option display name
+  String get displayName {
+    switch (optionType) {
+      case 'aggressive':
+        return 'Aggressive';
+      case 'moderate':
+        return 'Moderate';
+      case 'conservative':
+        return 'Conservative';
+      case 'maintenance':
+        return 'Maintenance';
+      default:
+        return optionType;
+    }
+  }
+
+  /// Get option emoji
+  String get emoji {
+    switch (optionType) {
+      case 'aggressive':
+        return '🔥';
+      case 'moderate':
+        return '⚖️';
+      case 'conservative':
+        return '🐢';
+      case 'maintenance':
+        return '➡️';
+      default:
+        return '📊';
+    }
+  }
+
+  /// Get formatted expected change
+  String get formattedWeeklyChange {
+    if (expectedWeeklyChangeKg.abs() < 0.05) return 'Maintain';
+    final sign = expectedWeeklyChangeKg > 0 ? '+' : '';
+    return '$sign${expectedWeeklyChangeKg.toStringAsFixed(2)} kg/week';
+  }
+
+  /// Get sustainability color
+  String get sustainabilityColor {
+    switch (sustainabilityRating) {
+      case 'high':
+        return 'green';
+      case 'medium':
+        return 'orange';
+      default:
+        return 'red';
+    }
+  }
+
+  factory RecommendationOption.fromJson(Map<String, dynamic> json) {
+    return RecommendationOption(
+      optionType: json['option_type'] as String? ?? 'moderate',
+      calories: json['calories'] as int? ?? 0,
+      proteinG: json['protein_g'] as int? ?? 0,
+      carbsG: json['carbs_g'] as int? ?? 0,
+      fatG: json['fat_g'] as int? ?? 0,
+      expectedWeeklyChangeKg:
+          (json['expected_weekly_change_kg'] as num?)?.toDouble() ?? 0.0,
+      sustainabilityRating:
+          json['sustainability_rating'] as String? ?? 'medium',
+      description: json['description'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'option_type': optionType,
+        'calories': calories,
+        'protein_g': proteinG,
+        'carbs_g': carbsG,
+        'fat_g': fatG,
+        'expected_weekly_change_kg': expectedWeeklyChangeKg,
+        'sustainability_rating': sustainabilityRating,
+        'description': description,
+      };
+}
+
+/// Multi-option recommendation response
+class RecommendationOptions {
+  final int currentTdee;
+  final String currentGoal;
+  final double adherenceScore;
+  final bool hasAdaptation;
+  final List<RecommendationOption> options;
+  final String? recommendedOption;
+
+  const RecommendationOptions({
+    required this.currentTdee,
+    required this.currentGoal,
+    required this.adherenceScore,
+    required this.hasAdaptation,
+    required this.options,
+    this.recommendedOption,
+  });
+
+  /// Get the recommended option if available
+  RecommendationOption? get recommended {
+    if (recommendedOption == null) return options.isNotEmpty ? options.first : null;
+    return options.firstWhere(
+      (o) => o.optionType == recommendedOption,
+      orElse: () => options.first,
+    );
+  }
+
+  /// Check if aggressive option is available
+  bool get hasAggressiveOption =>
+      options.any((o) => o.optionType == 'aggressive');
+
+  /// Check if conservative option is available
+  bool get hasConservativeOption =>
+      options.any((o) => o.optionType == 'conservative');
+
+  factory RecommendationOptions.fromJson(Map<String, dynamic> json) {
+    final optionsList = (json['options'] as List?)
+            ?.map((o) => RecommendationOption.fromJson(o as Map<String, dynamic>))
+            .toList() ??
+        [];
+
+    return RecommendationOptions(
+      currentTdee: json['current_tdee'] as int? ?? 0,
+      currentGoal: json['current_goal'] as String? ?? 'maintain',
+      adherenceScore: (json['adherence_score'] as num?)?.toDouble() ?? 0.0,
+      hasAdaptation: json['has_adaptation'] as bool? ?? false,
+      options: optionsList,
+      recommendedOption: json['recommended_option'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'current_tdee': currentTdee,
+        'current_goal': currentGoal,
+        'adherence_score': adherenceScore,
+        'has_adaptation': hasAdaptation,
+        'options': options.map((o) => o.toJson()).toList(),
+        if (recommendedOption != null) 'recommended_option': recommendedOption,
+      };
+}

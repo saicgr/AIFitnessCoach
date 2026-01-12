@@ -92,6 +92,15 @@ class SetTrackingSection extends StatefulWidget {
   final VoidCallback? onNextExercise;
   final Function(int index)? onEditSet;
 
+  /// Callback to add another set
+  final VoidCallback? onAddSet;
+
+  /// Callback to toggle weight unit (kg/lbs)
+  final VoidCallback? onUnitToggle;
+
+  /// Next exercise for preview
+  final WorkoutExercise? nextExercise;
+
   /// Index of just-completed set for animation
   final int? justCompletedSetIndex;
 
@@ -122,6 +131,9 @@ class SetTrackingSection extends StatefulWidget {
     this.onPreviousExercise,
     this.onNextExercise,
     this.onEditSet,
+    this.onAddSet,
+    this.onUnitToggle,
+    this.nextExercise,
     this.justCompletedSetIndex,
   });
 
@@ -195,6 +207,7 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
                                 reps: widget.currentReps,
                                 weightStep: widget.weightStep,
                                 useKg: widget.useKg,
+                                onUnitToggle: widget.onUnitToggle,
                                 previousWeight: _getPreviousWeight(),
                                 previousReps: _getPreviousReps(),
                                 onWeightChanged: widget.onWeightChanged,
@@ -215,6 +228,10 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
                           // Exercise completed state
                           if (widget.isCurrentExercise && widget.currentSetNumber > widget.totalSets)
                             _buildExerciseCompleteState(isDark, textPrimary),
+
+                          // Next exercise preview
+                          if (widget.nextExercise != null)
+                            _buildNextExercisePreview(isDark, textMuted),
                         ],
                       ),
               ),
@@ -388,49 +405,69 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
             child: Wrap(
               spacing: 12,
               runSpacing: 4,
-              children: widget.completedSets.asMap().entries.map((entry) {
-                final index = entry.key;
-                final set = entry.value;
-                final isJustCompleted = widget.justCompletedSetIndex == index;
+              children: [
+                ...widget.completedSets.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final set = entry.value;
+                  final isJustCompleted = widget.justCompletedSetIndex == index;
 
-                return GestureDetector(
-                  onTap: () => widget.onEditSet?.call(index),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: set.isEdited
-                          ? AppColors.orange.withOpacity(0.15)
-                          : AppColors.success.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
-                      border: isJustCompleted
-                          ? Border.all(color: AppColors.success, width: 1.5)
-                          : null,
-                    ),
-                    child: Text(
-                      'S${index + 1}: ${set.weight.toStringAsFixed(0)}${widget.useKg ? 'kg' : 'lbs'}×${set.reps}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: set.isEdited ? AppColors.orange : AppColors.success,
+                  return GestureDetector(
+                    onTap: () => widget.onEditSet?.call(index),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: set.isEdited
+                            ? AppColors.orange.withOpacity(0.15)
+                            : AppColors.success.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                        border: isJustCompleted
+                            ? Border.all(color: AppColors.success, width: 1.5)
+                            : null,
+                      ),
+                      child: Text(
+                        'S${index + 1}: ${set.weight.toStringAsFixed(0)}${widget.useKg ? 'kg' : 'lbs'}×${set.reps}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: set.isEdited ? AppColors.orange : AppColors.success,
+                        ),
                       ),
                     ),
+                  )
+                      .animate(
+                        target: isJustCompleted ? 1 : 0,
+                      )
+                      .scale(
+                        begin: const Offset(1, 1),
+                        end: const Offset(1.1, 1.1),
+                        duration: 200.ms,
+                      )
+                      .then()
+                      .scale(
+                        begin: const Offset(1.1, 1.1),
+                        end: const Offset(1, 1),
+                        duration: 200.ms,
+                      );
+                }),
+                // Add Set button
+                if (widget.onAddSet != null)
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      widget.onAddSet?.call();
+                    },
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.cyan, width: 1.5),
+                        color: AppColors.cyan.withOpacity(0.1),
+                      ),
+                      child: const Icon(Icons.add, size: 16, color: AppColors.cyan),
+                    ),
                   ),
-                )
-                    .animate(
-                      target: isJustCompleted ? 1 : 0,
-                    )
-                    .scale(
-                      begin: const Offset(1, 1),
-                      end: const Offset(1.1, 1.1),
-                      duration: 200.ms,
-                    )
-                    .then()
-                    .scale(
-                      begin: const Offset(1.1, 1.1),
-                      end: const Offset(1, 1),
-                      duration: 200.ms,
-                    );
-              }).toList(),
+              ],
             ),
           ),
         ],
@@ -493,5 +530,64 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
     final setIndex = widget.currentSetNumber - 1;
     if (setIndex >= widget.previousSets.length) return null;
     return widget.previousSets[setIndex]['reps'] as int?;
+  }
+
+  Widget _buildNextExercisePreview(bool isDark, Color textMuted) {
+    if (widget.nextExercise == null) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.cyan.withOpacity(0.05),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+        border: Border(
+          top: BorderSide(
+            color: isDark
+                ? Colors.white.withOpacity(0.05)
+                : Colors.black.withOpacity(0.05),
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.arrow_forward_rounded,
+            size: 14,
+            color: textMuted,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'NEXT:',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+              color: textMuted,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              widget.nextExercise!.name,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.cyan,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          // Next exercise sets info
+          Text(
+            '${widget.nextExercise!.sets ?? 3} sets',
+            style: TextStyle(
+              fontSize: 10,
+              color: textMuted,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

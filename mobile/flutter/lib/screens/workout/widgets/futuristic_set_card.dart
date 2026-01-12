@@ -36,6 +36,9 @@ class FuturisticSetCard extends StatefulWidget {
   /// Whether using kg or lbs
   final bool useKg;
 
+  /// Callback to toggle unit (kg/lbs)
+  final VoidCallback? onUnitToggle;
+
   /// Previous session weight (optional)
   final double? previousWeight;
 
@@ -81,6 +84,7 @@ class FuturisticSetCard extends StatefulWidget {
     required this.reps,
     this.weightStep = 2.5,
     this.useKg = true,
+    this.onUnitToggle,
     this.previousWeight,
     this.previousReps,
     required this.onWeightChanged,
@@ -193,6 +197,7 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
                           onChanged: widget.onWeightChanged,
                           step: widget.weightStep,
                           useKg: widget.useKg,
+                          onUnitToggle: widget.onUnitToggle,
                         ),
                       ),
                       SizedBox(width: isSmallScreen ? 8 : 16),
@@ -223,8 +228,8 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
               if (widget.previousWeight != null || widget.previousReps != null)
                 _buildPreviousSection(isDark),
 
-              // Skip button (if not last set)
-              if (widget.onSkip != null && !widget.isLastSet)
+              // Skip button (always show if callback exists)
+              if (widget.onSkip != null)
                 _buildSkipButton(isDark),
             ],
           ),
@@ -673,18 +678,24 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
 
   Widget _buildSkipButton(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          widget.onSkip?.call();
-        },
-        child: Text(
-          'Skip to next exercise',
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.textMuted,
-            decoration: TextDecoration.underline,
+      padding: const EdgeInsets.only(top: 16),
+      child: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            widget.onSkip?.call();
+          },
+          icon: const Icon(Icons.skip_next_rounded, size: 20),
+          label: const Text('Skip Exercise'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.glowOrange,
+            side: BorderSide(color: AppColors.glowOrange.withOpacity(0.5)),
+            backgroundColor: AppColors.glowOrange.withOpacity(0.1),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         ),
       ),

@@ -16,6 +16,7 @@ from google.genai import types
 
 from core.config import get_settings
 from core.logger import get_logger
+from models.gemini_schemas import FoodAnalysisResponse
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -118,25 +119,15 @@ Guidelines:
                 contents=[prompt, image_part],
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
+                    response_schema=FoodAnalysisResponse,
                     max_output_tokens=3000,  # Increased for thinking models
                     temperature=0.3,  # Lower temperature for more consistent nutrition estimates
                 ),
             )
 
-            # Parse the response
+            # Parse the response - structured output guarantees valid JSON
             content = response.text.strip()
             logger.info(f"✅ Vision API response received")
-
-            # Clean up the response (remove markdown code blocks if present)
-            if content.startswith("```json"):
-                content = content[7:]
-            if content.startswith("```"):
-                content = content[3:]
-            if content.endswith("```"):
-                content = content[:-3]
-            content = content.strip()
-
-            # Parse JSON
             result = json.loads(content)
 
             # Validate required fields

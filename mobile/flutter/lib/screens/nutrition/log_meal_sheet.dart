@@ -2820,6 +2820,13 @@ class _ScanTabState extends State<_ScanTab> {
     _controller = MobileScannerController(
       detectionSpeed: DetectionSpeed.normal,
       facing: CameraFacing.back,
+      // Only detect product barcode formats (not QR codes, URLs, etc.)
+      formats: [
+        BarcodeFormat.ean13,    // 13-digit European Article Number
+        BarcodeFormat.ean8,     // 8-digit EAN
+        BarcodeFormat.upcA,     // 12-digit Universal Product Code
+        BarcodeFormat.upcE,     // 8-digit compressed UPC
+      ],
     );
   }
 
@@ -2848,9 +2855,12 @@ class _ScanTabState extends State<_ScanTab> {
                   onDetect: (capture) {
                     if (_hasDetected) return;
                     for (final barcode in capture.barcodes) {
-                      if (barcode.rawValue != null) {
+                      final value = barcode.rawValue;
+                      // Validate: must be 8-14 digits (product barcodes)
+                      if (value != null &&
+                          RegExp(r'^\d{8,14}$').hasMatch(value)) {
                         _hasDetected = true;
-                        widget.onBarcodeDetected(barcode.rawValue!);
+                        widget.onBarcodeDetected(value);
                         break;
                       }
                     }
@@ -5420,17 +5430,24 @@ class _FoodAnalysisLoadingIndicatorState extends State<_FoodAnalysisLoadingIndic
     with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late AnimationController _rotateController;
+  late AnimationController _stepBounceController;
   late Animation<double> _pulseAnimation;
+  late Animation<double> _stepBounceAnimation;
   int _tipIndex = 0;
   int _dotCount = 0;
+  int _lastStep = 0;
 
   static const _tips = [
-    'AI is identifying ingredients',
-    'Calculating nutritional values',
-    'Checking portion sizes',
-    'Almost there',
-    'Processing your meal',
-    'Analyzing macros',
+    'Did you know? Protein keeps you full longer',
+    'Fun fact: Your body burns calories digesting food',
+    'Tip: Eating slowly helps you feel satisfied',
+    'Tracking meals builds awareness',
+    'Small choices add up to big results',
+    'Fiber is your gut\'s best friend',
+    'Hydration boosts metabolism',
+    'Consistency beats perfection',
+    'Protein helps build and repair muscle',
+    'Healthy fats are essential for brain function',
   ];
 
   @override
@@ -5452,6 +5469,18 @@ class _FoodAnalysisLoadingIndicatorState extends State<_FoodAnalysisLoadingIndic
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat();
+
+    // Step bounce animation (triggers when step changes)
+    _stepBounceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _stepBounceAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 50),
+    ]).animate(CurvedAnimation(parent: _stepBounceController, curve: Curves.easeOut));
+
+    _lastStep = widget.currentStep;
 
     // Cycle through tips every 2.5 seconds
     _startTipCycler();
@@ -5482,9 +5511,20 @@ class _FoodAnalysisLoadingIndicatorState extends State<_FoodAnalysisLoadingIndic
   }
 
   @override
+  void didUpdateWidget(covariant _FoodAnalysisLoadingIndicator oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Trigger bounce animation when step changes
+    if (widget.currentStep != _lastStep) {
+      _lastStep = widget.currentStep;
+      _stepBounceController.forward(from: 0);
+    }
+  }
+
+  @override
   void dispose() {
     _pulseController.dispose();
     _rotateController.dispose();
+    _stepBounceController.dispose();
     super.dispose();
   }
 
@@ -5554,26 +5594,34 @@ class _FoodAnalysisLoadingIndicatorState extends State<_FoodAnalysisLoadingIndic
                             },
                           ),
                         ),
-                        // Step counter with pulse
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '${widget.currentStep}/${widget.totalSteps}',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: teal,
+                        // Step counter with bounce animation on step change
+                        AnimatedBuilder(
+                          animation: _stepBounceAnimation,
+                          builder: (context, child) {
+                            return Transform.scale(
+                              scale: _stepBounceAnimation.value,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '${widget.currentStep}/${widget.totalSteps}',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: teal,
+                                    ),
+                                  ),
+                                  Text(
+                                    'steps',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: textMuted,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            Text(
-                              'steps',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: textMuted,
-                              ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
                       ],
                     ),

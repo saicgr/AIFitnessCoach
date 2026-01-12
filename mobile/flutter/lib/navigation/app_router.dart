@@ -986,6 +986,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             challengeData: data['challengeData'] as Map<String, dynamic>?,
             personalRecords: data['personalRecords'] as List<PersonalRecordInfo>?,
             performanceComparison: data['performanceComparison'] as PerformanceComparisonInfo?,
+            plannedExercises: data['plannedExercises'] as List<Map<String, dynamic>>?,
+            exerciseTimeSeconds: data['exerciseTimeSeconds'] as Map<int, int>?,
+            // Heart rate data from watch (if available)
+            heartRateReadings: data['heartRateReadings'] as List<HeartRateReadingData>?,
+            avgHeartRate: data['avgHeartRate'] as int?,
+            maxHeartRate: data['maxHeartRate'] as int?,
+            minHeartRate: data['minHeartRate'] as int?,
           );
         },
       ),

@@ -60,6 +60,8 @@ if [ "$BOOTED_DEVICES" -eq "0" ]; then
 else
     echo -e "${GREEN}Simulator is already running.${NC}"
     DEVICE_ID=$(xcrun simctl list devices booted | grep "iPhone" | head -1 | grep -oE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}')
+    # Ensure Simulator app is visible
+    open -a Simulator
 fi
 
 # Flutter clean

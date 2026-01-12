@@ -2,96 +2,51 @@
 ///
 /// This addresses user feedback: "countdown timer sux plus cheesy applause smh.
 /// sounds should be customizable."
+///
+/// Sound Categories:
+/// - Countdown (3, 2, 1): beep, chime, voice, tick, none
+/// - Rest Timer End: beep, chime, gong, none
+/// - Exercise Complete: chime, bell, ding, pop, whoosh, none
+/// - Workout Complete: chime, bell, success, fanfare, none (NO APPLAUSE!)
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/sound_preferences_provider.dart';
 import '../widgets/setting_tile.dart';
 import '../widgets/section_header.dart';
 
 /// Available countdown sound types
-enum CountdownSoundType { beep, chime, voice, tick, none }
+const List<String> countdownSoundTypes = [
+  'beep',
+  'chime',
+  'voice',
+  'tick',
+  'none'
+];
 
-/// Available completion sound types (NO APPLAUSE)
-enum CompletionSoundType { chime, bell, success, fanfare, none }
+/// Available rest timer sound types
+const List<String> restTimerSoundTypes = ['beep', 'chime', 'gong', 'none'];
 
-/// Provider for sound preferences (simplified state)
-final soundPreferencesProvider = StateNotifierProvider<SoundPreferencesNotifier, SoundPreferencesState>((ref) {
-  return SoundPreferencesNotifier();
-});
+/// Available exercise completion sound types
+const List<String> exerciseCompletionSoundTypes = [
+  'chime',
+  'bell',
+  'ding',
+  'pop',
+  'whoosh',
+  'none'
+];
 
-class SoundPreferencesState {
-  final bool countdownSoundEnabled;
-  final CountdownSoundType countdownSoundType;
-  final bool completionSoundEnabled;
-  final CompletionSoundType completionSoundType;
-  final bool restTimerSoundEnabled;
-  final CountdownSoundType restTimerSoundType;
-  final double soundEffectsVolume;
-
-  SoundPreferencesState({
-    this.countdownSoundEnabled = true,
-    this.countdownSoundType = CountdownSoundType.beep,
-    this.completionSoundEnabled = true,
-    this.completionSoundType = CompletionSoundType.chime,
-    this.restTimerSoundEnabled = true,
-    this.restTimerSoundType = CountdownSoundType.beep,
-    this.soundEffectsVolume = 0.8,
-  });
-
-  SoundPreferencesState copyWith({
-    bool? countdownSoundEnabled,
-    CountdownSoundType? countdownSoundType,
-    bool? completionSoundEnabled,
-    CompletionSoundType? completionSoundType,
-    bool? restTimerSoundEnabled,
-    CountdownSoundType? restTimerSoundType,
-    double? soundEffectsVolume,
-  }) {
-    return SoundPreferencesState(
-      countdownSoundEnabled: countdownSoundEnabled ?? this.countdownSoundEnabled,
-      countdownSoundType: countdownSoundType ?? this.countdownSoundType,
-      completionSoundEnabled: completionSoundEnabled ?? this.completionSoundEnabled,
-      completionSoundType: completionSoundType ?? this.completionSoundType,
-      restTimerSoundEnabled: restTimerSoundEnabled ?? this.restTimerSoundEnabled,
-      restTimerSoundType: restTimerSoundType ?? this.restTimerSoundType,
-      soundEffectsVolume: soundEffectsVolume ?? this.soundEffectsVolume,
-    );
-  }
-}
-
-class SoundPreferencesNotifier extends StateNotifier<SoundPreferencesState> {
-  SoundPreferencesNotifier() : super(SoundPreferencesState());
-
-  void setCountdownEnabled(bool enabled) {
-    state = state.copyWith(countdownSoundEnabled: enabled);
-  }
-
-  void setCountdownType(CountdownSoundType type) {
-    state = state.copyWith(countdownSoundType: type);
-  }
-
-  void setCompletionEnabled(bool enabled) {
-    state = state.copyWith(completionSoundEnabled: enabled);
-  }
-
-  void setCompletionType(CompletionSoundType type) {
-    state = state.copyWith(completionSoundType: type);
-  }
-
-  void setRestTimerEnabled(bool enabled) {
-    state = state.copyWith(restTimerSoundEnabled: enabled);
-  }
-
-  void setRestTimerType(CountdownSoundType type) {
-    state = state.copyWith(restTimerSoundType: type);
-  }
-
-  void setVolume(double volume) {
-    state = state.copyWith(soundEffectsVolume: volume);
-  }
-}
+/// Available workout completion sound types (NO APPLAUSE)
+const List<String> workoutCompletionSoundTypes = [
+  'chime',
+  'bell',
+  'success',
+  'fanfare',
+  'none'
+];
 
 class SoundSettingsSection extends ConsumerWidget {
   const SoundSettingsSection({super.key});
@@ -102,7 +57,8 @@ class SoundSettingsSection extends ConsumerWidget {
     final notifier = ref.read(soundPreferencesProvider.notifier);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +73,7 @@ class SoundSettingsSection extends ConsumerWidget {
           clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
-              // Countdown sounds
+              // Countdown sounds (3, 2, 1)
               SettingTile(
                 icon: Icons.timer_outlined,
                 iconColor: AppColors.cyan,
@@ -125,90 +81,94 @@ class SoundSettingsSection extends ConsumerWidget {
                 subtitle: 'Play sounds during countdown (3, 2, 1)',
                 trailing: Switch.adaptive(
                   value: prefs.countdownSoundEnabled,
-                  onChanged: notifier.setCountdownEnabled,
+                  onChanged: (enabled) => notifier.setCountdownEnabled(enabled),
                   activeColor: AppColors.cyan,
                 ),
               ),
               if (prefs.countdownSoundEnabled) ...[
-                Builder(
-                  builder: (context) {
-                    final screenWidth = MediaQuery.of(context).size.width;
-                    final leftPadding = screenWidth < 380 ? 32.0 : 56.0;
-                    return Padding(
-                      padding: EdgeInsets.only(left: leftPadding, right: 16, bottom: 12),
-                      child: _SoundTypeSelector<CountdownSoundType>(
-                        value: prefs.countdownSoundType,
-                        options: CountdownSoundType.values,
-                        onChanged: notifier.setCountdownType,
-                        getName: _getCountdownTypeName,
-                        isDark: isDark,
-                      ),
-                    );
-                  },
+                _buildSoundTypeSelector(
+                  context: context,
+                  value: prefs.countdownSoundType,
+                  options: countdownSoundTypes,
+                  onChanged: (type) => notifier.setCountdownType(type),
+                  onPreview: (type) => notifier.playPreview('countdown', type),
+                  isDark: isDark,
                 ),
               ],
               Divider(height: 1, color: cardBorder),
 
-              // Completion sounds (NO APPLAUSE)
-              SettingTile(
-                icon: Icons.celebration_outlined,
-                iconColor: AppColors.success,
-                title: 'Completion Sounds',
-                subtitle: 'Play sound when workout ends',
-                trailing: Switch.adaptive(
-                  value: prefs.completionSoundEnabled,
-                  onChanged: notifier.setCompletionEnabled,
-                  activeColor: AppColors.cyan,
-                ),
-              ),
-              if (prefs.completionSoundEnabled) ...[
-                Builder(
-                  builder: (context) {
-                    final screenWidth = MediaQuery.of(context).size.width;
-                    final leftPadding = screenWidth < 380 ? 32.0 : 56.0;
-                    return Padding(
-                      padding: EdgeInsets.only(left: leftPadding, right: 16, bottom: 12),
-                      child: _SoundTypeSelector<CompletionSoundType>(
-                        value: prefs.completionSoundType,
-                        options: CompletionSoundType.values,
-                        onChanged: notifier.setCompletionType,
-                        getName: _getCompletionTypeName,
-                        isDark: isDark,
-                      ),
-                    );
-                  },
-                ),
-              ],
-              Divider(height: 1, color: cardBorder),
-
-              // Rest timer sounds
+              // Rest timer end sounds
               SettingTile(
                 icon: Icons.hourglass_empty,
                 iconColor: AppColors.warning,
-                title: 'Rest Timer Sounds',
+                title: 'Rest Timer End',
                 subtitle: 'Play sound when rest period ends',
                 trailing: Switch.adaptive(
                   value: prefs.restTimerSoundEnabled,
-                  onChanged: notifier.setRestTimerEnabled,
+                  onChanged: (enabled) => notifier.setRestTimerEnabled(enabled),
                   activeColor: AppColors.cyan,
                 ),
               ),
               if (prefs.restTimerSoundEnabled) ...[
-                Builder(
-                  builder: (context) {
-                    final screenWidth = MediaQuery.of(context).size.width;
-                    final leftPadding = screenWidth < 380 ? 32.0 : 56.0;
-                    return Padding(
-                      padding: EdgeInsets.only(left: leftPadding, right: 16, bottom: 12),
-                      child: _SoundTypeSelector<CountdownSoundType>(
-                        value: prefs.restTimerSoundType,
-                        options: CountdownSoundType.values,
-                        onChanged: notifier.setRestTimerType,
-                        getName: _getCountdownTypeName,
-                        isDark: isDark,
-                      ),
-                    );
-                  },
+                _buildSoundTypeSelector(
+                  context: context,
+                  value: prefs.restTimerSoundType,
+                  options: restTimerSoundTypes,
+                  onChanged: (type) => notifier.setRestTimerType(type),
+                  onPreview: (type) => notifier.playPreview('rest_end', type),
+                  isDark: isDark,
+                ),
+              ],
+              Divider(height: 1, color: cardBorder),
+
+              // Exercise completion sounds (NEW)
+              SettingTile(
+                icon: Icons.fitness_center,
+                iconColor: AppColors.primary,
+                title: 'Exercise Completion',
+                subtitle: 'Play sound when all sets of exercise done',
+                trailing: Switch.adaptive(
+                  value: prefs.exerciseCompletionSoundEnabled,
+                  onChanged: (enabled) =>
+                      notifier.setExerciseCompletionEnabled(enabled),
+                  activeColor: AppColors.cyan,
+                ),
+              ),
+              if (prefs.exerciseCompletionSoundEnabled) ...[
+                _buildSoundTypeSelector(
+                  context: context,
+                  value: prefs.exerciseCompletionSoundType,
+                  options: exerciseCompletionSoundTypes,
+                  onChanged: (type) => notifier.setExerciseCompletionType(type),
+                  onPreview: (type) =>
+                      notifier.playPreview('exercise_complete', type),
+                  isDark: isDark,
+                ),
+              ],
+              Divider(height: 1, color: cardBorder),
+
+              // Workout completion sounds (NO APPLAUSE)
+              SettingTile(
+                icon: Icons.celebration_outlined,
+                iconColor: AppColors.success,
+                title: 'Workout Completion',
+                subtitle: 'Play sound when entire workout ends',
+                trailing: Switch.adaptive(
+                  value: prefs.workoutCompletionSoundEnabled,
+                  onChanged: (enabled) =>
+                      notifier.setWorkoutCompletionEnabled(enabled),
+                  activeColor: AppColors.cyan,
+                ),
+              ),
+              if (prefs.workoutCompletionSoundEnabled) ...[
+                _buildSoundTypeSelector(
+                  context: context,
+                  value: prefs.workoutCompletionSoundType,
+                  options: workoutCompletionSoundTypes,
+                  onChanged: (type) => notifier.setWorkoutCompletionType(type),
+                  onPreview: (type) =>
+                      notifier.playPreview('workout_complete', type),
+                  isDark: isDark,
                 ),
               ],
               Divider(height: 1, color: cardBorder),
@@ -224,7 +184,7 @@ class SoundSettingsSection extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Slider(
                   value: prefs.soundEffectsVolume,
-                  onChanged: notifier.setVolume,
+                  onChanged: (volume) => notifier.setVolume(volume),
                   min: 0.0,
                   max: 1.0,
                   divisions: 10,
@@ -239,84 +199,90 @@ class SoundSettingsSection extends ConsumerWidget {
     );
   }
 
-  String _getCountdownTypeName(CountdownSoundType type) {
-    switch (type) {
-      case CountdownSoundType.beep:
-        return 'Beep';
-      case CountdownSoundType.chime:
-        return 'Chime';
-      case CountdownSoundType.voice:
-        return 'Voice';
-      case CountdownSoundType.tick:
-        return 'Tick';
-      case CountdownSoundType.none:
-        return 'None';
-    }
-  }
-
-  String _getCompletionTypeName(CompletionSoundType type) {
-    switch (type) {
-      case CompletionSoundType.chime:
-        return 'Chime';
-      case CompletionSoundType.bell:
-        return 'Bell';
-      case CompletionSoundType.success:
-        return 'Success';
-      case CompletionSoundType.fanfare:
-        return 'Fanfare';
-      case CompletionSoundType.none:
-        return 'None';
-      // NOTE: No 'applause' - user specifically hated it
-    }
-  }
-}
-
-class _SoundTypeSelector<T> extends StatelessWidget {
-  final T value;
-  final List<T> options;
-  final void Function(T) onChanged;
-  final String Function(T) getName;
-  final bool isDark;
-
-  const _SoundTypeSelector({
-    required this.value,
-    required this.options,
-    required this.onChanged,
-    required this.getName,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+  Widget _buildSoundTypeSelector({
+    required BuildContext context,
+    required String value,
+    required List<String> options,
+    required void Function(String) onChanged,
+    required void Function(String) onPreview,
+    required bool isDark,
+  }) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final leftPadding = screenWidth < 380 ? 32.0 : 56.0;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final surface = isDark ? AppColors.surface : AppColorsLight.surface;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: options.map((option) {
-        final isSelected = option == value;
-        return ChoiceChip(
-          label: Text(
-            getName(option),
-            style: TextStyle(
-              color: isSelected ? Colors.white : textSecondary,
-              fontSize: 13,
+    return Padding(
+      padding: EdgeInsets.only(left: leftPadding, right: 16, bottom: 12),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: options.map((option) {
+          final isSelected = option == value;
+          return GestureDetector(
+            onLongPress: option != 'none' ? () => onPreview(option) : null,
+            child: ChoiceChip(
+              label: Text(
+                _formatSoundTypeName(option),
+                style: TextStyle(
+                  color: isSelected ? Colors.white : textSecondary,
+                  fontSize: 13,
+                ),
+              ),
+              selected: isSelected,
+              onSelected: (_) {
+                onChanged(option);
+                // Play preview on selection
+                if (option != 'none') {
+                  onPreview(option);
+                }
+              },
+              selectedColor: AppColors.cyan,
+              backgroundColor: surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: isSelected ? AppColors.cyan : cardBorder,
+                ),
+              ),
             ),
-          ),
-          selected: isSelected,
-          onSelected: (_) => onChanged(option),
-          selectedColor: AppColors.cyan,
-          backgroundColor: surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(
-              color: isSelected ? AppColors.cyan : cardBorder,
-            ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
+  }
+
+  String _formatSoundTypeName(String type) {
+    switch (type) {
+      case 'beep':
+        return 'Beep';
+      case 'chime':
+        return 'Chime';
+      case 'voice':
+        return 'Voice';
+      case 'tick':
+        return 'Tick';
+      case 'gong':
+        return 'Gong';
+      case 'bell':
+        return 'Bell';
+      case 'ding':
+        return 'Ding';
+      case 'pop':
+        return 'Pop';
+      case 'whoosh':
+        return 'Whoosh';
+      case 'success':
+        return 'Success';
+      case 'fanfare':
+        return 'Fanfare';
+      case 'none':
+        return 'None';
+      default:
+        return type[0].toUpperCase() + type.substring(1);
+    }
   }
 }
