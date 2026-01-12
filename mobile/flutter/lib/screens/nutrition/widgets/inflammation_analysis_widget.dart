@@ -297,11 +297,11 @@ class _InflammationScoreHeader extends StatelessWidget {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
-    // Color based on score (higher = better = green)
+    // Color based on score (lower = healthier = green, higher = inflammatory = red)
     Color scoreColor;
-    if (score >= 7) {
+    if (score <= 3) {
       scoreColor = InflammationColors.antiInflammatory;
-    } else if (score >= 4) {
+    } else if (score <= 6) {
       scoreColor = AppColors.warning;
     } else {
       scoreColor = InflammationColors.inflammatory;

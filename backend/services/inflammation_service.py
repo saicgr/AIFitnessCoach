@@ -227,7 +227,7 @@ class InflammationService:
                     "overall_score": overall_score,
                     "inflammatory_count": inflammatory_count,
                     "from_cache": from_cache,
-                    "is_healthy": overall_score >= 6,
+                    "is_healthy": overall_score <= 4,
                 },
             )
         except Exception as e:

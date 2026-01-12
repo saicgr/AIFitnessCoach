@@ -210,12 +210,12 @@ class InflammationAnalysis {
     }
   }
 
-  /// Get description based on overall score
+  /// Get description based on overall score (1=healthiest, 10=most inflammatory)
   String get scoreDescription {
-    if (overallScore >= 9) return 'Excellent - Highly Anti-Inflammatory';
-    if (overallScore >= 7) return 'Good - Anti-Inflammatory';
-    if (overallScore >= 5) return 'Moderate - Mostly Neutral';
-    if (overallScore >= 3) return 'Poor - Inflammatory';
+    if (overallScore <= 2) return 'Excellent - Low Inflammation';
+    if (overallScore <= 4) return 'Good - Anti-Inflammatory';
+    if (overallScore <= 6) return 'Moderate - Mostly Neutral';
+    if (overallScore <= 8) return 'Poor - Inflammatory';
     return 'Very Poor - Highly Inflammatory';
   }
 

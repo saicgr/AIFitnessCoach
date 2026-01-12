@@ -2845,7 +2845,7 @@ A comprehensive feature allowing users to set weekly challenges like "How many p
 | 71 | Manual Barcode Match | Match scanned barcode to alternative | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → Scan |
 | 72 | Ingredient Inflammation Analysis | AI-powered barcode ingredient analysis for inflammatory properties | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → Scan |
 | 73 | Color-Coded Inflammation Display | RED inflammatory, GREEN anti-inflammatory ingredient highlighting | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Nutrition → Scan |
-| 74 | Inflammation Score | Overall product inflammation score (1-10 scale) | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → Scan |
+| 74 | Inflammation Score | Overall product inflammation score (1=healthy, 10=inflammatory) | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → Scan |
 | 75 | Inflammation Scan History | Track user's barcode scan history with inflammation data | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → History |
 | 76 | Inflammation Scan Favorites | Favorite/unfavorite scanned products | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → History |
 | 77 | Inflammation Scan Notes | Add personal notes to scanned products | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → History |

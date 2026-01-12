@@ -1110,30 +1110,18 @@ Rules: Use USDA data. Sum totals from items. Account for prep methods (fried add
 
 {product_context}Ingredients: {ingredients_text}
 
-INFLAMMATION SCORING CRITERIA:
+INFLAMMATION SCORING CRITERIA (1 = lowest inflammation/healthiest, 10 = highest inflammation/unhealthiest):
 
-HIGHLY INFLAMMATORY (Score 1-2):
-- Refined sugars, high-fructose corn syrup
-- Trans fats, partially hydrogenated oils
-- Heavily processed seed/vegetable oils (soybean oil, corn oil, canola oil)
-- Artificial sweeteners (aspartame, sucralose)
-- MSG, artificial colors, artificial preservatives
-- Refined carbohydrates, white flour
+EXCELLENT - LOW INFLAMMATION (Score 1-2):
+- Pure water, mineral water, sparkling water (essential for hydration, zero inflammatory properties)
+- Turmeric/curcumin
+- Omega-3 rich foods (fish oil, flaxseed)
+- Green leafy vegetables
+- Berries (blueberries, strawberries)
+- Ginger, garlic
+- Green tea extract
 
-MODERATELY INFLAMMATORY (Score 3-4):
-- Excessive saturated fats from processed meats
-- Refined grains (some white rice, white bread ingredients)
-- Excessive sodium compounds
-- Some preservatives (sodium benzoate, potassium sorbate)
-- Conventional dairy in excess
-
-NEUTRAL (Score 5-6):
-- Water, salt in moderate amounts
-- Natural flavors (depends on source)
-- Many starches
-- Unprocessed ingredients with no known inflammatory effect
-
-ANTI-INFLAMMATORY (Score 7-8):
+GOOD - ANTI-INFLAMMATORY (Score 3-4):
 - Whole grains (oats, quinoa, brown rice)
 - Legumes, beans
 - Many vegetables and fruits
@@ -1141,13 +1129,26 @@ ANTI-INFLAMMATORY (Score 7-8):
 - Nuts and seeds
 - Natural herbs and spices
 
-HIGHLY ANTI-INFLAMMATORY (Score 9-10):
-- Turmeric/curcumin
-- Omega-3 rich foods (fish oil, flaxseed)
-- Green leafy vegetables
-- Berries (blueberries, strawberries)
-- Ginger, garlic
-- Green tea extract
+NEUTRAL (Score 5-6):
+- Salt in moderate amounts
+- Natural flavors (depends on source)
+- Many starches
+- Unprocessed ingredients with no known inflammatory effect
+
+POOR - MODERATELY INFLAMMATORY (Score 7-8):
+- Excessive saturated fats from processed meats
+- Refined grains (some white rice, white bread ingredients)
+- Excessive sodium compounds
+- Some preservatives (sodium benzoate, potassium sorbate)
+- Conventional dairy in excess
+
+VERY POOR - HIGHLY INFLAMMATORY (Score 9-10):
+- Refined sugars, high-fructose corn syrup
+- Trans fats, partially hydrogenated oils
+- Heavily processed seed/vegetable oils (soybean oil, corn oil, canola oil)
+- Artificial sweeteners (aspartame, sucralose)
+- MSG, artificial colors, artificial preservatives
+- Refined carbohydrates, white flour
 
 Return ONLY valid JSON in this exact format (no markdown, no explanation):
 {{
@@ -1173,15 +1174,15 @@ Return ONLY valid JSON in this exact format (no markdown, no explanation):
 }}
 
 IMPORTANT RULES:
-1. Score each ingredient individually from 1-10
+1. Score each ingredient individually from 1-10 (1=healthiest/lowest inflammation, 10=unhealthiest/highest inflammation)
 2. Calculate overall_score as a weighted average (inflammatory ingredients weigh more heavily)
 3. overall_category must be one of: highly_inflammatory, moderately_inflammatory, neutral, anti_inflammatory, highly_anti_inflammatory
-4. is_inflammatory = true if score <= 4
+4. is_inflammatory = true if score >= 7
 5. is_additive = true for preservatives, colorings, emulsifiers, stabilizers
 6. Keep the summary consumer-friendly, avoid jargon
 7. If you cannot identify an ingredient, use category "unknown" with score 5
-8. List ALL inflammatory ingredients (score 1-4) in inflammatory_ingredients
-9. List ALL anti-inflammatory ingredients (score 7-10) in anti_inflammatory_ingredients
+8. List ALL inflammatory ingredients (score 7-10) in inflammatory_ingredients
+9. List ALL anti-inflammatory ingredients (score 1-4) in anti_inflammatory_ingredients
 10. List ALL additives/preservatives in additives_found'''
 
         try:
@@ -1212,18 +1213,18 @@ IMPORTANT RULES:
                 "neutral", "anti_inflammatory", "highly_anti_inflammatory"
             ]
             if result.get("overall_category") not in valid_categories:
-                # Derive from score
+                # Derive from score (1=healthiest, 10=most inflammatory)
                 score = result.get("overall_score", 5)
                 if score <= 2:
-                    result["overall_category"] = "highly_inflammatory"
+                    result["overall_category"] = "highly_anti_inflammatory"
                 elif score <= 4:
-                    result["overall_category"] = "moderately_inflammatory"
+                    result["overall_category"] = "anti_inflammatory"
                 elif score <= 6:
                     result["overall_category"] = "neutral"
                 elif score <= 8:
-                    result["overall_category"] = "anti_inflammatory"
+                    result["overall_category"] = "moderately_inflammatory"
                 else:
-                    result["overall_category"] = "highly_anti_inflammatory"
+                    result["overall_category"] = "highly_inflammatory"
 
             # Ensure required fields exist
             result.setdefault("ingredient_analyses", [])
