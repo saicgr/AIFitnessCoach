@@ -210,11 +210,11 @@ class TestDifficultyRatios:
 class TestDifficultyCeilings:
     """Test the difficulty ceiling constants (used for ranking preferences)."""
 
-    def test_beginner_ceiling_is_3(self):
-        assert DIFFICULTY_CEILING["beginner"] == 3
+    def test_beginner_ceiling_is_6(self):
+        assert DIFFICULTY_CEILING["beginner"] == 6
 
-    def test_intermediate_ceiling_is_6(self):
-        assert DIFFICULTY_CEILING["intermediate"] == 6
+    def test_intermediate_ceiling_is_8(self):
+        assert DIFFICULTY_CEILING["intermediate"] == 8
 
     def test_advanced_ceiling_is_10(self):
         assert DIFFICULTY_CEILING["advanced"] == 10

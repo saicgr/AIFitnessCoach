@@ -353,13 +353,13 @@ class TestAdaptiveServiceWithNullFitnessLevel:
 class TestDifficultyCeilingConstants:
     """Test difficulty ceiling constants are correctly defined."""
 
-    def test_beginner_ceiling_is_3(self):
-        """Beginner ceiling should be 3."""
-        assert DIFFICULTY_CEILING["beginner"] == 3
+    def test_beginner_ceiling_is_6(self):
+        """Beginner ceiling should be 6."""
+        assert DIFFICULTY_CEILING["beginner"] == 6
 
-    def test_intermediate_ceiling_is_6(self):
-        """Intermediate ceiling should be 6."""
-        assert DIFFICULTY_CEILING["intermediate"] == 6
+    def test_intermediate_ceiling_is_8(self):
+        """Intermediate ceiling should be 8."""
+        assert DIFFICULTY_CEILING["intermediate"] == 8
 
     def test_advanced_ceiling_is_10(self):
         """Advanced ceiling should be 10 (no limit)."""

@@ -238,23 +238,23 @@ class TestDifficultyCeilingModification:
 
     def test_positive_adjustment_increases_ceiling(self):
         """Test that positive adjustment increases the difficulty ceiling."""
-        base = DIFFICULTY_CEILING["beginner"]  # 3
+        base = DIFFICULTY_CEILING["beginner"]  # 6
 
         result_plus_1 = get_adjusted_difficulty_ceiling("beginner", 1)
         result_plus_2 = get_adjusted_difficulty_ceiling("beginner", 2)
 
-        assert result_plus_1 == base + 1  # 4
-        assert result_plus_2 == base + 2  # 5
+        assert result_plus_1 == base + 1  # 7
+        assert result_plus_2 == base + 2  # 8
 
     def test_negative_adjustment_decreases_ceiling(self):
         """Test that negative adjustment decreases the difficulty ceiling."""
-        base = DIFFICULTY_CEILING["intermediate"]  # 6
+        base = DIFFICULTY_CEILING["intermediate"]  # 8
 
         result_minus_1 = get_adjusted_difficulty_ceiling("intermediate", -1)
         result_minus_2 = get_adjusted_difficulty_ceiling("intermediate", -2)
 
-        assert result_minus_1 == base - 1  # 5
-        assert result_minus_2 == base - 2  # 4
+        assert result_minus_1 == base - 1  # 7
+        assert result_minus_2 == base - 2  # 6
 
     def test_ceiling_clamped_to_max_10(self):
         """Test that adjusted ceiling is clamped to maximum of 10."""
@@ -532,6 +532,6 @@ class TestThresholdConstants:
 
     def test_difficulty_ceilings_are_correct(self):
         """Test that difficulty ceilings are set correctly."""
-        assert DIFFICULTY_CEILING["beginner"] == 3
-        assert DIFFICULTY_CEILING["intermediate"] == 6
+        assert DIFFICULTY_CEILING["beginner"] == 6
+        assert DIFFICULTY_CEILING["intermediate"] == 8
         assert DIFFICULTY_CEILING["advanced"] == 10

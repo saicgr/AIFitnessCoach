@@ -830,8 +830,8 @@ class TestDifficultyFilter:
         """Verify difficulty ceiling values are correct (used for ranking preferences)."""
         from services.exercise_rag.service import DIFFICULTY_CEILING
 
-        assert DIFFICULTY_CEILING["beginner"] == 3, "Beginner ceiling must be 3"
-        assert DIFFICULTY_CEILING["intermediate"] == 6, "Intermediate ceiling must be 6"
+        assert DIFFICULTY_CEILING["beginner"] == 6, "Beginner ceiling must be 6"
+        assert DIFFICULTY_CEILING["intermediate"] == 8, "Intermediate ceiling must be 8"
         assert DIFFICULTY_CEILING["advanced"] == 10, "Advanced ceiling must be 10"
 
     def test_difficulty_ratios_exist(self):
