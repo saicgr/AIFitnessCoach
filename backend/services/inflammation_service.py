@@ -193,6 +193,9 @@ class InflammationService:
             .upsert(data, on_conflict="barcode")\
             .execute()
 
+        if not result.data:
+            raise Exception("Failed to store inflammation analysis")
+
         return result.data[0]["id"]
 
     async def _record_user_scan(self, user_id: str, analysis_id: str) -> None:

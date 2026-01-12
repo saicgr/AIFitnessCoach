@@ -975,10 +975,7 @@ async def generate_weekly_workouts(http_request: Request, request: GenerateWeekl
 
             except Exception as e:
                 logger.error(f"Error generating workout: {e}")
-                exercises = [{"name": "Push-ups", "sets": 3, "reps": 12}, {"name": "Squats", "sets": 3, "reps": 15}]
-                workout_name = f"{focus.title()} Workout"
-                workout_type = "strength"
-                difficulty = "medium"
+                raise  # No fallback - let errors propagate per CLAUDE.md guidelines
 
             workout_db_data = {
                 "user_id": request.user_id,
@@ -1502,15 +1499,7 @@ async def generate_remaining_workouts(http_request: Request, request: GenerateMo
 
             except Exception as e:
                 logger.error(f"Error generating remaining workout: {e}")
-                return {
-                    "workout_date": workout_date,
-                    "focus": focus,
-                    "name": f"{focus.title()} Workout",
-                    "type": "strength",
-                    "difficulty": "medium",
-                    "exercises": [{"name": "Push-ups", "sets": 3, "reps": 12}],
-                    "exercises_used": ["Push-ups"],
-                }
+                raise  # No fallback - let errors propagate per CLAUDE.md guidelines
 
         for batch_start in range(0, len(workout_dates), BATCH_SIZE):
             batch_end = min(batch_start + BATCH_SIZE, len(workout_dates))

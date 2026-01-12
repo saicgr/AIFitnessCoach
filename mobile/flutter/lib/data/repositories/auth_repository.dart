@@ -338,6 +338,29 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Update user profile fields
+  /// [updates] - Map of field names to new values (e.g., {'weight_unit': 'lbs'})
+  Future<void> updateUserProfile(Map<String, dynamic> updates) async {
+    if (state.user == null) {
+      throw Exception('No user logged in');
+    }
+
+    try {
+      final userId = state.user!.id;
+      await _repository._apiClient.patch(
+        '${ApiConstants.users}/$userId',
+        data: updates,
+      );
+
+      // Refresh user data from server to get updated values
+      await refreshUser();
+      debugPrint('✅ [Auth] Updated user profile: $updates');
+    } catch (e) {
+      debugPrint('❌ [Auth] Update user profile error: $e');
+      rethrow;
+    }
+  }
+
   /// Reset coach selection (for start over)
   Future<void> markCoachNotSelected() async {
     if (state.user != null) {

@@ -19,6 +19,8 @@ class UserPreferences(BaseModel):
     # Warmup and stretch duration preferences (1-15 minutes each)
     warmup_duration_minutes: int = Field(default=5, ge=1, le=15)
     stretch_duration_minutes: int = Field(default=5, ge=1, le=15)
+    # Weight unit preference - syncs across app
+    weight_unit: str = Field(default="kg", max_length=5)  # 'kg' or 'lbs'
 
 
 class UserCreate(BaseModel):
@@ -52,6 +54,8 @@ class UserCreate(BaseModel):
     # Progression and workout type preferences
     progression_pace: Optional[str] = Field(default=None, max_length=20)  # slow, medium, fast
     workout_type_preference: Optional[str] = Field(default=None, max_length=20)  # strength, cardio, mixed
+    # Weight unit preference - 'kg' or 'lbs'
+    weight_unit: Optional[str] = Field(default="kg", max_length=5)
 
 
 class NotificationPreferences(BaseModel):
@@ -138,6 +142,8 @@ class UserUpdate(BaseModel):
     wake_time: Optional[str] = Field(default=None, max_length=10)  # HH:MM format, e.g., "07:00"
     sleep_time: Optional[str] = Field(default=None, max_length=10)  # HH:MM format, e.g., "23:00"
     coach_id: Optional[str] = Field(default=None, max_length=50)  # Selected coach ID
+    # Weight unit preference - 'kg' or 'lbs'
+    weight_unit: Optional[str] = Field(default=None, max_length=5)
 
 
 class User(BaseModel):
@@ -165,6 +171,8 @@ class User(BaseModel):
     date_of_birth: Optional[str] = Field(default=None, max_length=20)
     gender: Optional[str] = Field(default=None, max_length=20)  # 'male', 'female', or 'other'
     activity_level: Optional[str] = Field(default=None, max_length=50)
+    # Weight unit preference - syncs across app
+    weight_unit: str = Field(default="kg", max_length=5)  # 'kg' or 'lbs'
     # Accessibility settings
     accessibility_mode: Optional[str] = Field(default="standard", max_length=20)  # 'standard', 'senior', 'kids'
     accessibility_settings: Optional[dict] = None  # Detailed settings

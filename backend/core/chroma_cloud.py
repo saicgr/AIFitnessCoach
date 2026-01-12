@@ -135,6 +135,63 @@ class ChromaCloudClient:
         except Exception:
             return 0
 
+    def get_collection_embedding_dimension(self, collection_name: str) -> Optional[int]:
+        """
+        Get the embedding dimension of a collection by sampling one document.
+        Returns None if collection is empty or doesn't exist.
+        """
+        try:
+            collection = self.client.get_collection(name=collection_name)
+            if collection.count() == 0:
+                return None
+
+            # Sample one document to get embedding dimension
+            result = collection.get(
+                limit=1,
+                include=["embeddings"]
+            )
+
+            if result and result.get("embeddings") and len(result["embeddings"]) > 0:
+                return len(result["embeddings"][0])
+            return None
+        except Exception:
+            return None
+
+    def check_embedding_dimensions(self, expected_dim: int = 768) -> Dict[str, any]:
+        """
+        Check all collections for embedding dimension mismatches.
+
+        Args:
+            expected_dim: Expected embedding dimension (768 for Gemini text-embedding-004)
+
+        Returns:
+            Dict with 'healthy' bool and 'mismatches' list of problematic collections
+        """
+        mismatches = []
+        collections_checked = []
+
+        for collection_name in self.list_collections():
+            dim = self.get_collection_embedding_dimension(collection_name)
+            if dim is not None:
+                collections_checked.append({
+                    "name": collection_name,
+                    "dimension": dim,
+                    "matches": dim == expected_dim
+                })
+                if dim != expected_dim:
+                    mismatches.append({
+                        "name": collection_name,
+                        "actual_dim": dim,
+                        "expected_dim": expected_dim
+                    })
+
+        return {
+            "healthy": len(mismatches) == 0,
+            "expected_dimension": expected_dim,
+            "collections_checked": collections_checked,
+            "mismatches": mismatches
+        }
+
 
 # Singleton instance
 _chroma_cloud_client: Optional[ChromaCloudClient] = None

@@ -5,6 +5,23 @@ import 'exercise.dart';
 
 part 'workout.g.dart';
 
+/// Parse generation_metadata which can be String or Map from API
+Map<String, dynamic>? _parseGenerationMetadata(dynamic value) {
+  if (value == null) return null;
+  if (value is Map<String, dynamic>) return value;
+  if (value is String) {
+    if (value.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(value);
+      if (decoded is Map<String, dynamic>) return decoded;
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+  return null;
+}
+
 @JsonSerializable()
 class Workout extends Equatable {
   final String? id;
@@ -23,7 +40,7 @@ class Workout extends Equatable {
   final int? durationMinutes;
   @JsonKey(name: 'generation_method')
   final String? generationMethod;
-  @JsonKey(name: 'generation_metadata')
+  @JsonKey(name: 'generation_metadata', fromJson: _parseGenerationMetadata)
   final Map<String, dynamic>? generationMetadata; // Contains challenge_exercise for beginners
   @JsonKey(name: 'created_at')
   final String? createdAt;

@@ -43,8 +43,15 @@ import 'widgets/workout_bottom_bar.dart';
 import 'widgets/number_input_widgets.dart';
 import 'widgets/set_row.dart'; // For RpeRirSelector
 import 'widgets/fatigue_alert_modal.dart';
+import 'widgets/workout_plan_drawer.dart';
+import 'widgets/breathing_guide_sheet.dart';
+import 'widgets/hydration_dialog.dart';
+import 'widgets/workout_ai_coach_sheet.dart';
 import '../../data/models/rest_suggestion.dart';
+import '../../data/repositories/hydration_repository.dart';
 import '../../core/services/fatigue_service.dart';
+import '../../core/providers/user_provider.dart';
+import '../../data/services/haptic_service.dart';
 
 /// Active workout screen with modular composition
 class ActiveWorkoutScreen extends ConsumerStatefulWidget {
@@ -96,7 +103,8 @@ class _ActiveWorkoutScreenState
   // Input controllers
   late TextEditingController _repsController;
   late TextEditingController _weightController;
-  bool _useKg = true;
+  bool _useKg = true; // Initialized from user preference
+  bool _unitInitialized = false; // Track if unit has been initialized from user preference
 
   // Set tracking overlay
   bool _showSetOverlay = true;
@@ -108,7 +116,7 @@ class _ActiveWorkoutScreenState
   late List<WorkoutExercise> _exercises;
 
   // Tracking state
-  final int _totalDrinkIntakeMl = 0;
+  int _totalDrinkIntakeMl = 0;
   bool _isActiveRowExpanded = true;
   final List<Map<String, dynamic>> _restIntervals = [];
   DateTime? _lastSetCompletedAt;
@@ -350,7 +358,8 @@ class _ActiveWorkoutScreenState
     // RPE tracking is optional - users can enable it in settings
     _finalizeSetWithRpe();
 
-    HapticFeedback.heavyImpact();
+    // Use HapticService for satisfying set completion feedback
+    HapticService.setCompletion();
     _lastSetCompletedAt = DateTime.now();
   }
 
@@ -449,7 +458,10 @@ class _ActiveWorkoutScreenState
         return;
       }
 
-      // Try AI-powered suggestion
+      // Get AI settings for personalized suggestions
+      final aiSettings = ref.read(aiSettingsProvider);
+
+      // Try AI-powered suggestion with personalized AI settings
       final aiSuggestion = await WeightSuggestionService.getAISuggestion(
         dio: apiClient.dio,
         userId: userId,
@@ -467,6 +479,11 @@ class _ActiveWorkoutScreenState
         isLastSet: isLastSet,
         fitnessLevel: 'intermediate', // TODO: Get from user profile
         goals: [], // TODO: Get from user profile
+        // Pass AI settings for personalized coaching
+        coachingStyle: aiSettings?.coachingStyle ?? 'motivational',
+        communicationTone: aiSettings?.communicationTone ?? 'encouraging',
+        encouragementLevel: aiSettings?.encouragementLevel ?? 0.7,
+        responseLength: aiSettings?.responseLength ?? 'balanced',
       );
 
       if (!mounted) return;
@@ -748,6 +765,9 @@ class _ActiveWorkoutScreenState
             DateTime.now().difference(_currentExerciseStartTime!).inSeconds;
       }
 
+      // Haptic feedback for exercise transition
+      HapticService.exerciseTransition();
+
       setState(() {
         _currentExerciseIndex++;
         _viewingExerciseIndex = _currentExerciseIndex;
@@ -768,6 +788,8 @@ class _ActiveWorkoutScreenState
       _lastExerciseStartedAt = DateTime.now();
     } else {
       // All exercises complete - move to stretch phase
+      // Celebratory haptic for workout completion
+      HapticService.workoutComplete();
       setState(() {
         _currentPhase = WorkoutPhase.stretch;
       });
@@ -1297,6 +1319,12 @@ class _ActiveWorkoutScreenState
 
   @override
   Widget build(BuildContext context) {
+    // Initialize weight unit from user preference on first build
+    if (!_unitInitialized) {
+      _unitInitialized = true;
+      _useKg = ref.read(useKgProvider);
+    }
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
@@ -1392,6 +1420,8 @@ class _ActiveWorkoutScreenState
                   lastSetWeight: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
                       ? _completedSets[_currentExerciseIndex]!.last.weight
                       : null,
+                  // Ask AI Coach button
+                  onAskAICoach: () => context.push('/chat'),
                 ),
               ),
 
@@ -1474,10 +1504,11 @@ class _ActiveWorkoutScreenState
                       setState(() => _isDoneButtonPressed = false),
                   onShowNumberInputDialog: _showNumberInputDialog,
                   onSkipExercise: _skipExercise,
+                  onOpenWorkoutPlan: _showWorkoutPlanDrawer,
                 ),
               ),
 
-            // Bottom bar with exercise strip navigation
+            // Bottom bar with action buttons
             if (!_isResting)
               Positioned(
                 left: 0,
@@ -1501,6 +1532,22 @@ class _ActiveWorkoutScreenState
                   onExerciseTap: (index) {
                     setState(() => _viewingExerciseIndex = index);
                   },
+                  // New action button callbacks
+                  currentCompletedSets:
+                      _completedSets[_currentExerciseIndex]?.length ?? 0,
+                  onAddSet: () => setState(() {
+                    _totalSetsPerExercise[_currentExerciseIndex] =
+                        (_totalSetsPerExercise[_currentExerciseIndex] ?? 3) + 1;
+                  }),
+                  onDeleteSet: () {
+                    final sets = _completedSets[_currentExerciseIndex];
+                    if (sets != null && sets.isNotEmpty) {
+                      setState(() => sets.removeLast());
+                    }
+                  },
+                  onAddWater: _showHydrationDialog,
+                  onOpenBreathingGuide: () => _showBreathingGuide(currentExercise),
+                  onOpenAICoach: () => _showAICoachSheet(currentExercise),
                 ),
               ),
           ],
@@ -1705,6 +1752,186 @@ class _ActiveWorkoutScreenState
     setState(() {
       _completedSets[_viewingExerciseIndex]!.removeAt(setIndex);
     });
+  }
+
+  // ========================================================================
+  // BOTTOM BAR ACTION METHODS
+  // ========================================================================
+
+  /// Show hydration dialog and sync with nutrition tab
+  Future<void> _showHydrationDialog() async {
+    final amount = await showHydrationDialog(
+      context: context,
+      totalIntakeMl: _totalDrinkIntakeMl,
+    );
+
+    if (amount != null && amount > 0) {
+      // Update local workout state
+      setState(() => _totalDrinkIntakeMl += amount);
+
+      // Sync with hydration provider (nutrition tab)
+      final userId = ref.read(currentUserIdProvider);
+      if (userId != null) {
+        final success = await ref.read(hydrationProvider.notifier).logHydration(
+          userId: userId,
+          drinkType: 'water',
+          amountMl: amount,
+          workoutId: widget.workout.id,
+          notes: 'Logged during workout',
+        );
+
+        // Show confirmation
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(success
+                  ? '${amount}ml water logged'
+                  : 'Water logged locally (sync failed)'),
+              duration: const Duration(seconds: 2),
+              backgroundColor: success ? AppColors.success : AppColors.orange,
+            ),
+          );
+        }
+      } else {
+        // User not logged in, just show local confirmation
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${amount}ml water logged'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  /// Show breathing guide for the current exercise
+  void _showBreathingGuide(WorkoutExercise exercise) {
+    showBreathingGuide(
+      context: context,
+      exercise: exercise,
+    );
+  }
+
+  /// Show AI coach chat sheet
+  void _showAICoachSheet(WorkoutExercise exercise) {
+    final currentWeight = double.tryParse(_weightController.text) ?? exercise.weight ?? 0;
+    final completedSetsCount = _completedSets[_currentExerciseIndex]?.length ?? 0;
+    final totalSetsCount = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
+    final remainingExercises = _exercises.sublist(_currentExerciseIndex + 1);
+
+    showWorkoutAICoachSheet(
+      context: context,
+      ref: ref,
+      currentExercise: exercise,
+      completedSets: completedSetsCount,
+      totalSets: totalSetsCount,
+      currentWeight: currentWeight,
+      useKg: _useKg,
+      remainingExercises: remainingExercises,
+    );
+  }
+
+  /// Show workout plan drawer with reorderable exercises
+  void _showWorkoutPlanDrawer() {
+    showWorkoutPlanDrawer(
+      context: context,
+      exercises: _exercises,
+      currentExerciseIndex: _currentExerciseIndex,
+      completedSetsPerExercise: _completedSets.map(
+        (key, value) => MapEntry(key, value.length),
+      ),
+      totalSetsPerExercise: _totalSetsPerExercise,
+      onJumpToExercise: (index) {
+        setState(() {
+          _viewingExerciseIndex = index;
+        });
+      },
+      onReorder: (reorderedExercises) {
+        setState(() {
+          // Rebuild the exercise list with new order
+          _exercises.clear();
+          _exercises.addAll(reorderedExercises);
+        });
+      },
+      onSwapExercise: (index) {
+        // TODO: Open exercise swap sheet
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Swap ${_exercises[index].name}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      },
+      onDeleteExercise: (index) {
+        setState(() {
+          // Remove exercise and shift data
+          _exercises.removeAt(index);
+
+          // Clean up the maps for the deleted exercise
+          _completedSets.remove(index);
+          _totalSetsPerExercise.remove(index);
+          _previousSets.remove(index);
+
+          // Shift data for exercises after the deleted one
+          final newCompletedSets = <int, List<SetLog>>{};
+          final newTotalSets = <int, int>{};
+          final newPreviousSets = <int, List<Map<String, dynamic>>>{};
+
+          _completedSets.forEach((key, value) {
+            if (key > index) {
+              newCompletedSets[key - 1] = value;
+            } else {
+              newCompletedSets[key] = value;
+            }
+          });
+
+          _totalSetsPerExercise.forEach((key, value) {
+            if (key > index) {
+              newTotalSets[key - 1] = value;
+            } else {
+              newTotalSets[key] = value;
+            }
+          });
+
+          _previousSets.forEach((key, value) {
+            if (key > index) {
+              newPreviousSets[key - 1] = value;
+            } else {
+              newPreviousSets[key] = value;
+            }
+          });
+
+          _completedSets
+            ..clear()
+            ..addAll(newCompletedSets);
+          _totalSetsPerExercise
+            ..clear()
+            ..addAll(newTotalSets);
+          _previousSets
+            ..clear()
+            ..addAll(newPreviousSets);
+
+          // Adjust current index if needed
+          if (_currentExerciseIndex >= _exercises.length) {
+            _currentExerciseIndex = _exercises.length - 1;
+          }
+          if (_viewingExerciseIndex >= _exercises.length) {
+            _viewingExerciseIndex = _exercises.length - 1;
+          }
+        });
+      },
+      onAddExercise: () {
+        // TODO: Open exercise add sheet
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Add exercise feature coming soon'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      },
+    );
   }
 }
 

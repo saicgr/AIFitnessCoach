@@ -21,6 +21,7 @@ from models.gemini_schemas import (
     ExerciseListResponse,
     GeneratedWorkoutResponse,
     WorkoutNamesResponse,
+    WorkoutNamingResponse,
     ExerciseReasoningResponse,
     FoodAnalysisResponse,
     InflammationAnalysisGeminiResponse,
@@ -448,19 +449,21 @@ User message: "''' + user_message + '"'
                 ),
             )
 
-            content = response.text.strip()
-            data = json.loads(content)
+            # Use response.parsed for structured output - SDK handles JSON parsing
+            data = response.parsed
+            if not data:
+                raise ValueError("Gemini returned empty intent extraction response")
 
             return IntentExtraction(
-                intent=CoachIntent(data.get("intent", "question")),
-                exercises=[e.lower() for e in data.get("exercises", [])],
-                muscle_groups=[m.lower() for m in data.get("muscle_groups", [])],
-                modification=data.get("modification"),
-                body_part=data.get("body_part"),
-                setting_name=data.get("setting_name"),
-                setting_value=data.get("setting_value"),
-                destination=data.get("destination"),
-                hydration_amount=data.get("hydration_amount"),
+                intent=CoachIntent(data.intent or "question"),
+                exercises=[e.lower() for e in (data.exercises or [])],
+                muscle_groups=[m.lower() for m in (data.muscle_groups or [])],
+                modification=data.modification,
+                body_part=data.body_part,
+                setting_name=data.setting_name,
+                setting_value=data.setting_value,
+                destination=data.destination,
+                hydration_amount=data.hydration_amount,
             )
 
         except Exception as e:
@@ -498,9 +501,11 @@ IMPORTANT:
                 ),
             )
 
-            content = response.text.strip()
-            data = json.loads(content)
-            exercises = data.get("exercises", [])
+            # Use response.parsed for structured output - SDK handles JSON parsing
+            data = response.parsed
+            if not data:
+                return None
+            exercises = data.exercises or []
 
             if isinstance(exercises, list) and len(exercises) > 0:
                 return exercises
@@ -638,8 +643,11 @@ WEIGHT/COUNT FIELDS (required for portion editing):
                 logger.error(f"Food image analysis timed out after {IMAGE_ANALYSIS_TIMEOUT}s")
                 return None
 
-            content = response.text.strip()
-            result = json.loads(content)
+            # Use response.parsed for structured output - SDK handles JSON parsing
+            parsed = response.parsed
+            if not parsed:
+                return None
+            result = parsed.model_dump()
 
             # Enhance food items with USDA per-100g data for accurate scaling
             if result and result.get('food_items'):
@@ -833,16 +841,16 @@ Rules: Use USDA data. Sum totals from items. Account for prep methods (fried add
                     last_error = f"Timeout after {FOOD_ANALYSIS_TIMEOUT}s"
                     continue
 
-                content = response.text.strip() if response.text else ""
-                print(f"🔍 [Gemini] Raw response: {content[:500]}...")
-
-                if not content:
-                    print(f"⚠️ [Gemini] Empty response from API (attempt {attempt + 1})")
+                # Use response.parsed for structured output - SDK handles JSON parsing
+                parsed = response.parsed
+                if not parsed:
+                    print(f"⚠️ [Gemini] Empty parsed response from API (attempt {attempt + 1})")
                     last_error = "Empty response"
                     continue
 
-                # Parse JSON directly - structured output guarantees valid JSON
-                result = json.loads(content)
+                result = parsed.model_dump()
+                print(f"🔍 [Gemini] Parsed response with {len(result.get('food_items', []))} items")
+
                 if result and result.get('food_items'):
                     print(f"✅ [Gemini] Parsed {len(result.get('food_items', []))} food items")
 
@@ -875,10 +883,6 @@ Rules: Use USDA data. Sum totals from items. Account for prep methods (fried add
                     last_error = "No food_items in response"
                     continue
 
-            except json.JSONDecodeError as e:
-                print(f"⚠️ [Gemini] JSON parsing failed (attempt {attempt + 1}): {e}")
-                last_error = str(e)
-                continue
             except Exception as e:
                 print(f"⚠️ [Gemini] Food description parsing failed (attempt {attempt + 1}): {e}")
                 last_error = str(e)
@@ -1198,14 +1202,13 @@ IMPORTANT RULES:
                 ),
             )
 
-            content = response.text.strip() if response.text else ""
-
-            if not content:
+            # Use response.parsed for structured output - SDK handles JSON parsing
+            parsed = response.parsed
+            if not parsed:
                 print("⚠️ [Gemini] Empty response from inflammation analysis")
                 return None
 
-            # Parse JSON directly - structured output guarantees valid JSON
-            result = json.loads(content)
+            result = parsed.model_dump()
 
             # Validate and fix overall_category
             valid_categories = [
@@ -1921,8 +1924,12 @@ If user has gym equipment - most exercises MUST use that equipment!"""
                 ),
             )
 
-            content = response.text.strip()
-            workout_data = json.loads(content)
+            # Use response.parsed for structured output - SDK handles JSON parsing
+            parsed = response.parsed
+            if not parsed:
+                raise ValueError("Gemini returned empty workout response")
+
+            workout_data = parsed.model_dump()
 
             # Validate required fields
             if "exercises" not in workout_data or not workout_data["exercises"]:
@@ -1930,9 +1937,6 @@ If user has gym equipment - most exercises MUST use that equipment!"""
 
             return workout_data
 
-        except json.JSONDecodeError as e:
-            print(f"Failed to parse AI workout response: {e}")
-            raise ValueError(f"AI returned invalid JSON: {e}")
         except Exception as e:
             print(f"Workout generation failed: {e}")
             raise
@@ -2262,24 +2266,26 @@ Return a JSON object with:
                 config=types.GenerateContentConfig(
                     system_instruction="You are a creative fitness coach. Generate motivating workout names. Return ONLY valid JSON.",
                     response_mime_type="application/json",
-                    response_schema=GeneratedWorkoutResponse,
+                    response_schema=WorkoutNamingResponse,
                     temperature=0.8,
                     max_output_tokens=2000  # Increased for thinking models
                 ),
             )
 
-            content = response.text.strip()
-            ai_response = json.loads(content)
+            # Use response.parsed for structured output - SDK handles JSON parsing
+            ai_response = response.parsed
+            if not ai_response:
+                raise ValueError("Gemini returned empty workout naming response")
 
             # Combine AI response with our exercises
             return {
-                "name": ai_response.get("name", "Power Workout"),
-                "type": ai_response.get("type", "strength"),
+                "name": ai_response.name or "Power Workout",
+                "type": ai_response.type or "strength",
                 "difficulty": difficulty,
                 "duration_minutes": duration_minutes,
                 "target_muscles": list(set([ex.get('muscle_group', '') for ex in exercises if ex.get('muscle_group')])),
                 "exercises": exercises,
-                "notes": ai_response.get("notes", "Focus on proper form and controlled movements.")
+                "notes": ai_response.notes or "Focus on proper form and controlled movements."
             }
 
         except Exception as e:
@@ -2433,15 +2439,14 @@ RULES:
                         ),
                     )
 
-                    content = response.text.strip() if response.text else ""
-
-                    if not content:
+                    # Use response.parsed for structured output - SDK handles JSON parsing
+                    parsed = response.parsed
+                    if not parsed:
                         print(f"⚠️ [Exercise Reasoning] Empty response (attempt {attempt + 1})")
                         last_error = "Empty response from Gemini"
                         continue
 
-                    # Parse JSON directly - structured output guarantees valid JSON
-                    result = json.loads(content)
+                    result = parsed.model_dump()
 
                     if result.get("workout_reasoning") and result.get("exercise_reasoning"):
                         return {
@@ -2453,9 +2458,8 @@ RULES:
                         last_error = "Incomplete result from Gemini"
                         continue
 
-                except json.JSONDecodeError as e:
-                    print(f"⚠️ [Exercise Reasoning] JSON parse failed (attempt {attempt + 1}): {e}")
-                    print(f"   Content preview: {content[:200] if content else 'empty'}...")
+                except Exception as e:
+                    print(f"⚠️ [Exercise Reasoning] Failed (attempt {attempt + 1}): {e}")
                     last_error = str(e)
                     continue
 
@@ -2499,7 +2503,7 @@ RULES:
             Dict with weekly plan structure including daily entries
         """
         day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-        workout_day_names = [day_names[d] for d in workout_days]
+        workout_day_names = [day_names[d] for d in workout_days if 0 <= d < 7]
 
         prompt = f'''Generate a complete weekly holistic fitness plan coordinating workouts, nutrition, and fasting.
 

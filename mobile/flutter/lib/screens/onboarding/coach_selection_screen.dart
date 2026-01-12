@@ -15,8 +15,17 @@ import 'widgets/coach_profile_card.dart';
 import 'widgets/custom_coach_form.dart';
 
 /// Coach Selection Screen - Choose your AI coach persona before onboarding
+/// Also used for changing coach from AI settings (with fromSettings=true)
 class CoachSelectionScreen extends ConsumerStatefulWidget {
-  const CoachSelectionScreen({super.key});
+  /// When true, the user is changing their coach from AI settings
+  /// (not initial onboarding). The screen will pop back instead of
+  /// navigating to paywall.
+  final bool fromSettings;
+
+  const CoachSelectionScreen({
+    super.key,
+    this.fromSettings = false,
+  });
 
   @override
   ConsumerState<CoachSelectionScreen> createState() => _CoachSelectionScreenState();
@@ -106,12 +115,21 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
       aiNotifier.setCoachPersona(_selectedCoach!);
     }
 
+    // If coming from AI settings (changing coach), just pop back
+    if (widget.fromSettings) {
+      if (mounted) {
+        context.pop();
+      }
+      return;
+    }
+
+    // Initial onboarding flow: update auth state and navigate to paywall
     // Update local auth state immediately for fast navigation
     // Skip conversational onboarding - mark onboarding as complete
     ref.read(authStateProvider.notifier).markCoachSelected();
     ref.read(authStateProvider.notifier).markOnboardingComplete();
 
-    // Navigate to paywall screen (correct flow: Coach → Paywall → Calibration → Workout Gen → Home)
+    // Navigate to paywall screen (correct flow: Coach -> Paywall -> Calibration -> Workout Gen -> Home)
     if (mounted) {
       context.go('/paywall-features');
     }
@@ -505,22 +523,43 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
       children: [
         Row(
           children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                gradient: AppColors.cyanGradient,
-                borderRadius: BorderRadius.circular(14),
+            // Back button when coming from settings
+            if (widget.fromSettings) ...[
+              GestureDetector(
+                onTap: () => context.pop(),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.cyan.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.arrow_back,
+                    color: AppColors.cyan,
+                    size: 20,
+                  ),
+                ),
               ),
-              child: const Icon(Icons.smart_toy, color: Colors.white, size: 26),
-            ),
-            const SizedBox(width: 14),
+              const SizedBox(width: 12),
+            ] else ...[
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: AppColors.cyanGradient,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.smart_toy, color: Colors.white, size: 26),
+              ),
+              const SizedBox(width: 14),
+            ],
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Meet Your Coach',
+                    widget.fromSettings ? 'Change Coach' : 'Meet Your Coach',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -529,7 +568,9 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'You can always change this later',
+                    widget.fromSettings
+                        ? 'Select a new AI coach persona'
+                        : 'You can always change this later',
                     style: TextStyle(
                       fontSize: 14,
                       color: textSecondary,
@@ -538,39 +579,40 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                 ],
               ),
             ),
-            // Start Over button
-            GestureDetector(
-              onTap: _startOver,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.cyan.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: AppColors.cyan.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.refresh,
-                      size: 14,
-                      color: AppColors.cyan,
+            // Start Over button - only show during initial onboarding
+            if (!widget.fromSettings)
+              GestureDetector(
+                onTap: _startOver,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.cyan.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.cyan.withValues(alpha: 0.3),
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Start Over',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.refresh,
+                        size: 14,
                         color: AppColors.cyan,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      Text(
+                        'Start Over',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.cyan,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ],
@@ -673,7 +715,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Continue',
+                          widget.fromSettings ? 'Save Coach' : 'Continue',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -684,7 +726,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                         ),
                         const SizedBox(width: 8),
                         Icon(
-                          Icons.arrow_forward,
+                          widget.fromSettings ? Icons.check : Icons.arrow_forward,
                           size: 20,
                           color: isEnabled
                               ? Colors.white

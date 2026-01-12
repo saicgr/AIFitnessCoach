@@ -5,7 +5,7 @@ library;
 
 import 'dart:async';
 
-import 'package:flutter/services.dart';
+import '../../../data/services/haptic_service.dart';
 
 /// Callback types for timer events
 typedef OnTimerTick = void Function(int secondsRemaining);
@@ -68,11 +68,9 @@ class WorkoutTimerController {
         _restSecondsRemaining--;
         onRestTick?.call(_restSecondsRemaining);
 
-        // Haptic countdown warnings
-        if (_restSecondsRemaining == 5) {
-          HapticFeedback.lightImpact();
-        } else if (_restSecondsRemaining <= 3 && _restSecondsRemaining > 0) {
-          HapticFeedback.mediumImpact();
+        // Haptic countdown warnings using HapticService
+        if (_restSecondsRemaining <= 3 && _restSecondsRemaining > 0) {
+          HapticService.restTimerTick();
         }
 
         if (_restSecondsRemaining == 0) {
@@ -81,21 +79,15 @@ class WorkoutTimerController {
       }
     });
 
-    HapticFeedback.mediumImpact();
+    HapticService.medium();
   }
 
   void _endRest() {
     _restTimer?.cancel();
     _restSecondsRemaining = 0;
 
-    // Strong haptic feedback pattern when rest ends
-    HapticFeedback.heavyImpact();
-    Future.delayed(const Duration(milliseconds: 100), () {
-      HapticFeedback.mediumImpact();
-    });
-    Future.delayed(const Duration(milliseconds: 200), () {
-      HapticFeedback.mediumImpact();
-    });
+    // Use HapticService for rest complete feedback
+    HapticService.restTimerComplete();
 
     onRestComplete?.call();
   }
@@ -108,7 +100,7 @@ class WorkoutTimerController {
   /// Toggle pause state
   void togglePause() {
     _isPaused = !_isPaused;
-    HapticFeedback.selectionClick();
+    HapticService.selection();
   }
 
   /// Set pause state
@@ -167,12 +159,13 @@ class PhaseTimerController {
         _secondsRemaining--;
         onTick?.call(_secondsRemaining);
 
-        // Haptic feedback at key moments
+        // Haptic feedback at key moments using HapticService
         if (_secondsRemaining <= 3 && _secondsRemaining > 0) {
-          HapticFeedback.lightImpact();
+          HapticService.restTimerTick();
         }
       } else {
         stop();
+        HapticService.restTimerComplete();
         onComplete?.call();
       }
     });

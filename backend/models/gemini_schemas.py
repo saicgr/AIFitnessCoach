@@ -122,6 +122,18 @@ class WorkoutNamesResponse(BaseModel):
     workout_names: List[WorkoutNameItem] = Field(..., description="List of workout name suggestions")
 
 
+class WorkoutNamingResponse(BaseModel):
+    """Schema for generating workout names (without exercises - those come from RAG).
+
+    This is used by generate_workout_from_library() which only needs Gemini
+    to provide a creative name and tip. Exercises are selected by RAG, not Gemini.
+    """
+    name: str = Field(..., description="Creative workout name (3-4 words)")
+    type: str = Field(..., description="Workout type (strength, cardio, etc.)")
+    difficulty: str = Field(..., description="Difficulty level")
+    notes: Optional[str] = Field(default=None, description="Personalized tip for the user")
+
+
 # =============================================================================
 # EXERCISE REASONING SCHEMAS
 # =============================================================================

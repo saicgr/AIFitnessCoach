@@ -581,6 +581,11 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
+          // Extract food names from AI response
+          final foodNames = response.foodItems.isNotEmpty
+              ? response.foodItems.map((f) => f['name'] ?? 'Food').join(', ')
+              : description;
+
           // Calculate adjusted values based on portion multiplier
           final adjustedCalories = (response.totalCalories * portionMultiplier).round();
           final adjustedProtein = response.proteinG * portionMultiplier;
@@ -612,7 +617,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Food description
+                  // Food name and description
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -624,11 +629,32 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
                         Icon(Icons.restaurant, size: 20, color: textMuted),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Text(
-                            description,
-                            style: TextStyle(color: textPrimary, fontSize: 14),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                foodNames,
+                                style: TextStyle(
+                                  color: textPrimary,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (description.isNotEmpty && description.toLowerCase() != foodNames.toLowerCase()) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  description,
+                                  style: TextStyle(
+                                    color: textMuted,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                       ],

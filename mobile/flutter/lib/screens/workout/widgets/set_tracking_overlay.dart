@@ -16,7 +16,7 @@ import '../models/workout_state.dart';
 import 'number_input_widgets.dart';
 
 /// Set tracking overlay for logging sets during workout
-class SetTrackingOverlay extends StatelessWidget {
+class SetTrackingOverlay extends StatefulWidget {
   /// Current exercise being tracked
   final WorkoutExercise exercise;
 
@@ -102,6 +102,9 @@ class SetTrackingOverlay extends StatelessWidget {
   /// Callback to skip exercise (optional, for overflow menu)
   final VoidCallback? onSkipExercise;
 
+  /// Callback to open workout plan drawer
+  final VoidCallback? onOpenWorkoutPlan;
+
   const SetTrackingOverlay({
     super.key,
     required this.exercise,
@@ -132,11 +135,22 @@ class SetTrackingOverlay extends StatelessWidget {
     required this.onDoneButtonPressCancel,
     required this.onShowNumberInputDialog,
     this.onSkipExercise,
+    this.onOpenWorkoutPlan,
   });
 
-  bool get isViewingCurrent => viewingExerciseIndex == currentExerciseIndex;
-  int get currentSetIndex => completedSets.length;
-  bool get allSetsCompleted => completedSets.length >= totalSets;
+  @override
+  State<SetTrackingOverlay> createState() => _SetTrackingOverlayState();
+}
+
+class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
+  bool _isMinimized = false;
+
+  /// Current set type: null = working set, 'W' = warmup, 'D' = drop set, 'F' = failure
+  String? _currentSetType;
+
+  bool get isViewingCurrent => widget.viewingExerciseIndex == widget.currentExerciseIndex;
+  int get currentSetIndex => widget.completedSets.length;
+  bool get allSetsCompleted => widget.completedSets.length >= widget.totalSets;
 
   @override
   Widget build(BuildContext context) {
@@ -175,29 +189,45 @@ class SetTrackingOverlay extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header with exercise name and overflow menu
+              // Header with exercise name and overflow menu (always visible)
               _buildHeader(context, isDark, textPrimary, textMuted),
 
-              // Table header
-              _buildTableHeader(isDark, textMuted),
+              // Collapsible content
+              AnimatedSize(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                child: _isMinimized
+                    ? const SizedBox.shrink()
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Table header
+                          _buildTableHeader(isDark, textMuted),
 
-              // Warmup set row (always first)
-              _buildWarmupRow(context, isDark, textPrimary, textMuted),
+                          // Set type tags row (only shown when viewing current exercise)
+                          if (isViewingCurrent && !allSetsCompleted)
+                            _buildSetTypeTags(isDark, textMuted),
 
-              // Working set rows
-              ...List.generate(totalSets, (index) {
-                return _buildSetRow(context, index, isDark, textPrimary, textMuted);
-              }),
+                          // Warmup set row (always first)
+                          _buildWarmupRow(context, isDark, textPrimary, textMuted),
 
-              // Complete Set button (only CTA)
-              if (isViewingCurrent && !allSetsCompleted)
-                _buildCompleteSetButton(isDark),
+                          // Working set rows
+                          ...List.generate(widget.totalSets, (index) {
+                            return _buildSetRow(context, index, isDark, textPrimary, textMuted);
+                          }),
 
-              // Back to current or rest info
-              if (!isViewingCurrent)
-                _buildBackToCurrentButton(isDark, textMuted),
+                          // Complete Set button (only CTA)
+                          if (isViewingCurrent && !allSetsCompleted)
+                            _buildCompleteSetButton(isDark),
 
-              const SizedBox(height: 12),
+                          // Back to current or rest info
+                          if (!isViewingCurrent)
+                            _buildBackToCurrentButton(isDark, textMuted),
+
+                          const SizedBox(height: 12),
+                        ],
+                      ),
+              ),
             ],
           ),
         ),
@@ -211,96 +241,187 @@ class SetTrackingOverlay extends StatelessWidget {
     Color textPrimary,
     Color textMuted,
   ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.elevated.withOpacity(0.5)
-            : AppColorsLight.glassSurface.withOpacity(0.7),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Row(
-        children: [
-          // Previous exercise button
-          _buildNavButton(
-            icon: Icons.chevron_left,
-            enabled: viewingExerciseIndex > 0,
-            onTap: onPreviousExercise,
-            isDark: isDark,
-          ),
+    return GestureDetector(
+      onTap: _isMinimized
+          ? () {
+              setState(() => _isMinimized = false);
+              HapticFeedback.selectionClick();
+            }
+          : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isDark
+              ? AppColors.elevated.withOpacity(0.5)
+              : AppColorsLight.glassSurface.withOpacity(0.7),
+          borderRadius: _isMinimized
+              ? BorderRadius.circular(20)
+              : const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Row(
+          children: [
+            // Previous exercise button
+            _buildNavButton(
+              icon: Icons.chevron_left,
+              enabled: widget.viewingExerciseIndex > 0,
+              onTap: widget.onPreviousExercise,
+              isDark: isDark,
+            ),
 
-          const SizedBox(width: 12),
+            const SizedBox(width: 12),
 
-          // Exercise name and position
-          Expanded(
-            child: Column(
-              children: [
-                Text(
-                  exercise.name,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '${viewingExerciseIndex + 1} of $totalExercises',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: textMuted,
-                        fontWeight: FontWeight.w500,
-                      ),
+            // Exercise name and position
+            Expanded(
+              child: Column(
+                children: [
+                  Text(
+                    widget.exercise.name,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
                     ),
-                    if (!isViewingCurrent) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.orange.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(4),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${widget.viewingExerciseIndex + 1} of ${widget.totalExercises}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: textMuted,
+                          fontWeight: FontWeight.w500,
                         ),
-                        child: Text(
-                          viewingExerciseIndex < currentExerciseIndex
-                              ? 'DONE'
-                              : 'UPCOMING',
-                          style: const TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.orange,
-                            letterSpacing: 0.5,
+                      ),
+                      if (!isViewingCurrent) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.orange.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            widget.viewingExerciseIndex < widget.currentExerciseIndex
+                                ? 'DONE'
+                                : 'UPCOMING',
+                            style: const TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.orange,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
-                      ),
+                      ],
+                      // Show set progress when minimized
+                      if (_isMinimized) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.cyan.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '${widget.completedSets.length}/${widget.totalSets} sets',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.cyan,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
+
+            const SizedBox(width: 12),
+
+            // Next exercise button
+            _buildNavButton(
+              icon: Icons.chevron_right,
+              enabled: widget.viewingExerciseIndex < widget.totalExercises - 1,
+              onTap: widget.onNextExercise,
+              isDark: isDark,
+            ),
+
+            const SizedBox(width: 8),
+
+            // Open workout plan button (up arrow)
+            if (widget.onOpenWorkoutPlan != null)
+              _buildWorkoutPlanButton(isDark, textMuted),
+
+            const SizedBox(width: 4),
+
+            // Minimize/Expand button
+            _buildMinimizeButton(isDark, textMuted),
+
+            const SizedBox(width: 4),
+
+            // Overflow menu
+            _buildOverflowMenu(context, isDark),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWorkoutPlanButton(bool isDark, Color textMuted) {
+    return GestureDetector(
+      onTap: () {
+        widget.onOpenWorkoutPlan?.call();
+        HapticFeedback.selectionClick();
+      },
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          Icons.list_alt_rounded,
+          color: AppColors.purple,
+          size: 20,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMinimizeButton(bool isDark, Color textMuted) {
+    return GestureDetector(
+      onTap: () {
+        setState(() => _isMinimized = !_isMinimized);
+        HapticFeedback.selectionClick();
+      },
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: _isMinimized
+              ? AppColors.cyan.withOpacity(0.15)
+              : (isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05)),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: AnimatedRotation(
+          turns: _isMinimized ? 0.5 : 0,
+          duration: const Duration(milliseconds: 200),
+          child: Icon(
+            Icons.keyboard_arrow_down,
+            color: _isMinimized ? AppColors.cyan : textMuted,
+            size: 22,
           ),
-
-          const SizedBox(width: 12),
-
-          // Next exercise button
-          _buildNavButton(
-            icon: Icons.chevron_right,
-            enabled: viewingExerciseIndex < totalExercises - 1,
-            onTap: onNextExercise,
-            isDark: isDark,
-          ),
-
-          const SizedBox(width: 8),
-
-          // Overflow menu
-          _buildOverflowMenu(context, isDark),
-        ],
+        ),
       ),
     );
   }
@@ -355,18 +476,18 @@ class SetTrackingOverlay extends StatelessWidget {
         HapticFeedback.selectionClick();
         switch (value) {
           case 'add_set':
-            onAddSet();
+            widget.onAddSet();
             break;
           case 'remove_set':
-            if (totalSets > 1) {
+            if (widget.totalSets > 1) {
               // Could add a callback for remove set
             }
             break;
           case 'toggle_unit':
-            onToggleUnit();
+            widget.onToggleUnit();
             break;
           case 'skip':
-            onSkipExercise?.call();
+            widget.onSkipExercise?.call();
             break;
         }
       },
@@ -388,11 +509,11 @@ class SetTrackingOverlay extends StatelessWidget {
             children: [
               Icon(Icons.swap_horiz, size: 20, color: AppColors.purple),
               const SizedBox(width: 12),
-              Text('Switch to ${useKg ? 'lbs' : 'kg'}'),
+              Text('Switch to ${widget.useKg ? 'lbs' : 'kg'}'),
             ],
           ),
         ),
-        if (onSkipExercise != null)
+        if (widget.onSkipExercise != null)
           PopupMenuItem(
             value: 'skip',
             child: Row(
@@ -449,15 +570,28 @@ class SetTrackingOverlay extends StatelessWidget {
           ),
           Expanded(
             flex: 2,
-            child: Text(
-              useKg ? 'KG' : 'LBS',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.electricBlue,
-                letterSpacing: 0.5,
+            child: GestureDetector(
+              onTap: () {
+                widget.onToggleUnit();
+                HapticFeedback.selectionClick();
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.electricBlue.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  widget.useKg ? 'KG' : 'LBS',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.electricBlue,
+                    letterSpacing: 0.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
-              textAlign: TextAlign.center,
             ),
           ),
           const Expanded(
@@ -479,6 +613,282 @@ class SetTrackingOverlay extends StatelessWidget {
     );
   }
 
+  /// Build set type tags row (W/D/F)
+  Widget _buildSetTypeTags(bool isDark, Color textMuted) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Use compact mode on narrow screens
+    final isCompact = screenWidth < 340;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 12 : 16,
+        vertical: isCompact ? 8 : 10,
+      ),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.elevated.withOpacity(0.3)
+            : Colors.grey.shade100.withOpacity(0.5),
+        border: Border(
+          bottom: BorderSide(
+            color: isDark
+                ? Colors.white.withOpacity(0.05)
+                : Colors.black.withOpacity(0.04),
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Set type label - hide on very compact screens
+          if (!isCompact) ...[
+            Text(
+              'Set Type:',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: textMuted,
+              ),
+            ),
+            const SizedBox(width: 12),
+          ],
+          // Tag buttons with flexible spacing
+          Expanded(
+            child: Row(
+              mainAxisAlignment: isCompact ? MainAxisAlignment.spaceEvenly : MainAxisAlignment.start,
+              children: [
+                _buildSetTypeTag('W', 'Warmup', AppColors.orange, isDark, textMuted, isCompact),
+                SizedBox(width: isCompact ? 4 : 8),
+                _buildSetTypeTag('D', 'Drop Set', AppColors.purple, isDark, textMuted, isCompact),
+                SizedBox(width: isCompact ? 4 : 8),
+                _buildSetTypeTag('F', 'Failure', AppColors.error, isDark, textMuted, isCompact),
+              ],
+            ),
+          ),
+          SizedBox(width: isCompact ? 4 : 8),
+          // Info button
+          GestureDetector(
+            onTap: () => _showSetTypeInfoSheet(context),
+            child: Container(
+              width: isCompact ? 24 : 28,
+              height: isCompact ? 24 : 28,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isDark
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.black.withOpacity(0.05),
+              ),
+              child: Icon(
+                Icons.info_outline_rounded,
+                size: isCompact ? 14 : 16,
+                color: textMuted,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSetTypeTag(String tag, String label, Color color, bool isDark, Color textMuted, [bool isCompact = false]) {
+    final isSelected = _currentSetType == tag;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          if (_currentSetType == tag) {
+            _currentSetType = null; // Deselect if already selected
+          } else {
+            _currentSetType = tag;
+            // Auto-adjust values based on set type
+            _applySetTypeDefaults(tag);
+          }
+        });
+        HapticFeedback.selectionClick();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: EdgeInsets.symmetric(
+          horizontal: isCompact ? 8 : 12,
+          vertical: isCompact ? 4 : 6,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.2) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? color : (isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1)),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Text(
+          tag,
+          style: TextStyle(
+            fontSize: isCompact ? 11 : 13,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            color: isSelected ? color : textMuted,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Apply default values when selecting a set type
+  void _applySetTypeDefaults(String type) {
+    final currentWeight = double.tryParse(widget.weightController.text) ?? 0;
+
+    switch (type) {
+      case 'W': // Warmup - 50% of current weight
+        if (currentWeight > 0) {
+          widget.weightController.text = (currentWeight * 0.5).toStringAsFixed(0);
+        }
+        break;
+      case 'D': // Drop set - 80% of current weight (20% reduction)
+        if (currentWeight > 0) {
+          widget.weightController.text = (currentWeight * 0.8).toStringAsFixed(0);
+        }
+        break;
+      case 'F': // Failure - keep same weight
+        // No change to weight
+        break;
+    }
+  }
+
+  /// Show info sheet explaining set types
+  void _showSetTypeInfoSheet(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surface : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Title
+            Text(
+              'Set Types',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Warmup
+            _buildSetTypeInfoRow(
+              icon: Icons.whatshot_outlined,
+              tag: 'W',
+              title: 'Warmup',
+              description: 'Light weight to prepare muscles. Not counted in workout volume.',
+              color: AppColors.orange,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 16),
+
+            // Drop Set
+            _buildSetTypeInfoRow(
+              icon: Icons.trending_down_rounded,
+              tag: 'D',
+              title: 'Drop Set',
+              description: 'Immediately reduce weight after failure and continue repping. Great for muscle growth!',
+              color: AppColors.purple,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 16),
+
+            // Failure
+            _buildSetTypeInfoRow(
+              icon: Icons.fitness_center_rounded,
+              tag: 'F',
+              title: 'Failure',
+              description: "Mark when you couldn't complete target reps. Helps track intensity.",
+              color: AppColors.error,
+              isDark: isDark,
+            ),
+
+            SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSetTypeInfoRow({
+    required IconData icon,
+    required String tag,
+    required String title,
+    required String description,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Center(
+            child: Text(
+              tag,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   /// Build warmup set row
   Widget _buildWarmupRow(
     BuildContext context,
@@ -487,7 +897,7 @@ class SetTrackingOverlay extends StatelessWidget {
     Color textMuted,
   ) {
     // Calculate warmup weight (50% of target weight for first working set)
-    final targetWeight = double.tryParse(weightController.text) ?? exercise.weight ?? 0;
+    final targetWeight = double.tryParse(widget.weightController.text) ?? widget.exercise.weight ?? 0;
     final warmupWeight = targetWeight * 0.5;
     final warmupReps = 10; // Standard warmup reps
 
@@ -592,20 +1002,20 @@ class SetTrackingOverlay extends StatelessWidget {
     Color textPrimary,
     Color textMuted,
   ) {
-    final isCompleted = index < completedSets.length;
-    final isCurrent = isViewingCurrent && index == completedSets.length;
-    final isPending = index > completedSets.length;
-    final previousSet = index < previousSets.length ? previousSets[index] : null;
+    final isCompleted = index < widget.completedSets.length;
+    final isCurrent = isViewingCurrent && index == widget.completedSets.length;
+    final isPending = index > widget.completedSets.length;
+    final previousSet = index < widget.previousSets.length ? widget.previousSets[index] : null;
 
     SetLog? completedSetData;
     if (isCompleted) {
-      completedSetData = completedSets[index];
+      completedSetData = widget.completedSets[index];
     }
 
     // Format previous session data
     String prevDisplay = '-';
     if (previousSet != null) {
-      final prevWeight = useKg
+      final prevWeight = widget.useKg
           ? previousSet['weight'] as double
           : (previousSet['weight'] as double) * 2.20462;
       prevDisplay = '${prevWeight.toStringAsFixed(0)} × ${previousSet['reps']}';
@@ -681,13 +1091,13 @@ class SetTrackingOverlay extends StatelessWidget {
             flex: 2,
             child: isCurrent
                 ? _buildInlineInput(
-                    controller: weightController,
+                    controller: widget.weightController,
                     isDecimal: true,
                     isDark: isDark,
                   )
                 : Text(
                     isCompleted
-                        ? (useKg
+                        ? (widget.useKg
                             ? completedSetData!.weight.toStringAsFixed(0)
                             : (completedSetData!.weight * 2.20462)
                                 .toStringAsFixed(0))
@@ -708,7 +1118,7 @@ class SetTrackingOverlay extends StatelessWidget {
             flex: 2,
             child: isCurrent
                 ? _buildInlineInput(
-                    controller: repsController,
+                    controller: widget.repsController,
                     isDecimal: false,
                     isDark: isDark,
                   )
@@ -741,7 +1151,7 @@ class SetTrackingOverlay extends StatelessWidget {
     // Make completed rows swipeable for edit/delete
     if (isCompleted) {
       return Dismissible(
-        key: Key('set_${viewingExerciseIndex}_$index'),
+        key: Key('set_${widget.viewingExerciseIndex}_$index'),
         background: Container(
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.only(left: 24),
@@ -782,7 +1192,7 @@ class SetTrackingOverlay extends StatelessWidget {
         confirmDismiss: (direction) async {
           HapticFeedback.mediumImpact();
           if (direction == DismissDirection.startToEnd) {
-            onEditSet(index);
+            widget.onEditSet(index);
             return false;
           } else {
             return true;
@@ -790,7 +1200,7 @@ class SetTrackingOverlay extends StatelessWidget {
         },
         onDismissed: (direction) {
           if (direction == DismissDirection.endToStart) {
-            onDeleteSet(index);
+            widget.onDeleteSet(index);
           }
         },
         child: rowWidget,
@@ -810,16 +1220,17 @@ class SetTrackingOverlay extends StatelessWidget {
       isDecimal: isDecimal,
       isActive: true,
       accentColor: AppColors.electricBlue,
-      onShowDialog: () => onShowNumberInputDialog(controller, isDecimal),
+      onShowDialog: () => widget.onShowNumberInputDialog(controller, isDecimal),
     );
   }
 
   Widget _buildCompletedCheckmark(int index) {
-    final isJustCompleted = justCompletedSetIndex == index;
+    final isJustCompleted = widget.justCompletedSetIndex == index;
 
     return Stack(
       alignment: Alignment.center,
       children: [
+        // Outer pulse ring animation
         if (isJustCompleted) ...[
           Container(
             width: 36,
@@ -832,22 +1243,59 @@ class SetTrackingOverlay extends StatelessWidget {
               .animate()
               .scale(
                   begin: const Offset(0.5, 0.5),
+                  end: const Offset(1.5, 1.5),
+                  duration: 400.ms,
+                  curve: Curves.easeOutBack)
+              .fadeOut(duration: 400.ms, delay: 100.ms),
+          // Second pulse ring for extra satisfaction
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.success.withOpacity(0.2),
+            ),
+          )
+              .animate()
+              .scale(
+                  begin: const Offset(0.3, 0.3),
                   end: const Offset(1.3, 1.3),
-                  duration: 350.ms)
-              .fadeOut(duration: 350.ms),
+                  duration: 350.ms,
+                  delay: 50.ms,
+                  curve: Curves.easeOut)
+              .fadeOut(duration: 300.ms, delay: 150.ms),
         ],
-        Container(
+        // Main checkmark container
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           width: 28,
           height: 28,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: AppColors.success.withOpacity(0.15),
           ),
-          child: const Icon(
-            Icons.check_rounded,
-            size: 18,
-            color: AppColors.success,
-          ),
+          child: isJustCompleted
+              ? const Icon(
+                  Icons.check_rounded,
+                  size: 18,
+                  color: AppColors.success,
+                )
+                  .animate()
+                  .scale(
+                      begin: const Offset(0, 0),
+                      end: const Offset(1.0, 1.0),
+                      duration: 300.ms,
+                      curve: Curves.elasticOut)
+                  .then(delay: 50.ms)
+                  .scale(
+                      begin: const Offset(1.0, 1.0),
+                      end: const Offset(1.0, 1.0),
+                      duration: 100.ms)
+              : const Icon(
+                  Icons.check_rounded,
+                  size: 18,
+                  color: AppColors.success,
+                ),
         ),
       ],
     );
@@ -871,20 +1319,20 @@ class SetTrackingOverlay extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 4),
       child: GestureDetector(
-        onTapDown: (_) => onDoneButtonPressDown(),
-        onTapUp: (_) => onDoneButtonPressUp(),
-        onTapCancel: onDoneButtonPressCancel,
+        onTapDown: (_) => widget.onDoneButtonPressDown(),
+        onTapUp: (_) => widget.onDoneButtonPressUp(),
+        onTapCancel: widget.onDoneButtonPressCancel,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 100),
           width: double.infinity,
-          height: isDoneButtonPressed ? 52 : 56,
+          height: widget.isDoneButtonPressed ? 52 : 56,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             color: AppColors.electricBlue,
             boxShadow: [
               BoxShadow(
-                color: AppColors.electricBlue.withOpacity(isDoneButtonPressed ? 0.4 : 0.25),
-                blurRadius: isDoneButtonPressed ? 16 : 12,
+                color: AppColors.electricBlue.withOpacity(widget.isDoneButtonPressed ? 0.4 : 0.25),
+                blurRadius: widget.isDoneButtonPressed ? 16 : 12,
                 spreadRadius: 0,
                 offset: const Offset(0, 4),
               ),
@@ -916,7 +1364,7 @@ class SetTrackingOverlay extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 4),
       child: GestureDetector(
         onTap: () {
-          onBackToCurrentExercise();
+          widget.onBackToCurrentExercise();
           HapticFeedback.selectionClick();
         },
         child: Container(

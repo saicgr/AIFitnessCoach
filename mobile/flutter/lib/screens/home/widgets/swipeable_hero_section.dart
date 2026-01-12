@@ -250,6 +250,16 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
           return HeroWorkoutCard(workout: widget.todayWorkout!);
         }
 
+        // No workouts available AND not completed today - show loading
+        // This handles the post-onboarding gap where generation hasn't started
+        if (response?.completedToday != true) {
+          debugPrint('🏠 [SwipeableHero] Showing GeneratingHeroCard (no workouts, not completed)');
+          return const GeneratingHeroCard(
+            message: 'Preparing your workout...',
+            subtitle: 'This may take a moment',
+          );
+        }
+
         // Fallback to workoutsProvider as last resort
         debugPrint('🏠 [SwipeableHero] Using fallback workoutsProvider');
         return _buildFallbackFromWorkoutsProvider();

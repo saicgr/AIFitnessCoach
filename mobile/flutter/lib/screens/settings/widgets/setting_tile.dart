@@ -90,6 +90,9 @@ class SettingItemData {
   /// Whether this item navigates to the Calibration Test screen.
   final bool isCalibrationTestScreen;
 
+  /// Whether this item is the weight unit selector (kg/lbs).
+  final bool isWeightUnitSelector;
+
   const SettingItemData({
     required this.icon,
     required this.title,
@@ -120,6 +123,7 @@ class SettingItemData {
     this.isWorkoutDaysSelector = false,
     this.isProgressChartsScreen = false,
     this.isCalibrationTestScreen = false,
+    this.isWeightUnitSelector = false,
   });
 }
 

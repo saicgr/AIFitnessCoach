@@ -163,6 +163,29 @@ async def lifespan(app: FastAPI):
         logger.error(f"⚠️ Failed to initialize Exercise RAG: {e}")
         logger.error("Workouts will fall back to AI-generated exercises")
 
+    # Check ChromaDB embedding dimensions for mismatches
+    logger.info("Checking ChromaDB embedding dimensions...")
+    try:
+        from core.chroma_cloud import get_chroma_cloud_client
+        chroma_client = get_chroma_cloud_client()
+        dim_check = chroma_client.check_embedding_dimensions(expected_dim=768)
+
+        if dim_check["healthy"]:
+            logger.info("✅ ChromaDB embedding dimensions OK (768-dim Gemini embeddings)")
+        else:
+            logger.error("=" * 60)
+            logger.error("❌ CHROMADB EMBEDDING DIMENSION MISMATCH DETECTED!")
+            logger.error("   Some collections have wrong embedding dimensions.")
+            logger.error("   This will cause 'dimension mismatch' errors.")
+            logger.error("")
+            for m in dim_check["mismatches"]:
+                logger.error(f"   • {m['name']}: has {m['actual_dim']} dims, expected {m['expected_dim']}")
+            logger.error("")
+            logger.error("   FIX: Run 'python scripts/reindex_chromadb.py' to reindex")
+            logger.error("=" * 60)
+    except Exception as e:
+        logger.warning(f"⚠️ Could not check ChromaDB dimensions: {e}")
+
     logger.info("All services initialized (LangGraph agents ready)")
 
     # Check for pending workout generation jobs and resume them

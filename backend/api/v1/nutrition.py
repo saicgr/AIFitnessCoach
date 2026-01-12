@@ -4862,6 +4862,9 @@ async def calculate_adaptive_tdee(
                 .insert(calc_data)\
                 .execute()
 
+            if not result.data:
+                raise HTTPException(status_code=500, detail="Failed to create adaptive calculation")
+
             data = result.data[0]
             return AdaptiveCalculationResponse(
                 id=data["id"],
@@ -4927,6 +4930,9 @@ async def calculate_adaptive_tdee(
         result = db.client.table("adaptive_nutrition_calculations")\
             .insert(calc_data)\
             .execute()
+
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to create adaptive calculation")
 
         data = result.data[0]
         return AdaptiveCalculationResponse(
@@ -5266,6 +5272,9 @@ async def generate_weekly_recommendation(user_id: str):
         result = db.client.table("weekly_nutrition_recommendations")\
             .insert(rec_data)\
             .execute()
+
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to create weekly nutrition recommendation")
 
         data = result.data[0]
         return WeeklyRecommendationResponse(

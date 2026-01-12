@@ -78,6 +78,11 @@ class WeightSuggestionRequest(BaseModel):
     is_last_set: bool = False
     fitness_level: str = "intermediate"
     goals: List[str] = []
+    # AI Settings from user preferences
+    coaching_style: str = "motivational"
+    communication_tone: str = "encouraging"
+    encouragement_level: float = 0.7
+    response_length: str = "balanced"
 
 
 class WeightSuggestionResponse(BaseModel):
@@ -372,8 +377,56 @@ async def generate_ai_suggestion(
     - Historical data for this exercise
     - User's fitness level and goals
     - Equipment-specific increments
+    - User's AI settings for personalized coaching style
     """
     current = request.current_set
+
+    # Build coaching persona based on user's AI settings
+    coaching_personas = {
+        "motivational": "You are an enthusiastic, supportive coach who celebrates every win and keeps athletes motivated",
+        "professional": "You are a professional, data-driven coach who focuses on facts and optimal performance",
+        "friendly": "You are a friendly, approachable coach who feels like a supportive workout buddy",
+        "tough-love": "You are a direct, no-nonsense coach who challenges athletes to push their limits",
+        "drill-sergeant": "You are an intense, demanding coach who expects excellence and maximum effort",
+        "college-coach": "You are an energetic college coach with team spirit and competitive drive",
+        "zen-master": "You are a calm, mindful coach who emphasizes form, breathing, and body awareness",
+        "hype-beast": "You are an extremely energetic coach with maximum enthusiasm and hype",
+        "scientist": "You are a data-driven coach who explains the science behind each suggestion",
+        "comedian": "You are a funny coach who uses humor while still giving solid advice",
+        "old-school": "You are a classic, traditional coach with old-school training wisdom",
+    }
+
+    tone_instructions = {
+        "casual": "Use casual, friendly language with relaxed phrasing",
+        "encouraging": "Use warm, supportive language that builds confidence",
+        "formal": "Use professional, precise language",
+        "gen-z": "Use modern slang like 'no cap', 'lowkey', 'fr fr', 'bussin'",
+        "sarcastic": "Use playful sarcasm while still being helpful",
+        "roast-mode": "Roast them a little (playfully) while giving good advice",
+        "pirate": "Talk like a pirate, arrr!",
+        "british": "Use British English with dry wit and proper phrasing",
+        "surfer": "Talk like a chill surfer dude, bro",
+        "anime": "Use anime-style expressions and enthusiasm",
+    }
+
+    # Build encouragement guidance based on level
+    if request.encouragement_level >= 0.8:
+        encouragement_note = "Be VERY enthusiastic and celebratory in your encouragement message. Use exclamation marks!"
+    elif request.encouragement_level >= 0.5:
+        encouragement_note = "Be moderately encouraging and positive in your message"
+    else:
+        encouragement_note = "Keep encouragement minimal and focus on the data. Be concise."
+
+    # Build response length guidance
+    length_guidance = {
+        "concise": "Keep your reason to ONE short sentence (max 15 words)",
+        "balanced": "Keep your reason to 1-2 sentences",
+        "detailed": "Provide a detailed 2-3 sentence explanation with specific data points",
+    }
+
+    persona = coaching_personas.get(request.coaching_style, coaching_personas["motivational"])
+    tone = tone_instructions.get(request.communication_tone, tone_instructions["encouraging"])
+    length = length_guidance.get(request.response_length, length_guidance["balanced"])
 
     # Build history context
     history_context = ""
@@ -406,7 +459,10 @@ async def generate_ai_suggestion(
     if not intensity_context:
         intensity_context = "No intensity data provided"
 
-    prompt = f"""You are an expert fitness coach providing real-time weight suggestions during a workout.
+    prompt = f"""{persona}
+{tone}
+{encouragement_note}
+{length}
 
 CURRENT SET PERFORMANCE:
 - Exercise: {request.exercise_name}
@@ -437,8 +493,8 @@ Return ONLY valid JSON (no markdown):
   "suggested_weight": <number - the suggested weight in kg>,
   "weight_delta": <number - change from current weight>,
   "suggestion_type": "<increase|maintain|decrease>",
-  "reason": "<1-2 sentence explanation of why this suggestion>",
-  "encouragement": "<short motivational message>",
+  "reason": "<explanation following the length guidance above>",
+  "encouragement": "<motivational message matching your coaching persona and tone>",
   "confidence": <0.0-1.0 - how confident you are in this suggestion>
 }}
 
@@ -447,7 +503,7 @@ IMPORTANT:
 - Account for fatigue (later sets may need lower weight)
 - If they're building up (earlier sets), consider progressive overload
 - Weight suggestions must align with equipment increments
-- Be encouraging but realistic"""
+- Stay in character with your coaching persona throughout"""
 
     try:
         response = await gemini.chat(
@@ -509,6 +565,7 @@ async def get_weight_suggestion(request: WeightSuggestionRequest):
     - Current set performance (reps, weight, RPE/RIR)
     - Historical exercise data
     - User profile and goals
+    - AI settings for personalized coaching style
 
     Returns a personalized weight suggestion with reasoning.
 
@@ -519,6 +576,19 @@ async def get_weight_suggestion(request: WeightSuggestionRequest):
         f"exercise={request.exercise_name}, "
         f"set={request.current_set.set_number}/{request.total_sets}"
     )
+
+    # Validate input - reject obviously invalid data
+    if request.current_set.reps_completed <= 0:
+        logger.info("Invalid data: 0 reps completed, returning prompt to enter data")
+        return WeightSuggestionResponse(
+            suggested_weight=request.current_set.weight_kg,
+            weight_delta=0,
+            suggestion_type="invalid",
+            reason="Please enter valid reps to get personalized suggestions",
+            encouragement="Track your sets to unlock AI-powered weight recommendations!",
+            confidence=0,
+            ai_powered=False,
+        )
 
     try:
         # Get equipment-specific increment

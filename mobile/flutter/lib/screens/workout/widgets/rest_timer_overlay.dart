@@ -88,6 +88,9 @@ class RestTimerOverlay extends StatelessWidget {
   final int? lastSetTargetReps;
   final double? lastSetWeight;
 
+  /// Callback when user wants to ask AI Coach a question
+  final VoidCallback? onAskAICoach;
+
   const RestTimerOverlay({
     super.key,
     required this.restSecondsRemaining,
@@ -115,6 +118,7 @@ class RestTimerOverlay extends StatelessWidget {
     this.lastSetReps,
     this.lastSetTargetReps,
     this.lastSetWeight,
+    this.onAskAICoach,
   });
 
   /// Rest progress (1.0 = full, 0.0 = done)
@@ -234,6 +238,12 @@ class RestTimerOverlay extends StatelessWidget {
                     // Log 1RM button
                     if (onLog1RM != null)
                       _build1RMPrompt(cardBg, textColor, subtitleColor),
+
+                    // Ask AI Coach button
+                    if (onAskAICoach != null) ...[
+                      SizedBox(height: isCompactScreen ? 10 : 16),
+                      _buildAskAICoachButton(cardBg, textColor, subtitleColor, isDark),
+                    ],
 
                     // Extra padding at bottom for scroll
                     const SizedBox(height: 16),
@@ -635,6 +645,86 @@ class RestTimerOverlay extends StatelessWidget {
         .slideY(begin: 0.1, end: 0);
   }
 
+  /// Ask AI Coach button - opens chat for questions during rest
+  Widget _buildAskAICoachButton(
+    Color cardBg,
+    Color textColor,
+    Color subtitleColor,
+    bool isDark,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        onAskAICoach?.call();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.purple.withOpacity(0.3),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.purple.withOpacity(0.3),
+                    AppColors.cyan.withOpacity(0.3),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.auto_awesome,
+                color: AppColors.purple,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Ask AI Coach',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.purple,
+                  ),
+                ),
+                Text(
+                  'Have a question?',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: subtitleColor,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.chevron_right,
+              color: AppColors.purple.withOpacity(0.7),
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    )
+        .animate()
+        .fadeIn(delay: 350.ms, duration: 400.ms)
+        .slideY(begin: 0.1, end: 0);
+  }
+
   /// Loading state for AI weight suggestion
   Widget _buildLoadingWeightSuggestion(
     Color cardBg,
@@ -733,12 +823,13 @@ class RestTimerOverlay extends StatelessWidget {
     }
 
     // Build performance summary
+    // Only show if data is valid (reps > 0, since 0 reps is invalid)
     String? performanceSummary;
-    if (lastSetReps != null && lastSetWeight != null) {
+    if (lastSetReps != null && lastSetReps! > 0 && lastSetWeight != null) {
       final weightStr = lastSetWeight == lastSetWeight!.roundToDouble()
           ? '${lastSetWeight!.toInt()}kg'
           : '${lastSetWeight!.toStringAsFixed(1)}kg';
-      if (lastSetTargetReps != null) {
+      if (lastSetTargetReps != null && lastSetTargetReps! > 0) {
         performanceSummary = 'You did $lastSetReps/$lastSetTargetReps reps at $weightStr';
       } else {
         performanceSummary = 'You did $lastSetReps reps at $weightStr';
@@ -1003,7 +1094,7 @@ class RestTimerOverlay extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        lastSetWeight != null
+                        lastSetWeight != null && lastSetWeight! > 0
                             ? 'Keep ${lastSetWeight == lastSetWeight!.roundToDouble() ? lastSetWeight!.toInt() : lastSetWeight!.toStringAsFixed(1)} kg'
                             : 'Got it',
                         style: const TextStyle(
@@ -1032,7 +1123,7 @@ class RestTimerOverlay extends StatelessWidget {
                           ),
                         ),
                         child: Text(
-                          lastSetWeight != null
+                          lastSetWeight != null && lastSetWeight! > 0
                               ? 'Keep ${lastSetWeight == lastSetWeight!.roundToDouble() ? lastSetWeight!.toInt() : lastSetWeight!.toStringAsFixed(1)} kg'
                               : 'Keep Weight',
                           style: TextStyle(

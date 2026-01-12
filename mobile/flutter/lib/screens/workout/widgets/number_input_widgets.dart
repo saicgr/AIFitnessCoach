@@ -31,7 +31,8 @@ class InlineNumberInput extends StatefulWidget {
 
 class _InlineNumberInputState extends State<InlineNumberInput> {
   void _decrement() {
-    final increment = widget.isDecimal ? 2.5 : 1.0;
+    // Changed from 2.5 to 1.0 for weight increment per plan
+    final increment = widget.isDecimal ? 1.0 : 1.0;
     if (widget.isDecimal) {
       final current = double.tryParse(widget.controller.text) ?? 0;
       final newVal = (current - increment).clamp(0.0, 999.0);
@@ -47,7 +48,8 @@ class _InlineNumberInputState extends State<InlineNumberInput> {
   }
 
   void _increment() {
-    final increment = widget.isDecimal ? 2.5 : 1.0;
+    // Changed from 2.5 to 1.0 for weight increment per plan
+    final increment = widget.isDecimal ? 1.0 : 1.0;
     if (widget.isDecimal) {
       final current = double.tryParse(widget.controller.text) ?? 0;
       final newVal = current + increment;
@@ -65,9 +67,11 @@ class _InlineNumberInputState extends State<InlineNumberInput> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final height = widget.isActive ? 48.0 : 44.0;
-    final iconSize = widget.isActive ? 22.0 : 20.0;
-    final fontSize = widget.isActive ? 16.0 : 14.0;
+    // Increased height for larger touch targets
+    final height = widget.isActive ? 52.0 : 48.0;
+    // Increased icon size per plan
+    final iconSize = widget.isActive ? 26.0 : 22.0;
+    final fontSize = widget.isActive ? 18.0 : 16.0;
     final inputBg = widget.isActive
         ? (isDark ? AppColors.pureBlack : AppColorsLight.pureWhite)
         : (isDark ? AppColors.elevated : AppColorsLight.glassSurface);
@@ -75,10 +79,10 @@ class _InlineNumberInputState extends State<InlineNumberInput> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Responsive button width: use 30% of available width per button,
-        // clamped between 32px min and 48px max for touch accessibility
+        // Responsive button width: use 32% of available width per button,
+        // clamped between 36px min and 56px max for larger touch targets per plan
         final availableWidth = constraints.maxWidth;
-        final buttonWidth = (availableWidth * 0.30).clamp(32.0, 48.0);
+        final buttonWidth = (availableWidth * 0.32).clamp(36.0, 56.0);
 
         return Container(
           height: height,
@@ -228,7 +232,8 @@ class ExpandedNumberInput extends StatefulWidget {
 
 class _ExpandedNumberInputState extends State<ExpandedNumberInput> {
   void _decrement() {
-    final increment = widget.isDecimal ? 2.5 : 1.0;
+    // Changed from 2.5 to 1.0 for weight increment per plan
+    final increment = widget.isDecimal ? 1.0 : 1.0;
     if (widget.isDecimal) {
       final current = double.tryParse(widget.controller.text) ?? 0;
       final newVal = (current - increment).clamp(0.0, 999.0);
@@ -243,7 +248,8 @@ class _ExpandedNumberInputState extends State<ExpandedNumberInput> {
   }
 
   void _increment() {
-    final increment = widget.isDecimal ? 2.5 : 1.0;
+    // Changed from 2.5 to 1.0 for weight increment per plan
+    final increment = widget.isDecimal ? 1.0 : 1.0;
     if (widget.isDecimal) {
       final current = double.tryParse(widget.controller.text) ?? 0;
       final newVal = current + increment;
@@ -500,8 +506,9 @@ class NumberInputField extends StatelessWidget {
               final current = isDecimal
                   ? (double.tryParse(controller.text) ?? 0)
                   : (int.tryParse(controller.text) ?? 0);
+              // Changed from 2.5 to 1.0 for weight increment
               final newValue = isDecimal
-                  ? (current - 2.5).clamp(0, 999)
+                  ? (current - 1.0).clamp(0, 999)
                   : (current - 1).clamp(0, 999);
               controller.text = isDecimal
                   ? newValue.toStringAsFixed(1).replaceAll('.0', '')
@@ -539,7 +546,8 @@ class NumberInputField extends StatelessWidget {
               final current = isDecimal
                   ? (double.tryParse(controller.text) ?? 0)
                   : (int.tryParse(controller.text) ?? 0);
-              final newValue = isDecimal ? current + 2.5 : current + 1;
+              // Changed from 2.5 to 1.0 for weight increment
+              final newValue = isDecimal ? current + 1.0 : current + 1;
               controller.text = isDecimal
                   ? newValue.toStringAsFixed(1).replaceAll('.0', '')
                   : newValue.toInt().toString();
@@ -646,8 +654,9 @@ class InlineNumberInputWithLabel extends StatelessWidget {
                   final current = isDecimal
                       ? (double.tryParse(controller.text) ?? 0)
                       : (int.tryParse(controller.text) ?? 0);
+                  // Changed from 2.5 to 1.0 for weight increment
                   final newValue = isDecimal
-                      ? (current - 2.5).clamp(0.0, 999.0)
+                      ? (current - 1.0).clamp(0.0, 999.0)
                       : (current - 1).clamp(0, 999);
                   controller.text = isDecimal
                       ? newValue.toStringAsFixed(1).replaceAll('.0', '')
@@ -689,7 +698,8 @@ class InlineNumberInputWithLabel extends StatelessWidget {
                   final current = isDecimal
                       ? (double.tryParse(controller.text) ?? 0)
                       : (int.tryParse(controller.text) ?? 0);
-                  final newValue = isDecimal ? current + 2.5 : current + 1;
+                  // Changed from 2.5 to 1.0 for weight increment
+                  final newValue = isDecimal ? current + 1.0 : current + 1;
                   controller.text = isDecimal
                       ? newValue.toStringAsFixed(1).replaceAll('.0', '')
                       : newValue.toInt().toString();

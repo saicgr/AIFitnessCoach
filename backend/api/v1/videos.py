@@ -79,6 +79,12 @@ async def get_video_by_exercise_name(exercise_name: str, gender: str = None):
         search_names.append(exercise_name)  # Original name as fallback
         search_names.append(base_name)      # Base name as last resort
 
+        # Expand with name variants to handle format differences (Push-ups vs Push Up)
+        expanded_names = []
+        for name in search_names:
+            expanded_names.extend(generate_name_variants(name))
+        search_names = list(dict.fromkeys(expanded_names))  # Dedupe preserving order
+
         # Try each name variant - use wildcard pattern for partial matches
         found_result = None
         for name in search_names:
@@ -162,6 +168,34 @@ def get_search_keywords(exercise_name: str) -> list:
     stopwords = {'the', 'a', 'an', 'with', 'on', 'in', 'for', 'to', 'and', 'or'}
     words = [w for w in normalized.split() if w not in stopwords and len(w) > 2]
     return words
+
+
+def generate_name_variants(name: str) -> list:
+    """Generate name variants for flexible database matching.
+
+    Handles common variations like:
+    - Push-ups -> Push Up, Push-up, Push up
+    - Squats -> Squat
+    """
+    variants = set()
+    variants.add(name)
+
+    # Replace hyphens with spaces
+    space_version = name.replace("-", " ")
+    variants.add(space_version)
+
+    # Remove trailing 's' for plural handling (Push-ups -> Push-up)
+    if name.endswith("s") and len(name) > 2:
+        singular = name[:-1]
+        variants.add(singular)
+        variants.add(singular.replace("-", " "))
+
+    # Handle space version singular
+    if space_version.endswith("s") and len(space_version) > 2:
+        singular = space_version[:-1]
+        variants.add(singular)
+
+    return list(variants)
 
 
 def search_s3_for_image(exercise_name: str, gender: str = None) -> str:
@@ -258,6 +292,12 @@ async def get_image_by_exercise_name(exercise_name: str, gender: str = None):
             search_names.append(f"{base_name}_{gender}")
         search_names.append(exercise_name)  # Original name as fallback
         search_names.append(base_name)      # Base name as last resort
+
+        # Expand with name variants to handle format differences (Push-ups vs Push Up)
+        expanded_names = []
+        for name in search_names:
+            expanded_names.extend(generate_name_variants(name))
+        search_names = list(dict.fromkeys(expanded_names))  # Dedupe preserving order
 
         # Try each name variant - use wildcard pattern for partial matches
         found_result = None

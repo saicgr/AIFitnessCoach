@@ -48,7 +48,6 @@ else
         -m "not slow" \
         --ignore=tests/test_quick_replies_e2e.py \
         --ignore=tests/test_streaming_speed.py \
-        --ignore=tests/test_workout_generation_integration.py \
         --ignore=tests/test_pr_detection_integration.py \
         -x
 fi

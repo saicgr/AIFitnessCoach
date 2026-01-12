@@ -1887,13 +1887,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       );
     }
 
-    // No response - show empty state
+    // No response - show loading state (likely post-onboarding)
     if (response == null) {
-      return EmptyWorkoutCard(
-        onGenerate: () {
-          HapticService.light();
-          context.go('/workouts');
-        },
+      return const GeneratingHeroCard(
+        message: 'Preparing your workout...',
+        subtitle: 'This may take a moment',
       );
     }
 
@@ -1906,7 +1904,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       return HeroWorkoutCard(workout: workout);
     }
 
-    // No workouts available - show empty state to generate
+    // No workouts available AND not completed today - show loading
+    // This handles the post-onboarding gap where generation hasn't started
+    if (!response.completedToday) {
+      return const GeneratingHeroCard(
+        message: 'Preparing your workout...',
+        subtitle: 'This may take a moment',
+      );
+    }
+
+    // Only show empty state if user has completed workout and no more scheduled
     return EmptyWorkoutCard(
       onGenerate: () {
         HapticService.light();

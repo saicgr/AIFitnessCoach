@@ -19,3 +19,17 @@ final currentUserIdProvider = Provider<String?>((ref) {
   final authState = ref.watch(authStateProvider);
   return authState.user?.id;
 });
+
+/// Provider for user's weight unit preference ('kg' or 'lbs')
+/// Defaults to 'kg' if user is not loaded yet
+final weightUnitProvider = Provider<String>((ref) {
+  final authState = ref.watch(authStateProvider);
+  return authState.user?.preferredWeightUnit ?? 'kg';
+});
+
+/// Provider for whether user prefers metric (kg) units
+/// Convenience provider for easy use in widgets
+final useKgProvider = Provider<bool>((ref) {
+  final unit = ref.watch(weightUnitProvider);
+  return unit == 'kg';
+});

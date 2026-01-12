@@ -41,6 +41,8 @@ class User extends Equatable {
   final String? updatedAt;
   final String? timezone; // IANA timezone identifier (e.g., America/New_York)
   final String? role; // 'user', 'admin', or 'super_admin'
+  @JsonKey(name: 'weight_unit')
+  final String? weightUnit; // 'kg' or 'lbs' - user's preferred weight unit
 
   const User({
     required this.id,
@@ -66,6 +68,7 @@ class User extends Equatable {
     this.updatedAt,
     this.timezone,
     this.role,
+    this.weightUnit,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
@@ -135,6 +138,32 @@ class User extends Equatable {
 
   /// Check if user is a super admin
   bool get isSuperAdmin => role == 'super_admin';
+
+  /// Get weight unit preference with fallback to 'kg'
+  /// Checks weightUnit field first, then preferences JSON, then defaults to 'kg'
+  String get preferredWeightUnit {
+    // Direct field first
+    if (weightUnit != null && weightUnit!.isNotEmpty) {
+      return weightUnit!;
+    }
+    // Try preferences JSON
+    if (preferences != null && preferences!.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(preferences!);
+        if (decoded is Map && decoded['weight_unit'] != null) {
+          return decoded['weight_unit'] as String;
+        }
+      } catch (_) {}
+    }
+    // Default to kg
+    return 'kg';
+  }
+
+  /// Check if user prefers metric (kg) units
+  bool get usesMetricWeight => preferredWeightUnit == 'kg';
+
+  /// Check if user prefers imperial (lbs) units
+  bool get usesImperialWeight => preferredWeightUnit == 'lbs';
 
   /// Get photo URL (placeholder for now - would come from auth provider)
   String? get photoUrl => null;
@@ -530,6 +559,7 @@ class User extends Equatable {
         paywallCompleted,
         timezone,
         role,
+        weightUnit,
       ];
 
   User copyWith({
@@ -556,6 +586,7 @@ class User extends Equatable {
     String? updatedAt,
     String? timezone,
     String? role,
+    String? weightUnit,
   }) {
     return User(
       id: id ?? this.id,
@@ -581,6 +612,7 @@ class User extends Equatable {
       updatedAt: updatedAt ?? this.updatedAt,
       timezone: timezone ?? this.timezone,
       role: role ?? this.role,
+      weightUnit: weightUnit ?? this.weightUnit,
     );
   }
 }

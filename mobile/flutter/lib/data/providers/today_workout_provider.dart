@@ -35,6 +35,21 @@ final todayWorkoutProvider =
     });
   }
 
+  // If no workouts available (post-onboarding), schedule a refresh after 3 seconds
+  // This ensures the UI auto-updates when workouts become available
+  if (response?.todayWorkout == null &&
+      response?.nextWorkout == null &&
+      response?.completedToday != true &&
+      response?.isGenerating != true) {
+    Timer(const Duration(seconds: 3), () {
+      try {
+        ref.invalidateSelf();
+      } catch (_) {
+        // Provider may have been disposed
+      }
+    });
+  }
+
   // Sync today's workout to WearOS watch (Android only, non-blocking)
   if (Platform.isAndroid && response?.todayWorkout != null && !response!.isGenerating) {
     _syncWorkoutToWatch(response.todayWorkout!, ref);
@@ -67,10 +82,10 @@ void _syncWorkoutToWatch(TodayWorkoutSummary workout, FutureProviderRef ref) {
           'name': e.name,
           'targetSets': e.sets,
           'targetReps': e.reps.toString(),
-          'targetWeightKg': e.suggestedWeight,
+          'targetWeightKg': e.weight,
           'restSeconds': e.restSeconds ?? 60,
           'videoUrl': e.videoUrl,
-          'thumbnailUrl': e.thumbnailUrl,
+          'thumbnailUrl': e.gifUrl ?? e.imageS3Path,
         }).toList(),
         estimatedDuration: workout.durationMinutes,
         targetMuscleGroups: workout.primaryMuscles,

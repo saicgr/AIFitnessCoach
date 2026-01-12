@@ -72,6 +72,9 @@ dependencies {
     // Wearable Data Layer API for watch sync
     implementation("com.google.android.gms:play-services-wearable:19.0.0")
 
+    // Wear OS Remote Interactions for prompting watch app install
+    implementation("androidx.wear:wear-remote-interactions:1.1.0")
+
     // Coroutines for async operations
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")

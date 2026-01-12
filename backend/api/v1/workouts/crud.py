@@ -801,13 +801,19 @@ async def complete_workout(
             first_time_count = sum(1 for e in exercise_comparisons if e.status == 'first_time')
 
             # Get previous workout for overall comparison
-            prev_workout_response = supabase.table("workout_performance_summary").select(
-                "*"
-            ).eq("user_id", user_id).neq(
-                "workout_log_id", workout_log_id or ""
-            ).order("performed_at", desc=True).limit(1).execute()
-
-            prev_workout_stats = prev_workout_response.data[0] if prev_workout_response.data else None
+            if workout_log_id:
+                prev_workout_response = supabase.table("workout_performance_summary").select(
+                    "*"
+                ).eq("user_id", user_id).neq(
+                    "workout_log_id", workout_log_id
+                ).order("performed_at", desc=True).limit(1).execute()
+                prev_workout_stats = prev_workout_response.data[0] if prev_workout_response.data else None
+            else:
+                # No current workout log to exclude, just get the most recent
+                prev_workout_response = supabase.table("workout_performance_summary").select(
+                    "*"
+                ).eq("user_id", user_id).order("performed_at", desc=True).limit(1).execute()
+                prev_workout_stats = prev_workout_response.data[0] if prev_workout_response.data else None
 
             workout_comparison = comparison_service.compute_workout_comparison(
                 current_stats=workout_stats,

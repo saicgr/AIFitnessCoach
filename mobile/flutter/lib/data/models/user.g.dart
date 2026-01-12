@@ -30,6 +30,7 @@ User _$UserFromJson(Map<String, dynamic> json) => User(
   updatedAt: json['updated_at'] as String?,
   timezone: json['timezone'] as String?,
   role: json['role'] as String?,
+  weightUnit: json['weight_unit'] as String?,
 );
 
 Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
@@ -56,6 +57,7 @@ Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
   'updated_at': instance.updatedAt,
   'timezone': instance.timezone,
   'role': instance.role,
+  'weight_unit': instance.weightUnit,
 };
 
 GoogleAuthRequest _$GoogleAuthRequestFromJson(Map<String, dynamic> json) =>

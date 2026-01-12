@@ -308,6 +308,11 @@ class WeightSuggestionService {
     bool isLastSet = false,
     String fitnessLevel = 'intermediate',
     List<String> goals = const [],
+    // AI Settings for personalization
+    String coachingStyle = 'motivational',
+    String communicationTone = 'encouraging',
+    double encouragementLevel = 0.7,
+    String responseLength = 'balanced',
   }) async {
     try {
       final response = await dio.post(
@@ -330,6 +335,11 @@ class WeightSuggestionService {
           'is_last_set': isLastSet,
           'fitness_level': fitnessLevel,
           'goals': goals,
+          // AI Settings
+          'coaching_style': coachingStyle,
+          'communication_tone': communicationTone,
+          'encouragement_level': encouragementLevel,
+          'response_length': responseLength,
         },
       );
 

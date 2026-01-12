@@ -2044,22 +2044,7 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
 
             except Exception as e:
                 logger.error(f"Error generating workout: {e}")
-                # Fitness-level-appropriate fallback exercises
-                # CRITICAL: Beginners need lower volume to focus on form
-                if fitness_level == "beginner":
-                    fallback_sets, fallback_reps = 2, 10
-                elif fitness_level == "advanced":
-                    fallback_sets, fallback_reps = 4, 12
-                else:  # intermediate
-                    fallback_sets, fallback_reps = 3, 12
-                exercises = [
-                    {"name": "Push-ups", "sets": fallback_sets, "reps": fallback_reps},
-                    {"name": "Squats", "sets": fallback_sets, "reps": fallback_reps}
-                ]
-                logger.warning(f"Using fallback exercises with fitness_level={fitness_level}: {fallback_sets} sets x {fallback_reps} reps")
-                workout_name = f"{focus.title()} Workout"
-                workout_type = "strength"
-                difficulty = intensity_preference
+                raise  # No fallback - let errors propagate per CLAUDE.md guidelines
 
             # Apply 1RM-based weights for percentage-based training
             if one_rm_data and exercises:
@@ -2738,7 +2723,7 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
             user_name = user.get("name") or user.get("username") or "Unknown"
 
             day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-            selected_day_names = [day_names[d] for d in body.selected_days] if body.selected_days else []
+            selected_day_names = [day_names[d] for d in body.selected_days if 0 <= d < 7] if body.selected_days else []
 
             logger.info(f"[USER CONTEXT] user_id={body.user_id}, name={user_name}")
             logger.info(f"[USER CONTEXT] timezone={user_timezone}, created_at={user_created_at}")
@@ -3388,24 +3373,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
 
             except Exception as e:
                 logger.error(f"Error generating remaining workout: {e}")
-                # Fitness-level-appropriate fallback exercises
-                if fitness_level == "beginner":
-                    fb_sets, fb_reps = 2, 10
-                elif fitness_level == "advanced":
-                    fb_sets, fb_reps = 4, 12
-                else:
-                    fb_sets, fb_reps = 3, 12
-                logger.warning(f"Using fallback exercises with fitness_level={fitness_level}: {fb_sets} sets x {fb_reps} reps")
-                return {
-                    "workout_date": workout_date,
-                    "focus": focus,
-                    "name": f"{focus.title()} Workout",
-                    "type": "strength",
-                    "difficulty": intensity_preference,
-                    "exercises": [{"name": "Push-ups", "sets": fb_sets, "reps": fb_reps}],
-                    "exercises_used": ["Push-ups"],
-                    "queued_used": [],
-                }
+                raise  # No fallback - let errors propagate per CLAUDE.md guidelines
 
         for batch_start in range(0, len(workout_dates), BATCH_SIZE):
             batch_end = min(batch_start + BATCH_SIZE, len(workout_dates))

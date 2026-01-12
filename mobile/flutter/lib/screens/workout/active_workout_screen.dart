@@ -27,6 +27,7 @@ import 'widgets/set_adjustment_sheet.dart';
 import 'widgets/exercise_swap_sheet.dart';
 import 'widgets/superset_pair_sheet.dart';
 import '../../data/repositories/superset_repository.dart';
+import '../../core/providers/user_provider.dart';
 import 'widgets/exercise_thumbnail_strip.dart';
 import 'widgets/video_pip.dart';
 import 'widgets/rest_timer_overlay.dart';
@@ -158,7 +159,8 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
   // Inline input controllers for real-time weight/reps entry
   late TextEditingController _repsController;
   late TextEditingController _weightController;
-  bool _useKg = true; // true = kg, false = lbs
+  bool _useKg = true; // true = kg, false = lbs - initialized from user preference
+  bool _unitInitialized = false; // Track if unit has been initialized from user preference
 
   // Set tracking overlay
   bool _showSetOverlay = true; // Show by default
@@ -1792,23 +1794,40 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
       final userId = await apiClient.getUserId();
       if (userId == null) return;
 
-      // Build set history for fatigue detection
-      final setHistory = completedSets.map((set) => {
-        'set_number': completedSets.indexOf(set) + 1,
-        'weight_kg': set.weight,
-        'reps_completed': set.reps,
-        'rpe': 7.0, // Default
-        'rest_time_seconds': 90, // Default
+      // Get the current weight from controller
+      final currentWeight = double.tryParse(_weightController.text) ??
+          (completedSets.isNotEmpty ? completedSets.last.weight : 0.0);
+
+      // Build sets_data matching backend FatigueCheckRequest schema
+      final setsData = completedSets.map((set) => {
+        'reps': set.reps,
+        'weight': set.weight,
+        'rpe': null, // TODO: Get from actual user input when available
+        'rir': null, // TODO: Get from actual user input when available
+        'is_failure': false,
+        'target_reps': set.targetReps > 0 ? set.targetReps : (currentExercise.reps ?? 10),
       }).toList();
 
+      // Determine exercise type
+      String exerciseType = 'compound';
+      final muscleGroup = currentExercise.muscleGroup?.toLowerCase() ?? '';
+      if (muscleGroup.contains('bicep') ||
+          muscleGroup.contains('tricep') ||
+          muscleGroup.contains('calf') ||
+          muscleGroup.contains('forearm')) {
+        exerciseType = 'isolation';
+      } else if (muscleGroup.contains('bodyweight') ||
+                 currentExercise.equipment?.toLowerCase() == 'bodyweight') {
+        exerciseType = 'bodyweight';
+      }
+
       final response = await apiClient.post(
-        '/api/v1/workouts/fatigue-alerts',
+        '/api/workouts/fatigue-check',
         data: {
-          'user_id': userId,
-          'exercise_name': currentExercise.name,
-          'muscle_group': currentExercise.muscleGroup ?? 'unknown',
+          'sets_data': setsData,
+          'current_weight': currentWeight,
+          'exercise_type': exerciseType,
           'target_reps': currentExercise.reps ?? 10,
-          'set_history': setHistory,
         },
       );
 
@@ -4066,6 +4085,12 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
       ref.read(workoutHeartRateHistoryProvider.notifier).clear();
     }
 
+    // Initialize weight unit from user preference on first build
+    if (!_unitInitialized) {
+      _unitInitialized = true;
+      _useKg = ref.read(useKgProvider);
+    }
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
@@ -4261,6 +4286,8 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
                   lastSetWeight: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
                       ? _completedSets[_currentExerciseIndex]!.last.weight
                       : null,
+                  // Ask AI Coach button
+                  onAskAICoach: () => context.push('/chat'),
                 ),
               ),
 

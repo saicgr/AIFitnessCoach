@@ -20,6 +20,7 @@ from models.gemini_schemas import (
     GeneratedWorkoutResponse,
     WorkoutNameItem,
     WorkoutNamesResponse,
+    WorkoutNamingResponse,
     ExerciseReasoningItem,
     ExerciseReasoningResponse,
     # Food analysis
@@ -168,6 +169,33 @@ class TestWorkoutGenerationSchemas:
         )
         assert "upper body" in reasoning.workout_reasoning
         assert len(reasoning.exercise_reasoning) == 1
+
+    def test_workout_naming_response(self):
+        """Test WorkoutNamingResponse - the schema for generate_workout_from_library.
+
+        This schema is used when RAG provides exercises and we only need Gemini
+        to generate a creative name and notes. It does NOT include exercises.
+        """
+        naming = WorkoutNamingResponse(
+            name="Thunder Strike Chest",
+            type="strength",
+            difficulty="medium",
+            notes="Focus on controlled movements and progressive overload.",
+        )
+        assert naming.name == "Thunder Strike Chest"
+        assert naming.type == "strength"
+        assert naming.difficulty == "medium"
+        assert naming.notes is not None
+
+    def test_workout_naming_response_minimal(self):
+        """Test WorkoutNamingResponse with only required fields."""
+        naming = WorkoutNamingResponse(
+            name="Power Push",
+            type="strength",
+            difficulty="easy",
+        )
+        assert naming.name == "Power Push"
+        assert naming.notes is None  # Optional field
 
 
 class TestFoodAnalysisSchemas:

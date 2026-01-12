@@ -17,6 +17,7 @@ import '../../../core/providers/video_cache_provider.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
+import '../../../core/providers/user_provider.dart';
 import '../equipment/environment_list_screen.dart';
 import '../offline/downloaded_videos_screen.dart';
 import 'setting_tile.dart';
@@ -562,6 +563,109 @@ class SettingsCard extends ConsumerWidget {
     );
   }
 
+  void _showWeightUnitSelector(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentUnit = ref.read(weightUnitProvider);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Weight Unit',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Choose your preferred unit for displaying weights',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _WeightUnitOptionTile(
+              unit: 'kg',
+              displayName: 'Kilograms (kg)',
+              description: 'Metric system • Used in most countries',
+              icon: Icons.straighten,
+              isSelected: currentUnit == 'kg',
+              onTap: () async {
+                HapticFeedback.selectionClick();
+                Navigator.pop(context);
+                await _updateWeightUnit(context, ref, 'kg');
+              },
+            ),
+            _WeightUnitOptionTile(
+              unit: 'lbs',
+              displayName: 'Pounds (lbs)',
+              description: 'Imperial system • Used in USA & UK',
+              icon: Icons.fitness_center,
+              isSelected: currentUnit == 'lbs',
+              onTap: () async {
+                HapticFeedback.selectionClick();
+                Navigator.pop(context);
+                await _updateWeightUnit(context, ref, 'lbs');
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _updateWeightUnit(BuildContext context, WidgetRef ref, String unit) async {
+    try {
+      // Update user profile via API
+      await ref.read(authStateProvider.notifier).updateUserProfile({'weight_unit': unit});
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Weight unit changed to ${unit == 'kg' ? 'kilograms' : 'pounds'}'),
+            backgroundColor: AppColors.cyan,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to update weight unit'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
   void _showWorkoutDaysSelector(BuildContext context, WidgetRef ref) {
     final authState = ref.read(authStateProvider);
     final user = authState.user;
@@ -1051,6 +1155,27 @@ class SettingsCard extends ConsumerWidget {
               ],
             );
             onTap = () => context.push('/calibration/intro');
+          } else if (item.isWeightUnitSelector) {
+            final weightUnit = ref.watch(weightUnitProvider);
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  weightUnit == 'kg' ? 'Kilograms' : 'Pounds',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () => _showWeightUnitSelector(context, ref);
           } else {
             trailing = item.trailing;
           }
@@ -1086,7 +1211,8 @@ class SettingsCard extends ConsumerWidget {
                     !item.isTrainingSplitSelector &&
                     !item.isWorkoutDaysSelector &&
                     !item.isProgressChartsScreen &&
-                    !item.isCalibrationTestScreen,
+                    !item.isCalibrationTestScreen &&
+                    !item.isWeightUnitSelector,
                 borderRadius: index == 0
                     ? const BorderRadius.vertical(top: Radius.circular(16))
                     : index == items.length - 1
@@ -2654,6 +2780,89 @@ class _TrainingIntensitySheetState extends State<_TrainingIntensitySheet> {
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A tile for weight unit selection in the bottom sheet.
+class _WeightUnitOptionTile extends StatelessWidget {
+  final String unit;
+  final String displayName;
+  final String description;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _WeightUnitOptionTile({
+    required this.unit,
+    required this.displayName,
+    required this.description,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isDark ? AppColors.cyan.withValues(alpha: 0.15) : AppColorsLight.cyan.withValues(alpha: 0.1))
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppColors.cyan : cardBorder,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? AppColors.cyan : textMuted,
+              size: 28,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Icon(
+                Icons.check_circle,
+                color: AppColors.cyan,
+                size: 24,
+              ),
           ],
         ),
       ),

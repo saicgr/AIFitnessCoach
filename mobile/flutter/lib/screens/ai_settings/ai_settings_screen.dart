@@ -624,8 +624,9 @@ class _CoachPersonaSection extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-            // Navigate to coach selection screen
-            context.push('/coach-selection');
+            // Navigate to coach selection screen with fromSettings flag
+            // This allows changing coach without going through paywall again
+            context.push('/coach-selection?fromSettings=true');
           },
           child: Padding(
             padding: const EdgeInsets.all(16),

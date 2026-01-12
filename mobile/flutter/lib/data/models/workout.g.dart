@@ -17,7 +17,7 @@ Workout _$WorkoutFromJson(Map<String, dynamic> json) => Workout(
   exercisesJson: json['exercises_json'],
   durationMinutes: (json['duration_minutes'] as num?)?.toInt(),
   generationMethod: json['generation_method'] as String?,
-  generationMetadata: json['generation_metadata'] as Map<String, dynamic>?,
+  generationMetadata: _parseGenerationMetadata(json['generation_metadata']),
   createdAt: json['created_at'] as String?,
   updatedAt: json['updated_at'] as String?,
 );

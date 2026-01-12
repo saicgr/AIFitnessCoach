@@ -99,7 +99,7 @@ from models.cardio_session import (
 )
 
 # Workout models - kept here as they are the most complex and heavily used
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 from datetime import datetime
 
@@ -174,6 +174,14 @@ class GenerateWeeklyRequest(BaseModel):
     selected_days: List[int] = Field(..., max_length=7)
     duration_minutes: Optional[int] = Field(default=45, ge=1, le=480)
 
+    @field_validator('selected_days')
+    @classmethod
+    def validate_day_range(cls, v: List[int]) -> List[int]:
+        for day in v:
+            if not 0 <= day <= 6:
+                raise ValueError(f'Day index must be 0-6 (Mon-Sun), got {day}')
+        return v
+
 
 class GenerateWeeklyResponse(BaseModel):
     workouts: List[Workout]
@@ -186,6 +194,14 @@ class GenerateMonthlyRequest(BaseModel):
     duration_minutes: Optional[int] = Field(default=45, ge=1, le=480)
     weeks: Optional[int] = Field(default=12, ge=1, le=52)
     max_workouts: Optional[int] = Field(default=None, ge=1, le=30, description="Limit number of workouts to generate. If set, generates only this many workouts.")
+
+    @field_validator('selected_days')
+    @classmethod
+    def validate_day_range(cls, v: List[int]) -> List[int]:
+        for day in v:
+            if not 0 <= day <= 6:
+                raise ValueError(f'Day index must be 0-6 (Mon-Sun), got {day}')
+        return v
 
 
 class GenerateMonthlyResponse(BaseModel):

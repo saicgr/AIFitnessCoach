@@ -6,10 +6,13 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import com.google.android.gms.wearable.*
-import com.google.android.gms.wearable.RemoteActivityHelper
+import androidx.wear.remote.interactions.RemoteActivityHelper
+import com.google.common.util.concurrent.ListenableFuture
 import com.google.gson.Gson
 import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /**
  * Client for sending data from phone to Wear OS watch.
@@ -117,10 +120,20 @@ class WearableDataClient(private val context: Context) {
                 .setData(Uri.parse("market://details?id=$WATCH_APP_PACKAGE"))
                 .addCategory(Intent.CATEGORY_BROWSABLE)
 
-            val remoteActivityHelper = RemoteActivityHelper(activity)
+            val remoteActivityHelper = RemoteActivityHelper(activity, java.util.concurrent.Executors.newSingleThreadExecutor())
 
-            // Start Play Store on the watch
-            remoteActivityHelper.startRemoteActivity(playStoreIntent, watchNode.id).await()
+            // Start Play Store on the watch - use suspendCancellableCoroutine to await ListenableFuture
+            suspendCancellableCoroutine<Void?> { continuation ->
+                val future: ListenableFuture<Void> = remoteActivityHelper.startRemoteActivity(playStoreIntent, watchNode.id)
+                future.addListener({
+                    try {
+                        future.get()
+                        continuation.resume(null) { }
+                    } catch (e: Exception) {
+                        continuation.resumeWithException(e)
+                    }
+                }, java.util.concurrent.Executors.newSingleThreadExecutor())
+            }
 
             Log.i(TAG, "✅ Prompted watch app install on node: ${watchNode.displayName}")
             true

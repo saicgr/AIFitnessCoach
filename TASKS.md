@@ -2,21 +2,28 @@ FUTURE in voting:
 1. Posture video review
 2. Casting to TV
 
-ASAP:
-17. Add directly from library
-20. On the rest screen do some kind of words of encouragement featuring the them of the AI coach.
+UPCOMING:
 37. Gemini 2.5 flash text to speech for video audio AI generated --maybe just start and end audio
-
-54. Test and check for offline mode
 55. Finish Senior Mode
 55.5. older person. trying to get moving. it has been helpful. however I progressed too quickly with the running and strained my calf. I should of made the AI make the running more gradual. having said that I've trained with an adapted program removing lower leg activities.
 55.5 Offline mode aka Tracker Only Mode
-56. Premium Subscription has to work
-56. Strength Score and integration to social
+56. 
+56. 
 
 ISSUES:
-51. Use Flexbox to prevent all screensize issues
 53. 
+
+ASAP:
+0. Ability to add superset during the workout
+0.1. Ability to add superset before the workout
+0.2. Review fitness app hevy and gravl for superset
+0.3. Review fitness app hevy and gravl for weight inputs (pyramind, reverse pyramind etc)
+1. Strength Score per muscle
+1.1. Review fitness app hevy and gravl for more features
+1.2. Review Reddit posts
+2. Premium Subscription has to work
+3. Test and check for offline mode
+4. 
 
 <!-- NEW FEATURES IN APP -->
 2. Thats a solid rep for the next o=workout can you try increasing the weight 10 more lbs?

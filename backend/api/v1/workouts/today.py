@@ -177,7 +177,7 @@ async def get_today_workout(
         logger.info(f"[USER CONTEXT] timezone={user_timezone}, created_at={user_created_at}")
         logger.info(f"[USER CONTEXT] onboarding_completed={onboarding_completed}, onboarding_at={onboarding_completed_at}")
         logger.info(f"[TODAY DEBUG] server_date={today_str}, server_weekday={date.today().weekday()} ({today_day_name})")
-        logger.info(f"[TODAY DEBUG] selected_days={selected_days} ({[day_names[d] for d in selected_days]}), is_workout_day={is_today_workout_day}")
+        logger.info(f"[TODAY DEBUG] selected_days={selected_days} ({[day_names[d] for d in selected_days if 0 <= d < 7]}), is_workout_day={is_today_workout_day}")
 
         # Get today's workout (not completed)
         today_rows = db.list_workouts(

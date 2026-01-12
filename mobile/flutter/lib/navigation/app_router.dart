@@ -341,20 +341,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null; // Allow these screens for non-logged-in users
       }
 
-      // Coach selection screen - allow if user hasn't selected coach yet
+      // Coach selection screen - allow for all logged-in users
+      // Users can change their coach from AI settings even after initial selection
       if (isOnCoachSelection) {
         if (isLoggedIn) {
-          final user = authState.user;
-          if (user != null && !user.isCoachSelected) {
-            return null; // Allow - user is selecting coach
-          }
-          // Coach already selected, go to next step
-          // NOTE: Conversational onboarding is SKIPPED - go directly to paywall
-          if (user != null) {
-            // if (!user.isOnboardingComplete) return '/onboarding';
-            if (!user.isPaywallComplete) return '/paywall-features';
-          }
-          return getHomeRoute();
+          return null; // Allow - user is selecting or changing coach
         }
         return '/stats-welcome'; // Not logged in, go to start
       }
@@ -669,29 +660,34 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // Coach Selection - pick your AI coach personality before onboarding
+      // Also used for changing coach from AI settings (with ?fromSettings=true)
       GoRoute(
         path: '/coach-selection',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const CoachSelectionScreen(),
-          transitionDuration: const Duration(milliseconds: 400),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.05, 0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                )),
-                child: child,
-              ),
-            );
-          },
-        ),
+        pageBuilder: (context, state) {
+          // Check if coming from AI settings (changing coach, not initial selection)
+          final fromSettings = state.uri.queryParameters['fromSettings'] == 'true';
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: CoachSelectionScreen(fromSettings: fromSettings),
+            transitionDuration: const Duration(milliseconds: 400),
+            reverseTransitionDuration: const Duration(milliseconds: 300),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0.05, 0),
+                    end: Offset.zero,
+                  ).animate(CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  )),
+                  child: child,
+                ),
+              );
+            },
+          );
+        },
       ),
 
       // Workout Generation - full screen progress while generating workouts

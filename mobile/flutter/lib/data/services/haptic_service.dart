@@ -205,6 +205,110 @@ class HapticService {
         break;
     }
   }
+
+  /// PR Achievement - Triumphant cascade for personal records
+  static void prAchievement() {
+    if (_currentLevel == HapticLevel.off) return;
+    // Heavy -> Heavy -> Medium -> Light cascade (220ms total)
+    HapticFeedback.heavyImpact();
+    Future.delayed(const Duration(milliseconds: 80), () {
+      HapticFeedback.heavyImpact();
+    });
+    Future.delayed(const Duration(milliseconds: 160), () {
+      HapticFeedback.mediumImpact();
+    });
+    Future.delayed(const Duration(milliseconds: 220), () {
+      HapticFeedback.lightImpact();
+    });
+  }
+
+  /// Multi-PR Achievement - "da-da-DUM" pattern for multiple PRs
+  static void multiPrAchievement() {
+    if (_currentLevel == HapticLevel.off) return;
+    HapticFeedback.mediumImpact();
+    Future.delayed(const Duration(milliseconds: 100), () {
+      HapticFeedback.mediumImpact();
+    });
+    Future.delayed(const Duration(milliseconds: 200), () {
+      HapticFeedback.heavyImpact();
+    });
+    Future.delayed(const Duration(milliseconds: 280), () {
+      HapticFeedback.mediumImpact();
+    });
+    Future.delayed(const Duration(milliseconds: 340), () {
+      HapticFeedback.lightImpact();
+    });
+  }
+
+  /// Rest timer tick - for countdown beats
+  static void restTimerTick() {
+    if (_currentLevel == HapticLevel.off) return;
+    HapticFeedback.selectionClick();
+  }
+
+  /// Rest timer complete - for when rest is over
+  static void restTimerComplete() {
+    if (_currentLevel == HapticLevel.off) return;
+    HapticFeedback.mediumImpact();
+    Future.delayed(const Duration(milliseconds: 100), () {
+      HapticFeedback.lightImpact();
+    });
+  }
+
+  /// Set completion - for completing a set during workout
+  static void setCompletion() {
+    if (_currentLevel == HapticLevel.off) return;
+    switch (_currentLevel) {
+      case HapticLevel.light:
+        HapticFeedback.lightImpact();
+        break;
+      case HapticLevel.medium:
+        HapticFeedback.mediumImpact();
+        Future.delayed(const Duration(milliseconds: 60), () {
+          HapticFeedback.lightImpact();
+        });
+        break;
+      case HapticLevel.strong:
+        HapticFeedback.heavyImpact();
+        Future.delayed(const Duration(milliseconds: 50), () {
+          HapticFeedback.mediumImpact();
+        });
+        Future.delayed(const Duration(milliseconds: 100), () {
+          HapticFeedback.lightImpact();
+        });
+        break;
+      default:
+        break;
+    }
+  }
+
+  /// Exercise transition - when moving to next exercise
+  static void exerciseTransition() {
+    if (_currentLevel == HapticLevel.off) return;
+    HapticFeedback.mediumImpact();
+    Future.delayed(const Duration(milliseconds: 120), () {
+      HapticFeedback.lightImpact();
+    });
+  }
+
+  /// Workout complete - celebratory pattern for finishing workout
+  static void workoutComplete() {
+    if (_currentLevel == HapticLevel.off) return;
+    // Triple pulse celebration
+    HapticFeedback.heavyImpact();
+    Future.delayed(const Duration(milliseconds: 150), () {
+      HapticFeedback.heavyImpact();
+    });
+    Future.delayed(const Duration(milliseconds: 300), () {
+      HapticFeedback.heavyImpact();
+    });
+    Future.delayed(const Duration(milliseconds: 450), () {
+      HapticFeedback.mediumImpact();
+    });
+    Future.delayed(const Duration(milliseconds: 550), () {
+      HapticFeedback.lightImpact();
+    });
+  }
 }
 
 /// Riverpod provider for haptic level state

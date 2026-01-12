@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../widgets/widgets.dart';
 
-/// The preferences section containing theme and timezone settings.
+/// The preferences section containing theme, timezone, and unit settings.
 ///
 /// Allows users to choose between System, Light, or Dark theme.
 /// Timezone is auto-detected but can be overridden (e.g., when traveling).
+/// Weight unit can be set to kg or lbs.
 class PreferencesSection extends StatelessWidget {
   const PreferencesSection({super.key});
 
@@ -28,6 +29,12 @@ class PreferencesSection extends StatelessWidget {
               title: 'Timezone',
               subtitle: 'Auto-detected, override if traveling',
               isTimezoneSelector: true,
+            ),
+            SettingItemData(
+              icon: Icons.fitness_center_outlined,
+              title: 'Weight Unit',
+              subtitle: 'Kilograms or Pounds',
+              isWeightUnitSelector: true,
             ),
           ],
         ),
