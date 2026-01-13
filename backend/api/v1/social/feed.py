@@ -75,22 +75,27 @@ async def get_activity_feed(
     # Parse activities
     activities = []
     for row in result.data:
-        # Ensure pinned fields have defaults if not present in DB
-        row_data = {
-            **row,
-            "is_pinned": row.get("is_pinned", False),
-            "pinned_at": row.get("pinned_at"),
-            "pinned_by": row.get("pinned_by"),
-        }
-        # Remove nested 'users' before creating ActivityFeedItem
-        users_data = row_data.pop("users", None)
+        try:
+            # Ensure pinned fields have defaults if not present in DB
+            row_data = {
+                **row,
+                "is_pinned": row.get("is_pinned", False),
+                "pinned_at": row.get("pinned_at"),
+                "pinned_by": row.get("pinned_by"),
+            }
+            # Remove nested 'users' before creating ActivityFeedItem
+            users_data = row_data.pop("users", None)
 
-        activity = ActivityFeedItem(**row_data)
-        if users_data:
-            activity.user_name = users_data.get("name")
-            activity.user_avatar = users_data.get("avatar_url")
-            activity.is_support_user = users_data.get("is_support_user", False)
-        activities.append(activity)
+            activity = ActivityFeedItem(**row_data)
+            if users_data:
+                activity.user_name = users_data.get("name")
+                activity.user_avatar = users_data.get("avatar_url")
+                activity.is_support_user = users_data.get("is_support_user", False)
+            activities.append(activity)
+        except Exception as parse_error:
+            print(f"[Social] Error parsing activity row: {parse_error}, row: {row}")
+            # Skip malformed rows instead of failing the whole request
+            continue
 
     total_count = result.count or 0
 
