@@ -128,6 +128,12 @@ class ActivityFeedItem(BaseModel):
     # Joined user data
     user_name: Optional[str] = None
     user_avatar: Optional[str] = None
+    is_support_user: bool = False  # Whether the post author is the support account
+
+    # Pinned post fields (admin feature)
+    is_pinned: bool = False
+    pinned_at: Optional[datetime] = None
+    pinned_by: Optional[str] = None
 
 
 class ActivityFeedItemCreate(BaseModel):

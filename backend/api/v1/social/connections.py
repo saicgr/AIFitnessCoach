@@ -17,6 +17,7 @@ from models.social import (
     ConnectionType,
 )
 from .utils import get_supabase_client
+from services.admin_service import get_admin_service
 
 router = APIRouter()
 
@@ -82,8 +83,20 @@ async def delete_connection(
 
     Returns:
         Success message
+
+    Raises:
+        403: If trying to unfollow the support user
+        404: If connection not found
     """
     supabase = get_supabase_client()
+
+    # Check if trying to unfollow the support user
+    admin_service = get_admin_service()
+    if await admin_service.is_support_user(following_id):
+        raise HTTPException(
+            status_code=403,
+            detail="Cannot remove FitWiz Support from friends. They're here to help!"
+        )
 
     result = supabase.table("user_connections").delete().eq(
         "follower_id", user_id

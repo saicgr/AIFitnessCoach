@@ -5,7 +5,10 @@ This module handles activity feed operations:
 - GET /feed/{user_id} - Get activity feed for a user
 - POST /feed - Create a new activity
 - DELETE /feed/{activity_id} - Delete an activity
+- POST /feed/{activity_id}/pin - Pin an activity (admin only)
+- DELETE /feed/{activity_id}/pin - Unpin an activity (admin only)
 """
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
@@ -14,6 +17,7 @@ from models.social import (
     ActivityFeedItem, ActivityFeedItemCreate, ActivityFeedResponse, ActivityType,
 )
 from services.social_rag_service import get_social_rag_service
+from services.admin_service import get_admin_service
 from .utils import get_supabase_client
 
 router = APIRouter()
@@ -48,11 +52,13 @@ async def get_activity_feed(
     following_ids = [row["following_id"] for row in following_result.data]
     following_ids.append(user_id)  # Include user's own activities
 
-    # Build query
+    # Build query - pinned posts first, then by created_at
+    # Note: Supabase doesn't support multi-column ordering well,
+    # so we'll order by is_pinned DESC, then pinned_at DESC (for pinned), then created_at DESC
     query = supabase.table("activity_feed").select(
-        "*, users(name, avatar_url)",
+        "*, users(name, avatar_url, is_support_user)",
         count="exact"
-    ).in_("user_id", following_ids).order("created_at", desc=True)
+    ).in_("user_id", following_ids).order("is_pinned", desc=True).order("created_at", desc=True)
 
     if activity_type:
         query = query.eq("activity_type", activity_type.value)
@@ -70,6 +76,7 @@ async def get_activity_feed(
         if row.get("users"):
             activity.user_name = row["users"].get("name")
             activity.user_avatar = row["users"].get("avatar_url")
+            activity.is_support_user = row["users"].get("is_support_user", False)
         activities.append(activity)
 
     total_count = result.count or 0
@@ -173,3 +180,97 @@ async def delete_activity(
         print(f"[Social] Failed to remove activity from ChromaDB: {e}")
 
     return {"message": "Activity deleted successfully"}
+
+
+@router.post("/feed/{activity_id}/pin")
+async def pin_activity(
+    user_id: str,
+    activity_id: str,
+):
+    """
+    Pin an activity to the top of the feed (admin only).
+
+    Args:
+        user_id: User ID making the request (must be admin)
+        activity_id: Activity ID to pin
+
+    Returns:
+        Success message
+
+    Raises:
+        403: If user is not an admin
+        404: If activity not found
+    """
+    supabase = get_supabase_client()
+    admin_service = get_admin_service()
+
+    # Check if user is admin
+    if not await admin_service.is_admin(user_id):
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins can pin posts"
+        )
+
+    # Verify activity exists
+    check = supabase.table("activity_feed").select("id").eq("id", activity_id).execute()
+    if not check.data:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    # Pin the activity
+    result = supabase.table("activity_feed").update({
+        "is_pinned": True,
+        "pinned_at": datetime.now(timezone.utc).isoformat(),
+        "pinned_by": user_id,
+    }).eq("id", activity_id).execute()
+
+    if not result.data:
+        raise HTTPException(status_code=500, detail="Failed to pin activity")
+
+    return {"message": "Activity pinned successfully"}
+
+
+@router.delete("/feed/{activity_id}/pin")
+async def unpin_activity(
+    user_id: str,
+    activity_id: str,
+):
+    """
+    Unpin an activity from the top of the feed (admin only).
+
+    Args:
+        user_id: User ID making the request (must be admin)
+        activity_id: Activity ID to unpin
+
+    Returns:
+        Success message
+
+    Raises:
+        403: If user is not an admin
+        404: If activity not found
+    """
+    supabase = get_supabase_client()
+    admin_service = get_admin_service()
+
+    # Check if user is admin
+    if not await admin_service.is_admin(user_id):
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins can unpin posts"
+        )
+
+    # Verify activity exists
+    check = supabase.table("activity_feed").select("id").eq("id", activity_id).execute()
+    if not check.data:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    # Unpin the activity
+    result = supabase.table("activity_feed").update({
+        "is_pinned": False,
+        "pinned_at": None,
+        "pinned_by": None,
+    }).eq("id", activity_id).execute()
+
+    if not result.data:
+        raise HTTPException(status_code=500, detail="Failed to unpin activity")
+
+    return {"message": "Activity unpinned successfully"}

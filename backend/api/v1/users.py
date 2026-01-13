@@ -34,11 +34,36 @@ from core.rate_limiter import limiter
 from core.activity_logger import log_user_activity, log_user_error
 from core.username_generator import generate_username_sync
 from models.schemas import User, UserCreate, UserUpdate
+from services.admin_service import get_admin_service, SUPPORT_EMAIL
 
 
 class GoogleAuthRequest(BaseModel):
     """Request body for Google OAuth authentication."""
     access_token: str
+
+
+class EmailAuthRequest(BaseModel):
+    """Request body for email/password authentication."""
+    email: str
+    password: str
+
+
+class EmailSignupRequest(BaseModel):
+    """Request body for email/password signup."""
+    email: str
+    password: str
+    name: Optional[str] = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    """Request body for forgot password."""
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    """Request body for password reset."""
+    access_token: str
+    new_password: str
 
 
 class ProgramPreferences(BaseModel):
@@ -116,6 +141,8 @@ def row_to_user(row: dict) -> User:
         username=row.get("username"),  # Use actual username field
         name=row.get("name") or prefs_dict.get("name"),
         email=row.get("email"),  # Include email in response
+        role=row.get("role", "user"),  # Admin role support
+        is_support_user=row.get("is_support_user", False),  # Support user flag
         onboarding_completed=row.get("onboarding_completed", False),
         coach_selected=row.get("coach_selected", False),
         paywall_completed=row.get("paywall_completed", False),
@@ -183,6 +210,11 @@ async def google_auth(request: Request, body: GoogleAuthRequest):
         unique_username = generate_username_sync(name=full_name, email=email)
         logger.info(f"Generated unique username: {unique_username}")
 
+        # Check if this email should be an admin (support@fitwiz.us)
+        admin_service = get_admin_service()
+        is_admin = admin_service.should_be_admin(email)
+        is_support = admin_service.should_be_support_user(email)
+
         # Note: goals and equipment are VARCHAR columns, not JSONB,
         # so we need to pass them as JSON strings
         new_user_data = {
@@ -190,6 +222,8 @@ async def google_auth(request: Request, body: GoogleAuthRequest):
             "email": email,
             "name": full_name,
             "username": unique_username,  # Auto-generated unique username
+            "role": "admin" if is_admin else "user",
+            "is_support_user": is_support,
             "onboarding_completed": False,
             "coach_selected": False,  # Explicitly set for new users to trigger coach selection
             "paywall_completed": False,  # Explicitly set for new users to trigger paywall flow
@@ -201,7 +235,11 @@ async def google_auth(request: Request, body: GoogleAuthRequest):
         }
 
         created = db.create_user(new_user_data)
-        logger.info(f"New user created via Google OAuth: id={created['id']}, email={email}")
+        logger.info(f"New user created via Google OAuth: id={created['id']}, email={email}, role={created.get('role', 'user')}")
+
+        # Auto-add support user as friend to new users (if support user exists)
+        if not is_support:
+            await admin_service.add_support_friend_to_user(created['id'])
 
         return row_to_user(created)
 
@@ -213,6 +251,246 @@ async def google_auth(request: Request, body: GoogleAuthRequest):
         logger.error(f"Google auth failed: {e}")
         logger.error(f"Full traceback: {full_traceback}")
         raise HTTPException(status_code=500, detail=f"Google auth error: {str(e)}")
+
+
+@router.post("/auth/email", response_model=User)
+@limiter.limit("5/minute")
+async def email_auth(request: Request, body: EmailAuthRequest):
+    """
+    Authenticate with email and password via Supabase.
+
+    - Signs in with Supabase Auth
+    - Gets or creates user in our database
+    - Returns user object with onboarding status
+    """
+    logger.info(f"Email authentication attempt for: {body.email}")
+
+    try:
+        supabase_manager = get_supabase()
+        supabase_client = supabase_manager.client
+
+        # Sign in with Supabase Auth
+        auth_response = supabase_client.auth.sign_in_with_password({
+            "email": body.email,
+            "password": body.password,
+        })
+
+        if not auth_response or not auth_response.user:
+            logger.warning(f"Invalid email or password for: {body.email}")
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+
+        supabase_user = auth_response.user
+        supabase_user_id = supabase_user.id
+        email = supabase_user.email
+        full_name = supabase_user.user_metadata.get("full_name") or supabase_user.user_metadata.get("name", "")
+
+        logger.info(f"Supabase user verified: id={supabase_user_id}, email={email}")
+
+        db = get_supabase_db()
+
+        # Check if user already exists by auth_id
+        existing = db.get_user_by_auth_id(supabase_user_id)
+
+        if existing:
+            logger.info(f"Existing user found: id={existing['id']}")
+            return row_to_user(existing)
+
+        # Create new user (rare case - user exists in Supabase Auth but not in our DB)
+        unique_username = generate_username_sync(name=full_name, email=email)
+        logger.info(f"Generated unique username: {unique_username}")
+
+        # Check if this email should be an admin
+        admin_service = get_admin_service()
+        is_admin = admin_service.should_be_admin(email)
+        is_support = admin_service.should_be_support_user(email)
+
+        new_user_data = {
+            "auth_id": supabase_user_id,
+            "email": email,
+            "name": full_name or "User",
+            "username": unique_username,
+            "role": "admin" if is_admin else "user",
+            "is_support_user": is_support,
+            "onboarding_completed": False,
+            "coach_selected": False,
+            "paywall_completed": False,
+            "fitness_level": "beginner",
+            "goals": "[]",
+            "equipment": "[]",
+            "preferences": {"name": full_name, "email": email},
+            "active_injuries": [],
+        }
+
+        created = db.create_user(new_user_data)
+        logger.info(f"New user created via email auth: id={created['id']}, email={email}, role={created.get('role', 'user')}")
+
+        # Auto-add support user as friend to new users
+        if not is_support:
+            await admin_service.add_support_friend_to_user(created['id'])
+
+        return row_to_user(created)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        full_traceback = traceback.format_exc()
+        logger.error(f"Email auth failed: {e}")
+        logger.error(f"Full traceback: {full_traceback}")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+
+@router.post("/auth/email/signup", response_model=User)
+@limiter.limit("5/minute")
+async def email_signup(request: Request, body: EmailSignupRequest):
+    """
+    Create a new account with email and password via Supabase.
+
+    - Creates user in Supabase Auth
+    - Creates user in our database
+    - Returns user object
+    """
+    logger.info(f"Email signup attempt for: {body.email}")
+
+    try:
+        supabase_manager = get_supabase()
+        supabase_client = supabase_manager.client
+
+        # Sign up with Supabase Auth
+        auth_response = supabase_client.auth.sign_up({
+            "email": body.email,
+            "password": body.password,
+            "options": {
+                "data": {
+                    "full_name": body.name or "",
+                }
+            }
+        })
+
+        if not auth_response or not auth_response.user:
+            logger.warning(f"Signup failed for: {body.email}")
+            raise HTTPException(status_code=400, detail="Failed to create account. Email may already be in use.")
+
+        supabase_user = auth_response.user
+        supabase_user_id = supabase_user.id
+        email = supabase_user.email
+        full_name = body.name or ""
+
+        logger.info(f"Supabase user created: id={supabase_user_id}, email={email}")
+
+        db = get_supabase_db()
+
+        # Generate unique username
+        unique_username = generate_username_sync(name=full_name, email=email)
+        logger.info(f"Generated unique username: {unique_username}")
+
+        # Check if this email should be an admin
+        admin_service = get_admin_service()
+        is_admin = admin_service.should_be_admin(email)
+        is_support = admin_service.should_be_support_user(email)
+
+        new_user_data = {
+            "auth_id": supabase_user_id,
+            "email": email,
+            "name": full_name or "User",
+            "username": unique_username,
+            "role": "admin" if is_admin else "user",
+            "is_support_user": is_support,
+            "onboarding_completed": False,
+            "coach_selected": False,
+            "paywall_completed": False,
+            "fitness_level": "beginner",
+            "goals": "[]",
+            "equipment": "[]",
+            "preferences": {"name": full_name, "email": email},
+            "active_injuries": [],
+        }
+
+        created = db.create_user(new_user_data)
+        logger.info(f"New user created via email signup: id={created['id']}, email={email}, role={created.get('role', 'user')}")
+
+        # Auto-add support user as friend to new users
+        if not is_support:
+            await admin_service.add_support_friend_to_user(created['id'])
+
+        return row_to_user(created)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        full_traceback = traceback.format_exc()
+        logger.error(f"Email signup failed: {e}")
+        logger.error(f"Full traceback: {full_traceback}")
+        raise HTTPException(status_code=400, detail=f"Signup failed: {str(e)}")
+
+
+@router.post("/auth/forgot-password")
+@limiter.limit("3/minute")
+async def forgot_password(request: Request, body: ForgotPasswordRequest):
+    """
+    Send password reset email via Supabase.
+
+    - Triggers Supabase to send reset email
+    - Returns success regardless of whether email exists (security)
+    """
+    logger.info(f"Password reset requested for: {body.email}")
+
+    try:
+        supabase_manager = get_supabase()
+        supabase_client = supabase_manager.client
+
+        # Request password reset from Supabase
+        # Note: Supabase will send an email with a reset link
+        supabase_client.auth.reset_password_for_email(body.email)
+
+        logger.info(f"Password reset email sent to: {body.email}")
+
+        # Always return success for security (don't reveal if email exists)
+        return {"message": "If an account exists with this email, a password reset link has been sent."}
+
+    except Exception as e:
+        logger.error(f"Password reset failed: {e}")
+        # Still return success for security
+        return {"message": "If an account exists with this email, a password reset link has been sent."}
+
+
+@router.post("/auth/reset-password")
+@limiter.limit("5/minute")
+async def reset_password(request: Request, body: ResetPasswordRequest):
+    """
+    Reset password using the token from reset email.
+
+    - Verifies the reset token
+    - Updates the password
+    - Returns success message
+    """
+    logger.info("Password reset attempt with token")
+
+    try:
+        supabase_manager = get_supabase()
+        supabase_client = supabase_manager.client
+
+        # Update the user's password using the access token from the reset link
+        # The client should have exchanged the reset link for an access token
+        user_response = supabase_client.auth.get_user(body.access_token)
+
+        if not user_response or not user_response.user:
+            raise HTTPException(status_code=401, detail="Invalid or expired reset token")
+
+        # Update password
+        supabase_client.auth.update_user({
+            "password": body.new_password
+        })
+
+        logger.info(f"Password reset successful for user: {user_response.user.email}")
+        return {"message": "Password has been reset successfully."}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Password reset failed: {e}")
+        raise HTTPException(status_code=400, detail="Failed to reset password. Token may be expired.")
 
 
 def merge_extended_fields_into_preferences(
