@@ -3047,7 +3047,7 @@ Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10
 | 34 | Photo Comparison Title | Name comparison sets | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Progress → Photos → Compare |
 | 35 | Days Between Calculation | Auto-calculate days between | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev | — |
 
-### 12. Social & Community (36 Features)
+### 12. Social & Community (44 Features)
 
 **Tier Availability:**
 | Feature | Free | Premium | Premium Plus/Lifetime |
@@ -3096,6 +3096,62 @@ Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10
 | 34 | Milestone Celebrations | Auto-post achievements | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
 | 35 | Privacy Controls | Control who sees activity | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
 | 36 | Block/Report Users | Block inappropriate users | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
+| 37 | Direct Messages | Send private messages to friends | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Social → Messages |
+| 38 | Conversations List | View all message conversations | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Social → Messages Tab |
+| 39 | Unread Message Count | Badge showing unread messages | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Social → Messages |
+| 40 | FitWiz Support Chat | Auto-friend support@fitwiz.us | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Social → Messages |
+| 41 | Welcome Message | Auto welcome from FitWiz Support | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Social → Messages |
+| 42 | Message Read Receipts | Mark messages as read | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Social → Messages |
+| 43 | Support User Badge | Verified badge for support | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Social → Messages |
+| 44 | Notification Bell | Home screen notification icon | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Home → Header |
+
+#### Direct Messages Feature Details
+
+**User Flow:**
+1. **New User Signup**:
+   - User creates account (Google or Email)
+   - FitWiz Support (support@fitwiz.us) automatically added as friend
+   - Welcome message sent from FitWiz Support appears in Messages tab
+
+2. **Accessing Messages**:
+   - Navigate to Social screen (bottom nav bar)
+   - Tap "Messages" tab (second tab)
+   - View list of conversations with unread counts
+
+3. **Reading Messages**:
+   - Tap on any conversation card
+   - View full message history
+   - Messages automatically marked as read
+
+4. **Sending Messages**:
+   - Open conversation with a friend
+   - Type message and send
+   - Message appears instantly in conversation
+
+**Technical Implementation:**
+
+| Component | File | Description |
+|-----------|------|-------------|
+| Migration | `backend/migrations/152_direct_messages.sql` | Creates conversations, conversation_participants, direct_messages tables with RLS |
+| Backend API | `backend/api/v1/social/messages.py` | REST endpoints for conversations and messages |
+| Models | `backend/models/social.py` | DirectMessage, Conversation, ConversationParticipant Pydantic models |
+| Admin Service | `backend/services/admin_service.py` | send_welcome_message_to_user() method |
+| Flutter Tab | `lib/screens/social/tabs/messages_tab.dart` | MessagesTab UI with conversation list |
+| Flutter Service | `lib/data/services/social_service.dart` | getConversations(), getMessages(), sendMessage() |
+| Provider | `lib/data/providers/social_provider.dart` | conversationsProvider |
+| Tests | `backend/tests/test_messages_api.py` | API endpoint tests |
+
+**API Endpoints:**
+- `GET /api/v1/social/messages/conversations` - List user's conversations
+- `GET /api/v1/social/messages/conversations/{id}` - Get messages in conversation
+- `POST /api/v1/social/messages/send` - Send a message
+- `POST /api/v1/social/messages/conversations/{id}/read` - Mark as read
+- `GET /api/v1/social/messages/with/{user_id}` - Get/create conversation with user
+
+**Database Tables:**
+- `conversations` - Stores conversation metadata
+- `conversation_participants` - Links users to conversations
+- `direct_messages` - Stores individual messages
 
 ### 13. Achievements & Gamification (12 Features)
 

@@ -14,6 +14,8 @@ from datetime import datetime
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.activity_logger import log_user_activity, log_user_error
+from services.user_context_service import user_context_service, EventType
 from models.social import (
     DirectMessage,
     DirectMessageCreate,
@@ -315,12 +317,49 @@ async def send_message(
 
         logger.info(f"[Messages] Message sent successfully in conversation {conversation_id}")
 
+        # Log user activity and context
+        await log_user_activity(
+            user_id=user_id,
+            action="direct_message_sent",
+            endpoint="/api/v1/social/messages/send",
+            message="Sent a direct message",
+            metadata={
+                "conversation_id": conversation_id,
+                "recipient_id": request.recipient_id,
+                "message_length": len(request.content),
+            },
+            status_code=200
+        )
+
+        # Log to user context for AI awareness
+        await user_context_service.log_event(
+            user_id=user_id,
+            event_type=EventType.FEATURE_INTERACTION,
+            event_data={
+                "feature": "direct_messages",
+                "action": "message_sent",
+                "conversation_id": conversation_id,
+                "recipient_id": request.recipient_id,
+            },
+            context={
+                "message_length": len(request.content),
+            },
+        )
+
         return _parse_message(msg_row, sender_info)
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"[Messages] Failed to send message: {e}")
+        await log_user_error(
+            user_id=user_id,
+            action="direct_message_sent",
+            error=e,
+            endpoint="/api/v1/social/messages/send",
+            metadata={"recipient_id": request.recipient_id},
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
