@@ -56,8 +56,9 @@ async def get_activity_feed(
     offset = (page - 1) * page_size
 
     try:
+        # Simplified query - just get activities without join for now
         query = supabase.table("activity_feed").select(
-            "*, users(name, avatar_url, is_support_user)",
+            "*",
             count="exact"
         ).in_("user_id", following_ids).order("created_at", desc=True)
 
