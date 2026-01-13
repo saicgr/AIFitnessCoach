@@ -519,39 +519,14 @@ class _ReviewExerciseCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 // Muscle group and equipment
-                Row(
-                  children: [
-                    if (exercise.muscleGroup != null) ...[
-                      Text(
-                        exercise.muscleGroup!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colors.textSecondary,
-                        ),
-                      ),
-                    ],
-                    if (exercise.muscleGroup != null &&
-                        exercise.equipment != null)
-                      Text(
-                        ' • ',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colors.textMuted,
-                        ),
-                      ),
-                    if (exercise.equipment != null)
-                      Flexible(
-                        child: Text(
-                          exercise.equipment!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colors.textSecondary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                  ],
+                Text(
+                  _buildMuscleEquipmentText(),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colors.textSecondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 6),
                 // Sets, reps, rest
@@ -617,5 +592,16 @@ class _ReviewExerciseCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _buildMuscleEquipmentText() {
+    final parts = <String>[];
+    if (exercise.muscleGroup != null && exercise.muscleGroup!.isNotEmpty) {
+      parts.add(exercise.muscleGroup!);
+    }
+    if (exercise.equipment != null && exercise.equipment!.isNotEmpty) {
+      parts.add(exercise.equipment!);
+    }
+    return parts.join(' • ');
   }
 }

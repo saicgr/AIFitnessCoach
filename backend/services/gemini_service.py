@@ -1434,8 +1434,46 @@ This is an EXTREME intensity workout. You MUST:
 5. Include explosive and compound movements
 6. Add intensity boosters like pause reps, 1.5 reps, or slow eccentrics
 7. This workout should be BRUTAL - make users feel accomplished for finishing
-8. Include challenging exercise variations (e.g., deficit push-ups, Bulgarian split squats)
+8. Include challenging exercise variations (see HELL MODE EXERCISES below)
 9. Higher volume: more sets per exercise (4-5 sets minimum)
+
+🏋️ HELL MODE EXERCISES - USE THESE HARD VARIATIONS:
+LEGS (choose from these):
+- Barbell Back Squat (heavy), Front Squat, Pause Squat, Bulgarian Split Squat
+- Romanian Deadlift, Stiff-Leg Deadlift, Sumo Deadlift
+- Walking Lunges (weighted), Reverse Lunges, Jump Lunges
+- Leg Press (heavy), Hack Squat, Sissy Squat
+- Box Jumps, Jump Squats, Pistol Squats
+
+CHEST (choose from these):
+- Barbell Bench Press (heavy), Incline Barbell Press, Decline Press
+- Dumbbell Bench Press (heavy), Incline Dumbbell Press
+- Weighted Dips, Deficit Push-Ups, Clap Push-Ups
+- Cable Flyes (heavy), Dumbbell Flyes
+
+BACK (choose from these):
+- Deadlift (conventional or sumo), Rack Pulls
+- Barbell Row (heavy), Pendlay Row, T-Bar Row
+- Weighted Pull-Ups, Weighted Chin-Ups, Muscle-Ups
+- Lat Pulldown (heavy), Seated Cable Row (heavy)
+
+SHOULDERS (choose from these):
+- Overhead Press (barbell), Push Press, Arnold Press
+- Dumbbell Shoulder Press (heavy), Z-Press
+- Lateral Raise (heavy), Cable Lateral Raise
+- Face Pulls (heavy), Rear Delt Flyes, Upright Row
+
+ARMS (choose from these):
+- Barbell Curl (heavy), Preacher Curl, Spider Curl
+- Skull Crushers, Close-Grip Bench Press, Overhead Tricep Extension
+- Weighted Dips (tricep focus), Diamond Push-Ups
+
+⛔ DO NOT USE THESE EASY EXERCISES IN HELL MODE:
+- Bodyweight squats (use barbell squats instead)
+- Regular push-ups (use weighted/deficit/clap variations)
+- Dumbbell curls with light weight (use barbell or heavy dumbbells)
+- Machine exercises when free weights are available
+- Any exercise without added resistance/weight
 
 HELL MODE NAMING: Use intense, aggressive names like "Inferno", "Apocalypse", "Devastation", "Annihilation", "Carnage", "Rampage"."""
             if fitness_level == "beginner":
@@ -1444,6 +1482,57 @@ HELL MODE NAMING: Use intense, aggressive names like "Inferno", "Apocalypse", "D
                 safety_instruction += "\n\n💪 INTERMEDIATE IN HELL MODE: Push to your limits with challenging weights and minimal rest. You can handle this - make it count!"
         elif fitness_level == "beginner" and difficulty == "hard":
             safety_instruction = "\n\n⚠️ SAFETY NOTE: User is a beginner but wants hard intensity. Choose challenging exercises but ensure proper form is achievable. Include more rest periods and focus on compound movements with moderate weights rather than advanced techniques."
+
+        # Add difficulty-based rep/weight scaling
+        difficulty_scaling_instruction = ""
+        if difficulty == "easy":
+            difficulty_scaling_instruction = """
+
+📊 DIFFICULTY SCALING - EASY MODE:
+- Sets: 2-3 sets per exercise
+- Reps: 10-12 reps (higher rep range, lighter load)
+- Weights: Use 60-70% of typical recommendations
+- Rest: 90-120 seconds between sets
+- RPE Target: 5-6 (comfortable, could do 4+ more reps)
+- Focus: Form and technique over intensity"""
+        elif difficulty == "medium" or difficulty == "moderate":
+            difficulty_scaling_instruction = """
+
+📊 DIFFICULTY SCALING - MODERATE MODE:
+- Sets: 3-4 sets per exercise
+- Reps: 8-12 reps (standard hypertrophy range)
+- Weights: Use typical recommended weights for fitness level
+- Rest: 60-90 seconds between sets
+- RPE Target: 7-8 (challenging but sustainable)
+- Focus: Balance of form and progressive overload"""
+        elif difficulty == "challenging" or difficulty == "hard":
+            difficulty_scaling_instruction = """
+
+📊 DIFFICULTY SCALING - CHALLENGING MODE:
+- Sets: 3-4 sets per exercise (compound: 4 sets)
+- Reps: 6-10 reps (slightly lower reps, heavier weights)
+- Weights: Increase typical recommendations by 10-15%
+- Rest: 60-75 seconds between sets (shorter rest)
+- RPE Target: 8-9 (pushing limits, 1-2 reps in reserve)
+- Include: 1-2 exercises with failure on last set
+- Focus: Progressive overload and intensity"""
+        elif difficulty == "hell" or difficulty == "extreme":
+            difficulty_scaling_instruction = """
+
+📊 DIFFICULTY SCALING - HELL MODE:
+- Sets: 4-5 sets per exercise (MINIMUM 4 sets, preferably 5)
+- Reps: 6-8 for compounds, 8-10 for isolation, AMRAP on final sets
+- Weights: Increase typical recommendations by 20-30% (use HEAVY weights)
+- Rest: 30-45 seconds between sets (minimal rest, NO 60s+ rest periods)
+- RPE Target: 9-10 (near failure or failure on every working set)
+- Include: At least 2 drop set exercises, 1 superset pair, AMRAP finisher
+- Volume: 6-8 exercises minimum, high total volume
+- Exercise Selection: ONLY use advanced/compound exercises - NO basic bodyweight moves
+- Focus: Maximum intensity, muscle breakdown, mental toughness
+- Mark is_failure_set: true on at least 2 exercises
+- Mark is_drop_set: true on at least 1 isolation exercise"""
+
+        safety_instruction += difficulty_scaling_instruction
 
         # Determine workout type (strength, cardio, or mixed)
         # Addresses competitor feedback: "I hate how you can't pick cardio for one of your workouts"
