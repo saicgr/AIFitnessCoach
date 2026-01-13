@@ -884,7 +884,7 @@ class TestSetTypeGeneration:
 
     def test_gemini_schema_has_set_type_fields(self):
         """CRITICAL: WorkoutExerciseSchema must have set type fields."""
-        from models.gemini_schemas import WorkoutExerciseSchema
+        from models.gemini_schemas import WorkoutExerciseSchema, SetTargetSchema
 
         # Instantiate schema with set type fields
         exercise = WorkoutExerciseSchema(
@@ -895,21 +895,32 @@ class TestSetTypeGeneration:
             is_failure_set=True,
             drop_set_count=2,
             drop_set_percentage=20,
+            set_targets=[
+                SetTargetSchema(set_number=1, target_reps=12),
+                SetTargetSchema(set_number=2, target_reps=12),
+                SetTargetSchema(set_number=3, target_reps=12, set_type="failure"),
+            ],
         )
 
         assert exercise.is_drop_set is True, "CRITICAL: is_drop_set field must exist"
         assert exercise.is_failure_set is True, "CRITICAL: is_failure_set field must exist"
         assert exercise.drop_set_count == 2, "CRITICAL: drop_set_count field must exist"
         assert exercise.drop_set_percentage == 20, "CRITICAL: drop_set_percentage field must exist"
+        assert len(exercise.set_targets) == 3, "CRITICAL: set_targets field must exist"
 
     def test_set_type_defaults(self):
         """Set type fields should default to False/None."""
-        from models.gemini_schemas import WorkoutExerciseSchema
+        from models.gemini_schemas import WorkoutExerciseSchema, SetTargetSchema
 
         exercise = WorkoutExerciseSchema(
             name="Basic Exercise",
             sets=3,
             reps=10,
+            set_targets=[
+                SetTargetSchema(set_number=1, target_reps=10),
+                SetTargetSchema(set_number=2, target_reps=10),
+                SetTargetSchema(set_number=3, target_reps=10),
+            ],
         )
 
         assert exercise.is_drop_set is False, "is_drop_set should default to False"
@@ -919,7 +930,7 @@ class TestSetTypeGeneration:
 
     def test_generated_workout_can_have_set_types(self):
         """CRITICAL: GeneratedWorkoutResponse should support exercises with set types."""
-        from models.gemini_schemas import GeneratedWorkoutResponse, WorkoutExerciseSchema
+        from models.gemini_schemas import GeneratedWorkoutResponse, WorkoutExerciseSchema, SetTargetSchema
 
         workout = GeneratedWorkoutResponse(
             name="Beast Mode Legs",
@@ -934,6 +945,12 @@ class TestSetTypeGeneration:
                     reps=8,
                     is_failure_set=False,
                     is_drop_set=False,
+                    set_targets=[
+                        SetTargetSchema(set_number=1, target_reps=8, set_type="warmup"),
+                        SetTargetSchema(set_number=2, target_reps=8),
+                        SetTargetSchema(set_number=3, target_reps=8),
+                        SetTargetSchema(set_number=4, target_reps=8),
+                    ],
                 ),
                 WorkoutExerciseSchema(
                     name="Leg Extension",
@@ -943,7 +960,12 @@ class TestSetTypeGeneration:
                     is_failure_set=True,
                     drop_set_count=2,
                     drop_set_percentage=20,
-                    notes="Final set: AMRAP then drop weight 20% twice"
+                    notes="Final set: AMRAP then drop weight 20% twice",
+                    set_targets=[
+                        SetTargetSchema(set_number=1, target_reps=12),
+                        SetTargetSchema(set_number=2, target_reps=12),
+                        SetTargetSchema(set_number=3, target_reps=12, set_type="failure"),
+                    ],
                 ),
             ],
             notes="Focus on controlled movements"
@@ -956,7 +978,7 @@ class TestSetTypeGeneration:
 
     def test_workout_exercise_set_types_json_serialization(self):
         """Set type fields should serialize correctly to JSON."""
-        from models.gemini_schemas import WorkoutExerciseSchema
+        from models.gemini_schemas import WorkoutExerciseSchema, SetTargetSchema
 
         exercise = WorkoutExerciseSchema(
             name="Bicep Curl",
@@ -965,6 +987,11 @@ class TestSetTypeGeneration:
             is_drop_set=True,
             drop_set_count=3,
             drop_set_percentage=25,
+            set_targets=[
+                SetTargetSchema(set_number=1, target_reps=12),
+                SetTargetSchema(set_number=2, target_reps=12),
+                SetTargetSchema(set_number=3, target_reps=12, set_type="drop"),
+            ],
         )
 
         # Serialize to dict (as would happen in API response)
@@ -974,6 +1001,8 @@ class TestSetTypeGeneration:
         assert "is_failure_set" in exercise_dict, "is_failure_set must be in serialized dict"
         assert "drop_set_count" in exercise_dict, "drop_set_count must be in serialized dict"
         assert "drop_set_percentage" in exercise_dict, "drop_set_percentage must be in serialized dict"
+        assert "set_targets" in exercise_dict, "set_targets must be in serialized dict"
         assert exercise_dict["is_drop_set"] is True
         assert exercise_dict["drop_set_count"] == 3
         assert exercise_dict["drop_set_percentage"] == 25
+        assert len(exercise_dict["set_targets"]) == 3
