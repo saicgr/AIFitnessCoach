@@ -1888,6 +1888,12 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
         else:
             logger.info(f"🎯 [Feedback Loop] No difficulty adjustment needed: {difficulty_recommendation}")
 
+        # HELL MODE: Boost difficulty adjustment to prefer harder exercises from database
+        if intensity_preference == "hell":
+            hell_mode_boost = 3  # Strong preference for advanced exercises
+            difficulty_adjustment = min(5, difficulty_adjustment + hell_mode_boost)  # Cap at +5
+            logger.info(f"🔥 [HELL MODE] Boosted difficulty_adjustment to {difficulty_adjustment:+d} - selecting harder exercises")
+
         # Fetch comeback context for break detection
         comeback_context = await get_comeback_context(request.user_id)
         if comeback_context.get("needs_comeback"):
@@ -2312,6 +2318,12 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
             logger.info(f"🎯 [Feedback Loop] Applying difficulty_adjustment={difficulty_adjustment:+d}: {difficulty_recommendation}")
         else:
             logger.info(f"🎯 [Feedback Loop] No difficulty adjustment needed: {difficulty_recommendation}")
+
+        # HELL MODE: Boost difficulty adjustment to prefer harder exercises from database
+        if intensity_preference == "hell":
+            hell_mode_boost = 3  # Strong preference for advanced exercises
+            difficulty_adjustment = min(5, difficulty_adjustment + hell_mode_boost)  # Cap at +5
+            logger.info(f"🔥 [HELL MODE] Boosted difficulty_adjustment to {difficulty_adjustment:+d} - selecting harder exercises")
 
         # =============================================================================
         # AI CONSISTENCY: Fetch readiness score, mood, and injury-to-muscle mapping
@@ -2863,6 +2875,12 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
             else:
                 logger.info(f"🎯 [STREAM Feedback Loop] No difficulty adjustment needed")
 
+            # HELL MODE: Boost difficulty adjustment to prefer harder exercises from database
+            if intensity_preference == "hell":
+                hell_mode_boost = 3  # Strong preference for advanced exercises
+                difficulty_adjustment = min(5, difficulty_adjustment + hell_mode_boost)  # Cap at +5
+                logger.info(f"🔥 [STREAM HELL MODE] Boosted difficulty_adjustment to {difficulty_adjustment:+d} - selecting harder exercises")
+
             # Fetch comeback status for exercise parameter validation
             comeback_status = await get_user_comeback_status(body.user_id)
             is_comeback = comeback_status.get("in_comeback_mode", False)
@@ -3225,6 +3243,12 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
             logger.info(f"🎯 [Remaining Feedback Loop] Applying difficulty_adjustment={difficulty_adjustment:+d}: {difficulty_recommendation}")
         else:
             logger.info(f"🎯 [Remaining Feedback Loop] No difficulty adjustment needed")
+
+        # HELL MODE: Boost difficulty adjustment to prefer harder exercises from database
+        if intensity_preference == "hell":
+            hell_mode_boost = 3  # Strong preference for advanced exercises
+            difficulty_adjustment = min(5, difficulty_adjustment + hell_mode_boost)  # Cap at +5
+            logger.info(f"🔥 [Remaining HELL MODE] Boosted difficulty_adjustment to {difficulty_adjustment:+d} - selecting harder exercises")
 
         # Fetch comeback status for exercise parameter validation
         comeback_status = await get_user_comeback_status(request.user_id)
