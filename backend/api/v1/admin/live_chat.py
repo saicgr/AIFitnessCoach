@@ -337,8 +337,9 @@ async def get_live_chats(
         db = get_supabase_db()
 
         # Build query for live chat tickets
+        # Note: Using users!user_id syntax for PostgREST to infer the FK relationship
         query = db.client.table("support_tickets").select(
-            "*, users!support_tickets_user_id_fkey(name, email)"
+            "*, users!user_id(name, email)"
         ).eq("chat_mode", "live_chat")
 
         # Apply filters
@@ -474,7 +475,7 @@ async def get_live_chat_detail(
 
         # Get ticket with user info
         ticket_result = db.client.table("support_tickets").select(
-            "*, users!support_tickets_user_id_fkey(name, email, avatar_url, subscription_status, created_at)"
+            "*, users!user_id(name, email, avatar_url, subscription_status, created_at)"
         ).eq("id", ticket_id).eq("chat_mode", "live_chat").execute()
 
         if not ticket_result.data:
@@ -870,7 +871,7 @@ async def get_support_tickets(
 
         # Build query
         query = db.client.table("support_tickets").select(
-            "*, users!support_tickets_user_id_fkey(name, email)"
+            "*, users!user_id(name, email)"
         )
 
         if status:
