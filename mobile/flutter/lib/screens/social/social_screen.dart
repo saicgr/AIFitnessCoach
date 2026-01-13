@@ -9,6 +9,7 @@ import 'tabs/feed_tab.dart';
 import 'tabs/challenges_tab.dart';
 import 'tabs/leaderboard_tab.dart';
 import 'tabs/friends_tab.dart';
+import 'tabs/messages_tab.dart';
 import 'senior/senior_social_screen.dart';
 import 'friend_search_screen.dart';
 
@@ -28,7 +29,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -111,6 +112,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
               controller: _tabController,
               children: const [
                 FeedTab(),
+                MessagesTab(),
                 ChallengesTab(),
                 LeaderboardTab(),
                 FriendsTab(),
@@ -157,20 +159,27 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                 _buildTabItem(
                   context,
                   index: 1,
+                  icon: Icons.chat_bubble_rounded,
+                  label: 'Messages',
+                  isDark: isDark,
+                ),
+                _buildTabItem(
+                  context,
+                  index: 2,
                   icon: Icons.emoji_events_rounded,
                   label: 'Challenges',
                   isDark: isDark,
                 ),
                 _buildTabItem(
                   context,
-                  index: 2,
+                  index: 3,
                   icon: Icons.leaderboard_rounded,
                   label: 'Ranks',
                   isDark: isDark,
                 ),
                 _buildTabItem(
                   context,
-                  index: 3,
+                  index: 4,
                   icon: Icons.people_rounded,
                   label: 'Friends',
                   isDark: isDark,
@@ -303,7 +312,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                 color: AppColors.cyan,
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  _tabController.animateTo(3); // Friends tab
+                  _tabController.animateTo(4); // Friends tab
                 },
               ),
             ),
@@ -323,7 +332,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                 color: AppColors.orange,
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  _tabController.animateTo(1); // Challenges tab
+                  _tabController.animateTo(2); // Challenges tab
                 },
               ),
             ),

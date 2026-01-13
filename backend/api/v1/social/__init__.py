@@ -13,6 +13,7 @@ from the following submodules:
 - users: User search and discovery
 - friend_requests: Friend request management
 - notifications: Social notifications
+- messages: Direct messaging between users
 """
 from fastapi import APIRouter
 
@@ -26,6 +27,7 @@ from .summary import router as summary_router
 from .users import router as users_router
 from .friend_requests import router as friend_requests_router
 from .notifications import router as notifications_router
+from .messages import router as messages_router
 
 # Create the combined router with /social prefix
 router = APIRouter(prefix="/social")
@@ -41,6 +43,7 @@ router.include_router(summary_router)
 router.include_router(users_router)
 router.include_router(friend_requests_router)
 router.include_router(notifications_router)
+router.include_router(messages_router, prefix="/messages", tags=["messages"])
 
 # Re-export utilities
 from .utils import get_supabase_client

@@ -223,6 +223,86 @@ class AdminService:
         """
         return email.lower() == SUPPORT_EMAIL.lower()
 
+    async def send_welcome_message_to_user(self, user_id: str) -> bool:
+        """
+        Send a welcome message from the support user to a new user.
+
+        Args:
+            user_id: UUID of the new user
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            support_user = await self.get_support_user()
+            if not support_user:
+                logger.warning("Support user not found, skipping welcome message")
+                return False
+
+            support_user_id = support_user["id"]
+
+            # Don't send welcome message to the support user themselves
+            if user_id == support_user_id:
+                return True
+
+            # Get or create conversation
+            conv_result = self.db.client.rpc(
+                "get_or_create_conversation",
+                {"user1_id": support_user_id, "user2_id": user_id}
+            ).execute()
+
+            conversation_id = None
+            if conv_result.data:
+                conversation_id = str(conv_result.data)
+            else:
+                # Fallback: manually create conversation
+                conv_insert = self.db.client.table("conversations").insert({}).execute()
+                if conv_insert.data:
+                    conversation_id = str(conv_insert.data[0]["id"])
+
+                    # Add participants
+                    self.db.client.table("conversation_participants").insert([
+                        {"conversation_id": conversation_id, "user_id": support_user_id},
+                        {"conversation_id": conversation_id, "user_id": user_id},
+                    ]).execute()
+
+            if not conversation_id:
+                logger.error(f"Failed to create conversation for welcome message to {user_id}")
+                return False
+
+            # Send welcome message
+            welcome_message = (
+                "Welcome to FitWiz! 🎉\n\n"
+                "I'm here to help you on your fitness journey. "
+                "If you have any questions about the app, need workout tips, "
+                "or just want to chat about your fitness goals, feel free to message me anytime!\n\n"
+                "Let's get started on building a healthier you! 💪"
+            )
+
+            now = datetime.now(timezone.utc).isoformat()
+            message_data = {
+                "conversation_id": conversation_id,
+                "sender_id": support_user_id,
+                "content": welcome_message,
+                "is_system_message": False,
+                "created_at": now,
+            }
+
+            self.db.client.table("direct_messages").insert(message_data).execute()
+
+            # Update conversation last_message_at
+            self.db.client.table("conversations").update({
+                "last_message_at": now,
+                "updated_at": now,
+            }).eq("id", conversation_id).execute()
+
+            logger.info(f"Sent welcome message to user {user_id}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error sending welcome message to user {user_id}: {e}")
+            return False
+
 
 # Singleton instance
 _admin_service: Optional[AdminService] = None

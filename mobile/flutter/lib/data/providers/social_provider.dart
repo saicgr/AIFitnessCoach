@@ -72,3 +72,12 @@ final userActiveChallengesProvider = FutureProvider.family<List<Map<String, dyna
     return allChallenges.where((c) => c['user_participation'] != null).toList();
   },
 );
+
+/// Conversations list provider (direct messages)
+/// Note: Removed autoDispose to prevent refetching on navigation
+final conversationsProvider = FutureProvider.family<List<Map<String, dynamic>>, String>(
+  (ref, userId) async {
+    final socialService = ref.watch(socialServiceProvider);
+    return await socialService.getConversations(userId: userId);
+  },
+);

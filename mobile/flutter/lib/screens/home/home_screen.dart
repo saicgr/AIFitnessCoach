@@ -2884,6 +2884,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ),
           const Spacer(),
+          // Notification Bell
+          NotificationBellButton(isDark: isDark),
+          const SizedBox(width: 8),
           // Streak Badge - Consolidated metric
           _StreakBadge(streak: currentStreak, isDark: isDark, isCompact: isCompact),
         ],

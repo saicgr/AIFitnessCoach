@@ -400,3 +400,70 @@ class SeniorSocialSummary(BaseModel):
     your_challenges: List[SimplifiedChallenge]
     family_members: List[UserProfile]
     encouragement_count: int = 0  # How many cheers they received
+
+
+# ============================================================
+# DIRECT MESSAGES
+# ============================================================
+
+class DirectMessage(BaseModel):
+    """Direct message between users."""
+    id: str
+    conversation_id: str
+    sender_id: str
+    content: str
+    is_system_message: bool = False
+    created_at: datetime
+    edited_at: Optional[datetime] = None
+
+    # Joined sender data
+    sender_name: Optional[str] = None
+    sender_avatar: Optional[str] = None
+    sender_is_support: bool = False
+
+
+class DirectMessageCreate(BaseModel):
+    """Request to send a direct message."""
+    recipient_id: str = Field(..., max_length=100)
+    content: str = Field(..., min_length=1, max_length=5000)
+    conversation_id: Optional[str] = Field(default=None, max_length=100)
+
+
+class Conversation(BaseModel):
+    """Conversation between users."""
+    id: str
+    last_message_at: datetime
+    created_at: datetime
+
+    # Participants info
+    participants: List["ConversationParticipant"] = Field(default_factory=list)
+
+    # Latest message preview
+    last_message: Optional[DirectMessage] = None
+    unread_count: int = 0
+
+
+class ConversationParticipant(BaseModel):
+    """Conversation participant."""
+    user_id: str
+    user_name: Optional[str] = None
+    user_avatar: Optional[str] = None
+    is_support_user: bool = False
+    last_read_at: Optional[datetime] = None
+    is_muted: bool = False
+
+
+class ConversationsResponse(BaseModel):
+    """Conversations list response."""
+    conversations: List[Conversation]
+    total_count: int
+
+
+class MessagesResponse(BaseModel):
+    """Messages list response with pagination."""
+    messages: List[DirectMessage]
+    conversation_id: str
+    total_count: int
+    page: int
+    page_size: int
+    has_more: bool
