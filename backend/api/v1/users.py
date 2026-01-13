@@ -238,8 +238,12 @@ async def google_auth(request: Request, body: GoogleAuthRequest):
         logger.info(f"New user created via Google OAuth: id={created['id']}, email={email}, role={created.get('role', 'user')}")
 
         # Auto-add support user as friend to new users (if support user exists)
+        # This is non-critical, so we don't fail sign-in if it fails
         if not is_support:
-            await admin_service.add_support_friend_to_user(created['id'])
+            try:
+                await admin_service.add_support_friend_to_user(created['id'])
+            except Exception as friend_error:
+                logger.warning(f"Failed to auto-add support friend (non-critical): {friend_error}")
 
         return row_to_user(created)
 
@@ -324,9 +328,12 @@ async def email_auth(request: Request, body: EmailAuthRequest):
         created = db.create_user(new_user_data)
         logger.info(f"New user created via email auth: id={created['id']}, email={email}, role={created.get('role', 'user')}")
 
-        # Auto-add support user as friend to new users
+        # Auto-add support user as friend to new users (non-critical)
         if not is_support:
-            await admin_service.add_support_friend_to_user(created['id'])
+            try:
+                await admin_service.add_support_friend_to_user(created['id'])
+            except Exception as friend_error:
+                logger.warning(f"Failed to auto-add support friend (non-critical): {friend_error}")
 
         return row_to_user(created)
 
@@ -409,9 +416,12 @@ async def email_signup(request: Request, body: EmailSignupRequest):
         created = db.create_user(new_user_data)
         logger.info(f"New user created via email signup: id={created['id']}, email={email}, role={created.get('role', 'user')}")
 
-        # Auto-add support user as friend to new users
+        # Auto-add support user as friend to new users (non-critical)
         if not is_support:
-            await admin_service.add_support_friend_to_user(created['id'])
+            try:
+                await admin_service.add_support_friend_to_user(created['id'])
+            except Exception as friend_error:
+                logger.warning(f"Failed to auto-add support friend (non-critical): {friend_error}")
 
         return row_to_user(created)
 
