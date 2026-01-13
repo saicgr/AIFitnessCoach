@@ -160,7 +160,7 @@ class WorkoutBottomBar extends StatelessWidget {
             ],
           ),
 
-          // Center: Exercise Name (tappable for info)
+          // Center: Instructions button (Hevy-style)
           Expanded(
             child: GestureDetector(
               onTap: () {
@@ -168,40 +168,36 @@ class WorkoutBottomBar extends StatelessWidget {
                 onShowExerciseInfo?.call();
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Column(
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.electricBlue.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.electricBlue.withOpacity(0.3),
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      currentExercise.name,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
+                    Icon(
+                      Icons.play_circle_outline,
+                      size: 20,
+                      color: AppColors.electricBlue,
                     ),
-                    const SizedBox(height: 2),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          size: 12,
-                          color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'Instructions',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.electricBlue,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Tap for info',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                          ),
-                        ),
-                      ],
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),

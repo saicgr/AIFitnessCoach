@@ -3,6 +3,67 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'exercise.g.dart';
 
+/// Per-set AI target (like Gravl/Hevy style)
+@JsonSerializable()
+class SetTarget extends Equatable {
+  @JsonKey(name: 'set_number')
+  final int setNumber;
+  @JsonKey(name: 'set_type')
+  final String setType; // "warmup", "working", "drop", "failure", "amrap"
+  @JsonKey(name: 'target_reps')
+  final int targetReps;
+  @JsonKey(name: 'target_weight_kg')
+  final double? targetWeightKg;
+  @JsonKey(name: 'target_rpe')
+  final int? targetRpe; // 1-10
+  @JsonKey(name: 'target_rir')
+  final int? targetRir; // 0-5 (Reps in Reserve)
+
+  const SetTarget({
+    required this.setNumber,
+    this.setType = 'working',
+    required this.targetReps,
+    this.targetWeightKg,
+    this.targetRpe,
+    this.targetRir,
+  });
+
+  factory SetTarget.fromJson(Map<String, dynamic> json) =>
+      _$SetTargetFromJson(json);
+  Map<String, dynamic> toJson() => _$SetTargetToJson(this);
+
+  /// Get display label for set type (W = warmup, D = drop, etc.)
+  String get setTypeLabel {
+    switch (setType.toLowerCase()) {
+      case 'warmup':
+        return 'W';
+      case 'drop':
+        return 'D';
+      case 'failure':
+        return 'F';
+      case 'amrap':
+        return 'A';
+      default:
+        return ''; // Working sets show number
+    }
+  }
+
+  /// Whether this is a warmup set
+  bool get isWarmup => setType.toLowerCase() == 'warmup';
+
+  /// Whether this is a drop set
+  bool get isDropSet => setType.toLowerCase() == 'drop';
+
+  /// Whether this is a working set
+  bool get isWorkingSet => setType.toLowerCase() == 'working';
+
+  /// Whether this is a failure/AMRAP set
+  bool get isFailure => setType.toLowerCase() == 'failure' || setType.toLowerCase() == 'amrap';
+
+  @override
+  List<Object?> get props => [setNumber, setType, targetReps, targetWeightKg, targetRpe, targetRir];
+}
+
 /// Exercise within a workout
 @JsonSerializable()
 class WorkoutExercise extends Equatable {
@@ -72,6 +133,8 @@ class WorkoutExercise extends Equatable {
   final int? difficultyNum; // Numeric difficulty (1-10)
   @JsonKey(name: 'is_failure_set')
   final bool? isFailureSet; // Whether the final set should be taken to failure
+  @JsonKey(name: 'set_targets')
+  final List<SetTarget>? setTargets; // Per-set AI targets (Gravl/Hevy style)
 
   const WorkoutExercise({
     this.id,
@@ -111,6 +174,7 @@ class WorkoutExercise extends Equatable {
     this.difficulty,
     this.difficultyNum,
     this.isFailureSet,
+    this.setTargets,
   });
 
   /// Whether the weight is based on user's past workout history
@@ -252,6 +316,7 @@ class WorkoutExercise extends Equatable {
         restSeconds,
         durationSeconds,
         weight,
+        setTargets,
       ];
 
   WorkoutExercise copyWith({
@@ -288,6 +353,7 @@ class WorkoutExercise extends Equatable {
     int? dropSetCount,
     int? dropSetPercentage,
     bool? isFailureSet,
+    List<SetTarget>? setTargets,
   }) {
     return WorkoutExercise(
       id: id ?? this.id,
@@ -323,8 +389,26 @@ class WorkoutExercise extends Equatable {
       dropSetCount: dropSetCount ?? this.dropSetCount,
       dropSetPercentage: dropSetPercentage ?? this.dropSetPercentage,
       isFailureSet: isFailureSet ?? this.isFailureSet,
+      setTargets: setTargets ?? this.setTargets,
     );
   }
+
+  /// Get AI target for a specific set number
+  SetTarget? getTargetForSet(int setNumber) {
+    if (setTargets == null || setTargets!.isEmpty) return null;
+    return setTargets!.where((t) => t.setNumber == setNumber).firstOrNull;
+  }
+
+  /// Get warmup sets from targets
+  List<SetTarget> get warmupSets =>
+      setTargets?.where((t) => t.isWarmup).toList() ?? [];
+
+  /// Get working/effective sets from targets (excludes warmup)
+  List<SetTarget> get effectiveSets =>
+      setTargets?.where((t) => !t.isWarmup).toList() ?? [];
+
+  /// Whether this exercise has AI-generated set targets
+  bool get hasSetTargets => setTargets != null && setTargets!.isNotEmpty;
 }
 
 /// Library exercise (full details from /library/exercises API)

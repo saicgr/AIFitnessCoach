@@ -46,6 +46,7 @@ class AISettings {
   final bool restDaySuggestions;
   final bool nutritionMentions;
   final bool injurySensitivity;
+  final bool showAICoachDuringWorkouts;
 
   // Privacy & Data
   final bool saveChatHistory;
@@ -73,6 +74,7 @@ class AISettings {
     this.restDaySuggestions = true,
     this.nutritionMentions = true,
     this.injurySensitivity = true,
+    this.showAICoachDuringWorkouts = true,
     this.saveChatHistory = true,
     this.useRAG = true,
   });
@@ -93,6 +95,7 @@ class AISettings {
     bool? restDaySuggestions,
     bool? nutritionMentions,
     bool? injurySensitivity,
+    bool? showAICoachDuringWorkouts,
     bool? saveChatHistory,
     bool? useRAG,
   }) {
@@ -112,6 +115,7 @@ class AISettings {
       restDaySuggestions: restDaySuggestions ?? this.restDaySuggestions,
       nutritionMentions: nutritionMentions ?? this.nutritionMentions,
       injurySensitivity: injurySensitivity ?? this.injurySensitivity,
+      showAICoachDuringWorkouts: showAICoachDuringWorkouts ?? this.showAICoachDuringWorkouts,
       saveChatHistory: saveChatHistory ?? this.saveChatHistory,
       useRAG: useRAG ?? this.useRAG,
     );
@@ -133,6 +137,7 @@ class AISettings {
       'rest_day_suggestions': restDaySuggestions,
       'nutrition_mentions': nutritionMentions,
       'injury_sensitivity': injurySensitivity,
+      'show_ai_coach_during_workouts': showAICoachDuringWorkouts,
       'save_chat_history': saveChatHistory,
       'use_rag': useRAG,
       'default_agent': defaultAgent.name,
@@ -187,6 +192,7 @@ class AISettings {
       restDaySuggestions: json['rest_day_suggestions'] as bool? ?? true,
       nutritionMentions: json['nutrition_mentions'] as bool? ?? true,
       injurySensitivity: json['injury_sensitivity'] as bool? ?? true,
+      showAICoachDuringWorkouts: json['show_ai_coach_during_workouts'] as bool? ?? true,
       saveChatHistory: json['save_chat_history'] as bool? ?? true,
       useRAG: json['use_rag'] as bool? ?? true,
       defaultAgent: parseDefaultAgent(json['default_agent']),
@@ -342,6 +348,11 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
 
   void toggleInjurySensitivity() {
     state = state.copyWith(injurySensitivity: !state.injurySensitivity);
+    _saveSettings();
+  }
+
+  void toggleShowAICoachDuringWorkouts() {
+    state = state.copyWith(showAICoachDuringWorkouts: !state.showAICoachDuringWorkouts);
     _saveSettings();
   }
 
@@ -1263,6 +1274,13 @@ class _FitnessCoachingSection extends StatelessWidget {
             subtitle: 'Consider your injuries when giving advice',
             value: settings.injurySensitivity,
             onChanged: () => ref.read(aiSettingsProvider.notifier).toggleInjurySensitivity(),
+          ),
+          const SizedBox(height: 12),
+          _ToggleItem(
+            title: 'AI Coach During Workouts',
+            subtitle: 'Show AI coach assistant while exercising',
+            value: settings.showAICoachDuringWorkouts,
+            onChanged: () => ref.read(aiSettingsProvider.notifier).toggleShowAICoachDuringWorkouts(),
           ),
         ],
       ),

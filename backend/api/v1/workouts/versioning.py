@@ -529,7 +529,6 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                 "duration_minutes": regenerated.duration_minutes,
                 "scheduled_date": str(regenerated.scheduled_date) if regenerated.scheduled_date else None,
                 "exercises_json": json.loads(regenerated.exercises_json) if isinstance(regenerated.exercises_json, str) else regenerated.exercises_json,
-                "equipment_needed": regenerated.equipment_needed,
                 "is_completed": regenerated.is_completed,
                 "generation_method": regenerated.generation_method,
                 "version_number": regenerated.version_number,

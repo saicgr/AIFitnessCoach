@@ -6,6 +6,24 @@ part of 'exercise.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+SetTarget _$SetTargetFromJson(Map<String, dynamic> json) => SetTarget(
+  setNumber: (json['set_number'] as num).toInt(),
+  setType: json['set_type'] as String? ?? 'working',
+  targetReps: (json['target_reps'] as num).toInt(),
+  targetWeightKg: (json['target_weight_kg'] as num?)?.toDouble(),
+  targetRpe: (json['target_rpe'] as num?)?.toInt(),
+  targetRir: (json['target_rir'] as num?)?.toInt(),
+);
+
+Map<String, dynamic> _$SetTargetToJson(SetTarget instance) => <String, dynamic>{
+  'set_number': instance.setNumber,
+  'set_type': instance.setType,
+  'target_reps': instance.targetReps,
+  'target_weight_kg': instance.targetWeightKg,
+  'target_rpe': instance.targetRpe,
+  'target_rir': instance.targetRir,
+};
+
 WorkoutExercise _$WorkoutExerciseFromJson(Map<String, dynamic> json) =>
     WorkoutExercise(
       id: json['id'] as String?,
@@ -44,6 +62,10 @@ WorkoutExercise _$WorkoutExerciseFromJson(Map<String, dynamic> json) =>
       progressionFrom: json['progression_from'] as String?,
       difficulty: json['difficulty'] as String?,
       difficultyNum: (json['difficulty_num'] as num?)?.toInt(),
+      isFailureSet: json['is_failure_set'] as bool?,
+      setTargets: (json['set_targets'] as List<dynamic>?)
+          ?.map((e) => SetTarget.fromJson(e as Map<String, dynamic>))
+          .toList(),
     );
 
 Map<String, dynamic> _$WorkoutExerciseToJson(WorkoutExercise instance) =>
@@ -84,6 +106,8 @@ Map<String, dynamic> _$WorkoutExerciseToJson(WorkoutExercise instance) =>
       'progression_from': instance.progressionFrom,
       'difficulty': instance.difficulty,
       'difficulty_num': instance.difficultyNum,
+      'is_failure_set': instance.isFailureSet,
+      'set_targets': instance.setTargets,
     };
 
 LibraryExercise _$LibraryExerciseFromJson(Map<String, dynamic> json) =>

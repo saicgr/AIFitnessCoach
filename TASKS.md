@@ -24,6 +24,7 @@ ASAP:
 2. Premium Subscription has to work
 3. Test and check for offline mode
 4. Have only 1 male coach and the rest be female coaches - Need to regenerate images using ChatGPT.
+5. Achievements and rewards
 
 <!-- NEW FEATURES IN APP -->
 2. Thats a solid rep for the next o=workout can you try increasing the weight 10 more lbs?

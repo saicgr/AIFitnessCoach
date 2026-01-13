@@ -1706,19 +1706,29 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
         return;
       }
 
+      // Determine if exercise is compound (based on muscle group)
+      final muscleGroup = (currentExercise.muscleGroup ?? currentExercise.primaryMuscle ?? '').toLowerCase();
+      final isCompound = muscleGroup.contains('chest') ||
+          muscleGroup.contains('back') ||
+          muscleGroup.contains('legs') ||
+          muscleGroup.contains('quads') ||
+          muscleGroup.contains('hamstrings') ||
+          muscleGroup.contains('glutes') ||
+          muscleGroup.contains('shoulders');
+
+      final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
+      final setsRemaining = totalSets - completedSets.length;
+
       final response = await apiClient.post(
-        '/api/v1/workouts/rest-suggestions',
+        '/api/v1/workouts/rest-suggestion',
         data: {
-          'user_id': userId,
+          'rpe': 7, // Default RPE, will be updated when we add RPE tracking
+          'exercise_type': 'strength',
           'exercise_name': currentExercise.name,
-          'muscle_group': currentExercise.muscleGroup ?? 'unknown',
-          'set_number': completedSets.length,
-          'total_sets': _totalSetsPerExercise[_currentExerciseIndex] ?? 3,
-          'weight_kg': lastSet.weight,
-          'reps_completed': lastSet.reps,
-          'rpe': 7.0, // Default RPE, will be updated when we add RPE tracking
-          'goal_type': 'hypertrophy', // Default, will be from user profile
-          'time_constraints': false,
+          'sets_remaining': setsRemaining > 0 ? setsRemaining : 0,
+          'sets_completed': completedSets.length,
+          'is_compound': isCompound,
+          'muscle_group': currentExercise.muscleGroup ?? currentExercise.primaryMuscle,
         },
       );
 

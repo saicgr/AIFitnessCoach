@@ -8,8 +8,6 @@
 /// - Set type labels: DROP SET, FAILURE, WARMUP above rows when AI recommends
 library;
 
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -17,6 +15,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../models/workout_state.dart';
+import 'exercise_analytics_page.dart';
 import 'number_input_widgets.dart';
 
 /// Set tracking overlay for logging sets during workout
@@ -84,11 +83,18 @@ class SetTrackingOverlay extends StatefulWidget {
   /// Callback to go back to current exercise
   final VoidCallback onBackToCurrentExercise;
 
-  /// Callback to edit a completed set
+  /// Callback to edit a completed set (opens dialog - fallback)
   final void Function(int setIndex) onEditSet;
+
+  /// Callback to update a completed set inline (weight, reps)
+  final void Function(int setIndex, double weight, int reps)? onUpdateSet;
 
   /// Callback to delete a completed set
   final void Function(int setIndex) onDeleteSet;
+
+  /// Callback to quick-complete a set by tapping the set number
+  /// Pass the setIndex and whether to complete (true) or uncomplete (false)
+  final void Function(int setIndex, bool complete)? onQuickCompleteSet;
 
   /// Callback for done button press down
   final VoidCallback onDoneButtonPressDown;
@@ -109,11 +115,32 @@ class SetTrackingOverlay extends StatefulWidget {
   /// Callback to open workout plan drawer
   final VoidCallback? onOpenWorkoutPlan;
 
+  /// Callback to open exercise options sheet
+  final VoidCallback? onOpenExerciseOptions;
+
   /// Whether the overlay is minimized (controlled externally)
   final bool isMinimized;
 
   /// Callback when minimized state changes
   final void Function(bool isMinimized)? onMinimizedChanged;
+
+  /// Last session data for history display
+  final Map<String, dynamic>? lastSessionData;
+
+  /// Personal record data for history display
+  final Map<String, dynamic>? prData;
+
+  /// Current weight increment value
+  final double? currentWeightIncrement;
+
+  /// Callback when weight increment changes
+  final void Function(double)? onWeightIncrementChanged;
+
+  /// Current rep progression type for this exercise
+  final String? currentProgressionType;
+
+  /// Callback to open rep progression picker
+  final VoidCallback? onOpenProgressionPicker;
 
   const SetTrackingOverlay({
     super.key,
@@ -139,15 +166,24 @@ class SetTrackingOverlay extends StatefulWidget {
     required this.onAddSet,
     required this.onBackToCurrentExercise,
     required this.onEditSet,
+    this.onUpdateSet,
     required this.onDeleteSet,
+    this.onQuickCompleteSet,
     required this.onDoneButtonPressDown,
     required this.onDoneButtonPressUp,
     required this.onDoneButtonPressCancel,
     required this.onShowNumberInputDialog,
     this.onSkipExercise,
     this.onOpenWorkoutPlan,
+    this.onOpenExerciseOptions,
     this.isMinimized = false,
     this.onMinimizedChanged,
+    this.lastSessionData,
+    this.prData,
+    this.currentWeightIncrement,
+    this.onWeightIncrementChanged,
+    this.currentProgressionType,
+    this.onOpenProgressionPicker,
   });
 
   @override
@@ -158,22 +194,111 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
   /// Current set type: null = working set, 'W' = warmup, 'D' = drop set, 'F' = failure
   String? _currentSetType;
 
+  /// Whether warmup section is collapsed
+  bool _isWarmupCollapsed = false;
+
+  /// Notes text controller
+  final TextEditingController _notesController = TextEditingController();
+
+  /// Focus node for notes
+  final FocusNode _notesFocusNode = FocusNode();
+
+  /// Index of completed set being edited inline (null = not editing)
+  int? _editingSetIndex;
+
+  /// Controllers for inline editing of completed sets
+  TextEditingController? _editWeightController;
+  TextEditingController? _editRepsController;
+
+  /// Selected weight increment
+  late double _selectedIncrement;
+
+  // Weight increment options in kg
+  static const List<double> _kgIncrements = [1.0, 1.25, 2.5, 5.0, 10.0];
+  // Weight increment options in lbs
+  static const List<double> _lbsIncrements = [2.5, 5.0, 10.0, 15.0, 20.0];
+
+  List<double> get _incrementOptions =>
+      widget.useKg ? _kgIncrements : _lbsIncrements;
+
+  String get _unit => widget.useKg ? 'kg' : 'lbs';
+
   bool get isViewingCurrent => widget.viewingExerciseIndex == widget.currentExerciseIndex;
   int get currentSetIndex => widget.completedSets.length;
   bool get allSetsCompleted => widget.completedSets.length >= widget.totalSets;
 
-  /// Helper to toggle minimized state (calls parent callback)
-  void _toggleMinimized() {
-    HapticFeedback.selectionClick();
-    widget.onMinimizedChanged?.call(!widget.isMinimized);
+  @override
+  void initState() {
+    super.initState();
+    _selectedIncrement = widget.currentWeightIncrement ??
+        (widget.useKg ? 2.5 : 5.0);
   }
 
-  /// Helper to set minimized state directly
-  void _setMinimized(bool value) {
-    if (widget.isMinimized != value) {
-      HapticFeedback.selectionClick();
-      widget.onMinimizedChanged?.call(value);
+  @override
+  void dispose() {
+    _notesController.dispose();
+    _notesFocusNode.dispose();
+    _editWeightController?.dispose();
+    _editRepsController?.dispose();
+    super.dispose();
+  }
+
+  /// Start inline editing for a completed set
+  void _startEditingSet(int index) {
+    final setData = widget.completedSets[index];
+    final displayWeight = widget.useKg
+        ? setData.weight
+        : setData.weight * 2.20462;
+
+    setState(() {
+      _editingSetIndex = index;
+      _editWeightController?.dispose();
+      _editRepsController?.dispose();
+      _editWeightController = TextEditingController(
+        text: displayWeight.toStringAsFixed(0),
+      );
+      _editRepsController = TextEditingController(
+        text: setData.reps.toString(),
+      );
+    });
+  }
+
+  /// Save inline edits and close editing mode
+  void _saveEditingSet() {
+    if (_editingSetIndex == null) return;
+
+    final newWeight = double.tryParse(_editWeightController?.text ?? '') ?? 0;
+    final newReps = int.tryParse(_editRepsController?.text ?? '') ?? 0;
+
+    if (newWeight > 0 && newReps > 0) {
+      // Convert back to kg if displaying in lbs
+      final weightInKg = widget.useKg ? newWeight : newWeight / 2.20462;
+
+      // Update the completed set via callback
+      if (widget.onUpdateSet != null) {
+        widget.onUpdateSet!(_editingSetIndex!, weightInKg, newReps);
+      }
     }
+
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _editingSetIndex = null;
+      _editWeightController?.dispose();
+      _editRepsController?.dispose();
+      _editWeightController = null;
+      _editRepsController = null;
+    });
+  }
+
+  /// Cancel inline editing
+  void _cancelEditingSet() {
+    setState(() {
+      _editingSetIndex = null;
+      _editWeightController?.dispose();
+      _editRepsController?.dispose();
+      _editWeightController = null;
+      _editRepsController = null;
+    });
   }
 
   @override
@@ -183,84 +308,77 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: isDark ? 12 : 10,
-          sigmaY: isDark ? 12 : 10,
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.pureBlack.withOpacity(0.75)
-                : Colors.white.withOpacity(0.85),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withOpacity(0.1)
-                  : AppColorsLight.cardBorder.withOpacity(0.4),
+    // Full screen layout - no floating card, no blur
+    return Container(
+      color: isDark ? AppColors.pureBlack : Colors.grey.shade50,
+      child: Column(
+        children: [
+          // Header with exercise name and overflow menu
+          _buildHeader(context, isDark, textPrimary, textMuted),
+
+          // Quick stats row (History, Analytics, Increment) - Hevy style
+          _buildQuickStatsRow(isDark, textPrimary, textMuted),
+
+          // Scrollable content
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Table header
+                  _buildTableHeader(isDark, textMuted),
+
+                  // Set type tags row with + Set button (only shown when viewing current exercise)
+                  if (isViewingCurrent && !allSetsCompleted)
+                    _buildSetTypeTagsWithAddButton(isDark, textMuted),
+
+                  // Warmup section header with collapse toggle
+                  _buildSectionHeader(
+                    title: 'Warmup sets',
+                    isCollapsed: _isWarmupCollapsed,
+                    onToggle: () {
+                      setState(() => _isWarmupCollapsed = !_isWarmupCollapsed);
+                      HapticFeedback.selectionClick();
+                    },
+                    isDark: isDark,
+                    textMuted: textMuted,
+                  ),
+
+                  // Warmup set row (collapsible)
+                  if (!_isWarmupCollapsed)
+                    _buildWarmupRow(context, isDark, textPrimary, textMuted),
+
+                  // Effective sets section header
+                  _buildSectionHeader(
+                    title: 'Effective sets',
+                    isDark: isDark,
+                    textMuted: textMuted,
+                  ),
+
+                  // Working set rows
+                  ...List.generate(widget.totalSets, (index) {
+                    return _buildSetRow(context, index, isDark, textPrimary, textMuted);
+                  }),
+
+                  // Complete Set button (only CTA)
+                  if (isViewingCurrent && !allSetsCompleted)
+                    _buildCompleteSetButton(isDark),
+
+                  // Back to current or rest info
+                  if (!isViewingCurrent)
+                    _buildBackToCurrentButton(isDark, textMuted),
+
+                  // Notes section
+                  _buildNotesSection(isDark, textMuted),
+
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.4 : 0.15),
-                blurRadius: 24,
-                spreadRadius: 0,
-                offset: const Offset(0, 8),
-              ),
-            ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header with exercise name and overflow menu (always visible)
-              _buildHeader(context, isDark, textPrimary, textMuted),
-
-              // Collapsible content
-              AnimatedSize(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
-                child: widget.isMinimized
-                    ? const SizedBox.shrink()
-                    : Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Table header
-                          _buildTableHeader(isDark, textMuted),
-
-                          // Set type tags row (only shown when viewing current exercise)
-                          if (isViewingCurrent && !allSetsCompleted)
-                            _buildSetTypeTags(isDark, textMuted),
-
-                          // Warmup set row (always first)
-                          _buildWarmupRow(context, isDark, textPrimary, textMuted),
-
-                          // Working set rows
-                          ...List.generate(widget.totalSets, (index) {
-                            return _buildSetRow(context, index, isDark, textPrimary, textMuted);
-                          }),
-
-                          // Complete Set button (only CTA)
-                          if (isViewingCurrent && !allSetsCompleted)
-                            _buildCompleteSetButton(isDark),
-
-                          // Add/Delete Set buttons (below Complete Set)
-                          if (isViewingCurrent)
-                            _buildSetModifierButtons(isDark),
-
-                          // Back to current or rest info
-                          if (!isViewingCurrent)
-                            _buildBackToCurrentButton(isDark, textMuted),
-
-                          const SizedBox(height: 12),
-                        ],
-                      ),
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
-    ).animate().fadeIn(duration: 200.ms).slideY(begin: -0.05);
+    );
   }
 
   Widget _buildHeader(
@@ -269,21 +387,21 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     Color textPrimary,
     Color textMuted,
   ) {
-    return GestureDetector(
-      onTap: widget.isMinimized
-          ? () => _setMinimized(false)
-          : null,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.elevated.withOpacity(0.5)
-              : AppColorsLight.glassSurface.withOpacity(0.7),
-          borderRadius: widget.isMinimized
-              ? BorderRadius.circular(20)
-              : const BorderRadius.vertical(top: Radius.circular(20)),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.elevated.withOpacity(0.5)
+            : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark
+                ? Colors.white.withOpacity(0.1)
+                : Colors.black.withOpacity(0.08),
+          ),
         ),
-        child: Row(
+      ),
+      child: Row(
           children: [
             // Previous exercise button
             _buildNavButton(
@@ -346,24 +464,6 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
                             ),
                           ),
                         ),
-                      // Show set progress when minimized
-                      if (widget.isMinimized)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.cyan.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            '${widget.completedSets.length}/${widget.totalSets} sets',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.cyan,
-                            ),
-                          ),
-                        ),
                     ],
                   ),
                 ],
@@ -382,22 +482,15 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
 
             const SizedBox(width: 8),
 
-            // Open workout plan button (up arrow)
+            // Open workout plan button
             if (widget.onOpenWorkoutPlan != null)
               _buildWorkoutPlanButton(isDark, textMuted),
 
-            const SizedBox(width: 4),
-
-            // Minimize/Expand button
-            _buildMinimizeButton(isDark, textMuted),
-
-            const SizedBox(width: 4),
-
-            // Overflow menu
-            _buildOverflowMenu(context, isDark),
+            // 3-dot menu button for exercise options
+            if (widget.onOpenExerciseOptions != null)
+              _buildExerciseOptionsButton(isDark, textMuted),
           ],
         ),
-      ),
     );
   }
 
@@ -423,26 +516,549 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     );
   }
 
-  Widget _buildMinimizeButton(bool isDark, Color textMuted) {
+  Widget _buildExerciseOptionsButton(bool isDark, Color textMuted) {
     return GestureDetector(
-      onTap: _toggleMinimized,
+      onTap: () {
+        widget.onOpenExerciseOptions?.call();
+        HapticFeedback.selectionClick();
+      },
       child: Container(
         width: 36,
         height: 36,
+        margin: const EdgeInsets.only(left: 8),
         decoration: BoxDecoration(
-          color: widget.isMinimized
-              ? AppColors.cyan.withOpacity(0.15)
-              : (isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05)),
+          color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: AnimatedRotation(
-          turns: widget.isMinimized ? 0.5 : 0,
-          duration: const Duration(milliseconds: 200),
-          child: Icon(
-            Icons.keyboard_arrow_down,
-            color: widget.isMinimized ? AppColors.cyan : textMuted,
-            size: 22,
+        child: Icon(
+          Icons.more_vert_rounded,
+          color: textMuted,
+          size: 20,
+        ),
+      ),
+    );
+  }
+
+  /// Quick stats row with buttons for Analytics, Weight Increment, and Options (Hevy-style)
+  Widget _buildQuickStatsRow(bool isDark, Color textPrimary, Color textMuted) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withOpacity(0.03)
+            : Colors.black.withOpacity(0.02),
+        border: Border(
+          bottom: BorderSide(
+            color: isDark
+                ? Colors.white.withOpacity(0.08)
+                : Colors.black.withOpacity(0.06),
           ),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Analytics button - opens full page
+          Expanded(
+            child: _buildQuickStatButton(
+              icon: Icons.analytics_outlined,
+              label: 'Analytics',
+              value: widget.prData != null ? 'View PR' : 'View',
+              color: AppColors.success,
+              isDark: isDark,
+              textMuted: textMuted,
+              onTap: () => _openAnalyticsPage(context),
+            ),
+          ),
+          const SizedBox(width: 10),
+          // Weight Increment button
+          Expanded(
+            child: _buildQuickStatButton(
+              icon: Icons.tune_rounded,
+              label: 'Increment',
+              value: '${_selectedIncrement.toStringAsFixed(_selectedIncrement % 1 == 0 ? 0 : 1)} $_unit',
+              color: AppColors.orange,
+              isDark: isDark,
+              textMuted: textMuted,
+              onTap: () => _showWeightIncrementSheet(isDark, textPrimary, textMuted),
+            ),
+          ),
+          // Progression button (beside increment)
+          if (widget.onOpenProgressionPicker != null) ...[
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildQuickStatButton(
+                icon: Icons.trending_up_rounded,
+                label: 'Progression',
+                value: widget.currentProgressionType ?? 'Straight',
+                color: AppColors.purple,
+                isDark: isDark,
+                textMuted: textMuted,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  widget.onOpenProgressionPicker?.call();
+                },
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Open full analytics page
+  void _openAnalyticsPage(BuildContext context) {
+    HapticFeedback.mediumImpact();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ExerciseAnalyticsPage(
+          exercise: widget.exercise,
+          useKg: widget.useKg,
+          lastSessionData: widget.lastSessionData,
+          prData: widget.prData,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickStatButton({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+    required bool isDark,
+    required Color textMuted,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: color.withOpacity(0.25),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w500,
+                      color: textMuted,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Show history bottom sheet
+  void _showHistorySheet(bool isDark, Color textPrimary, Color textMuted) {
+    // Format last session data
+    String lastDisplay = 'No previous data';
+    String lastDate = '';
+    if (widget.lastSessionData != null) {
+      final weight = widget.lastSessionData!['weight'] as double?;
+      final reps = widget.lastSessionData!['reps'] as int?;
+      final date = widget.lastSessionData!['date'] as String?;
+      if (weight != null && reps != null) {
+        final displayWeight = widget.useKg ? weight : weight * 2.20462;
+        lastDisplay = '${displayWeight.toStringAsFixed(0)} $_unit × $reps reps';
+        if (date != null) {
+          lastDate = date;
+        }
+      }
+    }
+
+    // Format PR data
+    String prDisplay = 'No PR yet';
+    if (widget.prData != null) {
+      final weight = widget.prData!['weight'] as double?;
+      final reps = widget.prData!['reps'] as int?;
+      if (weight != null && reps != null) {
+        final displayWeight = widget.useKg ? weight : weight * 2.20462;
+        prDisplay = '${displayWeight.toStringAsFixed(0)} $_unit × $reps reps';
+      }
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surface : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Title
+            Row(
+              children: [
+                Icon(Icons.history_rounded, color: AppColors.electricBlue, size: 24),
+                const SizedBox(width: 10),
+                Text(
+                  'Exercise History',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Last session
+            _buildHistoryItem(
+              label: 'Last Session',
+              value: lastDisplay,
+              subtitle: lastDate.isNotEmpty ? lastDate : null,
+              color: AppColors.electricBlue,
+              isDark: isDark,
+              textPrimary: textPrimary,
+              textMuted: textMuted,
+            ),
+            const SizedBox(height: 16),
+
+            // Personal Record
+            _buildHistoryItem(
+              label: 'Personal Record',
+              value: prDisplay,
+              color: AppColors.success,
+              isDark: isDark,
+              textPrimary: textPrimary,
+              textMuted: textMuted,
+              showTrophy: widget.prData != null,
+            ),
+
+            SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHistoryItem({
+    required String label,
+    required String value,
+    String? subtitle,
+    required Color color,
+    required bool isDark,
+    required Color textPrimary,
+    required Color textMuted,
+    bool showTrophy = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              showTrophy ? Icons.emoji_events_rounded : Icons.fitness_center_rounded,
+              color: color,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Show analytics bottom sheet
+  void _showAnalyticsSheet(bool isDark, Color textPrimary, Color textMuted) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surface : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Title
+            Row(
+              children: [
+                Icon(Icons.analytics_outlined, color: AppColors.success, size: 24),
+                const SizedBox(width: 10),
+                Text(
+                  'Exercise Analytics',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Coming soon placeholder
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withOpacity(0.05)
+                    : Colors.black.withOpacity(0.03),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.black.withOpacity(0.08),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.show_chart_rounded,
+                    size: 48,
+                    color: textMuted.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Progress Charts Coming Soon',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Track your strength gains over time',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Show weight increment picker sheet
+  void _showWeightIncrementSheet(bool isDark, Color textPrimary, Color textMuted) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surface : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Title
+            Row(
+              children: [
+                Icon(Icons.tune_rounded, color: AppColors.orange, size: 24),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Weight Increment',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'Amount to adjust weight by',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Increment options
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: _incrementOptions.map((increment) {
+                final isSelected = _selectedIncrement == increment;
+                return GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _selectedIncrement = increment);
+                    widget.onWeightIncrementChanged?.call(increment);
+                    Navigator.pop(ctx);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.orange.withOpacity(0.2)
+                          : (isDark
+                              ? Colors.white.withOpacity(0.08)
+                              : Colors.black.withOpacity(0.05)),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColors.orange
+                            : (isDark
+                                ? Colors.white.withOpacity(0.15)
+                                : Colors.black.withOpacity(0.1)),
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    child: Text(
+                      '${increment.toStringAsFixed(increment % 1 == 0 ? 0 : 2)} $_unit',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                        color: isSelected
+                            ? AppColors.orange
+                            : (isDark ? Colors.white : Colors.black),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+
+            SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
+          ],
         ),
       ),
     );
@@ -481,72 +1097,6 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
               : (isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.15)),
         ),
       ),
-    );
-  }
-
-  Widget _buildOverflowMenu(BuildContext context, bool isDark) {
-    return PopupMenuButton<String>(
-      icon: Icon(
-        Icons.more_vert,
-        color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-        size: 22,
-      ),
-      color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      offset: const Offset(0, 40),
-      onSelected: (value) {
-        HapticFeedback.selectionClick();
-        switch (value) {
-          case 'add_set':
-            widget.onAddSet();
-            break;
-          case 'remove_set':
-            if (widget.totalSets > 1) {
-              // Could add a callback for remove set
-            }
-            break;
-          case 'toggle_unit':
-            widget.onToggleUnit();
-            break;
-          case 'skip':
-            widget.onSkipExercise?.call();
-            break;
-        }
-      },
-      itemBuilder: (context) => [
-        PopupMenuItem(
-          value: 'add_set',
-          child: Row(
-            children: [
-              Icon(Icons.add_circle_outline,
-                  size: 20, color: AppColors.electricBlue),
-              const SizedBox(width: 12),
-              const Text('Add Set'),
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          value: 'toggle_unit',
-          child: Row(
-            children: [
-              Icon(Icons.swap_horiz, size: 20, color: AppColors.purple),
-              const SizedBox(width: 12),
-              Text('Switch to ${widget.useKg ? 'lbs' : 'kg'}'),
-            ],
-          ),
-        ),
-        if (widget.onSkipExercise != null)
-          PopupMenuItem(
-            value: 'skip',
-            child: Row(
-              children: [
-                Icon(Icons.skip_next, size: 20, color: AppColors.orange),
-                const SizedBox(width: 12),
-                const Text('Skip Exercise'),
-              ],
-            ),
-          ),
-      ],
     );
   }
 
@@ -652,7 +1202,120 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     );
   }
 
-  /// Build set type tags row (W/D/F)
+  /// Build set type tags row with + Set button (W/D/F + Add)
+  Widget _buildSetTypeTagsWithAddButton(bool isDark, Color textMuted) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Use compact mode on narrow screens
+    final isCompact = screenWidth < 340;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 12 : 16,
+        vertical: isCompact ? 8 : 10,
+      ),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.elevated.withOpacity(0.3)
+            : Colors.grey.shade100.withOpacity(0.5),
+        border: Border(
+          bottom: BorderSide(
+            color: isDark
+                ? Colors.white.withOpacity(0.05)
+                : Colors.black.withOpacity(0.04),
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Set type label - hide on very compact screens
+          if (!isCompact) ...[
+            Text(
+              'Set Type:',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: textMuted,
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          // Tag buttons
+          _buildSetTypeTag('W', 'Warmup', AppColors.orange, isDark, textMuted, isCompact),
+          SizedBox(width: isCompact ? 4 : 6),
+          _buildSetTypeTag('D', 'Drop Set', AppColors.purple, isDark, textMuted, isCompact),
+          SizedBox(width: isCompact ? 4 : 6),
+          _buildSetTypeTag('F', 'Failure', AppColors.error, isDark, textMuted, isCompact),
+
+          SizedBox(width: isCompact ? 4 : 8),
+
+          // Info button (right after set types)
+          GestureDetector(
+            onTap: () => _showSetTypeInfoSheet(context),
+            child: Container(
+              width: isCompact ? 24 : 28,
+              height: isCompact ? 24 : 28,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isDark
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.black.withOpacity(0.05),
+              ),
+              child: Icon(
+                Icons.info_outline_rounded,
+                size: isCompact ? 14 : 16,
+                color: textMuted,
+              ),
+            ),
+          ),
+
+          const Spacer(),
+
+          // + Set button (at the end)
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              widget.onAddSet();
+            },
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: isCompact ? 8 : 10,
+                vertical: isCompact ? 4 : 5,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.electricBlue.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.electricBlue.withOpacity(0.4),
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.add_rounded,
+                    size: isCompact ? 14 : 16,
+                    color: AppColors.electricBlue,
+                  ),
+                  SizedBox(width: isCompact ? 2 : 4),
+                  Text(
+                    'Set',
+                    style: TextStyle(
+                      fontSize: isCompact ? 11 : 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.electricBlue,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build set type tags row (W/D/F) - legacy, replaced by _buildSetTypeTagsWithAddButton
   Widget _buildSetTypeTags(bool isDark, Color textMuted) {
     final screenWidth = MediaQuery.of(context).size.width;
     // Use compact mode on narrow screens
@@ -928,6 +1591,279 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     );
   }
 
+  /// Build section header (Hevy-style)
+  Widget _buildSectionHeader({
+    required String title,
+    bool isCollapsed = false,
+    VoidCallback? onToggle,
+    required bool isDark,
+    required Color textMuted,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withOpacity(0.03)
+            : Colors.black.withOpacity(0.02),
+        border: Border(
+          bottom: BorderSide(
+            color: isDark
+                ? Colors.white.withOpacity(0.06)
+                : Colors.black.withOpacity(0.05),
+          ),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textMuted,
+              letterSpacing: 0.3,
+            ),
+          ),
+          if (onToggle != null)
+            GestureDetector(
+              onTap: onToggle,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.08)
+                      : Colors.black.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isCollapsed ? 'Show' : 'Hide',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.electricBlue,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    AnimatedRotation(
+                      turns: isCollapsed ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Icon(
+                        Icons.keyboard_arrow_up,
+                        size: 14,
+                        color: AppColors.electricBlue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Build notes section (Hevy-style)
+  Widget _buildNotesSection(bool isDark, Color textMuted) {
+    final hasNotes = _notesController.text.isNotEmpty;
+
+    return GestureDetector(
+      onTap: () => _showNotesDialog(isDark),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withOpacity(0.05)
+              : Colors.black.withOpacity(0.03),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withOpacity(0.1)
+                : Colors.black.withOpacity(0.08),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.sticky_note_2_outlined,
+              size: 18,
+              color: hasNotes ? AppColors.purple : textMuted.withOpacity(0.6),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                hasNotes ? _notesController.text : 'Tap to add notes...',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: hasNotes
+                      ? (isDark ? Colors.white.withOpacity(0.9) : Colors.black.withOpacity(0.8))
+                      : textMuted.withOpacity(0.6),
+                  fontStyle: hasNotes ? FontStyle.normal : FontStyle.italic,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: textMuted.withOpacity(0.4),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Show notes editing dialog
+  void _showNotesDialog(bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surface : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Title
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Exercise Notes',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+                  if (_notesController.text.isNotEmpty)
+                    GestureDetector(
+                      onTap: () {
+                        setState(() => _notesController.clear());
+                        Navigator.pop(ctx);
+                      },
+                      child: Text(
+                        'Clear',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Notes text field
+              TextField(
+                controller: _notesController,
+                focusNode: _notesFocusNode,
+                maxLines: 4,
+                autofocus: true,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Add notes about form, adjustments, or how this set felt...',
+                  hintStyle: TextStyle(
+                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  ),
+                  filled: true,
+                  fillColor: isDark
+                      ? Colors.white.withOpacity(0.05)
+                      : Colors.black.withOpacity(0.03),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.1)
+                          : Colors.black.withOpacity(0.1),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.1)
+                          : Colors.black.withOpacity(0.1),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AppColors.purple,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 16),
+
+              // Done button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {});
+                    Navigator.pop(ctx);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.purple,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: MediaQuery.of(ctx).padding.bottom + 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   /// Build warmup set row
   Widget _buildWarmupRow(
     BuildContext context,
@@ -944,25 +1880,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // WARMUP label
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          margin: const EdgeInsets.only(left: 44, bottom: 4, top: 4),
-          decoration: BoxDecoration(
-            color: AppColors.orange.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: const Text(
-            'WARMUP',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: AppColors.orange,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-        // Warmup row
+        // Warmup row (orange styled - no separate label needed since section header says "Warmup sets")
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
@@ -1083,6 +2001,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     final isPending = index > widget.completedSets.length;
     final previousSet = index < widget.previousSets.length ? widget.previousSets[index] : null;
     final isLastSet = index == widget.totalSets - 1;
+    final isEditing = _editingSetIndex == index && isCompleted;
 
     SetLog? completedSetData;
     if (isCompleted) {
@@ -1104,31 +2023,78 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
       }
     }
 
-    // Format AI target data (TARGET column)
+    // Format AI target data (TARGET column) - use per-set targets if available
     String targetDisplay = '—';
-    final targetWeight = widget.exercise.weight;
-    final targetReps = widget.exercise.reps;
-    if (targetWeight != null && targetWeight > 0 && targetReps != null) {
-      final displayTargetWeight = widget.useKg
-          ? targetWeight
-          : targetWeight * 2.20462;
-      // For failure set, show AMRAP on last set
-      if (isLastSet && widget.exercise.isFailureSet == true) {
-        targetDisplay = '${displayTargetWeight.toStringAsFixed(0)} × AMRAP';
-      } else {
-        targetDisplay = '${displayTargetWeight.toStringAsFixed(0)} × $targetReps';
+    final setTarget = widget.exercise.getTargetForSet(index + 1); // 1-indexed
+    if (setTarget != null) {
+      // Use per-set AI target (Gravl/Hevy style)
+      final targetWeight = setTarget.targetWeightKg;
+      final targetReps = setTarget.targetReps;
+      if (targetWeight != null && targetWeight > 0) {
+        final displayTargetWeight = widget.useKg
+            ? targetWeight
+            : targetWeight * 2.20462;
+        // Show AMRAP for failure/amrap sets
+        if (setTarget.isFailure) {
+          targetDisplay = '${displayTargetWeight.toStringAsFixed(0)} × AMRAP';
+        } else {
+          targetDisplay = '${displayTargetWeight.toStringAsFixed(0)} × $targetReps';
+        }
+      } else if (targetReps > 0) {
+        // Bodyweight exercise - just show reps
+        if (setTarget.isFailure) {
+          targetDisplay = 'AMRAP';
+        } else {
+          targetDisplay = '$targetReps reps';
+        }
+      }
+    } else {
+      // Fallback to exercise-level target
+      final targetWeight = widget.exercise.weight;
+      final targetReps = widget.exercise.reps;
+      if (targetWeight != null && targetWeight > 0 && targetReps != null) {
+        final displayTargetWeight = widget.useKg
+            ? targetWeight
+            : targetWeight * 2.20462;
+        // For failure set, show AMRAP on last set
+        if (isLastSet && widget.exercise.isFailureSet == true) {
+          targetDisplay = '${displayTargetWeight.toStringAsFixed(0)} × AMRAP';
+        } else {
+          targetDisplay = '${displayTargetWeight.toStringAsFixed(0)} × $targetReps';
+        }
       }
     }
 
-    // Determine if this set has a special type label
+    // Determine set type label from AI targets or exercise-level flags
     String? setTypeLabel;
     Color? setTypeLabelColor;
-    if (widget.exercise.isDropSet == true && isLastSet) {
-      setTypeLabel = 'DROP SET';
-      setTypeLabelColor = AppColors.purple;
-    } else if (widget.exercise.isFailureSet == true && isLastSet) {
-      setTypeLabel = 'FAILURE';
-      setTypeLabelColor = AppColors.error;
+    String setNumberDisplay = '${index + 1}'; // Default: show set number
+
+    if (setTarget != null) {
+      // Use per-set type from AI targets
+      final typeLabel = setTarget.setTypeLabel;
+      if (typeLabel.isNotEmpty) {
+        setNumberDisplay = typeLabel; // W, D, F, A
+        if (setTarget.isWarmup) {
+          setTypeLabel = 'WARMUP';
+          setTypeLabelColor = AppColors.orange;
+        } else if (setTarget.isDropSet) {
+          setTypeLabel = 'DROP SET';
+          setTypeLabelColor = AppColors.purple;
+        } else if (setTarget.isFailure) {
+          setTypeLabel = 'FAILURE';
+          setTypeLabelColor = AppColors.error;
+        }
+      }
+    } else {
+      // Fallback to exercise-level flags
+      if (widget.exercise.isDropSet == true && isLastSet) {
+        setTypeLabel = 'DROP SET';
+        setTypeLabelColor = AppColors.purple;
+      } else if (widget.exercise.isFailureSet == true && isLastSet) {
+        setTypeLabel = 'FAILURE';
+        setTypeLabelColor = AppColors.error;
+      }
     }
 
     // Build the set type label widget if needed
@@ -1154,97 +2120,183 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     }
 
     final rowWidget = Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: isCurrent ? 14 : 10),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: (isCurrent || isEditing) ? 14 : 10),
       decoration: BoxDecoration(
-        color: isCurrent
-            ? AppColors.electricBlue.withOpacity(0.15)
-            : isCompleted
-                ? AppColors.success.withOpacity(0.05)
-                : Colors.transparent,
-        border: isCurrent
+        color: isEditing
+            ? AppColors.orange.withOpacity(0.15)
+            : isCurrent
+                ? AppColors.electricBlue.withOpacity(0.15)
+                : isCompleted
+                    ? AppColors.success.withOpacity(0.05)
+                    : Colors.transparent,
+        border: isEditing
             ? Border.all(
-                color: AppColors.electricBlue.withOpacity(0.4),
+                color: AppColors.orange.withOpacity(0.5),
                 width: 2,
               )
-            : Border(
-                bottom: BorderSide(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.05)
-                      : Colors.black.withOpacity(0.04),
-                ),
-              ),
-        borderRadius: isCurrent ? BorderRadius.circular(12) : null,
+            : isCurrent
+                ? Border.all(
+                    color: AppColors.electricBlue.withOpacity(0.4),
+                    width: 2,
+                  )
+                : Border(
+                    bottom: BorderSide(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.black.withOpacity(0.04),
+                    ),
+                  ),
+        borderRadius: (isCurrent || isEditing) ? BorderRadius.circular(12) : null,
       ),
-      margin: isCurrent ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4) : EdgeInsets.zero,
+      margin: (isCurrent || isEditing) ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4) : EdgeInsets.zero,
       child: Row(
         children: [
-          // Set number with NOW label for current set
-          SizedBox(
-            width: isCurrent ? 50 : 36,
-            child: isCurrent
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.electricBlue,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          'NOW',
-                          style: TextStyle(
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 0.4,
+          // Set number with NOW label for current set - tappable to edit/complete
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              if (isEditing) {
+                // Tap while editing → Save changes
+                _saveEditingSet();
+              } else if (isCompleted) {
+                // Tap on completed set → Start inline editing
+                _startEditingSet(index);
+              } else if (isCurrent) {
+                // Complete the current set using existing callback
+                widget.onCompleteSet();
+              } else if (isPending && widget.onQuickCompleteSet != null) {
+                // Quick complete a pending set
+                widget.onQuickCompleteSet?.call(index, true);
+              }
+            },
+            child: SizedBox(
+              width: (isCurrent || isEditing) ? 50 : 36,
+              child: isEditing
+                  // Editing state: show EDIT badge and save icon
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.orange,
+                            borderRadius: BorderRadius.circular(4),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.electricBlue.withOpacity(0.2),
-                          border: Border.all(color: AppColors.electricBlue, width: 2),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${index + 1}',
-                            style: const TextStyle(
-                              fontSize: 13,
+                          child: const Text(
+                            'EDIT',
+                            style: TextStyle(
+                              fontSize: 8,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.electricBlue,
+                              color: Colors.white,
+                              letterSpacing: 0.4,
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  )
-                : Container(
-                    width: 26,
-                    height: 26,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isCompleted
-                          ? AppColors.success.withOpacity(0.15)
-                          : Colors.transparent,
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${index + 1}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: isCompleted
-                              ? AppColors.success
-                              : textMuted.withOpacity(0.5),
+                        const SizedBox(height: 3),
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.orange.withOpacity(0.2),
+                            border: Border.all(color: AppColors.orange, width: 2),
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.check_rounded,
+                              size: 16,
+                              color: AppColors.orange,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
+                      ],
+                    )
+                  : isCurrent
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.electricBlue,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'NOW',
+                                style: TextStyle(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.electricBlue.withOpacity(0.2),
+                                border: Border.all(color: AppColors.electricBlue, width: 2),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  setNumberDisplay,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.electricBlue,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : isCompleted
+                          // Completed set: show green set number (tappable to edit)
+                          ? Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.success.withOpacity(0.2),
+                                border: Border.all(color: AppColors.success, width: 2),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  setNumberDisplay,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.success,
+                                  ),
+                                ),
+                              ),
+                            )
+                          // Pending set: show number (tappable to complete)
+                          : Container(
+                              width: 26,
+                              height: 26,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: textMuted.withOpacity(0.3),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  setNumberDisplay,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: textMuted.withOpacity(0.5),
+                                  ),
+                                ),
+                              ),
+                            ),
+            ),
           ),
 
           // LAST column - previous session (tappable to auto-fill)
@@ -1299,92 +2351,160 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
             ),
           ),
 
-          // Weight input
+          // Weight input - tap on completed weight to edit inline
           Expanded(
             flex: 3,
-            child: isCurrent
+            child: (isCurrent || isEditing)
                 ? _buildTappableInput(
-                    controller: widget.weightController,
+                    controller: isEditing ? _editWeightController! : widget.weightController,
                     isDecimal: true,
                     isDark: isDark,
                     textPrimary: textPrimary,
+                    accentColor: isEditing ? AppColors.orange : AppColors.electricBlue,
                   )
-                : Text(
-                    isCompleted
-                        ? (widget.useKg
-                            ? completedSetData!.weight.toStringAsFixed(0)
-                            : (completedSetData!.weight * 2.20462)
-                                .toStringAsFixed(0))
-                        : '—',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: isCompleted ? FontWeight.w600 : FontWeight.normal,
-                      color: isCompleted
-                          ? AppColors.success
-                          : textMuted.withOpacity(0.4),
+                : GestureDetector(
+                    onTap: isCompleted
+                        ? () {
+                            HapticFeedback.mediumImpact();
+                            _startEditingSet(index);
+                          }
+                        : null,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text(
+                        isCompleted
+                            ? (widget.useKg
+                                ? completedSetData!.weight.toStringAsFixed(0)
+                                : (completedSetData!.weight * 2.20462)
+                                    .toStringAsFixed(0))
+                            : '—',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: isCompleted ? FontWeight.w600 : FontWeight.normal,
+                          color: isCompleted
+                              ? AppColors.success
+                              : textMuted.withOpacity(0.4),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                    textAlign: TextAlign.center,
                   ),
           ),
 
-          // Reps input
+          // Reps input - tap on completed reps to edit inline
           Expanded(
             flex: 2,
-            child: isCurrent
+            child: (isCurrent || isEditing)
                 ? _buildTappableInput(
-                    controller: widget.repsController,
+                    controller: isEditing ? _editRepsController! : widget.repsController,
                     isDecimal: false,
                     isDark: isDark,
                     textPrimary: textPrimary,
+                    accentColor: isEditing ? AppColors.orange : AppColors.electricBlue,
                   )
-                : Text(
-                    isCompleted ? completedSetData!.reps.toString() : '—',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: isCompleted ? FontWeight.w600 : FontWeight.normal,
-                      color: isCompleted
-                          ? AppColors.success
-                          : textMuted.withOpacity(0.4),
+                : GestureDetector(
+                    onTap: isCompleted
+                        ? () {
+                            HapticFeedback.mediumImpact();
+                            _startEditingSet(index);
+                          }
+                        : null,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text(
+                        isCompleted ? completedSetData!.reps.toString() : '—',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: isCompleted ? FontWeight.w600 : FontWeight.normal,
+                          color: isCompleted
+                              ? AppColors.success
+                              : textMuted.withOpacity(0.4),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                    textAlign: TextAlign.center,
                   ),
           ),
 
-          // Checkmark / status
+          // Checkmark / status / cancel editing
           SizedBox(
             width: 36,
-            child: isCompleted
-                ? _buildCompletedCheckmark(index)
-                : isCurrent
-                    ? const SizedBox() // No inline button, use big CTA below
-                    : _buildPendingIndicator(textMuted),
+            child: isEditing
+                ? GestureDetector(
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      _cancelEditingSet();
+                    },
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: textMuted.withOpacity(0.15),
+                      ),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 16,
+                        color: textMuted,
+                      ),
+                    ),
+                  )
+                : isCompleted
+                    ? _buildCompletedCheckmark(index)
+                    : isCurrent
+                        ? const SizedBox() // No inline button, use big CTA below
+                        : _buildPendingIndicator(textMuted),
           ),
         ],
       ),
     );
 
-    // Make completed rows swipeable for edit/delete
-    if (isCompleted) {
+    // Can delete this row if there's more than 1 total set
+    final canDelete = widget.totalSets > 1;
+
+    // Build the final widget - wrap with swipe-to-delete for all rows
+    Widget finalWidget = rowWidget;
+
+    // Add set type label above if needed
+    if (setTypeLabelWidget != null) {
+      finalWidget = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          setTypeLabelWidget,
+          rowWidget,
+        ],
+      );
+    }
+
+    // Wrap ALL rows with Dismissible for swipe-to-delete
+    // Completed rows: swipe left = edit, swipe right = delete
+    // Pending/current rows: swipe right only = delete
+    if (canDelete) {
       return Dismissible(
         key: Key('set_${widget.viewingExerciseIndex}_$index'),
-        background: Container(
-          alignment: Alignment.centerLeft,
-          padding: const EdgeInsets.only(left: 24),
-          color: AppColors.electricBlue.withOpacity(0.15),
-          child: const Row(
-            children: [
-              Icon(Icons.edit, color: AppColors.electricBlue, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'Edit',
-                style: TextStyle(
-                  color: AppColors.electricBlue,
-                  fontWeight: FontWeight.w600,
+        // Left swipe background (Edit) - only for completed sets
+        background: isCompleted
+            ? Container(
+                alignment: Alignment.centerLeft,
+                padding: const EdgeInsets.only(left: 24),
+                color: AppColors.electricBlue.withOpacity(0.15),
+                child: const Row(
+                  children: [
+                    Icon(Icons.edit, color: AppColors.electricBlue, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Edit',
+                      style: TextStyle(
+                        color: AppColors.electricBlue,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-        ),
+              )
+            : Container(color: Colors.transparent),
+        // Right swipe background (Delete) - for all sets
         secondaryBackground: Container(
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.only(right: 24),
@@ -1404,37 +2524,42 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
             ],
           ),
         ),
+        // Only allow right-to-left swipe for non-completed rows
+        direction: isCompleted
+            ? DismissDirection.horizontal
+            : DismissDirection.endToStart,
         confirmDismiss: (direction) async {
           HapticFeedback.mediumImpact();
-          if (direction == DismissDirection.startToEnd) {
+          if (direction == DismissDirection.startToEnd && isCompleted) {
+            // Edit completed set
             widget.onEditSet(index);
             return false;
-          } else {
+          } else if (direction == DismissDirection.endToStart) {
+            // Delete - show confirmation for current/pending sets
+            if (!isCompleted) {
+              // For pending sets, just delete the row (reduce total)
+              return true;
+            }
             return true;
           }
+          return false;
         },
         onDismissed: (direction) {
           if (direction == DismissDirection.endToStart) {
-            widget.onDeleteSet(index);
+            if (isCompleted) {
+              // Delete completed set
+              widget.onDeleteSet(index);
+            } else {
+              // Delete pending/current row - signal to reduce total
+              widget.onDeleteSet(-1);
+            }
           }
         },
-        child: rowWidget,
+        child: finalWidget,
       );
     }
 
-    // Wrap in column if there's a set type label to show above this row
-    if (setTypeLabelWidget != null) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          setTypeLabelWidget,
-          rowWidget,
-        ],
-      );
-    }
-
-    return rowWidget;
+    return finalWidget;
   }
 
   /// Hevy-style inline editable input - direct text field in table
@@ -1443,15 +2568,17 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     required bool isDecimal,
     required bool isDark,
     required Color textPrimary,
+    Color? accentColor,
   }) {
+    final color = accentColor ?? AppColors.electricBlue;
     return Container(
       decoration: BoxDecoration(
         color: isDark
-            ? AppColors.electricBlue.withOpacity(0.12)
-            : AppColors.electricBlue.withOpacity(0.08),
+            ? color.withOpacity(0.12)
+            : color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: AppColors.electricBlue.withOpacity(0.5),
+          color: color.withOpacity(0.5),
           width: 1.5,
         ),
       ),
@@ -1462,7 +2589,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
         style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: AppColors.electricBlue,
+          color: color,
         ),
         decoration: const InputDecoration(
           border: InputBorder.none,
@@ -1609,21 +2736,14 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     );
   }
 
-  /// Build +/- Set modifier buttons
+  /// Build + Set button (after reps column, swipe to delete individual sets)
   Widget _buildSetModifierButtons(bool isDark) {
-    // Can delete if there are more sets than completed (empty rows exist)
-    // OR if there are completed sets to remove
-    // Minimum 1 set required
-    final hasEmptyRows = widget.totalSets > widget.completedSets.length;
-    final hasCompletedSets = widget.completedSets.isNotEmpty;
-    final canDelete = widget.totalSets > 1 && (hasEmptyRows || hasCompletedSets);
-
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Add Set button
+          // Add Set button only - swipe left on any set to delete
           _buildSetModifierButton(
             icon: Icons.add_circle_outline,
             label: '+ Set',
@@ -1633,27 +2753,6 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
               HapticFeedback.mediumImpact();
               widget.onAddSet();
             },
-          ),
-          const SizedBox(width: 16),
-          // Delete Set button - removes the last row (empty or completed)
-          _buildSetModifierButton(
-            icon: Icons.remove_circle_outline,
-            label: '- Set',
-            color: AppColors.error,
-            isDark: isDark,
-            isDisabled: !canDelete,
-            onTap: canDelete
-                ? () {
-                    HapticFeedback.mediumImpact();
-                    if (hasEmptyRows) {
-                      // Remove an empty set row (decrease total)
-                      widget.onDeleteSet(-1); // Signal to decrease total
-                    } else if (hasCompletedSets) {
-                      // Remove the last completed set
-                      widget.onDeleteSet(widget.completedSets.length - 1);
-                    }
-                  }
-                : null,
           ),
         ],
       ),

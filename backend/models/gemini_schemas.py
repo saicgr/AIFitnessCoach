@@ -84,6 +84,16 @@ class ExerciseIndicesResponse(BaseModel):
 # WORKOUT GENERATION SCHEMAS
 # =============================================================================
 
+class SetTargetSchema(BaseModel):
+    """Schema for per-set AI targets (like Gravl/Hevy)."""
+    set_number: int = Field(..., description="Set number (1-indexed)")
+    set_type: str = Field(default="working", description="Set type: 'warmup', 'working', 'drop', 'failure', 'amrap'")
+    target_reps: int = Field(..., description="Target reps for this set")
+    target_weight_kg: Optional[float] = Field(default=None, description="Target weight in kg for this set")
+    target_rpe: Optional[int] = Field(default=None, description="Target RPE (1-10) for this set")
+    target_rir: Optional[int] = Field(default=None, description="Target RIR (0-5) for this set")
+
+
 class WorkoutExerciseSchema(BaseModel):
     """Schema for a single exercise in a generated workout."""
     name: str = Field(..., description="Exercise name")
@@ -101,6 +111,7 @@ class WorkoutExerciseSchema(BaseModel):
     is_failure_set: bool = Field(default=False, description="True if final set should be taken to failure")
     drop_set_count: Optional[int] = Field(default=None, description="Number of drop sets (typically 2-3)")
     drop_set_percentage: Optional[int] = Field(default=None, description="Weight reduction percentage per drop (typically 20-25%)")
+    set_targets: Optional[List[SetTargetSchema]] = Field(default=None, description="Per-set AI targets (warmup, working, drop sets with specific weights/reps)")
 
 
 class GeneratedWorkoutResponse(BaseModel):

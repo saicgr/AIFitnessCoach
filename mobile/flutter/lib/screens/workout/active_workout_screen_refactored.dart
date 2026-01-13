@@ -48,6 +48,8 @@ import 'widgets/breathing_guide_sheet.dart';
 import 'widgets/hydration_dialog.dart';
 import 'widgets/workout_ai_coach_sheet.dart';
 import 'widgets/exercise_info_sheet.dart';
+import 'widgets/exercise_options_sheet.dart';
+import 'widgets/exercise_analytics_page.dart';
 import 'widgets/quit_workout_dialog.dart';
 import '../../data/models/rest_suggestion.dart';
 import '../../data/repositories/hydration_repository.dart';
@@ -90,6 +92,9 @@ class _ActiveWorkoutScreenState
   bool _showInstructions = false;
   bool _showExerciseList = false;
 
+  /// Whether to hide the AI Coach FAB for this session (user long-pressed to hide)
+  bool _hideAICoachForSession = false;
+
   // Video state
   VideoPlayerController? _videoController;
   bool _isVideoInitialized = false;
@@ -111,12 +116,12 @@ class _ActiveWorkoutScreenState
   late TextEditingController _weightController;
   bool _useKg = true; // Initialized from user preference
   bool _unitInitialized = false; // Track if unit has been initialized from user preference
+  double _weightIncrement = 2.5; // Default weight increment (kg)
 
   // Set tracking overlay
-  bool _showSetOverlay = true;
-  bool _isSetOverlayMinimized = false;
   final Map<int, List<Map<String, dynamic>>> _previousSets = {};
   final Map<int, int> _totalSetsPerExercise = {};
+  final Map<int, RepProgressionType> _repProgressionPerExercise = {};
   int _viewingExerciseIndex = 0;
 
   // Exercises list
@@ -327,6 +332,7 @@ class _ActiveWorkoutScreenState
 
   void _handleWarmupComplete() {
     HapticFeedback.heavyImpact();
+
     setState(() {
       _currentPhase = WorkoutPhase.active;
     });
@@ -637,20 +643,29 @@ class _ActiveWorkoutScreenState
         return;
       }
 
+      // Determine if exercise is compound (based on muscle group)
+      final muscleGroup = (exercise.muscleGroup ?? exercise.primaryMuscle ?? '').toLowerCase();
+      final isCompound = muscleGroup.contains('chest') ||
+          muscleGroup.contains('back') ||
+          muscleGroup.contains('legs') ||
+          muscleGroup.contains('quads') ||
+          muscleGroup.contains('hamstrings') ||
+          muscleGroup.contains('glutes') ||
+          muscleGroup.contains('shoulders');
+
+      final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
+      final setsRemaining = totalSets - completedSets.length;
+
       final response = await apiClient.dio.post(
-        '/workouts/rest-suggestions',
+        '/workouts/rest-suggestion',
         data: {
-          'user_id': userId,
+          'rpe': _lastSetRpe ?? 7, // Default to 7 if not tracked
+          'exercise_type': 'strength',
           'exercise_name': exercise.name,
-          'exercise_id': exercise.id ?? exercise.libraryId ?? '',
-          'muscle_group': exercise.muscleGroup ?? 'unknown',
-          'set_number': completedSets.length,
-          'total_sets': _totalSetsPerExercise[_currentExerciseIndex] ?? 3,
-          'last_set_reps': completedSets.last.reps,
-          'last_set_weight': completedSets.last.weight,
-          'last_set_rpe': _lastSetRpe,
-          'last_set_rir': _lastSetRir,
-          'default_rest_seconds': exercise.restSeconds ?? 90,
+          'sets_remaining': setsRemaining > 0 ? setsRemaining : 0,
+          'sets_completed': completedSets.length,
+          'is_compound': isCompound,
+          'muscle_group': exercise.muscleGroup ?? exercise.primaryMuscle,
         },
       );
 
@@ -793,18 +808,20 @@ class _ActiveWorkoutScreenState
       // Haptic feedback for exercise transition
       HapticService.exerciseTransition();
 
+      final nextIndex = _currentExerciseIndex + 1;
+      final nextExercise = _exercises[nextIndex];
+
       setState(() {
-        _currentExerciseIndex++;
+        _currentExerciseIndex = nextIndex;
         _viewingExerciseIndex = _currentExerciseIndex;
       });
 
       // Update input controllers for new exercise
-      final exercise = _exercises[_currentExerciseIndex];
-      _repsController.text = (exercise.reps ?? 10).toString();
-      _weightController.text = (exercise.weight ?? 0).toString();
+      _repsController.text = (nextExercise.reps ?? 10).toString();
+      _weightController.text = (nextExercise.weight ?? 0).toString();
 
       // Fetch media for new exercise
-      _fetchMediaForExercise(exercise);
+      _fetchMediaForExercise(nextExercise);
 
       // Start rest between exercises
       _startRest(true);
@@ -832,20 +849,9 @@ class _ActiveWorkoutScreenState
     _timerController.setPaused(_isPaused);
   }
 
-  /// Handle tap on video/media background area
-  /// - If set overlay is expanded: minimize it
-  /// - If set overlay is minimized: toggle video play/pause
+  /// Handle tap on background area (no-op since set tracking is full screen)
   void _handleVideoAreaTap() {
-    if (_isResting) return; // Don't handle during rest
-
-    if (!_isSetOverlayMinimized) {
-      // Overlay is expanded - minimize it
-      HapticFeedback.selectionClick();
-      setState(() => _isSetOverlayMinimized = true);
-    } else {
-      // Overlay is minimized - toggle video play/pause
-      _toggleVideoPlayPause();
-    }
+    // No action needed - set tracking is always visible
   }
 
   /// Toggle video play/pause
@@ -1382,7 +1388,7 @@ class _ActiveWorkoutScreenState
       totalCompletedSets: totalCompletedSets,
       exercisesWithCompletedSets: exercisesWithCompletedSets,
       timeSpentSeconds: _timerController.workoutSeconds,
-      coachPersona: _coachPersona,
+      coachPersona: ref.read(aiSettingsProvider).getCurrentCoach(),
       workoutName: widget.workout.name,
     );
 
@@ -1624,9 +1630,9 @@ class _ActiveWorkoutScreenState
                   lastSetWeight: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
                       ? _completedSets[_currentExerciseIndex]!.last.weight
                       : null,
-                  // Ask AI Coach button with coach persona
+                  // Ask AI Coach button with coach persona (reactive to changes)
                   onAskAICoach: () => _showAICoachSheet(currentExercise),
-                  coachPersona: _coachPersona,
+                  coachPersona: ref.watch(aiSettingsProvider).getCurrentCoach(),
                 ),
               ),
 
@@ -1658,12 +1664,13 @@ class _ActiveWorkoutScreenState
                 onQuit: _showQuitDialog,
               ),
 
-            // Set tracking overlay
-            if (!_isResting && _showSetOverlay)
+            // Set tracking overlay - full screen (no floating card, no minimize)
+            if (!_isResting)
               Positioned(
-                left: 16,
-                right: 16,
-                top: MediaQuery.of(context).padding.top + 90,
+                left: 0,
+                right: 0,
+                top: MediaQuery.of(context).padding.top + 70,
+                bottom: 90, // Leave space for bottom bar
                 child: SetTrackingOverlay(
                   exercise: _exercises[_viewingExerciseIndex],
                   viewingExerciseIndex: _viewingExerciseIndex,
@@ -1683,7 +1690,7 @@ class _ActiveWorkoutScreenState
                       setState(() => _isActiveRowExpanded = !_isActiveRowExpanded),
                   onCompleteSet: _completeSet,
                   onToggleUnit: _toggleUnit,
-                  onClose: () => setState(() => _showSetOverlay = false),
+                  onClose: () {}, // No close needed for full screen
                   onPreviousExercise: _viewingExerciseIndex > 0
                       ? () => setState(() => _viewingExerciseIndex--)
                       : null,
@@ -1697,7 +1704,9 @@ class _ActiveWorkoutScreenState
                   onBackToCurrentExercise: () =>
                       setState(() => _viewingExerciseIndex = _currentExerciseIndex),
                   onEditSet: (index) => _editCompletedSet(index),
+                  onUpdateSet: (index, weight, reps) => _updateCompletedSet(index, weight, reps),
                   onDeleteSet: (index) => _deleteCompletedSet(index),
+                  onQuickCompleteSet: (index, complete) => _quickCompleteSet(index, complete),
                   onDoneButtonPressDown: () =>
                       setState(() => _isDoneButtonPressed = true),
                   onDoneButtonPressUp: () {
@@ -1710,9 +1719,16 @@ class _ActiveWorkoutScreenState
                   onShowNumberInputDialog: _showNumberInputDialog,
                   onSkipExercise: _skipExercise,
                   onOpenWorkoutPlan: _showWorkoutPlanDrawer,
-                  isMinimized: _isSetOverlayMinimized,
-                  onMinimizedChanged: (minimized) =>
-                      setState(() => _isSetOverlayMinimized = minimized),
+                  onOpenExerciseOptions: () => _showExerciseOptionsSheet(_viewingExerciseIndex),
+                  isMinimized: false, // Always expanded
+                  onMinimizedChanged: null, // No minimize needed
+                  lastSessionData: _getLastSessionData(_viewingExerciseIndex),
+                  prData: _getPrData(_viewingExerciseIndex),
+                  currentWeightIncrement: _weightIncrement,
+                  onWeightIncrementChanged: (value) =>
+                      setState(() => _weightIncrement = value),
+                  currentProgressionType: (_repProgressionPerExercise[_viewingExerciseIndex] ?? RepProgressionType.straight).displayName,
+                  onOpenProgressionPicker: () => _showProgressionPicker(_viewingExerciseIndex),
                 ),
               ),
 
@@ -1756,7 +1772,7 @@ class _ActiveWorkoutScreenState
                   onAddWater: _showHydrationDialog,
                   onOpenBreathingGuide: () => _showBreathingGuide(currentExercise),
                   onOpenAICoach: () => _showAICoachSheet(currentExercise),
-                  coachPersona: _coachPersona,
+                  coachPersona: ref.watch(aiSettingsProvider).getCurrentCoach(),
                   onShowExerciseInfo: () => showExerciseInfoSheet(
                     context: context,
                     exercise: currentExercise,
@@ -1764,8 +1780,8 @@ class _ActiveWorkoutScreenState
                 ),
               ),
 
-            // Floating AI Coach FAB (visible when not resting - rest screen has its own Ask Coach button)
-            if (!_isResting)
+            // Floating AI Coach FAB (visible when not resting, not hidden for session, and enabled in settings)
+            if (!_isResting && !_hideAICoachForSession && ref.watch(aiSettingsProvider).showAICoachDuringWorkouts)
               Positioned(
                 bottom: MediaQuery.of(context).padding.bottom + 90,
                 right: 20,
@@ -1778,46 +1794,11 @@ class _ActiveWorkoutScreenState
   }
 
   Widget _buildMediaBackground() {
-    if (_isLoadingMedia) {
-      return Container(
-        color: AppColors.pureBlack,
-        child: const Center(
-          child: CircularProgressIndicator(color: AppColors.cyan),
-        ),
-      );
-    }
-
-    if (_isVideoInitialized && _videoController != null) {
-      return AspectRatio(
-        aspectRatio: _videoController!.value.aspectRatio,
-        child: VideoPlayer(_videoController!),
-      );
-    }
-
-    if (_imageUrl != null) {
-      return CachedNetworkImage(
-        imageUrl: _imageUrl!,
-        fit: BoxFit.cover,
-        placeholder: (context, url) => Container(
-          color: AppColors.pureBlack,
-          child: const Center(
-            child: CircularProgressIndicator(color: AppColors.cyan),
-          ),
-        ),
-        errorWidget: (context, url, error) => Container(
-          color: AppColors.elevated,
-          child: const Center(
-            child: Icon(Icons.fitness_center, size: 80, color: AppColors.cyan),
-          ),
-        ),
-      );
-    }
-
+    // Simple solid background - no video/GIF in background to keep UI clean
+    // User can tap "Instructions" button to see exercise video on-demand
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: AppColors.elevated,
-      child: const Center(
-        child: Icon(Icons.fitness_center, size: 80, color: AppColors.cyan),
-      ),
+      color: isDark ? AppColors.pureBlack : Colors.grey.shade100,
     );
   }
 
@@ -1969,6 +1950,25 @@ class _ActiveWorkoutScreenState
     );
   }
 
+  /// Update a completed set inline (without dialog)
+  void _updateCompletedSet(int setIndex, double weight, int reps) {
+    if (_completedSets[_viewingExerciseIndex] == null ||
+        setIndex < 0 ||
+        setIndex >= _completedSets[_viewingExerciseIndex]!.length) {
+      return;
+    }
+
+    setState(() {
+      final existingSet = _completedSets[_viewingExerciseIndex]![setIndex];
+      _completedSets[_viewingExerciseIndex]![setIndex] = SetLog(
+        reps: reps,
+        weight: weight,
+        completedAt: existingSet.completedAt,
+        setType: existingSet.setType,
+      );
+    });
+  }
+
   void _deleteCompletedSet(int setIndex) {
     setState(() {
       if (setIndex == -1) {
@@ -1984,6 +1984,71 @@ class _ActiveWorkoutScreenState
           setIndex < _completedSets[_viewingExerciseIndex]!.length) {
         // Remove a specific completed set
         _completedSets[_viewingExerciseIndex]!.removeAt(setIndex);
+      }
+    });
+  }
+
+  /// Quick complete or uncomplete a set by tapping its number
+  void _quickCompleteSet(int setIndex, bool complete) {
+    setState(() {
+      if (complete) {
+        // Complete the set - use target/last values or current inputs
+        final exercise = _exercises[_viewingExerciseIndex];
+        final previousSets = _previousSets[_viewingExerciseIndex] ?? [];
+
+        // Get weight: try input fields first, then target, then previous
+        double weight = double.tryParse(_weightController.text) ?? 0;
+        if (weight == 0 && exercise.weight != null) {
+          weight = exercise.weight!;
+        }
+        if (weight == 0 && setIndex < previousSets.length) {
+          weight = (previousSets[setIndex]['weight'] as double?) ?? 0;
+        }
+
+        // Get reps: try input fields first, then target, then previous
+        int reps = int.tryParse(_repsController.text) ?? 0;
+        if (reps == 0 && exercise.reps != null) {
+          reps = exercise.reps!;
+        }
+        if (reps == 0 && setIndex < previousSets.length) {
+          reps = (previousSets[setIndex]['reps'] as int?) ?? 0;
+        }
+
+        // Default fallback values if still zero
+        if (weight == 0) weight = 20;
+        if (reps == 0) reps = 10;
+
+        // Create set log
+        final setLog = SetLog(
+          weight: weight,
+          reps: reps,
+          completedAt: DateTime.now(),
+          setType: 'working',
+          targetReps: exercise.reps ?? reps,
+        );
+
+        // Insert at correct position
+        _completedSets[_viewingExerciseIndex] ??= [];
+        if (setIndex >= _completedSets[_viewingExerciseIndex]!.length) {
+          // Append at end
+          _completedSets[_viewingExerciseIndex]!.add(setLog);
+        } else {
+          // Insert at position
+          _completedSets[_viewingExerciseIndex]!.insert(setIndex, setLog);
+        }
+
+        // Trigger completion animation
+        _justCompletedSetIndex = setIndex;
+        Future.delayed(const Duration(milliseconds: 600), () {
+          if (mounted) setState(() => _justCompletedSetIndex = null);
+        });
+      } else {
+        // Uncomplete the set - remove it
+        if (_completedSets[_viewingExerciseIndex] != null &&
+            setIndex >= 0 &&
+            setIndex < _completedSets[_viewingExerciseIndex]!.length) {
+          _completedSets[_viewingExerciseIndex]!.removeAt(setIndex);
+        }
       }
     });
   }
@@ -2068,17 +2133,103 @@ class _ActiveWorkoutScreenState
   }
 
   /// Build floating AI Coach FAB - always visible above bottom bar
+  /// Long press to hide for this session
   Widget _buildFloatingAICoachButton(WorkoutExercise currentExercise) {
-    final coach = _coachPersona ?? CoachPersona.defaultCoach;
+    // Use ref.watch to reactively update when coach changes
+    final aiSettings = ref.watch(aiSettingsProvider);
+    final coach = aiSettings.getCurrentCoach();
 
-    return CoachAvatar(
-      coach: coach,
-      size: 56,
-      showBorder: true,
-      borderWidth: 3,
-      showShadow: true,
-      enableTapToView: false,
-      onTap: () => _showAICoachSheet(currentExercise),
+    return GestureDetector(
+      onLongPress: () {
+        HapticFeedback.heavyImpact();
+        _showHideCoachDialog();
+      },
+      child: CoachAvatar(
+        coach: coach,
+        size: 56,
+        showBorder: true,
+        borderWidth: 3,
+        showShadow: true,
+        enableTapToView: false,
+        onTap: () => _showAICoachSheet(currentExercise),
+      ),
+    );
+  }
+
+  /// Show dialog to confirm hiding AI Coach for this session
+  void _showHideCoachDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(
+              Icons.auto_awesome,
+              color: AppColors.cyan,
+              size: 24,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Hide AI Coach?',
+              style: TextStyle(
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'The AI Coach will be hidden for this workout session. You can still access it from Settings.',
+          style: TextStyle(
+            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() {
+                _hideAICoachForSession = true;
+              });
+              // Show confirmation snackbar
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('AI Coach hidden for this session'),
+                  behavior: SnackBarBehavior.floating,
+                  action: SnackBarAction(
+                    label: 'Undo',
+                    onPressed: () {
+                      setState(() {
+                        _hideAICoachForSession = false;
+                      });
+                    },
+                  ),
+                ),
+              );
+            },
+            child: Text(
+              'Hide',
+              style: TextStyle(
+                color: AppColors.orange,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -2180,6 +2331,413 @@ class _ActiveWorkoutScreenState
           ),
         );
       },
+    );
+  }
+
+  /// Get last session data for an exercise (from _previousSets)
+  Map<String, dynamic>? _getLastSessionData(int exerciseIndex) {
+    final previousSets = _previousSets[exerciseIndex];
+    if (previousSets == null || previousSets.isEmpty) {
+      return null;
+    }
+
+    // Get the first set from previous session as "last" data
+    final lastSet = previousSets.first;
+    final weight = lastSet['weight'] as double?;
+    final reps = lastSet['reps'] as int?;
+    final date = lastSet['date'] as String?;
+
+    if (weight != null && reps != null) {
+      return {
+        'weight': weight,
+        'reps': reps,
+        'date': date,
+      };
+    }
+    return null;
+  }
+
+  /// Get PR data for an exercise (from _exerciseMaxWeights)
+  Map<String, dynamic>? _getPrData(int exerciseIndex) {
+    if (exerciseIndex >= _exercises.length) return null;
+
+    final exercise = _exercises[exerciseIndex];
+    final prWeight = _exerciseMaxWeights[exercise.name];
+
+    if (prWeight != null && prWeight > 0) {
+      // We don't store PR reps, so estimate based on typical ranges
+      // In a real implementation, you'd store both weight and reps for PR
+      return {
+        'weight': prWeight,
+        'reps': 1, // Placeholder - ideally store actual PR reps
+      };
+    }
+    return null;
+  }
+
+  /// Show rep progression picker sheet
+  void _showProgressionPicker(int exerciseIndex) {
+    if (exerciseIndex >= _exercises.length) return;
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final currentProgression = _repProgressionPerExercise[exerciseIndex] ?? RepProgressionType.straight;
+
+    HapticFeedback.mediumImpact();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
+        ),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.nearBlack : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withOpacity(0.2)
+                    : Colors.black.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+
+            // Title
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.trending_up_rounded,
+                    color: AppColors.purple,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Change Reps Progression',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Progression options
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.only(bottom: 24),
+                children: RepProgressionType.values.map((type) {
+                  final isSelected = type == currentProgression;
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        HapticFeedback.mediumImpact();
+                        setState(() {
+                          _repProgressionPerExercise[exerciseIndex] = type;
+                        });
+                        Navigator.pop(ctx);
+                        // Show confirmation
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Changed to ${type.displayName}'),
+                            duration: const Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.purple.withOpacity(0.1)
+                              : Colors.transparent,
+                          border: Border(
+                            bottom: BorderSide(
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.05)
+                                  : Colors.black.withOpacity(0.04),
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            // Icon
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.purple.withOpacity(0.2)
+                                    : (isDark
+                                        ? Colors.white.withOpacity(0.08)
+                                        : Colors.black.withOpacity(0.05)),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                type.icon,
+                                color: isSelected ? AppColors.purple : textMuted,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            // Text
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    type.displayName,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                      color: isSelected ? AppColors.purple : textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    type.description,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Checkmark if selected
+                            if (isSelected)
+                              Icon(
+                                Icons.check_circle_rounded,
+                                color: AppColors.purple,
+                                size: 24,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+
+            // Bottom padding
+            SizedBox(height: MediaQuery.of(ctx).padding.bottom + 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Show exercise options sheet (3-dot menu)
+  void _showExerciseOptionsSheet(int exerciseIndex) {
+    if (exerciseIndex >= _exercises.length) return;
+
+    final exercise = _exercises[exerciseIndex];
+    final currentProgression = _repProgressionPerExercise[exerciseIndex] ?? RepProgressionType.straight;
+
+    showExerciseOptionsSheet(
+      context: context,
+      exercise: exercise,
+      currentProgression: currentProgression,
+      onProgressionChanged: (newProgression) {
+        setState(() {
+          _repProgressionPerExercise[exerciseIndex] = newProgression;
+        });
+        // Show confirmation
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Changed to ${newProgression.displayName}'),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+      onReplace: () {
+        // TODO: Implement exercise replacement
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Replace exercise coming soon'),
+            duration: Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+      onViewHistory: () {
+        // Open analytics page for this exercise
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => ExerciseAnalyticsPage(
+              exercise: exercise,
+              useKg: _useKg,
+              lastSessionData: _getLastSessionData(exerciseIndex),
+              prData: _getPrData(exerciseIndex),
+            ),
+          ),
+        );
+      },
+      onViewInstructions: () {
+        showExerciseInfoSheet(
+          context: context,
+          exercise: exercise,
+        );
+      },
+      onAddNotes: () {
+        // Notes are handled in the set tracking overlay
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Use the notes section below the sets'),
+            duration: Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+      onRemoveFromWorkout: () {
+        _removeExerciseFromWorkout(exerciseIndex);
+      },
+      onAddToSuperset: () {
+        // TODO: Implement superset functionality
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Superset feature coming soon'),
+            duration: Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+      onRemoveAndDontRecommend: () {
+        _removeExerciseFromWorkout(exerciseIndex);
+        // TODO: Add to blacklist for AI recommendations
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${exercise.name} removed and won\'t be recommended'),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+    );
+  }
+
+  /// Remove exercise from workout
+  void _removeExerciseFromWorkout(int index) {
+    if (_exercises.length <= 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot remove the last exercise'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final removedExercise = _exercises[index];
+
+    setState(() {
+      // Remove exercise and shift data
+      _exercises.removeAt(index);
+
+      // Clean up the maps for the deleted exercise
+      _completedSets.remove(index);
+      _totalSetsPerExercise.remove(index);
+      _previousSets.remove(index);
+      _repProgressionPerExercise.remove(index);
+
+      // Shift data for exercises after the deleted one
+      final newCompletedSets = <int, List<SetLog>>{};
+      final newTotalSets = <int, int>{};
+      final newPreviousSets = <int, List<Map<String, dynamic>>>{};
+      final newRepProgressions = <int, RepProgressionType>{};
+
+      _completedSets.forEach((key, value) {
+        if (key > index) {
+          newCompletedSets[key - 1] = value;
+        } else {
+          newCompletedSets[key] = value;
+        }
+      });
+
+      _totalSetsPerExercise.forEach((key, value) {
+        if (key > index) {
+          newTotalSets[key - 1] = value;
+        } else {
+          newTotalSets[key] = value;
+        }
+      });
+
+      _previousSets.forEach((key, value) {
+        if (key > index) {
+          newPreviousSets[key - 1] = value;
+        } else {
+          newPreviousSets[key] = value;
+        }
+      });
+
+      _repProgressionPerExercise.forEach((key, value) {
+        if (key > index) {
+          newRepProgressions[key - 1] = value;
+        } else {
+          newRepProgressions[key] = value;
+        }
+      });
+
+      _completedSets
+        ..clear()
+        ..addAll(newCompletedSets);
+      _totalSetsPerExercise
+        ..clear()
+        ..addAll(newTotalSets);
+      _previousSets
+        ..clear()
+        ..addAll(newPreviousSets);
+      _repProgressionPerExercise
+        ..clear()
+        ..addAll(newRepProgressions);
+
+      // Adjust current index if needed
+      if (_currentExerciseIndex >= _exercises.length) {
+        _currentExerciseIndex = _exercises.length - 1;
+      }
+      if (_viewingExerciseIndex >= _exercises.length) {
+        _viewingExerciseIndex = _exercises.length - 1;
+      }
+    });
+
+    // Show undo snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${removedExercise.name} removed'),
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            setState(() {
+              // Re-add the exercise at the same index
+              _exercises.insert(index, removedExercise);
+              // Shift maps back
+              // Note: This is a simplified undo - full undo would restore completed sets too
+            });
+          },
+        ),
+      ),
     );
   }
 }

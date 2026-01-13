@@ -1796,11 +1796,41 @@ Return a valid JSON object with this exact structure:
       "is_failure_set": false,
       "drop_set_count": null,
       "drop_set_percentage": null,
-      "notes": "Form tips or modifications"
+      "notes": "Form tips or modifications",
+      "set_targets": [
+        {{"set_number": 1, "set_type": "warmup", "target_reps": 12, "target_weight_kg": 5, "target_rpe": 5, "target_rir": null}},
+        {{"set_number": 2, "set_type": "working", "target_reps": 10, "target_weight_kg": 10, "target_rpe": 7, "target_rir": 3}},
+        {{"set_number": 3, "set_type": "working", "target_reps": 10, "target_weight_kg": 10, "target_rpe": 8, "target_rir": 2}},
+        {{"set_number": 4, "set_type": "failure", "target_reps": 8, "target_weight_kg": 10, "target_rpe": 10, "target_rir": 0}}
+      ]
     }}
   ],
   "notes": "Overall workout tips including warm-up and cool-down recommendations"
 }}
+
+🎯 SET TARGETS - CRITICAL REQUIREMENT:
+For EVERY exercise, you MUST include a "set_targets" array that specifies each individual set with:
+- set_number: 1-indexed set number
+- set_type: One of "warmup", "working", "drop", "failure", "amrap"
+- target_reps: Specific rep target for this set
+- target_weight_kg: Specific weight target for this set (reduces for drop sets)
+- target_rpe: Target Rate of Perceived Exertion (1-10, where 10 is max effort)
+- target_rir: Target Reps in Reserve (0-5, where 0 means failure)
+
+SET TYPE GUIDELINES:
+- Include 1 warmup set at 50% weight for compound exercises
+- Working sets should increase RPE progressively (7, 8, 9)
+- Drop sets: Each drop reduces weight by 20-25% with same reps
+- Failure/AMRAP sets: RPE 10, RIR 0
+
+EXAMPLE for a 4-set exercise with 2 drop sets:
+"set_targets": [
+  {{"set_number": 1, "set_type": "warmup", "target_reps": 12, "target_weight_kg": 20, "target_rpe": 5, "target_rir": null}},
+  {{"set_number": 2, "set_type": "working", "target_reps": 10, "target_weight_kg": 40, "target_rpe": 8, "target_rir": 2}},
+  {{"set_number": 3, "set_type": "working", "target_reps": 10, "target_weight_kg": 40, "target_rpe": 9, "target_rir": 1}},
+  {{"set_number": 4, "set_type": "drop", "target_reps": 10, "target_weight_kg": 30, "target_rpe": 9, "target_rir": 1}},
+  {{"set_number": 5, "set_type": "drop", "target_reps": 10, "target_weight_kg": 20, "target_rpe": 10, "target_rir": 0}}
+]
 
 NOTE: For cardio exercises, use duration_seconds (e.g., 30) instead of reps (set reps to 1).
 For strength exercises, set duration_seconds to null and use reps normally.
