@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/chat_message.dart';
+import '../../data/models/coach_persona.dart';
 import '../../data/providers/guest_mode_provider.dart';
 import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../screens/ai_settings/ai_settings_screen.dart';
 import '../../screens/chat/chat_screen.dart';
+import '../coach_avatar.dart';
 import '../guest_upgrade_sheet.dart';
 import '../main_shell.dart';
 import 'floating_chat_provider.dart';
@@ -185,7 +187,8 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
 
     // Get coach name from AI settings
     final aiSettings = ref.watch(aiSettingsProvider);
-    final coachName = aiSettings.coachName ?? 'AI Coach';
+    final coach = CoachPersona.findById(aiSettings.coachPersonaId) ?? CoachPersona.defaultCoach;
+    final coachName = coach.name;
 
     // Use Padding to handle keyboard - this is the Flutter-recommended way
     return Padding(
@@ -222,18 +225,11 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [cyan, purple],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.smart_toy, size: 20, color: Colors.white),
+                  CoachAvatar(
+                    coach: coach,
+                    size: 36,
+                    showBorder: true,
+                    showShadow: false,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -260,6 +256,23 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                       ],
                     ),
                   ),
+                  // Swap coach button
+                  GestureDetector(
+                    onTap: () {
+                      HapticService.light();
+                      // Close the bottom sheet first
+                      Navigator.of(context).pop();
+                      // Navigate to coach selection
+                      context.push('/coach-selection?fromSettings=true');
+                    },
+                    child: Tooltip(
+                      message: 'Change coach',
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Icon(Icons.swap_horiz, color: textMuted, size: 20),
+                      ),
+                    ),
+                  ),
                   // Maximize button - open full screen chat with animation
                   GestureDetector(
                     onTap: () {
@@ -269,9 +282,12 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                       // Navigate with custom animated route
                       Navigator.of(context).push(_createMaximizeRoute(context));
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Icon(Icons.open_in_full, color: textMuted, size: 20),
+                    child: Tooltip(
+                      message: 'Full screen',
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Icon(Icons.open_in_full, color: textMuted, size: 20),
+                      ),
                     ),
                   ),
                   GestureDetector(
@@ -314,7 +330,7 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                 ),
                 data: (messages) {
                   if (messages.isEmpty) {
-                    return _buildEmptyState(context, cyan, purple, textPrimary, textMuted, cardBorder);
+                    return _buildEmptyState(context, coach, textPrimary, textMuted, cardBorder);
                   }
 
                   // Scroll to bottom when messages change
@@ -413,7 +429,7 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, Color cyan, Color purple, Color textPrimary, Color textMuted, Color cardBorder) {
+  Widget _buildEmptyState(BuildContext context, CoachPersona coach, Color textPrimary, Color textMuted, Color cardBorder) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -429,14 +445,12 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
       child: Column(
         children: [
           const SizedBox(height: 20),
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [cyan, purple]),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.smart_toy, size: 30, color: Colors.white),
+          CoachAvatar(
+            coach: coach,
+            size: 60,
+            showBorder: true,
+            borderWidth: 3,
+            showShadow: true,
           ),
           const SizedBox(height: 16),
           Text(
@@ -472,7 +486,7 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.chat_bubble_outline, size: 16, color: cyan),
+                    Icon(Icons.chat_bubble_outline, size: 16, color: coach.primaryColor),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(suggestion, style: TextStyle(color: textPrimary)),
@@ -490,13 +504,41 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
 
   Widget _buildMessageBubble(BuildContext context, ChatMessage message) {
     final isUser = message.role == 'user';
+    final isSystem = message.role == 'system';
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
     final userTextColor = isDark ? AppColors.pureBlack : Colors.white;
+
+    // System messages (like coach change notifications) are displayed centered
+    if (isSystem) {
+      return Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: glassSurface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: cardBorder.withOpacity(0.5)),
+          ),
+          child: Text(
+            message.content,
+            style: TextStyle(
+              fontSize: 12,
+              color: textSecondary,
+              fontStyle: FontStyle.italic,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,

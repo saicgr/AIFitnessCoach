@@ -15,6 +15,7 @@ class CoachPersona {
   final Color primaryColor;
   final Color accentColor;
   final bool isCustom;
+  final String? imagePath; // Path to coach image asset
 
   const CoachPersona({
     required this.id,
@@ -28,6 +29,7 @@ class CoachPersona {
     required this.primaryColor,
     required this.accentColor,
     this.isCustom = false,
+    this.imagePath,
   });
 
   /// Pre-defined coach personas
@@ -43,6 +45,7 @@ class CoachPersona {
       icon: Icons.fitness_center,
       primaryColor: AppColors.orange,
       accentColor: AppColors.coral,
+      imagePath: 'assets/images/coaches/coach_mike.png',
     ),
     CoachPersona(
       id: 'dr_sarah',
@@ -55,6 +58,7 @@ class CoachPersona {
       icon: Icons.science,
       primaryColor: AppColors.electricBlue,
       accentColor: AppColors.cyan,
+      imagePath: 'assets/images/coaches/coach_dr_sarah.png',
     ),
     CoachPersona(
       id: 'sergeant_max',
@@ -67,6 +71,7 @@ class CoachPersona {
       icon: Icons.military_tech,
       primaryColor: AppColors.coral,
       accentColor: AppColors.error,
+      imagePath: 'assets/images/coaches/coach_max_sergeant.png',
     ),
     CoachPersona(
       id: 'zen_maya',
@@ -79,6 +84,7 @@ class CoachPersona {
       icon: Icons.spa,
       primaryColor: AppColors.teal,
       accentColor: AppColors.success,
+      imagePath: 'assets/images/coaches/coach_maya.png',
     ),
     CoachPersona(
       id: 'hype_danny',
@@ -91,6 +97,7 @@ class CoachPersona {
       icon: Icons.celebration,
       primaryColor: AppColors.magenta,
       accentColor: AppColors.purple,
+      imagePath: 'assets/images/coaches/coach_danny.png',
     ),
   ];
 

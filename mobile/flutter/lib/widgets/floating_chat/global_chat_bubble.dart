@@ -2,11 +2,14 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/animations/app_animations.dart';
 import '../../data/models/chat_message.dart';
+import '../../data/models/coach_persona.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../screens/ai_settings/ai_settings_screen.dart';
+import '../coach_avatar.dart';
 
 /// Global chat overlay that handles the modal chat UI
 /// The AI button is now in main_shell.dart (fixed position beside nav bar)
@@ -103,9 +106,10 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    // Get coach name from AI settings
+    // Get coach persona from AI settings
     final aiSettings = ref.watch(aiSettingsProvider);
-    final coachName = aiSettings.coachName ?? 'AI Coach';
+    final coach = CoachPersona.findById(aiSettings.coachPersonaId) ?? CoachPersona.defaultCoach;
+    final coachName = coach.name;
 
     // Wrap in Material to provide the required ancestor for TextField and other Material widgets
     // Use ValueKey to avoid GlobalKey conflicts when theme changes
@@ -143,20 +147,11 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: isDark
-                          ? [AppColors.cyan, AppColors.purple]
-                          : [AppColorsLight.cyan, AppColorsLight.purple],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.smart_toy, size: 22, color: Colors.white),
+                CoachAvatar(
+                  coach: coach,
+                  size: 40,
+                  showBorder: true,
+                  showShadow: false,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -182,6 +177,14 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                       ),
                     ],
                   ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.swap_horiz, color: textMuted, size: 20),
+                  onPressed: () {
+                    widget.onClose();
+                    context.push('/coach-selection?fromSettings=true');
+                  },
+                  tooltip: 'Change coach',
                 ),
                 IconButton(
                   icon: Icon(Icons.close, color: textMuted, size: 24),
@@ -316,8 +319,10 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+
+    // Get coach persona
+    final aiSettings = ref.watch(aiSettingsProvider);
+    final coach = CoachPersona.findById(aiSettings.coachPersonaId) ?? CoachPersona.defaultCoach;
 
     final suggestions = [
       'What should I eat before a workout?',
@@ -330,16 +335,12 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
       child: Column(
         children: [
           const SizedBox(height: 24),
-          Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [cyan, purple],
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.smart_toy, size: 36, color: Colors.white),
+          CoachAvatar(
+            coach: coach,
+            size: 70,
+            showBorder: true,
+            borderWidth: 3,
+            showShadow: true,
           ),
           const SizedBox(height: 20),
           Text(
@@ -377,7 +378,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.chat_bubble_outline, size: 18, color: cyan),
+                    Icon(Icons.chat_bubble_outline, size: 18, color: coach.primaryColor),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Text(

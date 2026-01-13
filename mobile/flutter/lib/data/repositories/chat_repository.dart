@@ -431,6 +431,18 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     clear();
   }
 
+  /// Add a system notification message (e.g., coach changed)
+  void addSystemNotification(String message) {
+    final notificationMessage = ChatMessage(
+      role: 'system',
+      content: message,
+      createdAt: DateTime.now().toIso8601String(),
+    );
+    final currentMessages = state.valueOrNull ?? [];
+    state = AsyncValue.data([...currentMessages, notificationMessage]);
+    debugPrint('📢 [Chat] System notification added: $message');
+  }
+
   /// Process action_data from AI response
   Future<void> _processActionData(Map<String, dynamic>? actionData) async {
     if (actionData == null) {

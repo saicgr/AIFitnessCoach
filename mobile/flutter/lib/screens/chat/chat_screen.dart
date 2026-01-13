@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/chat_message.dart';
+import '../../data/models/coach_persona.dart';
 import '../../data/models/live_chat_session.dart';
 import '../../data/providers/live_chat_provider.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/coach_avatar.dart';
 import '../../widgets/floating_chat/floating_chat_overlay.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import 'widgets/report_message_sheet.dart';
@@ -100,9 +102,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
-    // Get coach name from AI settings
+    // Get coach persona from AI settings
     final aiSettings = ref.watch(aiSettingsProvider);
-    final coachName = aiSettings.coachName ?? 'AI Coach';
+    final coach = CoachPersona.findById(aiSettings.coachPersonaId) ?? CoachPersona.defaultCoach;
+    final coachName = coach.name;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -117,22 +120,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ),
         title: Row(
           children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.cyan, AppColors.purple],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.smart_toy,
-                size: 20,
-                color: Colors.white,
-              ),
+            CoachAvatar(
+              coach: coach,
+              size: 36,
+              showBorder: true,
+              showShadow: false,
             ),
             const SizedBox(width: 12),
             Column(
@@ -204,10 +196,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
               data: (messages) {
                 if (messages.isEmpty) {
-                  return _EmptyChat(onSuggestionTap: (suggestion) {
-                    _textController.text = suggestion;
-                    _sendMessage();
-                  });
+                  return _EmptyChat(
+                    coach: coach,
+                    onSuggestionTap: (suggestion) {
+                      _textController.text = suggestion;
+                      _sendMessage();
+                    },
+                  );
                 }
 
                 return ListView.builder(
@@ -232,6 +227,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     return _MessageBubble(
                       message: message,
                       previousUserMessage: previousUserMessage,
+                      coach: coach,
                     ).animate().fadeIn(duration: 200.ms);
                   },
                 );
@@ -296,6 +292,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 Navigator.pop(context);
                 HapticService.selection();
                 context.push('/support-tickets');
+              },
+            ),
+            const Divider(height: 1, indent: 16, endIndent: 16),
+            ListTile(
+              leading: const Icon(Icons.swap_horiz, color: AppColors.purple),
+              title: const Text('Change Coach'),
+              subtitle: const Text(
+                'Switch to a different AI coach',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                HapticService.selection();
+                context.push('/coach-selection?fromSettings=true');
               },
             ),
             const Divider(height: 1, indent: 16, endIndent: 16),
@@ -619,25 +629,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   void _showAboutDialog() {
+    final aiSettings = ref.read(aiSettingsProvider);
+    final coach = CoachPersona.findById(aiSettings.coachPersonaId) ?? CoachPersona.defaultCoach;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.elevated,
         title: Row(
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.cyan, AppColors.purple],
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.smart_toy, color: Colors.white, size: 24),
+            CoachAvatar(
+              coach: coach,
+              size: 40,
+              showBorder: true,
+              showShadow: false,
+              enableTapToView: false, // Already in a dialog
             ),
             const SizedBox(width: 12),
-            const Text('AI Coach'),
+            Text(coach.name),
           ],
         ),
         content: const Text(
@@ -660,8 +669,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
 class _EmptyChat extends StatelessWidget {
   final Function(String) onSuggestionTap;
+  final CoachPersona coach;
 
-  const _EmptyChat({required this.onSuggestionTap});
+  const _EmptyChat({required this.onSuggestionTap, required this.coach});
 
   @override
   Widget build(BuildContext context) {
@@ -677,26 +687,16 @@ class _EmptyChat extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 40),
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.cyan, AppColors.purple],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.smart_toy,
-              size: 40,
-              color: Colors.white,
-            ),
+          CoachAvatar(
+            coach: coach,
+            size: 80,
+            showBorder: true,
+            borderWidth: 3,
+            showShadow: true,
           ),
           const SizedBox(height: 24),
           Text(
-            'AI Coach',
+            coach.name,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -773,15 +773,23 @@ class _EmptyChat extends StatelessWidget {
 class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
   final String? previousUserMessage;
+  final CoachPersona coach;
 
   const _MessageBubble({
     required this.message,
+    required this.coach,
     this.previousUserMessage,
   });
 
   @override
   Widget build(BuildContext context) {
     final isUser = message.role == 'user';
+    final isSystem = message.role == 'system';
+
+    // System messages (like coach change notifications) are displayed centered
+    if (isSystem) {
+      return _buildSystemMessage(context);
+    }
 
     // Wrap AI messages with GestureDetector for long-press to report
     Widget bubbleContent = Container(
@@ -806,28 +814,21 @@ class _MessageBubble extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 20,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [AppColors.cyan, AppColors.purple],
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.smart_toy,
-                      size: 12,
-                      color: Colors.white,
-                    ),
+                  CoachAvatar(
+                    coach: coach,
+                    size: 20,
+                    showBorder: true,
+                    borderWidth: 1,
+                    showShadow: false,
+                    enableTapToView: false, // Too small, don't interrupt chat
                   ),
                   const SizedBox(width: 6),
-                  const Text(
-                    'AI Coach',
+                  Text(
+                    coach.name,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.cyan,
+                      color: coach.primaryColor,
                     ),
                   ),
                 ],
@@ -886,6 +887,38 @@ class _MessageBubble extends StatelessWidget {
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: bubbleContent,
+    );
+  }
+
+  /// Build a system notification message (centered, subtle styling)
+  Widget _buildSystemMessage(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isDark
+              ? AppColors.glassSurface
+              : AppColorsLight.glassSurface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDark
+                ? AppColors.cardBorder.withOpacity(0.5)
+                : AppColorsLight.cardBorder.withOpacity(0.5),
+          ),
+        ),
+        child: Text(
+          message.content,
+          style: TextStyle(
+            fontSize: 13,
+            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+            fontStyle: FontStyle.italic,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
     );
   }
 

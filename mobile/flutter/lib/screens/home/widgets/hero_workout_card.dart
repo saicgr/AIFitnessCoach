@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -608,6 +609,7 @@ class _GeneratingHeroCardState extends State<GeneratingHeroCard>
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('🔄 [GeneratingHeroCard] build() called with message: ${widget.message}');
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;

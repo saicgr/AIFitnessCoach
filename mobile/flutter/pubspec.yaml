@@ -134,9 +134,9 @@ flutter:
   assets:
     - assets/icon/
     - assets/images/
+    - assets/images/coaches/
     - assets/lottie/
     - assets/audio/countdown/
     - assets/audio/exercise_complete/
     - assets/audio/workout_complete/
     - assets/audio/rest_end/
-    - packages/muscle_selector/assets/maps/

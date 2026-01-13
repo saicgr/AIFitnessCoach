@@ -103,6 +103,8 @@ from .utils import (
 from services.adaptive_workout_service import (
     apply_age_caps,
     get_senior_workout_prompt_additions,
+    get_user_set_type_preferences,
+    build_set_type_context,
 )
 
 router = APIRouter()
@@ -208,6 +210,15 @@ async def generate_workout(request: GenerateWorkoutRequest):
         if hormonal_context.get("kegels_enabled"):
             logger.info(f"[Workout Generation] User has kegels enabled - warmup: {hormonal_context.get('include_kegels_in_warmup')}, cooldown: {hormonal_context.get('include_kegels_in_cooldown')}")
 
+        # Fetch set type preferences for personalized drop set / failure set recommendations
+        logger.info(f"[Workout Generation] Fetching set type preferences for user: {request.user_id}")
+        set_type_prefs = await get_user_set_type_preferences(request.user_id, supabase_client=db.client)
+        set_type_context = build_set_type_context(set_type_prefs)
+        if set_type_prefs:
+            advanced_types = [k for k in set_type_prefs.keys() if k not in ["working", "warmup"]]
+            if advanced_types:
+                logger.info(f"[Workout Generation] User has history with set types: {advanced_types}")
+
         gemini_service = GeminiService()
 
         try:
@@ -231,6 +242,7 @@ async def generate_workout(request: GenerateWorkoutRequest):
                 staple_exercises=staple_exercises if staple_exercises else None,
                 progression_philosophy=combined_context if combined_context else None,
                 workout_patterns_context=workout_patterns_context if workout_patterns_context else None,
+                set_type_context=set_type_context if set_type_context else None,
             )
 
             exercises = workout_data.get("exercises", [])
@@ -1911,6 +1923,15 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
         if set_rep_limits.get("max_reps_per_set", 15) < 15:
             logger.info(f"[Weekly Generation] User has set max_reps_per_set: {set_rep_limits.get('max_reps_per_set')}")
 
+        # Fetch set type preferences for personalized drop set / failure set recommendations
+        logger.info(f"[Weekly Generation] Fetching set type preferences for user: {request.user_id}")
+        set_type_prefs = await get_user_set_type_preferences(request.user_id, supabase_client=db.client)
+        set_type_context = build_set_type_context(set_type_prefs)
+        if set_type_prefs:
+            advanced_types = [k for k in set_type_prefs.keys() if k not in ["working", "warmup"]]
+            if advanced_types:
+                logger.info(f"[Weekly Generation] User has history with set types: {advanced_types}")
+
         for day_index in request.selected_days:
             workout_date = calculate_workout_date(request.week_start_date, day_index)
             focus = workout_focus_map[day_index]
@@ -2015,6 +2036,7 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                         workout_environment=workout_environment,
                         progression_philosophy=progression_philosophy if progression_philosophy else None,
                         workout_patterns_context=workout_patterns_context if workout_patterns_context else None,
+                        set_type_context=set_type_context if set_type_context else None,
                     )
 
                 exercises = workout_data.get("exercises", [])
@@ -2355,6 +2377,15 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
             logger.info(f"[Monthly Generation] User has set max_sets_per_exercise: {set_rep_limits.get('max_sets_per_exercise')}")
         if set_rep_limits.get("max_reps_per_set", 15) < 15:
             logger.info(f"[Monthly Generation] User has set max_reps_per_set: {set_rep_limits.get('max_reps_per_set')}")
+
+        # Fetch set type preferences for personalized drop set / failure set recommendations
+        logger.info(f"[Monthly Generation] Fetching set type preferences for user: {request.user_id}")
+        set_type_prefs = await get_user_set_type_preferences(request.user_id, supabase_client=db.client)
+        set_type_context = build_set_type_context(set_type_prefs)
+        if set_type_prefs:
+            advanced_types = [k for k in set_type_prefs.keys() if k not in ["working", "warmup"]]
+            if advanced_types:
+                logger.info(f"[Monthly Generation] User has history with set types: {advanced_types}")
 
         async def generate_single_workout(
             workout_date: datetime,
@@ -3223,6 +3254,15 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         if set_rep_limits.get("max_reps_per_set", 15) < 15:
             logger.info(f"[Remaining Generation] User has set max_reps_per_set: {set_rep_limits.get('max_reps_per_set')}")
 
+        # Fetch set type preferences for personalized drop set / failure set recommendations
+        logger.info(f"[Remaining Generation] Fetching set type preferences for user: {request.user_id}")
+        set_type_prefs = await get_user_set_type_preferences(request.user_id, supabase_client=db.client)
+        set_type_context = build_set_type_context(set_type_prefs)
+        if set_type_prefs:
+            advanced_types = [k for k in set_type_prefs.keys() if k not in ["working", "warmup"]]
+            if advanced_types:
+                logger.info(f"[Remaining Generation] User has history with set types: {advanced_types}")
+
         BATCH_SIZE = 4
 
         async def generate_single_workout(
@@ -3338,6 +3378,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                         workout_environment=workout_environment,
                         progression_philosophy=progression_philosophy if progression_philosophy else None,
                         workout_patterns_context=workout_patterns_context if workout_patterns_context else None,
+                        set_type_context=set_type_context if set_type_context else None,
                     )
 
                 # Apply post-generation validation

@@ -47,11 +47,17 @@ import 'widgets/workout_plan_drawer.dart';
 import 'widgets/breathing_guide_sheet.dart';
 import 'widgets/hydration_dialog.dart';
 import 'widgets/workout_ai_coach_sheet.dart';
+import 'widgets/exercise_info_sheet.dart';
+import 'widgets/quit_workout_dialog.dart';
 import '../../data/models/rest_suggestion.dart';
 import '../../data/repositories/hydration_repository.dart';
 import '../../core/services/fatigue_service.dart';
 import '../../core/providers/user_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../data/services/pr_detection_service.dart';
+import '../../data/models/coach_persona.dart';
+import '../../widgets/coach_avatar.dart';
+import 'widgets/pr_inline_celebration.dart';
 
 /// Active workout screen with modular composition
 class ActiveWorkoutScreen extends ConsumerStatefulWidget {
@@ -108,6 +114,7 @@ class _ActiveWorkoutScreenState
 
   // Set tracking overlay
   bool _showSetOverlay = true;
+  bool _isSetOverlayMinimized = false;
   final Map<int, List<Map<String, dynamic>>> _previousSets = {};
   final Map<int, int> _totalSetsPerExercise = {};
   int _viewingExerciseIndex = 0;
@@ -141,6 +148,12 @@ class _ActiveWorkoutScreenState
   FatigueAlertData? _fatigueAlertData;
   bool _showFatigueAlert = false;
 
+  // PR detection service
+  late PRDetectionService _prDetectionService;
+
+  // Coach persona for AI Coach button
+  CoachPersona? _coachPersona;
+
   // Rest suggestion state (AI-powered)
   RestSuggestion? _restSuggestion;
   bool _isLoadingRestSuggestion = false;
@@ -173,6 +186,14 @@ class _ActiveWorkoutScreenState
     _timerController.onWorkoutTick = (_) => setState(() {});
     _timerController.onRestTick = (_) => setState(() {});
     _timerController.onRestComplete = _handleRestComplete;
+
+    // Initialize PR detection service
+    _prDetectionService = ref.read(prDetectionServiceProvider);
+    _prDetectionService.startNewWorkout();
+    _preloadPRHistory();
+
+    // Load coach persona for AI Coach button
+    _loadCoachPersona();
 
     // Start workout timer
     _timerController.startWorkoutTimer();
@@ -407,6 +428,10 @@ class _ActiveWorkoutScreenState
       _completedSets[_currentExerciseIndex]!.add(finalSetLog);
       _justCompletedSetIndex = _completedSets[_currentExerciseIndex]!.length - 1;
     });
+
+    // Check for PRs
+    final currentExercise = _exercises[_currentExerciseIndex];
+    _checkForPRs(finalSetLog, currentExercise);
 
     // Clear animation after delay
     Future.delayed(const Duration(milliseconds: 500), () {
@@ -807,6 +832,38 @@ class _ActiveWorkoutScreenState
     _timerController.setPaused(_isPaused);
   }
 
+  /// Handle tap on video/media background area
+  /// - If set overlay is expanded: minimize it
+  /// - If set overlay is minimized: toggle video play/pause
+  void _handleVideoAreaTap() {
+    if (_isResting) return; // Don't handle during rest
+
+    if (!_isSetOverlayMinimized) {
+      // Overlay is expanded - minimize it
+      HapticFeedback.selectionClick();
+      setState(() => _isSetOverlayMinimized = true);
+    } else {
+      // Overlay is minimized - toggle video play/pause
+      _toggleVideoPlayPause();
+    }
+  }
+
+  /// Toggle video play/pause
+  void _toggleVideoPlayPause() {
+    if (_videoController == null || !_isVideoInitialized) return;
+
+    HapticFeedback.lightImpact();
+    setState(() {
+      if (_isVideoPlaying) {
+        _videoController!.pause();
+        _isVideoPlaying = false;
+      } else {
+        _videoController!.play();
+        _isVideoPlaying = true;
+      }
+    });
+  }
+
   // ========================================================================
   // DATA FETCHING
   // ========================================================================
@@ -868,6 +925,118 @@ class _ActiveWorkoutScreenState
     } catch (e) {
       debugPrint('Failed to load history for ${exercise.name}: $e');
     }
+  }
+
+  /// Preload PR history for all exercises
+  Future<void> _preloadPRHistory() async {
+    try {
+      await _prDetectionService.preloadExerciseHistory(
+        ref: ref,
+        exercises: _exercises,
+      );
+      debugPrint('✅ [PR] Preloaded exercise history for PR detection');
+    } catch (e) {
+      debugPrint('❌ [PR] Error preloading PR history: $e');
+    }
+  }
+
+  /// Load coach persona from AI settings
+  void _loadCoachPersona() {
+    final aiSettings = ref.read(aiSettingsProvider);
+    if (aiSettings.coachPersonaId != null) {
+      // Try to find predefined coach
+      final predefined = CoachPersona.findById(aiSettings.coachPersonaId);
+      if (predefined != null) {
+        setState(() => _coachPersona = predefined);
+      } else if (aiSettings.isCustomCoach) {
+        // Create custom coach from settings
+        setState(() => _coachPersona = CoachPersona.custom(
+          name: aiSettings.coachName ?? 'My Coach',
+          coachingStyle: aiSettings.coachingStyle,
+          communicationTone: aiSettings.communicationTone,
+          encouragementLevel: aiSettings.encouragementLevel,
+        ));
+      }
+    } else {
+      // Default to Coach Mike
+      setState(() => _coachPersona = CoachPersona.defaultCoach);
+    }
+  }
+
+  /// Check for PRs after completing a set
+  void _checkForPRs(SetLog setLog, WorkoutExercise exercise) {
+    // Calculate total volume for the exercise
+    final completedSets = _completedSets[_currentExerciseIndex] ?? [];
+    double totalVolume = 0;
+    for (final set in completedSets) {
+      totalVolume += set.weight * set.reps;
+    }
+
+    final detectedPRs = _prDetectionService.checkForPR(
+      exerciseName: exercise.name,
+      weight: setLog.weight,
+      reps: setLog.reps,
+      totalSets: completedSets.length,
+      totalVolume: totalVolume,
+    );
+
+    if (detectedPRs.isEmpty) return;
+
+    debugPrint('🏆 [PR] Detected ${detectedPRs.length} PR(s)!');
+
+    // Trigger haptics
+    _prDetectionService.triggerHaptics(detectedPRs);
+
+    // Show celebration for the first PR that should be celebrated
+    for (final pr in detectedPRs) {
+      if (_prDetectionService.shouldShowCelebration(pr)) {
+        _prDetectionService.recordCelebration();
+        _prDetectionService.updateCacheAfterPR(pr);
+
+        // Show appropriate celebration
+        if (detectedPRs.length > 1) {
+          _showMultiPRCelebration(detectedPRs);
+        } else {
+          _showSinglePRCelebration(pr);
+        }
+        break; // Only show one celebration
+      }
+    }
+  }
+
+  /// Show single PR inline celebration
+  void _showSinglePRCelebration(DetectedPR pr) {
+    showPRInlineCelebration(
+      context: context,
+      pr: pr,
+      onDismiss: () {
+        debugPrint('✨ [PR] Celebration dismissed');
+      },
+    );
+  }
+
+  /// Show multi-PR celebration
+  void _showMultiPRCelebration(List<DetectedPR> prs) {
+    final overlayState = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => MultiPRInlineCelebration(
+        prs: prs,
+        onDismiss: () {
+          overlayEntry.remove();
+        },
+      ),
+    );
+
+    overlayState.insert(overlayEntry);
+
+    // Auto-dismiss after 3.5 seconds
+    Future.delayed(const Duration(milliseconds: 3500), () {
+      if (overlayEntry.mounted) {
+        overlayEntry.remove();
+      }
+    });
   }
 
   Future<void> _fetchMediaForExercise(WorkoutExercise exercise) async {
@@ -1196,36 +1365,67 @@ class _ActiveWorkoutScreenState
   // DIALOGS
   // ========================================================================
 
-  void _showQuitDialog() {
-    showDialog(
+  void _showQuitDialog() async {
+    // Calculate progress for the dialog
+    final totalSetsExpected = _totalSetsPerExercise.values.fold<int>(0, (sum, sets) => sum + sets);
+    final totalCompletedSets = _completedSets.values.fold<int>(0, (sum, sets) => sum + sets.length);
+    final exercisesWithCompletedSets = _completedSets.values.where((sets) => sets.isNotEmpty).length;
+
+    // Calculate progress percentage
+    final progressPercent = totalSetsExpected > 0
+        ? ((totalCompletedSets / totalSetsExpected) * 100).round()
+        : 0;
+
+    final result = await showQuitWorkoutDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.elevated,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Quit Workout?',
-          style: TextStyle(color: AppColors.textPrimary),
-        ),
-        content: const Text(
-          'Your progress will be lost. Are you sure you want to quit?',
-          style: TextStyle(color: AppColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.pop();
-            },
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Quit'),
-          ),
-        ],
-      ),
+      progressPercent: progressPercent,
+      totalCompletedSets: totalCompletedSets,
+      exercisesWithCompletedSets: exercisesWithCompletedSets,
+      timeSpentSeconds: _timerController.workoutSeconds,
+      coachPersona: _coachPersona,
+      workoutName: widget.workout.name,
     );
+
+    if (result != null && mounted) {
+      // User confirmed quit - log the exit and navigate away
+      await _logWorkoutExit(result.reason, result.notes);
+      if (mounted) {
+        context.pop();
+      }
+    }
+    // If result is null, user chose to continue (tapped "Keep Going")
+  }
+
+  /// Log workout exit when user quits early
+  Future<void> _logWorkoutExit(String reason, String? notes) async {
+    try {
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (widget.workout.id != null && userId != null) {
+        final totalCompletedSets = _completedSets.values.fold<int>(0, (sum, sets) => sum + sets.length);
+        final exercisesWithSets = _completedSets.values.where((sets) => sets.isNotEmpty).length;
+        final progressPercentage = _exercises.isNotEmpty
+            ? (exercisesWithSets / _exercises.length * 100)
+            : 0.0;
+
+        await workoutRepo.logWorkoutExit(
+          workoutId: widget.workout.id!,
+          userId: userId,
+          exitReason: reason,
+          exercisesCompleted: exercisesWithSets,
+          totalExercises: _exercises.length,
+          setsCompleted: totalCompletedSets,
+          timeSpentSeconds: _timerController.workoutSeconds,
+          progressPercentage: progressPercentage,
+          exitNotes: notes,
+        );
+        debugPrint('✅ [Quit] Logged workout exit: $reason');
+      }
+    } catch (e) {
+      debugPrint('❌ [Quit] Failed to log workout exit: $e');
+    }
   }
 
   void _showNumberInputDialog(
@@ -1375,9 +1575,13 @@ class _ActiveWorkoutScreenState
         backgroundColor: backgroundColor,
         body: Stack(
           children: [
-            // Background media
+            // Background media (tappable - minimizes overlay or toggles video)
             Positioned.fill(
-              child: _buildMediaBackground(),
+              child: GestureDetector(
+                onTap: _handleVideoAreaTap,
+                behavior: HitTestBehavior.opaque,
+                child: _buildMediaBackground(),
+              ),
             ),
 
             // Rest overlay with weight suggestion
@@ -1420,8 +1624,9 @@ class _ActiveWorkoutScreenState
                   lastSetWeight: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
                       ? _completedSets[_currentExerciseIndex]!.last.weight
                       : null,
-                  // Ask AI Coach button
-                  onAskAICoach: () => context.push('/chat'),
+                  // Ask AI Coach button with coach persona
+                  onAskAICoach: () => _showAICoachSheet(currentExercise),
+                  coachPersona: _coachPersona,
                 ),
               ),
 
@@ -1505,6 +1710,9 @@ class _ActiveWorkoutScreenState
                   onShowNumberInputDialog: _showNumberInputDialog,
                   onSkipExercise: _skipExercise,
                   onOpenWorkoutPlan: _showWorkoutPlanDrawer,
+                  isMinimized: _isSetOverlayMinimized,
+                  onMinimizedChanged: (minimized) =>
+                      setState(() => _isSetOverlayMinimized = minimized),
                 ),
               ),
 
@@ -1548,7 +1756,20 @@ class _ActiveWorkoutScreenState
                   onAddWater: _showHydrationDialog,
                   onOpenBreathingGuide: () => _showBreathingGuide(currentExercise),
                   onOpenAICoach: () => _showAICoachSheet(currentExercise),
+                  coachPersona: _coachPersona,
+                  onShowExerciseInfo: () => showExerciseInfoSheet(
+                    context: context,
+                    exercise: currentExercise,
+                  ),
                 ),
+              ),
+
+            // Floating AI Coach FAB (visible when not resting - rest screen has its own Ask Coach button)
+            if (!_isResting)
+              Positioned(
+                bottom: MediaQuery.of(context).padding.bottom + 90,
+                right: 20,
+                child: _buildFloatingAICoachButton(currentExercise),
               ),
           ],
         ),
@@ -1750,7 +1971,20 @@ class _ActiveWorkoutScreenState
 
   void _deleteCompletedSet(int setIndex) {
     setState(() {
-      _completedSets[_viewingExerciseIndex]!.removeAt(setIndex);
+      if (setIndex == -1) {
+        // Signal to decrease total sets (remove an empty row)
+        final currentTotal = _totalSetsPerExercise[_viewingExerciseIndex] ?? 3;
+        final completedCount = _completedSets[_viewingExerciseIndex]?.length ?? 0;
+        // Only decrease if there's at least 1 set AND more sets than completed
+        if (currentTotal > 1 && currentTotal > completedCount) {
+          _totalSetsPerExercise[_viewingExerciseIndex] = currentTotal - 1;
+        }
+      } else if (_completedSets[_viewingExerciseIndex] != null &&
+          setIndex >= 0 &&
+          setIndex < _completedSets[_viewingExerciseIndex]!.length) {
+        // Remove a specific completed set
+        _completedSets[_viewingExerciseIndex]!.removeAt(setIndex);
+      }
     });
   }
 
@@ -1830,6 +2064,21 @@ class _ActiveWorkoutScreenState
       currentWeight: currentWeight,
       useKg: _useKg,
       remainingExercises: remainingExercises,
+    );
+  }
+
+  /// Build floating AI Coach FAB - always visible above bottom bar
+  Widget _buildFloatingAICoachButton(WorkoutExercise currentExercise) {
+    final coach = _coachPersona ?? CoachPersona.defaultCoach;
+
+    return CoachAvatar(
+      coach: coach,
+      size: 56,
+      showBorder: true,
+      borderWidth: 3,
+      showShadow: true,
+      enableTapToView: false,
+      onTap: () => _showAICoachSheet(currentExercise),
     );
   }
 

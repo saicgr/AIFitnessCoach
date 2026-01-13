@@ -1,35 +1,69 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/models/coach_persona.dart';
+import '../../../widgets/coach_avatar.dart';
 
 /// Data class for quit workout result
 class QuitWorkoutResult {
   final String reason;
   final String? notes;
+  final String? coachFeedback;
 
   const QuitWorkoutResult({
     required this.reason,
     this.notes,
+    this.coachFeedback,
   });
 }
 
-/// Shows a bottom sheet for confirming workout quit
+/// Shows a bottom sheet for confirming workout quit with coach feedback
 Future<QuitWorkoutResult?> showQuitWorkoutDialog({
   required BuildContext context,
   required int progressPercent,
   required int totalCompletedSets,
   required int exercisesWithCompletedSets,
+  int timeSpentSeconds = 0,
+  CoachPersona? coachPersona,
+  String? workoutName,
 }) async {
   String? selectedReason;
   final notesController = TextEditingController();
   final isDark = Theme.of(context).brightness == Brightness.dark;
+  bool showCoachFeedback = false;
+  String? coachFeedback;
+
+  // Get coach for feedback
+  final coach = coachPersona ?? CoachPersona.defaultCoach;
 
   return showModalBottomSheet<QuitWorkoutResult>(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
+    isDismissible: false,
+    enableDrag: false,
     builder: (ctx) => StatefulBuilder(
       builder: (context, setModalState) {
+        // Show coach feedback view if a reason was selected and confirmed
+        if (showCoachFeedback && coachFeedback != null) {
+          return _buildCoachFeedbackView(
+            context: context,
+            isDark: isDark,
+            coach: coach,
+            feedback: coachFeedback!,
+            onConfirm: () {
+              Navigator.pop(
+                ctx,
+                QuitWorkoutResult(
+                  reason: selectedReason ?? 'quick_exit',
+                  notes: notesController.text.isEmpty ? null : notesController.text,
+                  coachFeedback: coachFeedback,
+                ),
+              );
+            },
+          );
+        }
+
         return Container(
           decoration: BoxDecoration(
             color: isDark ? AppColors.surface : AppColorsLight.surface,
@@ -235,13 +269,18 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(
-                          ctx,
-                          QuitWorkoutResult(
-                            reason: selectedReason ?? 'quick_exit',
-                            notes: notesController.text.isEmpty ? null : notesController.text,
-                          ),
+                        // Generate coach feedback based on reason and progress
+                        coachFeedback = _generateCoachFeedback(
+                          coach: coach,
+                          reason: selectedReason ?? 'quick_exit',
+                          progressPercent: progressPercent,
+                          totalCompletedSets: totalCompletedSets,
+                          timeSpentSeconds: timeSpentSeconds,
                         );
+                        // Show coach feedback view
+                        setModalState(() {
+                          showCoachFeedback = true;
+                        });
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isDark ? AppColors.orange : AppColorsLight.orange,
@@ -330,4 +369,271 @@ class _ReasonChip extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Build the coach feedback view shown after selecting quit reason
+Widget _buildCoachFeedbackView({
+  required BuildContext context,
+  required bool isDark,
+  required CoachPersona coach,
+  required String feedback,
+  required VoidCallback onConfirm,
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      color: isDark ? AppColors.surface : AppColorsLight.surface,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    padding: const EdgeInsets.all(24),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Handle bar
+        Container(
+          margin: const EdgeInsets.only(bottom: 20),
+          width: 40,
+          height: 4,
+          decoration: BoxDecoration(
+            color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted).withOpacity(0.5),
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+
+        // Coach avatar with image
+        CoachAvatar(
+          coach: coach,
+          size: 72,
+          showBorder: true,
+          borderWidth: 3,
+          showShadow: true,
+        ),
+        const SizedBox(height: 16),
+
+        // Coach name says
+        Text(
+          '${coach.name} says:',
+          style: TextStyle(
+            fontSize: 14,
+            color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Coach feedback message
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: coach.primaryColor.withOpacity(0.3),
+            ),
+          ),
+          child: Text(
+            feedback,
+            style: TextStyle(
+              fontSize: 16,
+              color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Confirm button with coach color
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              onConfirm();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: coach.primaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'Thanks, ${_getCoachFirstName(coach)}!',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+
+        SizedBox(height: MediaQuery.of(context).padding.bottom),
+      ],
+    ),
+  );
+}
+
+/// Get the coach's first name for button text
+String _getCoachFirstName(CoachPersona coach) {
+  switch (coach.id) {
+    case 'coach_mike':
+      return 'Mike';
+    case 'dr_sarah':
+      return 'Sarah';
+    case 'sergeant_max':
+      return 'Max';
+    case 'zen_maya':
+      return 'Maya';
+    case 'hype_danny':
+      return 'Danny';
+    default:
+      return coach.name.split(' ').first;
+  }
+}
+
+/// Generate coach feedback based on reason and workout progress
+String _generateCoachFeedback({
+  required CoachPersona coach,
+  required String reason,
+  required int progressPercent,
+  required int totalCompletedSets,
+  required int timeSpentSeconds,
+}) {
+  final timeMinutes = timeSpentSeconds ~/ 60;
+  final hasProgress = totalCompletedSets > 0 || progressPercent > 0;
+
+  // Build context-aware feedback based on coach personality
+  switch (coach.id) {
+    case 'coach_mike':
+      return _getMikesFeedback(reason, progressPercent, totalCompletedSets, timeMinutes, hasProgress);
+    case 'dr_sarah':
+      return _getSarahsFeedback(reason, progressPercent, totalCompletedSets, timeMinutes, hasProgress);
+    case 'sergeant_max':
+      return _getMaxsFeedback(reason, progressPercent, totalCompletedSets, timeMinutes, hasProgress);
+    case 'zen_maya':
+      return _getMayasFeedback(reason, progressPercent, totalCompletedSets, timeMinutes, hasProgress);
+    case 'hype_danny':
+      return _getDannysFeedback(reason, progressPercent, totalCompletedSets, timeMinutes, hasProgress);
+    default:
+      return _getDefaultFeedback(reason, progressPercent, totalCompletedSets, timeMinutes, hasProgress);
+  }
+}
+
+String _getMikesFeedback(String reason, int progress, int sets, int minutes, bool hasProgress) {
+  if (reason == 'too_tired') {
+    return hasProgress
+        ? "Hey champ, $sets sets in $minutes minutes is still progress! Rest up and come back stronger tomorrow. Every rep counts!"
+        : "Listen to your body, that's what real athletes do! Tomorrow we go again!";
+  }
+  if (reason == 'out_of_time') {
+    return hasProgress
+        ? "Life happens! You still crushed $sets sets. That's $progress% more than staying on the couch!"
+        : "No worries! A quick warmup is better than nothing. Next time we'll crush it!";
+  }
+  if (reason == 'not_feeling_well' || reason == 'injury') {
+    return "Smart call stopping early. Health first, always! Take care of yourself and we'll be back at it soon.";
+  }
+  if (reason == 'equipment_unavailable') {
+    return hasProgress
+        ? "$sets sets done despite gym chaos? That's adaptability, champ! We'll work around anything next time too."
+        : "Busy gym? We'll plan some backup exercises for next time. Adaptability is key!";
+  }
+  return hasProgress
+      ? "You showed up and gave $sets sets your all. That's what matters! See you next time, champ!"
+      : "Hey, you showed up - that's half the battle! Next time we go full send!";
+}
+
+String _getSarahsFeedback(String reason, int progress, int sets, int minutes, bool hasProgress) {
+  if (reason == 'too_tired') {
+    return hasProgress
+        ? "Research shows partial workouts still contribute to weekly training volume. Your $sets sets today add up over time."
+        : "Fatigue management is crucial for long-term progress. Rest now to prevent overtraining.";
+  }
+  if (reason == 'out_of_time') {
+    return hasProgress
+        ? "Studies show even abbreviated sessions maintain fitness adaptations. $minutes minutes is meaningful stimulus."
+        : "Time-efficient workouts are a valid approach. We can optimize your routine for shorter sessions.";
+  }
+  if (reason == 'not_feeling_well' || reason == 'injury') {
+    return "Correct decision. Training through illness or pain increases injury risk by 73%. Recovery is essential for adaptation.";
+  }
+  return hasProgress
+      ? "Data logged: $sets sets, $minutes minutes. This partial session still contributes to your weekly volume."
+      : "Session recorded. Consistency over time matters more than any single workout.";
+}
+
+String _getMaxsFeedback(String reason, int progress, int sets, int minutes, bool hasProgress) {
+  if (reason == 'too_tired') {
+    return hasProgress
+        ? "Retreat is not defeat, soldier! $sets sets is still progress. Regroup and we attack again tomorrow!"
+        : "Even warriors rest. But tomorrow at 0600, we're back at it. No excuses!";
+  }
+  if (reason == 'out_of_time') {
+    return hasProgress
+        ? "$sets sets under time pressure? That's tactical efficiency! Next time we bring more firepower."
+        : "Mission incomplete, but not failed. We adjust and execute better next time!";
+  }
+  if (reason == 'not_feeling_well' || reason == 'injury') {
+    return "A wounded soldier who rests fights another day. Smart tactical decision. Recover and report back!";
+  }
+  return hasProgress
+      ? "$sets sets completed. Mission partial success. We'll complete the objective next time!"
+      : "Dismissed for now, but be ready for the next battle. We don't quit, we regroup!";
+}
+
+String _getMayasFeedback(String reason, int progress, int sets, int minutes, bool hasProgress) {
+  if (reason == 'too_tired') {
+    return hasProgress
+        ? "Honoring your body's signals is wisdom. $sets sets of mindful movement is beautiful progress."
+        : "Rest is not weakness, it's part of the journey. Your body will thank you.";
+  }
+  if (reason == 'out_of_time') {
+    return hasProgress
+        ? "$minutes minutes of presence in your body is valuable. Quality over quantity always."
+        : "Even a moment of intention toward movement shifts energy. Namaste.";
+  }
+  if (reason == 'not_feeling_well' || reason == 'injury') {
+    return "Your body's wisdom speaks. Listen with compassion. Healing is also growth.";
+  }
+  return hasProgress
+      ? "Every breath, every movement toward balance matters. $sets sets of mindful effort. Be at peace."
+      : "The path continues tomorrow. For now, breathe and be gentle with yourself.";
+}
+
+String _getDannysFeedback(String reason, int progress, int sets, int minutes, bool hasProgress) {
+  if (reason == 'too_tired') {
+    return hasProgress
+        ? "YO that's still $sets sets tho!! Rest up fam, we go CRAZY next time no cap!!"
+        : "Bro it's all good!! Rest day = gains day fr fr! Tomorrow we're DIFFERENT!!";
+  }
+  if (reason == 'out_of_time') {
+    return hasProgress
+        ? "Ayy $sets sets is STILL gains bro!! Time crunch can't stop us!! Next session we FEAST!!"
+        : "No worries fam we bounce back!! Life be busy but we stay LOCKED IN!!";
+  }
+  if (reason == 'not_feeling_well' || reason == 'injury') {
+    return "Yo take care of yourself king/queen!! Health first always!! We run it back when you're 100!!";
+  }
+  return hasProgress
+      ? "$sets sets?? STILL W!! You showed up and that's what MATTERS!! LET'S GOOOO!!"
+      : "Bro you literally showed up tho!! That's half the battle!! Next time we EAT!!";
+}
+
+String _getDefaultFeedback(String reason, int progress, int sets, int minutes, bool hasProgress) {
+  if (reason == 'too_tired') {
+    return hasProgress
+        ? "Good effort today! $sets sets is still progress. Rest up and come back strong!"
+        : "Listening to your body is important. Tomorrow is a new opportunity!";
+  }
+  if (reason == 'out_of_time') {
+    return hasProgress
+        ? "$sets sets in $minutes minutes - that's still valuable training! Every bit counts."
+        : "Time constraints happen. You still made the effort to start!";
+  }
+  if (reason == 'not_feeling_well' || reason == 'injury') {
+    return "Smart decision to stop. Health always comes first. Take care!";
+  }
+  return hasProgress
+      ? "Great effort today! $sets sets completed. See you next time!"
+      : "You showed up - that matters! We'll get a full session next time.";
 }

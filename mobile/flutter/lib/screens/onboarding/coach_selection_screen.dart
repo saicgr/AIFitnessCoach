@@ -7,8 +7,11 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/coach_persona.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/onboarding_repository.dart';
+import '../../data/repositories/chat_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../core/constants/api_constants.dart';
+import '../../data/providers/nutrition_preferences_provider.dart';
+import '../../data/providers/fasting_provider.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/coach_profile_card.dart';
@@ -115,8 +118,16 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
       aiNotifier.setCoachPersona(_selectedCoach!);
     }
 
-    // If coming from AI settings (changing coach), just pop back
+    // If coming from AI settings (changing coach), add notification and pop back
     if (widget.fromSettings) {
+      // Add system notification to chat about coach change
+      final coachName = _isCustomMode
+          ? (_customName.isEmpty ? 'My Coach' : _customName)
+          : _selectedCoach?.name ?? 'your new coach';
+      ref.read(chatMessagesProvider.notifier).addSystemNotification(
+        '🔄 Coach changed to $coachName',
+      );
+
       if (mounted) {
         context.pop();
       }
@@ -229,26 +240,52 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
 
         // Calculate and save nutrition targets based on quiz data
         // This populates nutrition_preferences table with calories, macros, and goals
-        try {
-          await apiClient.post(
-            '${ApiConstants.users}/$userId/calculate-nutrition-targets',
-            data: {
-              'weight_kg': quizData.weightKg,
-              'height_cm': quizData.heightCm,
-              'age': quizData.age,
-              'gender': quizData.gender,
-              'activity_level': quizData.activityLevel,
-              'weight_direction': quizData.weightDirection,
-              'weight_change_rate': quizData.weightChangeRate,  // Fixed: was weightChangeAmount (double), now weightChangeRate (string)
-              'goal_weight_kg': quizData.goalWeightKg,
-              'nutrition_goals': quizData.nutritionGoals,
-              'workout_days_per_week': quizData.daysPerWeek,
-            },
-          );
-          debugPrint('✅ [CoachSelection] Nutrition targets calculated and saved');
-        } catch (nutritionError) {
-          debugPrint('⚠️ [CoachSelection] Failed to calculate nutrition targets: $nutritionError');
-          // Non-critical - user can still use the app
+        // Required fields: weight_kg, height_cm, age, gender
+        final hasRequiredFields = quizData.weightKg != null &&
+            quizData.heightCm != null &&
+            quizData.age != null &&
+            quizData.gender != null;
+
+        debugPrint('🥗 [CoachSelection] Nutrition calculation check:');
+        debugPrint('   - weight_kg: ${quizData.weightKg}');
+        debugPrint('   - height_cm: ${quizData.heightCm}');
+        debugPrint('   - age: ${quizData.age}');
+        debugPrint('   - gender: ${quizData.gender}');
+        debugPrint('   - activity_level: ${quizData.activityLevel}');
+        debugPrint('   - weight_direction: ${quizData.weightDirection}');
+        debugPrint('   - weight_change_rate: ${quizData.weightChangeRate}');
+        debugPrint('   - goal_weight_kg: ${quizData.goalWeightKg}');
+        debugPrint('   - nutrition_goals: ${quizData.nutritionGoals}');
+        debugPrint('   - hasRequiredFields: $hasRequiredFields');
+
+        if (hasRequiredFields) {
+          try {
+            await apiClient.post(
+              '${ApiConstants.users}/$userId/calculate-nutrition-targets',
+              data: {
+                'weight_kg': quizData.weightKg,
+                'height_cm': quizData.heightCm,
+                'age': quizData.age,
+                'gender': quizData.gender,
+                'activity_level': quizData.activityLevel ?? 'lightly_active',
+                'weight_direction': quizData.weightDirection ?? 'maintain',
+                'weight_change_rate': quizData.weightChangeRate ?? 'moderate',
+                'goal_weight_kg': quizData.goalWeightKg ?? quizData.weightKg,
+                'nutrition_goals': quizData.nutritionGoals ?? ['maintain'],
+                'workout_days_per_week': quizData.daysPerWeek ?? 3,
+              },
+            );
+            debugPrint('✅ [CoachSelection] Nutrition targets calculated and saved');
+
+            // Refresh nutrition preferences provider to load the new targets
+            await ref.read(nutritionPreferencesProvider.notifier).initialize(userId);
+            debugPrint('✅ [CoachSelection] Nutrition preferences provider refreshed');
+          } catch (nutritionError) {
+            debugPrint('⚠️ [CoachSelection] Failed to calculate nutrition targets: $nutritionError');
+            // Non-critical - user can still use the app
+          }
+        } else {
+          debugPrint('⚠️ [CoachSelection] Skipping nutrition calculation - missing required fields');
         }
 
         // Sync fasting preferences if user selected fasting during onboarding
@@ -263,6 +300,10 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
               },
             );
             debugPrint('✅ [CoachSelection] Fasting preferences synced');
+
+            // Refresh fasting provider to load the new settings
+            await ref.read(fastingProvider.notifier).initialize(userId, forceRefresh: true);
+            debugPrint('✅ [CoachSelection] Fasting provider refreshed');
           } catch (fastingError) {
             debugPrint('⚠️ [CoachSelection] Failed to sync fasting preferences: $fastingError');
             // Non-critical - user can still use the app

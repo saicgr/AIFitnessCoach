@@ -511,15 +511,15 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           debugPrint('🎯 [Paywall] Navigating to calibration (status: ${status == null ? "null" : "exists"}, completed: $isCompleted, skipped: $isSkipped)');
           context.go('/calibration/intro', extra: {'fromOnboarding': true});
         } else {
-          debugPrint('🏠 [Paywall] Navigating to home (completed: $isCompleted, skipped: $isSkipped)');
-          context.go('/home');
+          debugPrint('🏠 [Paywall] Navigating to workout loading (completed: $isCompleted, skipped: $isSkipped)');
+          context.go('/workout-loading');
         }
       }
     } catch (e) {
       debugPrint('❌ [Paywall] Error checking calibration status: $e');
-      // On error, just go home
+      // On error, go to workout loading to wait for generation
       if (context.mounted) {
-        context.go('/home');
+        context.go('/workout-loading');
       }
     }
   }

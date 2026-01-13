@@ -19,6 +19,7 @@ import 'widgets/day_picker.dart';
 import 'widgets/weight_goal_input.dart';
 import 'widgets/health_checklist_modal.dart';
 import 'pre_auth_quiz_screen.dart';
+import '../../widgets/coach_avatar.dart';
 
 /// Conversational AI onboarding screen
 /// WhatsApp-style chat interface for collecting user data
@@ -1146,9 +1147,7 @@ class _ConversationalOnboardingScreenState
 
     // Use coach's colors and info
     final coachName = coach.name;
-    final coachIcon = coach.icon;
     final coachColor = coach.primaryColor;
-    final coachAccentColor = coach.accentColor;
 
     return Container(
       padding: EdgeInsets.only(
@@ -1175,27 +1174,11 @@ class _ConversationalOnboardingScreenState
             ),
             tooltip: 'Go back',
           ),
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [coachColor, coachAccentColor],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: coachColor.withOpacity(0.4),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Center(
-              child: Icon(coachIcon, color: Colors.white, size: 20),
-            ),
+          CoachAvatar(
+            coach: coach,
+            size: 40,
+            showBorder: true,
+            showShadow: true,
           ),
           const SizedBox(width: 12),
           Expanded(

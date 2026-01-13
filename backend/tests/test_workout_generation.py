@@ -875,3 +875,105 @@ class TestDifficultyFilter:
 
         # Advanced should be high
         assert DIFFICULTY_STRING_TO_NUM["advanced"] >= 7, "Advanced must be >= 7"
+
+
+# ============ CRITICAL: Set Type Generation Tests ============
+
+class TestSetTypeGeneration:
+    """Tests for AI-generated set types (drop sets, failure sets)."""
+
+    def test_gemini_schema_has_set_type_fields(self):
+        """CRITICAL: WorkoutExerciseSchema must have set type fields."""
+        from models.gemini_schemas import WorkoutExerciseSchema
+
+        # Instantiate schema with set type fields
+        exercise = WorkoutExerciseSchema(
+            name="Leg Extension",
+            sets=3,
+            reps=12,
+            is_drop_set=True,
+            is_failure_set=True,
+            drop_set_count=2,
+            drop_set_percentage=20,
+        )
+
+        assert exercise.is_drop_set is True, "CRITICAL: is_drop_set field must exist"
+        assert exercise.is_failure_set is True, "CRITICAL: is_failure_set field must exist"
+        assert exercise.drop_set_count == 2, "CRITICAL: drop_set_count field must exist"
+        assert exercise.drop_set_percentage == 20, "CRITICAL: drop_set_percentage field must exist"
+
+    def test_set_type_defaults(self):
+        """Set type fields should default to False/None."""
+        from models.gemini_schemas import WorkoutExerciseSchema
+
+        exercise = WorkoutExerciseSchema(
+            name="Basic Exercise",
+            sets=3,
+            reps=10,
+        )
+
+        assert exercise.is_drop_set is False, "is_drop_set should default to False"
+        assert exercise.is_failure_set is False, "is_failure_set should default to False"
+        assert exercise.drop_set_count is None, "drop_set_count should default to None"
+        assert exercise.drop_set_percentage is None, "drop_set_percentage should default to None"
+
+    def test_generated_workout_can_have_set_types(self):
+        """CRITICAL: GeneratedWorkoutResponse should support exercises with set types."""
+        from models.gemini_schemas import GeneratedWorkoutResponse, WorkoutExerciseSchema
+
+        workout = GeneratedWorkoutResponse(
+            name="Beast Mode Legs",
+            type="strength",
+            difficulty="intermediate",
+            duration_minutes=45,
+            target_muscles=["quadriceps", "hamstrings"],
+            exercises=[
+                WorkoutExerciseSchema(
+                    name="Barbell Squat",
+                    sets=4,
+                    reps=8,
+                    is_failure_set=False,
+                    is_drop_set=False,
+                ),
+                WorkoutExerciseSchema(
+                    name="Leg Extension",
+                    sets=3,
+                    reps=12,
+                    is_drop_set=True,
+                    is_failure_set=True,
+                    drop_set_count=2,
+                    drop_set_percentage=20,
+                    notes="Final set: AMRAP then drop weight 20% twice"
+                ),
+            ],
+            notes="Focus on controlled movements"
+        )
+
+        assert len(workout.exercises) == 2, "Should have 2 exercises"
+        assert workout.exercises[0].is_drop_set is False, "First exercise no drop set"
+        assert workout.exercises[1].is_drop_set is True, "Second exercise is drop set"
+        assert workout.exercises[1].is_failure_set is True, "Second exercise is failure set"
+
+    def test_workout_exercise_set_types_json_serialization(self):
+        """Set type fields should serialize correctly to JSON."""
+        from models.gemini_schemas import WorkoutExerciseSchema
+
+        exercise = WorkoutExerciseSchema(
+            name="Bicep Curl",
+            sets=3,
+            reps=12,
+            is_drop_set=True,
+            drop_set_count=3,
+            drop_set_percentage=25,
+        )
+
+        # Serialize to dict (as would happen in API response)
+        exercise_dict = exercise.model_dump()
+
+        assert "is_drop_set" in exercise_dict, "is_drop_set must be in serialized dict"
+        assert "is_failure_set" in exercise_dict, "is_failure_set must be in serialized dict"
+        assert "drop_set_count" in exercise_dict, "drop_set_count must be in serialized dict"
+        assert "drop_set_percentage" in exercise_dict, "drop_set_percentage must be in serialized dict"
+        assert exercise_dict["is_drop_set"] is True
+        assert exercise_dict["drop_set_count"] == 3
+        assert exercise_dict["drop_set_percentage"] == 25

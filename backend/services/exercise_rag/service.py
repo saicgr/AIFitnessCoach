@@ -1453,14 +1453,23 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
             )
 
             if not results or not results["metadatas"] or not results["metadatas"][0]:
-                logger.warning("No challenge exercise candidates found in ChromaDB")
+                logger.warning("🔥 [Challenge] No candidates found in ChromaDB for query: %s", search_query)
                 return None
 
             metadatas = results["metadatas"][0]
             distances = results["distances"][0] if results["distances"] else []
+            logger.info(f"🔥 [Challenge] Found {len(metadatas)} initial candidates from ChromaDB")
+
+            # Log difficulty distribution for debugging
+            difficulty_counts = {}
+            for meta in metadatas:
+                d = meta.get("difficulty", "unknown")
+                difficulty_counts[d] = difficulty_counts.get(d, 0) + 1
+            logger.info(f"🔥 [Challenge] Difficulty distribution: {difficulty_counts}")
 
             # Filter candidates for challenge exercises
             challenge_candidates = []
+            filter_stats = {"duplicate": 0, "difficulty": 0, "equipment": 0, "injury": 0, "avoided": 0, "no_media": 0}
 
             for i, meta in enumerate(metadatas):
                 exercise_name = meta.get("name", "Unknown")
@@ -1468,13 +1477,15 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
 
                 # Skip if in main exercises (no duplicates)
                 if exercise_name_lower in main_exercise_names:
+                    filter_stats["duplicate"] += 1
                     continue
 
-                # Check difficulty is in challenge range (7-8)
+                # Check difficulty is in challenge range (5-8 for intermediate/advanced)
                 exercise_difficulty = meta.get("difficulty", "beginner")
                 difficulty_num = get_difficulty_numeric(exercise_difficulty)
 
                 if difficulty_num < CHALLENGE_DIFFICULTY_RANGE["min"] or difficulty_num > CHALLENGE_DIFFICULTY_RANGE["max"]:
+                    filter_stats["difficulty"] += 1
                     continue
 
                 # Check equipment compatibility
@@ -1483,6 +1494,7 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
 
                 if ex_equipment and ex_equipment not in ["bodyweight", "body weight", "none", ""]:
                     if not any(eq in ex_equipment for eq in equipment_lower):
+                        filter_stats["equipment"] += 1
                         continue
 
                 # Filter by injuries
@@ -1497,6 +1509,7 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
                         injuries=injuries
                     )
                     if not is_safe:
+                        filter_stats["injury"] += 1
                         continue
 
                 # Filter by avoided muscles
@@ -1506,11 +1519,13 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
 
                     avoid_list = avoided_muscles.get("avoid", [])
                     if any(am.lower() in primary_muscle for am in avoid_list):
+                        filter_stats["avoided"] += 1
                         continue
 
                 # Must have media
                 has_media = bool(meta.get("gif_url") or meta.get("video_url") or meta.get("image_url"))
                 if not has_media:
+                    filter_stats["no_media"] += 1
                     continue
 
                 # Calculate similarity score
@@ -1546,8 +1561,10 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
                 })
 
             if not challenge_candidates:
-                logger.info("No valid challenge exercise candidates after filtering")
+                logger.warning(f"🔥 [Challenge] No valid candidates after filtering. Stats: {filter_stats}")
                 return None
+
+            logger.info(f"🔥 [Challenge] Found {len(challenge_candidates)} valid candidates after filtering. Filter stats: {filter_stats}")
 
             # Sort by similarity (prefer progressions which got boosted)
             challenge_candidates.sort(key=lambda x: x["similarity"], reverse=True)

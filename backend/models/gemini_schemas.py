@@ -97,6 +97,10 @@ class WorkoutExerciseSchema(BaseModel):
     muscle_group: Optional[str] = Field(default=None, description="Primary muscle targeted")
     is_unilateral: bool = Field(default=False, description="True if single-arm/leg exercise")
     notes: Optional[str] = Field(default=None, description="Form tips or modifications")
+    is_drop_set: bool = Field(default=False, description="True if last set(s) should be drop sets")
+    is_failure_set: bool = Field(default=False, description="True if final set should be taken to failure")
+    drop_set_count: Optional[int] = Field(default=None, description="Number of drop sets (typically 2-3)")
+    drop_set_percentage: Optional[int] = Field(default=None, description="Weight reduction percentage per drop (typically 20-25%)")
 
 
 class GeneratedWorkoutResponse(BaseModel):

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/constants/app_colors.dart';
+import '../data/models/coach_persona.dart';
 import '../data/providers/admin_provider.dart';
 import '../data/providers/guest_mode_provider.dart';
 import '../data/providers/guest_usage_limits_provider.dart';
@@ -11,6 +12,7 @@ import '../data/services/widget_action_service.dart';
 import '../screens/admin_support/admin_support_provider.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/nutrition/quick_log_overlay.dart';
+import 'coach_avatar.dart';
 import 'floating_chat/floating_chat_overlay.dart';
 
 /// Provider to control floating nav bar visibility
@@ -364,7 +366,7 @@ class _AdminSupportButton extends ConsumerWidget {
   }
 }
 
-/// AI Coach button with gradient and glow - reactive to coach persona
+/// AI Coach button with coach avatar - reactive to coach persona
 class _AICoachButton extends ConsumerWidget {
   final VoidCallback onTap;
 
@@ -374,42 +376,16 @@ class _AICoachButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Watch AI settings to reactively update when coach changes
     final aiSettings = ref.watch(aiSettingsProvider);
-    final coach = ref.read(aiSettingsProvider.notifier).getCurrentCoach();
+    final coach = CoachPersona.findById(aiSettings.coachPersonaId) ?? CoachPersona.defaultCoach;
 
-    // Always use chat bubble for AI coach button (cleaner look)
-    const coachIcon = Icons.chat_bubble_rounded;
-    final primaryColor = coach?.primaryColor ?? AppColors.purple;
-    final accentColor = coach?.accentColor ?? AppColors.cyan;
-
-    return GestureDetector(
+    return CoachAvatar(
+      coach: coach,
+      size: 42,
+      showBorder: true,
+      borderWidth: 2,
+      showShadow: true,
+      enableTapToView: false, // Tap opens chat
       onTap: onTap,
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [primaryColor, accentColor],
-          ),
-          borderRadius: BorderRadius.circular(21),
-          boxShadow: [
-            BoxShadow(
-              color: accentColor.withOpacity(0.4),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-              spreadRadius: 1,
-            ),
-          ],
-        ),
-        child: Center(
-          child: Icon(
-            coachIcon,
-            color: Colors.white,
-            size: 18,
-          ),
-        ),
-      ),
     );
   }
 }

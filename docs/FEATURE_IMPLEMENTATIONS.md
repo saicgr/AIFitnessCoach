@@ -4,6 +4,77 @@ This document maps differentiation features to your existing FitWiz architecture
 
 ---
 
+## IMPLEMENTED FEATURES
+
+### Set Tracking with LAST + TARGET Columns and AI Set Type Recommendations
+
+**Status:** ✅ Implemented (January 2025)
+
+**Feature Description:**
+Enhanced set tracking UI inspired by Hevy app with LAST (previous session) and TARGET (AI recommendation) columns, plus AI-recommended set type labels (DROP SET, FAILURE) displayed above rows when appropriate.
+
+**Visual Design:**
+```
+┌────────────────────────────────────────────────────────────────┐
+│  SET    LAST       TARGET      LBS       REPS      ✓          │
+├────────────────────────────────────────────────────────────────┤
+│  NOW                                                           │
+│  [1]   60 × 10    65 × 10    [ 65 ]    [ 10 ]      ○          │
+├────────────────────────────────────────────────────────────────┤
+│   2    60 × 8     65 × 10       —         —        ○          │
+├────────────────────────────────────────────────────────────────┤
+│  DROP SET                                                      │  ← AI set type label
+│   3    55 × 6     60 × 8        —         —        ○          │
+├────────────────────────────────────────────────────────────────┤
+│  FAILURE                                                       │  ← AI set type label
+│   4       —       55 × AMRAP    —         —        ○          │
+└────────────────────────────────────────────────────────────────┘
+```
+
+**User Flow:**
+1. User starts a workout
+2. For each exercise, they see:
+   - **LAST column**: Previous session's weight × reps (tappable to auto-fill current inputs)
+   - **TARGET column**: AI-recommended weight × reps (pre-fills input fields)
+   - **Set type labels**: "DROP SET" (purple) or "FAILURE" (red) above rows when AI recommends
+   - **WARMUP label**: Orange label above warmup row
+3. Input fields are pre-filled with TARGET values
+4. User can tap LAST to quickly copy previous values (with haptic feedback)
+5. User can manually adjust values as needed
+6. After completing workout, data is saved for next session's LAST column
+
+**Technical Implementation:**
+
+*Frontend (Flutter):*
+- `set_tracking_overlay.dart` - Updated with LAST + TARGET columns, set type labels, tappable LAST
+- `exercise.dart` - Added `isFailureSet` field to WorkoutExercise model
+- `active_workout_screen_refactored.dart` - Passes exercise data to SetTrackingOverlay
+
+*Backend (Python):*
+- `gemini_schemas.py` - Added `is_drop_set`, `is_failure_set`, `drop_set_count`, `drop_set_percentage` fields
+- `gemini_service.py` - Updated workout generation prompt with set type recommendation guidelines
+
+*Database (Supabase):*
+- Migration `148_set_type_tracking.sql` - Added `set_type` and `is_ai_recommended_set_type` columns to `performance_logs`
+- Added `v_user_set_type_analytics` view for tracking user set type patterns
+
+**AI Set Type Guidelines:**
+- **Beginners**: No failure sets, no drop sets (risk of injury, poor form)
+- **Intermediate**: 1-2 failure sets per workout on isolation exercises, 0-1 drop set exercise
+- **Advanced**: 2-3 failure sets per workout including compound movements, 1-2 drop set exercises
+
+**Files Modified:**
+- `mobile/flutter/lib/screens/workout/widgets/set_tracking_overlay.dart`
+- `mobile/flutter/lib/data/models/exercise.dart`
+- `backend/models/gemini_schemas.py`
+- `backend/services/gemini_service.py`
+- `backend/migrations/148_set_type_tracking.sql`
+- `backend/tests/test_workout_generation.py`
+
+---
+
+---
+
 ## YOUR CURRENT APP ARCHITECTURE
 
 ```

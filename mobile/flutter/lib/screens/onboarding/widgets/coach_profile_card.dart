@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/coach_persona.dart';
+import '../../../widgets/coach_avatar.dart';
 
 /// Enhanced coach profile card for the swipeable PageView selection.
 /// Shows coach personality preview with sample message bubble.
@@ -99,19 +100,14 @@ class CoachProfileCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Coach icon
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              coach.icon,
-              color: Colors.white,
-              size: 26,
-            ),
+          // Coach avatar
+          CoachAvatar(
+            coach: coach,
+            size: 60,
+            showBorder: true,
+            borderWidth: 3,
+            showShadow: false,
+            enableTapToView: false, // Tap selects coach, not view
           ),
           const SizedBox(height: 8),
 

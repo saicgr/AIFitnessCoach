@@ -70,6 +70,8 @@ class WorkoutExercise extends Equatable {
   final String? difficulty; // Exercise difficulty level (e.g., "intermediate", "advanced")
   @JsonKey(name: 'difficulty_num')
   final int? difficultyNum; // Numeric difficulty (1-10)
+  @JsonKey(name: 'is_failure_set')
+  final bool? isFailureSet; // Whether the final set should be taken to failure
 
   const WorkoutExercise({
     this.id,
@@ -108,6 +110,7 @@ class WorkoutExercise extends Equatable {
     this.progressionFrom,
     this.difficulty,
     this.difficultyNum,
+    this.isFailureSet,
   });
 
   /// Whether the weight is based on user's past workout history
@@ -284,6 +287,7 @@ class WorkoutExercise extends Equatable {
     bool? isDropSet,
     int? dropSetCount,
     int? dropSetPercentage,
+    bool? isFailureSet,
   }) {
     return WorkoutExercise(
       id: id ?? this.id,
@@ -318,6 +322,7 @@ class WorkoutExercise extends Equatable {
       isDropSet: isDropSet ?? this.isDropSet,
       dropSetCount: dropSetCount ?? this.dropSetCount,
       dropSetPercentage: dropSetPercentage ?? this.dropSetPercentage,
+      isFailureSet: isFailureSet ?? this.isFailureSet,
     );
   }
 }

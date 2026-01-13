@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
@@ -15,6 +16,7 @@ import '../../../data/models/chat_message.dart';
 import '../../../data/models/coach_persona.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../screens/ai_settings/ai_settings_screen.dart';
+import '../../../widgets/coach_avatar.dart';
 
 /// Show AI coach sheet during workout
 Future<void> showWorkoutAICoachSheet({
@@ -85,6 +87,8 @@ class _WorkoutAICoachSheetState extends ConsumerState<WorkoutAICoachSheet> {
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
   bool _isTyping = false;
+  bool _isWaitingForResponse = false;
+  int _lastMessageCount = 0;
 
   List<QuickPrompt> get _quickPrompts => [
     QuickPrompt(
@@ -147,11 +151,16 @@ Exercises remaining: ${widget.remainingExercises.length}
 User question: $message
 ''';
 
+    // Set waiting state for typing indicator
+    setState(() {
+      _isWaitingForResponse = true;
+      _isTyping = false;
+    });
+
     // Send the message with workout context
     ref.read(chatMessagesProvider.notifier).sendMessage(workoutContext);
 
     _messageController.clear();
-    setState(() => _isTyping = false);
 
     // Scroll to bottom after a short delay
     Future.delayed(const Duration(milliseconds: 100), () {
@@ -249,29 +258,11 @@ User question: $message
       child: Row(
         children: [
           // Coach avatar
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [coach.primaryColor, coach.accentColor],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: coach.primaryColor.withOpacity(0.4),
-                  blurRadius: 12,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Icon(
-              coach.icon,
-              color: Colors.white,
-              size: 24,
-            ),
+          CoachAvatar(
+            coach: coach,
+            size: 48,
+            showBorder: true,
+            showShadow: true,
           ),
           const SizedBox(width: 12),
 
@@ -296,6 +287,21 @@ User question: $message
                   ),
                 ),
               ],
+            ),
+          ),
+
+          // Swap coach button
+          IconButton(
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.pop(context);
+              context.push('/coach-selection?fromSettings=true');
+            },
+            tooltip: 'Change coach',
+            icon: Icon(
+              Icons.swap_horiz,
+              color: isDark ? AppColors.textMuted : Colors.black54,
+              size: 22,
             ),
           ),
 
@@ -380,7 +386,31 @@ User question: $message
     bool isDark,
     CoachPersona coach,
   ) {
-    if (messages.isEmpty) {
+    // Check if we got a new assistant message (response received)
+    if (_isWaitingForResponse && messages.length > _lastMessageCount) {
+      // Check if the newest message is from assistant
+      if (messages.isNotEmpty && messages.last.role == 'assistant') {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {
+              _isWaitingForResponse = false;
+              _lastMessageCount = messages.length;
+            });
+          }
+        });
+      }
+    }
+
+    // Update message count
+    if (messages.length != _lastMessageCount && !_isWaitingForResponse) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() => _lastMessageCount = messages.length);
+        }
+      });
+    }
+
+    if (messages.isEmpty && !_isWaitingForResponse) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -408,17 +438,69 @@ User question: $message
         ? messages.sublist(messages.length - 20)
         : messages;
 
+    // Add +1 for typing indicator if waiting
+    final itemCount = recentMessages.length + (_isWaitingForResponse ? 1 : 0);
+
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.all(16),
-      itemCount: recentMessages.length,
+      itemCount: itemCount,
       itemBuilder: (context, index) {
+        // Show typing indicator as last item
+        if (_isWaitingForResponse && index == recentMessages.length) {
+          return _buildTypingIndicator(isDark, coach);
+        }
+
         final message = recentMessages[index];
         final isUser = message.role == 'user';
 
         return _buildMessageBubble(message, isUser, isDark, coach);
       },
     );
+  }
+
+  /// Build typing indicator with animated dots
+  Widget _buildTypingIndicator(bool isDark, CoachPersona coach) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // Coach avatar
+          CoachAvatar(
+            coach: coach,
+            size: 32,
+            showBorder: true,
+            showShadow: false,
+            enableTapToView: false, // Don't interrupt typing animation
+          ),
+          const SizedBox(width: 8),
+          // Typing bubble with animated dots
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.elevated : Colors.grey.shade100,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+                bottomLeft: Radius.circular(4),
+                bottomRight: Radius.circular(16),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _AnimatedDot(delay: 0, color: coach.primaryColor),
+                const SizedBox(width: 4),
+                _AnimatedDot(delay: 150, color: coach.primaryColor),
+                const SizedBox(width: 4),
+                _AnimatedDot(delay: 300, color: coach.primaryColor),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 200.ms);
   }
 
   Widget _buildMessageBubble(
@@ -444,20 +526,12 @@ User question: $message
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [coach.primaryColor, coach.accentColor],
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                coach.icon,
-                color: Colors.white,
-                size: 16,
-              ),
+            CoachAvatar(
+              coach: coach,
+              size: 32,
+              showBorder: true,
+              showShadow: false,
+              enableTapToView: false, // Don't interrupt chat flow
             ),
             const SizedBox(width: 8),
           ],
@@ -583,6 +657,68 @@ User question: $message
     return CoachPersona.predefinedCoaches.firstWhere(
       (c) => c.id == aiSettings.coachPersonaId,
       orElse: () => CoachPersona.defaultCoach,
+    );
+  }
+}
+
+/// Animated dot for typing indicator
+class _AnimatedDot extends StatefulWidget {
+  final int delay;
+  final Color color;
+
+  const _AnimatedDot({
+    required this.delay,
+    required this.color,
+  });
+
+  @override
+  State<_AnimatedDot> createState() => _AnimatedDotState();
+}
+
+class _AnimatedDotState extends State<_AnimatedDot>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _animation = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    // Start animation after delay
+    Future.delayed(Duration(milliseconds: widget.delay), () {
+      if (mounted) {
+        _controller.repeat(reverse: true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: widget.color.withOpacity(_animation.value),
+            shape: BoxShape.circle,
+          ),
+        );
+      },
     );
   }
 }

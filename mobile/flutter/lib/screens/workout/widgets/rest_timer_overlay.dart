@@ -13,6 +13,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/services/weight_suggestion_service.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/rest_suggestion.dart';
+import '../../../data/models/coach_persona.dart';
+import '../../../widgets/coach_avatar.dart';
 import 'rest_suggestion_card.dart';
 
 /// Rest timer overlay displayed between sets or exercises
@@ -91,6 +93,9 @@ class RestTimerOverlay extends StatelessWidget {
   /// Callback when user wants to ask AI Coach a question
   final VoidCallback? onAskAICoach;
 
+  /// Coach persona for personalized "Ask Coach" button
+  final CoachPersona? coachPersona;
+
   const RestTimerOverlay({
     super.key,
     required this.restSecondsRemaining,
@@ -119,6 +124,7 @@ class RestTimerOverlay extends StatelessWidget {
     this.lastSetTargetReps,
     this.lastSetWeight,
     this.onAskAICoach,
+    this.coachPersona,
   });
 
   /// Rest progress (1.0 = full, 0.0 = done)
@@ -652,6 +658,11 @@ class RestTimerOverlay extends StatelessWidget {
     Color subtitleColor,
     bool isDark,
   ) {
+    // Get coach name and colors
+    final coachName = _getCoachShortName(coachPersona);
+    final coachColor = coachPersona?.primaryColor ?? AppColors.purple;
+    final coach = coachPersona ?? CoachPersona.defaultCoach;
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.mediumImpact();
@@ -663,46 +674,35 @@ class RestTimerOverlay extends StatelessWidget {
           color: cardBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppColors.purple.withOpacity(0.3),
+            color: coachColor.withOpacity(0.3),
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.purple.withOpacity(0.3),
-                    AppColors.cyan.withOpacity(0.3),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.auto_awesome,
-                color: AppColors.purple,
-                size: 18,
-              ),
+            CoachAvatar(
+              coach: coach,
+              size: 30,
+              showBorder: true,
+              borderWidth: 1.5,
+              showShadow: false,
+              enableTapToView: false, // Tap triggers "Ask Coach" button
             ),
             const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Ask AI Coach',
+                Text(
+                  'Ask $coachName',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.purple,
+                    color: coachColor,
                   ),
                 ),
                 Text(
-                  'Have a question?',
+                  'Get tips for your next set',
                   style: TextStyle(
                     fontSize: 11,
                     color: subtitleColor,
@@ -713,7 +713,7 @@ class RestTimerOverlay extends StatelessWidget {
             const SizedBox(width: 8),
             Icon(
               Icons.chevron_right,
-              color: AppColors.purple.withOpacity(0.7),
+              color: coachColor.withOpacity(0.7),
               size: 20,
             ),
           ],
@@ -723,6 +723,30 @@ class RestTimerOverlay extends StatelessWidget {
         .animate()
         .fadeIn(delay: 350.ms, duration: 400.ms)
         .slideY(begin: 0.1, end: 0);
+  }
+
+  /// Get short display name for the coach
+  String _getCoachShortName(CoachPersona? coach) {
+    if (coach == null) return 'AI Coach';
+
+    switch (coach.id) {
+      case 'coach_mike':
+        return 'Mike';
+      case 'dr_sarah':
+        return 'Sarah';
+      case 'sergeant_max':
+        return 'Max';
+      case 'zen_maya':
+        return 'Maya';
+      case 'hype_danny':
+        return 'Danny';
+      case 'custom':
+        final firstName = coach.name.split(' ').first;
+        return firstName.length > 6 ? firstName.substring(0, 6) : firstName;
+      default:
+        final firstName = coach.name.split(' ').first;
+        return firstName.length > 6 ? firstName.substring(0, 6) : firstName;
+    }
   }
 
   /// Loading state for AI weight suggestion

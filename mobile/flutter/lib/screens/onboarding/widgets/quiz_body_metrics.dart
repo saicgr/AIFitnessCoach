@@ -646,6 +646,8 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                     onChanged: (isMetric) {
                       _convertWeightUnits(isMetric);
                       setState(() => _weightInMetric = isMetric);
+                      // Propagate weight unit change to parent for use in subsequent screens
+                      widget.onUnitChanged(isMetric);
                     },
                     isDark: isDark,
                     cardBg: cardBg,

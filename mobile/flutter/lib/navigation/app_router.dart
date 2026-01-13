@@ -55,6 +55,7 @@ import '../screens/personal_goals/personal_goals_screen.dart';
 import '../screens/paywall/paywall_features_screen.dart';
 import '../screens/paywall/paywall_timeline_screen.dart';
 import '../screens/paywall/paywall_pricing_screen.dart';
+import '../screens/loading/workout_loading_screen.dart';
 import '../screens/profile/workout_gallery_screen.dart';
 import '../screens/progress/progress_screen.dart';
 import '../screens/progress/milestones_screen.dart';
@@ -785,6 +786,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/senior-home',
         builder: (context, state) => const SeniorHomeScreen(),
+      ),
+
+      // Workout Loading Screen (shown after onboarding while workouts generate)
+      GoRoute(
+        path: '/workout-loading',
+        builder: (context, state) => const WorkoutLoadingScreen(),
       ),
 
       // Main app shell with bottom nav

@@ -5,13 +5,13 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import com.aifitnesscoach.app.wearable.WearableMethodChannel
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.FlutterEngineCache
 import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.plugin.common.MethodChannel
 
-class MainActivity : FlutterActivity() {
+class MainActivity : FlutterFragmentActivity() {
     companion object {
         private const val CHANNEL = "com.aifitnesscoach.app/widget_actions"
         private const val WIDGET_ENGINE_ID = "widget_engine"

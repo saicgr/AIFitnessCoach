@@ -74,9 +74,9 @@ class _CalibrationResultsScreenState extends ConsumerState<CalibrationResultsScr
     _showSuccessToast('Settings updated successfully!');
 
     // Navigate based on onboarding flow
-    // Correct flow: Coach → Paywall → Calibration → Workout Gen → Home
+    // Correct flow: Coach → Paywall → Calibration → Workout Loading → Home
     if (widget.fromOnboarding) {
-      context.go('/workout-generation');
+      context.go('/workout-loading');
     } else {
       context.go('/home');
     }
@@ -95,9 +95,9 @@ class _CalibrationResultsScreenState extends ConsumerState<CalibrationResultsScr
     _showInfoToast('Keeping your original settings');
 
     // Navigate based on onboarding flow
-    // Correct flow: Coach → Paywall → Calibration → Workout Gen → Home
+    // Correct flow: Coach → Paywall → Calibration → Workout Loading → Home
     if (widget.fromOnboarding) {
-      context.go('/workout-generation');
+      context.go('/workout-loading');
     } else {
       context.go('/home');
     }

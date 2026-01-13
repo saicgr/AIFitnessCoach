@@ -1,7 +1,7 @@
 /// Workout bottom bar widget
 ///
 /// Bottom navigation bar for the active workout screen.
-/// Action button bar design for quick workout actions.
+/// New design: Water(+) | Breathe | Exercise Name (center) | Skip
 library;
 
 import 'package:flutter/material.dart';
@@ -10,8 +10,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
+import '../../../data/models/coach_persona.dart';
 
-/// Bottom bar for workout actions - 6 action buttons for quick access
+/// Bottom bar for workout actions - streamlined layout with exercise name centered
 class WorkoutBottomBar extends StatelessWidget {
   /// Current exercise
   final WorkoutExercise currentExercise;
@@ -40,16 +41,16 @@ class WorkoutBottomBar extends StatelessWidget {
   /// Callback to skip (rest or exercise)
   final VoidCallback onSkip;
 
-  /// Optional callback to show exercise details
+  /// Optional callback to show exercise details/info
   final VoidCallback? onShowExerciseDetails;
 
   /// Callback when exercise is tapped in strip
   final void Function(int exerciseIndex)? onExerciseTap;
 
-  /// Callback to add a set
+  /// Callback to add a set (moved to set tracking overlay)
   final VoidCallback? onAddSet;
 
-  /// Callback to delete the last set
+  /// Callback to delete the last set (moved to set tracking overlay)
   final VoidCallback? onDeleteSet;
 
   /// Callback to open water/hydration dialog
@@ -58,11 +59,17 @@ class WorkoutBottomBar extends StatelessWidget {
   /// Callback to open breathing guide
   final VoidCallback? onOpenBreathingGuide;
 
-  /// Callback to open AI coach chat
+  /// Callback to open AI coach chat (now floating FAB)
   final VoidCallback? onOpenAICoach;
 
-  /// Number of completed sets for current exercise (for delete button state)
+  /// Number of completed sets for current exercise
   final int currentCompletedSets;
+
+  /// Selected coach persona (for AI Coach FAB display)
+  final CoachPersona? coachPersona;
+
+  /// Callback to show exercise info bottom sheet
+  final VoidCallback? onShowExerciseInfo;
 
   const WorkoutBottomBar({
     super.key,
@@ -83,6 +90,8 @@ class WorkoutBottomBar extends StatelessWidget {
     this.onOpenBreathingGuide,
     this.onOpenAICoach,
     this.currentCompletedSets = 0,
+    this.coachPersona,
+    this.onShowExerciseInfo,
   });
 
   @override
@@ -116,101 +125,183 @@ class WorkoutBottomBar extends StatelessWidget {
     );
   }
 
-  /// Build the 6-button action bar
+  /// Build the action bar with new layout:
+  /// [Water+] [Breathe] | Exercise Name (center, tappable) | [Skip]
   Widget _buildActionButtonsBar(BuildContext context, bool isDark) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    // Compact mode for smaller screens (< 360px width)
-    final isCompact = screenWidth < 360;
-
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isCompact ? 8 : 12,
-        vertical: isCompact ? 8 : 12,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          // Add Set button (blue)
-          _ActionButton(
-            icon: Icons.add_circle_outline,
-            label: 'Add Set',
-            color: AppColors.electricBlue,
-            isDark: isDark,
-            isCompact: isCompact,
-            onTap: () {
-              HapticFeedback.mediumImpact();
-              onAddSet?.call();
-            },
+          // Left: Water + Breathe buttons
+          Row(
+            children: [
+              // Water button with + indicator
+              _buildSmallActionButton(
+                icon: Icons.water_drop_outlined,
+                color: AppColors.teal,
+                isDark: isDark,
+                showPlusIndicator: true,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onAddWater?.call();
+                },
+              ),
+              const SizedBox(width: 8),
+              // Breathe button
+              _buildSmallActionButton(
+                icon: Icons.air_rounded,
+                color: AppColors.purple,
+                isDark: isDark,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onOpenBreathingGuide?.call();
+                },
+              ),
+            ],
           ),
 
-          // Delete Set button (red, disabled if 0 sets)
-          _ActionButton(
-            icon: Icons.remove_circle_outline,
-            label: 'Del Set',
-            color: AppColors.error,
-            isDark: isDark,
-            isCompact: isCompact,
-            isDisabled: currentCompletedSets <= 0,
-            onTap: currentCompletedSets > 0
-                ? () {
-                    HapticFeedback.mediumImpact();
-                    onDeleteSet?.call();
-                  }
-                : null,
+          // Center: Exercise Name (tappable for info)
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onShowExerciseInfo?.call();
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      currentExercise.name,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 12,
+                          color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Tap for info',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
 
-          // Skip button (orange)
-          _ActionButton(
-            icon: Icons.skip_next_rounded,
-            label: 'Skip',
-            color: AppColors.orange,
-            isDark: isDark,
-            isCompact: isCompact,
-            onTap: () {
-              HapticFeedback.mediumImpact();
-              onSkip();
-            },
-          ),
-
-          // Water button (teal)
-          _ActionButton(
-            icon: Icons.water_drop_outlined,
-            label: 'Water',
-            color: AppColors.teal,
-            isDark: isDark,
-            isCompact: isCompact,
-            onTap: () {
-              HapticFeedback.selectionClick();
-              onAddWater?.call();
-            },
-          ),
-
-          // Breathe button (purple)
-          _ActionButton(
-            icon: Icons.air_rounded,
-            label: 'Breathe',
-            color: AppColors.purple,
-            isDark: isDark,
-            isCompact: isCompact,
-            onTap: () {
-              HapticFeedback.selectionClick();
-              onOpenBreathingGuide?.call();
-            },
-          ),
-
-          // AI Coach button (cyan)
-          _ActionButton(
-            icon: Icons.auto_awesome,
-            label: 'AI',
-            color: AppColors.cyan,
-            isDark: isDark,
-            isCompact: isCompact,
-            onTap: () {
-              HapticFeedback.selectionClick();
-              onOpenAICoach?.call();
-            },
-          ),
+          // Right: Skip button
+          _buildSkipButton(isDark),
         ],
+      ),
+    );
+  }
+
+  /// Build small action button with optional + indicator
+  Widget _buildSmallActionButton({
+    required IconData icon,
+    required Color color,
+    required bool isDark,
+    bool showPlusIndicator = false,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: color.withOpacity(0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Icon(icon, color: color, size: 22),
+          ),
+          // + indicator badge
+          if (showPlusIndicator)
+            Positioned(
+              top: -4,
+              right: -4,
+              child: Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isDark ? AppColors.nearBlack : Colors.white,
+                    width: 2,
+                  ),
+                ),
+                child: const Icon(Icons.add, size: 12, color: Colors.white),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Build the skip button
+  Widget _buildSkipButton(bool isDark) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        onSkip();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.orange.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.orange.withOpacity(0.3),
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Skip',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.orange,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.skip_next_rounded,
+              color: AppColors.orange,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }

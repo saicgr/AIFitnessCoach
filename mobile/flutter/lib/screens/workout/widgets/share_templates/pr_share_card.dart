@@ -8,6 +8,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_colors.dart';
@@ -624,7 +625,7 @@ class _PRShareSheetState extends State<PRShareSheet> {
   }
 
   void _copyText() {
-    final text = '''
+    final textToCopy = '''
 NEW PERSONAL RECORD! 🏆
 
 ${widget.pr.exerciseName}
@@ -637,7 +638,8 @@ ${DateFormat('MMMM d, yyyy').format(widget.pr.achievedAt)}
 #FitWiz #PersonalRecord #Fitness #Gym
 ''';
 
-    // TODO: Copy to clipboard
+    // Copy to clipboard
+    Clipboard.setData(ClipboardData(text: textToCopy));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Copied to clipboard!')),
     );

@@ -1230,6 +1230,161 @@ class AdaptiveWorkoutService:
         return result
 
 
+# =============================================================================
+# SET TYPE PREFERENCE FUNCTIONS (Feedback Loop for Gemini)
+# =============================================================================
+
+async def get_user_set_type_preferences(user_id: str, supabase_client=None, days: int = 90) -> Dict[str, Any]:
+    """
+    Query v_user_set_type_analytics view for user's set type patterns.
+
+    This provides the feedback loop data for Gemini to learn from user's
+    historical acceptance of AI-recommended set types (drop sets, failure sets, AMRAP).
+
+    Args:
+        user_id: The user's UUID
+        supabase_client: Supabase client instance
+        days: Number of days to look back (default 90)
+
+    Returns:
+        Dict mapping set_type to preference data:
+        {
+            "drop_set": {
+                "total_performed": 15,
+                "ai_recommended_accepted": 12,
+                "user_selected": 3,
+                "acceptance_rate": 0.8,
+                "avg_reps": 10.5,
+                "avg_weight_kg": 25.0,
+                "first_used": "2024-10-15T...",
+                "last_used": "2025-01-10T...",
+            },
+            "failure": {...},
+            "amrap": {...},
+            ...
+        }
+    """
+    if not supabase_client:
+        logger.warning("[SetTypePrefs] No supabase client provided")
+        return {}
+
+    try:
+        # Query the analytics view created in migration 148
+        result = supabase_client.table("v_user_set_type_analytics") \
+            .select("*") \
+            .eq("user_id", user_id) \
+            .execute()
+
+        if not result.data:
+            logger.info(f"[SetTypePrefs] No set type history for user {user_id[:8]}...")
+            return {}
+
+        # Process rows into structured preference data
+        set_type_data = {}
+        for row in result.data:
+            set_type = row.get("set_type", "working")
+            total = row.get("total_sets", 0) or 0
+            ai_recommended = row.get("ai_recommended_count", 0) or 0
+            user_selected = row.get("user_selected_count", 0) or 0
+
+            # Calculate acceptance rate (how often user accepts AI recommendations)
+            acceptance_rate = ai_recommended / total if total > 0 else 0
+
+            set_type_data[set_type] = {
+                "total_performed": total,
+                "ai_recommended_accepted": ai_recommended,
+                "user_selected": user_selected,
+                "acceptance_rate": acceptance_rate,
+                "avg_reps": float(row.get("avg_reps", 0) or 0),
+                "avg_weight_kg": float(row.get("avg_weight_kg", 0) or 0),
+                "first_used": row.get("first_used"),
+                "last_used": row.get("last_used"),
+            }
+
+        logger.info(
+            f"[SetTypePrefs] Retrieved preferences for user {user_id[:8]}...: "
+            f"{len(set_type_data)} set types tracked"
+        )
+
+        return set_type_data
+
+    except Exception as e:
+        logger.error(f"[SetTypePrefs] Error fetching set type preferences: {e}")
+        return {}
+
+
+def build_set_type_context(set_type_prefs: Dict[str, Any]) -> str:
+    """
+    Format user's set type history for Gemini prompt injection.
+
+    This creates a context string that tells Gemini about the user's
+    historical preferences for advanced set types, enabling personalized
+    recommendations based on acceptance rates.
+
+    Args:
+        set_type_prefs: Dict from get_user_set_type_preferences()
+
+    Returns:
+        Formatted context string for Gemini prompt
+    """
+    if not set_type_prefs:
+        return ""
+
+    # Filter out 'working' and 'warmup' sets - we only care about advanced types
+    advanced_types = {k: v for k, v in set_type_prefs.items()
+                      if k not in ["working", "warmup"]}
+
+    if not advanced_types:
+        return "\n## User's Advanced Set Type History\n- No advanced set type history - use conservative defaults based on fitness level\n"
+
+    context = "\n## User's Advanced Set Type History (Based on 90 Days)\n"
+    context += "Use this data to personalize advanced set type recommendations:\n\n"
+
+    # Drop sets analysis
+    drop_sets = set_type_prefs.get("drop_set", {})
+    if drop_sets.get("total_performed", 0) > 0:
+        total = drop_sets["total_performed"]
+        rate = drop_sets.get("acceptance_rate", 0) * 100
+        context += f"- **Drop Sets**: {total} performed, {rate:.0f}% were AI-recommended\n"
+        if rate > 75:
+            context += "  → User LOVES drop sets - include 1-2 per hypertrophy workout\n"
+        elif rate > 50:
+            context += "  → User accepts drop sets moderately - include occasionally\n"
+        elif rate < 25 and total >= 5:
+            context += "  → User RARELY accepts AI drop set recommendations - avoid unless requested\n"
+
+    # Failure sets analysis
+    failure = set_type_prefs.get("failure", {})
+    if failure.get("total_performed", 0) > 0:
+        total = failure["total_performed"]
+        rate = failure.get("acceptance_rate", 0) * 100
+        context += f"- **Failure Sets**: {total} performed, {rate:.0f}% were AI-recommended\n"
+        if rate > 75:
+            context += "  → User ACCEPTS failure sets - recommend on final sets of compound exercises\n"
+        elif rate > 50:
+            context += "  → User uses failure sets selectively - recommend sparingly\n"
+        elif rate < 25 and total >= 5:
+            context += "  → User AVOIDS failure sets - don't recommend (user prefers leaving reps in reserve)\n"
+
+    # AMRAP analysis
+    amrap = set_type_prefs.get("amrap", {})
+    if amrap.get("total_performed", 0) > 0:
+        total = amrap["total_performed"]
+        rate = amrap.get("acceptance_rate", 0) * 100
+        context += f"- **AMRAP Sets**: {total} performed, {rate:.0f}% were AI-recommended\n"
+        if rate > 75:
+            context += "  → User ENJOYS AMRAP - include as workout finishers\n"
+        elif rate > 50:
+            context += "  → User accepts AMRAP occasionally - include when appropriate\n"
+        elif rate < 25 and total >= 5:
+            context += "  → User prefers fixed rep schemes - avoid AMRAP recommendations\n"
+
+    # Summary guidance for Gemini
+    context += "\n**IMPORTANT**: Respect these preferences when setting is_failure_set and is_drop_set fields.\n"
+
+    return context
+
+
 # Singleton instance for easy import
 _adaptive_service_instance = None
 

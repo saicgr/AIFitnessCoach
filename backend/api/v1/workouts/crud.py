@@ -1247,6 +1247,12 @@ async def populate_performance_logs(
             if not exercise_name:
                 continue
 
+            # Get AI-recommended set type info from exercise definition
+            # These fields are set by Gemini during workout generation
+            ai_recommended_drop_set = exercise.get("is_drop_set", False)
+            ai_recommended_failure_set = exercise.get("is_failure_set", False)
+            total_sets_count = len(exercise.get("sets", []))
+
             sets = exercise.get("sets", [])
 
             for set_data in sets:
@@ -1269,6 +1275,24 @@ async def populate_performance_logs(
                 if reps_completed <= 0 and weight_kg <= 0:
                     continue
 
+                # Determine if this set type was AI-recommended
+                # AI recommends: drop_set for is_drop_set exercises, failure for is_failure_set on final set
+                is_ai_recommended = False
+                if set_type == "drop_set" and ai_recommended_drop_set:
+                    is_ai_recommended = True
+                elif set_type == "failure" and ai_recommended_failure_set and set_number == total_sets_count:
+                    # Failure sets are typically recommended for the final set only
+                    is_ai_recommended = True
+                elif set_type == "amrap" and ai_recommended_failure_set and set_number == total_sets_count:
+                    # AMRAP is another form of failure set
+                    is_ai_recommended = True
+                elif set_type == "working" and not ai_recommended_drop_set and not ai_recommended_failure_set:
+                    # If AI didn't recommend special sets and user did working sets, that's following AI
+                    is_ai_recommended = True
+                elif set_type == "warmup":
+                    # Warmup sets are user-selected, not AI-recommended (AI doesn't specifically recommend warmups)
+                    is_ai_recommended = False
+
                 record = {
                     "workout_log_id": workout_log_id,
                     "user_id": user_id,
@@ -1280,6 +1304,7 @@ async def populate_performance_logs(
                     "rpe": float(rpe) if rpe is not None else None,
                     "rir": int(rir) if rir is not None else None,
                     "set_type": set_type,
+                    "is_ai_recommended_set_type": is_ai_recommended,
                     "tempo": tempo,
                     "is_completed": is_completed,
                     "failed_at_rep": failed_at_rep,

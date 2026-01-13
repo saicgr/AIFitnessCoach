@@ -1853,35 +1853,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     bool isAIGenerating,
     bool isDark,
   ) {
+    debugPrint('🏠 [HeroSection] Building hero section...');
+    debugPrint('🏠 [HeroSection] _isInitializing: $_isInitializing');
+    debugPrint('🏠 [HeroSection] isAIGenerating: $isAIGenerating');
+    debugPrint('🏠 [HeroSection] todayWorkoutState.isLoading: ${todayWorkoutState.isLoading}');
+    debugPrint('🏠 [HeroSection] todayWorkoutState.isRefreshing: ${todayWorkoutState.isRefreshing}');
+    debugPrint('🏠 [HeroSection] todayWorkoutState.hasError: ${todayWorkoutState.hasError}');
+    debugPrint('🏠 [HeroSection] todayWorkoutState.hasValue: ${todayWorkoutState.hasValue}');
+
     // Show loading during initial app load
     if (_isInitializing) {
+      debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (initializing)');
       return const GeneratingHeroCard(
         message: 'Loading your workout...',
       );
     }
 
-    // Handle loading state
-    if (todayWorkoutState.isLoading) {
+    // Handle initial loading state (no previous data)
+    if (todayWorkoutState.isLoading && !todayWorkoutState.hasValue) {
+      debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (initial loading)');
       return const GeneratingHeroCard(
         message: 'Loading workout...',
       );
     }
 
-    // Handle error state - show empty card with retry
+    // Handle error state - show loading card (more optimistic than error)
     if (todayWorkoutState.hasError) {
-      debugPrint('⚠️ [Home] todayWorkoutProvider error: ${todayWorkoutState.error}');
-      return EmptyWorkoutCard(
-        onGenerate: () {
-          HapticService.light();
-          context.go('/workouts');
-        },
+      debugPrint('⚠️ [HeroSection] Error: ${todayWorkoutState.error}');
+      // Show loading state instead of error - workouts may still be generating
+      return const GeneratingHeroCard(
+        message: 'Setting up your workouts...',
+        subtitle: 'This may take a moment',
       );
     }
 
     final response = todayWorkoutState.valueOrNull;
+    debugPrint('🏠 [HeroSection] response: $response');
+    debugPrint('🏠 [HeroSection] response?.isGenerating: ${response?.isGenerating}');
+    debugPrint('🏠 [HeroSection] response?.todayWorkout: ${response?.todayWorkout}');
+    debugPrint('🏠 [HeroSection] response?.nextWorkout: ${response?.nextWorkout}');
+    debugPrint('🏠 [HeroSection] response?.completedToday: ${response?.completedToday}');
 
     // Check if generating
     if (response?.isGenerating == true || isAIGenerating) {
+      debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (generating)');
       return GeneratingHeroCard(
         message: response?.generationMessage ?? 'Generating your workout...',
       );
@@ -1889,6 +1904,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     // No response - show loading state (likely post-onboarding)
     if (response == null) {
+      debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (null response)');
       return const GeneratingHeroCard(
         message: 'Preparing your workout...',
         subtitle: 'This may take a moment',
@@ -1899,26 +1915,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final workoutSummary = response.todayWorkout ?? response.nextWorkout;
 
     if (workoutSummary != null) {
+      debugPrint('🏠 [HeroSection] Showing: HeroWorkoutCard for ${workoutSummary.name}');
       final workout = workoutSummary.toWorkout();
       // Always show the HeroWorkoutCard - whether it's today or upcoming
       return HeroWorkoutCard(workout: workout);
     }
 
-    // No workouts available AND not completed today - show loading
-    // This handles the post-onboarding gap where generation hasn't started
-    if (!response.completedToday) {
+    // No workouts available - check if workout was completed today
+    if (response.completedToday && response.completedWorkout != null) {
+      debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (completed today, awaiting next)');
+      // User completed their workout today - show encouraging message
       return const GeneratingHeroCard(
-        message: 'Preparing your workout...',
-        subtitle: 'This may take a moment',
+        message: 'Great job today! 🎉',
+        subtitle: 'Rest up for your next workout',
       );
     }
 
-    // Only show empty state if user has completed workout and no more scheduled
-    return EmptyWorkoutCard(
-      onGenerate: () {
-        HapticService.light();
-        context.go('/workouts');
-      },
+    // No workouts available AND not completed today - show loading
+    // This handles the post-onboarding gap where generation hasn't started
+    debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (no workouts, not completed)');
+    return const GeneratingHeroCard(
+      message: 'Preparing your workout...',
+      subtitle: 'This may take a moment',
     );
   }
 

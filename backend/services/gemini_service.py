@@ -1314,6 +1314,7 @@ IMPORTANT RULES:
         progression_philosophy: Optional[str] = None,
         workout_patterns_context: Optional[str] = None,
         neat_context: Optional[str] = None,
+        set_type_context: Optional[str] = None,
     ) -> Dict:
         """
         Generate a personalized workout plan using AI.
@@ -1347,6 +1348,8 @@ IMPORTANT RULES:
             neat_context: Optional NEAT (Non-Exercise Activity Thermogenesis) context string with user's daily
                          activity patterns, step goals, streaks, and sedentary habits. Built by
                          user_context_service.get_neat_context_for_ai().
+            set_type_context: Optional context string with user's historical set type preferences (drop sets,
+                            failure sets, AMRAP) and acceptance rates. Built by build_set_type_context().
 
         Returns:
             Dict with workout structure including name, type, difficulty, exercises
@@ -1717,6 +1720,12 @@ This is a RETURN-TO-TRAINING workout - safety and gradual progression are CRITIC
             logger.info(f"[Gemini Service] Including workout patterns context with set/rep limits and historical data")
             workout_patterns_instruction = workout_patterns_context
 
+        # Build set type context with user's historical preferences for advanced set types
+        set_type_context_str = ""
+        if set_type_context and set_type_context.strip():
+            logger.info(f"[Gemini Service] Including set type context for personalized drop/failure set recommendations")
+            set_type_context_str = set_type_context
+
         # Build focus area instruction based on the training split/focus
         focus_instruction = ""
         if focus_areas and len(focus_areas) > 0:
@@ -1783,6 +1792,10 @@ Return a valid JSON object with this exact structure:
       "equipment": "equipment used or bodyweight",
       "muscle_group": "primary muscle targeted",
       "is_unilateral": false,
+      "is_drop_set": false,
+      "is_failure_set": false,
+      "drop_set_count": null,
+      "drop_set_percentage": null,
       "notes": "Form tips or modifications"
     }}
   ],
@@ -1793,6 +1806,41 @@ NOTE: For cardio exercises, use duration_seconds (e.g., 30) instead of reps (set
 For strength exercises, set duration_seconds to null and use reps normally.
 For mobility/stretching exercises, use hold_seconds (e.g., 30-60) for static holds instead of reps.
 For unilateral exercises (single-arm, single-leg), set is_unilateral: true.
+{set_type_context_str}
+🎯 ADVANCED SET TYPE RECOMMENDATIONS:
+For intermediate and advanced users, strategically include advanced set techniques:
+
+1. **Failure Sets (is_failure_set: true)**:
+   - Mark the FINAL set of compound exercises where going to failure would be beneficial
+   - Best for: Last set of isolation exercises, finisher exercises
+   - Guidelines by level:
+     * Beginner: NO failure sets (risk of injury, poor form)
+     * Intermediate: 1-2 failure sets per workout on isolation exercises only
+     * Advanced: 2-3 failure sets per workout, can include compound movements
+   - When is_failure_set is true, add "AMRAP" in notes
+
+2. **Drop Sets (is_drop_set: true)**:
+   - Great for isolation exercises at the end of a muscle group's training
+   - Use for: Bicep curls, tricep extensions, lateral raises, leg extensions
+   - When is_drop_set is true, also set:
+     * drop_set_count: 2-3 (number of weight drops)
+     * drop_set_percentage: 20-25 (percentage to reduce weight each drop)
+   - Guidelines by level:
+     * Beginner: NO drop sets
+     * Intermediate: 0-1 drop set exercise per workout
+     * Advanced: 1-2 drop set exercises per workout
+
+EXAMPLE: For an advanced leg workout, the last exercise (e.g., Leg Extension) might have:
+{{
+  "name": "Leg Extension",
+  "sets": 3,
+  "reps": 12,
+  "is_drop_set": true,
+  "is_failure_set": true,
+  "drop_set_count": 2,
+  "drop_set_percentage": 20,
+  "notes": "Final set: AMRAP then drop weight 20% twice"
+}}
 
 ⚠️ CRITICAL - REALISTIC WEIGHT RECOMMENDATIONS:
 For each exercise, include a starting weight_kg that follows industry-standard equipment increments:

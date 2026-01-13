@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/coach_persona.dart';
+import '../../../widgets/coach_avatar.dart';
 
 /// A card widget displaying a coach persona with selection state.
 class CoachCard extends StatelessWidget {
@@ -54,25 +55,12 @@ class CoachCard extends StatelessWidget {
         child: Row(
           children: [
             // Coach Avatar
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                gradient: isSelected
-                    ? LinearGradient(
-                        colors: [coach.primaryColor, coach.accentColor],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      )
-                    : null,
-                color: isSelected ? null : coach.primaryColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                coach.icon,
-                color: isSelected ? Colors.white : coach.primaryColor,
-                size: 26,
-              ),
+            CoachAvatar(
+              coach: coach,
+              size: 52,
+              showBorder: isSelected,
+              showShadow: isSelected,
+              enableTapToView: false, // Tap selects coach, not view
             ),
             const SizedBox(width: 14),
 

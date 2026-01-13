@@ -10,6 +10,8 @@ import '../../core/utils/difficulty_utils.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
 import '../../data/models/workout_generation_params.dart';
+import '../../data/models/coach_persona.dart';
+import '../ai_settings/ai_settings_screen.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../home/widgets/components/training_program_selector.dart';
@@ -19,6 +21,7 @@ import 'widgets/exercise_add_sheet.dart';
 import 'widgets/expanded_exercise_card.dart';
 import 'package:flutter/services.dart';
 import '../../widgets/fasting_training_warning.dart';
+import '../../widgets/coach_avatar.dart';
 
 class WorkoutDetailScreen extends ConsumerStatefulWidget {
   final String workoutId;
@@ -728,43 +731,25 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   }
 
   Widget _buildFloatingButtons(BuildContext context, WidgetRef ref, Workout workout) {
+    final aiSettings = ref.watch(aiSettingsProvider);
+    final coach = CoachPersona.findById(aiSettings.coachPersonaId) ?? CoachPersona.defaultCoach;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         // AI Coach Button
-        GestureDetector(
+        CoachAvatar(
+          coach: coach,
+          size: 48,
+          showBorder: true,
+          borderWidth: 2,
+          showShadow: true,
+          enableTapToView: false,
           onTap: () {
             HapticFeedback.mediumImpact();
             // Navigate to full chat screen for proper keyboard handling
             context.push('/chat');
           },
-          child: Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppColors.purple, AppColors.cyan],
-              ),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.cyan.withOpacity(0.4),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-            child: const Center(
-              child: Icon(
-                Icons.auto_awesome,
-                color: Colors.white,
-                size: 22,
-              ),
-            ),
-          ),
         ),
         const SizedBox(width: 12),
         // Let's Go Button - custom styled to ensure full text visibility

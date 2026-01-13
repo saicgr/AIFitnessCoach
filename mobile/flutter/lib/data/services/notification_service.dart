@@ -370,6 +370,8 @@ class NotificationService {
   }
 
   /// Initialize Firebase Messaging and Local Notifications
+  /// Note: Permission request is deferred until requestPermissionWhenReady() is called
+  /// after the Activity is available (post-runApp)
   Future<void> initialize() async {
     // Initialize timezone for scheduled notifications
     tz_data.initializeTimeZones();
@@ -393,38 +395,61 @@ class NotificationService {
     // Initialize local notifications
     await _initializeLocalNotifications();
 
-    // Request permission (required for iOS and Android 13+)
-    await _requestPermission();
+    // NOTE: Permission request and FCM token retrieval are deferred to
+    // requestPermissionWhenReady() to avoid "Unable to detect current Android Activity"
+    // error when called before runApp() completes
 
     // Check exact alarm permission for Android 12+
     await checkAndRequestExactAlarmPermission();
 
-    // Get FCM token
-    await _getToken();
-
-    // Listen for token refresh (only if Firebase is available)
-    if (_firebaseAvailable && messaging != null) {
-      messaging!.onTokenRefresh.listen((newToken) {
-        debugPrint('🔔 [FCM] Token refreshed: ${newToken.substring(0, 20)}...');
-        _fcmToken = newToken;
-        // Notify listeners so they can sync to backend
-        onTokenRefresh?.call(newToken);
-      });
-
-      // Handle foreground messages
-      FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-
-      // Handle when app is opened from notification
-      FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
-
-      // Check if app was opened from a notification
-      final initialMessage = await messaging!.getInitialMessage();
-      if (initialMessage != null) {
-        _handleMessageOpenedApp(initialMessage);
-      }
-    }
+    // NOTE: Firebase Messaging listeners are set up in requestPermissionWhenReady()
+    // because they require Activity context on Android
 
     debugPrint('🔔 [FCM] Notification service initialized (Firebase: $_firebaseAvailable)');
+  }
+
+  /// Request permission and get FCM token after Activity is ready
+  /// Call this from a widget's initState or after runApp() completes
+  Future<void> requestPermissionWhenReady() async {
+    if (!_firebaseAvailable) {
+      debugPrint('⚠️ [FCM] Firebase not available, skipping permission request');
+      return;
+    }
+
+    try {
+      // Request permission (required for iOS and Android 13+)
+      await _requestPermission();
+
+      // Get FCM token after permission is granted
+      await _getToken();
+
+      // Set up Firebase Messaging listeners now that Activity is available
+      if (messaging != null) {
+        // Listen for token refresh
+        messaging!.onTokenRefresh.listen((newToken) {
+          debugPrint('🔔 [FCM] Token refreshed: ${newToken.substring(0, 20)}...');
+          _fcmToken = newToken;
+          // Notify listeners so they can sync to backend
+          onTokenRefresh?.call(newToken);
+        });
+
+        // Handle foreground messages
+        FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+
+        // Handle when app is opened from notification
+        FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
+
+        // Check if app was opened from a notification
+        final initialMessage = await messaging!.getInitialMessage();
+        if (initialMessage != null) {
+          _handleMessageOpenedApp(initialMessage);
+        }
+      }
+
+      debugPrint('✅ [FCM] Permission requested, token retrieved, and listeners configured');
+    } catch (e) {
+      debugPrint('⚠️ [FCM] Error requesting permission: $e');
+    }
   }
 
   /// Initialize local notifications plugin

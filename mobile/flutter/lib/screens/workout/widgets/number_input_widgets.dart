@@ -68,10 +68,10 @@ class _InlineNumberInputState extends State<InlineNumberInput> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     // Increased height for larger touch targets
-    final height = widget.isActive ? 52.0 : 48.0;
+    final height = widget.isActive ? 56.0 : 48.0;
     // Increased icon size per plan
-    final iconSize = widget.isActive ? 26.0 : 22.0;
-    final fontSize = widget.isActive ? 18.0 : 16.0;
+    final iconSize = widget.isActive ? 28.0 : 22.0;
+    final fontSize = widget.isActive ? 24.0 : 16.0;
     final inputBg = widget.isActive
         ? (isDark ? AppColors.pureBlack : AppColorsLight.pureWhite)
         : (isDark ? AppColors.elevated : AppColorsLight.glassSurface);
