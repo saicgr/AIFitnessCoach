@@ -1,3 +1,5 @@
+<!-- FitWiz@Support2025! -->
+
 <!-- big task to FEATURES.md add 
 1. column at the end of every table to show the UI/UX navigation, like if dark mode then the value of the navigation column might be like app home -> setting -> theme -> dark mode, I want to understand where every feature is.
 2. in app comparison also include hevy, gravl and other apps- do research 

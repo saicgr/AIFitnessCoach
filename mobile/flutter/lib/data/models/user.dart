@@ -41,6 +41,8 @@ class User extends Equatable {
   final String? updatedAt;
   final String? timezone; // IANA timezone identifier (e.g., America/New_York)
   final String? role; // 'user', 'admin', or 'super_admin'
+  @JsonKey(name: 'is_support_user')
+  final bool? isSupportUser; // True for support@fitwiz.us (cannot be unfriended)
   @JsonKey(name: 'weight_unit')
   final String? weightUnit; // 'kg' or 'lbs' - user's preferred weight unit
 
@@ -68,6 +70,7 @@ class User extends Equatable {
     this.updatedAt,
     this.timezone,
     this.role,
+    this.isSupportUser,
     this.weightUnit,
   });
 
@@ -138,6 +141,9 @@ class User extends Equatable {
 
   /// Check if user is a super admin
   bool get isSuperAdmin => role == 'super_admin';
+
+  /// Check if user is the support account (cannot be unfriended)
+  bool get isSupport => isSupportUser == true;
 
   /// Get weight unit preference with fallback to 'kg'
   /// Checks weightUnit field first, then preferences JSON, then defaults to 'kg'
@@ -559,6 +565,7 @@ class User extends Equatable {
         paywallCompleted,
         timezone,
         role,
+        isSupportUser,
         weightUnit,
       ];
 
@@ -586,6 +593,7 @@ class User extends Equatable {
     String? updatedAt,
     String? timezone,
     String? role,
+    bool? isSupportUser,
     String? weightUnit,
   }) {
     return User(
@@ -612,6 +620,7 @@ class User extends Equatable {
       updatedAt: updatedAt ?? this.updatedAt,
       timezone: timezone ?? this.timezone,
       role: role ?? this.role,
+      isSupportUser: isSupportUser ?? this.isSupportUser,
       weightUnit: weightUnit ?? this.weightUnit,
     );
   }

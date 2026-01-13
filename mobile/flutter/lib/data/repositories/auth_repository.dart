@@ -138,6 +138,127 @@ class AuthRepository {
     }
   }
 
+  /// Sign in with email and password
+  Future<app_user.User> signInWithEmail(String email, String password) async {
+    try {
+      debugPrint('🔍 [Auth] Starting Email Sign-In for $email...');
+
+      // Sign in with Supabase Auth
+      final response = await _supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+
+      if (response.session == null) {
+        throw Exception('Invalid email or password');
+      }
+
+      final supabaseAccessToken = response.session!.accessToken;
+      debugPrint('✅ [Auth] Supabase email auth success, authenticating with backend...');
+
+      // Authenticate with backend
+      final backendResponse = await _apiClient.post(
+        '${ApiConstants.users}/auth/email',
+        data: {'email': email, 'password': password},
+      );
+
+      if (backendResponse.statusCode == 200 || backendResponse.statusCode == 201) {
+        final user = app_user.User.fromJson(backendResponse.data as Map<String, dynamic>);
+        debugPrint('✅ [Auth] Backend auth success: ${user.id}');
+
+        // Save user ID and token
+        await _apiClient.setUserId(user.id);
+        await _apiClient.setAuthToken(supabaseAccessToken);
+
+        // Sync credentials to watch (Android only, non-blocking)
+        if (Platform.isAndroid) {
+          _syncCredentialsToWatch(
+            userId: user.id,
+            authToken: supabaseAccessToken,
+            refreshToken: response.session?.refreshToken,
+          );
+        }
+
+        return user;
+      } else {
+        throw Exception('Backend authentication failed');
+      }
+    } catch (e) {
+      debugPrint('❌ [Auth] Email sign-in error: $e');
+      rethrow;
+    }
+  }
+
+  /// Sign up with email and password
+  Future<app_user.User> signUpWithEmail(String email, String password, {String? name}) async {
+    try {
+      debugPrint('🔍 [Auth] Starting Email Sign-Up for $email...');
+
+      // Sign up with Supabase Auth
+      final response = await _supabase.auth.signUp(
+        email: email,
+        password: password,
+        data: {'full_name': name ?? ''},
+      );
+
+      if (response.user == null) {
+        throw Exception('Failed to create account. Email may already be in use.');
+      }
+
+      final supabaseAccessToken = response.session?.accessToken;
+      if (supabaseAccessToken == null) {
+        // User may need to verify email first
+        throw Exception('Please check your email to verify your account.');
+      }
+
+      debugPrint('✅ [Auth] Supabase signup success, creating user in backend...');
+
+      // Create user in backend
+      final backendResponse = await _apiClient.post(
+        '${ApiConstants.users}/auth/email/signup',
+        data: {
+          'email': email,
+          'password': password,
+          'name': name,
+        },
+      );
+
+      if (backendResponse.statusCode == 200 || backendResponse.statusCode == 201) {
+        final user = app_user.User.fromJson(backendResponse.data as Map<String, dynamic>);
+        debugPrint('✅ [Auth] Backend user created: ${user.id}');
+
+        // Save user ID and token
+        await _apiClient.setUserId(user.id);
+        await _apiClient.setAuthToken(supabaseAccessToken);
+
+        return user;
+      } else {
+        throw Exception('Backend user creation failed');
+      }
+    } catch (e) {
+      debugPrint('❌ [Auth] Email sign-up error: $e');
+      rethrow;
+    }
+  }
+
+  /// Send password reset email
+  Future<void> sendPasswordReset(String email) async {
+    try {
+      debugPrint('🔍 [Auth] Sending password reset email to $email...');
+
+      // Use backend endpoint which handles Supabase
+      await _apiClient.post(
+        '${ApiConstants.users}/auth/forgot-password',
+        data: {'email': email},
+      );
+
+      debugPrint('✅ [Auth] Password reset email sent');
+    } catch (e) {
+      debugPrint('❌ [Auth] Password reset error: $e');
+      // Don't rethrow - always show success for security
+    }
+  }
+
   /// Sign out
   Future<void> signOut() async {
     try {
@@ -277,6 +398,44 @@ class AuthNotifier extends StateNotifier<AuthState> {
         status: AuthStatus.error,
         errorMessage: e.toString(),
       );
+    }
+  }
+
+  /// Sign in with email and password
+  Future<void> signInWithEmail(String email, String password) async {
+    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    try {
+      final user = await _repository.signInWithEmail(email, password);
+      state = AuthState(status: AuthStatus.authenticated, user: user);
+    } catch (e) {
+      state = AuthState(
+        status: AuthStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  /// Sign up with email and password
+  Future<void> signUpWithEmail(String email, String password, {String? name}) async {
+    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    try {
+      final user = await _repository.signUpWithEmail(email, password, name: name);
+      state = AuthState(status: AuthStatus.authenticated, user: user);
+    } catch (e) {
+      state = AuthState(
+        status: AuthStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  /// Send password reset email
+  Future<void> sendPasswordReset(String email) async {
+    try {
+      await _repository.sendPasswordReset(email);
+    } catch (e) {
+      // Silently handle - always show success for security
+      debugPrint('❌ [Auth] Password reset error: $e');
     }
   }
 

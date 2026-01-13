@@ -1391,6 +1391,19 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
 
         const SizedBox(height: 8),
 
+        // Email Sign In link
+        TextButton(
+          onPressed: _isSigningIn ? null : () => context.push('/email-sign-in'),
+          child: Text(
+            'Sign in with Email',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: AppColors.cyan,
+            ),
+          ),
+        ).animate().fadeIn(delay: 150.ms),
+
         // Cancel/back to get started
         TextButton(
           onPressed: () {

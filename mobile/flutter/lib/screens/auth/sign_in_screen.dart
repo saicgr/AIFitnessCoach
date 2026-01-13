@@ -513,6 +513,21 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
             ),
           ),
         ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.1),
+
+        const SizedBox(height: 16),
+
+        // Email Sign In link
+        TextButton(
+          onPressed: _isLoading ? null : () => context.push('/email-sign-in'),
+          child: Text(
+            'Sign in with Email',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+            ),
+          ),
+        ).animate().fadeIn(delay: 800.ms),
       ],
     );
   }

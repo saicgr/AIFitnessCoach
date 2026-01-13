@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/social_provider.dart';
+import '../../../data/providers/admin_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../widgets/main_shell.dart';
 import '../widgets/activity_card.dart';
@@ -31,6 +32,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     // Get userId from authStateProvider (consistent with rest of app)
     final authState = ref.watch(authStateProvider);
     final userId = authState.user?.id;
+    final isAdmin = ref.watch(isAdminProvider);
 
     // If no userId, show error
     if (userId == null) {
@@ -104,6 +106,9 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                             userReactionType: activity['user_reaction_type'] as String?,
                             onReact: (reactionType) => _handleReaction(activity['id'] as String, reactionType, userId),
                             onComment: () => _handleComment(activity['id'] as String),
+                            isPinned: activity['is_pinned'] as bool? ?? false,
+                            isCurrentUserAdmin: isAdmin,
+                            onPin: isAdmin ? () => _handlePinToggle(activity['id'] as String, activity['is_pinned'] as bool? ?? false, userId) : null,
                           ),
                         );
                       },
@@ -227,6 +232,50 @@ class _FeedTabState extends ConsumerState<FeedTab> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Comments feature coming soon!')),
       );
+    }
+  }
+
+  Future<void> _handlePinToggle(String activityId, bool currentlyPinned, String userId) async {
+    HapticFeedback.mediumImpact();
+
+    try {
+      final socialService = ref.read(socialServiceProvider);
+
+      if (currentlyPinned) {
+        await socialService.unpinPost(userId: userId, activityId: activityId);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Post unpinned'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        await socialService.pinPost(userId: userId, activityId: activityId);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Post pinned to top of feed'),
+              backgroundColor: AppColors.orange,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+
+      // Refresh the feed to show updated pin status
+      ref.invalidate(activityFeedProvider(userId));
+    } catch (e) {
+      debugPrint('Error toggling pin: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to ${currentlyPinned ? 'unpin' : 'pin'} post. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 }

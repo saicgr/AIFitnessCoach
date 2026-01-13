@@ -7,6 +7,7 @@ import '../data/repositories/auth_repository.dart';
 import '../screens/achievements/achievements_screen.dart';
 import '../screens/auth/stats_welcome_screen.dart';
 import '../screens/auth/sign_in_screen.dart';
+import '../screens/auth/email_sign_in_screen.dart';
 import '../screens/auth/pricing_preview_screen.dart';
 import '../screens/chat/chat_screen.dart';
 import '../screens/features/feature_voting_screen.dart';
@@ -181,6 +182,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isOnWeightProjection = state.matchedLocation == '/weight-projection';
       final isOnPreview = state.matchedLocation == '/preview';
       final isOnSignIn = state.matchedLocation == '/sign-in';
+      final isOnEmailSignIn = state.matchedLocation == '/email-sign-in';
       final isOnPricingPreview = state.matchedLocation == '/pricing-preview';
       final isOnCoachSelection = state.matchedLocation == '/coach-selection';
       final isOnPaywallFeatures = state.matchedLocation == '/paywall-features';
@@ -209,7 +211,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         // If we're on splash, stay there
         if (isOnSplash) return null;
         // Allow pre-auth screens to stay during loading (sign-in process shouldn't redirect)
-        if (isOnPreAuthQuiz || isOnWeightProjection || isOnPreview || isOnSignIn || isOnPricingPreview ||
+        if (isOnPreAuthQuiz || isOnWeightProjection || isOnPreview || isOnSignIn || isOnEmailSignIn || isOnPricingPreview ||
             isOnDemoWorkout || isOnPlanPreview || isGuestRoute || isOnStatsWelcome) {
           return null;
         }
@@ -220,7 +222,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Handle error state - allow sign-in screen to show errors
       if (authState.status == AuthStatus.error) {
         // If on sign-in page, stay there to show the error
-        if (isOnSignIn) return null;
+        if (isOnSignIn || isOnEmailSignIn) return null;
         // If on other pre-auth pages, stay there
         if (isOnPreAuthQuiz || isOnWeightProjection || isOnPreview || isOnPricingPreview ||
             isOnDemoWorkout || isOnPlanPreview || isGuestRoute || isOnStatsWelcome) {
@@ -320,9 +322,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       //   }
       // }
 
-      // Allow pre-auth quiz, weight projection, preview, sign-in, and pricing preview screens for non-logged-in users
+      // Allow pre-auth quiz, weight projection, preview, sign-in, email sign-in, and pricing preview screens for non-logged-in users
       // Also allow pre-auth quiz for logged-in users who are starting over (no coach selected)
-      if (isOnPreAuthQuiz || isOnWeightProjection || isOnPreview || isOnSignIn || isOnPricingPreview) {
+      if (isOnPreAuthQuiz || isOnWeightProjection || isOnPreview || isOnSignIn || isOnEmailSignIn || isOnPricingPreview) {
         if (isLoggedIn) {
           final user = authState.user;
           // Allow pre-auth quiz if user is starting over (coach not selected)
@@ -640,6 +642,32 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const SignInScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 0.05),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
+      // Email Sign-In Screen - alternative to Google sign-in
+      GoRoute(
+        path: '/email-sign-in',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const EmailSignInScreen(),
           transitionDuration: const Duration(milliseconds: 400),
           reverseTransitionDuration: const Duration(milliseconds: 300),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {

@@ -11,6 +11,7 @@ class FriendCard extends StatelessWidget {
   final int totalAchievements;
   final bool isFriend;
   final bool isFollowing;
+  final bool isSupportUser; // Support users cannot be unfriended
   final VoidCallback onTap;
   final VoidCallback onFollow;
 
@@ -24,6 +25,7 @@ class FriendCard extends StatelessWidget {
     required this.totalAchievements,
     required this.isFriend,
     required this.isFollowing,
+    this.isSupportUser = false,
     required this.onTap,
     required this.onFollow,
   });
@@ -151,26 +153,59 @@ class FriendCard extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // Follow button
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: onFollow,
-                  icon: Icon(
-                    isFollowing ? Icons.person_remove : Icons.person_add,
-                    size: 18,
+              // Follow button (hidden for support users who cannot be unfriended)
+              if (isSupportUser)
+                // Support user badge - cannot be unfriended
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.cyan.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.cyan.withValues(alpha: 0.3),
+                    ),
                   ),
-                  label: Text(isFollowing ? 'Unfollow' : 'Follow'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: isFollowing ? AppColors.textMuted : AppColors.cyan,
-                    side: BorderSide(
-                      color: isFollowing
-                          ? AppColors.textMuted.withValues(alpha: 0.3)
-                          : AppColors.cyan.withValues(alpha: 0.5),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.verified_rounded,
+                        size: 18,
+                        color: AppColors.cyan,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'FitWiz Support',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.cyan,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: onFollow,
+                    icon: Icon(
+                      isFollowing ? Icons.person_remove : Icons.person_add,
+                      size: 18,
+                    ),
+                    label: Text(isFollowing ? 'Unfollow' : 'Follow'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: isFollowing ? AppColors.textMuted : AppColors.cyan,
+                      side: BorderSide(
+                        color: isFollowing
+                            ? AppColors.textMuted.withValues(alpha: 0.3)
+                            : AppColors.cyan.withValues(alpha: 0.5),
+                      ),
                     ),
                   ),
                 ),
-              ),
             ],
           ),
         ),

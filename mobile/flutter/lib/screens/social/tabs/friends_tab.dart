@@ -285,6 +285,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
                 totalAchievements: friend['total_achievements'] as int? ?? 0,
                 isFriend: true,
                 isFollowing: true,
+                isSupportUser: friend['is_support_user'] as bool? ?? false,
                 onTap: () => _handleUserProfile(friend['id'] as String?),
                 onFollow: () {}, // Already friends
               ),
@@ -344,6 +345,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
                 totalAchievements: follower['total_achievements'] as int? ?? 0,
                 isFriend: false,
                 isFollowing: false,
+                isSupportUser: userProfile?['is_support_user'] as bool? ?? false,
                 onTap: () => _handleUserProfile(userProfile?['id'] as String?),
                 onFollow: () => _handleFollow(userProfile?['id'] as String?),
               ),
@@ -403,6 +405,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
                 totalAchievements: follow['total_achievements'] as int? ?? 0,
                 isFriend: false,
                 isFollowing: true,
+                isSupportUser: userProfile?['is_support_user'] as bool? ?? false,
                 onTap: () => _handleUserProfile(userProfile?['id'] as String?),
                 onFollow: () => _handleUnfollow(userProfile?['id'] as String?),
               ),

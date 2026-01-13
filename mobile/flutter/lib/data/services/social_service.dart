@@ -1157,6 +1157,54 @@ class SocialService {
   }
 
   // ============================================================
+  // POST PINNING (Admin Only)
+  // ============================================================
+
+  /// Pin a post to the top of the feed (admin only)
+  Future<void> pinPost({
+    required String userId,
+    required String activityId,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/social/feed/$activityId/pin',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Post pinned: $activityId');
+      } else {
+        throw Exception('Failed to pin post: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error pinning post: $e');
+      rethrow;
+    }
+  }
+
+  /// Unpin a post from the top of the feed (admin only)
+  Future<void> unpinPost({
+    required String userId,
+    required String activityId,
+  }) async {
+    try {
+      final response = await _apiClient.delete(
+        '/social/feed/$activityId/pin',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Post unpinned: $activityId');
+      } else {
+        throw Exception('Failed to unpin post: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error unpinning post: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================================
   // SOCIAL PRIVACY SETTINGS
   // ============================================================
 

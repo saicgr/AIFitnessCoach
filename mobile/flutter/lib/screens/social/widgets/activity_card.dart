@@ -38,6 +38,9 @@ class ActivityCard extends StatefulWidget {
   final Function(String reactionType) onReact; // Changed to accept reaction type
   final VoidCallback onComment;
   final List<Map<String, dynamic>>? badges; // Optional workout badges (TRENDING, HALL OF FAME, etc.)
+  final bool isPinned; // Whether this post is pinned to top of feed
+  final bool isCurrentUserAdmin; // Whether current user is admin (can pin/unpin)
+  final VoidCallback? onPin; // Callback to pin/unpin the post (admin only)
 
   const ActivityCard({
     super.key,
@@ -55,6 +58,9 @@ class ActivityCard extends StatefulWidget {
     required this.onReact,
     required this.onComment,
     this.badges,
+    this.isPinned = false,
+    this.isCurrentUserAdmin = false,
+    this.onPin,
   });
 
   @override
@@ -90,6 +96,41 @@ class _ActivityCardState extends State<ActivityCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Pinned badge (if pinned)
+          if (widget.isPinned)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.orange.withValues(alpha: 0.1),
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppColors.orange.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.push_pin_rounded,
+                    size: 14,
+                    color: AppColors.orange,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Pinned Post',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.orange,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
           // Header (User info + timestamp)
           Padding(
             padding: const EdgeInsets.all(16),
@@ -314,6 +355,24 @@ class _ActivityCardState extends State<ActivityCard> {
                 );
               },
             ),
+
+            // Pin/Unpin option (admin only)
+            if (widget.isCurrentUserAdmin && widget.onPin != null)
+              ListTile(
+                leading: Icon(
+                  widget.isPinned ? Icons.push_pin_outlined : Icons.push_pin_rounded,
+                  color: AppColors.orange,
+                ),
+                title: Text(
+                  widget.isPinned ? 'Unpin Post' : 'Pin to Top',
+                  style: const TextStyle(color: AppColors.orange),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  HapticFeedback.mediumImpact();
+                  widget.onPin!();
+                },
+              ),
 
             // Report option (only show if not own post)
             ListTile(
