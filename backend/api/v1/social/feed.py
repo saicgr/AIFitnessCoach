@@ -23,7 +23,7 @@ from .utils import get_supabase_client
 router = APIRouter()
 
 
-@router.get("/feed/{user_id}", response_model=ActivityFeedResponse)
+@router.get("/feed/{user_id}")
 async def get_activity_feed(
     user_id: str,
     page: int = Query(1, ge=1),
@@ -42,12 +42,20 @@ async def get_activity_feed(
     Returns:
         Paginated activity feed
     """
-    supabase = get_supabase_client()
+    try:
+        supabase = get_supabase_client()
+    except Exception as e:
+        print(f"[Social] Error getting supabase client: {e}")
+        raise HTTPException(status_code=500, detail=f"Database connection error: {str(e)}")
 
     # Get user's following list
-    following_result = supabase.table("user_connections").select("following_id").eq(
-        "follower_id", user_id
-    ).eq("status", "active").execute()
+    try:
+        following_result = supabase.table("user_connections").select("following_id").eq(
+            "follower_id", user_id
+        ).eq("status", "active").execute()
+    except Exception as e:
+        print(f"[Social] Error getting following list: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fetching connections: {str(e)}")
 
     following_ids = [row["following_id"] for row in following_result.data]
     following_ids.append(user_id)  # Include user's own activities
@@ -72,7 +80,7 @@ async def get_activity_feed(
         print(f"[Social] Error fetching feed: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch activity feed: {str(e)}")
 
-    # Parse activities
+    # Parse activities - return raw data for debugging
     activities = []
     for row in result.data:
         try:
@@ -99,13 +107,13 @@ async def get_activity_feed(
 
     total_count = result.count or 0
 
-    return ActivityFeedResponse(
-        items=activities,
-        total_count=total_count,
-        page=page,
-        page_size=page_size,
-        has_more=offset + page_size < total_count,
-    )
+    return {
+        "items": [a.model_dump() for a in activities],
+        "total_count": total_count,
+        "page": page,
+        "page_size": page_size,
+        "has_more": offset + page_size < total_count,
+    }
 
 
 @router.post("/feed", response_model=ActivityFeedItem)
