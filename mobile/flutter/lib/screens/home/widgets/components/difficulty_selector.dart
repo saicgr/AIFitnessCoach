@@ -115,6 +115,146 @@ class DifficultySelector extends StatelessWidget {
     );
   }
 
+  /// Show HELL mode warning dialog for ALL users (not just beginners)
+  void _showHellModeWarning(BuildContext context, SheetColors colors) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: colors.elevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.local_fire_department,
+                color: Colors.red,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'HELL Mode Warning',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'This is an extreme intensity workout designed to push your absolute limits.',
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildWarningItem(colors, 'High injury risk if form breaks down'),
+            _buildWarningItem(colors, 'Requires extended recovery time (48-72 hours)'),
+            _buildWarningItem(colors, 'Not recommended for consecutive days'),
+            _buildWarningItem(colors, 'Only proceed if fully rested and warmed up'),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: colors.orange.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: colors.orange.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.tips_and_updates, color: colors.orange, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Consider "Challenging" for a safer intense workout',
+                      style: TextStyle(
+                        color: colors.orange,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Choose Different',
+              style: TextStyle(color: colors.textMuted, fontSize: 15),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              onSelectionChanged('hell');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.local_fire_department, size: 18),
+                SizedBox(width: 6),
+                Text(
+                  'I Accept the Risk',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWarningItem(SheetColors colors, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.warning_amber, color: Colors.red.withOpacity(0.8), size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontSize: 13,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Show difficulty description on long press
   void _showDifficultyDescription(
     BuildContext context,
@@ -213,8 +353,12 @@ class DifficultySelector extends StatelessWidget {
                           ? null
                           : () {
                               final diff = difficulty.toLowerCase();
-                              // Show warning for beginners selecting hard/hell
-                              if (_isBeginner && (diff == 'hard' || diff == 'hell')) {
+                              // Show HELL mode warning for ALL users
+                              if (diff == 'hell') {
+                                _showHellModeWarning(context, colors);
+                              }
+                              // Show warning for beginners selecting hard
+                              else if (_isBeginner && diff == 'hard') {
                                 _showBeginnerWarning(context, difficulty, colors);
                               } else {
                                 onSelectionChanged(difficulty);

@@ -139,8 +139,8 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
       final user = authState.user;
       final selectedDays = user?.workoutDays ?? [0, 1, 2, 3, 4]; // Default Mon-Fri
 
-      // Convert from 0=Mon to 1=Mon format if needed by API
-      final apiDays = selectedDays.map((d) => d + 1).toList();
+      // API expects 0-indexed days (0=Mon, 6=Sun) - no conversion needed
+      final apiDays = selectedDays;
 
       final workoutRepo = _ref.read(workoutRepositoryProvider);
 

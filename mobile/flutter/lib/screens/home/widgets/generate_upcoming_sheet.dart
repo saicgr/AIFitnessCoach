@@ -219,12 +219,10 @@ class _GenerateUpcomingSheetState extends ConsumerState<_GenerateUpcomingSheet> 
     try {
       final repo = ref.read(workoutRepositoryProvider);
 
-      // Convert 0-indexed days to 1-indexed for API (1=Mon, 7=Sun)
-      final selectedDaysForApi = daysToGenerate.map((d) => d + 1).toList();
-
+      // API expects 0-indexed days (0=Mon, 6=Sun) - no conversion needed
       await for (final progress in repo.generateMonthlyWorkoutsStreaming(
         userId: userId,
-        selectedDays: selectedDaysForApi,
+        selectedDays: daysToGenerate,
         durationMinutes: 45,
         monthStartDate: DateTime.now().toIso8601String().split('T')[0],
         maxWorkouts: daysToGenerate.length,

@@ -27,7 +27,7 @@ from models.schemas import (
     GenerateWeeklyRequest, GenerateWeeklyResponse,
     GenerateMonthlyRequest, GenerateMonthlyResponse,
 )
-from services.gemini_service import GeminiService
+from services.gemini_service import GeminiService, validate_set_targets_strict
 from services.exercise_library_service import get_exercise_library_service
 from services.exercise_rag_service import get_exercise_rag_service
 from services.mood_workout_service import mood_workout_service, MoodType
@@ -714,6 +714,16 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                         f"(minimum required: {MIN_EXERCISES_REQUIRED}). This is an AI generation error."
                     )
 
+                # CRITICAL: Validate set_targets - FAIL if missing (no fallback)
+                user_context = {
+                    "user_id": body.user_id,
+                    "fitness_level": fitness_level,
+                    "difficulty": difficulty,
+                    "goals": goals if isinstance(goals, list) else [],
+                    "equipment": equipment if isinstance(equipment, list) else [],
+                }
+                exercises = validate_set_targets_strict(exercises, user_context)
+
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse streaming response: {e}")
                 yield f"event: error\ndata: {json.dumps({'error': 'Failed to parse workout data'})}\n\n"
@@ -960,6 +970,17 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
                         is_comeback=is_comeback
                     )
                     logger.info(f"🛡️ [Mood Safety] Validated exercise parameters (fitness={fitness_level}, age={user_age}, comeback={is_comeback})")
+
+                    # CRITICAL: Validate set_targets - FAIL if missing (no fallback)
+                    user_context = {
+                        "user_id": body.user_id,
+                        "fitness_level": fitness_level,
+                        "difficulty": difficulty,
+                        "goals": goals if isinstance(goals, list) else [],
+                        "equipment": equipment if isinstance(equipment, list) else [],
+                        "mood": mood.value if mood else None,
+                    }
+                    exercises = validate_set_targets_strict(exercises, user_context)
 
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse mood workout response: {e}")
@@ -2112,6 +2133,18 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
             # Store as separate field in exercises_json for frontend to display in separate section
             challenge_ex = challenge_exercise if 'challenge_exercise' in dir() else None
 
+            # CRITICAL: Validate set_targets - FAIL if missing (no fallback)
+            if exercises:
+                user_context = {
+                    "user_id": request.user_id,
+                    "fitness_level": fitness_level,
+                    "difficulty": difficulty,
+                    "goals": goals if isinstance(goals, list) else [],
+                    "equipment": equipment if isinstance(equipment, list) else [],
+                    "workout_date": workout_date.isoformat() if workout_date else None,
+                }
+                exercises = validate_set_targets_strict(exercises, user_context)
+
             workout_db_data = {
                 "user_id": request.user_id,
                 "name": workout_name,
@@ -2614,6 +2647,18 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                         is_comeback=is_comeback
                     )
 
+                    # CRITICAL: Validate set_targets - FAIL if missing (no fallback)
+                    user_context = {
+                        "user_id": request.user_id,
+                        "fitness_level": fitness_level,
+                        "difficulty": result["difficulty"],
+                        "goals": goals if isinstance(goals, list) else [],
+                        "equipment": equipment if isinstance(equipment, list) else [],
+                        "workout_date": result["workout_date"].isoformat(),
+                        "generation_source": "monthly_generation",
+                    }
+                    exercises = validate_set_targets_strict(exercises, user_context)
+
                 workout_db_data = {
                     "user_id": request.user_id,
                     "name": result["name"],
@@ -2991,6 +3036,19 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                             age=user_age,
                             is_comeback=is_comeback
                         )
+
+                        # CRITICAL: Validate set_targets - FAIL if missing (no fallback)
+                        user_context = {
+                            "user_id": body.user_id,
+                            "fitness_level": fitness_level,
+                            "difficulty": workout_data.get("difficulty", intensity_preference),
+                            "goals": goals if isinstance(goals, list) else [],
+                            "equipment": equipment if isinstance(equipment, list) else [],
+                            "workout_date": workout_date.isoformat(),
+                            "generation_source": "streaming_monthly_generation",
+                            "focus": focus,
+                        }
+                        exercises = validate_set_targets_strict(exercises, user_context)
 
                     # Save to database
                     workout_db_data = {
@@ -3498,6 +3556,18 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                         age=user_age,
                         is_comeback=is_comeback
                     )
+
+                    # CRITICAL: Validate set_targets - FAIL if missing (no fallback)
+                    user_context = {
+                        "user_id": request.user_id,
+                        "fitness_level": fitness_level,
+                        "difficulty": result["difficulty"],
+                        "goals": goals if isinstance(goals, list) else [],
+                        "equipment": equipment if isinstance(equipment, list) else [],
+                        "workout_date": result["workout_date"].isoformat(),
+                        "generation_source": "background_generation",
+                    }
+                    exercises = validate_set_targets_strict(exercises, user_context)
 
                 workout_db_data = {
                     "user_id": request.user_id,

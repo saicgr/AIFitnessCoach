@@ -111,7 +111,7 @@ class WorkoutExerciseSchema(BaseModel):
     is_failure_set: bool = Field(default=False, description="True if final set should be taken to failure")
     drop_set_count: Optional[int] = Field(default=None, description="Number of drop sets (typically 2-3)")
     drop_set_percentage: Optional[int] = Field(default=None, description="Weight reduction percentage per drop (typically 20-25%)")
-    set_targets: Optional[List[SetTargetSchema]] = Field(default=None, description="Per-set AI targets (warmup, working, drop sets with specific weights/reps)")
+    set_targets: List[SetTargetSchema] = Field(..., description="REQUIRED: Per-set AI targets with specific weight/reps for each set. Must match 'sets' count.")
 
 
 class GeneratedWorkoutResponse(BaseModel):

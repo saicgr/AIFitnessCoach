@@ -34,6 +34,123 @@ import re as regex_module  # For weight parsing
 settings = get_settings()
 logger = logging.getLogger("gemini")
 
+
+def validate_set_targets_strict(exercises: List[Dict], user_context: Dict = None) -> List[Dict]:
+    """
+    STRICTLY validates that every exercise has set_targets array from Gemini.
+    FAILS (raises exception) if any exercise is missing set_targets - NO FALLBACK DATA.
+
+    Also validates set_type values (W=warmup, D=drop, F=failure, A=amrap, or working).
+
+    Args:
+        exercises: List of exercise dictionaries from Gemini
+        user_context: Optional dict with user info for logging (user_id, fitness_level, etc.)
+
+    Returns:
+        List of exercises if all valid
+
+    Raises:
+        ValueError: If any exercise is missing set_targets or has invalid set types
+    """
+    # Log user context for debugging
+    if user_context:
+        logger.info(f"🔍 [set_targets] Validating for user context:")
+        logger.info(f"   - user_id: {user_context.get('user_id', 'unknown')}")
+        logger.info(f"   - fitness_level: {user_context.get('fitness_level', 'unknown')}")
+        logger.info(f"   - difficulty: {user_context.get('difficulty', 'unknown')}")
+        logger.info(f"   - goals: {user_context.get('goals', [])}")
+        logger.info(f"   - equipment: {user_context.get('equipment', [])}")
+
+    missing_targets = []
+    invalid_set_types = []
+    missing_set_types = []
+    valid_set_types = {'warmup', 'working', 'drop', 'failure', 'amrap'}
+
+    # Count set types across all exercises
+    set_type_counts = {'warmup': 0, 'working': 0, 'drop': 0, 'failure': 0, 'amrap': 0}
+    total_sets = 0
+
+    for exercise in exercises:
+        ex_name = exercise.get('name', 'Unknown')
+        set_targets = exercise.get("set_targets")
+
+        if not set_targets:
+            missing_targets.append(ex_name)
+            logger.error(f"❌ [set_targets] MISSING for '{ex_name}' - Gemini FAILED to generate!")
+            continue
+
+        # Validate each set target has proper set_type (W, D, F, A indicators)
+        logger.info(f"✅ [set_targets] '{ex_name}' has {len(set_targets)} targets:")
+        for st in set_targets:
+            total_sets += 1
+            set_num = st.get('set_number', '?')
+            set_type = st.get('set_type')
+            target_reps = st.get('target_reps', 0)
+            target_weight = st.get('target_weight_kg')
+            target_rpe = st.get('target_rpe')
+
+            # Check if set_type exists
+            if not set_type:
+                missing_set_types.append(f"{ex_name} set {set_num}")
+                logger.error(f"❌ [set_type] MISSING for '{ex_name}' set {set_num}")
+                continue
+
+            set_type_lower = set_type.lower()
+
+            # Validate set_type is valid
+            if set_type_lower not in valid_set_types:
+                invalid_set_types.append(f"{ex_name} set {set_num}: '{set_type}'")
+                logger.error(f"❌ [set_type] Invalid '{set_type}' for '{ex_name}' set {set_num} - must be W/D/F/A or working")
+            else:
+                # Count valid set types
+                set_type_counts[set_type_lower] += 1
+
+            # Log each set target with type indicator
+            type_indicator = {
+                'warmup': 'W',
+                'working': str(set_num),
+                'drop': 'D',
+                'failure': 'F',
+                'amrap': 'A'
+            }.get(set_type_lower, '?')
+
+            weight_str = f"{target_weight}kg" if target_weight else "BW"
+            rpe_str = f"RPE {target_rpe}" if target_rpe else ""
+            logger.info(f"   [{type_indicator}] Set {set_num}: {set_type.upper()} - {weight_str} × {target_reps} {rpe_str}")
+
+    # FAIL if any targets are missing
+    if missing_targets:
+        error_msg = f"Gemini FAILED to generate set_targets for {len(missing_targets)} exercises: {missing_targets}"
+        logger.error(f"❌ [FATAL] {error_msg}")
+        raise ValueError(error_msg)
+
+    # FAIL if any set_type is missing
+    if missing_set_types:
+        error_msg = f"Gemini FAILED to generate set_type for {len(missing_set_types)} sets: {missing_set_types}"
+        logger.error(f"❌ [FATAL] {error_msg}")
+        raise ValueError(error_msg)
+
+    # FAIL if any set_type is invalid
+    if invalid_set_types:
+        error_msg = f"Gemini generated invalid set_type for {len(invalid_set_types)} sets: {invalid_set_types}"
+        logger.error(f"❌ [FATAL] {error_msg}")
+        raise ValueError(error_msg)
+
+    # Log summary of set types found
+    logger.info(f"📊 [set_targets] Summary ({total_sets} total sets):")
+    logger.info(f"   W (warmup): {set_type_counts['warmup']}")
+    logger.info(f"   Working: {set_type_counts['working']}")
+    logger.info(f"   D (drop): {set_type_counts['drop']}")
+    logger.info(f"   F (failure): {set_type_counts['failure']}")
+    logger.info(f"   A (amrap): {set_type_counts['amrap']}")
+
+    logger.info(f"✅ [set_targets] All {len(exercises)} exercises have valid set_targets with proper set_type!")
+    return exercises
+
+
+# Keep old function name as alias for backwards compatibility with generation.py imports
+ensure_set_targets = validate_set_targets_strict
+
 # Initialize the Gemini client
 client = genai.Client(api_key=settings.gemini_api_key)
 
@@ -1489,12 +1606,13 @@ HELL MODE NAMING: Use intense, aggressive names like "Inferno", "Apocalypse", "D
             difficulty_scaling_instruction = """
 
 📊 DIFFICULTY SCALING - EASY MODE:
-- Sets: 2-3 sets per exercise
+- Sets: 3 sets per exercise (MINIMUM 3 sets - never use 2 sets)
 - Reps: 10-12 reps (higher rep range, lighter load)
 - Weights: Use 60-70% of typical recommendations
 - Rest: 90-120 seconds between sets
 - RPE Target: 5-6 (comfortable, could do 4+ more reps)
-- Focus: Form and technique over intensity"""
+- Focus: Form and technique over intensity
+- set_targets: Generate 3 set targets for each exercise (all working sets)"""
         elif difficulty == "medium" or difficulty == "moderate":
             difficulty_scaling_instruction = """
 
@@ -1504,7 +1622,8 @@ HELL MODE NAMING: Use intense, aggressive names like "Inferno", "Apocalypse", "D
 - Weights: Use typical recommended weights for fitness level
 - Rest: 60-90 seconds between sets
 - RPE Target: 7-8 (challenging but sustainable)
-- Focus: Balance of form and progressive overload"""
+- Focus: Balance of form and progressive overload
+- set_targets: Generate 3-4 set targets for each exercise (all working sets)"""
         elif difficulty == "challenging" or difficulty == "hard":
             difficulty_scaling_instruction = """
 
@@ -1515,7 +1634,8 @@ HELL MODE NAMING: Use intense, aggressive names like "Inferno", "Apocalypse", "D
 - Rest: 60-75 seconds between sets (shorter rest)
 - RPE Target: 8-9 (pushing limits, 1-2 reps in reserve)
 - Include: 1-2 exercises with failure on last set
-- Focus: Progressive overload and intensity"""
+- Focus: Progressive overload and intensity
+- set_targets: Generate 3-4 set targets for each exercise (include failure sets)"""
         elif difficulty == "hell" or difficulty == "extreme":
             difficulty_scaling_instruction = """
 
@@ -1530,7 +1650,8 @@ HELL MODE NAMING: Use intense, aggressive names like "Inferno", "Apocalypse", "D
 - Exercise Selection: ONLY use advanced/compound exercises - NO basic bodyweight moves
 - Focus: Maximum intensity, muscle breakdown, mental toughness
 - Mark is_failure_set: true on at least 2 exercises
-- Mark is_drop_set: true on at least 1 isolation exercise"""
+- Mark is_drop_set: true on at least 1 isolation exercise
+- set_targets: Generate 4-5 set targets for each exercise (include warmup, working, drop, failure sets)"""
 
         safety_instruction += difficulty_scaling_instruction
 
@@ -1897,8 +2018,12 @@ Return a valid JSON object with this exact structure:
   "notes": "Overall workout tips including warm-up and cool-down recommendations"
 }}
 
-🎯 SET TARGETS - CRITICAL REQUIREMENT:
-For EVERY exercise, you MUST include a "set_targets" array that specifies each individual set with:
+🚨🚨🚨 SET TARGETS - ABSOLUTELY REQUIRED (DO NOT SKIP) 🚨🚨🚨
+This is the MOST IMPORTANT field in the entire response!
+For EVERY exercise without exception, you MUST include a "set_targets" array.
+NEVER leave set_targets empty or null - the app will break without it!
+
+Each set_targets entry must include:
 - set_number: 1-indexed set number
 - set_type: One of "warmup", "working", "drop", "failure", "amrap"
 - target_reps: Specific rep target for this set
@@ -2101,6 +2226,16 @@ If user has gym equipment - most exercises MUST use that equipment!"""
             # Validate required fields
             if "exercises" not in workout_data or not workout_data["exercises"]:
                 raise ValueError("AI response missing exercises")
+
+            # CRITICAL: Validate set_targets - FAIL if missing (no fallback)
+            user_context = {
+                "fitness_level": fitness_level,
+                "difficulty": intensity_preference or "medium",
+                "goals": goals,
+                "equipment": equipment,
+                "generation_source": "gemini_generate_workout_plan",
+            }
+            workout_data["exercises"] = validate_set_targets_strict(workout_data["exercises"], user_context)
 
             return workout_data
 
