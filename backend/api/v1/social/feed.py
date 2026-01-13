@@ -52,25 +52,10 @@ async def get_activity_feed(
     following_ids = [row["following_id"] for row in following_result.data]
     following_ids.append(user_id)  # Include user's own activities
 
-    # Build query - pinned posts first, then by created_at
-    # Try with is_pinned ordering first, fall back to just created_at if column doesn't exist
+    # Build query - order by created_at (is_pinned ordering handled in results if column exists)
+    offset = (page - 1) * page_size
+
     try:
-        query = supabase.table("activity_feed").select(
-            "*, users(name, avatar_url, is_support_user)",
-            count="exact"
-        ).in_("user_id", following_ids).order("is_pinned", desc=True).order("created_at", desc=True)
-
-        if activity_type:
-            query = query.eq("activity_type", activity_type.value)
-
-        # Apply pagination
-        offset = (page - 1) * page_size
-        query = query.range(offset, offset + page_size - 1)
-
-        result = query.execute()
-    except Exception as e:
-        # If is_pinned column doesn't exist, fall back to simple ordering
-        print(f"[Social] Falling back to simple ordering: {e}")
         query = supabase.table("activity_feed").select(
             "*, users(name, avatar_url, is_support_user)",
             count="exact"
@@ -79,10 +64,12 @@ async def get_activity_feed(
         if activity_type:
             query = query.eq("activity_type", activity_type.value)
 
-        offset = (page - 1) * page_size
         query = query.range(offset, offset + page_size - 1)
-
         result = query.execute()
+
+    except Exception as e:
+        print(f"[Social] Error fetching feed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch activity feed: {str(e)}")
 
     # Parse activities
     activities = []
