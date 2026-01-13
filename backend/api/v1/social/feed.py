@@ -53,30 +53,55 @@ async def get_activity_feed(
     following_ids.append(user_id)  # Include user's own activities
 
     # Build query - pinned posts first, then by created_at
-    # Note: Supabase doesn't support multi-column ordering well,
-    # so we'll order by is_pinned DESC, then pinned_at DESC (for pinned), then created_at DESC
-    query = supabase.table("activity_feed").select(
-        "*, users(name, avatar_url, is_support_user)",
-        count="exact"
-    ).in_("user_id", following_ids).order("is_pinned", desc=True).order("created_at", desc=True)
+    # Try with is_pinned ordering first, fall back to just created_at if column doesn't exist
+    try:
+        query = supabase.table("activity_feed").select(
+            "*, users(name, avatar_url, is_support_user)",
+            count="exact"
+        ).in_("user_id", following_ids).order("is_pinned", desc=True).order("created_at", desc=True)
 
-    if activity_type:
-        query = query.eq("activity_type", activity_type.value)
+        if activity_type:
+            query = query.eq("activity_type", activity_type.value)
 
-    # Apply pagination
-    offset = (page - 1) * page_size
-    query = query.range(offset, offset + page_size - 1)
+        # Apply pagination
+        offset = (page - 1) * page_size
+        query = query.range(offset, offset + page_size - 1)
 
-    result = query.execute()
+        result = query.execute()
+    except Exception as e:
+        # If is_pinned column doesn't exist, fall back to simple ordering
+        print(f"[Social] Falling back to simple ordering: {e}")
+        query = supabase.table("activity_feed").select(
+            "*, users(name, avatar_url, is_support_user)",
+            count="exact"
+        ).in_("user_id", following_ids).order("created_at", desc=True)
+
+        if activity_type:
+            query = query.eq("activity_type", activity_type.value)
+
+        offset = (page - 1) * page_size
+        query = query.range(offset, offset + page_size - 1)
+
+        result = query.execute()
 
     # Parse activities
     activities = []
     for row in result.data:
-        activity = ActivityFeedItem(**row)
-        if row.get("users"):
-            activity.user_name = row["users"].get("name")
-            activity.user_avatar = row["users"].get("avatar_url")
-            activity.is_support_user = row["users"].get("is_support_user", False)
+        # Ensure pinned fields have defaults if not present in DB
+        row_data = {
+            **row,
+            "is_pinned": row.get("is_pinned", False),
+            "pinned_at": row.get("pinned_at"),
+            "pinned_by": row.get("pinned_by"),
+        }
+        # Remove nested 'users' before creating ActivityFeedItem
+        users_data = row_data.pop("users", None)
+
+        activity = ActivityFeedItem(**row_data)
+        if users_data:
+            activity.user_name = users_data.get("name")
+            activity.user_avatar = users_data.get("avatar_url")
+            activity.is_support_user = users_data.get("is_support_user", False)
         activities.append(activity)
 
     total_count = result.count or 0
