@@ -31,6 +31,8 @@ User _$UserFromJson(Map<String, dynamic> json) => User(
   timezone: json['timezone'] as String?,
   role: json['role'] as String?,
   isSupportUser: json['is_support_user'] as bool?,
+  isNewUser: json['is_new_user'] as bool?,
+  supportFriendAdded: json['support_friend_added'] as bool?,
   weightUnit: json['weight_unit'] as String?,
 );
 
@@ -59,6 +61,8 @@ Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
   'timezone': instance.timezone,
   'role': instance.role,
   'is_support_user': instance.isSupportUser,
+  'is_new_user': instance.isNewUser,
+  'support_friend_added': instance.supportFriendAdded,
   'weight_unit': instance.weightUnit,
 };
 

@@ -65,6 +65,12 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     try {
       await ref.read(authStateProvider.notifier).signInWithGoogle();
 
+      // After successful sign-in, check if we should show welcome message
+      final user = ref.read(authStateProvider).user;
+      if (user != null && user.isFirstLogin && user.hasSupportFriend && mounted) {
+        _showSupportFriendWelcome();
+      }
+
       // After successful sign-in, navigation happens automatically via router redirect
       // The pre-auth data is still in SharedPreferences and will be loaded in onboarding
     } finally {
@@ -76,6 +82,48 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         });
       }
     }
+  }
+
+  void _showSupportFriendWelcome() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.support_agent, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Welcome to FitWiz!',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'FitWiz Support is now your friend. Reach out anytime for help!',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.teal,
+        duration: const Duration(seconds: 5),
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
   }
 
   Future<void> _signInWithApple() async {

@@ -43,6 +43,10 @@ class User extends Equatable {
   final String? role; // 'user', 'admin', or 'super_admin'
   @JsonKey(name: 'is_support_user')
   final bool? isSupportUser; // True for support@fitwiz.us (cannot be unfriended)
+  @JsonKey(name: 'is_new_user')
+  final bool? isNewUser; // True on first login - signals to show welcome message
+  @JsonKey(name: 'support_friend_added')
+  final bool? supportFriendAdded; // True when FitWiz Support was auto-added as friend
   @JsonKey(name: 'weight_unit')
   final String? weightUnit; // 'kg' or 'lbs' - user's preferred weight unit
 
@@ -71,6 +75,8 @@ class User extends Equatable {
     this.timezone,
     this.role,
     this.isSupportUser,
+    this.isNewUser,
+    this.supportFriendAdded,
     this.weightUnit,
   });
 
@@ -144,6 +150,12 @@ class User extends Equatable {
 
   /// Check if user is the support account (cannot be unfriended)
   bool get isSupport => isSupportUser == true;
+
+  /// Check if this is the user's first login (for showing welcome message)
+  bool get isFirstLogin => isNewUser == true;
+
+  /// Check if FitWiz Support was auto-added as friend on signup
+  bool get hasSupportFriend => supportFriendAdded == true;
 
   /// Get weight unit preference with fallback to 'kg'
   /// Checks weightUnit field first, then preferences JSON, then defaults to 'kg'
@@ -566,6 +578,8 @@ class User extends Equatable {
         timezone,
         role,
         isSupportUser,
+        isNewUser,
+        supportFriendAdded,
         weightUnit,
       ];
 
@@ -594,6 +608,8 @@ class User extends Equatable {
     String? timezone,
     String? role,
     bool? isSupportUser,
+    bool? isNewUser,
+    bool? supportFriendAdded,
     String? weightUnit,
   }) {
     return User(
@@ -621,6 +637,8 @@ class User extends Equatable {
       timezone: timezone ?? this.timezone,
       role: role ?? this.role,
       isSupportUser: isSupportUser ?? this.isSupportUser,
+      isNewUser: isNewUser ?? this.isNewUser,
+      supportFriendAdded: supportFriendAdded ?? this.supportFriendAdded,
       weightUnit: weightUnit ?? this.weightUnit,
     );
   }

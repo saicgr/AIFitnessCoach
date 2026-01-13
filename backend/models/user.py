@@ -153,6 +153,8 @@ class User(BaseModel):
     email: Optional[str] = Field(default=None, max_length=320)  # User's email address
     role: str = Field(default="user", max_length=20)  # 'user' or 'admin'
     is_support_user: bool = False  # True only for support@fitwiz.us (cannot be unfriended)
+    is_new_user: bool = False  # True on first login - signals to app to show welcome message
+    support_friend_added: bool = False  # True when FitWiz Support was auto-added as friend
     onboarding_completed: bool = False
     coach_selected: bool = False  # Whether user has selected their AI coach
     paywall_completed: bool = False  # Whether user has completed paywall flow

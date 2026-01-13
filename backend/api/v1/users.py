@@ -85,8 +85,14 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
-def row_to_user(row: dict) -> User:
-    """Convert a Supabase row dict to User model."""
+def row_to_user(row: dict, is_new_user: bool = False, support_friend_added: bool = False) -> User:
+    """Convert a Supabase row dict to User model.
+
+    Args:
+        row: Database row as dict
+        is_new_user: True if this is the user's first login (show welcome message)
+        support_friend_added: True if FitWiz Support was auto-added as friend
+    """
     # Handle JSONB fields - they come as dicts/lists from Supabase
     goals = row.get("goals")
     if isinstance(goals, list):
@@ -143,6 +149,8 @@ def row_to_user(row: dict) -> User:
         email=row.get("email"),  # Include email in response
         role=row.get("role", "user"),  # Admin role support
         is_support_user=row.get("is_support_user", False),  # Support user flag
+        is_new_user=is_new_user,  # True on first login
+        support_friend_added=support_friend_added,  # True when support friend was added
         onboarding_completed=row.get("onboarding_completed", False),
         coach_selected=row.get("coach_selected", False),
         paywall_completed=row.get("paywall_completed", False),
@@ -238,14 +246,16 @@ async def google_auth(request: Request, body: GoogleAuthRequest):
         logger.info(f"New user created via Google OAuth: id={created['id']}, email={email}, role={created.get('role', 'user')}")
 
         # Auto-add support user as friend to new users (if support user exists)
-        # This is non-critical, so we don't fail sign-in if it fails
+        support_friend_added = False
         if not is_support:
             try:
-                await admin_service.add_support_friend_to_user(created['id'])
+                support_friend_added = await admin_service.add_support_friend_to_user(created['id'])
+                if support_friend_added:
+                    logger.info(f"Auto-added FitWiz Support as friend for new user {created['id']}")
             except Exception as friend_error:
-                logger.warning(f"Failed to auto-add support friend (non-critical): {friend_error}")
+                logger.warning(f"Failed to auto-add support friend: {friend_error}")
 
-        return row_to_user(created)
+        return row_to_user(created, is_new_user=True, support_friend_added=support_friend_added)
 
     except HTTPException:
         raise
@@ -328,14 +338,17 @@ async def email_auth(request: Request, body: EmailAuthRequest):
         created = db.create_user(new_user_data)
         logger.info(f"New user created via email auth: id={created['id']}, email={email}, role={created.get('role', 'user')}")
 
-        # Auto-add support user as friend to new users (non-critical)
+        # Auto-add support user as friend to new users
+        support_friend_added = False
         if not is_support:
             try:
-                await admin_service.add_support_friend_to_user(created['id'])
+                support_friend_added = await admin_service.add_support_friend_to_user(created['id'])
+                if support_friend_added:
+                    logger.info(f"Auto-added FitWiz Support as friend for new user {created['id']}")
             except Exception as friend_error:
-                logger.warning(f"Failed to auto-add support friend (non-critical): {friend_error}")
+                logger.warning(f"Failed to auto-add support friend: {friend_error}")
 
-        return row_to_user(created)
+        return row_to_user(created, is_new_user=True, support_friend_added=support_friend_added)
 
     except HTTPException:
         raise
@@ -416,14 +429,17 @@ async def email_signup(request: Request, body: EmailSignupRequest):
         created = db.create_user(new_user_data)
         logger.info(f"New user created via email signup: id={created['id']}, email={email}, role={created.get('role', 'user')}")
 
-        # Auto-add support user as friend to new users (non-critical)
+        # Auto-add support user as friend to new users
+        support_friend_added = False
         if not is_support:
             try:
-                await admin_service.add_support_friend_to_user(created['id'])
+                support_friend_added = await admin_service.add_support_friend_to_user(created['id'])
+                if support_friend_added:
+                    logger.info(f"Auto-added FitWiz Support as friend for new user {created['id']}")
             except Exception as friend_error:
-                logger.warning(f"Failed to auto-add support friend (non-critical): {friend_error}")
+                logger.warning(f"Failed to auto-add support friend: {friend_error}")
 
-        return row_to_user(created)
+        return row_to_user(created, is_new_user=True, support_friend_added=support_friend_added)
 
     except HTTPException:
         raise

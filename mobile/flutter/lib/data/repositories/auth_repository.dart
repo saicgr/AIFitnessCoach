@@ -115,6 +115,11 @@ class AuthRepository {
         final user = app_user.User.fromJson(backendResponse.data as Map<String, dynamic>);
         debugPrint('✅ [Auth] Backend auth success: ${user.id}');
 
+        // Log if new user with support friend
+        if (user.isFirstLogin && user.hasSupportFriend) {
+          debugPrint('🎉 [Auth] New user signed up! FitWiz Support auto-added as friend');
+        }
+
         // Save user ID and token
         await _apiClient.setUserId(user.id);
         await _apiClient.setAuthToken(supabaseAccessToken);
