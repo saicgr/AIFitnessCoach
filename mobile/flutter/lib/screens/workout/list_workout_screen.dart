@@ -49,16 +49,34 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
     _exerciseSets = {};
     for (int i = 0; i < widget.workout.exercises.length; i++) {
       final exercise = widget.workout.exercises[i];
-      final numSets = exercise.sets ?? 3;
-      _exerciseSets[i] = List.generate(numSets, (setIndex) {
-        return SetData(
-          setNumber: setIndex + 1,
-          weight: exercise.weight ?? 0,
-          reps: exercise.reps ?? 10,
-          isWarmup: false,
-          isCompleted: false,
-        );
-      });
+      final setTargets = exercise.setTargets;
+
+      // If exercise has AI-generated set targets, use them
+      if (setTargets != null && setTargets.isNotEmpty) {
+        _exerciseSets[i] = setTargets.map((target) {
+          return SetData(
+            setNumber: target.setNumber,
+            weight: target.targetWeightKg ?? exercise.weight ?? 0,
+            reps: target.targetReps,
+            isWarmup: target.isWarmup,
+            isCompleted: false,
+            setType: target.setType,
+            target: target,
+          );
+        }).toList();
+      } else {
+        // Fall back to generating sets from exercise-level data
+        final numSets = exercise.sets ?? 3;
+        _exerciseSets[i] = List.generate(numSets, (setIndex) {
+          return SetData(
+            setNumber: setIndex + 1,
+            weight: exercise.weight ?? 0,
+            reps: exercise.reps ?? 10,
+            isWarmup: false,
+            isCompleted: false,
+          );
+        });
+      }
     }
   }
 

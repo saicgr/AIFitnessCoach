@@ -22,6 +22,27 @@ from core.exercise_data import (
     STANDARD_KETTLEBELL_WEIGHTS,
 )
 
+# =====================================================
+# EQUIPMENT BASELINE WEIGHTS (Minimum Practical Starting Weight)
+# =====================================================
+# These represent the minimum weight possible for each equipment type.
+# For example, a barbell alone weighs 20kg - you can't lift less than that.
+EQUIPMENT_BASELINES = {
+    "barbell": 20.0,       # Standard Olympic barbell = 20kg (45 lbs)
+    "ez_bar": 10.0,        # EZ curl bar = ~10kg (22 lbs)
+    "ez bar": 10.0,        # Alias
+    "smith_machine": 10.0, # Smith bar is counterbalanced, starts ~10kg
+    "smith machine": 10.0, # Alias
+    "dumbbell": 2.5,       # Lightest dumbbell in most gyms = 2.5kg (5 lbs)
+    "dumbbells": 2.5,      # Alias
+    "kettlebell": 4.0,     # Lightest kettlebell = 4kg (8 lbs)
+    "kettlebells": 4.0,    # Alias
+    "cable": 5.0,          # Minimum cable stack = 5kg (10 lbs)
+    "machine": 10.0,       # Minimum machine weight = 10kg (20 lbs)
+    "bodyweight": 0.0,     # No external weight
+    "resistance_band": 0.0, # Variable resistance
+}
+
 
 def get_equipment_increment(equipment_type: str) -> float:
     """
@@ -209,6 +230,35 @@ def detect_equipment_type(
     return "dumbbell"
 
 
+def get_equipment_baseline(equipment_type: str) -> float:
+    """
+    Get the minimum practical starting weight for an equipment type.
+
+    For example, a barbell weighs 20kg - you can't lift less than the bar.
+
+    Args:
+        equipment_type: Equipment name (e.g., 'barbell', 'dumbbell')
+
+    Returns:
+        Minimum weight in kg for this equipment type
+    """
+    if not equipment_type:
+        return 0.0
+
+    eq_lower = equipment_type.lower().strip()
+
+    # Direct lookup
+    if eq_lower in EQUIPMENT_BASELINES:
+        return EQUIPMENT_BASELINES[eq_lower]
+
+    # Partial match
+    for key, baseline in EQUIPMENT_BASELINES.items():
+        if key in eq_lower or eq_lower in key:
+            return baseline
+
+    return 0.0
+
+
 def get_starting_weight(
     exercise_name: str,
     equipment_type: str,
@@ -217,8 +267,10 @@ def get_starting_weight(
     """
     Get an appropriate starting weight based on exercise, equipment, and fitness level.
 
-    This replaces hardcoded starting weights with intelligent recommendations
-    that consider the user's fitness level and the type of exercise.
+    This provides intelligent weight recommendations that consider:
+    1. Equipment baseline (barbell = 20kg minimum, the bar itself)
+    2. Fitness level (beginners start lighter)
+    3. Exercise type (compound vs isolation)
 
     Args:
         exercise_name: Name of the exercise
@@ -232,6 +284,7 @@ def get_starting_weight(
         exercise_name = ""
 
     name_lower = exercise_name.lower()
+    eq_lower = (equipment_type or "").lower()
 
     # Determine if this is a compound or isolation exercise
     compound_indicators = [
@@ -240,7 +293,50 @@ def get_starting_weight(
     ]
     is_compound = any(indicator in name_lower for indicator in compound_indicators)
 
-    # Base starting weights by fitness level and exercise type (in kg)
+    # Normalize fitness level
+    level = (fitness_level or "beginner").lower()
+    if level not in ["beginner", "intermediate", "advanced"]:
+        level = "beginner"
+
+    # Get equipment baseline (minimum possible weight)
+    baseline = get_equipment_baseline(equipment_type)
+
+    # =====================================================
+    # BARBELL: Special handling - add plates on top of bar
+    # =====================================================
+    if "barbell" in eq_lower:
+        # Barbell bar = 20kg, then add plates based on fitness level
+        if is_compound:
+            # Compound barbell exercises (squat, deadlift, bench, etc.)
+            plate_additions = {
+                "beginner": 0.0,    # Just the bar (20kg) - learn form
+                "intermediate": 10.0,  # Bar + 5kg each side (30kg total)
+                "advanced": 30.0,   # Bar + 15kg each side (50kg total)
+            }
+        else:
+            # Isolation barbell exercises (curls, etc.)
+            plate_additions = {
+                "beginner": 0.0,    # Just the bar (20kg)
+                "intermediate": 5.0,   # Bar + 2.5kg each side (25kg)
+                "advanced": 10.0,   # Bar + 5kg each side (30kg)
+            }
+        return baseline + plate_additions.get(level, 0.0)
+
+    # =====================================================
+    # EZ BAR: Similar to barbell but lighter bar
+    # =====================================================
+    if "ez" in eq_lower and "bar" in eq_lower:
+        # EZ bar = 10kg
+        plate_additions = {
+            "beginner": 0.0,    # Just the bar (10kg)
+            "intermediate": 5.0,   # Bar + 2.5kg each side (15kg)
+            "advanced": 10.0,   # Bar + 5kg each side (20kg)
+        }
+        return baseline + plate_additions.get(level, 0.0)
+
+    # =====================================================
+    # OTHER EQUIPMENT: Use base weights with adjustments
+    # =====================================================
     base_weights = {
         "beginner": {
             "compound": 10.0,   # Light weight to focus on form
@@ -256,16 +352,8 @@ def get_starting_weight(
         },
     }
 
-    # Normalize fitness level
-    level = (fitness_level or "beginner").lower()
-    if level not in base_weights:
-        level = "beginner"
-
     exercise_type = "compound" if is_compound else "isolation"
     base_weight = base_weights[level][exercise_type]
-
-    # Adjust for equipment type
-    eq_lower = (equipment_type or "").lower()
 
     # Kettlebells typically start lighter
     if "kettlebell" in eq_lower:
@@ -275,8 +363,11 @@ def get_starting_weight(
     if "machine" in eq_lower:
         base_weight = base_weight * 1.2
 
+    # Ensure we don't go below equipment baseline
+    final_weight = max(base_weight, baseline)
+
     # Snap to valid weight for the equipment
-    return snap_to_available_weights(base_weight, equipment_type)
+    return snap_to_available_weights(final_weight, equipment_type)
 
 
 def validate_weight_recommendation(

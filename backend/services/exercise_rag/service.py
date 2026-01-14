@@ -1194,9 +1194,10 @@ SELECTION CRITERIA:
 2. Choose exercises that best target the focus area ({focus_area})
 3. CRITICAL: Each exercise number must be UNIQUE - do NOT repeat any numbers
 4. Ensure variety - select DIFFERENT exercises for balanced muscle development
-5. Progress from compound to isolation exercises
-6. Consider the fitness level - {fitness_level}
-7. Align with goals: {', '.join(goals) if goals else 'General fitness'}
+5. USE EQUIPMENT VARIETY - Include exercises with different equipment types (barbell, dumbbell, cable, machine) rather than only bodyweight exercises. The user has access to gym equipment.
+6. Progress from compound to isolation exercises
+7. Consider the fitness level - {fitness_level} (but still use weights - beginners benefit from learning barbell and dumbbell movements)
+8. Align with goals: {', '.join(goals) if goals else 'General fitness'}
 
 IMPORTANT: You MUST select {count} DIFFERENT exercises. Each number in your response must be unique.
 
@@ -1277,6 +1278,48 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
             logger.error(f"AI selection failed: {e}")
             raise
 
+    def _detect_unilateral(self, exercise_name: str, metadata: dict = None) -> bool:
+        """
+        Detect if exercise is unilateral (single-arm/leg).
+
+        Unilateral exercises work one side at a time and should display
+        "(each side)" in the UI so users know the weight is per side.
+
+        Args:
+            exercise_name: Name of the exercise
+            metadata: Optional exercise metadata from RAG
+
+        Returns:
+            True if exercise is unilateral (single-sided)
+        """
+        if not exercise_name:
+            return False
+
+        name_lower = exercise_name.lower()
+
+        # Keywords that indicate unilateral exercises
+        unilateral_keywords = [
+            "single arm", "single-arm", "one arm", "one-arm",
+            "single leg", "single-leg", "one leg", "one-leg",
+            "alternate", "alternating", "unilateral",
+            "split squat", "bulgarian split",
+            "lunge", "step up", "step-up",
+            "pistol squat", "pistol",
+            "single dumbbell", "one dumbbell",
+        ]
+
+        if any(kw in name_lower for kw in unilateral_keywords):
+            return True
+
+        # Check metadata if available
+        if metadata:
+            if metadata.get("is_unilateral", False):
+                return True
+            if metadata.get("alternating_hands", False):
+                return True
+
+        return False
+
     def _format_exercise_for_workout(
         self,
         exercise: Dict,
@@ -1307,18 +1350,46 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
         """
         # Validate fitness level to ensure consistent defaults
         validated_level = validate_fitness_level(fitness_level)
+        exercise_name = exercise.get("name", "Unknown")
+
+        # Import exercise classification utilities
+        from core.exercise_data import get_exercise_type, REP_LIMITS
+
+        # 1. CLASSIFY EXERCISE using existing utility
+        exercise_type = get_exercise_type(exercise_name)  # compound_upper, compound_lower, isolation, bodyweight
+
+        # 2. GET REP RANGE based on exercise type (not just fitness level)
+        min_reps, max_reps = REP_LIMITS.get(exercise_type, (8, 12))
 
         if workout_params:
+            # Use adaptive params if provided
             sets = workout_params.get("sets", 3)
             reps = workout_params.get("reps", 12)
             rest = workout_params.get("rest_seconds", 60)
-        elif validated_level == "beginner":
-            # Beginner-appropriate defaults: lower volume, more rest
-            sets, reps, rest = 2, 10, 90
-        elif validated_level == "advanced":
-            sets, reps, rest = 4, 12, 45
-        else:  # intermediate
-            sets, reps, rest = 3, 12, 60
+        else:
+            # 3. DETERMINE SETS based on exercise type + fitness level
+            if exercise_type in ["compound_upper", "compound_lower"]:
+                # Compounds: More sets for strength development
+                base_sets = {"beginner": 3, "intermediate": 4, "advanced": 5}
+            else:
+                # Isolation/Bodyweight: Fewer sets
+                base_sets = {"beginner": 2, "intermediate": 3, "advanced": 4}
+            sets = base_sets.get(validated_level, 3)
+
+            # 4. DETERMINE REPS based on exercise type + fitness level
+            if validated_level == "beginner":
+                reps = max_reps  # Higher reps for technique focus
+            elif validated_level == "advanced":
+                reps = min_reps  # Lower reps for strength focus
+            else:
+                reps = (min_reps + max_reps) // 2  # Middle ground
+
+            # 5. REST based on exercise type (compounds need more rest)
+            if exercise_type in ["compound_upper", "compound_lower"]:
+                rest_map = {"beginner": 120, "intermediate": 90, "advanced": 60}
+            else:
+                rest_map = {"beginner": 90, "intermediate": 60, "advanced": 45}
+            rest = rest_map.get(validated_level, 60)
 
         # Apply progression pace adjustments
         # slow: Higher reps, lower intensity - focus on technique and endurance
@@ -1326,17 +1397,15 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
         # fast: Lower reps, higher intensity - focus on strength gains
         if progression_pace == "slow":
             # Slow progression: +2 reps, slightly longer rest
-            reps = min(reps + 2, 15)  # Cap at 15 reps
-            rest = min(rest + 15, 120)  # Add 15 sec rest, cap at 2 min
+            reps = min(reps + 2, max_reps)  # Cap at max_reps for exercise type
+            rest = min(rest + 15, 150)  # Add 15 sec rest, cap at 2.5 min
             logger.debug(f"Slow progression: adjusted to {reps} reps, {rest}s rest")
         elif progression_pace == "fast":
             # Fast progression: -2 reps, shorter rest for intensity
-            reps = max(reps - 2, 6)  # Minimum 6 reps
-            rest = max(rest - 10, 30)  # Reduce rest, minimum 30s
-            sets = min(sets + 1, 5)  # Add a set for more volume, cap at 5
+            reps = max(reps - 2, min_reps)  # Minimum at min_reps for exercise type
+            rest = max(rest - 15, 30)  # Reduce rest, minimum 30s
+            sets = min(sets + 1, 6)  # Add a set for more volume, cap at 6
             logger.debug(f"Fast progression: adjusted to {sets}x{reps}, {rest}s rest")
-
-        exercise_name = exercise.get("name", "Unknown")
         raw_equipment = exercise.get("equipment", "")
         if not raw_equipment or raw_equipment.lower() in ["bodyweight", "body weight", "none", ""]:
             equipment = infer_equipment_from_name(exercise_name)
@@ -1379,42 +1448,70 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
 
         # Generate set_targets array based on available data
         # This is CRITICAL - without set_targets, validate_set_targets_strict() will fail
+        # Valid set_types: "warmup" (W), "working", "drop" (D), "failure" (F), "amrap" (A)
         set_targets = []
         is_bodyweight = equipment_type == "bodyweight" or equipment.lower() in ["bodyweight", "body weight", "none", ""]
 
+        # Get base RPE from exercise difficulty metadata
+        exercise_difficulty = exercise.get("difficulty", "intermediate")
+        if exercise_difficulty in ["beginner", "easy"] or (isinstance(exercise_difficulty, (int, float)) and exercise_difficulty <= 3):
+            base_rpe = 6
+        elif exercise_difficulty in ["advanced", "hard"] or (isinstance(exercise_difficulty, (int, float)) and exercise_difficulty >= 7):
+            base_rpe = 8
+        else:
+            base_rpe = 7
+
         for set_num in range(1, sets + 1):
-            if set_num == 1 and sets >= 3 and not is_bodyweight and starting_weight > 0:
-                # First set = warmup at 50-60% weight for weighted exercises with 3+ sets
+            # WARMUP SET: First set for compound exercises with weights
+            if set_num == 1 and exercise_type in ["compound_upper", "compound_lower"] and not is_bodyweight and starting_weight > 0:
                 set_targets.append({
                     "set_number": set_num,
-                    "set_type": "warmup",
-                    "target_reps": min(reps + 2, 15),  # Slightly higher reps for warmup
-                    "target_weight_kg": round(starting_weight * 0.5, 1),
+                    "set_type": "warmup",  # W
+                    "target_reps": min(reps + 2, 15),  # Higher reps for warmup
+                    "target_weight_kg": round(starting_weight * 0.5, 1),  # 50% weight
                     "target_rpe": 5,
                     "target_rir": None,
                 })
-            elif set_num == sets and sets >= 3 and validated_level != "beginner":
-                # Last set can be pushed harder (near-failure) for non-beginners with 3+ sets
+            # FAILURE SET: Last set for advanced users
+            elif set_num == sets and validated_level == "advanced":
                 set_targets.append({
                     "set_number": set_num,
-                    "set_type": "working",
+                    "set_type": "failure",  # F
                     "target_reps": reps,
                     "target_weight_kg": starting_weight if not is_bodyweight else 0,
-                    "target_rpe": 9 if validated_level == "advanced" else 8,
-                    "target_rir": 1 if validated_level == "advanced" else 2,
+                    "target_rpe": 10,
+                    "target_rir": 0,
+                })
+            # DROP SET: Last set for intermediate users on isolation exercises
+            elif set_num == sets and validated_level == "intermediate" and exercise_type == "isolation" and not is_bodyweight:
+                set_targets.append({
+                    "set_number": set_num,
+                    "set_type": "drop",  # D
+                    "target_reps": reps,
+                    "target_weight_kg": round(starting_weight * 0.75, 1) if starting_weight > 0 else 0,  # 75% weight
+                    "target_rpe": 9,
+                    "target_rir": 1,
                 })
             else:
-                # Standard working sets
+                # WORKING SETS: Progressive RPE (earlier sets easier, later sets harder)
+                # Adjust set_num for warmup offset if compound exercise
+                adjusted_set_num = set_num - 1 if (exercise_type in ["compound_upper", "compound_lower"] and not is_bodyweight and starting_weight > 0) else set_num
+                progressive_rpe = min(base_rpe + max(0, adjusted_set_num - 1), 9)
+
                 set_targets.append({
                     "set_number": set_num,
                     "set_type": "working",
                     "target_reps": reps,
                     "target_weight_kg": starting_weight if not is_bodyweight else 0,
-                    "target_rpe": 7 if validated_level == "beginner" else 8,
-                    "target_rir": 3 if validated_level == "beginner" else 2,
+                    "target_rpe": progressive_rpe,
+                    "target_rir": 10 - progressive_rpe,
                 })
 
-        logger.debug(f"Generated {len(set_targets)} set_targets for {exercise_name} (bodyweight={is_bodyweight})")
+        logger.debug(f"Generated {len(set_targets)} set_targets for {exercise_name} (type={exercise_type}, bodyweight={is_bodyweight})")
+
+        # Detect if this is a unilateral exercise (single-arm/leg)
+        # Used to display "(each side)" in the UI for weight interpretation
+        is_unilateral = self._detect_unilateral(exercise_name, exercise)
 
         return {
             "name": exercise_name,
@@ -1435,6 +1532,7 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
             "is_favorite": exercise.get("is_favorite", False),  # From favorite boost
             "is_staple": exercise.get("is_staple", False),  # User's core lifts that never rotate
             "from_queue": exercise.get("from_queue", False),  # From exercise queue
+            "is_unilateral": is_unilateral,  # True if single-arm/leg - display "(each side)" in UI
             "set_targets": set_targets,  # CRITICAL: Required by validate_set_targets_strict()
         }
 

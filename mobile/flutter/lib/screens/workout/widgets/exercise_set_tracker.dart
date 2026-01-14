@@ -11,6 +11,8 @@ class SetData {
   bool isWarmup;
   bool isCompleted;
   DateTime? completedAt;
+  String setType; // 'working', 'warmup', 'failure', 'drop', 'amrap'
+  SetTarget? target; // AI-generated target for this set
 
   SetData({
     required this.setNumber,
@@ -19,7 +21,23 @@ class SetData {
     this.isWarmup = false,
     this.isCompleted = false,
     this.completedAt,
+    this.setType = 'working',
+    this.target,
   });
+
+  /// Get display label for set type (F for failure, D for drop, W for warmup)
+  String get setTypeLabel {
+    if (isWarmup || setType == 'warmup') return 'W';
+    if (setType == 'failure' || setType == 'amrap') return 'F';
+    if (setType == 'drop') return 'D';
+    return ''; // Working sets show number
+  }
+
+  /// Whether this is a failure/AMRAP set
+  bool get isFailureSet => setType == 'failure' || setType == 'amrap';
+
+  /// Whether this is a drop set
+  bool get isDropSet => setType == 'drop';
 
   SetData copyWith({
     int? setNumber,
@@ -28,6 +46,8 @@ class SetData {
     bool? isWarmup,
     bool? isCompleted,
     DateTime? completedAt,
+    String? setType,
+    SetTarget? target,
   }) {
     return SetData(
       setNumber: setNumber ?? this.setNumber,
@@ -36,6 +56,8 @@ class SetData {
       isWarmup: isWarmup ?? this.isWarmup,
       isCompleted: isCompleted ?? this.isCompleted,
       completedAt: completedAt ?? this.completedAt,
+      setType: setType ?? this.setType,
+      target: target ?? this.target,
     );
   }
 }
@@ -99,13 +121,6 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
   void dispose() {
     _notesController.dispose();
     super.dispose();
-  }
-
-  String _formatPrevious(PreviousSetData? prev) {
-    if (prev == null) return '-';
-    final unit = widget.useKg ? 'kg' : 'lbs';
-    final weight = widget.useKg ? prev.weight : prev.weight * 2.20462;
-    return '${weight.toStringAsFixed(0)}$unit x ${prev.reps}';
   }
 
   @override
@@ -278,8 +293,8 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
       ),
       child: Row(
         children: [
-          const SizedBox(width: 40, child: Text('SET', style: _headerStyle)),
-          const Expanded(flex: 2, child: Text('PREVIOUS', style: _headerStyle)),
+          const SizedBox(width: 36, child: Text('SET', style: _headerStyle)),
+          const Expanded(flex: 3, child: Text('TARGET', style: _headerStyle)),
           Expanded(
             flex: 2,
             child: GestureDetector(
@@ -298,7 +313,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
             ),
           ),
           const Expanded(flex: 2, child: Text('REPS', style: _headerStyle)),
-          const SizedBox(width: 48), // Checkmark column
+          const SizedBox(width: 44), // Checkmark column
         ],
       ),
     );
@@ -311,13 +326,54 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
     letterSpacing: 0.5,
   );
 
+  /// Format target display like Gravl: "25 lb x 9-11" with "1 RIR" below
+  String _formatTarget(SetData set) {
+    final target = set.target;
+    if (target == null) {
+      // Fall back to exercise-level defaults
+      final targetReps = widget.exercise.reps ?? 10;
+      return '$targetReps reps';
+    }
+
+    final unit = widget.useKg ? 'kg' : 'lb';
+    final weightKg = target.targetWeightKg ?? 0;
+    final weight = widget.useKg ? weightKg : weightKg * 2.20462;
+    final weightStr = weight > 0 ? '${weight.toStringAsFixed(weight.truncateToDouble() == weight ? 0 : 1)} $unit' : '';
+    final reps = target.targetReps;
+
+    if (weightStr.isNotEmpty) {
+      return '$weightStr x $reps';
+    }
+    return '$reps reps';
+  }
+
+  /// Get RIR display string (e.g., "1 RIR", "0 RIR")
+  String _formatRir(SetData set) {
+    final target = set.target;
+    if (target == null) return '';
+
+    final rir = target.targetRir;
+    if (rir == null) return '';
+
+    return '$rir RIR';
+  }
+
+  /// Get color for set type indicator
+  Color _getSetTypeColor(SetData set) {
+    if (set.isWarmup || set.setType == 'warmup') return AppColors.orange;
+    if (set.isFailureSet) return Colors.red;
+    if (set.isDropSet) return Colors.purple;
+    return AppColors.textPrimary;
+  }
+
   Widget _buildSetRow(int index, SetData set) {
-    final prev = widget.previousSets != null && index < widget.previousSets!.length
-        ? widget.previousSets![index]
-        : null;
+    // Get set type label (W, F, D, or set number)
+    final setLabel = set.setTypeLabel.isNotEmpty ? set.setTypeLabel : '${set.setNumber}';
+    final setColor = _getSetTypeColor(set);
+    final rirText = _formatRir(set);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: set.isCompleted ? AppColors.cyan.withAlpha(20) : Colors.transparent,
         border: Border(
@@ -326,28 +382,52 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
       ),
       child: Row(
         children: [
-          // Set number (W for warmup, or 1, 2, 3...)
+          // Set number/type (W for warmup, F for failure, D for drop, or 1, 2, 3...)
           SizedBox(
-            width: 40,
-            child: Text(
-              set.isWarmup ? 'W' : '${set.setNumber}',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: set.isWarmup ? AppColors.orange : AppColors.textPrimary,
+            width: 36,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              decoration: BoxDecoration(
+                color: setColor.withAlpha(30),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                setLabel,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: setColor,
+                ),
               ),
             ),
           ),
 
-          // Previous session
+          // Target with RIR (like Gravl's "Auto" column)
           Expanded(
-            flex: 2,
-            child: Text(
-              _formatPrevious(prev),
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.textMuted.withAlpha(180),
-              ),
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _formatTarget(set),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                if (rirText.isNotEmpty)
+                  Text(
+                    rirText,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: set.isFailureSet ? Colors.red.withAlpha(200) : AppColors.textMuted,
+                      fontWeight: set.isFailureSet ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+              ],
             ),
           ),
 
@@ -380,7 +460,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
 
           // Complete checkbox
           SizedBox(
-            width: 48,
+            width: 44,
             child: GestureDetector(
               onTap: () {
                 HapticFeedback.mediumImpact();

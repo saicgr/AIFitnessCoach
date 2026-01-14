@@ -75,6 +75,15 @@ class FuturisticSetCard extends StatefulWidget {
   /// Whether the current weight was auto-filled from AI suggestion
   final bool isWeightFromAiSuggestion;
 
+  /// Target RIR (Reps In Reserve) for this set
+  final int? targetRir;
+
+  /// Target reps for this set (from AI)
+  final int? targetReps;
+
+  /// Target weight for this set (from AI)
+  final double? targetWeight;
+
   const FuturisticSetCard({
     super.key,
     required this.exerciseName,
@@ -97,6 +106,9 @@ class FuturisticSetCard extends StatefulWidget {
     this.onSetTypeChanged,
     this.smartWeightSuggestion,
     this.isWeightFromAiSuggestion = false,
+    this.targetRir,
+    this.targetReps,
+    this.targetWeight,
   });
 
   @override
@@ -297,23 +309,71 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'SET ${widget.currentSetNumber} OF ${widget.totalSets}',
-                    style: TextStyle(
-                      fontSize: isSmallScreen ? 10 : 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
-                      color: _setTypeColor,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        'SET ${widget.currentSetNumber} OF ${widget.totalSets}',
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 10 : 12,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1,
+                          color: _setTypeColor,
+                        ),
+                      ),
+                      // RIR badge
+                      if (widget.targetRir != null) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: widget.targetRir == 0
+                                ? AppColors.error.withOpacity(0.2)
+                                : AppColors.glowOrange.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: widget.targetRir == 0
+                                  ? AppColors.error.withOpacity(0.5)
+                                  : AppColors.glowOrange.withOpacity(0.5),
+                            ),
+                          ),
+                          child: Text(
+                            '${widget.targetRir} RIR',
+                            style: TextStyle(
+                              fontSize: isSmallScreen ? 8 : 9,
+                              fontWeight: FontWeight.bold,
+                              color: widget.targetRir == 0
+                                  ? AppColors.error
+                                  : AppColors.glowOrange,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    _setTypeLabel,
-                    style: TextStyle(
-                      fontSize: isSmallScreen ? 9 : 10,
-                      fontWeight: FontWeight.w500,
-                      color: mutedColor,
-                    ),
+                  // Target info (weight × reps) + set type
+                  Row(
+                    children: [
+                      if (widget.targetWeight != null && widget.targetReps != null) ...[
+                        Text(
+                          '${widget.targetWeight!.toStringAsFixed(widget.targetWeight! == widget.targetWeight!.truncateToDouble() ? 0 : 1)} ${widget.useKg ? 'kg' : 'lbs'} × ${widget.targetReps}',
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 10 : 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      Text(
+                        _setTypeLabel,
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 9 : 10,
+                          fontWeight: FontWeight.w500,
+                          color: mutedColor,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

@@ -11,17 +11,17 @@ UPCOMING:
 56. 
 
 ISSUES:
-53. 
+53. Whats the difference between generate_workout_plan_streaming and _ai_select_exercises?
 
 ASAP:
 0. Ability to add superset during the workout
 0.1. Ability to add superset before the workout
-0.2. Review fitness app hevy and gravl for superset
-0.3. Review fitness app hevy and gravl for weight inputs (pyramind, reverse pyramind etc)
+0.2. Implement superset like macrofactor
+0.3. Review fitness app hevy and gravl, macrofactor workouts for weight inputs (pyramind, reverse pyramind etc)
 1. Strength Score per muscle
 1.1. Review fitness app hevy and gravl for more features
 1.2. Review Reddit posts
-2. Premium Subscription has to work
+2. Premium Subscription has to work (79.99$ yearly)
 3. Test and check for offline mode
 4. Have only 1 male coach and the rest be female coaches - Need to regenerate images using ChatGPT.
 5. Achievements and rewards

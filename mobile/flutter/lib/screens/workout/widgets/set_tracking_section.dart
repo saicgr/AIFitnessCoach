@@ -199,29 +199,39 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
                           if (widget.isCurrentExercise && widget.currentSetNumber <= widget.totalSets)
                             Padding(
                               padding: const EdgeInsets.all(12),
-                              child: FuturisticSetCard(
-                                exerciseName: widget.exercise.name,
-                                currentSetNumber: widget.currentSetNumber,
-                                totalSets: widget.totalSets,
-                                weight: widget.currentWeight,
-                                reps: widget.currentReps,
-                                weightStep: widget.weightStep,
-                                useKg: widget.useKg,
-                                onUnitToggle: widget.onUnitToggle,
-                                previousWeight: _getPreviousWeight(),
-                                previousReps: _getPreviousReps(),
-                                onWeightChanged: widget.onWeightChanged,
-                                onRepsChanged: widget.onRepsChanged,
-                                onComplete: widget.onCompleteSet,
-                                onSkip: widget.onSkipExercise,
-                                completedSets: widget.completedSets
-                                    .map((s) => {'weight': s.weight, 'reps': s.reps})
-                                    .toList(),
-                                isLastSet: widget.currentSetNumber >= widget.totalSets,
-                                setType: widget.setType,
-                                onSetTypeChanged: widget.onSetTypeChanged,
-                                smartWeightSuggestion: widget.smartWeightSuggestion,
-                                isWeightFromAiSuggestion: widget.isWeightFromAiSuggestion,
+                              child: Builder(
+                                builder: (context) {
+                                  // Get target for current set from exercise's setTargets
+                                  final currentTarget = widget.exercise.getTargetForSet(widget.currentSetNumber);
+                                  return FuturisticSetCard(
+                                    exerciseName: widget.exercise.name,
+                                    currentSetNumber: widget.currentSetNumber,
+                                    totalSets: widget.totalSets,
+                                    weight: widget.currentWeight,
+                                    reps: widget.currentReps,
+                                    weightStep: widget.weightStep,
+                                    useKg: widget.useKg,
+                                    onUnitToggle: widget.onUnitToggle,
+                                    previousWeight: _getPreviousWeight(),
+                                    previousReps: _getPreviousReps(),
+                                    onWeightChanged: widget.onWeightChanged,
+                                    onRepsChanged: widget.onRepsChanged,
+                                    onComplete: widget.onCompleteSet,
+                                    onSkip: widget.onSkipExercise,
+                                    completedSets: widget.completedSets
+                                        .map((s) => {'weight': s.weight, 'reps': s.reps})
+                                        .toList(),
+                                    isLastSet: widget.currentSetNumber >= widget.totalSets,
+                                    setType: currentTarget?.setType ?? widget.setType,
+                                    onSetTypeChanged: widget.onSetTypeChanged,
+                                    smartWeightSuggestion: widget.smartWeightSuggestion,
+                                    isWeightFromAiSuggestion: widget.isWeightFromAiSuggestion,
+                                    // Pass target RIR and other set-specific info
+                                    targetRir: currentTarget?.targetRir,
+                                    targetReps: currentTarget?.targetReps,
+                                    targetWeight: currentTarget?.targetWeightKg,
+                                  );
+                                },
                               ),
                             ),
 

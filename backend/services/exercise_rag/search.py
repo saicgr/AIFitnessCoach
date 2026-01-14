@@ -22,7 +22,7 @@ FOCUS_AREA_KEYWORDS = {
     "full_body_upper": "full body workout upper body focus chest back shoulders arms",
     "full_body_lower": "full body workout lower body focus legs glutes quads hamstrings calves",
     "full_body_power": "full body workout power explosive movements plyometrics jumps",
-    "full_body": "full body balanced workout compound exercises",
+    "full_body": "full body balanced workout compound exercises barbell dumbbell cable machine kettlebell strength training",
 
     # Upper/Lower split focus areas
     "upper": "upper body workout chest back shoulders arms biceps triceps pressing pulling rows",

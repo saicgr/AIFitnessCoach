@@ -315,6 +315,19 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
                           ),
                       textAlign: TextAlign.center,
                     ),
+                    // Unilateral indicator (like Gravl - "each side")
+                    if (widget.exercise.isUnilateral == true)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          '(each side)',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: textSecondary,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 8),
 
                     // Target muscle

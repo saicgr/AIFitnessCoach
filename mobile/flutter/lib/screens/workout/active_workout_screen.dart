@@ -4549,16 +4549,33 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      exercise.name,
-                      style: TextStyle(
-                        fontSize: titleFontSize,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        shadows: const [Shadow(blurRadius: 8, color: Colors.black54)],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            exercise.name,
+                            style: TextStyle(
+                              fontSize: titleFontSize,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              shadows: const [Shadow(blurRadius: 8, color: Colors.black54)],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        // Unilateral indicator (like Gravl - "each side")
+                        if (exercise.isUnilateral == true)
+                          Text(
+                            ' (each side)',
+                            style: TextStyle(
+                              fontSize: isCompact ? 10.0 : 12.0,
+                              fontStyle: FontStyle.italic,
+                              color: Colors.white.withOpacity(0.7),
+                              shadows: const [Shadow(blurRadius: 8, color: Colors.black54)],
+                            ),
+                          ),
+                      ],
                     ),
                     Text(
                       '${_currentExerciseIndex + 1}/${_exercises.length}',
