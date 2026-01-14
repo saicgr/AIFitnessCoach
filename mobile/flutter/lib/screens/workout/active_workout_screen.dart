@@ -248,9 +248,13 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     _workout = widget.workout;
     _exercises = List.from(widget.workout.exercises);
     // Initialize input controllers with default values from first exercise
+    // Prefer AI-generated setTargets data over generic exercise weight
     final firstExercise = _exercises[0];
-    _repsController = TextEditingController(text: (firstExercise.reps ?? 10).toString());
-    _weightController = TextEditingController(text: (firstExercise.weight ?? 0).toString());
+    final firstSetTarget = firstExercise.getTargetForSet(1);
+    final initialReps = firstSetTarget?.targetReps ?? firstExercise.reps ?? 10;
+    final initialWeight = firstSetTarget?.targetWeightKg ?? firstExercise.weight ?? 0;
+    _repsController = TextEditingController(text: initialReps.toString());
+    _weightController = TextEditingController(text: initialWeight.toString());
     _startWorkoutTimer();
     // Initialize completed sets tracking
     for (int i = 0; i < _exercises.length; i++) {
@@ -2031,8 +2035,18 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     _isWeightFromAiSuggestion = false;
 
     if (_currentSet < totalSets) {
-      // Move to next set, keep the same weight/reps for convenience
+      // Move to next set
       setState(() => _currentSet++);
+
+      // Update controllers with AI target for the new set (if available)
+      final nextSetTarget = exercise.getTargetForSet(_currentSet);
+      if (nextSetTarget != null) {
+        if (nextSetTarget.targetWeightKg != null) {
+          _weightController.text = nextSetTarget.targetWeightKg.toString();
+        }
+        _repsController.text = nextSetTarget.targetReps.toString();
+      }
+
       final restTime = exercise.restSeconds ?? 90;
 
       // Build context for smart rest messages
@@ -2360,8 +2374,10 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
         _showInstructions = false;
       });
       // Update controllers with next exercise defaults
-      _repsController.text = (nextExercise.reps ?? 10).toString();
-      _weightController.text = (nextExercise.weight ?? 0).toString();
+      // Prefer AI-generated setTargets data for first set
+      final firstSetTarget = nextExercise.getTargetForSet(1);
+      _repsController.text = (firstSetTarget?.targetReps ?? nextExercise.reps ?? 10).toString();
+      _weightController.text = (firstSetTarget?.targetWeightKg ?? nextExercise.weight ?? 0).toString();
       _fetchMediaForExercise(nextExercise);
 
       // Fetch smart weight suggestion for new exercise
@@ -2485,8 +2501,10 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     });
 
     // Update controllers with exercise defaults
-    _repsController.text = (exercise.reps ?? 10).toString();
-    _weightController.text = (exercise.weight ?? 0).toString();
+    // Prefer AI-generated setTargets data for the current set
+    final setTarget = exercise.getTargetForSet(_currentSet);
+    _repsController.text = (setTarget?.targetReps ?? exercise.reps ?? 10).toString();
+    _weightController.text = (setTarget?.targetWeightKg ?? exercise.weight ?? 0).toString();
 
     _fetchMediaForExercise(exercise);
     HapticFeedback.mediumImpact();

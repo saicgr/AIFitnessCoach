@@ -1316,6 +1316,21 @@ def apply_1rm_weights_to_exercises(
                 exercise_copy["one_rep_max_kg"] = one_rep_max_kg
                 exercise_copy["intensity_percent"] = intensity
 
+                # Also update setTargets weights if present (for per-set AI targets)
+                if "set_targets" in exercise_copy and exercise_copy["set_targets"]:
+                    for set_target in exercise_copy["set_targets"]:
+                        set_type = set_target.get("set_type", "working")
+                        if set_type == "warmup":
+                            # Warmup sets at 50% of working weight
+                            set_target["target_weight_kg"] = round(working_weight * 0.5, 1)
+                        elif set_type == "drop":
+                            # Drop sets at 80% of working weight
+                            set_target["target_weight_kg"] = round(working_weight * 0.8, 1)
+                        else:
+                            # Working/failure/amrap sets at full working weight
+                            set_target["target_weight_kg"] = working_weight
+                    logger.debug(f"Updated {len(exercise_copy['set_targets'])} set_targets with 1RM-based weights")
+
                 logger.debug(
                     f"Applied 1RM weight: {exercise_name} - "
                     f"1RM: {one_rep_max_kg}kg @ {intensity}% = {working_weight}kg"

@@ -616,6 +616,100 @@ class TestCalendarHeatmapEndpoint:
 
         assert response.status_code == 200
 
+    @patch('api.v1.consistency.get_supabase_db')
+    def test_accepts_date_range_parameters(self, mock_db, client):
+        """Should accept start_date and end_date parameters for custom date range."""
+        mock_result = MagicMock()
+        mock_result.data = []
+
+        mock_db_instance = MagicMock()
+        mock_query = MagicMock()
+        mock_query.select.return_value = mock_query
+        mock_query.eq.return_value = mock_query
+        mock_query.gte.return_value = mock_query
+        mock_query.lte.return_value = mock_query
+        mock_query.execute.return_value = mock_result
+        mock_db_instance.client.table.return_value = mock_query
+        mock_db.return_value = mock_db_instance
+
+        response = client.get(
+            "/api/v1/consistency/calendar?user_id=test-user&start_date=2025-01-01&end_date=2025-01-31"
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["start_date"] == "2025-01-01"
+        assert data["end_date"] == "2025-01-31"
+
+    @patch('api.v1.consistency.get_supabase_db')
+    def test_date_range_returns_correct_days(self, mock_db, client):
+        """Should return correct number of days for date range."""
+        mock_result = MagicMock()
+        mock_result.data = []
+
+        mock_db_instance = MagicMock()
+        mock_query = MagicMock()
+        mock_query.select.return_value = mock_query
+        mock_query.eq.return_value = mock_query
+        mock_query.gte.return_value = mock_query
+        mock_query.lte.return_value = mock_query
+        mock_query.execute.return_value = mock_result
+        mock_db_instance.client.table.return_value = mock_query
+        mock_db.return_value = mock_db_instance
+
+        # Request 7 days
+        response = client.get(
+            "/api/v1/consistency/calendar?user_id=test-user&start_date=2025-01-01&end_date=2025-01-07"
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["data"]) == 7
+
+    def test_invalid_date_format_returns_400(self, client):
+        """Should return 400 for invalid date format."""
+        response = client.get(
+            "/api/v1/consistency/calendar?user_id=test-user&start_date=invalid&end_date=2025-01-31"
+        )
+        assert response.status_code == 400
+        assert "Invalid date format" in response.json()["detail"]
+
+    def test_end_date_before_start_date_returns_400(self, client):
+        """Should return 400 when end_date is before start_date."""
+        response = client.get(
+            "/api/v1/consistency/calendar?user_id=test-user&start_date=2025-01-31&end_date=2025-01-01"
+        )
+        assert response.status_code == 400
+        assert "end_date must be greater than or equal to start_date" in response.json()["detail"]
+
+    @patch('api.v1.consistency.get_supabase_db')
+    def test_backward_compatibility_with_weeks(self, mock_db, client):
+        """Should still work with weeks parameter for backward compatibility."""
+        mock_result = MagicMock()
+        mock_result.data = []
+
+        mock_db_instance = MagicMock()
+        mock_query = MagicMock()
+        mock_query.select.return_value = mock_query
+        mock_query.eq.return_value = mock_query
+        mock_query.gte.return_value = mock_query
+        mock_query.lte.return_value = mock_query
+        mock_query.execute.return_value = mock_result
+        mock_db_instance.client.table.return_value = mock_query
+        mock_db.return_value = mock_db_instance
+
+        # Test without any date params (should default to 4 weeks)
+        response = client.get(
+            "/api/v1/consistency/calendar?user_id=test-user"
+        )
+        assert response.status_code == 200
+
+        # Test with weeks param
+        response = client.get(
+            "/api/v1/consistency/calendar?user_id=test-user&weeks=2"
+        )
+        assert response.status_code == 200
+
 
 # ============================================================================
 # API Endpoint Tests - Streak Recovery

@@ -83,6 +83,9 @@ dependencies:
   # Gallery Saver (for saving workout images to device gallery)
   gal: ^2.3.0
 
+  # PDF Generation (for stats export)
+  pdf: ^3.11.1
+
   # Text-to-Speech (for voice announcements during workouts)
   flutter_tts: ^4.2.0
 

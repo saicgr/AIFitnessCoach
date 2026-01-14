@@ -598,6 +598,353 @@ class WorkoutRAGService:
             print(f"❌ Failed to index program preferences: {e}")
             return ""
 
+    async def index_training_settings(
+        self,
+        user_id: str,
+        action: str,
+        one_rms: Optional[List[Dict[str, Any]]] = None,
+        global_intensity_percent: Optional[int] = None,
+        exercise_overrides: Optional[Dict[str, int]] = None,
+        progression_pace: Optional[str] = None,
+        training_split: Optional[str] = None,
+        workout_type: Optional[str] = None,
+        exercise_consistency: Optional[str] = None,  # 'consistent' or 'varied'
+        variation_percentage: Optional[int] = None,  # 0-100
+    ) -> str:
+        """
+        Index training settings changes for AI context retrieval.
+
+        This allows the AI coach to reference the user's training configuration:
+        - "Based on your 100kg bench press 1RM at 75% intensity, try 75kg..."
+        - "Since you prefer slow progression, I'll keep weights steady..."
+        - "Your Push/Pull/Legs split means today is a push day..."
+
+        Args:
+            user_id: User ID
+            action: What changed (set_1rm, delete_1rm, set_training_intensity, etc.)
+            one_rms: List of 1RM records [{exercise_name, one_rep_max_kg, source}]
+            global_intensity_percent: Global training intensity (50-100%)
+            exercise_overrides: Per-exercise intensity overrides {exercise: percent}
+            progression_pace: slow/medium/fast
+            training_split: full_body/push_pull_legs/upper_lower/etc.
+            workout_type: strength/cardio/mixed/mobility/recovery
+            exercise_consistency: 'consistent' or 'varied' - whether to use same exercises weekly
+            variation_percentage: 0-100 - percentage of exercises that rotate each week
+
+        Returns:
+            Document ID
+        """
+        from datetime import datetime
+
+        timestamp = datetime.now().isoformat()
+        doc_id = f"training_{user_id}_{action}_{timestamp}"
+
+        # Build training settings summary text
+        parts = [f"Training Settings Update for user {user_id}"]
+        parts.append(f"Updated: {timestamp}")
+        parts.append(f"Action: {action}")
+
+        if one_rms:
+            parts.append("One Rep Max (1RM) Records:")
+            for rm in one_rms:
+                exercise = rm.get("exercise_name", "Unknown")
+                weight = rm.get("one_rep_max_kg", 0)
+                source = rm.get("source", "manual")
+                parts.append(f"  - {exercise}: {weight}kg ({source})")
+
+        if global_intensity_percent is not None:
+            intensity_desc = self._get_intensity_description(global_intensity_percent)
+            parts.append(f"Global Training Intensity: {global_intensity_percent}% ({intensity_desc})")
+
+        if exercise_overrides:
+            parts.append("Per-Exercise Intensity Overrides:")
+            for exercise, percent in exercise_overrides.items():
+                desc = self._get_intensity_description(percent)
+                parts.append(f"  - {exercise}: {percent}% ({desc})")
+
+        if progression_pace:
+            pace_desc = {
+                'slow': 'Increase weight every 3-4 weeks',
+                'medium': 'Increase weight every 1-2 weeks',
+                'fast': 'Increase weight every session',
+            }.get(progression_pace, progression_pace)
+            parts.append(f"Progression Pace: {progression_pace} - {pace_desc}")
+
+        if training_split:
+            split_desc = {
+                'full_body': 'Full Body - All muscle groups each workout',
+                'upper_lower': 'Upper/Lower - Alternating upper and lower body',
+                'push_pull_legs': 'Push/Pull/Legs - Classic PPL split',
+                'body_part': 'Body Part Split - One muscle group per day',
+                'phul': 'PHUL - Power Hypertrophy Upper Lower',
+                'arnold_split': 'Arnold Split - Chest/Back, Shoulders/Arms, Legs',
+                'hyrox': 'HYROX - Hybrid running + functional',
+                'dont_know': 'Let AI Decide - Based on schedule and goals',
+            }.get(training_split, training_split)
+            parts.append(f"Training Split: {split_desc}")
+
+        if workout_type:
+            type_desc = {
+                'strength': 'Weight training focus',
+                'cardio': 'Running, cycling, HIIT',
+                'mixed': 'Strength + cardio days',
+                'mobility': 'Stretching, yoga, flexibility',
+                'recovery': 'Light movement, active rest',
+            }.get(workout_type, workout_type)
+            parts.append(f"Workout Type: {workout_type} - {type_desc}")
+
+        # Exercise Consistency
+        if exercise_consistency:
+            if exercise_consistency == "consistent":
+                parts.append("Exercise Consistency: CONSISTENT - Same core exercises each week for better progress tracking")
+            else:
+                parts.append("Exercise Consistency: VARIED - Different exercises each week to prevent boredom and hit muscles from different angles")
+
+        # Weekly Variety
+        if variation_percentage is not None:
+            parts.append(f"Weekly Variety: {variation_percentage}% - {100 - variation_percentage}% of exercises stay the same, {variation_percentage}% rotate each week")
+
+        settings_text = "\n".join(parts)
+
+        # Get embedding and store
+        try:
+            embedding = await self.gemini_service.get_embedding_async(settings_text)
+
+            # Build metadata
+            metadata = {
+                "user_id": user_id,
+                "change_type": "training_settings",
+                "action": action,
+                "timestamp": timestamp,
+            }
+            if global_intensity_percent is not None:
+                metadata["global_intensity_percent"] = global_intensity_percent
+            if progression_pace:
+                metadata["progression_pace"] = progression_pace
+            if training_split:
+                metadata["training_split"] = training_split
+            if workout_type:
+                metadata["workout_type"] = workout_type
+            if one_rms:
+                # Store 1RM summary as comma-separated for search
+                rm_summary = ",".join([f"{rm['exercise_name']}:{rm['one_rep_max_kg']}kg" for rm in one_rms])
+                metadata["one_rms"] = rm_summary[:500]  # Limit length
+            if exercise_consistency:
+                metadata["exercise_consistency"] = exercise_consistency
+            if variation_percentage is not None:
+                metadata["variation_percentage"] = variation_percentage
+
+            self.changes_collection.add(
+                ids=[doc_id],
+                embeddings=[embedding],
+                documents=[settings_text],
+                metadatas=[metadata],
+            )
+
+            print(f"📝 Indexed training settings for user {user_id}: {action}")
+            return doc_id
+        except Exception as e:
+            print(f"❌ Failed to index training settings: {e}")
+            return ""
+
+    def get_recent_training_settings(
+        self,
+        user_id: str,
+        days_lookback: int = 30,
+        max_results: int = 10,
+    ) -> Dict[str, Any]:
+        """
+        Retrieve the most recent training settings for a user with recency filtering.
+
+        This method queries the changes_collection and returns a consolidated view
+        of the user's current training configuration, prioritizing the most recent
+        settings for each category.
+
+        Args:
+            user_id: User ID to retrieve settings for
+            days_lookback: Only consider settings from the last N days (default 30)
+            max_results: Maximum number of documents to query (default 10)
+
+        Returns:
+            Dict containing consolidated training settings:
+            {
+                "one_rms": {"bench press": 100, ...},  # Most recent 1RMs
+                "global_intensity_percent": 75,
+                "progression_pace": "medium",
+                "training_split": "push_pull_legs",
+                "workout_type": "strength",
+                "exercise_consistency": "varied",
+                "variation_percentage": 30,
+                "context_text": "Formatted text for AI context",
+                "has_settings": bool,
+            }
+        """
+        from datetime import datetime, timedelta
+
+        try:
+            # Query training settings for this user
+            results = self.changes_collection.get(
+                where={
+                    "$and": [
+                        {"user_id": {"$eq": user_id}},
+                        {"change_type": {"$eq": "training_settings"}},
+                    ]
+                },
+                include=["metadatas", "documents"],
+            )
+
+            if not results or not results.get("metadatas"):
+                return {
+                    "one_rms": {},
+                    "global_intensity_percent": None,
+                    "progression_pace": None,
+                    "training_split": None,
+                    "workout_type": None,
+                    "exercise_consistency": None,
+                    "variation_percentage": None,
+                    "context_text": "",
+                    "has_settings": False,
+                }
+
+            # Filter by recency and sort by timestamp (most recent first)
+            cutoff_date = datetime.now() - timedelta(days=days_lookback)
+            cutoff_str = cutoff_date.isoformat()
+
+            # Pair metadata with documents and filter by date
+            valid_entries = []
+            for i, metadata in enumerate(results["metadatas"]):
+                timestamp = metadata.get("timestamp", "")
+                if timestamp >= cutoff_str:
+                    valid_entries.append({
+                        "metadata": metadata,
+                        "document": results["documents"][i] if results.get("documents") else "",
+                        "timestamp": timestamp,
+                    })
+
+            # Sort by timestamp descending (most recent first)
+            valid_entries.sort(key=lambda x: x["timestamp"], reverse=True)
+
+            # Consolidate settings - most recent value wins
+            consolidated = {
+                "one_rms": {},
+                "global_intensity_percent": None,
+                "progression_pace": None,
+                "training_split": None,
+                "workout_type": None,
+                "exercise_consistency": None,
+                "variation_percentage": None,
+            }
+
+            # Track which settings we've already set (most recent wins)
+            set_fields = set()
+
+            for entry in valid_entries[:max_results]:
+                meta = entry["metadata"]
+
+                # Global intensity
+                if "global_intensity_percent" not in set_fields and meta.get("global_intensity_percent"):
+                    consolidated["global_intensity_percent"] = meta["global_intensity_percent"]
+                    set_fields.add("global_intensity_percent")
+
+                # Progression pace
+                if "progression_pace" not in set_fields and meta.get("progression_pace"):
+                    consolidated["progression_pace"] = meta["progression_pace"]
+                    set_fields.add("progression_pace")
+
+                # Training split
+                if "training_split" not in set_fields and meta.get("training_split"):
+                    consolidated["training_split"] = meta["training_split"]
+                    set_fields.add("training_split")
+
+                # Workout type
+                if "workout_type" not in set_fields and meta.get("workout_type"):
+                    consolidated["workout_type"] = meta["workout_type"]
+                    set_fields.add("workout_type")
+
+                # Exercise consistency
+                if "exercise_consistency" not in set_fields and meta.get("exercise_consistency"):
+                    consolidated["exercise_consistency"] = meta["exercise_consistency"]
+                    set_fields.add("exercise_consistency")
+
+                # Variation percentage
+                if "variation_percentage" not in set_fields and meta.get("variation_percentage") is not None:
+                    consolidated["variation_percentage"] = meta["variation_percentage"]
+                    set_fields.add("variation_percentage")
+
+                # 1RMs - merge all, most recent overwrites older for same exercise
+                if meta.get("one_rms"):
+                    rm_pairs = meta["one_rms"].split(",")
+                    for pair in rm_pairs:
+                        if ":" in pair:
+                            exercise, weight = pair.rsplit(":", 1)
+                            exercise = exercise.strip().lower()
+                            if exercise not in consolidated["one_rms"]:
+                                # Parse weight (remove 'kg' suffix)
+                                try:
+                                    weight_val = float(weight.replace("kg", "").strip())
+                                    consolidated["one_rms"][exercise] = weight_val
+                                except ValueError:
+                                    pass
+
+            # Build context text for AI
+            context_parts = []
+            if consolidated["one_rms"]:
+                rm_text = ", ".join([f"{ex}: {w}kg" for ex, w in consolidated["one_rms"].items()])
+                context_parts.append(f"User's 1RM Records: {rm_text}")
+
+            if consolidated["global_intensity_percent"]:
+                intensity_desc = self._get_intensity_description(consolidated["global_intensity_percent"])
+                context_parts.append(f"Training Intensity: {consolidated['global_intensity_percent']}% ({intensity_desc})")
+
+            if consolidated["progression_pace"]:
+                context_parts.append(f"Progression Pace: {consolidated['progression_pace']}")
+
+            if consolidated["training_split"]:
+                context_parts.append(f"Training Split: {consolidated['training_split']}")
+
+            if consolidated["workout_type"]:
+                context_parts.append(f"Workout Type: {consolidated['workout_type']}")
+
+            if consolidated["exercise_consistency"]:
+                consistency_desc = "same exercises each week" if consolidated["exercise_consistency"] == "consistent" else "varied exercises"
+                context_parts.append(f"Exercise Consistency: {consolidated['exercise_consistency']} ({consistency_desc})")
+
+            if consolidated["variation_percentage"] is not None:
+                context_parts.append(f"Weekly Variety: {consolidated['variation_percentage']}% exercises rotate")
+
+            consolidated["context_text"] = "\n".join(context_parts)
+            consolidated["has_settings"] = bool(context_parts)
+
+            print(f"📊 Retrieved training settings for user {user_id}: {len(valid_entries)} recent entries")
+            return consolidated
+
+        except Exception as e:
+            print(f"❌ Failed to retrieve training settings: {e}")
+            return {
+                "one_rms": {},
+                "global_intensity_percent": None,
+                "progression_pace": None,
+                "training_split": None,
+                "workout_type": None,
+                "exercise_consistency": None,
+                "variation_percentage": None,
+                "context_text": "",
+                "has_settings": False,
+            }
+
+    def _get_intensity_description(self, percent: int) -> str:
+        """Get human-readable description for intensity percentage."""
+        if percent <= 60:
+            return "Light/Recovery"
+        elif percent <= 70:
+            return "Moderate/Endurance"
+        elif percent <= 80:
+            return "Working Weight/Hypertrophy"
+        elif percent <= 90:
+            return "Heavy/Strength"
+        else:
+            return "Near Max/Peaking"
+
     def get_stats(self) -> Dict[str, Any]:
         """Get workout RAG statistics."""
         return {

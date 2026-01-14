@@ -26,8 +26,8 @@ router = APIRouter()
 @router.get("/feed/{user_id}")
 async def get_activity_feed(
     user_id: str,
-    page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page: int = 1,
+    page_size: int = 20,
     activity_type: Optional[ActivityType] = None,
 ):
     """

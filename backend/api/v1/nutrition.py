@@ -1402,6 +1402,20 @@ async def log_food_direct(request: LogDirectRequest):
     """
     logger.info(f"Logging food directly for user {request.user_id}, source: {request.source_type}")
 
+    # Debug: Log incoming values
+    logger.info(
+        f"[LOG-DIRECT] RECEIVED VALUES | "
+        f"user={request.user_id} | "
+        f"calories={request.total_calories} | "
+        f"protein={request.total_protein} | "
+        f"carbs={request.total_carbs} | "
+        f"fat={request.total_fat} | "
+        f"food_items_count={len(request.food_items)}"
+    )
+    if request.food_items:
+        for idx, item in enumerate(request.food_items[:3]):  # Log first 3 items
+            logger.info(f"[LOG-DIRECT] ITEM[{idx}] | name={item.get('name')} | calories={item.get('calories')}")
+
     try:
         db = get_supabase_db()
 
@@ -2035,11 +2049,21 @@ async def analyze_food_from_image_streaming(
 
     Returns SSE events with progress updates and final analysis (no save).
     """
-    logger.info(f"[ANALYZE-STREAM] Analyzing food from image for user {user_id}, meal_type={meal_type}")
+    import uuid
+    request_id = f"req_{uuid.uuid4().hex[:12]}"
 
     # Read image upfront (before generator)
     image_bytes = await image.read()
     content_type = image.content_type or 'image/jpeg'
+    image_size_kb = len(image_bytes) // 1024
+
+    logger.info(
+        f"[ANALYZE-STREAM:{request_id}] START | "
+        f"user={user_id} | "
+        f"meal_type={meal_type} | "
+        f"content_type={content_type} | "
+        f"image_size_kb={image_size_kb}"
+    )
 
     async def generate_sse() -> AsyncGenerator[str, None]:
         start_time = time.time()
@@ -2054,36 +2078,71 @@ async def analyze_food_from_image_streaming(
                 "total_steps": total,
                 "message": message,
                 "detail": detail,
+                "request_id": request_id,
                 "elapsed_ms": elapsed_ms()
             }
             return f"event: progress\ndata: {json.dumps(data)}\n\n"
 
-        def send_error(error: str):
-            data = {"type": "error", "error": error, "elapsed_ms": elapsed_ms()}
+        def send_error(error: str, error_code: str = "UNKNOWN_ERROR", error_details: str = None):
+            data = {
+                "type": "error",
+                "error": error,
+                "error_code": error_code,
+                "error_details": error_details,
+                "request_id": request_id,
+                "user_id": user_id,
+                "elapsed_ms": elapsed_ms()
+            }
+            logger.error(
+                f"[ANALYZE-STREAM:{request_id}] FAILED | "
+                f"user={user_id} | "
+                f"error_code={error_code} | "
+                f"error={error} | "
+                f"details={error_details} | "
+                f"elapsed_ms={elapsed_ms()}"
+            )
             return f"event: error\ndata: {json.dumps(data)}\n\n"
 
         try:
             # Step 1: Process image
-            yield send_progress(1, 3, "Processing image...", f"{len(image_bytes) // 1024} KB")
+            yield send_progress(1, 3, "Processing image...", f"{image_size_kb} KB")
+            logger.info(f"[ANALYZE-STREAM:{request_id}] Step 1: Image processing started")
 
             image_base64 = base64.b64encode(image_bytes).decode('utf-8')
 
             # Step 2: Analyze with AI
             yield send_progress(2, 3, "Analyzing your food...", "AI is identifying ingredients")
+            logger.info(f"[ANALYZE-STREAM:{request_id}] Step 2: Sending to Gemini for analysis")
 
             gemini_service = GeminiService()
             food_analysis = await gemini_service.analyze_food_image(
                 image_base64=image_base64,
                 mime_type=content_type,
+                request_id=request_id,
             )
 
+            # Check if Gemini returned an error structure
+            if food_analysis and food_analysis.get('error'):
+                yield send_error(
+                    food_analysis.get('error'),
+                    food_analysis.get('error_code', 'GEMINI_ERROR'),
+                    food_analysis.get('error_details')
+                )
+                return
+
+            # Check for empty or missing food items
             if not food_analysis or not food_analysis.get('food_items'):
-                yield send_error("Could not identify any food items in the image")
+                yield send_error(
+                    "Could not identify any food items in the image. Please try a clearer photo.",
+                    "NO_FOOD_DETECTED",
+                    "Gemini analysis returned empty food_items"
+                )
                 return
 
             # Step 3: Calculate nutrition (analysis complete - NO SAVE)
             food_items = food_analysis.get('food_items', [])
             yield send_progress(3, 3, "Calculating nutrition...", f"Found {len(food_items)} items")
+            logger.info(f"[ANALYZE-STREAM:{request_id}] Step 3: Found {len(food_items)} food items")
 
             total_calories = food_analysis.get('total_calories', 0)
             protein_g = food_analysis.get('protein_g', 0.0)
@@ -2103,12 +2162,24 @@ async def analyze_food_from_image_streaming(
             calcium_mg = food_analysis.get('calcium_mg')
             iron_mg = food_analysis.get('iron_mg')
 
-            logger.info(f"[ANALYZE-STREAM] Image analysis complete for user {user_id}: {total_calories} calories")
+            # Log success with full details
+            logger.info(
+                f"[ANALYZE-STREAM:{request_id}] SUCCESS | "
+                f"user={user_id} | "
+                f"meal_type={meal_type} | "
+                f"items={len(food_items)} | "
+                f"calories={total_calories} | "
+                f"protein={protein_g}g | "
+                f"carbs={carbs_g}g | "
+                f"fat={fat_g}g | "
+                f"elapsed_ms={elapsed_ms()}"
+            )
 
             # Send the analysis result (NO database save - user must confirm first)
             response_data = {
                 "success": True,
                 "is_analysis_only": True,  # Flag to indicate this is not yet saved
+                "request_id": request_id,
                 "food_items": food_items,
                 "total_calories": total_calories,
                 "protein_g": protein_g,
@@ -2133,8 +2204,12 @@ async def analyze_food_from_image_streaming(
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 
         except Exception as e:
-            logger.error(f"[ANALYZE-STREAM] Image food analysis error: {e}")
-            yield send_error(str(e))
+            logger.exception(f"[ANALYZE-STREAM:{request_id}] EXCEPTION | user={user_id} | error={e}")
+            yield send_error(
+                "An unexpected error occurred. Please try again.",
+                "UNEXPECTED_EXCEPTION",
+                f"{type(e).__name__}: {str(e)}"
+            )
 
     return StreamingResponse(
         generate_sse(),

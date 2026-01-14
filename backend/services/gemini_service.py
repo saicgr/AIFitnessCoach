@@ -14,6 +14,7 @@ from typing import List, Dict, Optional
 import json
 import logging
 import asyncio
+import time
 from core.config import get_settings
 from models.chat import IntentExtraction, CoachIntent
 from models.gemini_schemas import (
@@ -414,18 +415,27 @@ class GeminiService:
             weight_g = item['weight_g']
 
             if usda_data:
-                item['usda_data'] = usda_data
-                item['ai_per_gram'] = None
+                # Check if USDA data has valid calories (non-zero)
+                usda_calories_per_100g = usda_data.get('calories_per_100g', 0)
 
-                # Recalculate nutrition using USDA data
-                if weight_g > 0:
+                if usda_calories_per_100g > 0 and weight_g > 0:
+                    # Use USDA data - it has valid nutritional info
+                    item['usda_data'] = usda_data
+                    item['ai_per_gram'] = None
+
                     multiplier = weight_g / 100.0
-                    item['calories'] = round(usda_data['calories_per_100g'] * multiplier)
+                    item['calories'] = round(usda_calories_per_100g * multiplier)
                     item['protein_g'] = round(usda_data['protein_per_100g'] * multiplier, 1)
                     item['carbs_g'] = round(usda_data['carbs_per_100g'] * multiplier, 1)
                     item['fat_g'] = round(usda_data['fat_per_100g'] * multiplier, 1)
                     item['fiber_g'] = round(usda_data['fiber_per_100g'] * multiplier, 1)
-            else:
+                    logger.info(f"[USDA] Using USDA data for '{food_names[i]}' | calories={item['calories']} | usda_cal/100g={usda_calories_per_100g}")
+                else:
+                    # USDA match found but has 0 calories - fall back to AI values
+                    logger.warning(f"[USDA] Found match for '{food_names[i]}' but calories=0, keeping AI estimate | ai_calories={item.get('calories', 0)}")
+                    item['usda_data'] = None  # Mark as no valid USDA data
+                    item['ai_per_gram'] = None
+            elif usda_data is None:
                 # Fallback: Calculate per-gram from AI estimate
                 item['usda_data'] = None
                 original_item = food_items[i]
@@ -684,17 +694,25 @@ IMPORTANT:
         self,
         image_base64: str,
         mime_type: str = "image/jpeg",
-    ) -> Optional[Dict]:
+        request_id: str = None,
+    ) -> Dict:
         """
         Analyze a food image and extract nutrition information using Gemini Vision.
 
         Args:
             image_base64: Base64 encoded image data
             mime_type: Image MIME type (e.g., 'image/jpeg', 'image/png')
+            request_id: Unique request ID for log traceability
 
         Returns:
             Dictionary with food_items, total_calories, protein_g, carbs_g, fat_g, fiber_g, feedback
+            On error, returns dict with 'error', 'error_code', and 'error_details' keys
         """
+        req_id = request_id or f"img_{int(time.time() * 1000)}"
+        image_size_kb = len(image_base64) * 3 // 4 // 1024  # Approximate decoded size
+
+        logger.info(f"[IMAGE-ANALYSIS:{req_id}] Starting food image analysis | mime={mime_type} | size_kb={image_size_kb}")
+
         # Prompt with weight/count fields for portion editing (like text describe feature)
         prompt = '''Analyze this food image and identify the foods with their nutrition.
 
@@ -733,15 +751,27 @@ WEIGHT/COUNT FIELDS (required for portion editing):
 
         # Timeout for image analysis - needs to be generous for complex images
         IMAGE_ANALYSIS_TIMEOUT = 60  # 60 seconds for images with many food items
+        start_time = time.time()
 
         try:
             # Create image part from base64
-            image_part = types.Part.from_bytes(
-                data=__import__('base64').b64decode(image_base64),
-                mime_type=mime_type
-            )
+            try:
+                image_part = types.Part.from_bytes(
+                    data=__import__('base64').b64decode(image_base64),
+                    mime_type=mime_type
+                )
+                logger.info(f"[IMAGE-ANALYSIS:{req_id}] Image decoded successfully")
+            except Exception as decode_err:
+                logger.error(f"[IMAGE-ANALYSIS:{req_id}] FAILED to decode base64 image | error={decode_err}")
+                return {
+                    "error": "Failed to decode image",
+                    "error_code": "IMAGE_DECODE_FAILED",
+                    "error_details": str(decode_err),
+                    "request_id": req_id,
+                }
 
             # Add timeout to prevent hanging on slow Gemini responses
+            logger.info(f"[IMAGE-ANALYSIS:{req_id}] Sending to Gemini API | model={self.model} | timeout={IMAGE_ANALYSIS_TIMEOUT}s")
             try:
                 response = await asyncio.wait_for(
                     client.aio.models.generate_content(
@@ -756,15 +786,92 @@ WEIGHT/COUNT FIELDS (required for portion editing):
                     ),
                     timeout=IMAGE_ANALYSIS_TIMEOUT
                 )
+                elapsed = time.time() - start_time
+                logger.info(f"[IMAGE-ANALYSIS:{req_id}] Gemini API responded | elapsed={elapsed:.2f}s")
             except asyncio.TimeoutError:
-                logger.error(f"Food image analysis timed out after {IMAGE_ANALYSIS_TIMEOUT}s")
-                return None
+                elapsed = time.time() - start_time
+                logger.error(f"[IMAGE-ANALYSIS:{req_id}] TIMEOUT after {elapsed:.2f}s (limit={IMAGE_ANALYSIS_TIMEOUT}s)")
+                return {
+                    "error": f"Image analysis timed out after {IMAGE_ANALYSIS_TIMEOUT} seconds. Please try again.",
+                    "error_code": "GEMINI_TIMEOUT",
+                    "error_details": f"Gemini API did not respond within {IMAGE_ANALYSIS_TIMEOUT}s",
+                    "request_id": req_id,
+                    "elapsed_seconds": elapsed,
+                }
+
+            # Check for blocked/filtered response
+            if hasattr(response, 'prompt_feedback') and response.prompt_feedback:
+                feedback = response.prompt_feedback
+                if hasattr(feedback, 'block_reason') and feedback.block_reason:
+                    logger.error(f"[IMAGE-ANALYSIS:{req_id}] BLOCKED by safety filter | reason={feedback.block_reason}")
+                    return {
+                        "error": "Image was blocked by content safety filter. Please try a different image.",
+                        "error_code": "SAFETY_FILTER_BLOCKED",
+                        "error_details": f"Block reason: {feedback.block_reason}",
+                        "request_id": req_id,
+                    }
+
+            # Check if response has candidates
+            if not response.candidates:
+                logger.error(f"[IMAGE-ANALYSIS:{req_id}] NO CANDIDATES in response | response={response}")
+                return {
+                    "error": "No analysis results returned from AI",
+                    "error_code": "NO_CANDIDATES",
+                    "error_details": "Gemini returned empty candidates array",
+                    "request_id": req_id,
+                }
+
+            # Check candidate finish reason
+            candidate = response.candidates[0]
+            if hasattr(candidate, 'finish_reason'):
+                finish_reason = str(candidate.finish_reason)
+                if 'SAFETY' in finish_reason.upper():
+                    logger.error(f"[IMAGE-ANALYSIS:{req_id}] SAFETY block on candidate | finish_reason={finish_reason}")
+                    return {
+                        "error": "Analysis blocked by content filter. Please try a different image.",
+                        "error_code": "CANDIDATE_SAFETY_BLOCKED",
+                        "error_details": f"Finish reason: {finish_reason}",
+                        "request_id": req_id,
+                    }
 
             # Use response.parsed for structured output - SDK handles JSON parsing
             parsed = response.parsed
             if not parsed:
-                return None
+                # Log raw response for debugging
+                raw_text = response.text if hasattr(response, 'text') else 'N/A'
+                logger.error(f"[IMAGE-ANALYSIS:{req_id}] PARSING FAILED | raw_response_preview={raw_text[:500] if raw_text else 'empty'}")
+                return {
+                    "error": "Could not parse AI response. Please try again.",
+                    "error_code": "PARSE_FAILED",
+                    "error_details": f"Raw response preview: {raw_text[:200] if raw_text else 'empty'}",
+                    "request_id": req_id,
+                }
             result = parsed.model_dump()
+            logger.info(f"[IMAGE-ANALYSIS:{req_id}] Parsed successfully | food_items_count={len(result.get('food_items', []))}")
+
+            # Debug: Log raw Gemini values BEFORE USDA enhancement
+            logger.info(
+                f"[IMAGE-ANALYSIS:{req_id}] RAW GEMINI VALUES | "
+                f"total_calories={result.get('total_calories')} | "
+                f"protein_g={result.get('protein_g')} | "
+                f"carbs_g={result.get('carbs_g')} | "
+                f"fat_g={result.get('fat_g')}"
+            )
+            for idx, item in enumerate(result.get('food_items', [])):
+                logger.info(
+                    f"[IMAGE-ANALYSIS:{req_id}] RAW ITEM[{idx}] | "
+                    f"name={item.get('name')} | "
+                    f"calories={item.get('calories')} | "
+                    f"protein_g={item.get('protein_g')} | "
+                    f"carbs_g={item.get('carbs_g')} | "
+                    f"fat_g={item.get('fat_g')} | "
+                    f"weight_g={item.get('weight_g')}"
+                )
+
+            # Validation: Check for items with 0 calories (suspicious)
+            zero_cal_items = [item.get('name') for item in result.get('food_items', []) if item.get('calories', 0) == 0]
+            if zero_cal_items:
+                logger.warning(f"[IMAGE-ANALYSIS:{req_id}] SUSPICIOUS: Gemini returned 0 calories for: {zero_cal_items}")
 
             # Enhance food items with USDA per-100g data for accurate scaling
             if result and result.get('food_items'):
@@ -785,16 +892,59 @@ WEIGHT/COUNT FIELDS (required for portion editing):
                     result['fat_g'] = round(total_fat, 1)
                     result['fiber_g'] = round(total_fiber, 1)
 
-                    print(f"✅ [USDA] Enhanced {len(enhanced_items)} image items, total: {total_calories} cal")
-                except Exception as e:
-                    logger.warning(f"USDA enhancement failed for image analysis, using AI estimates: {e}")
+                    logger.info(f"[IMAGE-ANALYSIS:{req_id}] USDA enhanced {len(enhanced_items)} items | total_calories={total_calories}")
 
+                    # Debug: Log values AFTER USDA enhancement
+                    for idx, item in enumerate(enhanced_items):
+                        logger.info(
+                            f"[IMAGE-ANALYSIS:{req_id}] ENHANCED ITEM[{idx}] | "
+                            f"name={item.get('name')} | "
+                            f"calories={item.get('calories')} | "
+                            f"protein_g={item.get('protein_g')} | "
+                            f"weight_g={item.get('weight_g')} | "
+                            f"usda_data={'YES' if item.get('usda_data') else 'NO'}"
+                        )
+                except Exception as e:
+                    logger.warning(f"[IMAGE-ANALYSIS:{req_id}] USDA enhancement failed, using AI estimates | error={e}")
+
+            # Check if we got empty food items
+            if not result.get('food_items'):
+                logger.error(f"[IMAGE-ANALYSIS:{req_id}] NO FOOD ITEMS detected in image")
+                return {
+                    "error": "Could not identify any food items in the image. Please try a clearer photo.",
+                    "error_code": "NO_FOOD_DETECTED",
+                    "error_details": "Gemini returned empty food_items array",
+                    "request_id": req_id,
+                }
+
+            # Success - log final summary
+            total_elapsed = time.time() - start_time
+            logger.info(
+                f"[IMAGE-ANALYSIS:{req_id}] SUCCESS | "
+                f"items={len(result.get('food_items', []))} | "
+                f"calories={result.get('total_calories', 0)} | "
+                f"elapsed={total_elapsed:.2f}s"
+            )
+
+            # Add request_id to result for traceability
+            result['request_id'] = req_id
             return result
 
         except Exception as e:
-            logger.error(f"Food image analysis failed: {e}")
-            logger.exception("Full traceback:")
-            return None
+            elapsed = time.time() - start_time
+            logger.error(
+                f"[IMAGE-ANALYSIS:{req_id}] UNEXPECTED ERROR | "
+                f"error_type={type(e).__name__} | "
+                f"error={str(e)} | "
+                f"elapsed={elapsed:.2f}s"
+            )
+            logger.exception(f"[IMAGE-ANALYSIS:{req_id}] Full traceback:")
+            return {
+                "error": "An unexpected error occurred during image analysis. Please try again.",
+                "error_code": "UNEXPECTED_ERROR",
+                "error_details": f"{type(e).__name__}: {str(e)}",
+                "request_id": req_id,
+            }
 
     async def parse_food_description(
         self,

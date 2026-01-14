@@ -69,6 +69,10 @@ WorkingWeightResult _$WorkingWeightResultFromJson(Map<String, dynamic> json) =>
       intensityPercent: (json['intensity_percent'] as num).toInt(),
       workingWeightKg: (json['working_weight_kg'] as num).toDouble(),
       isFromOverride: json['is_from_override'] as bool? ?? false,
+      sourceType: json['source_type'] as String? ?? 'direct',
+      sourceExercise: json['source_exercise'] as String?,
+      equipmentMultiplier:
+          (json['equipment_multiplier'] as num?)?.toDouble() ?? 1.0,
     );
 
 Map<String, dynamic> _$WorkingWeightResultToJson(
@@ -79,6 +83,54 @@ Map<String, dynamic> _$WorkingWeightResultToJson(
   'intensity_percent': instance.intensityPercent,
   'working_weight_kg': instance.workingWeightKg,
   'is_from_override': instance.isFromOverride,
+  'source_type': instance.sourceType,
+  'source_exercise': instance.sourceExercise,
+  'equipment_multiplier': instance.equipmentMultiplier,
+};
+
+LinkedExercise _$LinkedExerciseFromJson(Map<String, dynamic> json) =>
+    LinkedExercise(
+      id: json['id'] as String,
+      userId: json['user_id'] as String,
+      primaryExerciseName: json['primary_exercise_name'] as String,
+      linkedExerciseName: json['linked_exercise_name'] as String,
+      strengthMultiplier:
+          (json['strength_multiplier'] as num?)?.toDouble() ?? 0.85,
+      relationshipType: json['relationship_type'] as String? ?? 'variant',
+      notes: json['notes'] as String?,
+      createdAt: json['created_at'] as String?,
+      updatedAt: json['updated_at'] as String?,
+    );
+
+Map<String, dynamic> _$LinkedExerciseToJson(LinkedExercise instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'user_id': instance.userId,
+      'primary_exercise_name': instance.primaryExerciseName,
+      'linked_exercise_name': instance.linkedExerciseName,
+      'strength_multiplier': instance.strengthMultiplier,
+      'relationship_type': instance.relationshipType,
+      'notes': instance.notes,
+      'created_at': instance.createdAt,
+      'updated_at': instance.updatedAt,
+    };
+
+ExerciseLinkSuggestion _$ExerciseLinkSuggestionFromJson(
+  Map<String, dynamic> json,
+) => ExerciseLinkSuggestion(
+  name: json['name'] as String,
+  equipment: json['equipment'] as String,
+  suggestedMultiplier: (json['suggested_multiplier'] as num).toDouble(),
+  muscleGroup: json['muscle_group'] as String,
+);
+
+Map<String, dynamic> _$ExerciseLinkSuggestionToJson(
+  ExerciseLinkSuggestion instance,
+) => <String, dynamic>{
+  'name': instance.name,
+  'equipment': instance.equipment,
+  'suggested_multiplier': instance.suggestedMultiplier,
+  'muscle_group': instance.muscleGroup,
 };
 
 AutoPopulateResponse _$AutoPopulateResponseFromJson(

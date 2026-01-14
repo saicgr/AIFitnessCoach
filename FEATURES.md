@@ -645,6 +645,48 @@ This directly addresses the competitor complaint: changing days is now a 2-tap o
 - **Completion Rate Trends**: Weekly/monthly completion percentage over time
 - Backend: `GET /api/v1/consistency/streaks`, `GET /api/v1/consistency/calendar`, `GET /api/v1/consistency/patterns`, `GET /api/v1/consistency/stats`
 
+**Stats Date Range Filter:**
+- **Preset Time Ranges**: Quick filter buttons for 1 Week, 1 Month, 3 Months, 6 Months, 1 Year
+- **Custom Date Range**: "Custom" button triggers Flutter's `showDateRangePicker` for precise date selection
+- **Visual Date Display**: Selected range shown in format "Oct 13, 2025 - Jan 13, 2026"
+- **Filter Applies to All Stats**: Activity heatmap and all stats data update to show selected date range
+- **User Flow**: Tap calendar icon in stats screen → Select preset or custom → View filtered stats
+- **Backend API**: `GET /api/v1/consistency/calendar?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD` (or use `weeks` param for presets)
+- **Database**: No new tables - uses existing consistency and workout data with date filtering
+- **Migration**: No new migration needed - API enhancement only
+- **Frontend**: `DateRangeFilterSheet` bottom sheet, `customStatsDateRangeProvider` for state management
+
+**Stats Sharing to Social Feed:**
+- **3 Shareable Templates**: Overview (activity heatmap + key stats), Achievements (badges + milestones), PRs (personal records summary)
+- **Template Carousel**: Swipe between templates with page indicator dots
+- **Watermark Toggle**: Optional FitWiz watermark can be enabled/disabled
+- **4 Share Destinations**:
+  1. **Instagram Stories** - Deep link to Instagram's story composer
+  2. **System Share** - Share via any installed app (Messages, WhatsApp, etc.)
+  3. **Post to Feed** - Share to app's social feed for friends to see and react
+  4. **Save to Gallery** - Save image to device's photo library
+- **Stats Gallery Backend**: Images stored with stats snapshot data for feed display
+- **User Flow**: Tap share icon → Swipe through templates → Choose share destination
+- **Backend API**:
+  - `POST /api/v1/stats-gallery/upload` - Upload stats image with metadata
+  - `GET /api/v1/stats-gallery/{user_id}` - List user's stats gallery images
+  - `POST /api/v1/stats-gallery/{image_id}/share-to-feed` - Create activity feed entry
+  - `PUT /api/v1/stats-gallery/{image_id}/track-external-share` - Track Instagram/system shares
+  - `DELETE /api/v1/stats-gallery/{image_id}` - Soft delete stats image
+- **Database**: `stats_gallery` table with RLS policies for user data isolation
+- **Migration**: `153_stats_gallery.sql`
+- **Frontend**: `ShareStatsSheet`, `StatsOverviewTemplate`, `StatsAchievementsTemplate`, `StatsPRsTemplate`, `StatsGalleryService`
+
+**Stats Export (Multi-Format):**
+- **3 Export Formats**: CSV/ZIP, PDF Report, and Text Summary
+- **CSV/ZIP Export**: Full data export with all workouts, PRs, body measurements, achievements - reuses existing export dialog
+- **PDF Report**: Styled PDF with FitWiz branding, summary stats (total workouts, streaks), weekly progress bar, PRs table, achievements list
+- **Text Summary**: Quick shareable text format with key stats, perfect for copy-paste or messaging
+- **Export Sheet UI**: Clean bottom sheet with 3 tappable option cards showing icon, title, and description
+- **User Flow**: Tap export icon in stats screen → Select format → Export/share file
+- **PDF Generation**: Uses `pdf` package (v3.11.1) for client-side PDF creation
+- **Frontend**: `ExportStatsSheet`, `PdfExportService`
+
 ### 37. "Missed workouts disappear - no way to reschedule"
 ✅ **SOLVED**: Smart Rescheduling System
 - **Missed Workout Banner**: Prominent banner on home screen when a workout was missed
@@ -1226,6 +1268,343 @@ Onboarding → Paywall → Calibration Intro → Start/Skip
 - **Context Logging**: All calibration events logged for AI learning
 - **RLS Security**: Row-level security ensures users only see their own data
 - **Skip Option**: Users can skip and do it later from settings
+
+### 46b. Workout Settings - Training Configuration System
+✅ **FULLY IMPLEMENTED**: Complete workout settings system allowing users to customize their training experience:
+
+**Settings Overview:**
+All workout configuration options are accessible from Settings > Workout Settings, providing users full control over their training parameters.
+
+**1. My 1RMs (One Rep Max Storage)**
+Store and manage your one-rep max values for personalized weight recommendations:
+
+| Feature | Description |
+|---------|-------------|
+| **Add/Edit/Delete** | Manually enter 1RM values for any exercise |
+| **Auto-Populate** | Calculate 1RMs from your workout history (90 days lookback) |
+| **Source Tracking** | Track whether 1RM is manual, calculated, or tested |
+| **Confidence Score** | 0.0-1.0 score for calculated estimates |
+| **Last Tested Date** | Track when you last tested your max |
+
+**User Flow - My 1RMs:**
+```
+Settings → Workout Settings → My 1RMs
+                    ↓
+    ┌────────────────────────────────┐
+    │   No 1RMs Recorded             │
+    │   [Auto-populate from history] │
+    │   [+ Add 1RM]                  │
+    └────────────────────────────────┘
+                    ↓ (tap Add)
+    ┌────────────────────────────────┐
+    │   Add 1RM                      │
+    │   Exercise: [Bench Press    ]  │
+    │   Weight (kg): [100         ]  │
+    │   Source: ○ Manual ○ Tested    │
+    │   [Save]                       │
+    └────────────────────────────────┘
+```
+
+**2. Training Intensity (Percentage-Based Training)**
+Set your global training intensity as a percentage of your 1RM:
+
+| Intensity % | Description | Best For |
+|-------------|-------------|----------|
+| 50-60% | Light / Recovery | Deload weeks, active recovery |
+| 61-70% | Moderate / Endurance | Endurance building, warmups |
+| 71-80% | Working Weight / Hypertrophy | Muscle building, default training |
+| 81-90% | Heavy / Strength | Strength phases, powerlifting |
+| 91-100% | Near Max / Peaking | Competition prep, 1RM testing |
+
+**User Flow - Training Intensity:**
+```
+Settings → Workout Settings → Training Intensity
+                    ↓
+    ┌────────────────────────────────┐
+    │   Training Intensity: 75%      │
+    │   ━━━━━━━━━●━━━━━━             │
+    │   50%            100%          │
+    │                                │
+    │   "Working Weight/Hypertrophy" │
+    │   Build muscle at moderate load│
+    └────────────────────────────────┘
+```
+
+**3. Per-Exercise Intensity Overrides**
+Set different intensities for specific exercises:
+- Override global intensity for exercises where you want more/less intensity
+- Example: Train deadlifts at 85% but bench press at 70%
+
+**4. Progression Pace**
+Control how quickly the AI increases your weights:
+
+| Pace | Weight Increase | Best For |
+|------|-----------------|----------|
+| Slow | Every 3-4 weeks | Injury recovery, perfecting form |
+| Medium | Every 1-2 weeks | Steady, sustainable progress |
+| Fast | Every session | Beginners with rapid newbie gains |
+
+**5. Workout Type Preference**
+Select your primary training style:
+
+| Type | Description |
+|------|-------------|
+| Strength | Weight training focus, progressive overload |
+| Cardio | Running, cycling, HIIT |
+| Mixed | Combination of strength + cardio days |
+| Mobility | Stretching, yoga, flexibility work |
+| Recovery | Light movement, active rest |
+
+**6. Training Split**
+Choose your weekly workout structure:
+
+| Split | Days | Description |
+|-------|------|-------------|
+| Full Body | 3 | All muscle groups each workout |
+| Upper/Lower | 4 | Alternating upper and lower body |
+| Push/Pull/Legs | 5-6 | Classic PPL split |
+| Body Part Split | 5-6 | One muscle group per day |
+| PHUL | 4 | Power Hypertrophy Upper Lower |
+| Arnold Split | 6 | Chest/Back, Shoulders/Arms, Legs |
+| HYROX | 4-5 | Hybrid running + functional |
+| Let AI Decide | Auto | Based on your schedule and goals |
+
+**7. Workout Days**
+Select which days you train:
+- Multi-select any combination (Mon-Sun)
+- AI schedules workouts on selected days
+- Rest days automatically assigned to unselected days
+
+**Backend API Endpoints:**
+
+*1RM Management:*
+- `POST /api/v1/training/1rm` - Set/update a 1RM
+- `GET /api/v1/training/1rm/{user_id}` - Get all 1RMs
+- `GET /api/v1/training/1rm/{user_id}/{exercise}` - Get specific 1RM
+- `DELETE /api/v1/training/1rm/{user_id}/{exercise}` - Delete 1RM
+- `POST /api/v1/training/auto-populate/{user_id}` - Auto-calculate from history
+
+*Training Intensity:*
+- `POST /api/v1/training/intensity` - Set global intensity
+- `GET /api/v1/training/intensity/{user_id}` - Get intensity settings
+- `POST /api/v1/training/intensity/exercise` - Set per-exercise override
+- `DELETE /api/v1/training/intensity/exercise/{user_id}/{exercise}` - Remove override
+
+*Weight Calculation:*
+- `POST /api/v1/training/calculate-weight` - Calculate working weight from 1RM + intensity
+- `POST /api/v1/training/workout-weights` - Calculate weights for entire workout
+
+**Database Schema (migration: 064_percentage_training.sql):**
+
+| Table | Purpose |
+|-------|---------|
+| `user_exercise_1rms` | Stores user 1RM values with source, confidence, and timestamps |
+| `exercise_intensity_overrides` | Per-exercise intensity settings |
+| `users.training_intensity_percent` | Global intensity preference (50-100) |
+| `users.preferences` (JSONB) | Stores progression_pace, workout_type, training_split |
+
+**Flutter Implementation:**
+
+| File | Purpose |
+|------|---------|
+| `lib/screens/settings/training/my_1rms_screen.dart` | My 1RMs screen with add/edit/delete |
+| `lib/screens/settings/widgets/settings_card.dart` | Settings card with all preference selectors |
+| `lib/core/providers/training_intensity_provider.dart` | State management for 1RMs and intensity |
+| `lib/core/providers/training_preferences_provider.dart` | State for progression, type, split |
+| `lib/data/repositories/training_intensity_repository.dart` | API client for training endpoints |
+| `lib/data/models/training_intensity.dart` | Flutter models for training data |
+
+**Backend Implementation:**
+
+| File | Purpose |
+|------|---------|
+| `backend/api/v1/training_intensity.py` | All training settings API endpoints |
+| `backend/services/percentage_training_service.py` | Business logic for calculations |
+| `backend/tests/test_percentage_training.py` | Comprehensive test suite (18 tests) |
+
+**User Context Logging (Database + ChromaDB):**
+All training settings changes are logged to both Supabase (for debugging) and ChromaDB (for AI context):
+
+*Database Logging (user_activity_log table):*
+- `set_1rm` - When user adds/updates a 1RM value
+- `delete_1rm` - When user removes a 1RM
+- `set_training_intensity` - When global intensity changes
+- `set_exercise_intensity_override` - When per-exercise override set
+- `delete_exercise_intensity_override` - When override removed
+- `auto_populate_1rms` - When auto-calculation is triggered
+
+*ChromaDB Indexing (for AI coach context):*
+Training settings are embedded and stored in ChromaDB so the AI coach can reference:
+- "Based on your 100kg bench press 1RM at 75% intensity, try 75kg..."
+- "Since you prefer slow progression, I'll keep weights steady..."
+- "Your Push/Pull/Legs split means today is a push day..."
+
+**Key Features:**
+- **Equipment-Aware Rounding**: Working weights rounded to equipment increments (barbell 2.5kg, dumbbell 2kg, machine 5kg, kettlebell 4kg)
+- **Brzycki Formula**: 1RM calculated using scientifically validated formula
+- **Fuzzy Matching**: Exercise names matched even with variations
+- **RLS Security**: Row-level security ensures data isolation
+- **Offline Support**: Settings cached locally for offline access
+- **AI Context Integration**: All settings indexed to ChromaDB for personalized AI coaching
+
+**8. Exercise Consistency**
+Control whether workouts use varied or consistent exercises:
+
+| Mode | Description |
+|------|-------------|
+| Consistent | Same core exercises each week (stability for progress tracking) |
+| Varied | Different exercises each week (prevents boredom, hits muscles from angles) |
+
+**Features:**
+- **Favorite Exercises**: Mark exercises you love - AI prioritizes these
+- **Staple Exercises**: Core lifts (Squat, Bench, Deadlift) that NEVER rotate out
+- Stored in `favorite_exercises` and `staple_exercises` tables
+
+**Backend Endpoints:**
+- `GET /api/v1/consistency/insights` - Get consistency insights
+- `GET /api/v1/consistency/patterns` - Time/day workout patterns
+- `GET /api/v1/consistency/calendar` - Calendar heatmap data
+
+**Flutter Implementation:**
+- `lib/core/providers/consistency_mode_provider.dart`
+- `lib/data/repositories/exercise_preferences_repository.dart`
+
+**9. Weekly Variety**
+Control how much exercise variety appears week-to-week:
+
+| Setting | Behavior |
+|---------|----------|
+| 0% | Same exercises every week |
+| 30% (default) | 70% same exercises, 30% rotate |
+| 100% | All new exercises each week |
+
+**Database:**
+- Column: `users.variation_percentage` (0-100, default 30%)
+- Works with staple exercises (these never rotate regardless of setting)
+
+**Migration:** `backend/migrations/063_staple_exercises.sql`
+
+**10. Progress Charts**
+Visual progress tracking over time (Settings > Workout Settings > Progress Charts):
+
+| Chart Type | Description |
+|------------|-------------|
+| Strength Progression | Line chart showing weight increases by muscle group |
+| Volume Chart | Bar chart showing total volume (sets × reps × weight) per week |
+
+**Features:**
+- Time range selector: 4, 8, 12 weeks, or all-time
+- Muscle group filter: Focus on specific body parts
+- Summary cards: Total workouts, PRs, volume change %
+
+**Backend Endpoints:**
+- `GET /api/v1/progress/strength-over-time` - Strength by muscle group
+- `GET /api/v1/progress/volume-over-time` - Weekly volume
+- `GET /api/v1/progress/exercise/{name}` - Per-exercise progression
+- `GET /api/v1/progress/summary` - Progress statistics
+
+**Flutter Implementation:**
+- `lib/screens/progress/charts/progress_charts_screen.dart`
+- `lib/data/providers/progress_charts_provider.dart`
+- `lib/data/repositories/progress_charts_repository.dart`
+
+**Database Migration:** `backend/migrations/096_progress_analytics.sql`
+
+**11. Linked Exercises (Garmin-Style 1RM Sharing)**
+Share 1RM values across related exercises - set one benchmark exercise and derive working weights for all linked variants.
+
+**The Problem Solved:**
+Users had to manually enter 1RMs for every single exercise variation. With 50+ chest exercises (bench press, incline, decline, dumbbell, cable, etc.), this was tedious and often resulted in missing 1RMs for most exercises.
+
+**How It Works:**
+1. Set a 1RM for a "benchmark" exercise (e.g., Barbell Bench Press = 100kg)
+2. Link related exercises with strength multipliers (e.g., Incline Dumbbell Press at 85%)
+3. System automatically calculates working weights for all linked exercises
+4. Fallback chain: Direct 1RM → Explicit Link → Muscle Group Fallback
+
+**User Flow:**
+1. Navigate to **Settings → Workout Settings → My 1RMs**
+2. Set a 1RM for a primary exercise (e.g., "Barbell Bench Press" = 100kg)
+3. Tap the exercise card to expand linked exercises section
+4. Tap "Link Exercise" to add related exercises
+5. Select from suggestions (filtered by same muscle group) or search
+6. Adjust the strength multiplier (default 85%) and relationship type
+7. Save - linked exercises now derive their working weights automatically
+
+**Relationship Types:**
+| Type | Description | Typical Multiplier |
+|------|-------------|-------------------|
+| Variant | Same movement, different variation (e.g., Incline vs Flat) | 80-90% |
+| Angle | Same exercise, different angle (e.g., 30° vs 45° incline) | 90-95% |
+| Equipment Swap | Same movement, different equipment (e.g., Barbell vs Dumbbell) | 80-90% |
+| Progression | Progressive exercise (e.g., Push-up vs Weighted Push-up) | 70-85% |
+
+**Equipment Multipliers (Automatic):**
+When deriving weights from muscle group fallback, equipment type is considered:
+
+| Equipment | Multiplier | Reason |
+|-----------|------------|--------|
+| Barbell | 1.00 | Reference standard |
+| Smith Machine | 0.95 | Fixed path reduces stabilization |
+| EZ Bar | 0.95 | Slightly less leverage |
+| Trap Bar | 1.00 | Similar mechanics to barbell |
+| Machine | 0.90 | Fixed path, less stabilization |
+| Dumbbell | 0.85 | Each arm works independently |
+| Cable | 0.80 | Constant tension, less stable |
+| Kettlebell | 0.75 | Different grip mechanics |
+| Bodyweight | 0.70 | Different mechanics entirely |
+| Resistance Band | 0.60 | Variable resistance throughout ROM |
+
+**3-Level Fallback Chain:**
+When calculating working weight for an exercise:
+1. **Direct 1RM**: Use exact 1RM if stored for this exercise
+2. **Explicit Link**: Check if linked to another exercise with stored 1RM
+3. **Muscle Group Fallback**: Find highest-confidence 1RM for same primary muscle, apply equipment multiplier
+
+**Backend Endpoints:**
+*Linked Exercises CRUD:*
+- `POST /api/v1/training/linked-exercises` - Create exercise link
+- `GET /api/v1/training/linked-exercises/{user_id}` - Get all linked exercises
+- `PUT /api/v1/training/linked-exercises/{link_id}` - Update link (multiplier, type)
+- `DELETE /api/v1/training/linked-exercises/{link_id}` - Remove link
+- `GET /api/v1/training/linked-exercises/{user_id}/suggestions/{exercise}` - Get linking suggestions
+
+**Database Schema (migration: 154_exercise_relationships.sql):**
+
+| Table | Purpose |
+|-------|---------|
+| `exercise_relationships` | Stores user-defined exercise links with multipliers |
+| Columns: `user_id`, `primary_exercise_name`, `linked_exercise_name`, `strength_multiplier`, `relationship_type`, `notes` |
+
+**Flutter Implementation:**
+| File | Purpose |
+|------|---------|
+| `lib/screens/settings/training/my_1rms_screen.dart` | Linked exercises UI in 1RM cards |
+| `lib/core/providers/training_intensity_provider.dart` | LinkedExercisesNotifier, state management |
+| `lib/data/repositories/training_intensity_repository.dart` | API client for linked exercises |
+| `lib/data/models/training_intensity.dart` | LinkedExercise, ExerciseLinkSuggestion models |
+
+**Backend Implementation:**
+| File | Purpose |
+|------|---------|
+| `backend/api/v1/training_intensity.py` | Linked exercises API endpoints |
+| `backend/services/percentage_training_service.py` | Fallback logic, equipment multipliers, link resolution |
+| `backend/tests/test_percentage_training.py` | Tests for linked exercises and equipment scaling |
+
+**Key Features:**
+- **Smart Suggestions**: Filtered by same primary muscle group
+- **Adjustable Multipliers**: 50-100% range with 5% increments
+- **Visual Feedback**: Derived weights show source exercise (e.g., "Based on Bench Press")
+- **Badge Counts**: 1RM cards show number of linked exercises
+- **RLS Security**: Row-level security ensures data isolation
+- **ChromaDB Integration**: AI coach knows about linked exercises for personalized advice
+
+**Example Scenario:**
+1. User sets Barbell Bench Press = 100kg (1RM)
+2. Links Incline Dumbbell Press at 85% multiplier
+3. Workout includes Incline Dumbbell Press at 75% intensity
+4. System calculates: 100kg × 0.85 (link) × 0.75 (intensity) = 63.75kg → rounded to 64kg
+5. UI shows: "64 kg (based on Barbell Bench Press 1RM)"
 
 ### 47. "Falls short for its library and ability to input cooked grains - barcode scanner shows 'Item not found' for well-known drinks"
 ✅ **SOLVED**: Complete nutrition tracking enhancement addressing four major pain points:

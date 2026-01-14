@@ -46,6 +46,24 @@ class WorkingWeightResult:
     intensity_percent: int
     working_weight_kg: float
     is_from_override: bool
+    # New fields for linked exercises feature
+    source_type: str = 'direct'  # 'direct', 'linked', 'muscle_group_fallback'
+    source_exercise: Optional[str] = None  # Name of exercise 1RM was derived from
+    equipment_multiplier: float = 1.0  # Multiplier applied for equipment difference
+
+
+@dataclass
+class LinkedExercise:
+    """User-defined link between exercises for 1RM sharing."""
+    id: str
+    user_id: str
+    primary_exercise_name: str  # The benchmark exercise with stored 1RM
+    linked_exercise_name: str   # The exercise that uses the benchmark's 1RM
+    strength_multiplier: float  # How weight scales (0.5 - 1.0, default 0.85)
+    relationship_type: str      # 'variant', 'angle', 'equipment_swap', 'progression'
+    notes: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 
 class PercentageTrainingService:
@@ -88,6 +106,21 @@ class PercentageTrainingService:
         'cable': 2.5,      # Cable stacks
         'kettlebell': 4.0, # Kettlebells jump 4kg typically
         'bodyweight': 0,   # No rounding needed
+    }
+
+    # Equipment multipliers for linked exercise weight scaling
+    # Used when calculating working weight from a benchmark exercise with different equipment
+    EQUIPMENT_MULTIPLIERS = {
+        'barbell': 1.0,      # Reference baseline
+        'dumbbell': 0.85,    # Dumbbells require more stabilization (~85% of barbell)
+        'machine': 0.90,     # Fixed path, slightly easier (~90% of barbell)
+        'cable': 0.80,       # Cable resistance curve differs (~80% of barbell)
+        'kettlebell': 0.75,  # Different mechanics (~75% of barbell)
+        'bodyweight': 0.70,  # Bodyweight progressions (~70% of barbell)
+        'smith_machine': 0.95,  # Guided barbell (~95% of barbell)
+        'ez_bar': 0.95,      # Curved bar, similar to barbell (~95%)
+        'trap_bar': 1.0,     # Similar loading to barbell
+        'resistance_band': 0.60,  # Variable resistance (~60% of barbell)
     }
 
     def __init__(self, supabase_client=None):
@@ -373,6 +406,433 @@ class PercentageTrainingService:
         }
 
     # -------------------------------------------------------------------------
+    # Linked Exercises: CRUD Operations
+    # -------------------------------------------------------------------------
+
+    async def get_linked_exercises(
+        self,
+        user_id: str,
+        primary_exercise_name: Optional[str] = None,
+    ) -> List[LinkedExercise]:
+        """
+        Get linked exercises for a user.
+
+        Args:
+            user_id: User ID
+            primary_exercise_name: Optional filter by primary exercise
+
+        Returns:
+            List of LinkedExercise objects
+        """
+        if not self.supabase:
+            return []
+
+        query = self.supabase.table('exercise_relationships').select('*').eq(
+            'user_id', user_id
+        )
+
+        if primary_exercise_name:
+            query = query.eq('primary_exercise_name', primary_exercise_name)
+
+        result = query.execute()
+
+        return [
+            LinkedExercise(
+                id=row['id'],
+                user_id=row['user_id'],
+                primary_exercise_name=row['primary_exercise_name'],
+                linked_exercise_name=row['linked_exercise_name'],
+                strength_multiplier=float(row.get('strength_multiplier', 0.85)),
+                relationship_type=row.get('relationship_type', 'variant'),
+                notes=row.get('notes'),
+                created_at=row.get('created_at'),
+                updated_at=row.get('updated_at'),
+            )
+            for row in result.data
+        ]
+
+    async def create_linked_exercise(
+        self,
+        user_id: str,
+        primary_exercise_name: str,
+        linked_exercise_name: str,
+        strength_multiplier: float = 0.85,
+        relationship_type: str = 'variant',
+        notes: Optional[str] = None,
+    ) -> LinkedExercise:
+        """
+        Create a link between two exercises for 1RM sharing.
+
+        Args:
+            user_id: User ID
+            primary_exercise_name: The benchmark exercise with stored 1RM
+            linked_exercise_name: The exercise that will use the benchmark's 1RM
+            strength_multiplier: How weight scales (0.5 - 1.0)
+            relationship_type: Type of relationship
+            notes: Optional notes about the link
+
+        Returns:
+            Created LinkedExercise object
+        """
+        if not self.supabase:
+            raise ValueError("Supabase client not configured")
+
+        # Clamp multiplier to valid range
+        strength_multiplier = max(0.5, min(1.0, strength_multiplier))
+
+        data = {
+            'user_id': user_id,
+            'primary_exercise_name': primary_exercise_name,
+            'linked_exercise_name': linked_exercise_name,
+            'strength_multiplier': strength_multiplier,
+            'relationship_type': relationship_type,
+            'notes': notes,
+        }
+
+        result = self.supabase.table('exercise_relationships').upsert(
+            data,
+            on_conflict='user_id,primary_exercise_name,linked_exercise_name'
+        ).execute()
+
+        row = result.data[0]
+        return LinkedExercise(
+            id=row['id'],
+            user_id=row['user_id'],
+            primary_exercise_name=row['primary_exercise_name'],
+            linked_exercise_name=row['linked_exercise_name'],
+            strength_multiplier=float(row.get('strength_multiplier', 0.85)),
+            relationship_type=row.get('relationship_type', 'variant'),
+            notes=row.get('notes'),
+            created_at=row.get('created_at'),
+            updated_at=row.get('updated_at'),
+        )
+
+    async def update_linked_exercise(
+        self,
+        link_id: str,
+        user_id: str,
+        strength_multiplier: Optional[float] = None,
+        relationship_type: Optional[str] = None,
+        notes: Optional[str] = None,
+    ) -> Optional[LinkedExercise]:
+        """
+        Update a linked exercise relationship.
+
+        Args:
+            link_id: The relationship ID
+            user_id: User ID (for security check)
+            strength_multiplier: New multiplier (optional)
+            relationship_type: New relationship type (optional)
+            notes: New notes (optional)
+
+        Returns:
+            Updated LinkedExercise or None if not found
+        """
+        if not self.supabase:
+            raise ValueError("Supabase client not configured")
+
+        update_data = {}
+        if strength_multiplier is not None:
+            update_data['strength_multiplier'] = max(0.5, min(1.0, strength_multiplier))
+        if relationship_type is not None:
+            update_data['relationship_type'] = relationship_type
+        if notes is not None:
+            update_data['notes'] = notes
+
+        if not update_data:
+            return None
+
+        result = self.supabase.table('exercise_relationships').update(
+            update_data
+        ).eq('id', link_id).eq('user_id', user_id).execute()
+
+        if not result.data:
+            return None
+
+        row = result.data[0]
+        return LinkedExercise(
+            id=row['id'],
+            user_id=row['user_id'],
+            primary_exercise_name=row['primary_exercise_name'],
+            linked_exercise_name=row['linked_exercise_name'],
+            strength_multiplier=float(row.get('strength_multiplier', 0.85)),
+            relationship_type=row.get('relationship_type', 'variant'),
+            notes=row.get('notes'),
+            created_at=row.get('created_at'),
+            updated_at=row.get('updated_at'),
+        )
+
+    async def delete_linked_exercise(
+        self,
+        link_id: str,
+        user_id: str,
+    ) -> bool:
+        """
+        Delete a linked exercise relationship.
+
+        Args:
+            link_id: The relationship ID
+            user_id: User ID (for security check)
+
+        Returns:
+            True if deleted, False otherwise
+        """
+        if not self.supabase:
+            return False
+
+        self.supabase.table('exercise_relationships').delete().eq(
+            'id', link_id
+        ).eq('user_id', user_id).execute()
+
+        return True
+
+    # -------------------------------------------------------------------------
+    # Linked Exercises: Lookup Methods
+    # -------------------------------------------------------------------------
+
+    async def get_primary_muscle(self, exercise_name: str) -> Optional[str]:
+        """
+        Get primary muscle group for an exercise from the database.
+
+        Args:
+            exercise_name: Name of the exercise
+
+        Returns:
+            Primary muscle group or None if not found
+        """
+        if not self.supabase:
+            return None
+
+        result = self.supabase.table('exercises').select(
+            'primary_muscle'
+        ).ilike('name', exercise_name).limit(1).execute()
+
+        if result.data:
+            return result.data[0].get('primary_muscle')
+        return None
+
+    async def get_exercise_equipment(self, exercise_name: str) -> Optional[str]:
+        """
+        Get equipment type for an exercise from the database.
+
+        Args:
+            exercise_name: Name of the exercise
+
+        Returns:
+            Equipment type or None if not found
+        """
+        if not self.supabase:
+            return None
+
+        result = self.supabase.table('exercises').select(
+            'equipment'
+        ).ilike('name', exercise_name).limit(1).execute()
+
+        if result.data:
+            return result.data[0].get('equipment')
+        return None
+
+    async def find_1rm_via_link(
+        self,
+        user_id: str,
+        exercise_name: str,
+    ) -> Optional[Tuple[float, str, float]]:
+        """
+        Find a 1RM for an exercise via explicit user-defined links.
+
+        Args:
+            user_id: User ID
+            exercise_name: Name of the exercise to find 1RM for
+
+        Returns:
+            Tuple of (1rm_kg, source_exercise_name, multiplier) or None
+        """
+        if not self.supabase:
+            return None
+
+        # Check if this exercise is linked to any primary exercise
+        result = self.supabase.table('exercise_relationships').select(
+            'primary_exercise_name,strength_multiplier'
+        ).eq('user_id', user_id).ilike(
+            'linked_exercise_name', exercise_name
+        ).limit(1).execute()
+
+        if not result.data:
+            return None
+
+        link = result.data[0]
+        primary_name = link['primary_exercise_name']
+        multiplier = float(link.get('strength_multiplier', 0.85))
+
+        # Get the 1RM for the primary exercise
+        rm_result = self.supabase.table('user_exercise_1rms').select(
+            'one_rep_max_kg'
+        ).eq('user_id', user_id).ilike(
+            'exercise_name', primary_name
+        ).limit(1).execute()
+
+        if rm_result.data:
+            one_rm = float(rm_result.data[0]['one_rep_max_kg'])
+            return (one_rm * multiplier, primary_name, multiplier)
+
+        return None
+
+    async def find_1rm_by_muscle_group(
+        self,
+        user_id: str,
+        exercise_name: str,
+        target_equipment: Optional[str] = None,
+    ) -> Optional[Tuple[float, str, float]]:
+        """
+        Find a 1RM for an exercise by looking up related exercises in the same muscle group.
+
+        This is the fallback when no direct 1RM or explicit link exists.
+
+        Args:
+            user_id: User ID
+            exercise_name: Name of the exercise to find 1RM for
+            target_equipment: Equipment type of the target exercise (for multiplier)
+
+        Returns:
+            Tuple of (estimated_1rm_kg, source_exercise_name, equipment_multiplier) or None
+        """
+        if not self.supabase:
+            return None
+
+        # Get the target exercise's primary muscle
+        primary_muscle = await self.get_primary_muscle(exercise_name)
+        if not primary_muscle:
+            return None
+
+        # Get target equipment if not provided
+        if not target_equipment:
+            target_equipment = await self.get_exercise_equipment(exercise_name) or 'barbell'
+
+        # Get all exercises with the same primary muscle
+        exercises_result = self.supabase.table('exercises').select(
+            'name,equipment'
+        ).eq('primary_muscle', primary_muscle).execute()
+
+        if not exercises_result.data:
+            return None
+
+        exercise_lookup = {
+            e['name'].lower(): e.get('equipment', 'barbell')
+            for e in exercises_result.data
+        }
+
+        # Get user's 1RMs for these exercises, ordered by confidence
+        user_1rms_result = self.supabase.table('user_exercise_1rms').select(
+            'exercise_name,one_rep_max_kg,confidence'
+        ).eq('user_id', user_id).order('confidence', desc=True).execute()
+
+        if not user_1rms_result.data:
+            return None
+
+        # Find the best matching 1RM in this muscle group
+        for rm in user_1rms_result.data:
+            rm_exercise_lower = rm['exercise_name'].lower()
+            if rm_exercise_lower in exercise_lookup:
+                source_equipment = exercise_lookup[rm_exercise_lower]
+                source_1rm = float(rm['one_rep_max_kg'])
+
+                # Calculate equipment multiplier
+                source_mult = self.EQUIPMENT_MULTIPLIERS.get(source_equipment, 1.0)
+                target_mult = self.EQUIPMENT_MULTIPLIERS.get(target_equipment, 1.0)
+
+                # Scale from source equipment to target equipment
+                # If going from barbell (1.0) to dumbbell (0.85), multiply by 0.85
+                # If going from dumbbell (0.85) to barbell (1.0), multiply by 1.0/0.85
+                if source_mult > 0:
+                    equipment_ratio = target_mult / source_mult
+                else:
+                    equipment_ratio = 1.0
+
+                estimated_1rm = source_1rm * equipment_ratio
+                return (estimated_1rm, rm['exercise_name'], equipment_ratio)
+
+        return None
+
+    async def get_suggested_exercises_for_linking(
+        self,
+        user_id: str,
+        primary_exercise_name: str,
+        limit: int = 10,
+    ) -> List[Dict[str, any]]:
+        """
+        Get suggested exercises to link to a primary exercise.
+
+        Suggests exercises in the same muscle group that don't have their own 1RM.
+
+        Args:
+            user_id: User ID
+            primary_exercise_name: The benchmark exercise
+            limit: Maximum number of suggestions
+
+        Returns:
+            List of exercise suggestions with name, equipment, and suggested multiplier
+        """
+        if not self.supabase:
+            return []
+
+        # Get primary muscle of the primary exercise
+        primary_muscle = await self.get_primary_muscle(primary_exercise_name)
+        if not primary_muscle:
+            return []
+
+        # Get primary exercise's equipment
+        primary_equipment = await self.get_exercise_equipment(primary_exercise_name) or 'barbell'
+
+        # Get all exercises in the same muscle group
+        exercises_result = self.supabase.table('exercises').select(
+            'name,equipment,primary_muscle,secondary_muscles'
+        ).eq('primary_muscle', primary_muscle).limit(50).execute()
+
+        if not exercises_result.data:
+            return []
+
+        # Get user's existing 1RMs
+        user_1rms_result = self.supabase.table('user_exercise_1rms').select(
+            'exercise_name'
+        ).eq('user_id', user_id).execute()
+
+        existing_1rms = {rm['exercise_name'].lower() for rm in user_1rms_result.data or []}
+
+        # Get existing links
+        links_result = self.supabase.table('exercise_relationships').select(
+            'linked_exercise_name'
+        ).eq('user_id', user_id).eq('primary_exercise_name', primary_exercise_name).execute()
+
+        existing_links = {link['linked_exercise_name'].lower() for link in links_result.data or []}
+
+        suggestions = []
+        for exercise in exercises_result.data:
+            name = exercise['name']
+            name_lower = name.lower()
+
+            # Skip if it's the primary exercise, has its own 1RM, or is already linked
+            if (name_lower == primary_exercise_name.lower() or
+                name_lower in existing_1rms or
+                name_lower in existing_links):
+                continue
+
+            equipment = exercise.get('equipment', 'barbell')
+            primary_mult = self.EQUIPMENT_MULTIPLIERS.get(primary_equipment, 1.0)
+            target_mult = self.EQUIPMENT_MULTIPLIERS.get(equipment, 1.0)
+
+            # Suggest multiplier based on equipment difference
+            suggested_multiplier = round(target_mult / primary_mult, 2) if primary_mult > 0 else 0.85
+
+            suggestions.append({
+                'name': name,
+                'equipment': equipment,
+                'suggested_multiplier': min(1.0, max(0.5, suggested_multiplier)),
+                'muscle_group': primary_muscle,
+            })
+
+        return suggestions[:limit]
+
+    # -------------------------------------------------------------------------
     # Auto-Populate 1RMs from Workout History
     # -------------------------------------------------------------------------
 
@@ -477,20 +937,26 @@ class PercentageTrainingService:
         user_id: str,
         exercises: List[str],
         equipment_types: Optional[Dict[str, str]] = None,
+        use_linked_exercises: bool = True,
+        use_muscle_group_fallback: bool = True,
     ) -> List[WorkingWeightResult]:
         """
         Calculate working weights for a list of exercises.
 
-        Uses stored 1RMs and intensity preferences to calculate
-        target working weights.
+        Uses a 3-level fallback chain to find 1RMs:
+        1. Direct 1RM lookup (exact exercise name match)
+        2. Linked exercises (user-defined exercise relationships)
+        3. Muscle group fallback (same muscle group with equipment scaling)
 
         Args:
             user_id: User ID
             exercises: List of exercise names
             equipment_types: Optional mapping of exercise -> equipment type
+            use_linked_exercises: Whether to use explicit exercise links
+            use_muscle_group_fallback: Whether to fall back to muscle group lookup
 
         Returns:
-            List of WorkingWeightResult for exercises with known 1RMs
+            List of WorkingWeightResult for all exercises (including estimated 1RMs)
         """
         results = []
 
@@ -509,11 +975,45 @@ class PercentageTrainingService:
         for exercise in exercises:
             exercise_lower = exercise.lower()
 
-            # Check if we have a 1RM for this exercise
-            if exercise_lower not in user_1rms:
-                continue
+            # Get equipment type
+            equipment = 'barbell'
+            if equipment_types:
+                equipment = equipment_types.get(exercise, 'barbell')
 
-            user_1rm = user_1rms[exercise_lower]
+            # Initialize source tracking
+            source_type = 'direct'
+            source_exercise = None
+            equipment_multiplier = 1.0
+            one_rm_kg = None
+
+            # ===== FALLBACK CHAIN =====
+
+            # Level 1: Direct 1RM lookup (exact match)
+            if exercise_lower in user_1rms:
+                user_1rm = user_1rms[exercise_lower]
+                one_rm_kg = user_1rm.one_rep_max_kg
+                source_type = 'direct'
+                source_exercise = None
+
+            # Level 2: Linked exercise lookup
+            elif use_linked_exercises:
+                link_result = await self.find_1rm_via_link(user_id, exercise)
+                if link_result:
+                    one_rm_kg, source_exercise, equipment_multiplier = link_result
+                    source_type = 'linked'
+
+            # Level 3: Muscle group fallback
+            if one_rm_kg is None and use_muscle_group_fallback:
+                fallback_result = await self.find_1rm_by_muscle_group(
+                    user_id, exercise, equipment
+                )
+                if fallback_result:
+                    one_rm_kg, source_exercise, equipment_multiplier = fallback_result
+                    source_type = 'muscle_group_fallback'
+
+            # Skip if no 1RM found through any method
+            if one_rm_kg is None:
+                continue
 
             # Get intensity (override or global)
             is_override = exercise in overrides or exercise_lower in overrides
@@ -522,24 +1022,22 @@ class PercentageTrainingService:
                 overrides.get(exercise_lower, global_intensity)
             )
 
-            # Get equipment type
-            equipment = 'barbell'
-            if equipment_types:
-                equipment = equipment_types.get(exercise, 'barbell')
-
             # Calculate working weight
             working_weight = self.calculate_working_weight(
-                user_1rm.one_rep_max_kg,
+                one_rm_kg,
                 intensity,
                 equipment,
             )
 
             results.append(WorkingWeightResult(
                 exercise_name=exercise,
-                one_rep_max_kg=user_1rm.one_rep_max_kg,
+                one_rep_max_kg=one_rm_kg,
                 intensity_percent=intensity,
                 working_weight_kg=working_weight,
                 is_from_override=is_override,
+                source_type=source_type,
+                source_exercise=source_exercise,
+                equipment_multiplier=equipment_multiplier,
             ))
 
         return results

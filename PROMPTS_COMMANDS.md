@@ -12,6 +12,8 @@ use multiple agents to run in parallel
 So what features are added? how does it work whats the user flow?
 -->
 
+<!-- Implement them all with frontend flutter, backend API, supabase tables, gemini API calls, backend tests, supabase table migration, user context logging should all be implemented as well and Update Features.md with 1. features that are added and 2. how does it work whats the user flow -->
+
 <!-- 
 For the changes that you have done, 
 Have to check implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests, supabase table migration, user context logging should all be implemented as well and Update Features.md with 1. features that are added and 2. how does it work whats the user flow

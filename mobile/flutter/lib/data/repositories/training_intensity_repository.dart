@@ -275,6 +275,135 @@ class TrainingIntensityRepository {
   }
 
   // ---------------------------------------------------------------------------
+  // Linked Exercises
+  // ---------------------------------------------------------------------------
+
+  /// Get all linked exercises for a user
+  Future<List<LinkedExercise>> getLinkedExercises({
+    required String userId,
+    String? primaryExerciseName,
+  }) async {
+    try {
+      String url = '${ApiConstants.baseUrl}/training/linked-exercises/$userId';
+      if (primaryExerciseName != null) {
+        url += '?primary_exercise_name=${Uri.encodeComponent(primaryExerciseName)}';
+      }
+
+      final response = await _apiClient.get(url);
+
+      if (response.statusCode == 200 && response.data is List) {
+        return (response.data as List)
+            .map((json) => LinkedExercise.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error getting linked exercises: $e');
+      return [];
+    }
+  }
+
+  /// Create a linked exercise relationship
+  Future<LinkedExercise?> createLinkedExercise({
+    required String userId,
+    required String primaryExerciseName,
+    required String linkedExerciseName,
+    double strengthMultiplier = 0.85,
+    String relationshipType = 'variant',
+    String? notes,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '${ApiConstants.baseUrl}/training/linked-exercises',
+        data: {
+          'user_id': userId,
+          'primary_exercise_name': primaryExerciseName,
+          'linked_exercise_name': linkedExerciseName,
+          'strength_multiplier': strengthMultiplier,
+          'relationship_type': relationshipType,
+          if (notes != null) 'notes': notes,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        return LinkedExercise.fromJson(response.data as Map<String, dynamic>);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error creating linked exercise: $e');
+      return null;
+    }
+  }
+
+  /// Update a linked exercise relationship
+  Future<LinkedExercise?> updateLinkedExercise({
+    required String linkId,
+    required String userId,
+    double? strengthMultiplier,
+    String? relationshipType,
+    String? notes,
+  }) async {
+    try {
+      final response = await _apiClient.put(
+        '${ApiConstants.baseUrl}/training/linked-exercises/$linkId',
+        data: {
+          'user_id': userId,
+          if (strengthMultiplier != null) 'strength_multiplier': strengthMultiplier,
+          if (relationshipType != null) 'relationship_type': relationshipType,
+          if (notes != null) 'notes': notes,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        return LinkedExercise.fromJson(response.data as Map<String, dynamic>);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error updating linked exercise: $e');
+      return null;
+    }
+  }
+
+  /// Delete a linked exercise relationship
+  Future<bool> deleteLinkedExercise({
+    required String linkId,
+    required String userId,
+  }) async {
+    try {
+      final response = await _apiClient.delete(
+        '${ApiConstants.baseUrl}/training/linked-exercises/$linkId?user_id=$userId',
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error deleting linked exercise: $e');
+      return false;
+    }
+  }
+
+  /// Get exercise linking suggestions
+  Future<List<ExerciseLinkSuggestion>> getExerciseLinkingSuggestions({
+    required String userId,
+    required String primaryExerciseName,
+    int limit = 10,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '${ApiConstants.baseUrl}/training/linked-exercises/$userId/suggestions/${Uri.encodeComponent(primaryExerciseName)}?limit=$limit',
+      );
+
+      if (response.statusCode == 200 && response.data is List) {
+        return (response.data as List)
+            .map((json) => ExerciseLinkSuggestion.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error getting exercise linking suggestions: $e');
+      return [];
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Helper: Calculate working weight locally (no API call)
   // ---------------------------------------------------------------------------
 

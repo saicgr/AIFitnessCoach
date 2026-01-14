@@ -534,10 +534,16 @@ async def get_consistency_patterns(
 @router.get("/calendar", response_model=CalendarHeatmapResponse, tags=["Consistency"])
 async def get_calendar_heatmap(
     user_id: str = Query(..., description="User ID"),
-    weeks: int = Query(4, ge=1, le=52, description="Number of weeks to include"),
+    weeks: int = Query(None, ge=1, le=52, description="Number of weeks to include (legacy, use start_date/end_date instead)"),
+    start_date_param: Optional[str] = Query(None, alias="start_date", description="Start date in YYYY-MM-DD format"),
+    end_date_param: Optional[str] = Query(None, alias="end_date", description="End date in YYYY-MM-DD format"),
 ):
     """
     Get calendar heatmap data for visualizing workout consistency.
+
+    Supports two modes:
+    1. Date range: Provide start_date and end_date for custom range
+    2. Weeks (legacy): Provide weeks parameter to get data from today - (weeks * 7) to today
 
     Returns workout status for each day:
     - completed: Workout was done
@@ -548,9 +554,53 @@ async def get_calendar_heatmap(
     db = get_supabase_db()
 
     try:
-        # Calculate date range
+        # Calculate date range based on parameters
         today = date.today()
-        start_date = today - timedelta(days=weeks * 7)
+
+        if start_date_param and end_date_param:
+            # Use custom date range
+            try:
+                start_date = date.fromisoformat(start_date_param)
+                end_date = date.fromisoformat(end_date_param)
+
+                # Validate date range
+                if end_date < start_date:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="end_date must be greater than or equal to start_date"
+                    )
+
+                # Cap end_date to today if it's in the future
+                if end_date > today:
+                    end_date = today
+
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid date format. Use YYYY-MM-DD. Error: {str(e)}"
+                )
+        else:
+            # Use weeks parameter (default to 4 weeks for backward compatibility)
+            weeks_value = weeks if weeks is not None else 4
+            start_date = today - timedelta(days=weeks_value * 7)
+            end_date = today
+
+        # Log the filter usage for user context
+        try:
+            await user_context_service.log_activity(
+                user_id=user_id,
+                event_type=EventType.FEATURE_USAGE,
+                endpoint="/api/v1/consistency/calendar",
+                message=f"Fetched calendar heatmap from {start_date} to {end_date}",
+                metadata={
+                    "start_date": start_date.isoformat(),
+                    "end_date": end_date.isoformat(),
+                    "days": (end_date - start_date).days + 1,
+                    "used_custom_range": bool(start_date_param and end_date_param),
+                }
+            )
+        except Exception as log_error:
+            logger.warning(f"Failed to log calendar access: {log_error}")
 
         # Get all scheduled workouts in range
         workouts_response = db.client.table("workouts").select(
@@ -558,7 +608,7 @@ async def get_calendar_heatmap(
         ).eq("user_id", user_id).gte(
             "scheduled_date", start_date.isoformat()
         ).lte(
-            "scheduled_date", today.isoformat()
+            "scheduled_date", end_date.isoformat()
         ).execute()
 
         # Build a map of date -> workout info
@@ -580,7 +630,7 @@ async def get_calendar_heatmap(
         total_rest = 0
 
         current_date = start_date
-        while current_date <= today:
+        while current_date <= end_date:
             dow = current_date.weekday()  # 0=Monday in Python
             # Convert to SQL format (0=Sunday)
             sql_dow = (dow + 1) % 7
@@ -611,13 +661,16 @@ async def get_calendar_heatmap(
         return CalendarHeatmapResponse(
             user_id=user_id,
             start_date=start_date,
-            end_date=today,
+            end_date=end_date,
             data=calendar_data,
             total_completed=total_completed,
             total_missed=total_missed,
             total_rest_days=total_rest,
         )
 
+    except HTTPException:
+        # Re-raise HTTPExceptions (validation errors, etc.)
+        raise
     except Exception as e:
         logger.error(f"Error fetching calendar heatmap: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch calendar data: {str(e)}")

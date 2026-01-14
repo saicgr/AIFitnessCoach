@@ -9,6 +9,9 @@ import '../../data/services/haptic_service.dart';
 import '../../widgets/activity_heatmap.dart';
 import '../../widgets/exercise_search_results.dart';
 import '../../widgets/workout_day_detail_sheet.dart';
+import 'widgets/date_range_filter_sheet.dart';
+import 'widgets/export_stats_sheet.dart';
+import 'widgets/share_stats_sheet.dart';
 
 /// Comprehensive Stats Screen
 /// Combines: Workout stats, achievements, body measurements, progress graphs, nutrition
@@ -65,27 +68,27 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
             icon: Icon(Icons.calendar_month_outlined, color: textPrimary),
             onPressed: () {
               HapticService.light();
-              // TODO: Show time range picker
+              DateRangeFilterSheet.show(context, ref);
             },
             tooltip: 'Time Range',
           ),
-          // Export/Share
+          // Export
+          IconButton(
+            icon: Icon(Icons.file_download_outlined, color: textPrimary),
+            onPressed: () {
+              HapticService.light();
+              ExportStatsSheet.show(context, ref);
+            },
+            tooltip: 'Export',
+          ),
+          // Share
           IconButton(
             icon: Icon(Icons.ios_share_outlined, color: textPrimary),
             onPressed: () {
               HapticService.light();
-              // TODO: Export stats
+              ShareStatsSheet.show(context, ref);
             },
-            tooltip: 'Export',
-          ),
-          // Settings
-          IconButton(
-            icon: Icon(Icons.tune_outlined, color: textPrimary),
-            onPressed: () {
-              HapticService.light();
-              // TODO: Stats settings
-            },
-            tooltip: 'Settings',
+            tooltip: 'Share',
           ),
         ],
       ),

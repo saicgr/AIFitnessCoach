@@ -64,18 +64,36 @@ class ConsistencyRepository {
   }
 
   /// Get calendar heatmap data
+  ///
+  /// Supports two modes:
+  /// 1. Weeks-based: Use [weeks] parameter for preset ranges
+  /// 2. Custom range: Use [startDate] and [endDate] for custom date range
   Future<CalendarHeatmapResponse> getCalendarHeatmap({
     required String userId,
-    int weeks = 4,
+    int? weeks,
+    DateTime? startDate,
+    DateTime? endDate,
   }) async {
     try {
       debugPrint('🔍 [Consistency] Getting calendar heatmap for $userId');
+
+      final queryParams = <String, dynamic>{
+        'user_id': userId,
+      };
+
+      // Use custom date range if provided, otherwise use weeks
+      if (startDate != null && endDate != null) {
+        queryParams['start_date'] = startDate.toIso8601String().split('T')[0];
+        queryParams['end_date'] = endDate.toIso8601String().split('T')[0];
+        debugPrint('🔍 [Consistency] Using custom date range: ${queryParams['start_date']} to ${queryParams['end_date']}');
+      } else {
+        queryParams['weeks'] = weeks ?? 4;
+        debugPrint('🔍 [Consistency] Using weeks: ${queryParams['weeks']}');
+      }
+
       final response = await _client.get(
         '/consistency/calendar',
-        queryParameters: {
-          'user_id': userId,
-          'weeks': weeks,
-        },
+        queryParameters: queryParams,
       );
       debugPrint('✅ [Consistency] Got calendar heatmap successfully');
       return CalendarHeatmapResponse.fromJson(response.data);

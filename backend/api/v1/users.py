@@ -1197,6 +1197,58 @@ async def update_user(user_id: str, user: UserUpdate):
                     logger.info(f"📊 Indexed onboarding preferences to ChromaDB for user {user_id}")
                 except Exception as rag_error:
                     logger.warning(f"⚠️ Could not index preferences to ChromaDB: {rag_error}")
+
+            # Index training settings changes to ChromaDB for AI context
+            has_training_settings = any([
+                user.progression_pace, user.workout_type_preference, user.training_split
+            ])
+            if has_training_settings:
+                try:
+                    from services.rag_service import WorkoutRAGService
+                    from services.gemini_service import GeminiService
+
+                    gemini_service = GeminiService()
+                    rag_service = WorkoutRAGService(gemini_service)
+
+                    await rag_service.index_training_settings(
+                        user_id=user_id,
+                        action="update_training_preferences",
+                        progression_pace=user.progression_pace,
+                        training_split=user.training_split,
+                        workout_type=user.workout_type_preference,
+                    )
+                    logger.info(f"📊 Indexed training settings to ChromaDB for user {user_id}")
+                except Exception as rag_error:
+                    logger.warning(f"⚠️ Could not index training settings to ChromaDB: {rag_error}")
+
+            # Index exercise variety/consistency settings to ChromaDB for AI context
+            prefs = update_data.get("preferences", {})
+            if isinstance(prefs, str):
+                import json
+                prefs = json.loads(prefs)
+
+            has_exercise_variety_settings = any([
+                prefs.get("exercise_consistency"),
+                prefs.get("variation_percentage") is not None,
+            ])
+
+            if has_exercise_variety_settings:
+                try:
+                    from services.rag_service import WorkoutRAGService
+                    from services.gemini_service import GeminiService
+
+                    gemini_service = GeminiService()
+                    rag_service = WorkoutRAGService(gemini_service)
+
+                    await rag_service.index_training_settings(
+                        user_id=user_id,
+                        action="update_exercise_variety",
+                        exercise_consistency=prefs.get("exercise_consistency"),
+                        variation_percentage=prefs.get("variation_percentage"),
+                    )
+                    logger.info(f"📊 Indexed exercise variety settings to ChromaDB for user {user_id}")
+                except Exception as rag_error:
+                    logger.warning(f"⚠️ Could not index exercise variety settings to ChromaDB: {rag_error}")
         else:
             updated = existing
 

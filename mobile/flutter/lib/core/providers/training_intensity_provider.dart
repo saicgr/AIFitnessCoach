@@ -4,6 +4,9 @@ import '../../data/models/training_intensity.dart';
 import '../../data/repositories/training_intensity_repository.dart';
 import '../../data/services/api_client.dart';
 
+// Re-export for convenience
+export '../../data/models/training_intensity.dart' show LinkedExercise, ExerciseLinkSuggestion;
+
 // -----------------------------------------------------------------------------
 // State Classes
 // -----------------------------------------------------------------------------
@@ -445,4 +448,225 @@ final exerciseWorkingWeightDisplayProvider = Provider.family<String?, String>((
   if (workingWeight == null) return null;
 
   return '${workingWeight.toStringAsFixed(1)} kg ($intensity% of 1RM)';
+});
+
+// -----------------------------------------------------------------------------
+// Linked Exercises State & Notifier
+// -----------------------------------------------------------------------------
+
+/// State for linked exercises
+class LinkedExercisesState {
+  final List<LinkedExercise> linkedExercises;
+  final List<ExerciseLinkSuggestion> suggestions;
+  final bool isLoading;
+  final String? error;
+
+  const LinkedExercisesState({
+    this.linkedExercises = const [],
+    this.suggestions = const [],
+    this.isLoading = false,
+    this.error,
+  });
+
+  LinkedExercisesState copyWith({
+    List<LinkedExercise>? linkedExercises,
+    List<ExerciseLinkSuggestion>? suggestions,
+    bool? isLoading,
+    String? error,
+  }) {
+    return LinkedExercisesState(
+      linkedExercises: linkedExercises ?? this.linkedExercises,
+      suggestions: suggestions ?? this.suggestions,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+    );
+  }
+
+  /// Get linked exercises for a specific primary exercise
+  List<LinkedExercise> getLinkedFor(String primaryExerciseName) {
+    final lowerName = primaryExerciseName.toLowerCase();
+    return linkedExercises
+        .where((l) => l.primaryExerciseName.toLowerCase() == lowerName)
+        .toList();
+  }
+
+  /// Count of linked exercises for a primary exercise
+  int countLinkedFor(String primaryExerciseName) {
+    return getLinkedFor(primaryExerciseName).length;
+  }
+}
+
+/// Notifier for managing linked exercises
+class LinkedExercisesNotifier extends StateNotifier<LinkedExercisesState> {
+  final Ref _ref;
+
+  LinkedExercisesNotifier(this._ref) : super(const LinkedExercisesState(isLoading: true)) {
+    _loadLinkedExercises();
+  }
+
+  Future<void> _loadLinkedExercises() async {
+    try {
+      final apiClient = _ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) {
+        state = state.copyWith(isLoading: false);
+        return;
+      }
+
+      final repo = _ref.read(trainingIntensityRepositoryProvider);
+      final linkedExercises = await repo.getLinkedExercises(userId: userId);
+
+      state = state.copyWith(
+        linkedExercises: linkedExercises,
+        isLoading: false,
+      );
+    } catch (e) {
+      debugPrint('Error loading linked exercises: $e');
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  Future<void> refresh() async {
+    state = state.copyWith(isLoading: true);
+    await _loadLinkedExercises();
+  }
+
+  /// Load suggestions for linking to a specific exercise
+  Future<void> loadSuggestions(String primaryExerciseName) async {
+    try {
+      final apiClient = _ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) return;
+
+      final repo = _ref.read(trainingIntensityRepositoryProvider);
+      final suggestions = await repo.getExerciseLinkingSuggestions(
+        userId: userId,
+        primaryExerciseName: primaryExerciseName,
+      );
+
+      state = state.copyWith(suggestions: suggestions);
+    } catch (e) {
+      debugPrint('Error loading suggestions: $e');
+    }
+  }
+
+  /// Create a new linked exercise
+  Future<bool> createLink({
+    required String primaryExerciseName,
+    required String linkedExerciseName,
+    double strengthMultiplier = 0.85,
+    String relationshipType = 'variant',
+    String? notes,
+  }) async {
+    try {
+      final apiClient = _ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) return false;
+
+      final repo = _ref.read(trainingIntensityRepositoryProvider);
+      final result = await repo.createLinkedExercise(
+        userId: userId,
+        primaryExerciseName: primaryExerciseName,
+        linkedExerciseName: linkedExerciseName,
+        strengthMultiplier: strengthMultiplier,
+        relationshipType: relationshipType,
+        notes: notes,
+      );
+
+      if (result != null) {
+        final updatedList = [...state.linkedExercises, result];
+        state = state.copyWith(linkedExercises: updatedList);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error creating linked exercise: $e');
+      return false;
+    }
+  }
+
+  /// Update a linked exercise
+  Future<bool> updateLink({
+    required String linkId,
+    double? strengthMultiplier,
+    String? relationshipType,
+    String? notes,
+  }) async {
+    try {
+      final apiClient = _ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) return false;
+
+      final repo = _ref.read(trainingIntensityRepositoryProvider);
+      final result = await repo.updateLinkedExercise(
+        linkId: linkId,
+        userId: userId,
+        strengthMultiplier: strengthMultiplier,
+        relationshipType: relationshipType,
+        notes: notes,
+      );
+
+      if (result != null) {
+        final updatedList = state.linkedExercises
+            .map((l) => l.id == linkId ? result : l)
+            .toList();
+        state = state.copyWith(linkedExercises: updatedList);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error updating linked exercise: $e');
+      return false;
+    }
+  }
+
+  /// Delete a linked exercise
+  Future<bool> deleteLink(String linkId) async {
+    try {
+      final apiClient = _ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) return false;
+
+      final repo = _ref.read(trainingIntensityRepositoryProvider);
+      final success = await repo.deleteLinkedExercise(
+        linkId: linkId,
+        userId: userId,
+      );
+
+      if (success) {
+        final updatedList = state.linkedExercises
+            .where((l) => l.id != linkId)
+            .toList();
+        state = state.copyWith(linkedExercises: updatedList);
+      }
+      return success;
+    } catch (e) {
+      debugPrint('Error deleting linked exercise: $e');
+      return false;
+    }
+  }
+}
+
+/// Provider for linked exercises
+final linkedExercisesProvider =
+    StateNotifierProvider<LinkedExercisesNotifier, LinkedExercisesState>((ref) {
+  return LinkedExercisesNotifier(ref);
+});
+
+/// Provider to get linked exercises for a specific primary exercise
+final linkedExercisesForProvider = Provider.family<List<LinkedExercise>, String>((
+  ref,
+  primaryExerciseName,
+) {
+  final linkedState = ref.watch(linkedExercisesProvider);
+  return linkedState.getLinkedFor(primaryExerciseName);
+});
+
+/// Provider to get count of linked exercises for a primary exercise
+final linkedExerciseCountProvider = Provider.family<int, String>((
+  ref,
+  primaryExerciseName,
+) {
+  final linkedState = ref.watch(linkedExercisesProvider);
+  return linkedState.countLinkedFor(primaryExerciseName);
 });

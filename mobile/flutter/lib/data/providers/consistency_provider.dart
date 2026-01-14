@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show DateTimeRange;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/consistency.dart';
 import '../models/workout_day_detail.dart';
@@ -429,9 +430,15 @@ enum HeatmapTimeRange {
   const HeatmapTimeRange(this.weeks, this.label);
 }
 
-/// Selected time range for heatmap
+/// Selected time range for heatmap (preset options)
 final heatmapTimeRangeProvider = StateProvider<HeatmapTimeRange>((ref) {
   return HeatmapTimeRange.threeMonths;
+});
+
+/// Custom date range for stats filtering (when user selects custom option)
+/// If set, this takes precedence over heatmapTimeRangeProvider
+final customStatsDateRangeProvider = StateProvider<DateTimeRange?>((ref) {
+  return null;
 });
 
 /// Current search query for exercise search

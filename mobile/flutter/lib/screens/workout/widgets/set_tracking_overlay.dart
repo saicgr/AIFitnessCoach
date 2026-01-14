@@ -2024,6 +2024,8 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     }
 
     // Format AI target data (TARGET column) - use per-set targets if available
+    // Include unit label so user knows if weight is in kg or lbs
+    final unit = widget.useKg ? 'kg' : 'lbs';
     String targetDisplay = '—';
     final setTarget = widget.exercise.getTargetForSet(index + 1); // 1-indexed
     if (setTarget != null) {
@@ -2036,12 +2038,12 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
             : targetWeight * 2.20462;
         // Show AMRAP for failure/amrap sets
         if (setTarget.isFailure) {
-          targetDisplay = '${displayTargetWeight.toStringAsFixed(0)} × AMRAP';
+          targetDisplay = '${displayTargetWeight.toStringAsFixed(0)} $unit × AMRAP';
         } else {
-          targetDisplay = '${displayTargetWeight.toStringAsFixed(0)} × $targetReps';
+          targetDisplay = '${displayTargetWeight.toStringAsFixed(0)} $unit × $targetReps';
         }
       } else if (targetReps > 0) {
-        // Bodyweight exercise - just show reps
+        // Bodyweight exercise - just show reps (no weight/unit needed)
         if (setTarget.isFailure) {
           targetDisplay = 'AMRAP';
         } else {
@@ -2058,9 +2060,9 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
             : targetWeight * 2.20462;
         // For failure set, show AMRAP on last set
         if (isLastSet && widget.exercise.isFailureSet == true) {
-          targetDisplay = '${displayTargetWeight.toStringAsFixed(0)} × AMRAP';
+          targetDisplay = '${displayTargetWeight.toStringAsFixed(0)} $unit × AMRAP';
         } else {
-          targetDisplay = '${displayTargetWeight.toStringAsFixed(0)} × $targetReps';
+          targetDisplay = '${displayTargetWeight.toStringAsFixed(0)} $unit × $targetReps';
         }
       }
     }

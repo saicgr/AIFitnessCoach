@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/week_comparison_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
@@ -120,13 +121,89 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     return '${secs}s';
   }
 
+  /// Build set rows from AI setTargets or fallback to legacy format
+  List<Widget> _buildSetRows({
+    required WorkoutExercise exercise,
+    required bool useKg,
+    required Color cardBorder,
+    required Color glassSurface,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color textSecondary,
+  }) {
+    // Use AI-generated setTargets if available
+    if (exercise.hasSetTargets && exercise.setTargets!.isNotEmpty) {
+      int workingSetNumber = 0;
+      return exercise.setTargets!.map((target) {
+        // For working sets, track the number (1, 2, 3...)
+        String setLabel;
+        if (target.setType.toLowerCase() == 'working') {
+          workingSetNumber++;
+          setLabel = '$workingSetNumber';
+        } else {
+          setLabel = target.setTypeLabel; // W, D, F, A
+        }
+
+        return _buildSetRow(
+          setLabel: setLabel,
+          isWarmup: target.isWarmup,
+          setType: target.setType,
+          weightKg: target.targetWeightKg,
+          targetReps: target.targetReps,
+          useKg: useKg,
+          cardBorder: cardBorder,
+          glassSurface: glassSurface,
+          textPrimary: textPrimary,
+          textMuted: textMuted,
+          textSecondary: textSecondary,
+        );
+      }).toList();
+    }
+
+    // Fallback to legacy format (hardcoded 2 warmups + working sets)
+    final totalSets = exercise.sets ?? 3;
+    final warmupSets = 2;
+    final defaultReps = exercise.reps ?? 10;
+
+    return [
+      ...List.generate(warmupSets, (i) => _buildSetRow(
+        setLabel: 'W',
+        isWarmup: true,
+        setType: 'warmup',
+        weightKg: null,
+        targetReps: defaultReps,
+        useKg: useKg,
+        cardBorder: cardBorder,
+        glassSurface: glassSurface,
+        textPrimary: textPrimary,
+        textMuted: textMuted,
+        textSecondary: textSecondary,
+      )),
+      ...List.generate(totalSets, (i) => _buildSetRow(
+        setLabel: '${i + 1}',
+        isWarmup: false,
+        setType: 'working',
+        weightKg: exercise.weight,
+        targetReps: defaultReps,
+        useKg: useKg,
+        cardBorder: cardBorder,
+        glassSurface: glassSurface,
+        textPrimary: textPrimary,
+        textMuted: textMuted,
+        textSecondary: textSecondary,
+      )),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final exercise = widget.exercise;
     final totalSets = exercise.sets ?? 3;
-    final warmupSets = 2; // Default 2 warmup sets
     final repRange = _getRepRange();
     final restSeconds = exercise.restSeconds ?? 90;
+
+    // Get user's weight unit preference (kg or lbs)
+    final useKg = ref.watch(useKgProvider);
 
     // Theme-aware colors
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -186,29 +263,16 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                   // Set Table Header
                   _buildTableHeader(glassSurface, textMuted),
 
-                  // Set Rows
-                  ...List.generate(warmupSets, (i) => _buildSetRow(
-                    setLabel: 'W',
-                    isWarmup: true,
-                    weight: null,
-                    repRange: repRange,
+                  // Set Rows - use AI setTargets if available
+                  ..._buildSetRows(
+                    exercise: exercise,
+                    useKg: useKg,
                     cardBorder: cardBorder,
                     glassSurface: glassSurface,
                     textPrimary: textPrimary,
                     textMuted: textMuted,
                     textSecondary: textSecondary,
-                  )),
-                  ...List.generate(totalSets, (i) => _buildSetRow(
-                    setLabel: '${i + 1}',
-                    isWarmup: false,
-                    weight: exercise.weight,
-                    repRange: repRange,
-                    cardBorder: cardBorder,
-                    glassSurface: glassSurface,
-                    textPrimary: textPrimary,
-                    textMuted: textMuted,
-                    textSecondary: textSecondary,
-                  )),
+                  ),
 
                   const SizedBox(height: 8),
                 ],
@@ -559,42 +623,42 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
       ),
       child: Row(
         children: [
+          // SET column
           SizedBox(
             width: 50,
             child: Text(
               'SET',
               style: TextStyle(
                 fontSize: 11,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
                 color: textMuted,
-                letterSpacing: 0.5,
+                letterSpacing: 0.3,
               ),
             ),
           ),
+          // LAST column - previous session data
           Expanded(
-            child: Center(
-              child: Text(
-                'LBS',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: textMuted,
-                  letterSpacing: 0.5,
-                ),
+            flex: 3,
+            child: Text(
+              'LAST',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: textMuted,
+                letterSpacing: 0.3,
               ),
             ),
           ),
-          SizedBox(
-            width: 80,
-            child: Center(
-              child: Text(
-                'REP RANGE',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: textMuted,
-                  letterSpacing: 0.5,
-                ),
+          // TARGET column - AI recommended weight × reps
+          Expanded(
+            flex: 3,
+            child: Text(
+              'TARGET',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.purple.withOpacity(0.9),
+                letterSpacing: 0.3,
               ),
             ),
           ),
@@ -1056,17 +1120,63 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
         name.contains('cardio');
   }
 
+  /// Get color for set type (matching active workout set_row.dart)
+  Color _getSetTypeColor(String setType) {
+    switch (setType.toLowerCase()) {
+      case 'warmup':
+        return AppColors.orange;
+      case 'drop':
+        return AppColors.purple;
+      case 'failure':
+      case 'amrap':
+        return Colors.red;
+      default:
+        return AppColors.cyan; // working
+    }
+  }
+
   Widget _buildSetRow({
     required String setLabel,
     required bool isWarmup,
-    double? weight,
-    required String repRange,
+    String setType = 'working',
+    double? weightKg,
+    int? targetReps,
+    required bool useKg,
     required Color cardBorder,
     required Color glassSurface,
     required Color textPrimary,
     required Color textMuted,
     required Color textSecondary,
   }) {
+    final setColor = _getSetTypeColor(setType);
+
+    // Convert weight to user's preferred unit (matching active workout screen)
+    // All weights are stored in kg internally
+    double? displayWeight;
+    if (weightKg != null && weightKg > 0) {
+      displayWeight = useKg ? weightKg : weightKg * 2.20462;
+    }
+
+    // Build target display string: weight unit × reps (matching active workout screen)
+    // Include unit label so user knows if weight is in kg or lbs
+    final unit = useKg ? 'kg' : 'lbs';
+    String targetDisplay = '—';
+    if (displayWeight != null && displayWeight > 0 && targetReps != null && targetReps > 0) {
+      // Check if this is a failure/amrap set
+      if (setType.toLowerCase() == 'failure' || setType.toLowerCase() == 'amrap') {
+        targetDisplay = '${displayWeight.toStringAsFixed(0)} $unit × AMRAP';
+      } else {
+        targetDisplay = '${displayWeight.toStringAsFixed(0)} $unit × $targetReps';
+      }
+    } else if (targetReps != null && targetReps > 0) {
+      // Bodyweight exercise - just show reps (no weight/unit needed)
+      if (setType.toLowerCase() == 'failure' || setType.toLowerCase() == 'amrap') {
+        targetDisplay = 'AMRAP';
+      } else {
+        targetDisplay = '$targetReps reps';
+      }
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -1078,16 +1188,14 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
       ),
       child: Row(
         children: [
-          // Set number
+          // SET column - Set number with type color badge
           SizedBox(
             width: 50,
             child: Container(
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: isWarmup
-                    ? AppColors.orange.withOpacity(0.2)
-                    : AppColors.cyan.withOpacity(0.2),
+                color: setColor.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Center(
@@ -1096,44 +1204,35 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: isWarmup ? AppColors.orange : AppColors.cyan,
+                    color: setColor,
                   ),
                 ),
               ),
             ),
           ),
 
-          // Weight
+          // LAST column - previous session data (shows "—" for preview)
           Expanded(
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                decoration: BoxDecoration(
-                  color: glassSurface,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  weight != null ? '${weight.toInt()}' : '-',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: weight != null ? textPrimary : textMuted,
-                  ),
-                ),
+            flex: 3,
+            child: Text(
+              '—',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: textMuted,
               ),
             ),
           ),
 
-          // Rep range
-          SizedBox(
-            width: 80,
-            child: Center(
-              child: Text(
-                repRange,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: textSecondary,
-                ),
+          // TARGET column - AI recommended weight × reps
+          Expanded(
+            flex: 3,
+            child: Text(
+              targetDisplay,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: targetDisplay != '—' ? AppColors.purple : textMuted,
               ),
             ),
           ),

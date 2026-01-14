@@ -117,6 +117,18 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
     _tabController = TabController(length: 5, vsync: this, initialIndex: 0);
     // Use initial meal type if provided, otherwise default based on time
     _selectedMealType = widget.initialMealType ?? _getDefaultMealType();
+
+    debugPrint('🍽️ [LogMeal] Sheet initialized | userId=${widget.userId} | initialMealType=${widget.initialMealType?.value ?? "auto"} | selectedMealType=${_selectedMealType.value}');
+
+    // Log tab changes for user context
+    _tabController.addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() {
+    if (!_tabController.indexIsChanging) {
+      final tabNames = ['Describe', 'Photo', 'Voice', 'Scan', 'Quick'];
+      debugPrint('🔄 [LogMeal] Tab changed | tab=${tabNames[_tabController.index]} | index=${_tabController.index}');
+    }
   }
 
   MealType _getDefaultMealType() {
@@ -129,17 +141,23 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
 
   @override
   void dispose() {
+    debugPrint('🍽️ [LogMeal] Sheet disposed | userId=${widget.userId}');
+    _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
 
   Future<void> _pickImage(ImageSource source) async {
+    debugPrint('📸 [LogMeal] _pickImage started | source=${source.name} | userId=${widget.userId}');
+
     // Check guest limits for photo scanning
     final isGuest = ref.read(isGuestModeProvider);
     if (isGuest) {
+      debugPrint('📸 [LogMeal] Guest mode detected, checking limits');
       final canScan = await ref.read(guestUsageLimitsProvider.notifier).usePhotoScan();
       if (!canScan) {
+        debugPrint('⚠️ [LogMeal] Guest photo scan limit reached');
         if (mounted) {
           Navigator.pop(context);
           GuestUpgradeSheet.show(context, feature: GuestFeatureLimit.photoScan);
@@ -150,6 +168,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
 
     try {
       final picker = ImagePicker();
+      debugPrint('📸 [LogMeal] Opening image picker...');
       final image = await picker.pickImage(
         source: source,
         maxWidth: 1024,
@@ -157,7 +176,12 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
         imageQuality: 85,
       );
 
-      if (image == null) return;
+      if (image == null) {
+        debugPrint('📸 [LogMeal] User cancelled image picker');
+        return;
+      }
+
+      debugPrint('📸 [LogMeal] Image selected | path=${image.path}');
 
       setState(() {
         _isLoading = true;
@@ -170,15 +194,22 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
       final repository = ref.read(nutritionRepositoryProvider);
       LogFoodResponse? response;
 
+      debugPrint('📸 [LogMeal] Starting image analysis stream | mealType=${_selectedMealType.value}');
+      final stopwatch = Stopwatch()..start();
+
       // Use ANALYZE-ONLY streaming - does NOT save to database yet
       await for (final progress in repository.analyzeFoodFromImageStreaming(
         userId: widget.userId,
         mealType: _selectedMealType.value,
         imageFile: File(image.path),
       )) {
-        if (!mounted) return;
+        if (!mounted) {
+          debugPrint('⚠️ [LogMeal] Widget unmounted during analysis');
+          return;
+        }
 
         if (progress.hasError) {
+          debugPrint('❌ [LogMeal] Analysis error | message=${progress.message} | elapsed=${stopwatch.elapsedMilliseconds}ms');
           setState(() {
             _isLoading = false;
             _error = progress.message;
@@ -188,10 +219,12 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
 
         if (progress.isCompleted && progress.foodLog != null) {
           response = progress.foodLog;
+          debugPrint('✅ [LogMeal] Analysis complete | elapsed=${stopwatch.elapsedMilliseconds}ms');
           break;
         }
 
         // Update progress UI
+        debugPrint('🔄 [LogMeal] Progress update | step=${progress.step}/${progress.totalSteps} | ${progress.message}');
         setState(() {
           _currentStep = progress.step;
           _totalSteps = progress.totalSteps;
@@ -200,10 +233,35 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
         });
       }
 
+      stopwatch.stop();
+
       if (mounted && response != null) {
         setState(() => _isLoading = false);
 
+        // Log detailed response info for debugging
+        debugPrint('📊 [LogMeal] Response received:');
+        debugPrint('   - success: ${response.success}');
+        debugPrint('   - foodItems count: ${response.foodItems.length}');
+        debugPrint('   - totalCalories: ${response.totalCalories}');
+        debugPrint('   - protein: ${response.proteinG}g');
+        debugPrint('   - carbs: ${response.carbsG}g');
+        debugPrint('   - fat: ${response.fatG}g');
+        debugPrint('   - fiber: ${response.fiberG}g');
+        if (response.foodItems.isNotEmpty) {
+          debugPrint('   - foodItems: ${response.foodItems.map((f) => f['name']).toList()}');
+        }
+
+        // Validate that we actually detected food with nutrition data
+        if (response.foodItems.isEmpty && response.totalCalories == 0) {
+          debugPrint('⚠️ [LogMeal] Empty response - no food detected');
+          setState(() {
+            _error = 'Could not identify food in the image. Please try a clearer photo with visible food items.';
+          });
+          return;
+        }
+
         if (_restaurantMode) {
+          debugPrint('🍽️ [LogMeal] Restaurant mode - showing portion selector');
           // Show portion selector instead of confirmation dialog
           setState(() {
             _pendingFoodLog = response;
@@ -212,12 +270,21 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
         }
 
         // Show rainbow confirmation dialog for user to review with portion editing
-        final result = await _showRainbowNutritionConfirmation(response, 'Photo analysis');
+        // Extract food names from the response for display
+        final detectedFoodNames = response.foodItems.isNotEmpty
+            ? response.foodItems.map((f) => f['name']?.toString() ?? 'Food').join(', ')
+            : 'Detected food';
+        debugPrint('🎯 [LogMeal] Showing confirmation dialog | foods="$detectedFoodNames"');
+        final result = await _showRainbowNutritionConfirmation(response, detectedFoodNames);
+        debugPrint('📋 [LogMeal] Dialog result | confirmed=${result?.confirmed} | multiplier=${result?.multiplier}');
+
         if (result != null && result.confirmed && mounted) {
           // Apply portion multiplier to the response
           final adjustedResponse = result.multiplier != 1.0
               ? response.copyWithMultiplier(result.multiplier)
               : response;
+
+          debugPrint('💾 [LogMeal] Saving meal | calories=${adjustedResponse.totalCalories} | multiplier=${result.multiplier}');
 
           // NOW actually save to database after user confirmation
           setState(() {
@@ -233,12 +300,14 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
               sourceType: 'image',
             );
 
+            debugPrint('✅ [LogMeal] Meal saved successfully');
             if (mounted) {
               Navigator.pop(context);
               _showSuccessSnackbar(adjustedResponse.totalCalories);
               ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
             }
           } catch (saveError) {
+            debugPrint('❌ [LogMeal] Save failed | error=$saveError');
             if (mounted) {
               setState(() {
                 _isLoading = false;
@@ -246,9 +315,20 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
               });
             }
           }
+        } else {
+          debugPrint('📋 [LogMeal] User cancelled or dismissed confirmation dialog');
         }
+      } else if (mounted && response == null) {
+        // Stream completed but no response - show error
+        debugPrint('❌ [LogMeal] Stream completed but response is null');
+        setState(() {
+          _isLoading = false;
+          _error = 'Analysis failed. Please try again.';
+        });
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('❌ [LogMeal] Exception in _pickImage | error=$e');
+      debugPrint('   stackTrace: $stackTrace');
       setState(() {
         _isLoading = false;
         _error = e.toString();
@@ -258,7 +338,12 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
 
   Future<void> _logFromText() async {
     final description = _descriptionController.text.trim();
-    if (description.isEmpty) return;
+    if (description.isEmpty) {
+      debugPrint('📝 [LogMeal] _logFromText called but description is empty');
+      return;
+    }
+
+    debugPrint('📝 [LogMeal] _logFromText started | description="$description" | mealType=${_selectedMealType.value} | restaurantMode=$_restaurantMode');
 
     // Check guest limits for text describe
     final isGuest = ref.read(isGuestModeProvider);
@@ -285,15 +370,22 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
       final repository = ref.read(nutritionRepositoryProvider);
       LogFoodResponse? response;
 
+      debugPrint('📝 [LogMeal] Starting text analysis stream...');
+      final stopwatch = Stopwatch()..start();
+
       // Use ANALYZE-ONLY streaming - does NOT save to database yet
       await for (final progress in repository.analyzeFoodFromTextStreaming(
         userId: widget.userId,
         description: description,
         mealType: _selectedMealType.value,
       )) {
-        if (!mounted) return;
+        if (!mounted) {
+          debugPrint('⚠️ [LogMeal] Widget unmounted during text analysis');
+          return;
+        }
 
         if (progress.hasError) {
+          debugPrint('❌ [LogMeal] Text analysis error | message=${progress.message} | elapsed=${stopwatch.elapsedMilliseconds}ms');
           setState(() {
             _isLoading = false;
             _error = progress.message;
@@ -303,10 +395,12 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
 
         if (progress.isCompleted && progress.foodLog != null) {
           response = progress.foodLog;
+          debugPrint('✅ [LogMeal] Text analysis complete | elapsed=${stopwatch.elapsedMilliseconds}ms');
           break;
         }
 
         // Update progress UI
+        debugPrint('🔄 [LogMeal] Text progress | step=${progress.step}/${progress.totalSteps} | ${progress.message}');
         setState(() {
           _currentStep = progress.step;
           _totalSteps = progress.totalSteps;
@@ -315,10 +409,32 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
         });
       }
 
+      stopwatch.stop();
+
       if (mounted && response != null) {
         setState(() => _isLoading = false);
 
+        // Log detailed response info for debugging
+        debugPrint('📊 [LogMeal] Text response received:');
+        debugPrint('   - success: ${response.success}');
+        debugPrint('   - foodItems count: ${response.foodItems.length}');
+        debugPrint('   - totalCalories: ${response.totalCalories}');
+        debugPrint('   - protein: ${response.proteinG}g | carbs: ${response.carbsG}g | fat: ${response.fatG}g');
+        if (response.foodItems.isNotEmpty) {
+          debugPrint('   - foodItems: ${response.foodItems.map((f) => f['name']).toList()}');
+        }
+
+        // Validate that we actually got nutrition data
+        if (response.foodItems.isEmpty && response.totalCalories == 0) {
+          debugPrint('⚠️ [LogMeal] Empty text response - no food detected');
+          setState(() {
+            _error = 'Could not analyze "$description". Please try a more specific food description.';
+          });
+          return;
+        }
+
         if (_restaurantMode) {
+          debugPrint('🍽️ [LogMeal] Restaurant mode - showing portion selector');
           // Show portion selector instead of confirmation dialog
           setState(() {
             _pendingFoodLog = response;
@@ -327,12 +443,16 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
         }
 
         // Show rainbow confirmation dialog for user to review with portion editing
+        debugPrint('🎯 [LogMeal] Showing text confirmation dialog');
         final result = await _showRainbowNutritionConfirmation(response, description);
+        debugPrint('📋 [LogMeal] Text dialog result | confirmed=${result?.confirmed} | multiplier=${result?.multiplier}');
         if (result != null && result.confirmed && mounted) {
           // Apply portion multiplier to the response
           final adjustedResponse = result.multiplier != 1.0
               ? response.copyWithMultiplier(result.multiplier)
               : response;
+
+          debugPrint('💾 [LogMeal] Saving text meal | calories=${adjustedResponse.totalCalories} | multiplier=${result.multiplier}');
 
           // NOW actually save to database after user confirmation
           setState(() {
@@ -348,12 +468,14 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
               sourceType: 'text',
             );
 
+            debugPrint('✅ [LogMeal] Text meal saved successfully');
             if (mounted) {
               Navigator.pop(context);
               _showSuccessSnackbar(adjustedResponse.totalCalories);
               ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
             }
           } catch (saveError) {
+            debugPrint('❌ [LogMeal] Text save failed | error=$saveError');
             if (mounted) {
               setState(() {
                 _isLoading = false;
@@ -361,9 +483,20 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
               });
             }
           }
+        } else {
+          debugPrint('📋 [LogMeal] User cancelled text confirmation dialog');
         }
+      } else if (mounted && response == null) {
+        // Stream completed but no response - show error
+        debugPrint('❌ [LogMeal] Text stream completed but response is null');
+        setState(() {
+          _isLoading = false;
+          _error = 'Analysis failed. Please try again.';
+        });
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('❌ [LogMeal] Exception in _logFromText | error=$e');
+      debugPrint('   stackTrace: $stackTrace');
       setState(() {
         _isLoading = false;
         _error = e.toString();
@@ -373,9 +506,12 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
 
   /// Log an already analyzed food response
   void _logAnalyzedFood(LogFoodResponse response) async {
+    debugPrint('✅ [LogMeal] _logAnalyzedFood called | calories=${response.totalCalories} | protein=${response.proteinG}g | foodItems=${response.foodItems.length}');
+
     // Check if there's an active fast that should be ended
     final fastingState = ref.read(fastingProvider);
     if (fastingState.activeFast != null && response.totalCalories > 50) {
+      debugPrint('⏰ [LogMeal] Active fast detected | calories > 50, showing end fast dialog');
       // Show dialog to confirm ending fast
       final shouldEndFast = await _showEndFastDialog(fastingState.activeFast!);
       if (!mounted) return;
@@ -400,7 +536,12 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
 
   /// Log food with portion size multiplier (for restaurant mode)
   Future<void> _logWithPortion(double portionMultiplier) async {
-    if (_pendingFoodLog == null) return;
+    if (_pendingFoodLog == null) {
+      debugPrint('🍽️ [LogMeal] _logWithPortion called but _pendingFoodLog is null');
+      return;
+    }
+
+    debugPrint('🍽️ [LogMeal] _logWithPortion started | portionMultiplier=$portionMultiplier | originalCalories=${_pendingFoodLog!.totalCalories}');
 
     setState(() {
       _isLoading = true;
@@ -794,7 +935,11 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
   }
 
   Future<void> _handleBarcodeScan(String barcode) async {
-    if (_hasScanned) return;
+    debugPrint('🔍 [LogMeal] Barcode scanned | barcode=$barcode | hasScanned=$_hasScanned');
+    if (_hasScanned) {
+      debugPrint('🔍 [LogMeal] Ignoring duplicate barcode scan');
+      return;
+    }
     _hasScanned = true;
 
     // Check guest limits for barcode scanning
@@ -817,11 +962,15 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
 
     try {
       final repository = ref.read(nutritionRepositoryProvider);
+      debugPrint('🔍 [LogMeal] Looking up barcode in database...');
       final product = await repository.lookupBarcode(barcode);
+      debugPrint('🔍 [LogMeal] Barcode lookup result | productName=${product.productName} | caloriesPer100g=${product.caloriesPer100g}');
 
       if (mounted) {
         final confirmed = await _showProductConfirmation(product);
+        debugPrint('🔍 [LogMeal] Product confirmation | confirmed=$confirmed');
         if (confirmed == true) {
+          debugPrint('🔍 [LogMeal] Logging barcode food | mealType=${_selectedMealType.value}');
           final response = await repository.logFoodFromBarcode(
             userId: widget.userId,
             barcode: barcode,
@@ -829,11 +978,13 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
           );
 
           if (mounted) {
+            debugPrint('✅ [LogMeal] Barcode food logged successfully | calories=${response.totalCalories}');
             Navigator.pop(context);
             _showSuccessSnackbar(response.totalCalories);
             ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
           }
         } else {
+          debugPrint('🔍 [LogMeal] User cancelled barcode confirmation');
           setState(() {
             _isLoading = false;
             _hasScanned = false;
@@ -841,6 +992,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
         }
       }
     } catch (e) {
+      debugPrint('❌ [LogMeal] Barcode scan error | error=$e');
       setState(() {
         _isLoading = false;
         _hasScanned = false;
@@ -939,14 +1091,34 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
   }
 
   void _showSuccessSnackbar(int calories) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Logged $calories kcal'),
-        backgroundColor: widget.isDark ? AppColors.success : AppColorsLight.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    );
+    // Get scaffold messenger before any async operations
+    final messenger = ScaffoldMessenger.of(context);
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final isDark = widget.isDark;
+
+    // Use Future.delayed to show snackbar after sheet animation completes
+    // This ensures the nav bar is visible and snackbar appears above it
+    Future.delayed(const Duration(milliseconds: 100), () {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+              Text('Logged $calories kcal'),
+            ],
+          ),
+          backgroundColor: isDark ? AppColors.success : AppColorsLight.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          margin: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            bottom: bottomPadding + 100, // Clear the floating nav bar (42px) + padding (16px) + buffer
+          ),
+        ),
+      );
+    });
   }
 
   void _showRestaurantModeInfo(BuildContext context, bool isDark) {
@@ -1035,8 +1207,20 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final orange = isDark ? AppColors.orange : AppColorsLight.orange;
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isKeyboardVisible = keyboardHeight > 0;
+
+    // Dynamically adjust sheet height when keyboard is visible
+    // This ensures the text field remains visible above the keyboard
+    final sheetHeight = isKeyboardVisible
+        ? screenHeight - keyboardHeight - MediaQuery.of(context).padding.top - 20
+        : screenHeight * 0.85;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      height: sheetHeight,
       decoration: BoxDecoration(
         color: nearBlack,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -1088,7 +1272,10 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: GestureDetector(
-                      onTap: () => setState(() => _selectedMealType = type),
+                      onTap: () {
+                        debugPrint('🍽️ [LogMeal] Meal type changed | from=${_selectedMealType.value} | to=${type.value}');
+                        setState(() => _selectedMealType = type);
+                      },
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
@@ -1125,7 +1312,10 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: GestureDetector(
-              onTap: () => setState(() => _restaurantMode = !_restaurantMode),
+              onTap: () {
+                debugPrint('🍽️ [LogMeal] Restaurant mode toggled | enabled=${!_restaurantMode}');
+                setState(() => _restaurantMode = !_restaurantMode);
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
@@ -1723,6 +1913,10 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
   bool _isSaved = false;
   bool _isSaving = false;
 
+  // Scroll controller for keyboard handling
+  final ScrollController _scrollController = ScrollController();
+  final FocusNode _textFieldFocusNode = FocusNode();
+
   // Mood tracking state
   FoodMood? _moodBefore;
   FoodMood? _moodAfter;
@@ -1741,6 +1935,37 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
   static const carbsColor = Color(0xFF6BCB77);
   static const fatColor = Color(0xFF4D96FF);
   static const fiberColor = Color(0xFF9B59B6);
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen for focus changes to scroll when keyboard appears
+    _textFieldFocusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void dispose() {
+    _textFieldFocusNode.removeListener(_onFocusChange);
+    _textFieldFocusNode.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    if (_textFieldFocusNode.hasFocus) {
+      // Delay to allow keyboard animation to complete
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted && _scrollController.hasClients) {
+          // Scroll to top to ensure text field is visible
+          _scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    }
+  }
 
   Future<void> _handleAnalyze() async {
     if (widget.controller.text.trim().isEmpty) return;
@@ -1981,6 +2206,7 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
           _isSaved = true;
           _isSaving = false;
         });
+        final bottomPadding = MediaQuery.of(context).padding.bottom;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Row(
@@ -1993,6 +2219,11 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
             backgroundColor: const Color(0xFF6BCB77),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            margin: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              bottom: bottomPadding + 100, // Clear the floating nav bar
+            ),
           ),
         );
       }
@@ -2045,6 +2276,8 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
 
     // Simple AI-first describe input
     return SingleChildScrollView(
+      controller: _scrollController,
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2060,6 +2293,7 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
             ),
             child: TextField(
               controller: widget.controller,
+              focusNode: _textFieldFocusNode,
               maxLines: 3,
               minLines: 2,
               style: TextStyle(color: textPrimary, fontSize: 15),

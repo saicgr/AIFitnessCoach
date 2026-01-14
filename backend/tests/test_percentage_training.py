@@ -13,6 +13,7 @@ from services.percentage_training_service import (
     UserExercise1RM,
     TrainingIntensitySettings,
     WorkingWeightResult,
+    LinkedExercise,
 )
 
 
@@ -315,6 +316,153 @@ class TestEdgeCases:
         )
         # 100 * 0.73 = 73, rounds to 2.5kg increment = 72.5
         assert result == 72.5
+
+
+class TestEquipmentMultipliers:
+    """Tests for equipment multipliers used in linked exercise calculations."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.service = PercentageTrainingService()
+
+    def test_barbell_is_baseline(self):
+        """Barbell should be the baseline (1.0)."""
+        assert self.service.EQUIPMENT_MULTIPLIERS['barbell'] == 1.0
+
+    def test_dumbbell_multiplier(self):
+        """Dumbbell should be 0.85 (85% of barbell)."""
+        assert self.service.EQUIPMENT_MULTIPLIERS['dumbbell'] == 0.85
+
+    def test_machine_multiplier(self):
+        """Machine should be 0.90 (90% of barbell)."""
+        assert self.service.EQUIPMENT_MULTIPLIERS['machine'] == 0.90
+
+    def test_cable_multiplier(self):
+        """Cable should be 0.80 (80% of barbell)."""
+        assert self.service.EQUIPMENT_MULTIPLIERS['cable'] == 0.80
+
+    def test_kettlebell_multiplier(self):
+        """Kettlebell should be 0.75 (75% of barbell)."""
+        assert self.service.EQUIPMENT_MULTIPLIERS['kettlebell'] == 0.75
+
+    def test_bodyweight_multiplier(self):
+        """Bodyweight should be 0.70 (70% of barbell)."""
+        assert self.service.EQUIPMENT_MULTIPLIERS['bodyweight'] == 0.70
+
+    def test_smith_machine_multiplier(self):
+        """Smith machine should be 0.95 (95% of barbell)."""
+        assert self.service.EQUIPMENT_MULTIPLIERS['smith_machine'] == 0.95
+
+    def test_ez_bar_multiplier(self):
+        """EZ bar should be 0.95 (95% of barbell)."""
+        assert self.service.EQUIPMENT_MULTIPLIERS['ez_bar'] == 0.95
+
+    def test_trap_bar_multiplier(self):
+        """Trap bar should be 1.0 (same as barbell)."""
+        assert self.service.EQUIPMENT_MULTIPLIERS['trap_bar'] == 1.0
+
+    def test_resistance_band_multiplier(self):
+        """Resistance band should be 0.60 (60% of barbell)."""
+        assert self.service.EQUIPMENT_MULTIPLIERS['resistance_band'] == 0.60
+
+
+class TestLinkedExerciseDataClasses:
+    """Tests for LinkedExercise and enhanced WorkingWeightResult data classes."""
+
+    def test_working_weight_result_with_source_fields(self):
+        """WorkingWeightResult should have source tracking fields."""
+        result = WorkingWeightResult(
+            exercise_name='Incline Dumbbell Press',
+            one_rep_max_kg=85.0,
+            intensity_percent=75,
+            working_weight_kg=63.75,
+            is_from_override=False,
+            source_type='linked',
+            source_exercise='Barbell Bench Press',
+            equipment_multiplier=0.85,
+        )
+        assert result.exercise_name == 'Incline Dumbbell Press'
+        assert result.source_type == 'linked'
+        assert result.source_exercise == 'Barbell Bench Press'
+        assert result.equipment_multiplier == 0.85
+
+    def test_working_weight_result_defaults(self):
+        """WorkingWeightResult should have sensible defaults for new fields."""
+        result = WorkingWeightResult(
+            exercise_name='Squat',
+            one_rep_max_kg=100.0,
+            intensity_percent=75,
+            working_weight_kg=75.0,
+            is_from_override=False,
+        )
+        assert result.source_type == 'direct'
+        assert result.source_exercise is None
+        assert result.equipment_multiplier == 1.0
+
+    def test_linked_exercise_creation(self):
+        """Test creating a LinkedExercise object."""
+        from services.percentage_training_service import LinkedExercise
+
+        link = LinkedExercise(
+            id='test-uuid',
+            user_id='user-uuid',
+            primary_exercise_name='Barbell Bench Press',
+            linked_exercise_name='Incline Dumbbell Press',
+            strength_multiplier=0.85,
+            relationship_type='variant',
+            notes='Incline is harder than flat',
+        )
+        assert link.primary_exercise_name == 'Barbell Bench Press'
+        assert link.linked_exercise_name == 'Incline Dumbbell Press'
+        assert link.strength_multiplier == 0.85
+        assert link.relationship_type == 'variant'
+        assert link.notes == 'Incline is harder than flat'
+
+
+class TestEquipmentScaling:
+    """Tests for equipment-based weight scaling calculations."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.service = PercentageTrainingService()
+
+    def test_barbell_to_dumbbell_scaling(self):
+        """Barbell 1RM should scale down to dumbbell by 0.85."""
+        # If barbell bench is 100kg, dumbbell should be ~85kg
+        barbell_1rm = 100.0
+        barbell_mult = self.service.EQUIPMENT_MULTIPLIERS['barbell']
+        dumbbell_mult = self.service.EQUIPMENT_MULTIPLIERS['dumbbell']
+
+        expected = barbell_1rm * (dumbbell_mult / barbell_mult)
+        assert expected == 85.0
+
+    def test_dumbbell_to_barbell_scaling(self):
+        """Dumbbell 1RM should scale up to barbell by 1/0.85."""
+        # If dumbbell bench is 85kg, barbell should be ~100kg
+        dumbbell_1rm = 85.0
+        barbell_mult = self.service.EQUIPMENT_MULTIPLIERS['barbell']
+        dumbbell_mult = self.service.EQUIPMENT_MULTIPLIERS['dumbbell']
+
+        expected = dumbbell_1rm * (barbell_mult / dumbbell_mult)
+        assert expected == 100.0
+
+    def test_barbell_to_cable_scaling(self):
+        """Barbell 1RM should scale down to cable by 0.80."""
+        barbell_1rm = 100.0
+        barbell_mult = self.service.EQUIPMENT_MULTIPLIERS['barbell']
+        cable_mult = self.service.EQUIPMENT_MULTIPLIERS['cable']
+
+        expected = barbell_1rm * (cable_mult / barbell_mult)
+        assert expected == 80.0
+
+    def test_machine_to_barbell_scaling(self):
+        """Machine 1RM should scale up to barbell by 1/0.90."""
+        machine_1rm = 90.0
+        barbell_mult = self.service.EQUIPMENT_MULTIPLIERS['barbell']
+        machine_mult = self.service.EQUIPMENT_MULTIPLIERS['machine']
+
+        expected = machine_1rm * (barbell_mult / machine_mult)
+        assert expected == 100.0
 
 
 if __name__ == '__main__':

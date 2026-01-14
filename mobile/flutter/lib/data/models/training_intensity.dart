@@ -168,12 +168,27 @@ class WorkingWeightResult {
   @JsonKey(name: 'is_from_override')
   final bool isFromOverride;
 
+  /// Source of the 1RM: 'direct', 'linked', 'muscle_group_fallback'
+  @JsonKey(name: 'source_type')
+  final String sourceType;
+
+  /// Exercise name from which 1RM was derived (for linked/fallback)
+  @JsonKey(name: 'source_exercise')
+  final String? sourceExercise;
+
+  /// Equipment multiplier applied (for linked/fallback)
+  @JsonKey(name: 'equipment_multiplier')
+  final double equipmentMultiplier;
+
   const WorkingWeightResult({
     required this.exerciseName,
     required this.oneRepMaxKg,
     required this.intensityPercent,
     required this.workingWeightKg,
     this.isFromOverride = false,
+    this.sourceType = 'direct',
+    this.sourceExercise,
+    this.equipmentMultiplier = 1.0,
   });
 
   factory WorkingWeightResult.fromJson(Map<String, dynamic> json) =>
@@ -184,6 +199,138 @@ class WorkingWeightResult {
   /// Get display string for the working weight
   String get display =>
       '${workingWeightKg.toStringAsFixed(1)} kg ($intensityPercent% of 1RM)';
+
+  /// Whether this weight was derived from another exercise
+  bool get isDerived => sourceType != 'direct';
+
+  /// Get display string for the source
+  String get sourceDisplay {
+    switch (sourceType) {
+      case 'linked':
+        return 'Based on $sourceExercise';
+      case 'muscle_group_fallback':
+        return 'Estimated from $sourceExercise';
+      default:
+        return 'Direct 1RM';
+    }
+  }
+}
+
+/// Linked exercise relationship for 1RM sharing
+@JsonSerializable()
+class LinkedExercise {
+  final String id;
+
+  @JsonKey(name: 'user_id')
+  final String userId;
+
+  @JsonKey(name: 'primary_exercise_name')
+  final String primaryExerciseName;
+
+  @JsonKey(name: 'linked_exercise_name')
+  final String linkedExerciseName;
+
+  @JsonKey(name: 'strength_multiplier')
+  final double strengthMultiplier;
+
+  @JsonKey(name: 'relationship_type')
+  final String relationshipType;
+
+  final String? notes;
+
+  @JsonKey(name: 'created_at')
+  final String? createdAt;
+
+  @JsonKey(name: 'updated_at')
+  final String? updatedAt;
+
+  const LinkedExercise({
+    required this.id,
+    required this.userId,
+    required this.primaryExerciseName,
+    required this.linkedExerciseName,
+    this.strengthMultiplier = 0.85,
+    this.relationshipType = 'variant',
+    this.notes,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  factory LinkedExercise.fromJson(Map<String, dynamic> json) =>
+      _$LinkedExerciseFromJson(json);
+
+  Map<String, dynamic> toJson() => _$LinkedExerciseToJson(this);
+
+  /// Get display string for the relationship type
+  String get relationshipDisplay {
+    switch (relationshipType) {
+      case 'variant':
+        return 'Variant';
+      case 'angle':
+        return 'Different Angle';
+      case 'equipment_swap':
+        return 'Different Equipment';
+      case 'progression':
+        return 'Progression';
+      default:
+        return relationshipType;
+    }
+  }
+
+  /// Get multiplier as percentage string
+  String get multiplierDisplay => '${(strengthMultiplier * 100).round()}%';
+
+  LinkedExercise copyWith({
+    String? id,
+    String? userId,
+    String? primaryExerciseName,
+    String? linkedExerciseName,
+    double? strengthMultiplier,
+    String? relationshipType,
+    String? notes,
+    String? createdAt,
+    String? updatedAt,
+  }) {
+    return LinkedExercise(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      primaryExerciseName: primaryExerciseName ?? this.primaryExerciseName,
+      linkedExerciseName: linkedExerciseName ?? this.linkedExerciseName,
+      strengthMultiplier: strengthMultiplier ?? this.strengthMultiplier,
+      relationshipType: relationshipType ?? this.relationshipType,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+}
+
+/// Suggested exercise for linking
+@JsonSerializable()
+class ExerciseLinkSuggestion {
+  final String name;
+  final String equipment;
+
+  @JsonKey(name: 'suggested_multiplier')
+  final double suggestedMultiplier;
+
+  @JsonKey(name: 'muscle_group')
+  final String muscleGroup;
+
+  const ExerciseLinkSuggestion({
+    required this.name,
+    required this.equipment,
+    required this.suggestedMultiplier,
+    required this.muscleGroup,
+  });
+
+  factory ExerciseLinkSuggestion.fromJson(Map<String, dynamic> json) =>
+      _$ExerciseLinkSuggestionFromJson(json);
+
+  Map<String, dynamic> toJson() => _$ExerciseLinkSuggestionToJson(this);
+
+  /// Get multiplier as percentage string
+  String get multiplierDisplay => '${(suggestedMultiplier * 100).round()}%';
 }
 
 /// Auto-populate response

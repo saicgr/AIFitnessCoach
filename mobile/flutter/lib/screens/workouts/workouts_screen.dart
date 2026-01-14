@@ -169,27 +169,33 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     bool isToday = false;
     int? daysUntilNext;
     bool isNextWeek = false;
+    bool isGenerating = false;
+    String? generationMessage;
+    bool completedToday = false;
 
     // Get user for checking if it's last workout day
     final authState = ref.watch(authStateProvider);
     final user = authState.user;
     final isLastWorkoutDay = user?.isLastWorkoutDayOfWeek ?? false;
 
-    todayWorkoutState.whenData((response) {
-      if (response != null) {
-        if (response.hasWorkoutToday && response.todayWorkout != null) {
-          todayOrNextWorkout = response.todayWorkout!.toWorkout();
-          isToday = true;
-        } else if (response.nextWorkout != null) {
-          todayOrNextWorkout = response.nextWorkout!.toWorkout();
-          daysUntilNext = response.daysUntilNext;
-          // Check if next workout is in next week (more than remaining days this week)
-          if (isLastWorkoutDay && daysUntilNext != null && daysUntilNext! > 0) {
-            isNextWeek = true;
-          }
+    // Extract data from todayWorkoutState
+    final response = todayWorkoutState.valueOrNull;
+    if (response != null) {
+      isGenerating = response.isGenerating;
+      generationMessage = response.generationMessage;
+      completedToday = response.completedToday;
+      if (response.hasWorkoutToday && response.todayWorkout != null) {
+        todayOrNextWorkout = response.todayWorkout!.toWorkout();
+        isToday = true;
+      } else if (response.nextWorkout != null) {
+        todayOrNextWorkout = response.nextWorkout!.toWorkout();
+        daysUntilNext = response.daysUntilNext;
+        // Check if next workout is in next week (more than remaining days this week)
+        if (isLastWorkoutDay && daysUntilNext != null && daysUntilNext > 0) {
+          isNextWeek = true;
         }
       }
-    });
+    }
 
     // Calculate weekly progress
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
@@ -224,52 +230,19 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         const SizedBox(height: 16),
 
         // Today's/Next Workout Section (using todayWorkoutProvider - same as Home)
-        if (todayWorkoutState.isLoading) ...[
-          _buildSectionHeader(
-            'YOUR WORKOUT',
-            textSecondary,
-          ),
-          const SizedBox(height: 8),
-          const GeneratingHeroCard(
-            message: 'Loading your workout...',
-            subtitle: 'Fetching your personalized plan',
-          ),
-          const SizedBox(height: 24),
-        ] else if (todayOrNextWorkout != null) ...[
-          _buildSectionHeader(
-            isToday
-                ? 'TODAY\'S WORKOUT'
-                : isNextWeek
-                    ? 'NEXT WEEK\'S WORKOUT${daysUntilNext != null ? ' (in $daysUntilNext day${daysUntilNext == 1 ? '' : 's'})' : ''}'
-                    : 'NEXT WORKOUT${daysUntilNext != null ? ' (in $daysUntilNext day${daysUntilNext == 1 ? '' : 's'})' : ''}',
-            textSecondary,
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: NextWorkoutCard(
-              workout: todayOrNextWorkout!,
-              onStart: () {
-                HapticService.medium();
-                context.push('/active-workout', extra: todayOrNextWorkout);
-              },
-              showUpcomingLink: false,
-            ),
-          ),
-          const SizedBox(height: 24),
-        ] else ...[
-          // No workout available yet - show generating state (never "no workout")
-          _buildSectionHeader(
-            'YOUR WORKOUT',
-            textSecondary,
-          ),
-          const SizedBox(height: 8),
-          const GeneratingHeroCard(
-            message: 'Preparing your workout...',
-            subtitle: 'Your personalized plan is being created',
-          ),
-          const SizedBox(height: 24),
-        ],
+        // Priority: 1. Loading, 2. Error, 3. Generating, 4. Has workout, 5. Completed, 6. Preparing
+        ..._buildWorkoutSection(
+          context,
+          textSecondary,
+          todayWorkoutState,
+          todayOrNextWorkout,
+          isToday,
+          isNextWeek,
+          daysUntilNext,
+          isGenerating,
+          generationMessage,
+          completedToday,
+        ),
 
         // Weekly Progress
         _buildSectionHeader('THIS WEEK', textSecondary),
@@ -535,6 +508,124 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         }).toList(),
       ),
     );
+  }
+
+  /// Build workout section with proper state handling (matches Home screen logic)
+  List<Widget> _buildWorkoutSection(
+    BuildContext context,
+    Color textSecondary,
+    AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
+    Workout? todayOrNextWorkout,
+    bool isToday,
+    bool isNextWeek,
+    int? daysUntilNext,
+    bool isGenerating,
+    String? generationMessage,
+    bool completedToday,
+  ) {
+    debugPrint('🏋️ [WorkoutsScreen] Building workout section...');
+    debugPrint('🏋️ [WorkoutsScreen] isLoading: ${todayWorkoutState.isLoading}');
+    debugPrint('🏋️ [WorkoutsScreen] hasValue: ${todayWorkoutState.hasValue}');
+    debugPrint('🏋️ [WorkoutsScreen] hasError: ${todayWorkoutState.hasError}');
+    debugPrint('🏋️ [WorkoutsScreen] isGenerating: $isGenerating');
+    debugPrint('🏋️ [WorkoutsScreen] todayOrNextWorkout: ${todayOrNextWorkout?.name}');
+    debugPrint('🏋️ [WorkoutsScreen] completedToday: $completedToday');
+
+    // 1. Initial loading state (no previous data)
+    if (todayWorkoutState.isLoading && !todayWorkoutState.hasValue) {
+      debugPrint('🏋️ [WorkoutsScreen] Showing: Loading state');
+      return [
+        _buildSectionHeader('YOUR WORKOUT', textSecondary),
+        const SizedBox(height: 8),
+        const GeneratingHeroCard(
+          message: 'Loading your workout...',
+          subtitle: 'Fetching your personalized plan',
+        ),
+        const SizedBox(height: 24),
+      ];
+    }
+
+    // 2. Error state - show optimistic loading (workouts may still be generating)
+    if (todayWorkoutState.hasError) {
+      debugPrint('⚠️ [WorkoutsScreen] Error: ${todayWorkoutState.error}');
+      return [
+        _buildSectionHeader('YOUR WORKOUT', textSecondary),
+        const SizedBox(height: 8),
+        const GeneratingHeroCard(
+          message: 'Setting up your workouts...',
+          subtitle: 'This may take a moment',
+        ),
+        const SizedBox(height: 24),
+      ];
+    }
+
+    // 3. Generating state - backend is creating workouts
+    if (isGenerating) {
+      debugPrint('🏋️ [WorkoutsScreen] Showing: Generating state');
+      return [
+        _buildSectionHeader('YOUR WORKOUT', textSecondary),
+        const SizedBox(height: 8),
+        GeneratingHeroCard(
+          message: generationMessage ?? 'Generating your workout...',
+          subtitle: 'Your personalized plan is being created',
+        ),
+        const SizedBox(height: 24),
+      ];
+    }
+
+    // 4. Has workout - show the workout card
+    if (todayOrNextWorkout != null) {
+      debugPrint('🏋️ [WorkoutsScreen] Showing: Workout card for ${todayOrNextWorkout.name}');
+      return [
+        _buildSectionHeader(
+          isToday
+              ? 'TODAY\'S WORKOUT'
+              : isNextWeek
+                  ? 'NEXT WEEK\'S WORKOUT${daysUntilNext != null ? ' (in $daysUntilNext day${daysUntilNext == 1 ? '' : 's'})' : ''}'
+                  : 'NEXT WORKOUT${daysUntilNext != null ? ' (in $daysUntilNext day${daysUntilNext == 1 ? '' : 's'})' : ''}',
+          textSecondary,
+        ),
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: NextWorkoutCard(
+            workout: todayOrNextWorkout,
+            onStart: () {
+              HapticService.medium();
+              context.push('/active-workout', extra: todayOrNextWorkout);
+            },
+            showUpcomingLink: false,
+          ),
+        ),
+        const SizedBox(height: 24),
+      ];
+    }
+
+    // 5. Completed today - show encouraging message
+    if (completedToday) {
+      debugPrint('🏋️ [WorkoutsScreen] Showing: Completed today state');
+      return [
+        _buildSectionHeader('YOUR WORKOUT', textSecondary),
+        const SizedBox(height: 8),
+        const GeneratingHeroCard(
+          message: 'Great job today! 🎉',
+          subtitle: 'Rest up for your next workout',
+        ),
+        const SizedBox(height: 24),
+      ];
+    }
+
+    // 6. No workout available - show preparing state (default fallback)
+    debugPrint('🏋️ [WorkoutsScreen] Showing: Preparing state (no workout available)');
+    return [
+      _buildSectionHeader('YOUR WORKOUT', textSecondary),
+      const SizedBox(height: 8),
+      const GeneratingHeroCard(
+        message: 'Preparing your workout...',
+        subtitle: 'Your personalized plan is being created',
+      ),
+      const SizedBox(height: 24),
+    ];
   }
 }
 

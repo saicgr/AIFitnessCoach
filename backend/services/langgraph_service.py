@@ -13,7 +13,7 @@ from typing import Optional, Dict, Any, Tuple
 
 from models.chat import ChatRequest, ChatResponse, CoachIntent, AgentType
 from services.gemini_service import GeminiService
-from services.rag_service import RAGService
+from services.rag_service import RAGService, WorkoutRAGService
 
 # Import all domain agents
 from services.langgraph_agents.nutrition_agent import build_nutrition_agent_graph
@@ -184,7 +184,12 @@ class LangGraphCoachService:
         }
 
     async def _get_rag_context(self, message: str, user_id: str) -> Tuple[str, bool, list]:
-        """Get RAG context for the message."""
+        """Get RAG context for the message, including training settings."""
+        context_parts = []
+        rag_used = False
+        similar_questions = []
+
+        # 1. Get Q&A context (existing behavior)
         try:
             rag_service = RAGService(gemini_service=self.gemini_service)
             similar_docs = await rag_service.find_similar(
@@ -193,14 +198,36 @@ class LangGraphCoachService:
                 n_results=3
             )
             formatted = rag_service.format_context(similar_docs)
+            if formatted:
+                context_parts.append(formatted)
+                rag_used = True
             similar_questions = [
                 doc.get("metadata", {}).get("question", "")
                 for doc in similar_docs[:3]
             ]
-            return formatted, len(similar_docs) > 0, similar_questions
         except Exception as e:
-            logger.warning(f"RAG context retrieval failed: {e}")
-            return "", False, []
+            logger.warning(f"Q&A RAG context retrieval failed: {e}")
+
+        # 2. Get training settings context (1RMs, intensity, etc.)
+        try:
+            workout_rag = WorkoutRAGService(self.gemini_service)
+            training_settings = workout_rag.get_recent_training_settings(
+                user_id=user_id,
+                days_lookback=30,
+                max_results=10
+            )
+            if training_settings.get("has_settings") and training_settings.get("context_text"):
+                # Add training settings as a separate context section
+                settings_context = f"\n--- User's Training Settings ---\n{training_settings['context_text']}"
+                context_parts.append(settings_context)
+                rag_used = True
+                logger.info(f"📊 Added training settings to RAG context for user {user_id}")
+        except Exception as e:
+            logger.warning(f"Training settings RAG retrieval failed: {e}")
+
+        # Combine all context parts
+        combined_context = "\n\n".join(context_parts)
+        return combined_context, rag_used, similar_questions
 
     def _select_agent(
         self,

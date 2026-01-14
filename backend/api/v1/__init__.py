@@ -14,6 +14,7 @@ from api.v1 import saved_workouts, challenges, leaderboard
 from api.v1 import workouts  # Modular workouts package
 from api.v1 import social  # Modular social package
 from api.v1 import workout_gallery  # Shareable workout recap images
+from api.v1 import stats_gallery  # Shareable stats images
 from api.v1 import personal_goals  # Weekly personal challenges
 from api.v1 import goal_social  # Goal sharing and friend features
 from api.v1 import features  # Feature voting system (Robinhood-style)
@@ -147,6 +148,9 @@ router.include_router(leaderboard.router, tags=["Leaderboard"])
 
 # Shareable workout recap images for social sharing
 router.include_router(workout_gallery.router, prefix="/workout-gallery", tags=["Workout Gallery"])
+
+# Shareable stats images for social sharing
+router.include_router(stats_gallery.router, prefix="/stats-gallery", tags=["Stats Gallery"])
 
 # Weekly personal goals (Push it to the Limit challenges)
 router.include_router(personal_goals.router, prefix="/personal-goals", tags=["Personal Goals"])
