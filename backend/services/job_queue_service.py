@@ -227,6 +227,52 @@ class JobQueueService:
             except Exception as e:
                 logger.error(f"Failed to cancel stale jobs: {e}")
 
+    def get_recent_job(self, user_id: str, within_seconds: int = 60) -> Optional[Dict[str, Any]]:
+        """
+        Get a recent job for the user within the specified time window.
+
+        This is used to implement generation cooldown - prevents excessive
+        retry attempts by checking if generation was recently attempted.
+
+        Args:
+            user_id: User ID
+            within_seconds: Time window to check (default 60 seconds)
+
+        Returns:
+            Recent job dict if found, None otherwise
+        """
+        from datetime import timedelta
+
+        cutoff = (datetime.now() - timedelta(seconds=within_seconds)).isoformat()
+
+        if self.use_db:
+            try:
+                db = get_supabase_db()
+                result = db.client.table("workout_generation_jobs")\
+                    .select("*")\
+                    .eq("user_id", user_id)\
+                    .gte("created_at", cutoff)\
+                    .order("created_at", desc=True)\
+                    .limit(1)\
+                    .execute()
+
+                if result.data:
+                    job = result.data[0]
+                    logger.debug(f"Found recent job {job.get('id')} for user {user_id} (status={job.get('status')})")
+                    return job
+                return None
+            except Exception as e:
+                logger.error(f"Failed to get recent job from DB: {e}")
+
+        # In-memory fallback
+        cutoff_dt = datetime.now() - timedelta(seconds=within_seconds)
+        user_jobs = [
+            j for j in _memory_jobs.values()
+            if j["user_id"] == user_id and
+            datetime.fromisoformat(j["created_at"]) >= cutoff_dt
+        ]
+        return user_jobs[-1] if user_jobs else None
+
 
 # Singleton instance
 _job_queue_service: Optional[JobQueueService] = None

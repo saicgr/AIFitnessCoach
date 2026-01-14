@@ -68,6 +68,10 @@ class WorkoutFeedbackRAGService:
         total_reps: int,
         total_volume_kg: float,
         completed_at: str,
+        # User preferences for RAG context
+        training_intensity_percent: int = 75,
+        progression_pace: str = "medium",
+        has_1rm_data: bool = False,
     ) -> str:
         """
         Index a completed workout session for RAG retrieval.
@@ -87,6 +91,9 @@ class WorkoutFeedbackRAGService:
             total_reps: Total reps completed
             total_volume_kg: Total weight volume (sets * reps * weight)
             completed_at: ISO timestamp when completed
+            training_intensity_percent: User's training intensity setting (50-100)
+            progression_pace: User's progression pace (slow, medium, fast)
+            has_1rm_data: Whether user has 1RM data for personalization
 
         Returns:
             Document ID
@@ -105,7 +112,7 @@ class WorkoutFeedbackRAGService:
 
         exercise_text = ", ".join(exercise_summaries)
 
-        # Create searchable text for embedding
+        # Create searchable text for embedding (include preferences for context)
         session_text = (
             f"Workout: {workout_name}\n"
             f"Type: {workout_type}\n"
@@ -114,6 +121,8 @@ class WorkoutFeedbackRAGService:
             f"Rest Time: {total_rest_seconds // 60} minutes (avg {avg_rest_seconds:.0f}s between sets)\n"
             f"Calories: {calories_burned} kcal\n"
             f"Sets: {total_sets}, Reps: {total_reps}, Volume: {total_volume_kg:.1f}kg\n"
+            f"Training Intensity: {training_intensity_percent}%\n"
+            f"Progression Pace: {progression_pace}\n"
             f"Date: {completed_at}"
         )
 
@@ -146,10 +155,14 @@ class WorkoutFeedbackRAGService:
                 "total_reps": total_reps,
                 "total_volume_kg": total_volume_kg,
                 "completed_at": completed_at,
+                # User preferences for RAG filtering/context
+                "training_intensity_percent": training_intensity_percent,
+                "progression_pace": progression_pace,
+                "has_1rm_data": has_1rm_data,
             }],
         )
 
-        print(f"🏋️ Indexed workout session: {workout_name} for user {user_id}")
+        print(f"🏋️ Indexed workout session: {workout_name} for user {user_id} (intensity={training_intensity_percent}%, pace={progression_pace})")
         return doc_id
 
     async def get_user_workout_history(

@@ -617,20 +617,21 @@ class _GeneratingHeroCardState extends State<GeneratingHeroCard>
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 180),
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border(
-            left: BorderSide(color: AppColors.cyan, width: 4),
-            top: BorderSide(color: AppColors.cyan.withValues(alpha: 0.3)),
-            right: BorderSide(color: AppColors.cyan.withValues(alpha: 0.3)),
-            bottom: BorderSide(color: AppColors.cyan.withValues(alpha: 0.3)),
-          ),
-        ),
-        child: Column(
+      child: Stack(
+        children: [
+          // Main card container
+          Container(
+            constraints: const BoxConstraints(minHeight: 180),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppColors.cyan.withValues(alpha: 0.3),
+                width: 1,
+              ),
+            ),
+            child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Animated loading indicator with glow effect
@@ -728,7 +729,25 @@ class _GeneratingHeroCardState extends State<GeneratingHeroCard>
               },
             ),
           ],
-        ),
+            ),
+          ),
+          // Left accent bar overlay
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            child: Container(
+              width: 4,
+              decoration: BoxDecoration(
+                color: AppColors.cyan,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  bottomLeft: Radius.circular(20),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

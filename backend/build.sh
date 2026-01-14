@@ -52,6 +52,28 @@ else
         -x
 fi
 
+# Run REAL integration tests if enabled (makes actual API calls to ChromaDB and Gemini)
+# Set RUN_INTEGRATION_TESTS=true in Render env vars to enable
+if [ "$RUN_INTEGRATION_TESTS" = "true" ]; then
+    echo ""
+    echo "============================================"
+    echo "Running REAL integration tests (API calls)..."
+    echo "============================================"
+    pip install pytest pytest-asyncio httpx pytest-timeout
+
+    # These tests make real API calls to ChromaDB and Gemini
+    # They verify the full workout generation pipeline works end-to-end
+    # Longer timeout (120s) for real API calls
+    python -m pytest tests/test_rag_gemini_real_integration.py \
+        -v --tb=short \
+        -m "integration" \
+        --timeout=120 \
+        -x
+
+    echo ""
+    echo "✅ Integration tests passed!"
+fi
+
 echo ""
 echo "============================================"
 echo "✅ Build complete - deploying..."

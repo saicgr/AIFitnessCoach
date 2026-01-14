@@ -604,6 +604,17 @@ async def generate_ai_coach_feedback(request: AICoachFeedbackRequest):
         # Index the workout session for future RAG retrieval
         indexed = False
         try:
+            # Fetch user preferences for RAG context
+            from api.v1.workouts.utils import (
+                get_user_training_intensity,
+                get_user_progression_pace,
+                get_user_1rm_data,
+            )
+
+            training_intensity = await get_user_training_intensity(request.user_id)
+            progression_pace = await get_user_progression_pace(request.user_id)
+            user_1rm_data = await get_user_1rm_data(request.user_id)
+
             await rag_service.index_workout_session(
                 workout_log_id=request.workout_log_id,
                 workout_id=request.workout_id,
@@ -619,9 +630,13 @@ async def generate_ai_coach_feedback(request: AICoachFeedbackRequest):
                 total_reps=request.total_reps,
                 total_volume_kg=request.total_volume_kg,
                 completed_at=current_session["completed_at"],
+                # Pass user preferences for RAG context
+                training_intensity_percent=training_intensity,
+                progression_pace=progression_pace,
+                has_1rm_data=bool(user_1rm_data),
             )
             indexed = True
-            logger.info(f"Indexed workout session {request.workout_log_id} for RAG")
+            logger.info(f"Indexed workout session {request.workout_log_id} for RAG (intensity={training_intensity}%, pace={progression_pace})")
         except Exception as e:
             logger.warning(f"Failed to index workout session: {e}")
 

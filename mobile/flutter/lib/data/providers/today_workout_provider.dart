@@ -1,10 +1,25 @@
 import 'dart:async';
 import 'dart:io' show Platform;
+import 'dart:math' show min, pow;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/wearable_provider.dart';
 import '../repositories/workout_repository.dart';
 import '../services/wearable_service.dart';
+
+/// Tracks poll count for exponential backoff
+/// Prevents excessive API calls when generation is failing
+int _generationPollCount = 0;
+
+/// Maximum number of polls before giving up
+/// ~2 minutes with exponential backoff: 2s, 4s, 8s, 16s, 30s, 30s...
+const int _maxGenerationPolls = 30;
+
+/// Calculate backoff seconds with exponential growth, capped at 30s
+int _getBackoffSeconds() {
+  // 2s, 4s, 8s, 16s, 30s (capped)
+  return min(30, 2 * pow(2, min(_generationPollCount, 4)).toInt());
+}
 
 /// Provider for today's workout data
 ///
@@ -15,24 +30,43 @@ import '../services/wearable_service.dart';
 /// - Caches result for the current session (removed autoDispose for faster navigation)
 /// - Auto-refreshes on provider invalidation
 /// - Auto-polls when is_generating is true (JIT generation in progress)
+/// - Exponential backoff to prevent excessive API calls (2s -> 4s -> 8s -> 16s -> 30s cap)
+/// - Stops polling after 30 attempts (~2 minutes) to prevent infinite loops
 /// - Auto-syncs to WearOS watch when workout is available (Android only)
 final todayWorkoutProvider =
     FutureProvider<TodayWorkoutResponse?>((ref) async {
   final repository = ref.watch(workoutRepositoryProvider);
   final response = await repository.getTodayWorkout();
 
-  // If generation is in progress, schedule a refresh after 2 seconds
+  // If generation is in progress, schedule a refresh with exponential backoff
   // This enables automatic polling until the workout is ready
   if (response?.isGenerating == true) {
-    // Use a timer to auto-refresh (non-blocking)
-    Timer(const Duration(seconds: 2), () {
-      // Only invalidate if the provider is still active
-      try {
-        ref.invalidateSelf();
-      } catch (_) {
-        // Provider may have been disposed
-      }
-    });
+    if (_generationPollCount < _maxGenerationPolls) {
+      _generationPollCount++;
+      final backoffSeconds = _getBackoffSeconds();
+      debugPrint('🔄 [Generation] Poll #$_generationPollCount, next in ${backoffSeconds}s');
+
+      // Use a timer to auto-refresh with backoff (non-blocking)
+      Timer(Duration(seconds: backoffSeconds), () {
+        // Only invalidate if the provider is still active
+        try {
+          ref.invalidateSelf();
+        } catch (_) {
+          // Provider may have been disposed
+        }
+      });
+    } else {
+      // Stop polling after max attempts - something is wrong
+      debugPrint('❌ [Generation] Max polls ($_maxGenerationPolls) reached. Stopping auto-refresh.');
+      // Reset counter for next session
+      _generationPollCount = 0;
+    }
+  } else {
+    // Reset poll count when generation completes or is not in progress
+    if (_generationPollCount > 0) {
+      debugPrint('✅ [Generation] Complete after $_generationPollCount polls');
+    }
+    _generationPollCount = 0;
   }
 
   // If no workouts available (post-onboarding), schedule a refresh after 3 seconds

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/providers/today_workout_provider.dart';
-import '../../../data/repositories/workout_repository.dart';
 import 'hero_workout_card.dart';
 import 'hero_nutrition_card.dart';
 import 'hero_fasting_card.dart';
@@ -210,17 +209,32 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
         if (widget.todayWorkout != null) {
           return HeroWorkoutCard(workout: widget.todayWorkout!);
         }
-        // Fallback to workoutsProvider
-        return _buildFallbackFromWorkoutsProvider();
+        // Show loading state instead of empty card on error
+        return const GeneratingHeroCard(
+          message: 'Loading workout...',
+          subtitle: 'Please wait',
+        );
       },
       data: (response) {
         debugPrint('🏠 [SwipeableHero] State: DATA');
-        // Check if generating
-        if (response?.isGenerating == true || widget.isGenerating) {
-          debugPrint('🏠 [SwipeableHero] Showing GeneratingHeroCard (isGenerating)');
-          return GeneratingHeroCard(
-            message: response?.generationMessage ?? 'Generating workout...',
-          );
+
+        // Get workout: today's OR next (ALWAYS show a workout, never rest day)
+        final workoutSummary = response?.todayWorkout ?? response?.nextWorkout;
+
+        // Check if generating OR if no workouts exist (post-onboarding state)
+        final hasNoWorkouts = workoutSummary == null && widget.todayWorkout == null;
+        final isGeneratingWorkout = response?.isGenerating == true || widget.isGenerating;
+
+        if (isGeneratingWorkout || hasNoWorkouts) {
+          // If no workouts exist and not completed today, show generating card
+          // This handles the post-onboarding gap when workouts are being generated
+          if (response?.completedToday != true) {
+            debugPrint('🏠 [SwipeableHero] Showing GeneratingHeroCard (isGenerating=$isGeneratingWorkout, hasNoWorkouts=$hasNoWorkouts)');
+            return GeneratingHeroCard(
+              message: response?.generationMessage ?? 'Preparing your workout...',
+              subtitle: 'Your personalized workout plan is being created',
+            );
+          }
         }
 
         // Check if user completed today's workout - show next workout with completion banner
@@ -235,8 +249,6 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
           );
         }
 
-        // Get workout: today's OR next (ALWAYS show a workout, never rest day)
-        final workoutSummary = response?.todayWorkout ?? response?.nextWorkout;
         debugPrint('🏠 [SwipeableHero] workoutSummary: $workoutSummary');
 
         if (workoutSummary != null) {
@@ -250,58 +262,11 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
           return HeroWorkoutCard(workout: widget.todayWorkout!);
         }
 
-        // No workouts available AND not completed today - show loading
-        // This handles the post-onboarding gap where generation hasn't started
-        if (response?.completedToday != true) {
-          debugPrint('🏠 [SwipeableHero] Showing GeneratingHeroCard (no workouts, not completed)');
-          return const GeneratingHeroCard(
-            message: 'Preparing your workout...',
-            subtitle: 'This may take a moment',
-          );
-        }
-
-        // Fallback to workoutsProvider as last resort
-        debugPrint('🏠 [SwipeableHero] Using fallback workoutsProvider');
-        return _buildFallbackFromWorkoutsProvider();
-      },
-    );
-  }
-
-  /// Fallback to workoutsProvider when todayWorkoutProvider fails or returns no workouts
-  Widget _buildFallbackFromWorkoutsProvider() {
-    return Consumer(
-      builder: (context, ref, _) {
-        final workoutsState = ref.watch(workoutsProvider);
-
-        return workoutsState.when(
-          loading: () => const GeneratingHeroCard(
-            message: 'Loading workout...',
-          ),
-          error: (_, __) => const GeneratingHeroCard(
-            message: 'Loading workout...',
-          ),
-          data: (workouts) {
-            if (workouts.isEmpty) {
-              return const GeneratingHeroCard(
-                message: 'Preparing your workout...',
-              );
-            }
-
-            // Find next workout (today or future, not completed)
-            final today = DateTime.now().toIso8601String().split('T')[0];
-            final nextWorkout = workouts.where((w) {
-              final date = w.scheduledDate?.split('T')[0] ?? '';
-              return !(w.isCompleted ?? false) && date.compareTo(today) >= 0;
-            }).firstOrNull;
-
-            if (nextWorkout != null) {
-              return HeroWorkoutCard(workout: nextWorkout);
-            }
-
-            return const GeneratingHeroCard(
-              message: 'Preparing your workout...',
-            );
-          },
+        // Final fallback - show generating card (should rarely reach here)
+        debugPrint('🏠 [SwipeableHero] Final fallback: showing GeneratingHeroCard');
+        return const GeneratingHeroCard(
+          message: 'Preparing your workout...',
+          subtitle: 'This may take a moment',
         );
       },
     );

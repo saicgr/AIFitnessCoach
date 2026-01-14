@@ -266,23 +266,47 @@ async def get_today_workout(
 
             # Check if we have background_tasks available for async generation
             if background_tasks is not None:
-                # Trigger generation in background - user sees "Creating your workout..."
-                try:
-                    # Call generate_next_workout which schedules the actual generation
-                    result = await generate_next_workout(user_id, background_tasks)
+                # COOLDOWN CHECK: Prevent excessive retries by checking for recent jobs
+                from services.job_queue_service import get_job_queue_service
+                job_queue = get_job_queue_service()
 
-                    if result.get("needs_generation") or result.get("already_generating"):
+                recent_job = job_queue.get_recent_job(user_id, within_seconds=60)
+                if recent_job:
+                    # A job was created recently - don't trigger another one
+                    job_status = recent_job.get("status", "unknown")
+                    job_error = recent_job.get("error_message", "")
+
+                    if job_status == "in_progress":
                         is_generating = True
                         generation_message = "Creating your next workout..."
-                        logger.info(f"[JIT Safety Net] Generation triggered for user {user_id}: {result}")
-                    elif result.get("success") and not result.get("needs_generation"):
-                        # Workout already exists - this shouldn't happen but handle it
-                        logger.info(f"[JIT Safety Net] Workout already exists: {result}")
-                except Exception as gen_error:
-                    logger.error(f"[JIT Safety Net] Failed to trigger generation: {gen_error}")
-                    # Don't fail the request - just log and continue
-                    is_generating = False
-                    generation_message = None
+                        logger.info(f"[JIT Safety Net] Generation already in progress for user {user_id}")
+                    elif job_status == "failed":
+                        is_generating = False
+                        generation_message = f"Generation failed. Please try again in a minute."
+                        logger.warning(f"[JIT Safety Net] Recent generation failed for user {user_id}: {job_error}")
+                    else:
+                        # pending, completed, or other status
+                        is_generating = job_status == "pending"
+                        generation_message = "Workout generation queued..." if job_status == "pending" else None
+                        logger.info(f"[JIT Safety Net] Recent job status={job_status} for user {user_id}")
+                else:
+                    # No recent job - safe to trigger new generation
+                    try:
+                        # Call generate_next_workout which schedules the actual generation
+                        result = await generate_next_workout(user_id, background_tasks)
+
+                        if result.get("needs_generation") or result.get("already_generating"):
+                            is_generating = True
+                            generation_message = "Creating your next workout..."
+                            logger.info(f"[JIT Safety Net] Generation triggered for user {user_id}: {result}")
+                        elif result.get("success") and not result.get("needs_generation"):
+                            # Workout already exists - this shouldn't happen but handle it
+                            logger.info(f"[JIT Safety Net] Workout already exists: {result}")
+                    except Exception as gen_error:
+                        logger.error(f"[JIT Safety Net] Failed to trigger generation: {gen_error}")
+                        # Don't fail the request - just log and continue
+                        is_generating = False
+                        generation_message = None
             else:
                 logger.warning(f"[JIT Safety Net] No background_tasks available for user {user_id}")
 

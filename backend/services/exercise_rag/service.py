@@ -1377,6 +1377,45 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
                 )
                 weight_source = "generic"
 
+        # Generate set_targets array based on available data
+        # This is CRITICAL - without set_targets, validate_set_targets_strict() will fail
+        set_targets = []
+        is_bodyweight = equipment_type == "bodyweight" or equipment.lower() in ["bodyweight", "body weight", "none", ""]
+
+        for set_num in range(1, sets + 1):
+            if set_num == 1 and sets >= 3 and not is_bodyweight and starting_weight > 0:
+                # First set = warmup at 50-60% weight for weighted exercises with 3+ sets
+                set_targets.append({
+                    "set_number": set_num,
+                    "set_type": "warmup",
+                    "target_reps": min(reps + 2, 15),  # Slightly higher reps for warmup
+                    "target_weight_kg": round(starting_weight * 0.5, 1),
+                    "target_rpe": 5,
+                    "target_rir": None,
+                })
+            elif set_num == sets and sets >= 3 and validated_level != "beginner":
+                # Last set can be pushed harder (near-failure) for non-beginners with 3+ sets
+                set_targets.append({
+                    "set_number": set_num,
+                    "set_type": "working",
+                    "target_reps": reps,
+                    "target_weight_kg": starting_weight if not is_bodyweight else 0,
+                    "target_rpe": 9 if validated_level == "advanced" else 8,
+                    "target_rir": 1 if validated_level == "advanced" else 2,
+                })
+            else:
+                # Standard working sets
+                set_targets.append({
+                    "set_number": set_num,
+                    "set_type": "working",
+                    "target_reps": reps,
+                    "target_weight_kg": starting_weight if not is_bodyweight else 0,
+                    "target_rpe": 7 if validated_level == "beginner" else 8,
+                    "target_rir": 3 if validated_level == "beginner" else 2,
+                })
+
+        logger.debug(f"Generated {len(set_targets)} set_targets for {exercise_name} (bodyweight={is_bodyweight})")
+
         return {
             "name": exercise_name,
             "sets": sets,
@@ -1396,6 +1435,7 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
             "is_favorite": exercise.get("is_favorite", False),  # From favorite boost
             "is_staple": exercise.get("is_staple", False),  # User's core lifts that never rotate
             "from_queue": exercise.get("from_queue", False),  # From exercise queue
+            "set_targets": set_targets,  # CRITICAL: Required by validate_set_targets_strict()
         }
 
     async def select_challenge_exercise(
