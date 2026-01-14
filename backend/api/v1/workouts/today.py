@@ -77,11 +77,16 @@ def _extract_primary_muscles(exercises: list) -> List[str]:
 def _row_to_summary(row: dict) -> TodayWorkoutSummary:
     """Convert a database row to TodayWorkoutSummary."""
     # Parse exercises
-    exercises = row.get("exercises") or row.get("exercises_json") or []
+    raw_exercises = row.get("exercises") or row.get("exercises_json")
+    logger.info(f"[_row_to_summary] workout_id={row.get('id')}, exercises_type={type(raw_exercises)}, "
+                f"exercises_len={len(raw_exercises) if raw_exercises else 0}")
+
+    exercises = raw_exercises or []
     if isinstance(exercises, str):
         try:
             exercises = json.loads(exercises)
         except (json.JSONDecodeError, TypeError):
+            logger.warning(f"[_row_to_summary] Failed to parse exercises JSON for workout {row.get('id')}")
             exercises = []
 
     # Get scheduled date

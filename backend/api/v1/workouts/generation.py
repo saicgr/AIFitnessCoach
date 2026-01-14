@@ -3569,6 +3569,12 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     }
                     exercises = validate_set_targets_strict(exercises, user_context)
 
+                # SAFETY NET: Do not save workout if exercises list is empty
+                if not exercises:
+                    logger.error(f"[Remaining Gen] ❌ Cannot save workout with empty exercises! "
+                                f"user={request.user_id}, date={result['workout_date']}, name={result['name']}")
+                    continue
+
                 workout_db_data = {
                     "user_id": request.user_id,
                     "name": result["name"],
@@ -3581,6 +3587,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     "generation_source": "background_generation",
                 }
 
+                logger.info(f"[Remaining Gen] Saving workout '{result['name']}' with {len(exercises)} exercises")
                 created = db.create_workout(workout_db_data)
                 workout = row_to_workout(created)
                 await index_workout_to_rag(workout)
