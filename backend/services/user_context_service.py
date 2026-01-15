@@ -203,6 +203,9 @@ class EventType(str, Enum):
     QUICK_WORKOUT_CHAT_REQUEST = "quick_workout_chat_request"
     QUICK_WORKOUT_CHAT_GENERATED = "quick_workout_chat_generated"
     QUICK_WORKOUT_CHAT_FAILED = "quick_workout_chat_failed"
+    # RIR (Reps in Reserve) feedback events - for auto-weight adjustment
+    SET_RIR_FEEDBACK = "set_rir_feedback"
+    WEIGHT_AUTO_ADJUSTED = "weight_auto_adjusted"
     # Library interaction events - for AI preference learning
     LIBRARY_EXERCISE_VIEWED = "library_exercise_viewed"
     LIBRARY_PROGRAM_VIEWED = "library_program_viewed"
@@ -1367,6 +1370,116 @@ class UserContextService:
         return await self.log_event(
             user_id=user_id,
             event_type=EventType.NUTRITION_LOG,
+            event_data=event_data,
+            context=context,
+        )
+
+    async def log_set_rir_feedback(
+        self,
+        user_id: str,
+        workout_id: str,
+        exercise_name: str,
+        set_number: int,
+        target_rir: int,
+        logged_rir: int,
+        weight_kg: float,
+        reps: int,
+        device: Optional[str] = None,
+    ) -> Optional[str]:
+        """
+        Log RIR (Reps in Reserve) feedback after completing a set.
+
+        This tracks how the user's actual effort compared to the target,
+        which helps improve future intensity recommendations.
+
+        Args:
+            user_id: User ID
+            workout_id: Workout ID
+            exercise_name: Name of the exercise
+            set_number: Which set (1-based)
+            target_rir: The target RIR prescribed for this set
+            logged_rir: The user's actual reported RIR
+            weight_kg: Weight used for the set
+            reps: Reps completed
+            device: Device info
+        """
+        rir_diff = logged_rir - target_rir
+        feedback_category = "perfect" if rir_diff == 0 else ("easier" if rir_diff > 0 else "harder")
+
+        event_data = {
+            "workout_id": workout_id,
+            "exercise_name": exercise_name,
+            "set_number": set_number,
+            "target_rir": target_rir,
+            "logged_rir": logged_rir,
+            "rir_difference": rir_diff,
+            "feedback_category": feedback_category,
+            "weight_kg": weight_kg,
+            "reps": reps,
+        }
+
+        context = self._build_context(device=device)
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.SET_RIR_FEEDBACK,
+            event_data=event_data,
+            context=context,
+        )
+
+    async def log_weight_auto_adjusted(
+        self,
+        user_id: str,
+        workout_id: str,
+        exercise_name: str,
+        set_number: int,
+        previous_weight_kg: float,
+        new_weight_kg: float,
+        adjustment_reason: str,
+        logged_rir: int,
+        target_rir: int,
+        device: Optional[str] = None,
+    ) -> Optional[str]:
+        """
+        Log when weight is auto-adjusted based on RIR feedback.
+
+        This tracks the auto-weight adjustment feature usage,
+        helping understand if users find it helpful.
+
+        Args:
+            user_id: User ID
+            workout_id: Workout ID
+            exercise_name: Name of the exercise
+            set_number: Set that triggered the adjustment
+            previous_weight_kg: Weight before adjustment
+            new_weight_kg: Weight after adjustment
+            adjustment_reason: Why weight was adjusted
+            logged_rir: The user's reported RIR
+            target_rir: The target RIR
+            device: Device info
+        """
+        weight_change = new_weight_kg - previous_weight_kg
+        change_percent = (weight_change / previous_weight_kg * 100) if previous_weight_kg > 0 else 0
+
+        event_data = {
+            "workout_id": workout_id,
+            "exercise_name": exercise_name,
+            "set_number": set_number,
+            "previous_weight_kg": previous_weight_kg,
+            "new_weight_kg": new_weight_kg,
+            "weight_change_kg": weight_change,
+            "change_percent": round(change_percent, 1),
+            "adjustment_direction": "increase" if weight_change > 0 else "decrease",
+            "adjustment_reason": adjustment_reason,
+            "logged_rir": logged_rir,
+            "target_rir": target_rir,
+        }
+
+        context = self._build_context(device=device)
+
+        return await self.log_event(
+            user_id=user_id,
+            event_type=EventType.WEIGHT_AUTO_ADJUSTED,
             event_data=event_data,
             context=context,
         )
