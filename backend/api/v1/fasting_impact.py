@@ -417,21 +417,21 @@ async def log_weight_with_fasting(data: LogWeightWithFastingRequest):
         # Use explicitly provided fasting_record_id if given, otherwise use detected one
         fasting_record_id = data.fasting_record_id or fasting_status.get("fasting_record_id")
 
-        # Create weight log
-        weight_log = {
+        # Create weight log using the actual schema columns
+        # The weight_logs table has: id, user_id, weight_kg, logged_at, source, notes, created_at
+        # Fasting correlation is tracked separately via the fasting_weight_correlation table
+        # which is updated automatically via a database trigger
+        weight_log_db = {
             "id": str(uuid.uuid4()),
             "user_id": data.user_id,
             "weight_kg": data.weight_kg,
-            "date": data.date,
+            "logged_at": f"{data.date}T12:00:00Z",  # Use noon as default time for date-only input
+            "source": "manual",
             "notes": data.notes,
-            "fasting_record_id": fasting_record_id,
-            "is_fasting_day": fasting_status["is_fasting_day"],
-            "fasting_protocol": fasting_status.get("protocol"),
-            "fasting_completion_percent": fasting_status.get("completion_percent"),
             "created_at": datetime.utcnow().isoformat(),
         }
 
-        result = db.client.table("weight_logs").insert(weight_log).execute()
+        result = db.client.table("weight_logs").insert(weight_log_db).execute()
 
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to log weight")
@@ -451,7 +451,21 @@ async def log_weight_with_fasting(data: LogWeightWithFastingRequest):
             status_code=200
         )
 
-        return WeightLogResponse(**weight_log)
+        # Construct response with both database data and fasting context
+        response_data = {
+            "id": weight_log_db["id"],
+            "user_id": data.user_id,
+            "weight_kg": data.weight_kg,
+            "date": data.date,
+            "notes": data.notes,
+            "fasting_record_id": fasting_record_id,
+            "is_fasting_day": fasting_status["is_fasting_day"],
+            "fasting_protocol": fasting_status.get("protocol"),
+            "fasting_completion_percent": fasting_status.get("completion_percent"),
+            "created_at": weight_log_db["created_at"],
+        }
+
+        return WeightLogResponse(**response_data)
 
     except HTTPException:
         raise
@@ -488,11 +502,12 @@ async def get_weight_correlation(
         end_date = date.today()
         start_date = end_date - timedelta(days=days)
 
-        # Get weight logs
-        result = db.client.table("weight_logs").select("*").eq(
+        # Get weight correlation data from fasting_weight_correlation table
+        # This table is populated automatically by a trigger when weight is logged
+        result = db.client.table("fasting_weight_correlation").select("*").eq(
             "user_id", user_id
-        ).gte("logged_at", start_date.isoformat()).lte("logged_at", end_date.isoformat()).order(
-            "logged_at", desc=True
+        ).gte("date", start_date.isoformat()).lte("date", end_date.isoformat()).order(
+            "date", desc=True
         ).execute()
 
         weight_logs = []
@@ -508,6 +523,11 @@ async def get_weight_correlation(
             else:
                 non_fasting_day_weights.append(weight)
 
+            # Calculate completion percent from duration if available
+            fasting_duration = row.get("fasting_duration_minutes", 0)
+            # Assume 16h (960 min) as default goal for completion calculation
+            completion_percent = min(100.0, (fasting_duration / 960) * 100) if fasting_duration else None
+
             if include_non_fasting or is_fasting:
                 weight_logs.append(WeightLogResponse(
                     id=row.get("id"),
@@ -518,7 +538,7 @@ async def get_weight_correlation(
                     fasting_record_id=row.get("fasting_record_id"),
                     is_fasting_day=is_fasting,
                     fasting_protocol=row.get("fasting_protocol"),
-                    fasting_completion_percent=row.get("fasting_completion_percent"),
+                    fasting_completion_percent=completion_percent if row.get("fasting_completed_goal") else None,
                     created_at=row.get("created_at"),
                 ))
 
@@ -629,7 +649,8 @@ async def get_fasting_impact_analysis(
         for row in (weight_result.data or []):
             weight = row.get("weight_kg", 0)
             log_date = (row.get("logged_at") or "")[:10]  # Extract date part
-            if row.get("is_fasting_day") or log_date in fasting_dates:
+            # Check if this date was a fasting day (weight_logs doesn't have is_fasting_day column)
+            if log_date in fasting_dates:
                 fasting_weights.append(weight)
             else:
                 non_fasting_weights.append(weight)
@@ -1193,12 +1214,12 @@ async def get_weight_data_for_ai(user_id: str, days: int = 30) -> List[Dict[str,
     start_date = end_date - timedelta(days=days)
 
     try:
-        # Get weight logs
+        # Get weight logs (using logged_at, not date column)
         weight_result = db.client.table("weight_logs").select(
-            "date, weight_kg"
+            "logged_at, weight_kg"
         ).eq("user_id", user_id).gte(
-            "date", start_date.isoformat()
-        ).order("date").execute()
+            "logged_at", start_date.isoformat()
+        ).order("logged_at").execute()
 
         weight_logs = weight_result.data or []
 
@@ -1221,7 +1242,7 @@ async def get_weight_data_for_ai(user_id: str, days: int = 30) -> List[Dict[str,
         # Combine data
         result = []
         for log in weight_logs:
-            log_date = log.get("date", "")[:10] if log.get("date") else ""
+            log_date = (log.get("logged_at") or "")[:10]
             result.append({
                 "date": log_date,
                 "weight_kg": float(log.get("weight_kg", 0)),
