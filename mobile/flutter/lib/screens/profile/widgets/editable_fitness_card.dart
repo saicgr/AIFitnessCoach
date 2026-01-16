@@ -110,8 +110,8 @@ class _EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    // Use monochrome accent
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
 
     return Stack(
       children: [
@@ -125,11 +125,11 @@ class _EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
               // Goal
               _buildEditableRow(
                 icon: Icons.flag,
-                iconColor: purple,
+                iconColor: accentColor,
                 label: 'Goal',
                 value: _selectedGoal,
                 isEditing: _isEditing,
-                editWidget: _buildGoalSelector(purple, cardBorder, textSecondary),
+                editWidget: _buildGoalSelector(accentColor, cardBorder, textSecondary),
                 isDark: isDark,
                 textMuted: textMuted,
               ),
@@ -138,11 +138,11 @@ class _EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
               // Level
               _buildEditableRow(
                 icon: Icons.signal_cellular_alt,
-                iconColor: cyan,
+                iconColor: accentColor,
                 label: 'Level',
                 value: _selectedLevel,
                 isEditing: _isEditing,
-                editWidget: _buildLevelSelector(cyan, cardBorder, textSecondary),
+                editWidget: _buildLevelSelector(accentColor, cardBorder, textSecondary),
                 isDark: isDark,
                 textMuted: textMuted,
               ),
@@ -151,13 +151,13 @@ class _EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
               // Workout Days
               _buildEditableRow(
                 icon: Icons.calendar_today,
-                iconColor: AppColors.orange,
+                iconColor: accentColor,
                 label: 'Workout Days',
                 value: _selectedDays.isEmpty
                     ? 'Not set'
                     : _selectedDays.map((d) => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d]).join(', '),
                 isEditing: _isEditing,
-                editWidget: _buildDaysSelector(cyan, cardBorder, textSecondary),
+                editWidget: _buildDaysSelector(accentColor, cardBorder, textSecondary),
                 isDark: isDark,
                 textMuted: textMuted,
               ),
@@ -185,7 +185,7 @@ class _EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
         Positioned(
           top: 8,
           right: 8,
-          child: _buildEditButton(cyan, textMuted),
+          child: _buildEditButton(accentColor, textMuted),
         ),
       ],
     );

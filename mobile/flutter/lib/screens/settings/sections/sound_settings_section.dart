@@ -124,7 +124,7 @@ class SoundSettingsSection extends ConsumerWidget {
               // Exercise completion sounds (NEW)
               SettingTile(
                 icon: Icons.fitness_center,
-                iconColor: AppColors.primary,
+                iconColor: AppColors.textPrimary,
                 title: 'Exercise Completion',
                 subtitle: 'Play sound when all sets of exercise done',
                 trailing: Switch.adaptive(

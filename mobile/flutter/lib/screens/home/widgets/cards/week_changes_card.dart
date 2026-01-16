@@ -118,12 +118,13 @@ class WeekChangesCard extends ConsumerWidget {
                       runSpacing: 6,
                       children: comparison.newExercises.take(3).map((exercise) {
                         return Container(
+                          constraints: const BoxConstraints(maxWidth: 200),
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
-                            color: AppColors.cyan.withOpacity(0.12),
+                            color: textMuted.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: AppColors.cyan.withOpacity(0.3),
+                              color: textMuted.withOpacity(0.2),
                             ),
                           ),
                           child: Row(
@@ -132,15 +133,19 @@ class WeekChangesCard extends ConsumerWidget {
                               Icon(
                                 Icons.fiber_new,
                                 size: 14,
-                                color: AppColors.cyan,
+                                color: textPrimary,
                               ),
                               const SizedBox(width: 4),
-                              Text(
-                                exercise,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.cyan,
+                              Flexible(
+                                child: Text(
+                                  exercise,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: textPrimary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                 ),
                               ),
                             ],

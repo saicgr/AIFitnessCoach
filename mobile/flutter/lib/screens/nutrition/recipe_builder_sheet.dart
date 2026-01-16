@@ -1398,12 +1398,12 @@ class _NutritionSummaryCard extends StatelessWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
-    // Rainbow colors
-    const caloriesColor = Color(0xFFFF6B6B);
-    const proteinColor = Color(0xFFFFD93D);
-    const carbsColor = Color(0xFF6BCB77);
-    const fatColor = Color(0xFF4D96FF);
-    const fiberColor = Color(0xFF9B59B6);
+    // Monochrome macro colors
+    final caloriesColor = AppColors.textPrimary;
+    final proteinColor = AppColors.textSecondary;
+    final carbsColor = AppColors.textMuted;
+    final fatColor = AppColors.textSecondary;
+    final fiberColor = AppColors.textMuted;
 
     return Container(
       padding: const EdgeInsets.all(16),

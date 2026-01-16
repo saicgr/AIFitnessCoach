@@ -62,6 +62,8 @@ class TrainingSetupCard extends StatelessWidget {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    // Use monochrome accent
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
 
     final equipment = user?.equipmentList ?? [];
 
@@ -93,12 +95,12 @@ class TrainingSetupCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withOpacity(0.1),
+                      color: accentColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       Icons.edit_rounded,
-                      color: AppColors.cyan,
+                      color: accentColor,
                       size: 18,
                     ),
                   ),
@@ -178,7 +180,7 @@ class TrainingSetupCard extends StatelessWidget {
               icon: Icons.build_outlined,
               label: 'My Custom Equipment',
               subtitle: 'Add equipment not in the standard list',
-              iconColor: AppColors.cyan,
+              iconColor: accentColor,
               textPrimary: textPrimary,
               textSecondary: textSecondary,
               onTap: onCustomEquipment!,

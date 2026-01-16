@@ -1477,27 +1477,59 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
             else:
                 return 5  # 5+ reps left (warmup/easy)
 
-        # Determine base RIR targets based on exercise type and fitness level
-        # Compound exercises: Keep RIR higher for safety (more technical, heavier loads)
-        # Isolation exercises: Can push closer to failure safely
+        # Universal RIR progression for ALL fitness levels (MacroFactor-style)
+        # Research shows beginners underpredict RIR by ~1 rep, so conservative RIR 3
+        # leads to actual RIR 5-6 = no training stimulus. Same RIR for all levels,
+        # weight is what varies by fitness level.
         is_compound = exercise_type in ["compound_upper", "compound_lower"]
 
-        if is_compound:
-            # Compound lifts: more conservative RIR for safety
-            rir_by_level = {
-                "beginner": 3,      # Beginners: RIR 3 (learning form)
-                "intermediate": 2,  # Intermediate: RIR 2
-                "advanced": 2,      # Advanced: RIR 2 (still safe for compounds)
-            }
-        else:
-            # Isolation exercises: can push harder
-            rir_by_level = {
-                "beginner": 3,      # Beginners: RIR 3 (learning form)
-                "intermediate": 2,  # Intermediate: RIR 2
-                "advanced": 1,      # Advanced: RIR 1 (can push harder on isolation)
-            }
+        def get_working_set_rir(set_number: int, total_sets: int, is_compound_ex: bool) -> int:
+            """
+            Universal RIR progression: 2 → 1 → 0-1
+            Same for ALL fitness levels. Weight is the differentiator.
+            """
+            if set_number == 1:
+                return 2  # First working set: RIR 2 (yellow)
+            elif set_number == 2:
+                return 1  # Second set: RIR 1 (orange)
+            else:
+                # Later sets: RIR 1 for compounds (safety), RIR 0 for isolation
+                return 1 if is_compound_ex else 0
 
-        base_rir = rir_by_level.get(validated_level, 2)
+        def get_weight_for_rir(base_weight: float, target_rir: int, equipment_type: str) -> float:
+            """
+            Calculate weight based on RIR target.
+            Lower RIR = higher weight (each RIR drop ≈ 5% weight increase).
+
+            RIR 2 = base weight (100%)
+            RIR 1 = base weight + 5%
+            RIR 0 = base weight + 10%
+            """
+            if base_weight <= 0:
+                return 0
+
+            # Weight multiplier based on RIR (RIR 2 is baseline)
+            rir_multipliers = {
+                2: 1.00,   # Baseline
+                1: 1.05,   # +5%
+                0: 1.10,   # +10%
+            }
+            multiplier = rir_multipliers.get(target_rir, 1.0)
+            raw_weight = base_weight * multiplier
+
+            # Round to equipment-appropriate increment
+            increment = {
+                "dumbbell": 2.5,
+                "dumbbells": 2.5,
+                "barbell": 2.5,
+                "machine": 5.0,
+                "cable": 2.5,
+                "kettlebell": 4.0,
+                "smith_machine": 2.5,
+                "ez_bar": 2.5,
+            }.get(equipment_type.lower() if equipment_type else "barbell", 2.5)
+
+            return round(raw_weight / increment) * increment
 
         for set_num in range(1, sets + 1):
             # WARMUP SET: First set for compound exercises with weights
@@ -1510,46 +1542,32 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
                     "target_rpe": 5,
                     "target_rir": 5,  # Warmup = lots in tank
                 })
-            # FAILURE SET: Last set for advanced users
-            elif set_num == sets and validated_level == "advanced":
-                set_targets.append({
-                    "set_number": set_num,
-                    "set_type": "failure",  # F
-                    "target_reps": reps,
-                    "target_weight_kg": starting_weight if not is_bodyweight else 0,
-                    "target_rpe": 10,
-                    "target_rir": 0,  # Failure = 0 in tank
-                })
-            # DROP SET: Last set for intermediate users on isolation exercises
-            elif set_num == sets and validated_level == "intermediate" and exercise_type == "isolation" and not is_bodyweight:
-                set_targets.append({
-                    "set_number": set_num,
-                    "set_type": "drop",  # D
-                    "target_reps": reps,
-                    "target_weight_kg": round(starting_weight * 0.75, 1) if starting_weight > 0 else 0,  # 75% weight
-                    "target_rpe": 9,
-                    "target_rir": 1,  # Drop set = 1 in tank
-                })
             else:
-                # WORKING SETS: Progressive fatigue model
-                # As sets progress, RIR decreases (accumulating fatigue)
+                # WORKING SETS: Universal RIR progression (same for all fitness levels)
                 # Adjust set_num for warmup offset if compound exercise
                 adjusted_set_num = set_num - 1 if (is_compound and not is_bodyweight and starting_weight > 0) else set_num
 
-                # Progressive fatigue: each set gets harder (lower RIR)
-                # But don't go below RIR 1 for working sets (leave failure for explicit failure sets)
-                fatigue_reduction = max(0, adjusted_set_num - 1) * 0.5  # 0.5 RIR per set
-                target_rir = max(1, round(base_rir - fatigue_reduction))
+                # Get RIR based on set position (2 → 1 → 0-1)
+                target_rir = get_working_set_rir(adjusted_set_num, sets, is_compound)
 
-                # Calculate RPE from RIR (inverse of rpe_to_rir)
-                # RIR 3 → RPE 7, RIR 2 → RPE 8, RIR 1 → RPE 9, RIR 0 → RPE 10
+                # Calculate weight based on RIR (lower RIR = higher weight)
+                set_weight = get_weight_for_rir(starting_weight, target_rir, equipment_type)
+
+                # Calculate RPE from RIR
+                # RIR 2 → RPE 8, RIR 1 → RPE 9, RIR 0 → RPE 10
                 target_rpe = 10 - target_rir
+
+                # Determine set type based on RIR
+                if target_rir == 0:
+                    set_type = "failure"  # F - max effort
+                else:
+                    set_type = "working"
 
                 set_targets.append({
                     "set_number": set_num,
-                    "set_type": "working",
+                    "set_type": set_type,
                     "target_reps": reps,
-                    "target_weight_kg": starting_weight if not is_bodyweight else 0,
+                    "target_weight_kg": set_weight if not is_bodyweight else 0,
                     "target_rpe": target_rpe,
                     "target_rir": target_rir,
                 })

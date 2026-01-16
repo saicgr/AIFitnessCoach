@@ -46,7 +46,7 @@ class RestSuggestionCard extends StatelessWidget {
     final isSmallScreen = screenWidth < 380;
 
     // Determine accent color based on rest category
-    final accentColor = _getCategoryColor(suggestion.category);
+    final accentColor = _getCategoryColor(suggestion.category, isDark);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -103,13 +103,15 @@ class RestSuggestionCard extends StatelessWidget {
   }
 
   Widget _buildHeader(bool isDark, Color accentColor) {
+    final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+    final bgOpacity = isDark ? 0.2 : 0.15;
     return Row(
       children: [
         // Timer icon
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: accentColor.withOpacity(0.2),
+            color: accentColor.withOpacity(bgOpacity),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
@@ -143,7 +145,7 @@ class RestSuggestionCard extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.purple.withOpacity(0.2),
+                        color: purple.withOpacity(bgOpacity),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -151,7 +153,7 @@ class RestSuggestionCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.purple,
+                          color: purple,
                         ),
                       ),
                     ),
@@ -416,17 +418,25 @@ class RestSuggestionCard extends StatelessWidget {
     );
   }
 
-  Color _getCategoryColor(RestCategory category) {
+  Color _getCategoryColor(RestCategory category, bool isDark) {
+    Color baseColor;
     switch (category) {
       case RestCategory.short:
-        return AppColors.cyan;
+        baseColor = AppColors.cyan;
       case RestCategory.moderate:
-        return AppColors.success;
+        baseColor = AppColors.success;
       case RestCategory.long:
-        return AppColors.orange;
+        baseColor = AppColors.orange;
       case RestCategory.extended:
-        return AppColors.purple;
+        baseColor = AppColors.purple;
     }
+    return isDark ? baseColor : _darkenColor(baseColor);
+  }
+
+  /// Darken a color for better visibility in light mode
+  Color _darkenColor(Color color) {
+    final hsl = HSLColor.fromColor(color);
+    return hsl.withLightness((hsl.lightness * 0.7).clamp(0.0, 1.0)).toColor();
   }
 }
 
@@ -439,9 +449,18 @@ class RestSuggestionLoadingCard extends StatelessWidget {
     this.isCompact = false,
   });
 
+  /// Darken a color for better visibility in light mode
+  Color _darkenColor(Color color) {
+    final hsl = HSLColor.fromColor(color);
+    return hsl.withLightness((hsl.lightness * 0.7).clamp(0.0, 1.0)).toColor();
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cyan = isDark ? AppColors.cyan : _darkenColor(AppColors.cyan);
+    final bgOpacity = isDark ? 0.2 : 0.15;
+    final borderOpacity = isDark ? 0.3 : 0.4;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -455,7 +474,7 @@ class RestSuggestionLoadingCard extends StatelessWidget {
                 : Colors.white.withOpacity(0.8),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: AppColors.cyan.withOpacity(0.3),
+              color: cyan.withOpacity(borderOpacity),
               width: 1.5,
             ),
           ),
@@ -464,7 +483,7 @@ class RestSuggestionLoadingCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withOpacity(0.2),
+                  color: cyan.withOpacity(bgOpacity),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: SizedBox(
@@ -472,7 +491,7 @@ class RestSuggestionLoadingCard extends StatelessWidget {
                   height: 24,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.cyan),
+                    valueColor: AlwaysStoppedAnimation<Color>(cyan),
                   ),
                 ),
               ),
@@ -487,7 +506,7 @@ class RestSuggestionLoadingCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.cyan,
+                        color: cyan,
                         letterSpacing: 1,
                       ),
                     ),

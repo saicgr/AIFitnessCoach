@@ -315,16 +315,8 @@ class _SwipeableHeroSectionState extends ConsumerState<SwipeableHeroSection> {
   }
 
   Color _getFocusColor(HomeFocus focus) {
-    switch (focus) {
-      case HomeFocus.forYou:
-        return AppColors.teal;
-      case HomeFocus.workout:
-        return AppColors.cyan;
-      case HomeFocus.nutrition:
-        return const Color(0xFF34C759);
-      case HomeFocus.fasting:
-        return AppColors.orange;
-    }
+    // All focus colors are now monochrome (white for dark mode)
+    return AppColors.textPrimary;
   }
 
   String _getFocusLabel(HomeFocus focus) {

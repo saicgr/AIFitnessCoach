@@ -139,7 +139,7 @@ class _ModeSelectionScreenState extends ConsumerState<ModeSelectionScreen> {
                   children: [
                     Icon(
                       Icons.info_outline,
-                      color: AppColors.cyan,
+                      color: AppColors.accent,
                       size: 28,
                     ),
                     const SizedBox(width: 16),
@@ -163,7 +163,7 @@ class _ModeSelectionScreenState extends ConsumerState<ModeSelectionScreen> {
               // Loading indicator
               if (_isSaving)
                 const Center(
-                  child: CircularProgressIndicator(color: AppColors.cyan),
+                  child: CircularProgressIndicator(color: AppColors.accent),
                 ),
             ],
           ),
@@ -250,7 +250,7 @@ class _ModeButton extends StatelessWidget {
 
     return Material(
       color: isRecommended
-          ? AppColors.cyan.withOpacity(0.15)
+          ? AppColors.accent.withOpacity(0.15)
           : (isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF5F5F5)),
       borderRadius: BorderRadius.circular(24),
       child: InkWell(
@@ -262,7 +262,7 @@ class _ModeButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: isRecommended
-                  ? AppColors.cyan
+                  ? AppColors.accent
                   : (isDark
                       ? const Color(0xFF444444)
                       : const Color(0xFFDDDDDD)),
@@ -278,7 +278,7 @@ class _ModeButton extends StatelessWidget {
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: isRecommended
-                      ? AppColors.cyan
+                      ? AppColors.accent
                       : (isDark ? Colors.white : const Color(0xFF1A1A1A)),
                 ),
               ),
@@ -287,7 +287,7 @@ class _ModeButton extends StatelessWidget {
                 const Icon(
                   Icons.star,
                   size: 18,
-                  color: AppColors.cyan,
+                  color: AppColors.accent,
                 ),
               ],
             ],

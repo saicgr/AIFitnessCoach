@@ -48,19 +48,21 @@ class DifficultyUtils {
   /// Get the color associated with a difficulty level.
   ///
   /// [internal] - The internal difficulty value
-  /// Returns the appropriate color for the difficulty
-  static Color getColor(String internal) {
+  /// [isDark] - Whether the app is in dark mode
+  /// Returns the appropriate monochrome color for the difficulty
+  static Color getColor(String internal, {bool isDark = true}) {
+    // Use monochrome grayscale tones for difficulty levels
     switch (internal.toLowerCase()) {
       case 'easy':
-        return AppColors.success;
+        return isDark ? const Color(0xFF808080) : const Color(0xFF808080);
       case 'medium':
-        return AppColors.orange;
+        return isDark ? const Color(0xFFA0A0A0) : const Color(0xFF606060);
       case 'hard':
-        return AppColors.purple;
+        return isDark ? const Color(0xFFC0C0C0) : const Color(0xFF404040);
       case 'hell':
-        return AppColors.error;
+        return isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
       default:
-        return AppColors.cyan;
+        return isDark ? const Color(0xFFA0A0A0) : const Color(0xFF606060);
     }
   }
 

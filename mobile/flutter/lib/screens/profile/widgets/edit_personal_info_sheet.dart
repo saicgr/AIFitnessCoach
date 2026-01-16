@@ -147,7 +147,8 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    // Use monochrome accent
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
 
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
@@ -161,9 +162,9 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
         child: Column(
           children: [
             _buildHandle(textMuted),
-            _buildTitle(context, cyan),
+            _buildTitle(context, accentColor),
             if (_isLoading)
-              Expanded(child: Center(child: CircularProgressIndicator(color: cyan)))
+              Expanded(child: Center(child: CircularProgressIndicator(color: accentColor)))
             else
               _buildForm(
                 scrollController,
@@ -172,7 +173,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
                 textMuted,
                 textSecondary,
                 cardBorder,
-                cyan,
+                accentColor,
               ),
           ],
         ),
@@ -547,7 +548,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: isDark ? AppColors.cyan : AppColorsLight.cyan),
+          borderSide: BorderSide(color: isDark ? AppColors.accent : AppColorsLight.accent),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       ),

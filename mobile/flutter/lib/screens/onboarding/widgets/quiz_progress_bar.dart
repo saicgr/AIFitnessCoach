@@ -34,11 +34,11 @@ class QuizProgressBar extends StatelessWidget {
               widthFactor: value,
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: AppColors.cyanGradient,
+                  gradient: AppColors.accentGradient,
                   borderRadius: BorderRadius.circular(3),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.cyan.withOpacity(0.4),
+                      color: AppColors.accent.withOpacity(0.4),
                       blurRadius: 8,
                       spreadRadius: 0,
                     ),

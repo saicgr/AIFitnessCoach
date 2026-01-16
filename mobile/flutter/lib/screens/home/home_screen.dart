@@ -7,9 +7,11 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../data/models/home_layout.dart';
 import '../../data/providers/home_layout_provider.dart';
+import '../../data/providers/local_layout_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/providers/branded_program_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -32,7 +34,10 @@ import 'widgets/watch_install_banner.dart';
 import 'widgets/tile_factory.dart';
 import 'widgets/my_program_summary_card.dart';
 import 'widgets/hero_workout_card.dart';
-import 'widgets/week_progress_strip.dart';
+import 'widgets/habits_section.dart';
+import 'widgets/body_metrics_section.dart';
+import 'widgets/achievements_section.dart';
+import '../../data/providers/consistency_provider.dart';
 
 /// Preset layout templates for quick customization
 class LayoutPreset {
@@ -80,7 +85,7 @@ const List<LayoutPreset> layoutPresets = [
       TileType.weekChanges,
       TileType.challengeProgress,
       TileType.upcomingWorkouts,
-      TileType.quickActions,
+      // Quick actions removed - now accessible via + button in nav bar
       TileType.aiCoachTip,
     ],
   ),
@@ -92,7 +97,7 @@ const List<LayoutPreset> layoutPresets = [
     tiles: [
       TileType.caloriesSummary,
       TileType.macroRings,
-      TileType.quickActions,
+      // Quick actions removed - now accessible via + button in nav bar
       TileType.bodyWeight,
       TileType.fasting,
       TileType.nextWorkout,
@@ -115,7 +120,7 @@ const List<LayoutPreset> layoutPresets = [
       TileType.weeklyProgress,
       TileType.streakCounter,
       TileType.bodyWeight,
-      TileType.quickActions,
+      // Quick actions removed - now accessible via + button in nav bar
       TileType.weeklyGoals,
       TileType.upcomingWorkouts,
     ],
@@ -129,7 +134,7 @@ const List<LayoutPreset> layoutPresets = [
       TileType.nextWorkout,
       TileType.weeklyProgress,
       TileType.streakCounter,
-      TileType.quickActions,
+      // Quick actions removed - now accessible via + button in nav bar
       TileType.aiCoachTip,
     ],
   ),
@@ -148,7 +153,7 @@ const List<LayoutPreset> layoutPresets = [
       TileType.bodyWeight,
       TileType.weeklyGoals,
       TileType.aiCoachTip,
-      TileType.quickActions,
+      // Quick actions removed - now accessible via + button in nav bar
     ],
   ),
   LayoutPreset(
@@ -164,7 +169,7 @@ const List<LayoutPreset> layoutPresets = [
       TileType.streakCounter,
       TileType.personalRecords,
       TileType.weeklyProgress,
-      TileType.quickActions,
+      // Quick actions removed - now accessible via + button in nav bar
     ],
   ),
 ];
@@ -287,7 +292,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         TileType.moodPicker,
         TileType.dailyActivity,
         TileType.nextWorkout,
-        TileType.quickActions,
+        // Quick actions removed - now accessible via + button in nav bar
         TileType.weekChanges,
         TileType.weeklyProgress,
         TileType.weeklyGoals,
@@ -1147,7 +1152,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       TileType.moodPicker,
       TileType.dailyActivity,
       TileType.nextWorkout,
-      TileType.quickActions,
+      // Quick actions removed - now accessible via + button in nav bar
       TileType.weekChanges,
       TileType.weeklyProgress,
       TileType.weeklyGoals,
@@ -1279,6 +1284,251 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     return 'Good evening,';
   }
 
+  /// Check if a tile type is visible in the local layout
+  bool _isTileVisible(AsyncValue<HomeLayout?> layoutState, TileType type) {
+    final layout = layoutState.value;
+    if (layout == null) return true; // Show by default if no layout loaded
+    final tile = layout.tiles.where((t) => t.type == type).firstOrNull;
+    return tile?.isVisible ?? true; // Show by default if tile not found
+  }
+
+  /// Build a section header for the home screen
+  Widget _buildHomeSectionHeader(String title, bool isDark, {IconData? icon}) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final accentColor = isDark ? Colors.white : Colors.black;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+      child: Row(
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 16, color: accentColor.withValues(alpha: 0.7)),
+            const SizedBox(width: 8),
+          ],
+          Text(
+            title.toUpperCase(),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: textMuted,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build all visible layout tiles as slivers for dynamic rendering
+  /// Tiles are organized into logical sections with headers
+  List<Widget> _buildLayoutTilesAsSlivers(
+    BuildContext context,
+    HomeLayout? layout,
+    bool isDark,
+    AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
+    bool isAIGenerating,
+  ) {
+    if (layout == null) {
+      return _buildFallbackTilesAsSlivers(context, isDark, todayWorkoutState, isAIGenerating);
+    }
+
+    // Tiles to skip (deprecated or return empty)
+    const deprecatedTiles = {
+      TileType.heroSection,
+      TileType.weightTrend,
+      TileType.sleepScore,
+      TileType.streakCounter,
+      TileType.upcomingFeatures,
+      TileType.weeklyProgress, // Deprecated
+    };
+
+    // Get visible tiles, sorted by order
+    final visibleTiles = layout.tiles
+        .where((t) => t.isVisible && !deprecatedTiles.contains(t.type))
+        .toList()
+      ..sort((a, b) => a.order.compareTo(b.order));
+
+    if (visibleTiles.isEmpty) {
+      return _buildFallbackTilesAsSlivers(context, isDark, todayWorkoutState, isAIGenerating);
+    }
+
+    // Define section groups and their tile types
+    const insightsTiles = {TileType.aiCoachTip, TileType.personalRecords, TileType.fitnessScore};
+    const goalsTiles = {TileType.weeklyGoals, TileType.weekChanges};
+    const trackingTiles = {TileType.habits, TileType.bodyWeight, TileType.achievements, TileType.dailyStats, TileType.quickLogWeight, TileType.quickLogMeasurements};
+
+    // Group tiles by section
+    final workoutTiles = <HomeTile>[];  // nextWorkout, quickStart, quickActions
+    final insightTilesList = <HomeTile>[];
+    final goalsTilesList = <HomeTile>[];
+    final trackingTilesList = <HomeTile>[];
+    final otherTiles = <HomeTile>[];
+
+    for (final tile in visibleTiles) {
+      if (tile.type == TileType.nextWorkout || tile.type == TileType.quickStart || tile.type == TileType.quickActions) {
+        workoutTiles.add(tile);
+      } else if (insightsTiles.contains(tile.type)) {
+        insightTilesList.add(tile);
+      } else if (goalsTiles.contains(tile.type)) {
+        goalsTilesList.add(tile);
+      } else if (trackingTiles.contains(tile.type)) {
+        trackingTilesList.add(tile);
+      } else {
+        otherTiles.add(tile);
+      }
+    }
+
+    final slivers = <Widget>[];
+
+    // Helper to render a group of tiles
+    void renderTileGroup(List<HomeTile> tiles) {
+      final halfWidthTiles = <HomeTile>[];
+
+      for (final tile in tiles) {
+        // Special handling for nextWorkout - use hero section logic
+        if (tile.type == TileType.nextWorkout) {
+          if (halfWidthTiles.isNotEmpty) {
+            slivers.add(SliverToBoxAdapter(
+              child: TileFactory.buildHalfWidthRow(context, ref, halfWidthTiles.toList(), isDark),
+            ));
+            halfWidthTiles.clear();
+          }
+          slivers.add(SliverToBoxAdapter(
+            child: _buildHeroSectionFixed(context, todayWorkoutState, isAIGenerating, isDark),
+          ));
+          continue;
+        }
+
+        // Tiles that have their own padding (don't wrap with extra padding)
+        const tilesWithOwnPadding = {
+          TileType.habits,
+          TileType.bodyWeight,
+          TileType.achievements,
+          TileType.weeklyGoals,
+          TileType.weekChanges,
+          TileType.aiCoachTip,
+          TileType.personalRecords,
+          TileType.fitnessScore,
+        };
+
+        if (tilesWithOwnPadding.contains(tile.type)) {
+          if (halfWidthTiles.isNotEmpty) {
+            slivers.add(SliverToBoxAdapter(
+              child: TileFactory.buildHalfWidthRow(context, ref, halfWidthTiles.toList(), isDark),
+            ));
+            halfWidthTiles.clear();
+          }
+          slivers.add(SliverToBoxAdapter(
+            child: TileFactory.buildTile(context, ref, tile, isDark: isDark),
+          ));
+          continue;
+        }
+
+        // Half-width tiles - group in pairs
+        if (tile.size == TileSize.half) {
+          halfWidthTiles.add(tile);
+          if (halfWidthTiles.length == 2) {
+            slivers.add(SliverToBoxAdapter(
+              child: TileFactory.buildHalfWidthRow(context, ref, halfWidthTiles.toList(), isDark),
+            ));
+            halfWidthTiles.clear();
+          }
+          continue;
+        }
+
+        // Flush pending half-width tiles
+        if (halfWidthTiles.isNotEmpty) {
+          slivers.add(SliverToBoxAdapter(
+            child: TileFactory.buildHalfWidthRow(context, ref, halfWidthTiles.toList(), isDark),
+          ));
+          halfWidthTiles.clear();
+        }
+
+        // Full-width tile
+        slivers.add(SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: TileFactory.buildTile(context, ref, tile, isDark: isDark),
+          ),
+        ));
+      }
+
+      // Flush remaining half-width tiles
+      if (halfWidthTiles.isNotEmpty) {
+        slivers.add(SliverToBoxAdapter(
+          child: TileFactory.buildHalfWidthRow(context, ref, halfWidthTiles, isDark),
+        ));
+      }
+    }
+
+    // Render workout section (no header - it's the main focus)
+    if (workoutTiles.isNotEmpty) {
+      renderTileGroup(workoutTiles);
+    }
+
+    // Render insights section
+    if (insightTilesList.isNotEmpty) {
+      slivers.add(SliverToBoxAdapter(
+        child: _buildHomeSectionHeader('Insights', isDark, icon: Icons.lightbulb_outline),
+      ));
+      renderTileGroup(insightTilesList);
+    }
+
+    // Render goals section
+    if (goalsTilesList.isNotEmpty) {
+      slivers.add(SliverToBoxAdapter(
+        child: _buildHomeSectionHeader('Goals & Progress', isDark, icon: Icons.flag_outlined),
+      ));
+      renderTileGroup(goalsTilesList);
+    }
+
+    // Render tracking section
+    if (trackingTilesList.isNotEmpty) {
+      slivers.add(SliverToBoxAdapter(
+        child: _buildHomeSectionHeader('Tracking', isDark, icon: Icons.timeline),
+      ));
+      renderTileGroup(trackingTilesList);
+    }
+
+    // Render other tiles if any
+    if (otherTiles.isNotEmpty) {
+      slivers.add(SliverToBoxAdapter(
+        child: _buildHomeSectionHeader('More', isDark),
+      ));
+      renderTileGroup(otherTiles);
+    }
+
+    return slivers;
+  }
+
+  /// Fallback tiles when layout fails to load
+  List<Widget> _buildFallbackTilesAsSlivers(
+    BuildContext context,
+    bool isDark,
+    AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
+    bool isAIGenerating,
+  ) {
+    return [
+      // Hero workout section
+      SliverToBoxAdapter(
+        child: _buildHeroSectionFixed(context, todayWorkoutState, isAIGenerating, isDark),
+      ),
+      // Quick actions row
+      const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          child: QuickActionsRow(),
+        ),
+      ),
+      // Habits section
+      const SliverToBoxAdapter(child: HabitsSection()),
+      // Body metrics section
+      const SliverToBoxAdapter(child: BodyMetricsSection()),
+      // Achievements section
+      const SliverToBoxAdapter(child: AchievementsSection()),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
@@ -1287,11 +1537,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final user = authState.user;
     final isAIGenerating = ref.watch(aiGeneratingWorkoutProvider);
     final activeLayoutState = ref.watch(activeLayoutProvider);
+    // Watch local layout for tile visibility settings
+    final localLayoutState = ref.watch(localLayoutProvider);
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    // Watch the current streak from consistency provider
+    final currentStreak = ref.watch(currentStreakProvider);
 
     // Get responsive padding based on window mode
     final horizontalPadding = responsiveHorizontalPadding;
@@ -1319,8 +1574,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               SliverToBoxAdapter(
                 child: _buildHeader(
                   context,
-                  user?.displayName ?? 'User',
-                  0, // Streak is now shown elsewhere, not fetched here
+                  // Use first name only to avoid truncation
+                  (user?.displayName ?? 'User').split(' ').first,
+                  currentStreak,
                   isDark,
                   isCompact: isInSplitScreen || isNarrowLayout,
                 ),
@@ -1342,32 +1598,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               //   child: WatchInstallBanner(isDark: isDark),
               // ),
 
-              // Hero Section - Today's Workout or Rest Day Card
-              SliverToBoxAdapter(
-                child: _buildHeroSectionFixed(
-                  context,
-                  todayWorkoutState,
-                  isAIGenerating,
-                  isDark,
-                ),
-              ),
-
-              // Quick Actions Row
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: QuickActionsRow(),
-                ),
-              ),
-
-              // Trends Section - Fixed progress cards
-              SliverToBoxAdapter(
-                child: _buildTrendsSection(isDark),
+              // Dynamic tiles from local layout
+              ...localLayoutState.when(
+                loading: () => [const SliverToBoxAdapter(child: SizedBox.shrink())],
+                error: (_, __) => _buildFallbackTilesAsSlivers(context, isDark, todayWorkoutState, isAIGenerating),
+                data: (layout) => _buildLayoutTilesAsSlivers(context, layout, isDark, todayWorkoutState, isAIGenerating),
               ),
 
               // Bottom padding for nav bar
               const SliverToBoxAdapter(
-                child: SizedBox(height: 100),
+                child: SizedBox(height: 120),
               ),
             ],
           ),
@@ -1738,11 +1978,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
       ),
 
-      // Week Progress Strip - day circles with completion count
-      const SliverToBoxAdapter(
-        child: WeekProgressStrip(),
-      ),
-
       // My Program Summary - visible access to workout preferences
       const SliverToBoxAdapter(
         child: MyProgramSummaryCard(),
@@ -1958,25 +2193,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   /// Build fixed trends section with progress cards
-  /// Shows DailyStats, QuickLogWeight, and WeekProgressStrip
+  /// Shows DailyStats and QuickLogWeight
   Widget _buildTrendsSection(bool isDark) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section header
+          // Section header - larger font for readability
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
-              'YOUR PROGRESS',
+              'Your Progress',
               style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: textMuted,
-                letterSpacing: 1.5,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: textPrimary,
               ),
             ),
           ),
@@ -1996,11 +2230,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ],
             ),
           ),
-
-          const SizedBox(height: 16),
-
-          // Week progress strip
-          const WeekProgressStrip(),
         ],
       ),
     );
@@ -2884,9 +3113,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ),
           const Spacer(),
+          // Customize Home Screen Button
+          CustomizeButton(isDark: isDark),
           // Notification Bell
           NotificationBellButton(isDark: isDark),
-          const SizedBox(width: 8),
           // Streak Badge - Consolidated metric
           _StreakBadge(streak: currentStreak, isDark: isDark, isCompact: isCompact),
         ],
@@ -3250,10 +3480,10 @@ class WorkoutCategoryPills extends ConsumerWidget {
   const WorkoutCategoryPills({super.key, required this.isDark});
 
   static final List<Map<String, dynamic>> _focusOptions = [
-    {'label': 'For You', 'icon': Icons.star_rounded, 'route': null, 'color': AppColors.teal},
-    {'label': 'Workout', 'icon': Icons.fitness_center, 'route': '/workouts', 'color': AppColors.cyan},
-    {'label': 'Nutrition', 'icon': Icons.restaurant, 'route': '/nutrition', 'color': const Color(0xFF34C759)},
-    {'label': 'Fasting', 'icon': Icons.timer, 'route': '/fasting', 'color': AppColors.orange},
+    {'label': 'For You', 'icon': Icons.star_rounded, 'route': null, 'color': AppColors.textPrimary},
+    {'label': 'Workout', 'icon': Icons.fitness_center, 'route': '/workouts', 'color': AppColors.textPrimary},
+    {'label': 'Nutrition', 'icon': Icons.restaurant, 'route': '/nutrition', 'color': AppColors.textPrimary},
+    {'label': 'Fasting', 'icon': Icons.timer, 'route': '/fasting', 'color': AppColors.textPrimary},
   ];
 
   @override
@@ -3268,6 +3498,9 @@ class WorkoutCategoryPills extends ConsumerWidget {
     } else if (location.startsWith('/fasting')) {
       activeIndex = 3;
     }
+
+    // Get dynamic accent color from provider
+    final colors = ref.colors(context);
 
     return AnimationLimiter(
       child: SingleChildScrollView(
@@ -3284,7 +3517,8 @@ class WorkoutCategoryPills extends ConsumerWidget {
               final index = entry.key;
               final option = entry.value;
               final isActive = index == activeIndex;
-              final activeColor = option['color'] as Color;
+              // Use dynamic accent color from provider
+              final activeColor = colors.accent;
               final route = option['route'] as String?;
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
@@ -3335,7 +3569,8 @@ class _CategoryPill extends StatelessWidget {
     final inactiveBg = isDark
         ? AppColors.glassSurface
         : AppColorsLight.glassSurface;
-    const activeText = Colors.white;
+    // In dark mode (white bg), text is black. In light mode (black bg), text is white.
+    final activeText = isDark ? Colors.black : Colors.white;
     final inactiveText = isDark
         ? AppColors.textSecondary
         : AppColorsLight.textSecondary;

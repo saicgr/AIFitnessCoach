@@ -30,7 +30,7 @@ class FastingStatsCard extends StatelessWidget {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Container(
@@ -66,7 +66,7 @@ class FastingStatsCard extends StatelessWidget {
             Divider(color: cardBorder, height: 1),
             Padding(
               padding: const EdgeInsets.all(16),
-              child: _buildWeeklyProgress(textPrimary, textMuted, purple),
+              child: _buildWeeklyProgress(textPrimary, textMuted, accentColor),
             ),
           ],
 
@@ -220,7 +220,7 @@ class FastingStatsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildWeeklyProgress(Color textPrimary, Color textMuted, Color purple) {
+  Widget _buildWeeklyProgress(Color textPrimary, Color textMuted, Color accentColor) {
     final fastsThisWeek = streak?.fastsThisWeek ?? 0;
     final weeklyGoal = streak?.weeklyGoalFasts ?? 5;
     final progress = weeklyGoal > 0 ? (fastsThisWeek / weeklyGoal).clamp(0.0, 1.0) : 0.0;
@@ -233,7 +233,7 @@ class FastingStatsCard extends StatelessWidget {
             Icon(
               Icons.calendar_today_outlined,
               size: 16,
-              color: purple,
+              color: accentColor,
             ),
             const SizedBox(width: 8),
             Text(
@@ -271,7 +271,7 @@ class FastingStatsCard extends StatelessWidget {
             minHeight: 6,
             backgroundColor: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
             valueColor: AlwaysStoppedAnimation<Color>(
-              progress >= 1.0 ? AppColors.success : purple,
+              progress >= 1.0 ? AppColors.success : accentColor,
             ),
           ),
         ),
@@ -329,6 +329,7 @@ class FastingStatsCard extends StatelessWidget {
   Widget _buildWeightCorrelation(Color textPrimary, Color textMuted) {
     final avgFasting = weightCorrelation!.avgWeightFastingDays;
     final avgNonFasting = weightCorrelation!.avgWeightNonFastingDays;
+    final monoAccent = isDark ? AppColors.accent : AppColorsLight.accent;
 
     // Determine if fasting helps with weight
     String correlationText;
@@ -364,7 +365,7 @@ class FastingStatsCard extends StatelessWidget {
             Icon(
               Icons.monitor_weight_outlined,
               size: 16,
-              color: AppColors.cyan,
+              color: monoAccent,
             ),
             const SizedBox(width: 8),
             Text(

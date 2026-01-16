@@ -99,13 +99,13 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
       'id': 'lose_fat',
       'label': 'Lose Fat',
       'icon': Icons.local_fire_department,
-      'color': AppColors.coral,
+      'color': AppColors.accent,
     },
     {
       'id': 'build_muscle',
       'label': 'Build Muscle',
       'icon': Icons.fitness_center,
-      'color': AppColors.purple,
+      'color': AppColors.accent,
     },
     {
       'id': 'maintain',
@@ -117,7 +117,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
       'id': 'improve_energy',
       'label': 'Improve Energy',
       'icon': Icons.bolt,
-      'color': AppColors.orange,
+      'color': AppColors.accent,
     },
     {
       'id': 'eat_healthier',
@@ -194,13 +194,13 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
-                          gradient: isSelected ? AppColors.cyanGradient : null,
+                          gradient: isSelected ? AppColors.accentGradient : null,
                           color: isSelected
                               ? null
                               : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isSelected ? AppColors.cyan : cardBorder,
+                            color: isSelected ? AppColors.accent : cardBorder,
                             width: isSelected ? 2 : 1,
                           ),
                         ),
@@ -266,13 +266,13 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                           duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           decoration: BoxDecoration(
-                            gradient: isSelected ? AppColors.cyanGradient : null,
+                            gradient: isSelected ? AppColors.accentGradient : null,
                             color: isSelected
                                 ? null
                                 : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: isSelected ? AppColors.cyan : cardBorder,
+                              color: isSelected ? AppColors.accent : cardBorder,
                               width: isSelected ? 2 : 1,
                             ),
                           ),
@@ -340,13 +340,13 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                gradient: isSelected ? AppColors.cyanGradient : null,
+                                gradient: isSelected ? AppColors.accentGradient : null,
                                 color: isSelected
                                     ? null
                                     : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: isSelected ? AppColors.cyan : cardBorder,
+                                  color: isSelected ? AppColors.accent : cardBorder,
                                   width: isSelected ? 2 : 1,
                                 ),
                               ),
@@ -409,21 +409,21 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.cyan.withValues(alpha: 0.1),
-            AppColors.purple.withValues(alpha: 0.1),
+            AppColors.accent.withValues(alpha: 0.1),
+            AppColors.accent.withValues(alpha: 0.1),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.insights_outlined, color: AppColors.cyan, size: 20),
+              Icon(Icons.insights_outlined, color: AppColors.accent, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -446,7 +446,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                 icon: Icons.local_fire_department,
                 value: '${estimate.calories}',
                 label: 'kcal',
-                color: AppColors.coral,
+                color: AppColors.accent,
                 textPrimary: textPrimary,
                 textSecondary: textSecondary,
               ),
@@ -454,7 +454,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                 icon: Icons.fitness_center,
                 value: '${estimate.protein}g',
                 label: 'protein',
-                color: AppColors.purple,
+                color: AppColors.accent,
                 textPrimary: textPrimary,
                 textSecondary: textSecondary,
               ),
@@ -462,7 +462,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                 icon: Icons.grain,
                 value: '${estimate.carbs}g',
                 label: 'carbs',
-                color: AppColors.orange,
+                color: AppColors.accent,
                 textPrimary: textPrimary,
                 textSecondary: textSecondary,
               ),
@@ -483,20 +483,20 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.cyan.withValues(alpha: 0.08),
+                color: AppColors.accent.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.restaurant, color: AppColors.cyan, size: 16),
+                  Icon(Icons.restaurant, color: AppColors.accent, size: 16),
                   const SizedBox(width: 8),
                   Text(
                     '~$calPerMeal kcal & ${proteinPerMeal}g protein per meal',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.cyan,
+                      color: AppColors.accent,
                     ),
                   ),
                 ],
@@ -522,7 +522,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                 child: _buildInsightChip(
                   icon: Icons.psychology,
                   text: 'Metabolic age: ${estimate.metabolicAge}',
-                  color: AppColors.purple,
+                  color: AppColors.accent,
                   textSecondary: textSecondary,
                 ),
               ),

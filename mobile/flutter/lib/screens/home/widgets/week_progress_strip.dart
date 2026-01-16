@@ -105,14 +105,14 @@ class WeekProgressStrip extends ConsumerWidget {
                             'View All',
                             style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.cyan,
+                              color: textSecondary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                           Icon(
                             Icons.chevron_right,
                             size: 16,
-                            color: AppColors.cyan,
+                            color: textSecondary,
                           ),
                         ],
                       ),
@@ -216,7 +216,10 @@ class _DayCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    // Monochrome accent - white in dark mode, black in light mode
+    final accentColor = textPrimary;
 
     // Determine appearance based on state
     Color bgColor;
@@ -229,15 +232,15 @@ class _DayCircle extends StatelessWidget {
       borderColor = AppColors.success;
       centerWidget = Icon(Icons.check, size: 16, color: Colors.white);
     } else if (state.isToday) {
-      // Today - cyan ring
-      bgColor = AppColors.cyan.withValues(alpha: 0.15);
-      borderColor = AppColors.cyan;
+      // Today - monochrome accent ring
+      bgColor = accentColor.withValues(alpha: 0.15);
+      borderColor = accentColor;
       centerWidget = Container(
         width: 8,
         height: 8,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: AppColors.cyan,
+          color: accentColor,
         ),
       );
     } else if (state.hasWorkout && state.isPast) {
@@ -275,7 +278,7 @@ class _DayCircle extends StatelessWidget {
           style: TextStyle(
             fontSize: 11,
             fontWeight: state.isToday ? FontWeight.bold : FontWeight.normal,
-            color: state.isToday ? AppColors.cyan : textMuted,
+            color: textPrimary,
           ),
         ),
       ],

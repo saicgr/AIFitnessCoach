@@ -166,7 +166,7 @@ async def list_performance_logs(
 class ExerciseLastPerformance(BaseModel):
     """Last performance data for an exercise."""
     exercise_name: str
-    sets: List[dict]  # List of {set_number, weight_kg, reps_completed, set_type}
+    sets: List[dict]  # List of {set_number, weight_kg, reps_completed, set_type, rir, rpe}
     recorded_at: Optional[str] = None
     workout_log_id: Optional[str] = None
 
@@ -223,6 +223,8 @@ async def get_exercise_last_performance(
                 "weight_kg": s.get("weight_kg"),
                 "reps_completed": s.get("reps_completed"),
                 "set_type": s.get("set_type", "working"),
+                "rir": s.get("rir"),
+                "rpe": s.get("rpe"),
             })
 
         recorded_at = sets_data[0].get("recorded_at") if sets_data else None

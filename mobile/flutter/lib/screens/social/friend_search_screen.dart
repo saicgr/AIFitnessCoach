@@ -314,10 +314,11 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
     final animationValue = _tabController.animation?.value ?? 0.0;
     final selectionProgress = (1.0 - (animationValue - index).abs()).clamp(0.0, 1.0);
 
-    final selectedBg = AppColors.cyan;
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final selectedBg = accentColor;
     final unselectedBg = Colors.transparent;
-    final selectedFg = isDark ? Colors.black : Colors.white;
-    final unselectedFg = AppColors.textMuted;
+    final selectedFg = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+    final unselectedFg = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     final bgColor = Color.lerp(unselectedBg, selectedBg, selectionProgress)!;
     final fgColor = Color.lerp(unselectedFg, selectedFg, selectionProgress)!;
@@ -339,7 +340,7 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: AppColors.cyan.withValues(alpha: 0.3),
+                      color: accentColor.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),

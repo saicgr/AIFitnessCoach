@@ -94,7 +94,7 @@ class _QuizFastingState extends State<QuizFasting> {
       'fastingHours': 16,
       'eatingHours': 8,
       'icon': Icons.schedule,
-      'color': AppColors.cyan,
+      'color': AppColors.accent,
       'difficulty': 'Intermediate',
       'bestFor': ['intermediate', 'lose', 'maintain'],
       'popular': true,
@@ -106,7 +106,7 @@ class _QuizFastingState extends State<QuizFasting> {
       'fastingHours': 18,
       'eatingHours': 6,
       'icon': Icons.timer,
-      'color': AppColors.purple,
+      'color': AppColors.accent,
       'difficulty': 'Intermediate',
       'bestFor': ['intermediate', 'advanced', 'lose'],
     },
@@ -117,7 +117,7 @@ class _QuizFastingState extends State<QuizFasting> {
       'fastingHours': 20,
       'eatingHours': 4,
       'icon': Icons.hourglass_top,
-      'color': AppColors.orange,
+      'color': AppColors.accent,
       'difficulty': 'Advanced',
       'bestFor': ['advanced', 'lose'],
     },
@@ -276,21 +276,21 @@ class _QuizFastingState extends State<QuizFasting> {
 
     if (direction == 'lose') {
       benefits = [
-        {'icon': Icons.local_fire_department, 'text': 'Burns fat', 'color': AppColors.coral},
-        {'icon': Icons.trending_down, 'text': 'Reduces cravings', 'color': AppColors.purple},
-        {'icon': Icons.bolt, 'text': 'Boosts energy', 'color': AppColors.orange},
+        {'icon': Icons.local_fire_department, 'text': 'Burns fat', 'color': AppColors.accent},
+        {'icon': Icons.trending_down, 'text': 'Reduces cravings', 'color': AppColors.accent},
+        {'icon': Icons.bolt, 'text': 'Boosts energy', 'color': AppColors.accent},
       ];
     } else if (direction == 'gain') {
       benefits = [
-        {'icon': Icons.fitness_center, 'text': 'Builds muscle', 'color': AppColors.purple},
+        {'icon': Icons.fitness_center, 'text': 'Builds muscle', 'color': AppColors.accent},
         {'icon': Icons.trending_up, 'text': 'Growth hormone', 'color': AppColors.success},
         {'icon': Icons.restaurant, 'text': 'Better digestion', 'color': AppColors.teal},
       ];
     } else {
       benefits = [
-        {'icon': Icons.psychology, 'text': 'Mental clarity', 'color': AppColors.cyan},
-        {'icon': Icons.favorite, 'text': 'Heart health', 'color': AppColors.coral},
-        {'icon': Icons.schedule, 'text': 'Simple routine', 'color': AppColors.purple},
+        {'icon': Icons.psychology, 'text': 'Mental clarity', 'color': AppColors.accent},
+        {'icon': Icons.favorite, 'text': 'Heart health', 'color': AppColors.accent},
+        {'icon': Icons.schedule, 'text': 'Simple routine', 'color': AppColors.accent},
       ];
     }
 
@@ -352,9 +352,9 @@ class _QuizFastingState extends State<QuizFasting> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withValues(alpha: 0.08),
+                  color: AppColors.accent.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.cyan.withValues(alpha: 0.2)),
+                  border: Border.all(color: AppColors.accent.withValues(alpha: 0.2)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -468,7 +468,7 @@ class _QuizFastingState extends State<QuizFasting> {
                             duration: const Duration(milliseconds: 200),
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                             decoration: BoxDecoration(
-                              gradient: isSelected ? AppColors.cyanGradient : null,
+                              gradient: isSelected ? AppColors.accentGradient : null,
                               color: isSelected
                                   ? null
                                   : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
@@ -476,13 +476,13 @@ class _QuizFastingState extends State<QuizFasting> {
                               border: Border.all(
                                 color: isRecommended && !isSelected
                                     ? AppColors.success
-                                    : (isSelected ? AppColors.cyan : cardBorder),
+                                    : (isSelected ? AppColors.accent : cardBorder),
                                 width: isSelected || isRecommended ? 2 : 1,
                               ),
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                        color: AppColors.cyan.withValues(alpha: 0.3),
+                                        color: AppColors.accent.withValues(alpha: 0.3),
                                         blurRadius: 8,
                                         spreadRadius: 0,
                                       ),
@@ -548,7 +548,7 @@ class _QuizFastingState extends State<QuizFasting> {
                                               decoration: BoxDecoration(
                                                 color: isSelected
                                                     ? Colors.white.withValues(alpha: 0.2)
-                                                    : AppColors.cyan.withValues(alpha: 0.15),
+                                                    : AppColors.accent.withValues(alpha: 0.15),
                                                 borderRadius: BorderRadius.circular(4),
                                               ),
                                               child: Text(
@@ -556,7 +556,7 @@ class _QuizFastingState extends State<QuizFasting> {
                                                 style: TextStyle(
                                                   fontSize: 10,
                                                   fontWeight: FontWeight.w600,
-                                                  color: isSelected ? Colors.white : AppColors.cyan,
+                                                  color: isSelected ? Colors.white : AppColors.accent,
                                                 ),
                                               ),
                                             ),
@@ -667,13 +667,13 @@ class _QuizFastingState extends State<QuizFasting> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
         decoration: BoxDecoration(
-          gradient: isSelected ? AppColors.cyanGradient : null,
+          gradient: isSelected ? AppColors.accentGradient : null,
           color: isSelected
               ? null
               : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.cyan : cardBorder,
+            color: isSelected ? AppColors.accent : cardBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -682,7 +682,7 @@ class _QuizFastingState extends State<QuizFasting> {
           children: [
             Icon(
               icon,
-              color: isSelected ? Colors.white : AppColors.cyan,
+              color: isSelected ? Colors.white : AppColors.accent,
               size: 18,
             ),
             const SizedBox(width: 8),
@@ -723,12 +723,12 @@ class _QuizFastingState extends State<QuizFasting> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isValid
-              ? AppColors.cyan.withValues(alpha: 0.1)
+              ? AppColors.accent.withValues(alpha: 0.1)
               : AppColors.error.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isValid
-                ? AppColors.cyan.withValues(alpha: 0.3)
+                ? AppColors.accent.withValues(alpha: 0.3)
                 : AppColors.error.withValues(alpha: 0.3),
           ),
         ),
@@ -739,7 +739,7 @@ class _QuizFastingState extends State<QuizFasting> {
               children: [
                 Icon(
                   isValid ? Icons.restaurant_menu : Icons.warning_amber_rounded,
-                  color: isValid ? AppColors.cyan : AppColors.error,
+                  color: isValid ? AppColors.accent : AppColors.error,
                   size: 18,
                 ),
                 const SizedBox(width: 8),
@@ -751,7 +751,7 @@ class _QuizFastingState extends State<QuizFasting> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: isValid ? AppColors.cyan : AppColors.error,
+                      color: isValid ? AppColors.accent : AppColors.error,
                     ),
                   ),
                 ),
@@ -773,7 +773,7 @@ class _QuizFastingState extends State<QuizFasting> {
                   style: TextStyle(
                     fontSize: 11,
                     fontStyle: FontStyle.italic,
-                    color: AppColors.purple,
+                    color: AppColors.accent,
                   ),
                 ),
               ],
@@ -794,20 +794,20 @@ class _QuizFastingState extends State<QuizFasting> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withValues(alpha: 0.15),
+                    color: AppColors.accent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.auto_fix_high, size: 14, color: AppColors.cyan),
+                      Icon(Icons.auto_fix_high, size: 14, color: AppColors.accent),
                       const SizedBox(width: 6),
                       Text(
                         'Adjust to $maxMeals meals',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.cyan,
+                          color: AppColors.accent,
                         ),
                       ),
                     ],
@@ -882,7 +882,7 @@ class _QuizFastingState extends State<QuizFasting> {
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.cyan,
+                                color: AppColors.accent,
                               ),
                             ),
                           ),
@@ -1080,10 +1080,10 @@ class _QuizFastingState extends State<QuizFasting> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.purple.withValues(alpha: 0.15),
+                    color: AppColors.accent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(Icons.bedtime_outlined, color: AppColors.purple, size: 20),
+                  child: Icon(Icons.bedtime_outlined, color: AppColors.accent, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1119,7 +1119,7 @@ class _QuizFastingState extends State<QuizFasting> {
                   child: _buildTimePicker(
                     label: 'Wake up',
                     icon: Icons.wb_sunny_outlined,
-                    color: AppColors.orange,
+                    color: AppColors.accent,
                     time: wakeTime,
                     onTap: () async {
                       final picked = await showTimePicker(
@@ -1129,7 +1129,7 @@ class _QuizFastingState extends State<QuizFasting> {
                           return Theme(
                             data: Theme.of(context).copyWith(
                               colorScheme: Theme.of(context).colorScheme.copyWith(
-                                primary: AppColors.cyan,
+                                primary: AppColors.accent,
                               ),
                             ),
                             child: child!,
@@ -1151,7 +1151,7 @@ class _QuizFastingState extends State<QuizFasting> {
                   child: _buildTimePicker(
                     label: 'Bedtime',
                     icon: Icons.nightlight_outlined,
-                    color: AppColors.purple,
+                    color: AppColors.accent,
                     time: sleepTime,
                     onTap: () async {
                       final picked = await showTimePicker(
@@ -1161,7 +1161,7 @@ class _QuizFastingState extends State<QuizFasting> {
                           return Theme(
                             data: Theme.of(context).copyWith(
                               colorScheme: Theme.of(context).colorScheme.copyWith(
-                                primary: AppColors.cyan,
+                                primary: AppColors.accent,
                               ),
                             ),
                             child: child!,
@@ -1290,7 +1290,7 @@ class _QuizFastingState extends State<QuizFasting> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.cyan.withValues(alpha: 0.1),
+        color: AppColors.accent.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -1298,7 +1298,7 @@ class _QuizFastingState extends State<QuizFasting> {
           Icon(
             Icons.lightbulb_outline,
             size: 16,
-            color: AppColors.cyan,
+            color: AppColors.accent,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -1306,7 +1306,7 @@ class _QuizFastingState extends State<QuizFasting> {
               'Suggested eating window: ${formatHour(eatingStartHour)} - ${formatHour(eatingEndHour)}',
               style: TextStyle(
                 fontSize: 12,
-                color: AppColors.cyan,
+                color: AppColors.accent,
               ),
             ),
           ),

@@ -18,6 +18,8 @@ class NutritionFastingCard extends ConsumerWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    // Use monochrome accent
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
 
     final nutritionState = ref.watch(nutritionPreferencesProvider);
     final fastingState = ref.watch(fastingSettingsProvider);
@@ -76,7 +78,7 @@ class NutritionFastingCard extends ConsumerWidget {
                   },
                   icon: Icon(
                     Icons.edit_outlined,
-                    color: AppColors.cyan,
+                    color: accentColor,
                     size: 20,
                   ),
                   tooltip: 'Edit nutrition settings',
@@ -88,7 +90,7 @@ class NutritionFastingCard extends ConsumerWidget {
           // Nutrition info rows
           _buildInfoRow(
             icon: Icons.local_fire_department_outlined,
-            iconColor: AppColors.orange,
+            iconColor: accentColor,
             label: 'Daily Target',
             value: '$currentCalories cal',
             isDark: isDark,
@@ -99,7 +101,7 @@ class NutritionFastingCard extends ConsumerWidget {
 
           _buildInfoRow(
             icon: Icons.restaurant_outlined,
-            iconColor: AppColors.cyan,
+            iconColor: accentColor,
             label: 'Diet Type',
             value: _getDietTypeDisplay(prefs?.dietType),
             isDark: isDark,
@@ -110,7 +112,7 @@ class NutritionFastingCard extends ConsumerWidget {
 
           _buildInfoRow(
             icon: Icons.flag_outlined,
-            iconColor: AppColors.purple,
+            iconColor: accentColor,
             label: 'Goal',
             value: _getNutritionGoalDisplay(prefs?.nutritionGoal),
             isDark: isDark,
@@ -134,7 +136,7 @@ class NutritionFastingCard extends ConsumerWidget {
             Divider(height: 1, color: cardBorder, indent: 16, endIndent: 16),
             _buildInfoRow(
               icon: Icons.schedule,
-              iconColor: AppColors.magenta,
+              iconColor: accentColor,
               label: 'Fasting Protocol',
               value: _getFastingProtocolDisplay(fastingState.fastingProtocol),
               isDark: isDark,
@@ -193,11 +195,14 @@ class NutritionFastingCard extends ConsumerWidget {
     required Color textPrimary,
     required Color textMuted,
   }) {
+    // Use monochrome accent
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          Icon(Icons.pie_chart_outline, color: AppColors.success, size: 20),
+          Icon(Icons.pie_chart_outline, color: accentColor, size: 20),
           const SizedBox(width: 12),
           Text(
             'Macros',
@@ -207,11 +212,11 @@ class NutritionFastingCard extends ConsumerWidget {
             ),
           ),
           const Spacer(),
-          _MacroBadge(label: 'P', value: '${protein}g', color: AppColors.cyan),
+          _MacroBadge(label: 'P', value: '${protein}g', color: accentColor),
           const SizedBox(width: 6),
-          _MacroBadge(label: 'C', value: '${carbs}g', color: AppColors.orange),
+          _MacroBadge(label: 'C', value: '${carbs}g', color: accentColor),
           const SizedBox(width: 6),
-          _MacroBadge(label: 'F', value: '${fat}g', color: AppColors.purple),
+          _MacroBadge(label: 'F', value: '${fat}g', color: accentColor),
         ],
       ),
     );

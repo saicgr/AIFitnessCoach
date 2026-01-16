@@ -11,7 +11,8 @@ class PaywallFeaturesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.colors;
+    // Use ref.colors(context) to get dynamic accent color from provider
+    final colors = ref.colors(context);
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -34,14 +35,7 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       width: 72,
                       height: 72,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            colors.cyan,
-                            colors.cyanDark,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
+                        gradient: colors.accentGradient,
                         shape: BoxShape.circle,
                       ),
                       child: ClipOval(
@@ -50,10 +44,10 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                           width: 72,
                           height: 72,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => const Icon(
+                          errorBuilder: (context, error, stackTrace) => Icon(
                             Icons.fitness_center,
                             size: 36,
-                            color: Colors.white,
+                            color: colors.accentContrast,
                           ),
                         ),
                       ),
@@ -75,7 +69,7 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: colors.cyan,
+                        color: colors.accent,
                       ),
                     ),
 
@@ -100,7 +94,7 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                     const SizedBox(height: 8),
                     _FeatureItem(
                       icon: Icons.star_outline,
-                      iconColor: Colors.amber,
+                      iconColor: colors.accent,
                       title: 'Staple & avoided exercises',
                       subtitle: 'Always include favorites, never see exercises you hate',
                       colors: colors,
@@ -156,7 +150,7 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                     const SizedBox(height: 8),
                     _FeatureItem(
                       icon: Icons.self_improvement,
-                      iconColor: const Color(0xFFE91E63),
+                      iconColor: colors.accent,
                       title: 'Hormonal health optimization',
                       subtitle: 'Cycle-aware workouts & diet recommendations',
                       colors: colors,
@@ -177,8 +171,8 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                 child: ElevatedButton(
                   onPressed: () => context.push('/paywall-timeline'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.cyan,
-                    foregroundColor: Colors.white,
+                    backgroundColor: colors.accent,
+                    foregroundColor: colors.accentContrast,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),

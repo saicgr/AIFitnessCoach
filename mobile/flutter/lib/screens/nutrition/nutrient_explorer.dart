@@ -80,7 +80,7 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
                 title: 'VITAMINS',
                 icon: Icons.wb_sunny_outlined,
                 nutrients: summary.vitamins,
-                categoryColor: const Color(0xFFFF9F43),
+                categoryColor: AppColors.textPrimary,
                 isDark: widget.isDark,
                 onNutrientTap: (nutrient) => _showNutrientDetail(nutrient),
               ).animate().fadeIn(delay: 150.ms),
@@ -90,7 +90,7 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
                 title: 'MINERALS',
                 icon: Icons.diamond_outlined,
                 nutrients: summary.minerals,
-                categoryColor: const Color(0xFF00D9C0),
+                categoryColor: AppColors.textSecondary,
                 isDark: widget.isDark,
                 onNutrientTap: (nutrient) => _showNutrientDetail(nutrient),
               ).animate().fadeIn(delay: 200.ms),
@@ -100,7 +100,7 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
                 title: 'FATTY ACIDS',
                 icon: Icons.water_drop_outlined,
                 nutrients: summary.fattyAcids,
-                categoryColor: const Color(0xFF4D96FF),
+                categoryColor: AppColors.textSecondary,
                 isDark: widget.isDark,
                 onNutrientTap: (nutrient) => _showNutrientDetail(nutrient),
               ).animate().fadeIn(delay: 250.ms),
@@ -110,7 +110,7 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
                 title: 'OTHER',
                 icon: Icons.more_horiz,
                 nutrients: summary.other,
-                categoryColor: const Color(0xFF9B59B6),
+                categoryColor: AppColors.textMuted,
                 isDark: widget.isDark,
                 onNutrientTap: (nutrient) => _showNutrientDetail(nutrient),
               ).animate().fadeIn(delay: 300.ms),
@@ -164,16 +164,16 @@ class _NutrientScoreCard extends StatelessWidget {
     Color scoreColor;
     String scoreLabel;
     if (score >= 80) {
-      scoreColor = const Color(0xFF4CAF50);
+      scoreColor = AppColors.textPrimary;
       scoreLabel = 'Excellent';
     } else if (score >= 60) {
-      scoreColor = const Color(0xFF8BC34A);
+      scoreColor = AppColors.textPrimary;
       scoreLabel = 'Good';
     } else if (score >= 40) {
-      scoreColor = const Color(0xFFFFC107);
+      scoreColor = AppColors.textSecondary;
       scoreLabel = 'Needs Attention';
     } else {
-      scoreColor = const Color(0xFFFF9800);
+      scoreColor = AppColors.textSecondary;
       scoreLabel = 'Low';
     }
 
@@ -248,19 +248,19 @@ class _NutrientScoreCard extends StatelessWidget {
                         _StatChip(
                           label: 'Optimal',
                           count: optimalCount,
-                          color: const Color(0xFF4CAF50),
+                          color: AppColors.textPrimary,
                         ),
                         const SizedBox(width: 8),
                         _StatChip(
                           label: 'Low',
                           count: lowCount,
-                          color: const Color(0xFFFFC107),
+                          color: AppColors.textSecondary,
                         ),
                         const SizedBox(width: 8),
                         _StatChip(
                           label: 'High',
                           count: overCount,
-                          color: const Color(0xFFFF9800),
+                          color: AppColors.textSecondary,
                         ),
                       ],
                     ),
@@ -644,13 +644,13 @@ class _NutrientRow extends StatelessWidget {
   Color _getStatusColor(NutrientStatus status) {
     switch (status) {
       case NutrientStatus.low:
-        return const Color(0xFFFFC107);
+        return AppColors.textSecondary;
       case NutrientStatus.optimal:
-        return const Color(0xFF4CAF50);
+        return AppColors.textPrimary;
       case NutrientStatus.high:
-        return const Color(0xFFFF9800);
+        return AppColors.textSecondary;
       case NutrientStatus.overCeiling:
-        return const Color(0xFFF44336);
+        return AppColors.textMuted;
     }
   }
 }
@@ -993,13 +993,13 @@ class _NutrientDetailSheetState extends State<NutrientDetailSheet> {
   Color _getStatusColor(NutrientStatus status) {
     switch (status) {
       case NutrientStatus.low:
-        return const Color(0xFFFFC107);
+        return AppColors.textSecondary;
       case NutrientStatus.optimal:
-        return const Color(0xFF4CAF50);
+        return AppColors.textPrimary;
       case NutrientStatus.high:
-        return const Color(0xFFFF9800);
+        return AppColors.textSecondary;
       case NutrientStatus.overCeiling:
-        return const Color(0xFFF44336);
+        return AppColors.textMuted;
     }
   }
 
@@ -1245,10 +1245,10 @@ class _ThreeTierProgressBar extends StatelessWidget {
     final currentPercent = (currentValue / maxValue).clamp(0.0, 1.0);
 
     // Determine zone colors
-    Color deficientColor = const Color(0xFFEF5350); // Red - below floor
-    Color lowColor = const Color(0xFFFFC107); // Yellow - between floor and target
-    Color optimalColor = const Color(0xFF4CAF50); // Green - at target or above
-    Color excessiveColor = const Color(0xFFF44336); // Red - over ceiling
+    Color deficientColor = AppColors.textMuted; // Red - below floor
+    Color lowColor = AppColors.textSecondary; // Yellow - between floor and target
+    Color optimalColor = AppColors.textPrimary; // Green - at target or above
+    Color excessiveColor = AppColors.textMuted; // Red - over ceiling
 
     return Column(
       children: [
@@ -1410,7 +1410,7 @@ class _ThreeTierProgressBar extends StatelessWidget {
               _TierLabel(
                 label: 'Floor',
                 value: '${floorValue!.toStringAsFixed(0)}$unit',
-                color: const Color(0xFFFFC107),
+                color: AppColors.textSecondary,
               )
             else
               const SizedBox(width: 60),
@@ -1419,7 +1419,7 @@ class _ThreeTierProgressBar extends StatelessWidget {
             _TierLabel(
               label: 'Target',
               value: '${targetValue.toStringAsFixed(0)}$unit',
-              color: const Color(0xFF4CAF50),
+              color: AppColors.textPrimary,
               isCenter: true,
             ),
 
@@ -1428,7 +1428,7 @@ class _ThreeTierProgressBar extends StatelessWidget {
               _TierLabel(
                 label: 'Ceiling',
                 value: '${ceilingValue!.toStringAsFixed(0)}$unit',
-                color: const Color(0xFFF44336),
+                color: AppColors.textMuted,
               )
             else
               const SizedBox(width: 60),

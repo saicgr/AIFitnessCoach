@@ -26,11 +26,11 @@ class LetsGoButton extends StatelessWidget {
             vertical: 12,
           ),
           decoration: BoxDecoration(
-            gradient: AppColors.cyanGradient,
+            gradient: AppColors.accentGradient,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: AppColors.cyan.withOpacity(0.5),
+                color: AppColors.accent.withOpacity(0.5),
                 blurRadius: 20,
                 spreadRadius: 0,
               ),

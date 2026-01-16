@@ -73,7 +73,9 @@ class _ProtocolSelectorSheetState extends State<ProtocolSelectorSheet> {
     final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    // Use monochrome accent instead of purple
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Container(
@@ -172,7 +174,7 @@ class _ProtocolSelectorSheetState extends State<ProtocolSelectorSheet> {
                     Icon(
                       _showExtended ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                       size: 20,
-                      color: purple,
+                      color: accentColor,
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -187,7 +189,7 @@ class _ProtocolSelectorSheetState extends State<ProtocolSelectorSheet> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.orange.withValues(alpha: 0.15),
+                        color: textMuted.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -195,7 +197,7 @@ class _ProtocolSelectorSheetState extends State<ProtocolSelectorSheet> {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: Colors.orange,
+                          color: textMuted,
                         ),
                       ),
                     ),
@@ -247,7 +249,7 @@ class _ProtocolSelectorSheetState extends State<ProtocolSelectorSheet> {
                         Text('Duration', style: TextStyle(fontSize: 13, color: textPrimary)),
                         Text(
                           '$_customHours hours',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: purple),
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: accentColor),
                         ),
                       ],
                     ),
@@ -261,8 +263,8 @@ class _ProtocolSelectorSheetState extends State<ProtocolSelectorSheet> {
                         min: 12,
                         max: 72,
                         divisions: 60,
-                        activeColor: purple,
-                        inactiveColor: purple.withValues(alpha: 0.2),
+                        activeColor: accentColor,
+                        inactiveColor: accentColor.withValues(alpha: 0.2),
                         onChanged: (value) {
                           setState(() => _customHours = value.round());
                           HapticService.light();
@@ -289,8 +291,8 @@ class _ProtocolSelectorSheetState extends State<ProtocolSelectorSheet> {
               child: ElevatedButton(
                 onPressed: _confirm,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: purple,
-                  foregroundColor: Colors.white,
+                  backgroundColor: accentColor,
+                  foregroundColor: accentContrast,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -331,10 +333,13 @@ class _ProtocolChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    // Use monochrome accent for all chips
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final accentColor = isExtended ? Colors.orange : purple;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    // Extended protocols use muted color for differentiation
+    final chipAccent = isExtended ? textMuted : accentColor;
 
     return GestureDetector(
       onTap: onTap,
@@ -343,11 +348,11 @@ class _ProtocolChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? accentColor.withValues(alpha: 0.15)
+              ? chipAccent.withValues(alpha: 0.15)
               : cardBorder.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? accentColor : Colors.transparent,
+            color: isSelected ? chipAccent : Colors.transparent,
             width: 2,
           ),
         ),
@@ -356,7 +361,7 @@ class _ProtocolChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? accentColor : textPrimary,
+            color: isSelected ? chipAccent : textPrimary,
           ),
         ),
       ),

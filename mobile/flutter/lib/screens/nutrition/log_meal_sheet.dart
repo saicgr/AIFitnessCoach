@@ -709,11 +709,11 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     // Rainbow colors for nutrition values
-    const caloriesColor = Color(0xFFFF6B6B);  // Red/Coral
-    const proteinColor = Color(0xFFFFD93D);   // Yellow/Gold
-    const carbsColor = Color(0xFF6BCB77);     // Green
-    const fatColor = Color(0xFF4D96FF);       // Blue
-    const fiberColor = Color(0xFF9B59B6);     // Purple
+    const caloriesColor = AppColors.textPrimary;  // Red/Coral
+    const proteinColor = AppColors.textSecondary;   // Yellow/Gold
+    const carbsColor = AppColors.textMuted;     // Green
+    const fatColor = AppColors.textSecondary;       // Blue
+    const fiberColor = AppColors.textMuted;     // Purple
 
     // Portion multiplier state
     double portionMultiplier = 1.0;
@@ -739,7 +739,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Row(
               children: [
-                const Icon(Icons.auto_awesome, color: Color(0xFFFFD93D), size: 28),
+                const Icon(Icons.auto_awesome, color: AppColors.textSecondary, size: 28),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -914,7 +914,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, (confirmed: true, multiplier: portionMultiplier)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6BCB77),
+                  backgroundColor: AppColors.textMuted,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -1930,11 +1930,11 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
   int? _analysisElapsedMs; // Time taken for AI analysis
 
   // Rainbow colors for nutrition values
-  static const caloriesColor = Color(0xFFFF6B6B);
-  static const proteinColor = Color(0xFFFFD93D);
-  static const carbsColor = Color(0xFF6BCB77);
-  static const fatColor = Color(0xFF4D96FF);
-  static const fiberColor = Color(0xFF9B59B6);
+  static const caloriesColor = AppColors.textPrimary;
+  static const proteinColor = AppColors.textSecondary;
+  static const carbsColor = AppColors.textMuted;
+  static const fatColor = AppColors.textSecondary;
+  static const fiberColor = AppColors.textMuted;
 
   @override
   void initState() {
@@ -2216,7 +2216,7 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
                 Text('Saved to favorites!'),
               ],
             ),
-            backgroundColor: const Color(0xFF6BCB77),
+            backgroundColor: AppColors.textMuted,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             margin: EdgeInsets.only(
@@ -2434,7 +2434,7 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
                 // AI Estimated header row
                 Row(
                   children: [
-                    const Icon(Icons.auto_awesome, color: Color(0xFFFFD93D), size: 20),
+                    const Icon(Icons.auto_awesome, color: AppColors.textSecondary, size: 20),
                     const SizedBox(width: 8),
                     Text(
                       'AI Estimated',
@@ -2462,12 +2462,12 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFFFD93D)),
+                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textSecondary),
                               )
                             : Icon(
                                 _isSaved ? Icons.star : Icons.star_border,
                                 size: 24,
-                                color: _isSaved ? const Color(0xFFFFD93D) : textMuted,
+                                color: _isSaved ? AppColors.textSecondary : textMuted,
                               ),
                       ),
                     ),
@@ -2504,19 +2504,19 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
                         icon: Icons.fitness_center,
                         value: '${response.proteinG.toStringAsFixed(0)}g',
                         unit: 'Protein',
-                        color: const Color(0xFFE6A700),  // Darker gold for readability
+                        color: AppColors.textSecondary,  // Darker gold for readability
                       ),
                       _CompactMacroChip(
                         icon: Icons.grain,
                         value: '${response.carbsG.toStringAsFixed(0)}g',
                         unit: 'Carbs',
-                        color: const Color(0xFF2E9E4B),  // Darker green for readability
+                        color: AppColors.textMuted,  // Darker green for readability
                       ),
                       _CompactMacroChip(
                         icon: Icons.opacity,
                         value: '${response.fatG.toStringAsFixed(0)}g',
                         unit: 'Fat',
-                        color: const Color(0xFF3575CC),  // Darker blue for readability
+                        color: AppColors.textSecondary,  // Darker blue for readability
                       ),
                     ],
                   ),
@@ -2597,7 +2597,7 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
                 style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6BCB77),
+                backgroundColor: AppColors.textMuted,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -4004,9 +4004,9 @@ class _CompactGoalScore extends StatelessWidget {
   });
 
   Color _getScoreColor() {
-    if (score >= 8) return const Color(0xFF6BCB77);  // Green
-    if (score >= 5) return const Color(0xFF5DADE2);  // Blue instead of yellow
-    return const Color(0xFFFF6B6B);  // Red
+    if (score >= 8) return AppColors.textMuted;  // Green
+    if (score >= 5) return AppColors.textSecondary;  // Blue instead of yellow
+    return AppColors.textPrimary;  // Red
   }
 
   @override
@@ -4075,9 +4075,9 @@ class _OverallMealScoreCard extends StatelessWidget {
 
   Color _getScoreColor() {
     if (score == null) return Colors.grey;
-    if (score! >= 8) return const Color(0xFF6BCB77);  // Green
-    if (score! >= 5) return const Color(0xFFFFD93D);  // Yellow
-    return const Color(0xFFFF6B6B);  // Red
+    if (score! >= 8) return AppColors.textMuted;  // Green
+    if (score! >= 5) return AppColors.textSecondary;  // Yellow
+    return AppColors.textPrimary;  // Red
   }
 
   String _getScoreLabel() {
@@ -4370,9 +4370,9 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
 
   Color _getScoreColor() {
     if (widget.item.goalScore == null) return Colors.grey;
-    if (widget.item.goalScore! >= 8) return const Color(0xFF6BCB77);  // Green
-    if (widget.item.goalScore! >= 5) return const Color(0xFF5DADE2);  // Blue
-    return const Color(0xFFFF6B6B);  // Red
+    if (widget.item.goalScore! >= 8) return AppColors.textMuted;  // Green
+    if (widget.item.goalScore! >= 5) return AppColors.textSecondary;  // Blue
+    return AppColors.textPrimary;  // Red
   }
 
   void _updateWeight(double newWeight) {
@@ -4837,9 +4837,9 @@ class _AISuggestionCard extends StatelessWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
-    const encourageColor = Color(0xFF6BCB77);  // Green
-    const warningColor = Color(0xFFFF6B6B);    // Red
-    const swapColor = Color(0xFF4D96FF);       // Blue
+    const encourageColor = AppColors.textMuted;  // Green
+    const warningColor = AppColors.textPrimary;    // Red
+    const swapColor = AppColors.textSecondary;       // Blue
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -5205,21 +5205,21 @@ class _MoodChip extends StatelessWidget {
   Color _getMoodColor() {
     switch (mood) {
       case FoodMood.great:
-        return const Color(0xFF6BCB77); // Green
+        return AppColors.textMuted; // Green
       case FoodMood.good:
-        return const Color(0xFF4ECDC4); // Teal
+        return AppColors.textSecondary; // Teal
       case FoodMood.neutral:
-        return const Color(0xFF95A5A6); // Gray
+        return AppColors.textMuted; // Gray
       case FoodMood.tired:
-        return const Color(0xFF9B59B6); // Purple
+        return AppColors.textMuted; // Purple
       case FoodMood.stressed:
-        return const Color(0xFFE74C3C); // Red
+        return AppColors.textMuted; // Red
       case FoodMood.hungry:
-        return const Color(0xFFFF6B6B); // Coral
+        return AppColors.textPrimary; // Coral
       case FoodMood.satisfied:
-        return const Color(0xFF3498DB); // Blue
+        return AppColors.textSecondary; // Blue
       case FoodMood.bloated:
-        return const Color(0xFFF39C12); // Orange
+        return AppColors.textSecondary; // Orange
     }
   }
 

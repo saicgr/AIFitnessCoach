@@ -55,6 +55,8 @@ class FastingImpactCard extends StatelessWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    // Use monochrome accent
+    final monoAccent = isDark ? AppColors.accent : AppColorsLight.accent;
 
     final accentColor = positiveColor ??
         (isPositive ? AppColors.success : AppColors.orange);
@@ -70,7 +72,7 @@ class FastingImpactCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, color: AppColors.cyan, size: 20),
+              Icon(icon, color: monoAccent, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -91,7 +93,7 @@ class FastingImpactCard extends StatelessWidget {
                 child: _buildValueColumn(
                   fastingLabel ?? 'Fasting Days',
                   fastingValue ?? '--',
-                  AppColors.cyan,
+                  monoAccent,
                   textMuted,
                 ),
               ),

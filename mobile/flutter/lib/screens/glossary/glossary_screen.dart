@@ -274,6 +274,8 @@ class _GlossaryItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -282,7 +284,7 @@ class _GlossaryItem extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: AppColors.cyan,
+            color: accentColor,
           ),
         ),
         const SizedBox(height: 4),

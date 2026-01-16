@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/providers/window_mode_provider.dart';
+import 'core/theme/accent_color_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'data/providers/admin_provider.dart';
@@ -101,10 +102,15 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
             displayFeatures: mediaQuery.displayFeatures,
             platformBrightness: mediaQuery.platformBrightness,
           ),
-          child: WindowModeObserver(
-            child: FloatingChatOverlay(
-              key: const ValueKey('floating_chat_overlay'),
-              child: child ?? const SizedBox.shrink(),
+          // AccentColorScopeWrapper provides dynamic accent color to all widgets
+          // via AccentColorScope InheritedWidget. context.colors.accent now
+          // automatically uses the user's selected accent color.
+          child: AccentColorScopeWrapper(
+            child: WindowModeObserver(
+              child: FloatingChatOverlay(
+                key: const ValueKey('floating_chat_overlay'),
+                child: child ?? const SizedBox.shrink(),
+              ),
             ),
           ),
         );

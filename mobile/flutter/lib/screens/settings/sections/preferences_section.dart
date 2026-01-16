@@ -25,6 +25,12 @@ class PreferencesSection extends StatelessWidget {
               isThemeSelector: true,
             ),
             SettingItemData(
+              icon: Icons.color_lens_outlined,
+              title: 'Accent Color',
+              subtitle: 'Choose your app accent color',
+              isAccentColorSelector: true,
+            ),
+            SettingItemData(
               icon: Icons.travel_explore_outlined,
               title: 'Timezone',
               subtitle: 'Auto-detected, override if traveling',
@@ -35,6 +41,12 @@ class PreferencesSection extends StatelessWidget {
               title: 'Weight Unit',
               subtitle: 'Kilograms or Pounds',
               isWeightUnitSelector: true,
+            ),
+            SettingItemData(
+              icon: Icons.tune,
+              title: 'Weight Increments',
+              subtitle: 'Customize +/- step per equipment',
+              isWeightIncrementsSelector: true,
             ),
           ],
         ),

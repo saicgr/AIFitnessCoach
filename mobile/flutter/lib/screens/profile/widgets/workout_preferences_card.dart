@@ -19,6 +19,8 @@ class WorkoutPreferencesCard extends StatelessWidget {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    // Use monochrome accent
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
 
     return Container(
       width: double.infinity,
@@ -42,10 +44,10 @@ class WorkoutPreferencesCard extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.cyan.withOpacity(0.1),
+                        color: accentColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: AppColors.cyan.withOpacity(0.3),
+                          color: accentColor.withOpacity(0.3),
                         ),
                       ),
                       child: Row(
@@ -53,14 +55,14 @@ class WorkoutPreferencesCard extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.edit_rounded,
-                            color: AppColors.cyan,
+                            color: accentColor,
                             size: 16,
                           ),
                           const SizedBox(width: 6),
                           Text(
                             'Edit Program',
                             style: TextStyle(
-                              color: AppColors.cyan,
+                              color: accentColor,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),

@@ -33,7 +33,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   Widget build(BuildContext context) {
     final workoutsState = ref.watch(workoutsProvider);
     final selectedWeek = ref.watch(selectedWeekProvider);
-    final colors = context.colors;
+    // Use ref.colors(context) for dynamic accent color
+    final colors = ref.colors(context);
     final screenWidth = MediaQuery.of(context).size.width;
 
     // Auto-select agenda view on narrow screens

@@ -60,13 +60,13 @@ class QuizContinueButton extends StatelessWidget {
                   onPressed: canProceed ? onPressed : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: canProceed
-                        ? AppColors.cyan
+                        ? AppColors.accent
                         : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
                     foregroundColor: canProceed
                         ? Colors.white
                         : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
                     elevation: canProceed ? 4 : 0,
-                    shadowColor: canProceed ? AppColors.cyan.withValues(alpha: 0.4) : Colors.transparent,
+                    shadowColor: canProceed ? AppColors.accent.withValues(alpha: 0.4) : Colors.transparent,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),

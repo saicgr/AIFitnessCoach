@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/today_workout_provider.dart';
@@ -153,13 +154,16 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    // Use dark background for hero card - pureBlack in dark mode, elevated (light gray) in light mode
+    final cardBg = isDark ? AppColors.pureBlack : AppColorsLight.elevated;
 
     final workout = widget.workout;
     final dateLabel = _getScheduledDateLabel(workout.scheduledDate);
     final isToday = dateLabel == 'Today';
 
-    final accentColor = isToday ? AppColors.cyan : AppColors.purple;
+    // Get accent color from provider for dynamic accent
+    final accentColorEnum = ref.watch(accentColorProvider);
+    final accentColor = accentColorEnum.getColor(isDark);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -195,13 +199,11 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Date badge
+                  // Date badge - monochrome styling
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     decoration: BoxDecoration(
-                      color: isToday
-                          ? AppColors.cyan.withValues(alpha: 0.15)
-                          : AppColors.purple.withValues(alpha: 0.15),
+                      color: accentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -209,7 +211,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: isToday ? AppColors.cyan : AppColors.purple,
+                        color: accentColor,
                         letterSpacing: 1.5,
                       ),
                     ),
@@ -246,7 +248,10 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                       const SizedBox(width: 16),
                       _StatChip(
                         icon: Icons.fitness_center,
-                        label: '${workout.exerciseCount} exercises',
+                        // Show exercise count or fallback to generic label if 0
+                        label: workout.exerciseCount > 0
+                            ? '${workout.exerciseCount} exercises'
+                            : 'Ready to start',
                         isDark: isDark,
                       ),
                     ],
@@ -260,11 +265,33 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                     child: ElevatedButton(
                       onPressed: () {
                         HapticService.medium();
+                        debugPrint('🏋️ [HeroWorkoutCard] START pressed');
+                        debugPrint('🏋️ [HeroWorkoutCard] workout.id=${workout.id}');
+                        debugPrint('🏋️ [HeroWorkoutCard] workout.exercisesJson type=${workout.exercisesJson?.runtimeType}');
+                        debugPrint('🏋️ [HeroWorkoutCard] workout.exercises.length=${workout.exercises.length}');
+                        debugPrint('🏋️ [HeroWorkoutCard] workout.exerciseCount=${workout.exerciseCount}');
+
+                        // Check if workout has exercises before navigating
+                        if (workout.exercises.isEmpty) {
+                          debugPrint('⚠️ [HeroWorkoutCard] Workout has no exercises! exercisesJson=${workout.exercisesJson}');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Workout is not ready yet. Please try regenerating.'),
+                              backgroundColor: Colors.orange,
+                              behavior: SnackBarBehavior.floating,
+                              margin: const EdgeInsets.only(bottom: 120, left: 16, right: 16),
+                            ),
+                          );
+                          return;
+                        }
+                        debugPrint('✅ [HeroWorkoutCard] Navigating to active-workout with ${workout.exercises.length} exercises');
                         context.push('/active-workout', extra: workout);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isToday ? AppColors.cyan : AppColors.purple,
-                        foregroundColor: Colors.white,
+                        // Monochrome: white button in dark mode, black button in light mode
+                        backgroundColor: accentColor,
+                        // Contrast text: black on white button, white on black button
+                        foregroundColor: isDark ? Colors.black : Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -415,7 +442,11 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    // Use dark background for hero card - pureBlack in dark mode, elevated (light gray) in light mode
+    final cardBg = isDark ? AppColors.pureBlack : AppColorsLight.elevated;
+    // Get accent color from provider for dynamic accent
+    final accentColorEnum = ref.watch(accentColorProvider);
+    final accentColor = accentColorEnum.getColor(isDark);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -424,12 +455,12 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
           color: cardBg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: AppColors.purple.withValues(alpha: 0.3),
+            color: accentColor.withValues(alpha: 0.3),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.purple.withValues(alpha: 0.2),
+              color: accentColor.withValues(alpha: 0.2),
               blurRadius: 24,
               offset: const Offset(0, 8),
               spreadRadius: 2,
@@ -478,11 +509,11 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Date badge for next workout
+                  // Date badge for next workout - monochrome
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     decoration: BoxDecoration(
-                      color: AppColors.purple.withValues(alpha: 0.15),
+                      color: accentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -490,7 +521,7 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.purple,
+                        color: accentColor,
                         letterSpacing: 1.5,
                       ),
                     ),
@@ -534,7 +565,7 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Preview button (not start since it's not today)
+                  // Preview button (not start since it's not today) - monochrome
                   SizedBox(
                     width: double.infinity,
                     height: 56,
@@ -544,7 +575,7 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
                         GoRouter.of(context).push('/workout/${nextWorkout.id}');
                       },
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: AppColors.purple, width: 2),
+                        side: BorderSide(color: accentColor, width: 2),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -552,7 +583,7 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.visibility_outlined, size: 22, color: AppColors.purple),
+                          Icon(Icons.visibility_outlined, size: 22, color: accentColor),
                           const SizedBox(width: 8),
                           Text(
                             'PREVIEW',
@@ -560,7 +591,7 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1,
-                              color: AppColors.purple,
+                              color: accentColor,
                             ),
                           ),
                         ],
@@ -578,17 +609,17 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
 }
 
 /// Card shown when generating/loading workouts
-class GeneratingHeroCard extends StatefulWidget {
+class GeneratingHeroCard extends ConsumerStatefulWidget {
   final String? message;
   final String? subtitle;
 
   const GeneratingHeroCard({super.key, this.message, this.subtitle});
 
   @override
-  State<GeneratingHeroCard> createState() => _GeneratingHeroCardState();
+  ConsumerState<GeneratingHeroCard> createState() => _GeneratingHeroCardState();
 }
 
-class _GeneratingHeroCardState extends State<GeneratingHeroCard>
+class _GeneratingHeroCardState extends ConsumerState<GeneratingHeroCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _shimmerController;
 
@@ -611,9 +642,13 @@ class _GeneratingHeroCardState extends State<GeneratingHeroCard>
   Widget build(BuildContext context) {
     debugPrint('🔄 [GeneratingHeroCard] build() called with message: ${widget.message}');
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    // Use dark background for hero card - pureBlack in dark mode, elevated (light gray) in light mode
+    final cardBg = isDark ? AppColors.pureBlack : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    // Get accent color from provider for dynamic accent
+    final accentColorEnum = ref.watch(accentColorProvider);
+    final accentColor = accentColorEnum.getColor(isDark);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -627,7 +662,7 @@ class _GeneratingHeroCardState extends State<GeneratingHeroCard>
               color: cardBg,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: AppColors.cyan.withValues(alpha: 0.3),
+                color: accentColor.withValues(alpha: 0.3),
                 width: 1,
               ),
             ),
@@ -646,7 +681,7 @@ class _GeneratingHeroCardState extends State<GeneratingHeroCard>
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.cyan.withValues(alpha: 0.3),
+                        color: accentColor.withValues(alpha: 0.3),
                         blurRadius: 20,
                         spreadRadius: 5,
                       ),
@@ -659,14 +694,14 @@ class _GeneratingHeroCardState extends State<GeneratingHeroCard>
                   height: 56,
                   child: CircularProgressIndicator(
                     strokeWidth: 4,
-                    color: AppColors.cyan,
-                    backgroundColor: AppColors.cyan.withValues(alpha: 0.2),
+                    color: accentColor,
+                    backgroundColor: accentColor.withValues(alpha: 0.2),
                   ),
                 ),
                 // Center icon
                 Icon(
                   Icons.fitness_center_rounded,
-                  color: AppColors.cyan,
+                  color: accentColor,
                   size: 24,
                 ),
               ],
@@ -700,7 +735,7 @@ class _GeneratingHeroCardState extends State<GeneratingHeroCard>
                   width: 120,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(2),
-                    color: AppColors.cyan.withValues(alpha: 0.2),
+                    color: accentColor.withValues(alpha: 0.2),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(2),
@@ -715,7 +750,7 @@ class _GeneratingHeroCardState extends State<GeneratingHeroCard>
                               gradient: LinearGradient(
                                 colors: [
                                   Colors.transparent,
-                                  AppColors.cyan,
+                                  accentColor,
                                   Colors.transparent,
                                 ],
                               ),
@@ -739,7 +774,7 @@ class _GeneratingHeroCardState extends State<GeneratingHeroCard>
             child: Container(
               width: 4,
               decoration: BoxDecoration(
-                color: AppColors.cyan,
+                color: accentColor,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(20),
                   bottomLeft: Radius.circular(20),

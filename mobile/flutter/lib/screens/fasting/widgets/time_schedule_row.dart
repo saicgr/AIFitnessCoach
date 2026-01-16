@@ -40,7 +40,7 @@ class TimeScheduleRow extends StatelessWidget {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.fromSeed(
-              seedColor: isDark ? AppColors.purple : AppColorsLight.purple,
+              seedColor: isDark ? AppColors.accent : AppColorsLight.accent,
               brightness: isDark ? Brightness.dark : Brightness.light,
             ),
           ),
@@ -64,7 +64,8 @@ class TimeScheduleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    // Use monochrome accent
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -87,7 +88,7 @@ class TimeScheduleRow extends StatelessWidget {
               Icon(
                 Icons.play_circle_outline_rounded,
                 size: 18,
-                color: purple,
+                color: accentColor,
               ),
               const SizedBox(width: 6),
               Text(
@@ -151,7 +152,7 @@ class TimeScheduleRow extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: purple.withValues(alpha: 0.15),
+                  color: accentColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -159,7 +160,7 @@ class TimeScheduleRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: purple,
+                    color: accentColor,
                   ),
                 ),
               ),

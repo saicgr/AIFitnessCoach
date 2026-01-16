@@ -1,8 +1,11 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/constants/app_colors.dart';
+import '../core/theme/theme_colors.dart';
 import '../data/models/coach_persona.dart';
 import '../data/providers/admin_provider.dart';
 import '../data/providers/guest_mode_provider.dart';
@@ -14,6 +17,7 @@ import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/nutrition/quick_log_overlay.dart';
 import 'coach_avatar.dart';
 import 'floating_chat/floating_chat_overlay.dart';
+import 'quick_actions_sheet.dart';
 
 /// Provider to control floating nav bar visibility
 final floatingNavBarVisibleProvider = StateProvider<bool>((ref) => true);
@@ -32,8 +36,9 @@ class MainShell extends ConsumerWidget {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/social')) return 1;
-    if (location.startsWith('/profile')) return 2;
-    if (location.startsWith('/stats')) return 3;
+    // Index 2 is the + button (no selection state)
+    if (location.startsWith('/stats')) return 2;
+    if (location.startsWith('/profile')) return 3;
     return 0;
   }
 
@@ -53,11 +58,12 @@ class MainShell extends ConsumerWidget {
       case 1:
         context.go('/social');
         break;
+      // Index 2 is + button - handled separately
       case 2:
-        context.go('/profile');
+        context.go('/stats');
         break;
       case 3:
-        context.go('/stats');
+        context.go('/profile');
         break;
     }
   }
@@ -69,6 +75,8 @@ class MainShell extends ConsumerWidget {
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final isNavBarVisible = ref.watch(floatingNavBarVisibleProvider);
     final isGuestMode = ref.watch(isGuestModeProvider);
+    // Get dynamic accent color from provider
+    final accentColor = ref.colors(context).accent;
 
     // Initialize widget action service (MethodChannel listener)
     // This allows Android widgets to trigger UI actions without navigation
@@ -115,7 +123,7 @@ class MainShell extends ConsumerWidget {
               ],
             ),
           ),
-          // Floating nav bar at bottom with AI button
+          // Nav bar at bottom
           Positioned(
             left: 0,
             right: 0,
@@ -135,7 +143,85 @@ class MainShell extends ConsumerWidget {
               ),
             ),
           ),
+          // Floating draggable AI Coach button
+          _DraggableAICoachButton(
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              showChatBottomSheet(context, ref);
+            },
+          ),
         ],
+      ),
+    );
+  }
+}
+
+/// Draggable floating AI Coach button that can be positioned anywhere on screen
+class _DraggableAICoachButton extends StatefulWidget {
+  final VoidCallback onTap;
+
+  const _DraggableAICoachButton({required this.onTap});
+
+  @override
+  State<_DraggableAICoachButton> createState() => _DraggableAICoachButtonState();
+}
+
+class _DraggableAICoachButtonState extends State<_DraggableAICoachButton> {
+  // Position - initialized in initState
+  late double _xPosition;
+  late double _yPosition;
+
+  static const double buttonSize = 64.0; // Bigger avatar
+
+  @override
+  void initState() {
+    super.initState();
+    // Will be properly initialized in first build
+    _xPosition = -1;
+    _yPosition = -1;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final topPadding = MediaQuery.of(context).padding.top;
+
+    // Initialize position on first build
+    if (_xPosition < 0 || _yPosition < 0) {
+      _xPosition = size.width - buttonSize - 16;
+      _yPosition = size.height - buttonSize - bottomPadding - 140; // Above nav bar
+    }
+
+    // Boundaries for dragging - allow going lower (just above nav bar)
+    const minX = 8.0;
+    final maxX = size.width - buttonSize - 8;
+    final minY = topPadding + 60;
+    final maxY = size.height - buttonSize - bottomPadding - 90; // Closer to nav bar
+
+    return Positioned(
+      left: _xPosition.clamp(minX, maxX),
+      top: _yPosition.clamp(minY, maxY),
+      child: GestureDetector(
+        onPanUpdate: (details) {
+          setState(() {
+            _xPosition = (_xPosition + details.delta.dx).clamp(minX, maxX);
+            _yPosition = (_yPosition + details.delta.dy).clamp(minY, maxY);
+          });
+        },
+        onPanEnd: (details) {
+          // Snap to nearest edge (left or right)
+          setState(() {
+            final centerX = _xPosition + buttonSize / 2;
+            if (centerX < size.width / 2) {
+              _xPosition = minX;
+            } else {
+              _xPosition = maxX;
+            }
+          });
+        },
+        onTap: widget.onTap,
+        child: _AICoachButton(onTap: widget.onTap),
       ),
     );
   }
@@ -155,138 +241,221 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final navBarColor = isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated;
-    final shadowColor = isDark ? Colors.black.withValues(alpha: 0.5) : Colors.black.withValues(alpha: 0.1);
+    final navBarColor = isDark ? const Color(0xFF1C1C1E) : Colors.white;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     // Watch the labels expanded provider - secondary pages set this to false
     final labelsExpanded = ref.watch(navBarLabelsExpandedProvider);
 
-    // Dynamic sizing based on nav bar dimensions - compact design
-    const navBarHeight = 42.0;
-    const navBarRadius = navBarHeight / 2; // Fully rounded ends
-    const itemPadding = 3.0; // Reduced padding for compact look
-    final itemHeight = navBarHeight - (itemPadding * 2); // 36
+    // Get dynamic accent color from provider
+    final accentColor = ref.colors(context).accent;
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        bottom: bottomPadding + 16,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
+    // Nav bar dimensions
+    const navBarHeight = 64.0;
+    const itemHeight = 50.0;
+    const plusButtonSize = 52.0;
+    const plusButtonProtrusion = 12.0; // How much the + button sticks up
+
+    const fadeHeight = 50.0;
+
+    return SizedBox(
+      height: navBarHeight + bottomPadding + plusButtonProtrusion + fadeHeight,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          // Back button - only shown on secondary pages (when labels are collapsed), OUTSIDE the nav bar
-          if (!labelsExpanded) ...[
-            _FloatingBackButton(
-              onTap: () {
-                // Reset labels to expanded before navigating home
-                ref.read(navBarLabelsExpandedProvider.notifier).state = true;
-                onItemTapped(0); // Go to Home
-              },
-            ),
-            const SizedBox(width: 8),
-          ],
-
-          // Nav bar - uses intrinsic width, animates when items expand/collapse
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-            height: navBarHeight,
-            decoration: BoxDecoration(
-              color: navBarColor,
-              borderRadius: BorderRadius.circular(navBarRadius),
-              border: isDark ? null : Border.all(color: AppColorsLight.cardBorder, width: 1),
-              boxShadow: [
-                BoxShadow(
-                  color: shadowColor,
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                  spreadRadius: 1,
+          // Full gradient from transparent to solid - covers entire nav area
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            child: IgnorePointer(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      navBarColor.withValues(alpha: 0.0),
+                      navBarColor.withValues(alpha: 0.15),
+                      navBarColor.withValues(alpha: 0.4),
+                      navBarColor.withValues(alpha: 0.7),
+                      navBarColor.withValues(alpha: 0.9),
+                      navBarColor,
+                      navBarColor,
+                    ],
+                    stops: const [0.0, 0.1, 0.25, 0.4, 0.5, 0.6, 1.0],
+                  ),
                 ),
-              ],
+              ),
             ),
-            child: Padding(
-              padding: EdgeInsets.all(itemPadding),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Home - Cyan
-                  _NavItem(
-                    icon: Icons.home_outlined,
-                    selectedIcon: Icons.home_rounded,
-                    label: 'Home',
-                    isSelected: selectedIndex == 0,
-                    labelsExpanded: labelsExpanded,
-                    onTap: () {
-                      // Reset labels to expanded when navigating to Home
-                      if (!labelsExpanded) {
-                        ref.read(navBarLabelsExpandedProvider.notifier).state = true;
-                      }
-                      onItemTapped(0);
-                    },
-                    itemHeight: itemHeight,
-                    selectedColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
-                  ),
-                  const SizedBox(width: 4),
-                  // Social - Orange (globe icon)
-                  _NavItem(
-                    icon: Icons.public_outlined,
-                    selectedIcon: Icons.public,
-                    label: 'Social',
-                    isSelected: selectedIndex == 1,
-                    labelsExpanded: labelsExpanded,
-                    onTap: () => onItemTapped(1),
-                    itemHeight: itemHeight,
-                    selectedColor: const Color(0xFFFF9500),
-                  ),
-                  const SizedBox(width: 4),
-                  // Profile - Purple
-                  _NavItem(
-                    icon: Icons.person_outline,
-                    selectedIcon: Icons.person,
-                    label: 'Profile',
-                    isSelected: selectedIndex == 2,
-                    labelsExpanded: labelsExpanded,
-                    onTap: () => onItemTapped(2),
-                    itemHeight: itemHeight,
-                    selectedColor: isDark ? AppColors.purple : AppColorsLight.purple,
-                  ),
-                  const SizedBox(width: 4),
-                  // Stats - Teal (bar chart icon)
-                  _NavItem(
-                    icon: Icons.bar_chart_outlined,
-                    selectedIcon: Icons.bar_chart,
-                    label: 'Stats',
-                    isSelected: selectedIndex == 3,
-                    labelsExpanded: labelsExpanded,
-                    onTap: () => onItemTapped(3),
-                    itemHeight: itemHeight,
-                    selectedColor: AppColors.teal,
-                  ),
-                ],
+          ),
+          // Nav bar content - positioned at bottom, only this area receives touches
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: navBarHeight + bottomPadding,
+            child: SafeArea(
+              top: false,
+              child: SizedBox(
+                height: navBarHeight,
+                child: Stack(
+                  children: [
+                    // Main nav items
+                    Row(
+                      children: [
+                        // Left side nav items
+                        Expanded(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _AnchoredNavItem(
+                                icon: Icons.home_outlined,
+                                selectedIcon: Icons.home_rounded,
+                                label: 'Home',
+                                isSelected: selectedIndex == 0,
+                                onTap: () => onItemTapped(0),
+                                itemHeight: itemHeight,
+                                selectedColor: accentColor,
+                                isDark: isDark,
+                              ),
+                              _AnchoredNavItem(
+                                icon: Icons.public_outlined,
+                                selectedIcon: Icons.public,
+                                label: 'Social',
+                                isSelected: selectedIndex == 1,
+                                onTap: () => onItemTapped(1),
+                                itemHeight: itemHeight,
+                                selectedColor: accentColor,
+                                isDark: isDark,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Space for center + button
+                        const SizedBox(width: plusButtonSize + 16),
+
+                        // Right side nav items
+                        Expanded(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _AnchoredNavItem(
+                                icon: Icons.bar_chart_outlined,
+                                selectedIcon: Icons.bar_chart,
+                                label: 'Stats',
+                                isSelected: selectedIndex == 2,
+                                onTap: () => onItemTapped(2),
+                                itemHeight: itemHeight,
+                                selectedColor: accentColor,
+                                isDark: isDark,
+                              ),
+                              _AnchoredNavItem(
+                                icon: Icons.person_outline,
+                                selectedIcon: Icons.person,
+                                label: 'Profile',
+                                isSelected: selectedIndex == 3,
+                                onTap: () => onItemTapped(3),
+                                itemHeight: itemHeight,
+                                selectedColor: accentColor,
+                                isDark: isDark,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Admin Support Button - only shown for admins
+                    Positioned(
+                      right: 8,
+                      top: 0,
+                      bottom: 0,
+                      child: Center(child: _AdminSupportButton()),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
 
-          // Spacing between nav bar and buttons
-          const SizedBox(width: 8),
-
-          // Admin Support Button - only shown for admins
-          _AdminSupportButton(),
-
-          // AI Coach Button - fixed position
-          _AICoachButton(
-            onTap: () {
-              HapticFeedback.mediumImpact();
-              // Show the chat bottom sheet directly (we have Navigator access here)
-              showChatBottomSheet(context, ref);
-            },
+          // Center + button aligned with nav bar, slight protrusion above
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: bottomPadding + (navBarHeight - plusButtonSize) / 2 + plusButtonProtrusion,
+            child: Center(
+              child: _ProtrudingPlusButton(
+                size: plusButtonSize,
+                onTap: () => showQuickActionsSheet(context, ref),
+                isDark: isDark,
+                accentColor: accentColor,
+              ),
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Helper to get contrast color for a given background
+Color _getContrastColor(Color background) {
+  // Calculate luminance - if > 0.5, use black text, otherwise white
+  final luminance = background.computeLuminance();
+  return luminance > 0.5 ? Colors.black : Colors.white;
+}
+
+/// Plus button with slight protrusion above the nav bar
+class _ProtrudingPlusButton extends StatelessWidget {
+  final double size;
+  final VoidCallback onTap;
+  final bool isDark;
+  final Color accentColor;
+
+  const _ProtrudingPlusButton({
+    required this.size,
+    required this.onTap,
+    required this.isDark,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Use dynamic accent color
+    final buttonColor = accentColor;
+    // Contrast icon: for colored accents use white, for monochrome use opposite
+    final iconColor = _getContrastColor(buttonColor);
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        onTap();
+      },
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: buttonColor,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: buttonColor.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Icon(
+            Icons.add_rounded,
+            color: iconColor,
+            size: 28,
+          ),
+        ),
       ),
     );
   }
@@ -380,9 +549,9 @@ class _AICoachButton extends ConsumerWidget {
 
     return CoachAvatar(
       coach: coach,
-      size: 42,
+      size: 56,
       showBorder: true,
-      borderWidth: 2,
+      borderWidth: 3,
       showShadow: true,
       enableTapToView: false, // Tap opens chat
       onTap: onTap,
@@ -522,6 +691,270 @@ class _FloatingBackButton extends StatelessWidget {
             color: Colors.white,
             size: 18,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Plus button for quick actions in the center of nav bar
+class _PlusButton extends StatelessWidget {
+  final double itemHeight;
+  final VoidCallback onTap;
+
+  const _PlusButton({
+    required this.itemHeight,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final purpleColor = isDark ? AppColors.purple : AppColorsLight.purple;
+
+    return Semantics(
+      label: 'Quick Actions',
+      button: true,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          onTap();
+        },
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          height: itemHeight,
+          width: itemHeight,
+          decoration: BoxDecoration(
+            color: purpleColor,
+            borderRadius: BorderRadius.circular(itemHeight / 2),
+            boxShadow: [
+              BoxShadow(
+                color: purpleColor.withOpacity(0.4),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: const Center(
+            child: Icon(
+              Icons.add_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Anchored nav item for standard bottom navigation bar (like Fitbod)
+class _AnchoredNavItem extends StatelessWidget {
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final double itemHeight;
+  final Color selectedColor;
+  final bool isDark;
+
+  const _AnchoredNavItem({
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    required this.itemHeight,
+    required this.selectedColor,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final activeColor = isSelected ? selectedColor : textMuted;
+
+    return Semantics(
+      label: label,
+      selected: isSelected,
+      button: true,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          height: itemHeight,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isSelected ? selectedIcon : icon,
+                color: activeColor,
+                size: 24,
+              ),
+              // Only show label when selected
+              AnimatedSize(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                child: isSelected
+                    ? Padding(
+                        padding: const EdgeInsets.only(left: 6),
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            color: selectedColor,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Anchored plus button for standard bottom navigation bar
+class _AnchoredPlusButton extends StatelessWidget {
+  final double itemHeight;
+  final VoidCallback onTap;
+
+  const _AnchoredPlusButton({
+    required this.itemHeight,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Semantics(
+      label: 'Quick Actions',
+      button: true,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          onTap();
+        },
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          height: 44,
+          width: 44,
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white : Colors.black,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Icon(
+              Icons.add_rounded,
+              color: isDark ? Colors.black : Colors.white,
+              size: 28,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Elevated FAB that sits above the nav bar (like Fitbod/reference designs)
+class _ElevatedFAB extends StatelessWidget {
+  final double size;
+  final VoidCallback onTap;
+  final bool isDark;
+
+  const _ElevatedFAB({
+    required this.size,
+    required this.onTap,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Use app's purple color for the FAB
+    final fabColor = isDark ? AppColors.purple : AppColorsLight.purple;
+
+    return Semantics(
+      label: 'Quick Actions',
+      button: true,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          onTap();
+        },
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: fabColor,
+            shape: BoxShape.circle,
+            // No shadow - clean look
+          ),
+          child: const Center(
+            child: Icon(
+              Icons.add_rounded,
+              color: Colors.white,
+              size: 32,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Anchored back button for secondary pages
+class _AnchoredBackButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final double itemHeight;
+  final bool isDark;
+
+  const _AnchoredBackButton({
+    required this.onTap,
+    required this.itemHeight,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cyanColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 56,
+        height: itemHeight,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: cyanColor,
+              size: 24,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Back',
+              style: TextStyle(
+                color: cyanColor,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );

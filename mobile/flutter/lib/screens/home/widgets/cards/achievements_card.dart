@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/home_layout.dart';
 import '../../../../data/models/milestone.dart';
 import '../../../../data/providers/milestones_provider.dart';
@@ -25,6 +26,7 @@ class AchievementsCard extends ConsumerWidget {
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accentColor = ref.colors(context).accent;
 
     final milestonesState = ref.watch(milestonesProvider);
     final achieved = milestonesState.achieved;
@@ -39,6 +41,7 @@ class AchievementsCard extends ConsumerWidget {
     if (size == TileSize.compact) {
       return _buildCompactLayout(
         context,
+        ref,
         elevatedColor: elevatedColor,
         textColor: textColor,
         textMuted: textMuted,
@@ -63,33 +66,16 @@ class AchievementsCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border(
-            left: BorderSide(color: const Color(0xFFFFD700), width: 4), // Gold
-            top: BorderSide(color: cardBorder),
-            right: BorderSide(color: cardBorder),
-            bottom: BorderSide(color: cardBorder),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.orange.withOpacity(0.15),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-              spreadRadius: 1,
-            ),
-            BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: Border.all(color: cardBorder),
         ),
         child: isLoading
             ? _buildLoadingState(textMuted)
             : achieved.isEmpty && nextMilestone == null
-                ? _buildEmptyState(textMuted)
+                ? _buildEmptyState(textMuted, accentColor)
                 : _buildContentState(
                     textColor: textColor,
                     textMuted: textMuted,
+                    accentColor: accentColor,
                     recentAchievement: recentAchievement,
                     nextMilestone: nextMilestone,
                     totalPoints: totalPoints,
@@ -99,7 +85,8 @@ class AchievementsCard extends ConsumerWidget {
   }
 
   Widget _buildCompactLayout(
-    BuildContext context, {
+    BuildContext context,
+    WidgetRef ref, {
     required Color elevatedColor,
     required Color textColor,
     required Color textMuted,
@@ -108,6 +95,7 @@ class AchievementsCard extends ConsumerWidget {
     required int totalPoints,
     required bool isLoading,
   }) {
+    final accentColor = ref.colors(context).accent;
     return InkWell(
       onTap: () {
         HapticService.light();
@@ -119,32 +107,14 @@ class AchievementsCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border(
-            left: BorderSide(color: const Color(0xFFFFD700), width: 4), // Gold
-            top: BorderSide(color: cardBorder),
-            right: BorderSide(color: cardBorder),
-            bottom: BorderSide(color: cardBorder),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.orange.withOpacity(0.15),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-              spreadRadius: 1,
-            ),
-            BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: Border.all(color: cardBorder),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.emoji_events,
-              color: const Color(0xFFFFD700), // Gold
+              color: accentColor,
               size: 16,
             ),
             const SizedBox(width: 6),
@@ -185,13 +155,13 @@ class AchievementsCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(Color textMuted) {
+  Widget _buildEmptyState(Color textMuted, Color accentColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(Icons.emoji_events, color: const Color(0xFFFFD700), size: 20),
+            Icon(Icons.emoji_events, color: accentColor, size: 20),
             const SizedBox(width: 8),
             Text(
               'Achievements',
@@ -215,7 +185,7 @@ class AchievementsCard extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFD700).withValues(alpha: 0.15),
+            color: accentColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
@@ -223,7 +193,7 @@ class AchievementsCard extends ConsumerWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFFFFD700),
+              color: accentColor,
             ),
           ),
         ),
@@ -234,13 +204,15 @@ class AchievementsCard extends ConsumerWidget {
   Widget _buildContentState({
     required Color textColor,
     required Color textMuted,
+    required Color accentColor,
     required MilestoneProgress? recentAchievement,
     required MilestoneProgress? nextMilestone,
     required int totalPoints,
   }) {
-    // Get tier color for badge
+    // Use accent color for milestone tier colors
     Color getTierColor(MilestoneTier tier) {
-      return Color(tier.colorValue);
+      // Return accent color with varying opacity based on tier
+      return accentColor;
     }
 
     return Column(
@@ -249,7 +221,7 @@ class AchievementsCard extends ConsumerWidget {
         // Header
         Row(
           children: [
-            Icon(Icons.emoji_events, color: const Color(0xFFFFD700), size: 20),
+            Icon(Icons.emoji_events, color: accentColor, size: 20),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
@@ -274,7 +246,7 @@ class AchievementsCard extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.purple,
+                          color: accentColor,
                           height: 1.0,
                         ),
                       );
@@ -346,7 +318,7 @@ class AchievementsCard extends ConsumerWidget {
                 ),
                 Icon(
                   Icons.check_circle,
-                  color: AppColors.success,
+                  color: accentColor,
                   size: 20,
                 ),
               ],

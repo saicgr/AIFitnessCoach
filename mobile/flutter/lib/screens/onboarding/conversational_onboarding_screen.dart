@@ -968,7 +968,8 @@ class _ConversationalOnboardingScreenState
         state.collectedData['name'] == null &&
         !_isLoading;
 
-    final colors = context.colors;
+    // Use ref.colors(context) for dynamic accent color
+    final colors = ref.colors(context);
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -1046,11 +1047,11 @@ class _ConversationalOnboardingScreenState
                                     vertical: 12,
                                   ),
                                   decoration: BoxDecoration(
-                                    gradient: AppColors.cyanGradient,
+                                    gradient: AppColors.accentGradient,
                                     borderRadius: BorderRadius.circular(20),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.cyan.withOpacity(0.5),
+                                        color: AppColors.accent.withOpacity(0.5),
                                         blurRadius: 20,
                                         spreadRadius: 0,
                                       ),

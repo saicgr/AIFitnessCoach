@@ -71,7 +71,7 @@ class QuickLogOverlay extends ConsumerWidget {
                         icon: const Icon(Icons.open_in_new, size: 18),
                         label: const Text('Go to App'),
                         style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFF6366F1),
+                          foregroundColor: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                         ),
                       ),
                       IconButton(

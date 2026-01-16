@@ -285,11 +285,11 @@ class _PreferencesStepState extends State<PreferencesStep> {
         ),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.cyan.withOpacity(0.15)
+              ? AppColors.accent.withOpacity(0.15)
               : AppColors.glassSurface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.cyan : AppColors.cardBorder,
+            color: isSelected ? AppColors.accent : AppColors.cardBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -301,7 +301,7 @@ class _PreferencesStepState extends State<PreferencesStep> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? AppColors.cyan : AppColors.textPrimary,
+                color: isSelected ? AppColors.accent : AppColors.textPrimary,
               ),
             ),
             if (showQuantity) ...[
@@ -320,7 +320,7 @@ class _PreferencesStepState extends State<PreferencesStep> {
       decoration: BoxDecoration(
         color: AppColors.glassSurface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+        border: Border.all(color: AppColors.accent.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -332,7 +332,7 @@ class _PreferencesStepState extends State<PreferencesStep> {
               child: Icon(
                 Icons.remove,
                 size: 14,
-                color: currentValue <= 1 ? AppColors.textMuted : AppColors.cyan,
+                color: currentValue <= 1 ? AppColors.textMuted : AppColors.accent,
               ),
             ),
           ),
@@ -343,7 +343,7 @@ class _PreferencesStepState extends State<PreferencesStep> {
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: AppColors.cyan,
+                color: AppColors.accent,
               ),
             ),
           ),
@@ -354,7 +354,7 @@ class _PreferencesStepState extends State<PreferencesStep> {
               child: Icon(
                 Icons.add,
                 size: 14,
-                color: currentValue >= 2 ? AppColors.textMuted : AppColors.cyan,
+                color: currentValue >= 2 ? AppColors.textMuted : AppColors.accent,
               ),
             ),
           ),

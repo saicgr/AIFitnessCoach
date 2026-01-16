@@ -494,6 +494,103 @@ class WeightSuggestionService {
     );
   }
 
+  /// Adjust weight for next set based on logged RIR vs target RIR
+  ///
+  /// This provides instant, rules-based weight adjustment when the user
+  /// logs their actual RIR after completing a set. The adjustment helps
+  /// ensure the next set is appropriately challenging.
+  ///
+  /// Logic:
+  /// - RIR higher than target = weight was too light → increase
+  /// - RIR lower than target = weight was too heavy → decrease
+  /// - RIR matches target = perfect weight → no change
+  ///
+  /// Parameters:
+  /// - [currentWeight]: Weight used in the just-completed set (in kg)
+  /// - [loggedRir]: The user's logged RIR (0-5)
+  /// - [targetRir]: The target RIR for the set (0-5)
+  /// - [incrementKg]: Equipment-specific weight increment (default 2.5kg)
+  ///
+  /// Returns: Adjusted weight rounded to the nearest increment
+  static double adjustWeightForRir({
+    required double currentWeight,
+    required int loggedRir,
+    required int targetRir,
+    double incrementKg = 2.5,
+  }) {
+    // Skip adjustment for bodyweight exercises
+    if (currentWeight == 0) return 0;
+
+    final rirDiff = loggedRir - targetRir;
+
+    // Determine percentage adjustment based on RIR difference
+    double adjustment;
+    if (rirDiff <= -2) {
+      // Much harder than expected (e.g., target RIR 2, actual RIR 0)
+      adjustment = -0.15; // 15% drop
+    } else if (rirDiff == -1) {
+      // Slightly harder than expected
+      adjustment = -0.075; // 7.5% drop
+    } else if (rirDiff == 0) {
+      // Perfect! Weight was right on target
+      adjustment = 0;
+    } else if (rirDiff == 1) {
+      // Slightly easier than expected
+      adjustment = 0.05; // 5% increase
+    } else {
+      // Much easier than expected (rirDiff >= 2)
+      adjustment = 0.10; // 10% increase
+    }
+
+    // Calculate new weight
+    final newWeight = currentWeight * (1 + adjustment);
+
+    // Round to nearest equipment increment
+    final roundedWeight = (newWeight / incrementKg).round() * incrementKg;
+
+    // Ensure we don't go below the minimum increment
+    return roundedWeight.clamp(incrementKg, 999.0);
+  }
+
+  /// Get adjustment info for UI display
+  ///
+  /// Returns a user-friendly message explaining the weight adjustment
+  static ({double newWeight, String message, bool adjusted}) getWeightAdjustmentInfo({
+    required double currentWeight,
+    required int loggedRir,
+    required int targetRir,
+    double incrementKg = 2.5,
+  }) {
+    final newWeight = adjustWeightForRir(
+      currentWeight: currentWeight,
+      loggedRir: loggedRir,
+      targetRir: targetRir,
+      incrementKg: incrementKg,
+    );
+
+    final diff = newWeight - currentWeight;
+
+    if (diff.abs() < 0.01) {
+      return (
+        newWeight: currentWeight,
+        message: 'Perfect intensity! Keep the weight.',
+        adjusted: false,
+      );
+    } else if (diff > 0) {
+      return (
+        newWeight: newWeight,
+        message: 'Weight increased: ${currentWeight.toStringAsFixed(1)} → ${newWeight.toStringAsFixed(1)} kg',
+        adjusted: true,
+      );
+    } else {
+      return (
+        newWeight: newWeight,
+        message: 'Weight adjusted: ${currentWeight.toStringAsFixed(1)} → ${newWeight.toStringAsFixed(1)} kg',
+        adjusted: true,
+      );
+    }
+  }
+
   /// Get a user-friendly description for an RPE value
   static String getRpeDescription(int rpe) {
     return RpeLevel.fromValue(rpe)?.description ?? 'Unknown intensity';

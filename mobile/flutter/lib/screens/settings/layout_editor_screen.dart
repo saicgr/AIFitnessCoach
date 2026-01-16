@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/models/home_layout.dart';
-import '../../data/providers/home_layout_provider.dart';
+import '../../data/providers/local_layout_provider.dart';
 import '../../data/services/haptic_service.dart';
-import '../../data/services/layout_share_service.dart';
-import 'widgets/tile_picker_sheet.dart';
-import 'widgets/template_picker_sheet.dart';
 
-/// Screen for editing home screen layout with drag-and-drop
+/// Screen for editing home screen layout with tabs for Toggles and Discover
 class LayoutEditorScreen extends ConsumerStatefulWidget {
   const LayoutEditorScreen({super.key});
 
@@ -16,20 +15,45 @@ class LayoutEditorScreen extends ConsumerStatefulWidget {
   ConsumerState<LayoutEditorScreen> createState() => _LayoutEditorScreenState();
 }
 
-class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen> {
-  bool _isReordering = false;
+class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  bool _hasUserDefault = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _checkUserDefault();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _checkUserDefault() async {
+    final hasDefault =
+        await ref.read(localLayoutProvider.notifier).hasUserDefault();
+    if (mounted) {
+      setState(() => _hasUserDefault = hasDefault);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         isDark ? AppColors.background : AppColorsLight.background;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textColor =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    final layoutState = ref.watch(activeLayoutProvider);
-    final allLayoutsState = ref.watch(allLayoutsProvider);
+    final layoutState = ref.watch(localLayoutProvider);
+    final accentColor = ref.colors(context).accent;
+    final isAtDefault = ref.watch(localLayoutProvider.notifier).matchesAppDefault();
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -48,66 +72,38 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
-          // Templates button
-          IconButton(
-            icon: Icon(Icons.style_outlined, color: AppColors.purple),
-            onPressed: () => _showTemplatesSheet(context),
-            tooltip: 'Templates',
-          ),
+          // Reset button - only show when layout is modified from default
+          if (!isAtDefault)
+            IconButton(
+              icon: Icon(Icons.refresh, color: accentColor),
+              tooltip: 'Reset to Original',
+              onPressed: _showResetDialog,
+            ),
           // More options menu
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, color: textMuted),
-            onSelected: (value) => _handleMenuAction(value),
+            onSelected: _handleMenuAction,
             itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'new_layout',
+              PopupMenuItem(
+                value: 'set_default',
                 child: Row(
                   children: [
-                    Icon(Icons.add, size: 20),
-                    SizedBox(width: 12),
-                    Text('New Layout'),
+                    Icon(Icons.bookmark_outline, size: 20, color: textColor),
+                    const SizedBox(width: 12),
+                    Text('Set as My Default',
+                        style: TextStyle(color: textColor)),
                   ],
                 ),
               ),
-              const PopupMenuItem(
-                value: 'rename',
-                child: Row(
-                  children: [
-                    Icon(Icons.edit_outlined, size: 20),
-                    SizedBox(width: 12),
-                    Text('Rename Layout'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'share',
-                child: Row(
-                  children: [
-                    Icon(Icons.share_outlined, size: 20),
-                    SizedBox(width: 12),
-                    Text('Share Layout'),
-                  ],
-                ),
-              ),
-              const PopupMenuDivider(),
-              const PopupMenuItem(
-                value: 'reset',
-                child: Row(
-                  children: [
-                    Icon(Icons.restore, size: 20),
-                    SizedBox(width: 12),
-                    Text('Reset to Default'),
-                  ],
-                ),
-              ),
-              if ((allLayoutsState.value?.length ?? 0) > 1)
-                const PopupMenuItem(
-                  value: 'delete',
+              if (_hasUserDefault)
+                PopupMenuItem(
+                  value: 'apply_default',
                   child: Row(
                     children: [
-                      Icon(Icons.delete_outline, size: 20, color: Colors.red),
-                      SizedBox(width: 12),
-                      Text('Delete Layout', style: TextStyle(color: Colors.red)),
+                      Icon(Icons.bookmark, size: 20, color: AppColors.purple),
+                      const SizedBox(width: 12),
+                      Text('Apply My Default',
+                          style: TextStyle(color: textColor)),
                     ],
                   ),
                 ),
@@ -115,666 +111,507 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen> {
           ),
         ],
       ),
-      body: layoutState.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, color: AppColors.error, size: 48),
-              const SizedBox(height: 16),
-              Text(
-                'Failed to load layout',
-                style: TextStyle(color: textColor, fontSize: 16),
+      body: Column(
+        children: [
+          // Styled TabBar
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: elevatedColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicator: BoxDecoration(
+                color: accentColor,
+                borderRadius: BorderRadius.circular(10),
               ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => ref.read(activeLayoutProvider.notifier).refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
-        data: (layout) {
-          if (layout == null) {
-            return Center(
-              child: Text(
-                'No layout found',
-                style: TextStyle(color: textMuted),
-              ),
-            );
-          }
-
-          return Column(
-            children: [
-              // Layout selector dropdown
-              _buildLayoutSelector(
-                context,
-                layout,
-                allLayoutsState.value ?? [],
-                isDark,
-                elevatedColor,
-                textColor,
-                textMuted,
-              ),
-
-              // Main content - tile list
-              Expanded(
-                child: _buildTileList(
-                  context,
-                  layout,
-                  isDark,
-                  elevatedColor,
-                  textColor,
-                  textMuted,
-                ),
-              ),
-
-              // Bottom action bar
-              _buildBottomBar(
-                context,
-                layout,
-                isDark,
-                elevatedColor,
-                textColor,
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildLayoutSelector(
-    BuildContext context,
-    HomeLayout currentLayout,
-    List<HomeLayout> allLayouts,
-    bool isDark,
-    Color elevatedColor,
-    Color textColor,
-    Color textMuted,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: elevatedColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
-        ),
-        child: PopupMenuButton<String>(
-          onSelected: (layoutId) {
-            HapticService.light();
-            ref.read(activeLayoutProvider.notifier).activateLayout(layoutId);
-          },
-          offset: const Offset(0, 48),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Icon(Icons.dashboard_customize, color: AppColors.cyan, size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Current Layout',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: textMuted,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      Text(
-                        currentLayout.name,
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: textColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.keyboard_arrow_down, color: textMuted),
+              indicatorSize: TabBarIndicatorSize.tab,
+              labelColor: isDark ? Colors.black : Colors.white,
+              unselectedLabelColor: textMuted,
+              labelStyle:
+                  const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              unselectedLabelStyle: const TextStyle(fontSize: 14),
+              dividerColor: Colors.transparent,
+              padding: const EdgeInsets.all(4),
+              tabs: const [
+                Tab(text: 'Toggles'),
+                Tab(text: 'Discover'),
               ],
             ),
           ),
-          itemBuilder: (context) {
-            return allLayouts.map((layout) {
-              return PopupMenuItem<String>(
-                value: layout.id,
-                child: Row(
+          // Content
+          Expanded(
+            child: layoutState.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      layout.isActive
-                          ? Icons.check_circle
-                          : Icons.radio_button_unchecked,
-                      color: layout.isActive ? AppColors.cyan : textMuted,
-                      size: 20,
+                    Icon(Icons.error_outline, color: AppColors.error, size: 48),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Failed to load layout',
+                      style: TextStyle(color: textColor, fontSize: 16),
                     ),
-                    const SizedBox(width: 12),
-                    Text(layout.name),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () =>
+                          ref.read(localLayoutProvider.notifier).refresh(),
+                      child: const Text('Retry'),
+                    ),
                   ],
                 ),
-              );
-            }).toList();
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTileList(
-    BuildContext context,
-    HomeLayout layout,
-    bool isDark,
-    Color elevatedColor,
-    Color textColor,
-    Color textMuted,
-  ) {
-    final visibleTiles = layout.visibleTiles;
-    final hiddenTiles = layout.hiddenTiles;
-
-    return ReorderableListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      proxyDecorator: (child, index, animation) {
-        return AnimatedBuilder(
-          animation: animation,
-          builder: (context, child) {
-            final elevation = Tween<double>(begin: 0, end: 8).evaluate(animation);
-            return Material(
-              elevation: elevation,
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.transparent,
-              child: child,
-            );
-          },
-          child: child,
-        );
-      },
-      onReorderStart: (index) {
-        HapticService.medium();
-        setState(() => _isReordering = true);
-      },
-      onReorderEnd: (index) {
-        setState(() => _isReordering = false);
-      },
-      onReorder: (oldIndex, newIndex) {
-        HapticService.light();
-        if (oldIndex < visibleTiles.length && newIndex <= visibleTiles.length) {
-          ref.read(activeLayoutProvider.notifier).reorderTiles(
-                oldIndex,
-                newIndex > oldIndex ? newIndex - 1 : newIndex,
-              );
-        }
-      },
-      itemCount: visibleTiles.length + (hiddenTiles.isNotEmpty ? 1 + hiddenTiles.length : 0),
-      itemBuilder: (context, index) {
-        // Visible tiles
-        if (index < visibleTiles.length) {
-          final tile = visibleTiles[index];
-          return _buildTileItem(
-            key: ValueKey(tile.id),
-            tile: tile,
-            isDark: isDark,
-            elevatedColor: elevatedColor,
-            textColor: textColor,
-            textMuted: textMuted,
-            isVisible: true,
-          );
-        }
-
-        // Hidden section header
-        if (index == visibleTiles.length && hiddenTiles.isNotEmpty) {
-          return Container(
-            key: const ValueKey('hidden_header'),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Row(
-              children: [
-                const Expanded(child: Divider()),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    'HIDDEN',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: textMuted,
-                      letterSpacing: 1.2,
+              ),
+              data: (layout) {
+                if (layout == null) {
+                  return Center(
+                    child: Text(
+                      'No layout found',
+                      style: TextStyle(color: textMuted),
                     ),
-                  ),
-                ),
-                const Expanded(child: Divider()),
-              ],
-            ),
-          );
-        }
+                  );
+                }
 
-        // Hidden tiles
-        final hiddenIndex = index - visibleTiles.length - 1;
-        if (hiddenIndex >= 0 && hiddenIndex < hiddenTiles.length) {
-          final tile = hiddenTiles[hiddenIndex];
-          return _buildTileItem(
-            key: ValueKey(tile.id),
-            tile: tile,
-            isDark: isDark,
-            elevatedColor: elevatedColor,
-            textColor: textColor,
-            textMuted: textMuted,
-            isVisible: false,
-          );
-        }
-
-        return const SizedBox.shrink(key: ValueKey('empty'));
-      },
-    );
-  }
-
-  Widget _buildTileItem({
-    required Key key,
-    required HomeTile tile,
-    required bool isDark,
-    required Color elevatedColor,
-    required Color textColor,
-    required Color textMuted,
-    required bool isVisible,
-  }) {
-    final iconColor = _getIconColorForType(tile.type);
-
-    return Padding(
-      key: key,
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Container(
-        decoration: BoxDecoration(
-          color: elevatedColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isVisible ? iconColor.withOpacity(0.3) : Colors.transparent,
-          ),
-        ),
-        child: ListTile(
-          contentPadding: const EdgeInsets.only(left: 8, right: 12),
-          leading: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (isVisible)
-                ReorderableDragStartListener(
-                  index: tile.order,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Icon(
-                      Icons.drag_handle,
-                      color: textMuted,
-                      size: 20,
+                return TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _TogglesTab(
+                      layout: layout,
+                      isDark: isDark,
+                      elevatedColor: elevatedColor,
+                      textColor: textColor,
+                      textMuted: textMuted,
                     ),
-                  ),
-                )
-              else
-                const SizedBox(width: 36),
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: iconColor.withOpacity(isVisible ? 0.15 : 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  _getIconForType(tile.type),
-                  color: isVisible ? iconColor : iconColor.withOpacity(0.5),
-                  size: 18,
-                ),
-              ),
-            ],
-          ),
-          title: Text(
-            tile.type.displayName,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isVisible ? textColor : textMuted,
+                    _DiscoverTab(
+                      isDark: isDark,
+                      elevatedColor: elevatedColor,
+                      textColor: textColor,
+                      textMuted: textMuted,
+                      hasUserDefault: _hasUserDefault,
+                      onUserDefaultApplied: _checkUserDefault,
+                    ),
+                  ],
+                );
+              },
             ),
           ),
-          subtitle: Text(
-            tile.type.description,
-            style: TextStyle(
-              fontSize: 11,
-              color: textMuted,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Size selector (only for tiles with multiple size options)
-              if (isVisible && tile.type.supportedSizes.length > 1)
-                _buildSizeDropdown(tile, textMuted),
-              const SizedBox(width: 8),
-              // Visibility toggle
-              IconButton(
-                icon: Icon(
-                  isVisible ? Icons.visibility : Icons.visibility_off,
-                  color: isVisible ? AppColors.cyan : textMuted,
-                  size: 20,
-                ),
-                onPressed: () {
-                  HapticService.light();
-                  ref
-                      .read(activeLayoutProvider.notifier)
-                      .toggleTileVisibility(tile.id);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSizeDropdown(HomeTile tile, Color textMuted) {
-    return PopupMenuButton<TileSize>(
-      onSelected: (size) {
-        HapticService.light();
-        ref.read(activeLayoutProvider.notifier).changeTileSize(tile.id, size);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: AppColors.cyan.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              tile.size.displayName,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.cyan,
-              ),
-            ),
-            const SizedBox(width: 2),
-            Icon(Icons.arrow_drop_down, size: 16, color: AppColors.cyan),
-          ],
-        ),
-      ),
-      itemBuilder: (context) {
-        return tile.type.supportedSizes.map((size) {
-          return PopupMenuItem<TileSize>(
-            value: size,
-            child: Row(
-              children: [
-                Icon(
-                  tile.size == size
-                      ? Icons.check_circle
-                      : Icons.radio_button_unchecked,
-                  size: 18,
-                  color: tile.size == size ? AppColors.cyan : textMuted,
-                ),
-                const SizedBox(width: 8),
-                Text(size.displayName),
-              ],
-            ),
-          );
-        }).toList();
-      },
-    );
-  }
-
-  Widget _buildBottomBar(
-    BuildContext context,
-    HomeLayout layout,
-    bool isDark,
-    Color elevatedColor,
-    Color textColor,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: elevatedColor,
-        border: Border(
-          top: BorderSide(
-            color: isDark
-                ? Colors.white.withOpacity(0.1)
-                : Colors.black.withOpacity(0.1),
-          ),
-        ),
-      ),
-      child: SafeArea(
-        child: Row(
-          children: [
-            // Add Tile button
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () => _showTilePickerSheet(context, layout),
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add Tile'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Share button
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.purple.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: IconButton(
-                onPressed: () => _shareLayout(layout),
-                icon: Icon(Icons.share_outlined, color: AppColors.purple),
-                tooltip: 'Share Layout',
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showTilePickerSheet(BuildContext context, HomeLayout layout) {
-    HapticService.light();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => TilePickerSheet(
-        currentTiles: layout.tiles,
-        onTileSelected: (type, size) {
-          ref.read(activeLayoutProvider.notifier).addTile(type, size: size);
-          Navigator.pop(context);
-        },
-      ),
-    );
-  }
-
-  void _showTemplatesSheet(BuildContext context) {
-    HapticService.light();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => TemplatePickerSheet(
-        onTemplateSelected: (template) async {
-          // Create new layout from template
-          final notifier = ref.read(allLayoutsProvider.notifier);
-          final newLayout = await notifier.createFromTemplate(
-            templateId: template.id,
-          );
-          // Activate it
-          ref.read(activeLayoutProvider.notifier).activateLayout(newLayout.id);
-          if (mounted) Navigator.pop(context);
-        },
+        ],
       ),
     );
   }
 
   void _handleMenuAction(String action) {
     switch (action) {
-      case 'new_layout':
-        _createNewLayout();
+      case 'set_default':
+        _saveAsDefault();
         break;
-      case 'rename':
-        _renameLayout();
-        break;
-      case 'share':
-        final layout = ref.read(activeLayoutProvider).value;
-        if (layout != null) _shareLayout(layout);
-        break;
-      case 'reset':
-        _resetToDefault();
-        break;
-      case 'delete':
-        _deleteLayout();
+      case 'apply_default':
+        _applyUserDefault();
         break;
     }
   }
 
-  void _createNewLayout() async {
-    final name = await _showTextInputDialog(
-      title: 'New Layout',
-      hint: 'Enter layout name',
-      defaultValue: 'My Layout',
-    );
-    if (name != null && name.isNotEmpty) {
-      final notifier = ref.read(allLayoutsProvider.notifier);
-      final newLayout = await notifier.createLayout(
-        name: name,
-        tiles: createDefaultTiles(),
-      );
-      ref.read(activeLayoutProvider.notifier).activateLayout(newLayout.id);
-    }
-  }
+  void _showResetDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
-  void _renameLayout() async {
-    final currentLayout = ref.read(activeLayoutProvider).value;
-    if (currentLayout == null) return;
-
-    final name = await _showTextInputDialog(
-      title: 'Rename Layout',
-      hint: 'Enter new name',
-      defaultValue: currentLayout.name,
-    );
-    if (name != null && name.isNotEmpty) {
-      await ref
-          .read(allLayoutsProvider.notifier)
-          .renameLayout(currentLayout.id, name);
-      ref.read(activeLayoutProvider.notifier).refresh();
-    }
-  }
-
-  void _resetToDefault() async {
-    final confirmed = await showDialog<bool>(
+    showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reset to Default'),
-        content: const Text(
-            'This will reset your home screen layout to the default configuration. Your customizations will be lost.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Reset'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      HapticService.medium();
-      await ref.read(activeLayoutProvider.notifier).resetToDefault();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Layout reset to default'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-  }
-
-  void _deleteLayout() async {
-    final currentLayout = ref.read(activeLayoutProvider).value;
-    if (currentLayout == null) return;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Layout'),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        title: Text('Reset Layout', style: TextStyle(color: textColor)),
         content: Text(
-            'Are you sure you want to delete "${currentLayout.name}"? This cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      await ref
-          .read(allLayoutsProvider.notifier)
-          .deleteLayout(currentLayout.id);
-      // Active layout will auto-update since we refresh
-    }
-  }
-
-  void _shareLayout(HomeLayout layout) {
-    HapticService.light();
-    showShareLayoutSheet(context, layout);
-  }
-
-  Future<String?> _showTextInputDialog({
-    required String title,
-    required String hint,
-    String? defaultValue,
-  }) async {
-    final controller = TextEditingController(text: defaultValue);
-    return showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(hintText: hint),
-          autofocus: true,
+          'Reset to the app\'s original layout? This will undo all your customizations.',
+          style: TextStyle(
+              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel',
+                style: TextStyle(
+                    color: isDark
+                        ? AppColors.textMuted
+                        : AppColorsLight.textMuted)),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Save'),
+            onPressed: () {
+              Navigator.pop(ctx);
+              ref.read(localLayoutProvider.notifier).resetToAppDefault();
+              HapticService.success();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Layout reset to original'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            child: Text('Reset',
+                style: TextStyle(
+                    color: isDark
+                        ? AppColors.cyan
+                        : _darkenColor(AppColors.cyan))),
           ),
         ],
       ),
     );
+  }
+
+  void _saveAsDefault() async {
+    await ref.read(localLayoutProvider.notifier).saveAsUserDefault();
+    HapticService.success();
+    setState(() => _hasUserDefault = true);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Saved as your default layout'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _applyUserDefault() async {
+    await ref.read(localLayoutProvider.notifier).applyUserDefault();
+    HapticService.success();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Applied your default layout'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Color _darkenColor(Color color) {
+    final hsl = HSLColor.fromColor(color);
+    return hsl.withLightness((hsl.lightness * 0.7).clamp(0.0, 1.0)).toColor();
+  }
+}
+
+/// Toggles tab - List of all tiles with on/off switches and drag-to-reorder
+class _TogglesTab extends ConsumerStatefulWidget {
+  final HomeLayout layout;
+  final bool isDark;
+  final Color elevatedColor;
+  final Color textColor;
+  final Color textMuted;
+
+  const _TogglesTab({
+    required this.layout,
+    required this.isDark,
+    required this.elevatedColor,
+    required this.textColor,
+    required this.textMuted,
+  });
+
+  @override
+  ConsumerState<_TogglesTab> createState() => _TogglesTabState();
+}
+
+class _TogglesTabState extends ConsumerState<_TogglesTab> {
+  List<HomeTile> _orderedTiles = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _updateOrderedTiles();
+  }
+
+  @override
+  void didUpdateWidget(covariant _TogglesTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.layout != widget.layout) {
+      _updateOrderedTiles();
+    }
+  }
+
+  void _updateOrderedTiles() {
+    // Combine visible and hidden tiles, sorted by order
+    final allTiles = List<HomeTile>.from(widget.layout.tiles);
+    allTiles.sort((a, b) {
+      // Visible tiles first, then hidden tiles
+      if (a.isVisible && !b.isVisible) return -1;
+      if (!a.isVisible && b.isVisible) return 1;
+      return a.order.compareTo(b.order);
+    });
+    _orderedTiles = allTiles;
+  }
+
+  Color _darkenColor(Color color) {
+    final hsl = HSLColor.fromColor(color);
+    return hsl.withLightness((hsl.lightness * 0.7).clamp(0.0, 1.0)).toColor();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleTiles = _orderedTiles.where((t) => t.isVisible).toList();
+    final hiddenTiles = _orderedTiles.where((t) => !t.isVisible).toList();
+
+    return Column(
+      children: [
+        // Info banner
+        Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: (widget.isDark ? AppColors.cyan : _darkenColor(AppColors.cyan))
+                .withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: (widget.isDark
+                      ? AppColors.cyan
+                      : _darkenColor(AppColors.cyan))
+                  .withOpacity(0.3),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                size: 18,
+                color:
+                    widget.isDark ? AppColors.cyan : _darkenColor(AppColors.cyan),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Drag to reorder • Toggle to show/hide',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: widget.isDark
+                        ? AppColors.cyan
+                        : _darkenColor(AppColors.cyan),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Tile list
+        Expanded(
+          child: ReorderableListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            proxyDecorator: (child, index, animation) {
+              return AnimatedBuilder(
+                animation: animation,
+                builder: (context, child) {
+                  final elevation =
+                      Tween<double>(begin: 0, end: 8).evaluate(animation);
+                  return Material(
+                    elevation: elevation,
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.transparent,
+                    child: child,
+                  );
+                },
+                child: child,
+              );
+            },
+            onReorderStart: (index) {
+              HapticFeedback.mediumImpact();
+            },
+            onReorder: (oldIndex, newIndex) {
+              if (oldIndex < visibleTiles.length &&
+                  newIndex <= visibleTiles.length) {
+                HapticFeedback.lightImpact();
+                ref.read(localLayoutProvider.notifier).reorderTiles(
+                      oldIndex,
+                      newIndex > oldIndex ? newIndex - 1 : newIndex,
+                    );
+              }
+            },
+            itemCount: visibleTiles.length +
+                (hiddenTiles.isNotEmpty ? 1 + hiddenTiles.length : 0),
+            itemBuilder: (context, index) {
+              // Visible tiles
+              if (index < visibleTiles.length) {
+                final tile = visibleTiles[index];
+                return _buildTileRow(
+                  key: ValueKey(tile.id),
+                  tile: tile,
+                  index: index,
+                  isVisible: true,
+                );
+              }
+
+              // Hidden section header
+              if (index == visibleTiles.length && hiddenTiles.isNotEmpty) {
+                return Container(
+                  key: const ValueKey('hidden_header'),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Row(
+                    children: [
+                      const Expanded(child: Divider()),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'HIDDEN',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: widget.textMuted,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                      const Expanded(child: Divider()),
+                    ],
+                  ),
+                );
+              }
+
+              // Hidden tiles
+              final hiddenIndex = index - visibleTiles.length - 1;
+              if (hiddenIndex >= 0 && hiddenIndex < hiddenTiles.length) {
+                final tile = hiddenTiles[hiddenIndex];
+                return _buildTileRow(
+                  key: ValueKey(tile.id),
+                  tile: tile,
+                  index: index,
+                  isVisible: false,
+                );
+              }
+
+              return const SizedBox.shrink(key: ValueKey('empty'));
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTileRow({
+    required Key key,
+    required HomeTile tile,
+    required int index,
+    required bool isVisible,
+  }) {
+    final iconColor = _getIconColorForType(tile.type, widget.isDark);
+    final accent = ref.colors(context).accent;
+
+    return Padding(
+      key: key,
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: widget.elevatedColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isVisible ? iconColor.withOpacity(0.3) : Colors.transparent,
+          ),
+        ),
+        child: Row(
+          children: [
+            // Drag handle (only for visible tiles)
+            if (isVisible)
+              ReorderableDragStartListener(
+                index: index,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Icon(
+                    Icons.drag_handle,
+                    color: widget.textMuted,
+                    size: 20,
+                  ),
+                ),
+              )
+            else
+              const SizedBox(width: 44),
+
+            // Icon
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(isVisible ? 0.15 : 0.08),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                _getIconForType(tile.type),
+                color: isVisible ? iconColor : iconColor.withOpacity(0.5),
+                size: 18,
+              ),
+            ),
+
+            const SizedBox(width: 12),
+
+            // Title and description
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tile.type.displayName,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isVisible ? widget.textColor : widget.textMuted,
+                    ),
+                  ),
+                  Text(
+                    tile.type.description,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: widget.textMuted,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+
+            // Toggle switch
+            Switch(
+              value: isVisible,
+              onChanged: (value) {
+                HapticFeedback.lightImpact();
+                ref
+                    .read(localLayoutProvider.notifier)
+                    .toggleTileVisibility(tile.id);
+              },
+              activeThumbColor: accent,
+              activeTrackColor: accent.withValues(alpha: 0.3),
+              inactiveThumbColor: widget.textMuted,
+              inactiveTrackColor: widget.textMuted.withValues(alpha: 0.3),
+            ),
+
+            const SizedBox(width: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getIconColorForType(TileType type, bool isDark) {
+    Color baseColor;
+    switch (type.category) {
+      case TileCategory.workout:
+        baseColor = AppColors.cyan;
+      case TileCategory.progress:
+        baseColor = AppColors.green;
+      case TileCategory.nutrition:
+        baseColor = AppColors.orange;
+      case TileCategory.social:
+        baseColor = AppColors.purple;
+      case TileCategory.wellness:
+        baseColor = AppColors.yellow;
+      case TileCategory.tools:
+        baseColor = AppColors.cyan;
+    }
+    return isDark ? baseColor : _darkenColor(baseColor);
   }
 
   IconData _getIconForType(TileType type) {
     switch (type) {
+      case TileType.quickStart:
+        return Icons.play_circle_filled;
       case TileType.nextWorkout:
         return Icons.fitness_center;
       case TileType.fitnessScore:
@@ -825,8 +662,6 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen> {
         return Icons.bedtime;
       case TileType.restDayTip:
         return Icons.spa;
-      case TileType.quickStart:
-        return Icons.play_circle_filled;
       case TileType.myJourney:
         return Icons.route;
       case TileType.progressCharts:
@@ -836,35 +671,318 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen> {
       case TileType.weeklyPlan:
         return Icons.calendar_view_week;
       case TileType.weightTrend:
-        return Icons.trending_up;
+        return Icons.trending_down;
       case TileType.dailyStats:
-        return Icons.bar_chart;
+        return Icons.directions_walk;
       case TileType.achievements:
         return Icons.emoji_events;
       case TileType.heroSection:
-        return Icons.star;
+        return Icons.view_carousel;
       case TileType.quickLogWeight:
         return Icons.scale;
       case TileType.quickLogMeasurements:
         return Icons.straighten;
       case TileType.habits:
-        return Icons.check_circle_outline;
+        return Icons.checklist;
+    }
+  }
+}
+
+/// Discover tab - Preset layouts and user's saved default
+class _DiscoverTab extends ConsumerWidget {
+  final bool isDark;
+  final Color elevatedColor;
+  final Color textColor;
+  final Color textMuted;
+  final bool hasUserDefault;
+  final VoidCallback onUserDefaultApplied;
+
+  const _DiscoverTab({
+    required this.isDark,
+    required this.elevatedColor,
+    required this.textColor,
+    required this.textMuted,
+    required this.hasUserDefault,
+    required this.onUserDefaultApplied,
+  });
+
+  Color _darkenColor(Color color) {
+    final hsl = HSLColor.fromColor(color);
+    return hsl.withLightness((hsl.lightness * 0.7).clamp(0.0, 1.0)).toColor();
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+    final cyan = isDark ? AppColors.cyan : _darkenColor(AppColors.cyan);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // User's default card (if exists)
+          if (hasUserDefault) ...[
+            _buildSectionHeader('MY DEFAULT', purple),
+            const SizedBox(height: 8),
+            _buildMyDefaultCard(context, ref, purple),
+            const SizedBox(height: 24),
+          ],
+
+          // Presets section
+          _buildSectionHeader('PRESETS', cyan),
+          const SizedBox(height: 8),
+          Text(
+            'Choose a preset to quickly customize your home screen',
+            style: TextStyle(fontSize: 13, color: textMuted),
+          ),
+          const SizedBox(height: 16),
+
+          // Preset cards grid
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.1,
+            children: LayoutPreset.values
+                .map((preset) => _buildPresetCard(context, ref, preset))
+                .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 16,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: color,
+            letterSpacing: 1.2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMyDefaultCard(
+      BuildContext context, WidgetRef ref, Color purple) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.medium();
+        ref.read(localLayoutProvider.notifier).applyUserDefault();
+        onUserDefaultApplied();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Applied your default layout'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: elevatedColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: purple.withOpacity(0.4), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: purple.withOpacity(0.1),
+              blurRadius: 12,
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: purple.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.bookmark,
+                color: purple,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'My Default',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Your saved custom layout',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: purple,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text(
+                'Apply',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPresetCard(
+      BuildContext context, WidgetRef ref, LayoutPreset preset) {
+    final presetColor = _getPresetColor(preset);
+    final color = isDark ? presetColor : _darkenColor(presetColor);
+
+    return GestureDetector(
+      onTap: () {
+        HapticService.medium();
+        ref.read(localLayoutProvider.notifier).applyPreset(preset);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Applied ${preset.displayName}'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: elevatedColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                _getPresetIcon(preset),
+                color: color,
+                size: 20,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              preset.displayName,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Expanded(
+              child: Text(
+                preset.description,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: textMuted,
+                  height: 1.3,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'Apply',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _getPresetIcon(LayoutPreset preset) {
+    switch (preset) {
+      case LayoutPreset.fatLossFocus:
+        return Icons.trending_down;
+      case LayoutPreset.gymFocused:
+        return Icons.fitness_center;
+      case LayoutPreset.nutritionFocused:
+        return Icons.restaurant;
+      case LayoutPreset.trackerOnly:
+        return Icons.insights;
+      case LayoutPreset.fastingFocused:
+        return Icons.timer;
+      case LayoutPreset.minimal:
+        return Icons.view_agenda;
     }
   }
 
-  Color _getIconColorForType(TileType type) {
-    switch (type.category) {
-      case TileCategory.workout:
-        return AppColors.cyan;
-      case TileCategory.progress:
-        return AppColors.green;
-      case TileCategory.nutrition:
+  Color _getPresetColor(LayoutPreset preset) {
+    switch (preset) {
+      case LayoutPreset.fatLossFocus:
         return AppColors.orange;
-      case TileCategory.social:
+      case LayoutPreset.gymFocused:
+        return AppColors.cyan;
+      case LayoutPreset.nutritionFocused:
+        return AppColors.green;
+      case LayoutPreset.trackerOnly:
         return AppColors.purple;
-      case TileCategory.wellness:
+      case LayoutPreset.fastingFocused:
         return AppColors.yellow;
-      case TileCategory.tools:
+      case LayoutPreset.minimal:
         return AppColors.cyan;
     }
   }

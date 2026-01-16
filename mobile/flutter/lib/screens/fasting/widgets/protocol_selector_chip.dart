@@ -17,7 +17,8 @@ class ProtocolSelectorChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    // Use monochrome accent instead of purple
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -30,7 +31,7 @@ class ProtocolSelectorChip extends StatelessWidget {
           color: elevated,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: purple.withValues(alpha: 0.4),
+            color: accentColor.withValues(alpha: 0.4),
             width: 1.5,
           ),
         ),
@@ -40,7 +41,7 @@ class ProtocolSelectorChip extends StatelessWidget {
             Icon(
               Icons.timer_outlined,
               size: 18,
-              color: purple,
+              color: accentColor,
             ),
             const SizedBox(width: 8),
             Column(

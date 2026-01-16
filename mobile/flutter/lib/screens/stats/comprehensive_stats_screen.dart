@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/providers/consistency_provider.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
@@ -45,7 +46,8 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    // Use dynamic accent color from provider
+    final cyan = ref.colors(context).accent;
 
     return Scaffold(
       backgroundColor: backgroundColor,

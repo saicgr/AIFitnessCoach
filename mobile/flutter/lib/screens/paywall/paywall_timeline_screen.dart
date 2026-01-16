@@ -12,7 +12,8 @@ class PaywallTimelineScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.colors;
+    // Use ref.colors(context) to get dynamic accent color from provider
+    final colors = ref.colors(context);
     final now = DateTime.now();
     final reminderDate = now.add(const Duration(days: 5));
     final chargeDate = now.add(const Duration(days: 7));
@@ -34,13 +35,13 @@ class PaywallTimelineScreen extends ConsumerWidget {
                       children: [
                         Icon(
                           Icons.chevron_left,
-                          color: colors.cyan,
+                          color: colors.accent,
                           size: 28,
                         ),
                         Text(
                           'Back',
                           style: TextStyle(
-                            color: colors.cyan,
+                            color: colors.accent,
                             fontSize: 17,
                             fontWeight: FontWeight.w500,
                           ),
@@ -65,14 +66,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            colors.cyan,
-                            colors.cyanDark,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
+                        gradient: colors.accentGradient,
                         shape: BoxShape.circle,
                       ),
                       child: ClipOval(
@@ -81,10 +75,10 @@ class PaywallTimelineScreen extends ConsumerWidget {
                           width: 80,
                           height: 80,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => const Icon(
+                          errorBuilder: (context, error, stackTrace) => Icon(
                             Icons.fitness_center,
                             size: 40,
-                            color: Colors.white,
+                            color: colors.accentContrast,
                           ),
                         ),
                       ),
@@ -115,7 +109,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
                     // Timeline
                     _TimelineItem(
                       icon: Icons.card_giftcard,
-                      iconColor: Colors.amber,
+                      iconColor: colors.accent,
                       title: 'Today',
                       subtitle: 'Unlimited workouts, food scanning, injury tracking, skill progressions & more',
                       isFirst: true,
@@ -124,7 +118,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
                     ),
                     _TimelineItem(
                       icon: Icons.notifications_outlined,
-                      iconColor: colors.cyan,
+                      iconColor: colors.accent,
                       title: 'In 5 days',
                       subtitle: 'We\'ll remind you before your trial ends - no surprises',
                       isFirst: false,
@@ -156,8 +150,8 @@ class PaywallTimelineScreen extends ConsumerWidget {
                 child: ElevatedButton(
                   onPressed: () => context.push('/paywall-pricing'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.cyan,
-                    foregroundColor: Colors.white,
+                    backgroundColor: colors.accent,
+                    foregroundColor: colors.accentContrast,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -223,7 +217,7 @@ class _TimelineItem extends StatelessWidget {
                   Container(
                     width: 2,
                     height: 8,
-                    color: colors.cyan.withOpacity(0.3),
+                    color: colors.accent.withOpacity(0.3),
                   ),
                 // Dot with icon
                 Container(
@@ -244,7 +238,7 @@ class _TimelineItem extends StatelessWidget {
                   Expanded(
                     child: Container(
                       width: 2,
-                      color: colors.cyan.withOpacity(0.3),
+                      color: colors.accent.withOpacity(0.3),
                     ),
                   ),
               ],

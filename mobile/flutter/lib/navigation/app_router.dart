@@ -973,6 +973,39 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             );
           }
+          // Check for empty exercises list
+          if (workout.exercises.isEmpty) {
+            debugPrint('❌ [Router] Workout has no exercises: ${workout.id}');
+            return Scaffold(
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, size: 48, color: Colors.orange),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Workout has no exercises',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 32),
+                      child: Text(
+                        'This workout is missing exercise data. Please try regenerating it.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => context.go('/home'),
+                      child: const Text('Go Home'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
           // Use video-based workout screen with set tracking overlay
           return ActiveWorkoutScreen(workout: workout);
         },

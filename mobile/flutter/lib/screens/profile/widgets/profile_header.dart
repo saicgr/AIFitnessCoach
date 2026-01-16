@@ -75,20 +75,22 @@ class ProfileHeader extends StatelessWidget {
   }
 
   Widget _buildUsername(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Text(
       '@$username',
       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppColors.cyan,
+            color: isDark ? AppColors.cyan : AppColorsLight.textSecondary,
             fontWeight: FontWeight.w500,
           ),
     );
   }
 
   Widget _buildEmail(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Text(
       email,
       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppColors.textSecondary,
+            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
           ),
     );
   }

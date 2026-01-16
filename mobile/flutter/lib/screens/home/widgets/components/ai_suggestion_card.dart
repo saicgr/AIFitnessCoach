@@ -24,18 +24,9 @@ class AISuggestionCard extends StatelessWidget {
     required this.onTap,
   });
 
-  Color _getTypeColor(String type) {
-    switch (type.toLowerCase()) {
-      case 'hiit':
-        return AppColors.error;
-      case 'cardio':
-        return AppColors.orange;
-      case 'flexibility':
-        return AppColors.purple;
-      case 'strength':
-      default:
-        return AppColors.cyan;
-    }
+  Color _getTypeColor(String type, bool isDark) {
+    // Use monochrome for all workout types
+    return isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
   }
 
   @override
@@ -52,8 +43,9 @@ class AISuggestionCard extends StatelessWidget {
     final sampleExercises =
         (suggestion['sample_exercises'] as List?)?.cast<String>() ?? [];
 
-    final difficultyColor = getDifficultyColor(difficulty);
-    final typeColor = _getTypeColor(type);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final difficultyColor = getDifficultyColor(difficulty, isDark: isDark);
+    final typeColor = _getTypeColor(type, isDark);
 
     // Ranking label based on position
     String rankLabel;

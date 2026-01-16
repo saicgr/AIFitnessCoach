@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/providers/today_workout_provider.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
@@ -114,20 +115,21 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
   }
 
   Widget _buildLoadingState(Color elevatedColor, Color textMuted) {
+    final accentColor = ref.colors(context).accent;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(20),
         border: Border(
-          left: BorderSide(color: AppColors.teal, width: 4),
-          top: BorderSide(color: AppColors.cyan.withValues(alpha: 0.2)),
-          right: BorderSide(color: AppColors.cyan.withValues(alpha: 0.2)),
-          bottom: BorderSide(color: AppColors.cyan.withValues(alpha: 0.2)),
+          left: BorderSide(color: accentColor, width: 4),
+          top: BorderSide(color: accentColor.withValues(alpha: 0.2)),
+          right: BorderSide(color: accentColor.withValues(alpha: 0.2)),
+          bottom: BorderSide(color: accentColor.withValues(alpha: 0.2)),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.teal.withOpacity(0.15),
+            color: accentColor.withOpacity(0.15),
             blurRadius: 16,
             offset: const Offset(0, 6),
             spreadRadius: 1,
@@ -141,12 +143,12 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
       ),
       child: Column(
         children: [
-          const SizedBox(
+          SizedBox(
             height: 24,
             width: 24,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: AppColors.cyan,
+              color: accentColor,
             ),
           ),
           const SizedBox(height: 12),
@@ -165,20 +167,21 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
     Color textMuted,
     Object error,
   ) {
+    final accentColor = ref.colors(context).accent;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(20),
         border: Border(
-          left: BorderSide(color: AppColors.teal, width: 4),
+          left: BorderSide(color: accentColor, width: 4),
           top: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
           right: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
           bottom: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.teal.withOpacity(0.15),
+            color: accentColor.withOpacity(0.15),
             blurRadius: 16,
             offset: const Offset(0, 6),
             spreadRadius: 1,
@@ -217,20 +220,21 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
     Color textColor,
     Color textMuted,
   ) {
+    final accentColor = ref.colors(context).accent;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(20),
         border: Border(
-          left: BorderSide(color: AppColors.teal, width: 4),
+          left: BorderSide(color: accentColor, width: 4),
           top: BorderSide(color: AppColors.textMuted.withValues(alpha: 0.2)),
           right: BorderSide(color: AppColors.textMuted.withValues(alpha: 0.2)),
           bottom: BorderSide(color: AppColors.textMuted.withValues(alpha: 0.2)),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.teal.withOpacity(0.15),
+            color: accentColor.withOpacity(0.15),
             blurRadius: 16,
             offset: const Offset(0, 6),
             spreadRadius: 1,
@@ -273,6 +277,7 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
     bool isNextWorkout = false,
   }) {
     final typeColor = AppColors.getWorkoutTypeColor(workout.type);
+    final accentColor = ref.colors(context).accent;
 
     return AnimatedBuilder(
       animation: _pulseController,
@@ -291,12 +296,12 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
               ),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: AppColors.cyan.withValues(alpha: _glowAnimation.value),
+                color: accentColor.withValues(alpha: _glowAnimation.value),
                 width: 2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.cyan.withValues(alpha: _glowAnimation.value * 0.3),
+                  color: accentColor.withValues(alpha: _glowAnimation.value * 0.3),
                   blurRadius: 20,
                   spreadRadius: 2,
                 ),
@@ -317,33 +322,38 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
               // Header with "TODAY" badge
               Row(
                 children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: AppColors.cyan.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isNextWorkout ? Icons.event : Icons.today,
-                          size: 14,
-                          color: AppColors.cyan,
+                  Builder(
+                    builder: (context) {
+                      final accentColor = ref.colors(context).accent;
+                      return Container(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: accentColor.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          isNextWorkout ? 'TOMORROW' : 'TODAY',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.cyan,
-                            letterSpacing: 1,
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isNextWorkout ? Icons.event : Icons.today,
+                              size: 14,
+                              color: accentColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              isNextWorkout ? 'TOMORROW' : 'TODAY',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: accentColor,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                   const Spacer(),
                   Container(
@@ -426,30 +436,35 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
               const SizedBox(height: 20),
 
               // Big START button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _startWorkoutFromSummary(workout),
-                  icon: const Icon(Icons.play_arrow, size: 24),
-                  label: const Text(
-                    'START WORKOUT',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
+              Builder(
+                builder: (context) {
+                  final accentColor = ref.colors(context).accent;
+                  return SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _startWorkoutFromSummary(workout),
+                      icon: const Icon(Icons.play_arrow, size: 24),
+                      label: const Text(
+                        'START WORKOUT',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accentColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 4,
+                        shadowColor: accentColor.withValues(alpha: 0.5),
+                      ),
                     ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cyan,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    elevation: 4,
-                    shadowColor: AppColors.cyan.withValues(alpha: 0.5),
-                  ),
-                ),
+                  );
+                },
               ),
             ],
           ),
@@ -464,20 +479,21 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
     Color textMuted,
     TodayWorkoutResponse response,
   ) {
+    final accentColor = ref.colors(context).accent;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(20),
         border: Border(
-          left: BorderSide(color: AppColors.teal, width: 4),
+          left: BorderSide(color: accentColor, width: 4),
           top: BorderSide(color: AppColors.purple.withValues(alpha: 0.3)),
           right: BorderSide(color: AppColors.purple.withValues(alpha: 0.3)),
           bottom: BorderSide(color: AppColors.purple.withValues(alpha: 0.3)),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.teal.withOpacity(0.15),
+            color: accentColor.withOpacity(0.15),
             blurRadius: 16,
             offset: const Offset(0, 6),
             spreadRadius: 1,
@@ -539,12 +555,12 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withValues(alpha: 0.15),
+                      color: accentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.event,
-                      color: AppColors.cyan,
+                      color: accentColor,
                       size: 22,
                     ),
                   ),
@@ -594,7 +610,7 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
             icon: const Icon(Icons.calendar_month, size: 18),
             label: const Text('View Upcoming'),
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.cyan,
+              foregroundColor: accentColor,
             ),
           ),
         ],

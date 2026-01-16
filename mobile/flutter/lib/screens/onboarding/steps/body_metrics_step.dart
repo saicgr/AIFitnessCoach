@@ -120,7 +120,7 @@ class _BodyMetricsStepState extends State<BodyMetricsStep> {
                     _showAdvanced ? 'Hide' : 'Show',
                     style: const TextStyle(
                       fontSize: 12,
-                      color: AppColors.cyan,
+                      color: AppColors.accent,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

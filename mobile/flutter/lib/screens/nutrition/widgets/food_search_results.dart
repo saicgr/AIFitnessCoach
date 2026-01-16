@@ -180,9 +180,9 @@ class _ShimmerLoadingResultsState extends State<_ShimmerLoadingResults>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA);
+    final baseColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final highlightColor =
-        isDark ? const Color(0xFF3C3C3E) : const Color(0xFFF5F5F5);
+        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
     return ListView.builder(
       shrinkWrap: true,
@@ -562,7 +562,7 @@ class _ResultCard extends StatelessWidget {
                           _NutrientPill(
                             label: '${result.calories}',
                             unit: 'kcal',
-                            color: const Color(0xFFFF6B6B),
+                            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                             isDark: isDark,
                           ),
                           if (result.protein != null) ...[
@@ -570,7 +570,7 @@ class _ResultCard extends StatelessWidget {
                             _NutrientPill(
                               label: '${result.protein!.toStringAsFixed(0)}g',
                               unit: 'protein',
-                              color: const Color(0xFFFFD93D),
+                              color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
                               isDark: isDark,
                             ),
                           ],

@@ -41,7 +41,7 @@ class QuizFitnessLevel extends StatelessWidget {
       'id': 'advanced',
       'label': 'Advanced',
       'icon': Icons.rocket_launch_outlined,
-      'color': AppColors.coral,
+      'color': AppColors.accent,
       'description': 'Experienced athlete, seeking new challenges',
     },
   ];
@@ -133,13 +133,13 @@ class QuizFitnessLevel extends StatelessWidget {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              gradient: isSelected ? AppColors.cyanGradient : null,
+              gradient: isSelected ? AppColors.accentGradient : null,
               color: isSelected
                   ? null
                   : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? AppColors.cyan : cardBorder,
+                color: isSelected ? AppColors.accent : cardBorder,
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -235,13 +235,13 @@ class QuizFitnessLevel extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  gradient: isSelected ? AppColors.cyanGradient : null,
+                  gradient: isSelected ? AppColors.accentGradient : null,
                   color: isSelected
                       ? null
                       : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected ? AppColors.cyan : cardBorder,
+                    color: isSelected ? AppColors.accent : cardBorder,
                     width: isSelected ? 2 : 1,
                   ),
                 ),
@@ -301,13 +301,13 @@ class QuizFitnessLevel extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  gradient: isSelected ? AppColors.cyanGradient : null,
+                  gradient: isSelected ? AppColors.accentGradient : null,
                   color: isSelected
                       ? null
                       : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isSelected ? AppColors.cyan : cardBorder,
+                    color: isSelected ? AppColors.accent : cardBorder,
                     width: isSelected ? 2 : 1,
                   ),
                 ),

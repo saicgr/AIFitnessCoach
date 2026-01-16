@@ -47,6 +47,11 @@ class Workout extends Equatable {
   @JsonKey(name: 'updated_at')
   final String? updatedAt;
 
+  /// Optional known exercise count (used when exercises aren't fully loaded)
+  /// This is set when converting from TodayWorkoutSummary which has count from API
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final int? knownExerciseCount;
+
   const Workout({
     this.id,
     this.userId,
@@ -61,6 +66,7 @@ class Workout extends Equatable {
     this.generationMetadata,
     this.createdAt,
     this.updatedAt,
+    this.knownExerciseCount,
   });
 
   factory Workout.fromJson(Map<String, dynamic> json) => _$WorkoutFromJson(json);
@@ -78,16 +84,43 @@ class Workout extends Equatable {
       } else {
         return [];
       }
-      return exercisesList
-          .map((e) => WorkoutExercise.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } catch (_) {
+      return exercisesList.map((e) {
+        // Handle case where exercise is already a WorkoutExercise object
+        if (e is WorkoutExercise) {
+          return e;
+        }
+        // Handle case where exercise is a Map (from JSON)
+        if (e is Map<String, dynamic>) {
+          // Deep convert any SetTarget objects in set_targets to Maps
+          final Map<String, dynamic> exerciseMap = Map<String, dynamic>.from(e);
+          if (exerciseMap['set_targets'] is List) {
+            exerciseMap['set_targets'] = (exerciseMap['set_targets'] as List).map((st) {
+              if (st is SetTarget) {
+                return st.toJson();
+              }
+              return st;
+            }).toList();
+          }
+          return WorkoutExercise.fromJson(exerciseMap);
+        }
+        return null;
+      }).whereType<WorkoutExercise>().toList();
+    } catch (e) {
+      // Log the actual error for debugging
+      print('❌ [Workout.exercises] Parse error: $e');
       return [];
     }
   }
 
   /// Get exercise count (excluding challenge exercise)
-  int get exerciseCount => exercises.length;
+  /// Uses knownExerciseCount as fallback when exercises aren't loaded
+  int get exerciseCount {
+    final parsedCount = exercises.length;
+    // If we have parsed exercises, use that count
+    if (parsedCount > 0) return parsedCount;
+    // Otherwise use the known count from API if available
+    return knownExerciseCount ?? 0;
+  }
 
   /// Get challenge exercise from generation metadata (for beginners)
   WorkoutExercise? get challengeExercise {
@@ -178,6 +211,7 @@ class Workout extends Equatable {
         isCompleted,
         durationMinutes,
         generationMetadata,
+        knownExerciseCount,
       ];
 
   Workout copyWith({
@@ -194,6 +228,7 @@ class Workout extends Equatable {
     Map<String, dynamic>? generationMetadata,
     String? createdAt,
     String? updatedAt,
+    int? knownExerciseCount,
   }) {
     return Workout(
       id: id ?? this.id,
@@ -209,6 +244,7 @@ class Workout extends Equatable {
       generationMetadata: generationMetadata ?? this.generationMetadata,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      knownExerciseCount: knownExerciseCount ?? this.knownExerciseCount,
     );
   }
 }

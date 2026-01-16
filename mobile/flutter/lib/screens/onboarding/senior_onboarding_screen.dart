@@ -279,7 +279,7 @@ class _SeniorOnboardingScreenState
                         height: 6,
                         decoration: BoxDecoration(
                           color: i <= _currentPage
-                              ? AppColors.cyan
+                              ? AppColors.accent
                               : (isDark
                                   ? const Color(0xFF333333)
                                   : const Color(0xFFDDDDDD)),
@@ -430,13 +430,13 @@ class _SeniorOnboardingScreenState
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: AppColors.cyan.withOpacity(0.2),
+              color: AppColors.accent.withOpacity(0.2),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.celebration,
               size: 64,
-              color: AppColors.cyan,
+              color: AppColors.accent,
             ),
           ),
           const SizedBox(height: 40),
@@ -642,7 +642,7 @@ class _SummaryCard extends StatelessWidget {
           Icon(
             icon,
             size: 32,
-            color: AppColors.cyan,
+            color: AppColors.accent,
           ),
           const SizedBox(width: 16),
           Column(

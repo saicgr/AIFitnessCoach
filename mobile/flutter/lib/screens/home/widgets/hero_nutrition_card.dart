@@ -145,12 +145,12 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
           color: cardBg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: const Color(0xFF34C759).withValues(alpha: 0.4),
+            color: AppColors.textPrimary.withValues(alpha: 0.4),
             width: 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF34C759).withValues(alpha: 0.1),
+              color: AppColors.textPrimary.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -167,7 +167,7 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF34C759).withValues(alpha: 0.15),
+                      color: AppColors.textPrimary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Text(
@@ -175,7 +175,7 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF34C759),
+                        color: AppColors.textPrimary,
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -189,7 +189,7 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
                       height: 24,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: const Color(0xFF34C759),
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -240,7 +240,7 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(3),
                             color: calorieProgress < 1.0
-                                ? const Color(0xFF34C759)
+                                ? AppColors.textPrimary
                                 : AppColors.error,
                           ),
                         ),
@@ -297,7 +297,7 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
                         showLogMealSheet(context, ref);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF34C759),
+                        backgroundColor: AppColors.textPrimary,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(

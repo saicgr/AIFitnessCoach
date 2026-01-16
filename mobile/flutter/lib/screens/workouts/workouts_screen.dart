@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/models/workout.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -53,6 +54,8 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     final backgroundColor = isDark ? AppColors.background : AppColorsLight.background;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    // Get dynamic accent color from provider
+    final accentColor = ref.colors(context).accent;
 
     // Watch workouts state (for weekly progress, upcoming list)
     final workoutsState = ref.watch(workoutsProvider);
@@ -64,7 +67,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
       body: wrapWithSwipeDetector(
         child: CustomScrollView(
           slivers: [
-          // App Bar with Library and Settings buttons
+          // App Bar with Back, Library and Settings buttons
           SliverAppBar(
             floating: true,
             snap: true,
@@ -72,10 +75,22 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             surfaceTintColor: Colors.transparent,
             automaticallyImplyLeading: false,
             centerTitle: false,
+            leading: IconButton(
+              onPressed: () {
+                HapticService.light();
+                context.go('/home');
+              },
+              icon: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: accentColor,
+                size: 22,
+              ),
+              tooltip: 'Back to Home',
+            ),
             title: Text(
               'Workouts',
               style: TextStyle(
-                fontSize: 32,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: textPrimary,
               ),
@@ -89,7 +104,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                 },
                 icon: Icon(
                   Icons.fitness_center,
-                  color: AppColors.purple,
+                  color: accentColor,
                   size: 24,
                 ),
                 tooltip: 'Exercise Library',
@@ -118,6 +133,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
               isDark,
               textPrimary,
               textSecondary,
+              accentColor,
               workouts,
               todayWorkoutState,
             ),
@@ -159,6 +175,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     bool isDark,
     Color textPrimary,
     Color textSecondary,
+    Color accentColor,
     List<Workout> workouts,
     AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
   ) {
@@ -220,7 +237,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         const SizedBox(height: 8),
 
         // Quick Actions Row
-        _buildQuickActions(context, isDark, textSecondary),
+        _buildQuickActions(context, isDark, textSecondary, accentColor),
 
         const SizedBox(height: 16),
 
@@ -282,7 +299,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     );
   }
 
-  Widget _buildQuickActions(BuildContext context, bool isDark, Color textSecondary) {
+  Widget _buildQuickActions(BuildContext context, bool isDark, Color textSecondary, Color accentColor) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -293,7 +310,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
               context,
               icon: Icons.add_circle_outline,
               label: 'Custom',
-              color: AppColors.cyan,
+              color: accentColor,
               isDark: isDark,
               onTap: () {
                 HapticService.light();
@@ -308,7 +325,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
               context,
               icon: Icons.search,
               label: 'Browse',
-              color: AppColors.purple,
+              color: accentColor,
               isDark: isDark,
               onTap: () {
                 HapticService.light();
@@ -323,7 +340,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
               context,
               icon: Icons.auto_awesome,
               label: 'Upcoming',
-              color: AppColors.electricBlue,
+              color: accentColor,
               isDark: isDark,
               onTap: () {
                 HapticService.light();
@@ -401,7 +418,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.cyan,
+                  color: textColor,
                 ),
               ),
             ),
@@ -679,7 +696,7 @@ class _PreviousSessionCard extends StatelessWidget {
           color: elevatedColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppColors.success.withValues(alpha: 0.3),
+            color: textSecondary.withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -690,12 +707,12 @@ class _PreviousSessionCard extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.2),
+                color: textSecondary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.check_circle,
-                color: AppColors.success,
+                color: textPrimary,
                 size: 22,
               ),
             ),

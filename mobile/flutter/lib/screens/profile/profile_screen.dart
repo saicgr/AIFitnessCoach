@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
+import '../../core/providers/warmup_duration_provider.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
@@ -61,6 +64,8 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 24),
           _buildTrainingSetupSection(context, ref, user),
           const SizedBox(height: 32),
+          _buildExercisePreferencesSection(context, ref),
+          const SizedBox(height: 32),
           _buildNutritionFastingSection(),
           const SizedBox(height: 32),
           _buildAccountSection(context, ref),
@@ -111,6 +116,16 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildExercisePreferencesSection(BuildContext context, WidgetRef ref) {
+    return Column(
+      children: [
+        const SectionHeader(title: 'EXERCISE PREFERENCES'),
+        const SizedBox(height: 12),
+        const _WarmupStretchPreferencesCard(),
+      ],
+    ).animate().fadeIn(delay: 190.ms);
+  }
+
   void _showCustomEquipmentSheet(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
@@ -144,7 +159,7 @@ class ProfileScreen extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
-                      const Icon(Icons.fitness_center, color: AppColors.cyan),
+                      Icon(Icons.fitness_center, color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary),
                       const SizedBox(width: 12),
                       Text(
                         'My Custom Equipment',
@@ -470,7 +485,7 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
         SnackBar(
           content: Text('Added "$trimmed" to your equipment'),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.cyan.withValues(alpha: 0.9),
+          backgroundColor: AppColors.success,
         ),
       );
     }
@@ -498,9 +513,11 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    // Monochrome accent
+    final accentColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: CircularProgressIndicator(color: accentColor));
     }
 
     return Column(
@@ -528,7 +545,7 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.cyan),
+                      borderSide: BorderSide(color: accentColor),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -542,8 +559,8 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
               ElevatedButton(
                 onPressed: () => _addEquipment(_textController.text),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
-                  foregroundColor: Colors.black,
+                  backgroundColor: accentColor,
+                  foregroundColor: isDark ? Colors.black : Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 14,
@@ -610,12 +627,12 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
                         leading: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: AppColors.cyan.withValues(alpha: 0.15),
+                            color: accentColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.fitness_center,
-                            color: AppColors.cyan,
+                            color: accentColor,
                             size: 20,
                           ),
                         ),
@@ -627,9 +644,9 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
                           ),
                         ),
                         trailing: IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.delete_outline,
-                            color: AppColors.red,
+                            color: AppColors.error,
                             size: 22,
                           ),
                           onPressed: () => _removeEquipment(equipment),
@@ -640,6 +657,142 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
                 ),
         ),
       ],
+    );
+  }
+}
+
+/// Card for warmup and stretch preferences with toggles
+class _WarmupStretchPreferencesCard extends ConsumerWidget {
+  const _WarmupStretchPreferencesCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    // Use dynamic accent color from provider
+    final orange = ref.colors(context).accent;
+    final cyan = ref.colors(context).accent;
+
+    final warmupState = ref.watch(warmupDurationProvider);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        children: [
+          // Warmup toggle
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: orange.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.whatshot,
+                    color: orange,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Warmup Phase',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Dynamic warmup before workouts',
+                        style: TextStyle(fontSize: 12, color: textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch.adaptive(
+                  value: warmupState.warmupEnabled,
+                  onChanged: warmupState.isLoading
+                      ? null
+                      : (value) {
+                          HapticFeedback.lightImpact();
+                          ref.read(warmupDurationProvider.notifier).setWarmupEnabled(value);
+                        },
+                  activeColor: orange,
+                ),
+              ],
+            ),
+          ),
+
+          Divider(height: 1, color: cardBorder, indent: 16, endIndent: 16),
+
+          // Stretch toggle
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: cyan.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.self_improvement,
+                    color: cyan,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Cooldown Stretch',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Stretching after workouts',
+                        style: TextStyle(fontSize: 12, color: textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch.adaptive(
+                  value: warmupState.stretchEnabled,
+                  onChanged: warmupState.isLoading
+                      ? null
+                      : (value) {
+                          HapticFeedback.lightImpact();
+                          ref.read(warmupDurationProvider.notifier).setStretchEnabled(value);
+                        },
+                  activeColor: cyan,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

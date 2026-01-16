@@ -386,10 +386,10 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                   Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: AppColors.orange.withValues(alpha: 0.15),
+                      color: AppColors.accent.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Icon(Icons.cake_outlined, color: AppColors.orange, size: 14),
+                    child: Icon(Icons.cake_outlined, color: AppColors.accent, size: 14),
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -405,7 +405,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.cyan.withValues(alpha: 0.15),
+                        color: AppColors.accent.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -413,7 +413,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.cyan,
+                          color: AppColors.accent,
                         ),
                       ),
                     ),
@@ -468,10 +468,10 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                   Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: AppColors.purple.withValues(alpha: 0.15),
+                      color: AppColors.accent.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Icon(Icons.person_outline, color: AppColors.purple, size: 14),
+                    child: Icon(Icons.person_outline, color: AppColors.accent, size: 14),
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -542,10 +542,10 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                   Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withOpacity(0.15),
+                      color: AppColors.accent.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(Icons.height, color: AppColors.cyan, size: 14),
+                    child: Icon(Icons.height, color: AppColors.accent, size: 14),
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -624,10 +624,10 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                   Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: AppColors.purple.withOpacity(0.15),
+                      color: AppColors.accent.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(Icons.monitor_weight_outlined, color: AppColors.purple, size: 14),
+                    child: Icon(Icons.monitor_weight_outlined, color: AppColors.accent, size: 14),
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -733,13 +733,13 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
           data: Theme.of(context).copyWith(
             colorScheme: isDark
                 ? ColorScheme.dark(
-                    primary: AppColors.cyan,
+                    primary: AppColors.accent,
                     onPrimary: Colors.white,
                     surface: AppColors.elevated,
                     onSurface: AppColors.textPrimary,
                   )
                 : ColorScheme.light(
-                    primary: AppColors.cyan,
+                    primary: AppColors.accent,
                     onPrimary: Colors.white,
                     surface: Colors.white,
                     onSurface: AppColorsLight.textPrimary,
@@ -774,11 +774,11 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          gradient: isSelected ? AppColors.cyanGradient : null,
+          gradient: isSelected ? AppColors.accentGradient : null,
           color: isSelected ? null : cardBg,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? AppColors.cyan : cardBorder,
+            color: isSelected ? AppColors.accent : cardBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -822,7 +822,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
               duration: const Duration(milliseconds: 150),
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               decoration: BoxDecoration(
-                gradient: isMetric ? AppColors.cyanGradient : null,
+                gradient: isMetric ? AppColors.accentGradient : null,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
@@ -846,7 +846,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
               duration: const Duration(milliseconds: 150),
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               decoration: BoxDecoration(
-                gradient: !isMetric ? AppColors.cyanGradient : null,
+                gradient: !isMetric ? AppColors.accentGradient : null,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
@@ -885,7 +885,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
       color = AppColors.success;
     } else if (bmi < 30) {
       category = 'Overweight';
-      color = AppColors.orange;
+      color = AppColors.accent;
     } else {
       category = 'Obese';
       color = AppColors.error;
@@ -1030,13 +1030,13 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          gradient: isSelected ? AppColors.cyanGradient : null,
+          gradient: isSelected ? AppColors.accentGradient : null,
           color: isSelected
               ? null
               : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? AppColors.cyan : cardBorder,
+            color: isSelected ? AppColors.accent : cardBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -1113,9 +1113,9 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withOpacity(0.1),
+                    color: AppColors.accent.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+                    border: Border.all(color: AppColors.accent.withOpacity(0.3)),
                   ),
                   child: Column(
                     children: [
@@ -1124,7 +1124,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                         style: TextStyle(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.cyan,
+                          color: AppColors.accent,
                         ),
                       ),
                       Text(
@@ -1222,7 +1222,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
-                color: AppColors.cyan,
+                color: AppColors.accent,
               ),
               decoration: InputDecoration(
                 suffixText: unit,
@@ -1232,11 +1232,11 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.cyan),
+                  borderSide: BorderSide(color: AppColors.accent),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.cyan, width: 2),
+                  borderSide: BorderSide(color: AppColors.accent, width: 2),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
@@ -1275,7 +1275,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.cyan,
+              backgroundColor: AppColors.accent,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),

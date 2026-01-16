@@ -141,7 +141,7 @@ class MessageBubble extends StatelessWidget {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
               decoration: BoxDecoration(
-                gradient: isUser ? AppColors.cyanGradient : null,
+                gradient: isUser ? AppColors.accentGradient : null,
                 color: isUser ? null : colors.glassSurface,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(20),
@@ -228,8 +228,8 @@ class MessageBubble extends StatelessWidget {
 
   Widget _buildAiAvatar(ThemeColors colors) {
     // Use coach colors if provided, otherwise fall back to default cyan
-    final coachColor = coach?.primaryColor ?? AppColors.cyan;
-    final coachAccentColor = coach?.accentColor ?? AppColors.purple;
+    final coachColor = coach?.primaryColor ?? AppColors.accent;
+    final coachAccentColor = coach?.accentColor ?? AppColors.accent;
     final coachIcon = coach?.icon ?? Icons.auto_awesome;
 
     return Container(

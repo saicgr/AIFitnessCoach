@@ -709,7 +709,62 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
   }
 }
 
-/// My Space button for the TODAY section
+/// Edit button for the home screen header
+/// Opens the layout editor to customize home screen tiles
+class CustomizeButton extends StatelessWidget {
+  /// Whether the current theme is dark
+  final bool isDark;
+
+  const CustomizeButton({
+    super.key,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final bgColor = purple.withOpacity(isDark ? 0.15 : 0.12);
+
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        context.push('/settings/homescreen');
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: purple.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.edit_outlined,
+              color: purple,
+              size: 16,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              'Edit',
+              style: TextStyle(
+                color: purple,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// My Space button for the TODAY section (pill style)
 /// Opens the layout editor to customize home screen tiles
 class MySpaceButton extends StatelessWidget {
   /// Whether the current theme is dark

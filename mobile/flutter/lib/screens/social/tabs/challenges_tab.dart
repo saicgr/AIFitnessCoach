@@ -225,6 +225,9 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
   }
 
   Widget _buildCreateChallengeButton(BuildContext context, bool isDark) {
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -233,15 +236,10 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.orange.withValues(alpha: 0.15),
-                AppColors.pink.withValues(alpha: 0.15),
-              ],
-            ),
+            color: accentColor.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: AppColors.orange.withValues(alpha: 0.3),
+              color: accentColor.withValues(alpha: 0.2),
             ),
           ),
           child: Row(
@@ -250,14 +248,12 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.orange, AppColors.pink],
-                  ),
+                  color: accentColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.add_rounded,
-                  color: Colors.white,
+                  color: isDark ? AppColors.accentContrast : AppColorsLight.accentContrast,
                   size: 32,
                 ),
               ),
@@ -276,15 +272,15 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
                     Text(
                       'Start your own challenge and invite friends',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textMuted,
+                            color: textMuted,
                           ),
                     ),
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: AppColors.orange,
+                color: accentColor,
               ),
             ],
           ),

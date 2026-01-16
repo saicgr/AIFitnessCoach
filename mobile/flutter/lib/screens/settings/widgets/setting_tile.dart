@@ -93,6 +93,12 @@ class SettingItemData {
   /// Whether this item is the weight unit selector (kg/lbs).
   final bool isWeightUnitSelector;
 
+  /// Whether this item is the accent color selector.
+  final bool isAccentColorSelector;
+
+  /// Whether this item is the weight increments selector.
+  final bool isWeightIncrementsSelector;
+
   const SettingItemData({
     required this.icon,
     required this.title,
@@ -124,6 +130,8 @@ class SettingItemData {
     this.isProgressChartsScreen = false,
     this.isCalibrationTestScreen = false,
     this.isWeightUnitSelector = false,
+    this.isAccentColorSelector = false,
+    this.isWeightIncrementsSelector = false,
   });
 }
 

@@ -115,7 +115,7 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
 
     showModalBottomSheet(
       context: context,
@@ -156,7 +156,7 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
                 value: data.fastingHours != null
                     ? '${data.fastingHours!.round()}h fast'
                     : 'Completed',
-                color: purple,
+                color: accentColor,
                 isDark: isDark,
               ),
             ],
@@ -168,7 +168,7 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
                 value: data.workoutPerformanceScore != null
                     ? '${(data.workoutPerformanceScore! * 100).round()}% completion'
                     : 'Completed',
-                color: AppColors.cyan,
+                color: accentColor,
                 isDark: isDark,
               ),
             ],
@@ -282,7 +282,7 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
@@ -401,13 +401,13 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildLegendItem(
-                color: purple,
+                color: accentColor,
                 label: 'Fasting',
                 isDark: isDark,
               ),
               const SizedBox(width: 16),
               _buildLegendItem(
-                color: AppColors.cyan,
+                color: accentColor,
                 label: 'Workout',
                 isDark: isDark,
               ),
@@ -439,7 +439,7 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     Color? backgroundColor;
@@ -447,12 +447,12 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
     BoxBorder? border;
 
     if (isFastingDay) {
-      backgroundColor = purple.withValues(alpha: 0.2);
-      textColor = purple;
+      backgroundColor = accentColor.withValues(alpha: 0.2);
+      textColor = accentColor;
     }
 
     if (isToday) {
-      border = Border.all(color: purple, width: 2);
+      border = Border.all(color: accentColor, width: 2);
     }
 
     if (canMark) {
@@ -490,7 +490,7 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
                 width: 4,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.cyan,
+                  color: accentColor,
                   shape: BoxShape.circle,
                 ),
               ),

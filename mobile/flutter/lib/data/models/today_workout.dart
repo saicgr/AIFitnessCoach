@@ -35,6 +35,10 @@ class TodayWorkoutSummary {
   factory TodayWorkoutSummary.fromJson(Map<String, dynamic> json) {
     // Parse exercises from JSON array
     final exercisesJson = json['exercises'] as List<dynamic>? ?? [];
+    print('🔍 [TodayWorkoutSummary.fromJson] workout_id=${json['id']}, '
+        'exercises_count=${exercisesJson.length}, '
+        'exercise_count_field=${json['exercise_count']}');
+
     final exercises = exercisesJson
         .map((e) => WorkoutExercise.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -81,6 +85,8 @@ class TodayWorkoutSummary {
         scheduledDate: scheduledDate,
         isCompleted: isCompleted,
         exercisesJson: exercises.map((e) => e.toJson()).toList(),
+        // Pass the API's exercise count so it can be used as fallback
+        knownExerciseCount: exerciseCount,
       );
 }
 

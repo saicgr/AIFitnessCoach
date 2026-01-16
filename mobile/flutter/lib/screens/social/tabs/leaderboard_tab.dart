@@ -216,6 +216,8 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
 
   Widget _buildFilterChip(String label, LeaderboardFilter filter, bool isDark, {bool enabled = true}) {
     final isSelected = _selectedFilter == filter;
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return FilterChip(
       label: Text(label),
@@ -228,13 +230,13 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
           _loadLeaderboard();
         }
       } : null,
-      selectedColor: AppColors.orange.withValues(alpha: 0.2),
-      checkmarkColor: AppColors.orange,
+      selectedColor: accentColor.withValues(alpha: 0.15),
+      checkmarkColor: accentColor,
       backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
       labelStyle: TextStyle(
         color: enabled
-            ? (isSelected ? AppColors.orange : (isDark ? Colors.white : Colors.black))
-            : AppColors.textMuted,
+            ? (isSelected ? accentColor : (isDark ? Colors.white : Colors.black))
+            : textMuted,
       ),
     );
   }
@@ -338,53 +340,58 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
 
     showModalBottomSheet(
       context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Challenge $userName',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 24),
+      builder: (sheetContext) {
+        final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
+        final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
 
-            if (isFriend) ...[
-              // Direct challenge for friends
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Challenge $userName',
+                style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 24),
+
+              if (isFriend) ...[
+                // Direct challenge for friends
+                ListTile(
+                  leading: Icon(Icons.emoji_events, color: accentColor),
+                  title: const Text('Challenge Directly'),
+                  subtitle: const Text('Send a direct challenge notification'),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    // TODO: Show ChallengeFriendsDialog
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Feature coming soon!')),
+                    );
+                  },
+                ),
+                const Divider(),
+              ],
+
+              // Async challenge (Beat Their Best)
               ListTile(
-                leading: const Icon(Icons.emoji_events, color: AppColors.orange),
-                title: const Text('Challenge Directly'),
-                subtitle: const Text('Send a direct challenge notification'),
-                onTap: () {
-                  Navigator.pop(context);
-                  // TODO: Show ChallengeFriendsDialog
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Feature coming soon!')),
-                  );
+                leading: Icon(Icons.flash_on, color: accentColor),
+                title: const Text('Beat Their Best'),
+                subtitle: Text(
+                  isFriend
+                      ? 'Challenge without notification (async)'
+                      : 'Try to beat their record!',
+                ),
+                onTap: () async {
+                  Navigator.pop(sheetContext);
+                  await _createAsyncChallenge(userId, userName);
                 },
               ),
-              const Divider(),
             ],
-
-            // Async challenge (Beat Their Best)
-            ListTile(
-              leading: const Icon(Icons.flash_on, color: AppColors.cyan),
-              title: const Text('Beat Their Best'),
-              subtitle: Text(
-                isFriend
-                    ? 'Challenge without notification (async)'
-                    : 'Try to beat their record!',
-              ),
-              onTap: () async {
-                Navigator.pop(context);
-                await _createAsyncChallenge(userId, userName);
-              },
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

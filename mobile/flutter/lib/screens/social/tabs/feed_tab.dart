@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/providers/admin_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -130,12 +131,18 @@ class _FeedTabState extends ConsumerState<FeedTab> {
         Positioned(
           bottom: 80, // Above the bottom nav bar
           right: 16,
-          child: FloatingActionButton(
-            onPressed: () => _showCreatePostSheet(userId),
-            backgroundColor: AppColors.cyan,
-            foregroundColor: Colors.white,
-            elevation: 4,
-            child: const Icon(Icons.add_rounded, size: 28),
+          child: Builder(
+            builder: (context) {
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              final accentColor = ref.colors(context).accent;
+              return FloatingActionButton(
+                onPressed: () => _showCreatePostSheet(userId),
+                backgroundColor: accentColor,
+                foregroundColor: isDark ? Colors.black : Colors.white,
+                elevation: 4,
+                child: const Icon(Icons.add_rounded, size: 28),
+              );
+            },
           ),
         ),
       ],

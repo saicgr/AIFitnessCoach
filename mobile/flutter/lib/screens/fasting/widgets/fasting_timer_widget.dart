@@ -26,7 +26,9 @@ class FastingTimerWidget extends ConsumerWidget {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    // Use monochrome accent instead of purple
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
 
     // Watch the timer for live updates
     final timerValue = ref.watch(fastingTimerProvider);
@@ -138,7 +140,7 @@ class FastingTimerWidget extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: purple,
+                              color: accentColor,
                               fontFeatures: const [FontFeature.tabularFigures()],
                             ),
                           ),
@@ -157,18 +159,11 @@ class FastingTimerWidget extends ConsumerWidget {
                               width: screenWidth < 380 ? 64 : 72,
                               height: screenWidth < 380 ? 64 : 72,
                               decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    purple,
-                                    purple.withValues(alpha: 0.8),
-                                  ],
-                                ),
+                                color: accentColor,
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: purple.withValues(alpha: 0.4),
+                                    color: accentColor.withValues(alpha: 0.4),
                                     blurRadius: 20,
                                     spreadRadius: 4,
                                   ),
@@ -176,7 +171,7 @@ class FastingTimerWidget extends ConsumerWidget {
                               ),
                               child: Icon(
                                 Icons.play_arrow_rounded,
-                                color: Colors.white,
+                                color: accentContrast,
                                 size: screenWidth < 380 ? 36 : 40,
                               ),
                             ),
@@ -236,25 +231,25 @@ class FastingTimerWidget extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
 
-            // End fast button
+            // End fast button - using monochrome accent
             TextButton.icon(
               onPressed: onEndFast,
               icon: Icon(
                 Icons.stop_rounded,
-                color: AppColors.coral,
+                color: accentColor,
                 size: 20,
               ),
               label: Text(
                 'End Fast',
                 style: TextStyle(
-                  color: AppColors.coral,
+                  color: accentColor,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               style: TextButton.styleFrom(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                backgroundColor: AppColors.coral.withValues(alpha: 0.1),
+                backgroundColor: accentColor.withValues(alpha: 0.1),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

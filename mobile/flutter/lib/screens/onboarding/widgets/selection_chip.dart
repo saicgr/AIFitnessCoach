@@ -33,12 +33,12 @@ class SelectionChip extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.cyan.withOpacity(0.15)
+              ? AppColors.accent.withOpacity(0.15)
               : AppColors.glassSurface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? AppColors.cyan
+                ? AppColors.accent
                 : AppColors.cardBorder,
             width: isSelected ? 2 : 1,
           ),
@@ -59,7 +59,7 @@ class SelectionChip extends StatelessWidget {
           Icon(
             icon,
             size: 18,
-            color: isSelected ? AppColors.cyan : AppColors.textSecondary,
+            color: isSelected ? AppColors.accent : AppColors.textSecondary,
           ),
           const SizedBox(width: 8),
         ],
@@ -68,7 +68,7 @@ class SelectionChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected ? AppColors.cyan : AppColors.textPrimary,
+            color: isSelected ? AppColors.accent : AppColors.textPrimary,
           ),
         ),
       ],
@@ -84,14 +84,14 @@ class SelectionChip extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.cyan.withOpacity(0.2)
+                  ? AppColors.accent.withOpacity(0.2)
                   : AppColors.elevated,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               icon,
               size: 20,
-              color: isSelected ? AppColors.cyan : AppColors.textSecondary,
+              color: isSelected ? AppColors.accent : AppColors.textSecondary,
             ),
           ),
           const SizedBox(width: 12),
@@ -105,7 +105,7 @@ class SelectionChip extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: isSelected ? AppColors.cyan : AppColors.textPrimary,
+                  color: isSelected ? AppColors.accent : AppColors.textPrimary,
                 ),
               ),
               if (description != null) ...[
@@ -126,9 +126,9 @@ class SelectionChip extends StatelessWidget {
           height: 24,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isSelected ? AppColors.cyan : Colors.transparent,
+            color: isSelected ? AppColors.accent : Colors.transparent,
             border: Border.all(
-              color: isSelected ? AppColors.cyan : AppColors.textMuted,
+              color: isSelected ? AppColors.accent : AppColors.textMuted,
               width: 2,
             ),
           ),
@@ -313,12 +313,12 @@ class DaySelector extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.cyan
+                  ? AppColors.accent
                   : AppColors.glassSurface,
               shape: BoxShape.circle,
               border: Border.all(
                 color: isSelected
-                    ? AppColors.cyan
+                    ? AppColors.accent
                     : AppColors.cardBorder,
                 width: isSelected ? 2 : 1,
               ),

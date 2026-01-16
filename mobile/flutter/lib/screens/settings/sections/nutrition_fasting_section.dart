@@ -168,40 +168,46 @@ class NutritionFastingSection extends ConsumerWidget {
   const NutritionFastingSection({super.key});
 
   /// Help items explaining each nutrition/fasting preference
-  static const List<Map<String, dynamic>> _nutritionHelpItems = [
-    {
-      'icon': Icons.restaurant_outlined,
-      'title': 'Intermittent Fasting',
-      'description':
-          'Time-restricted eating where you cycle between periods of fasting and eating. Popular protocols include 16:8, 18:6, and OMAD.',
-      'color': AppColors.orange,
-    },
-    {
-      'icon': Icons.schedule,
-      'title': 'Fasting Protocol',
-      'description':
-          'The ratio of fasting to eating hours. 16:8 means 16 hours fasting, 8 hours eating window.',
-      'color': AppColors.purple,
-    },
-    {
-      'icon': Icons.wb_sunny_outlined,
-      'title': 'Wake Time',
-      'description':
-          'Your typical wake-up time. Used to calculate optimal eating windows that align with your circadian rhythm.',
-      'color': AppColors.cyan,
-    },
-    {
-      'icon': Icons.bedtime_outlined,
-      'title': 'Sleep Time',
-      'description':
-          'Your typical bedtime. Helps optimize your eating window to end 2-3 hours before sleep for better digestion.',
-      'color': AppColors.purple,
-    },
-  ];
+  /// Note: Colors will be resolved at build time based on theme
+  static List<Map<String, dynamic>> _getNutritionHelpItems(bool isDark) {
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    return [
+      {
+        'icon': Icons.restaurant_outlined,
+        'title': 'Intermittent Fasting',
+        'description':
+            'Time-restricted eating where you cycle between periods of fasting and eating. Popular protocols include 16:8, 18:6, and OMAD.',
+        'color': accentColor,
+      },
+      {
+        'icon': Icons.schedule,
+        'title': 'Fasting Protocol',
+        'description':
+            'The ratio of fasting to eating hours. 16:8 means 16 hours fasting, 8 hours eating window.',
+        'color': accentColor,
+      },
+      {
+        'icon': Icons.wb_sunny_outlined,
+        'title': 'Wake Time',
+        'description':
+            'Your typical wake-up time. Used to calculate optimal eating windows that align with your circadian rhythm.',
+        'color': accentColor,
+      },
+      {
+        'icon': Icons.bedtime_outlined,
+        'title': 'Sleep Time',
+        'description':
+            'Your typical bedtime. Helps optimize your eating window to end 2-3 hours before sleep for better digestion.',
+        'color': accentColor,
+      },
+    ];
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final settingsState = ref.watch(fastingSettingsProvider);
+    final helpItems = _getNutritionHelpItems(isDark);
 
     if (settingsState.isLoading) {
       return Column(
@@ -211,7 +217,7 @@ class NutritionFastingSection extends ConsumerWidget {
             title: 'NUTRITION & FASTING',
             subtitle: 'Configure your eating schedule',
             helpTitle: 'Nutrition & Fasting Explained',
-            helpItems: _nutritionHelpItems,
+            helpItems: helpItems,
           ),
           const SizedBox(height: 12),
           const Center(
@@ -231,7 +237,7 @@ class NutritionFastingSection extends ConsumerWidget {
           title: 'NUTRITION & FASTING',
           subtitle: 'Configure your eating schedule',
           helpTitle: 'Nutrition & Fasting Explained',
-          helpItems: _nutritionHelpItems,
+          helpItems: helpItems,
         ),
         const SizedBox(height: 12),
         _NutritionFastingCard(settingsState: settingsState),
@@ -253,9 +259,8 @@ class _NutritionFastingCard extends ConsumerWidget {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    // Use monochrome accent
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
 
     return Material(
       color: elevatedColor,
@@ -269,7 +274,7 @@ class _NutritionFastingCard extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               children: [
-                Icon(Icons.restaurant_outlined, color: orange, size: 20),
+                Icon(Icons.restaurant_outlined, color: accentColor, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -291,8 +296,8 @@ class _NutritionFastingCard extends ConsumerWidget {
                           .read(fastingSettingsProvider.notifier)
                           .setInterestedInFasting(value);
                     },
-                    activeTrackColor: orange.withValues(alpha: 0.5),
-                    activeThumbColor: orange,
+                    activeTrackColor: accentColor.withValues(alpha: 0.5),
+                    activeThumbColor: accentColor,
                   ),
                 ),
               ],
@@ -310,7 +315,7 @@ class _NutritionFastingCard extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 child: Row(
                   children: [
-                    Icon(Icons.schedule, color: purple, size: 20),
+                    Icon(Icons.schedule, color: accentColor, size: 20),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -327,7 +332,7 @@ class _NutritionFastingCard extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: purple,
+                        color: accentColor,
                       ),
                     ),
                     const SizedBox(width: 2),
@@ -344,7 +349,7 @@ class _NutritionFastingCard extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Row(
                 children: [
-                  Icon(Icons.bedtime_outlined, color: cyan, size: 20),
+                  Icon(Icons.bedtime_outlined, color: accentColor, size: 20),
                   const SizedBox(width: 10),
                   Text(
                     'Sleep',
@@ -367,7 +372,7 @@ class _NutritionFastingCard extends ConsumerWidget {
                           .read(fastingSettingsProvider.notifier)
                           .setWakeTime(time),
                     ),
-                    color: cyan,
+                    color: accentColor,
                     isDark: isDark,
                   ),
                   const SizedBox(width: 8),
@@ -384,7 +389,7 @@ class _NutritionFastingCard extends ConsumerWidget {
                           .read(fastingSettingsProvider.notifier)
                           .setSleepTime(time),
                     ),
-                    color: cyan,
+                    color: accentColor,
                     isDark: isDark,
                   ),
                 ],
@@ -554,6 +559,8 @@ class _ProtocolSelectorSheet extends StatelessWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final bgColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    // Use monochrome accent
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
 
     return Container(
       padding: const EdgeInsets.only(top: 8, bottom: 16),
@@ -606,11 +613,11 @@ class _ProtocolSelectorSheet extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.purple.withValues(alpha: 0.15)
+                            ? accentColor.withValues(alpha: 0.15)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: isSelected ? AppColors.purple : cardBorder,
+                          color: isSelected ? accentColor : cardBorder,
                           width: isSelected ? 1.5 : 1,
                         ),
                       ),
@@ -623,7 +630,7 @@ class _ProtocolSelectorSheet extends StatelessWidget {
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: isSelected
-                                  ? AppColors.purple
+                                  ? accentColor
                                   : (isDark
                                       ? Colors.white
                                       : AppColorsLight.textPrimary),

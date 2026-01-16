@@ -7,6 +7,12 @@ import '../constants/api_constants.dart';
 
 /// Warmup and stretch duration preferences state
 class WarmupDurationState {
+  /// Whether warmup phase is enabled before workouts
+  final bool warmupEnabled;
+
+  /// Whether stretch/cooldown phase is enabled after workouts
+  final bool stretchEnabled;
+
   /// Warmup duration in minutes (1-15)
   final int warmupDurationMinutes;
 
@@ -20,6 +26,8 @@ class WarmupDurationState {
   final String? error;
 
   const WarmupDurationState({
+    this.warmupEnabled = true,
+    this.stretchEnabled = true,
     this.warmupDurationMinutes = 5,
     this.stretchDurationMinutes = 5,
     this.isLoading = false,
@@ -27,12 +35,16 @@ class WarmupDurationState {
   });
 
   WarmupDurationState copyWith({
+    bool? warmupEnabled,
+    bool? stretchEnabled,
     int? warmupDurationMinutes,
     int? stretchDurationMinutes,
     bool? isLoading,
     String? error,
   }) {
     return WarmupDurationState(
+      warmupEnabled: warmupEnabled ?? this.warmupEnabled,
+      stretchEnabled: stretchEnabled ?? this.stretchEnabled,
       warmupDurationMinutes: warmupDurationMinutes ?? this.warmupDurationMinutes,
       stretchDurationMinutes: stretchDurationMinutes ?? this.stretchDurationMinutes,
       isLoading: isLoading ?? this.isLoading,
@@ -81,6 +93,8 @@ class WarmupDurationNotifier extends StateNotifier<WarmupDurationState> {
       if (authState.user != null) {
         final prefsMap = _parsePreferences(authState.user!.preferences);
         if (prefsMap != null) {
+          final warmupEnabled = prefsMap['warmup_enabled'] as bool? ?? true;
+          final stretchEnabled = prefsMap['stretch_enabled'] as bool? ?? true;
           final warmupDuration = _clampDuration(
             prefsMap['warmup_duration_minutes'] as int?,
           );
@@ -88,21 +102,91 @@ class WarmupDurationNotifier extends StateNotifier<WarmupDurationState> {
             prefsMap['stretch_duration_minutes'] as int?,
           );
           state = WarmupDurationState(
+            warmupEnabled: warmupEnabled,
+            stretchEnabled: stretchEnabled,
             warmupDurationMinutes: warmupDuration,
             stretchDurationMinutes: stretchDuration,
           );
           debugPrint(
-            '   [WarmupDuration] Loaded: warmup=${warmupDuration}min, stretch=${stretchDuration}min',
+            '   [WarmupDuration] Loaded: warmup=$warmupEnabled, stretch=$stretchEnabled, warmup=${warmupDuration}min, stretch=${stretchDuration}min',
           );
           return;
         }
       }
       // Use defaults if no user or no preferences
       state = const WarmupDurationState();
-      debugPrint('   [WarmupDuration] Using defaults: warmup=5min, stretch=5min');
+      debugPrint('   [WarmupDuration] Using defaults: warmup=true, stretch=true, 5min each');
     } catch (e) {
       debugPrint('   [WarmupDuration] Init error: $e');
       state = WarmupDurationState(error: e.toString());
+    }
+  }
+
+  /// Set warmup enabled and sync to backend
+  Future<void> setWarmupEnabled(bool enabled) async {
+    if (enabled == state.warmupEnabled) return;
+
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final apiClient = _ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId != null) {
+        // Get current preferences and merge
+        final authState = _ref.read(authStateProvider);
+        final currentPrefs = _parsePreferences(authState.user?.preferences) ?? {};
+        currentPrefs['warmup_enabled'] = enabled;
+
+        await apiClient.put(
+          '${ApiConstants.users}/$userId',
+          data: {'preferences': jsonEncode(currentPrefs)},
+        );
+        debugPrint('   [WarmupDuration] Synced warmup_enabled: $enabled');
+      }
+
+      // Refresh user to get updated data
+      await _ref.read(authStateProvider.notifier).refreshUser();
+
+      state = state.copyWith(warmupEnabled: enabled, isLoading: false);
+      debugPrint('   [WarmupDuration] Updated warmup_enabled to: $enabled');
+    } catch (e) {
+      debugPrint('   [WarmupDuration] Update error: $e');
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  /// Set stretch enabled and sync to backend
+  Future<void> setStretchEnabled(bool enabled) async {
+    if (enabled == state.stretchEnabled) return;
+
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final apiClient = _ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId != null) {
+        // Get current preferences and merge
+        final authState = _ref.read(authStateProvider);
+        final currentPrefs = _parsePreferences(authState.user?.preferences) ?? {};
+        currentPrefs['stretch_enabled'] = enabled;
+
+        await apiClient.put(
+          '${ApiConstants.users}/$userId',
+          data: {'preferences': jsonEncode(currentPrefs)},
+        );
+        debugPrint('   [WarmupDuration] Synced stretch_enabled: $enabled');
+      }
+
+      // Refresh user to get updated data
+      await _ref.read(authStateProvider.notifier).refreshUser();
+
+      state = state.copyWith(stretchEnabled: enabled, isLoading: false);
+      debugPrint('   [WarmupDuration] Updated stretch_enabled to: $enabled');
+    } catch (e) {
+      debugPrint('   [WarmupDuration] Update error: $e');
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
@@ -232,6 +316,8 @@ class WarmupDurationNotifier extends StateNotifier<WarmupDurationState> {
       final prefsMap = _parsePreferences(authState.user!.preferences);
       if (prefsMap != null) {
         state = WarmupDurationState(
+          warmupEnabled: prefsMap['warmup_enabled'] as bool? ?? true,
+          stretchEnabled: prefsMap['stretch_enabled'] as bool? ?? true,
           warmupDurationMinutes: _clampDuration(
             prefsMap['warmup_duration_minutes'] as int?,
           ),

@@ -6,6 +6,7 @@ library;
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import '../constants/app_colors.dart';
 
 /// Simple confetti particle
 class ConfettiParticle {
@@ -53,14 +54,14 @@ class _ConfettiOverlayState extends State<ConfettiOverlay>
   late List<ConfettiParticle> _particles;
   final Random _random = Random();
 
-  static const List<Color> _colors = [
-    Color(0xFFFFD700), // Gold
-    Color(0xFFFF6B6B), // Red
-    Color(0xFF4ECDC4), // Cyan
-    Color(0xFFFFE66D), // Yellow
-    Color(0xFF95E1D3), // Mint
-    Color(0xFFFF8B94), // Pink
-    Color(0xFFA8E6CE), // Light green
+  static final List<Color> _colors = [
+    AppColors.textPrimary, // White/primary
+    AppColors.textSecondary, // Light gray
+    AppColors.textMuted, // Muted gray
+    AppColors.textPrimary.withValues(alpha: 0.9),
+    AppColors.textSecondary.withValues(alpha: 0.8),
+    AppColors.textMuted.withValues(alpha: 0.7),
+    AppColors.textPrimary.withValues(alpha: 0.6),
   ];
 
   @override
@@ -182,7 +183,7 @@ class SetCompletionBurst extends StatefulWidget {
 
   const SetCompletionBurst({
     super.key,
-    this.color = const Color(0xFF4CAF50),
+    this.color = AppColors.textPrimary,
     this.size = 60,
     this.onComplete,
   });
@@ -247,7 +248,7 @@ class PRRippleEffect extends StatefulWidget {
 
   const PRRippleEffect({
     super.key,
-    this.color = const Color(0xFFFFD700),
+    this.color = AppColors.textPrimary,
     this.rippleCount = 3,
     this.onComplete,
   });
@@ -327,7 +328,7 @@ class StarBurstAnimation extends StatefulWidget {
   const StarBurstAnimation({
     super.key,
     this.starCount = 8,
-    this.color = const Color(0xFFFFD700),
+    this.color = AppColors.textPrimary,
     this.onComplete,
   });
 

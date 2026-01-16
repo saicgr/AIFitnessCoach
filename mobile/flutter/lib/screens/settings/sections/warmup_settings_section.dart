@@ -47,8 +47,56 @@ class _WarmupSettingsCard extends ConsumerWidget {
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          // Warmup duration slider
+          // Warmup enabled toggle
           Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.play_circle_outline,
+                  color: textPrimary,
+                  size: 22,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Enable Warmup Phase',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Show warmup screen before workouts',
+                        style: TextStyle(fontSize: 12, color: textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch.adaptive(
+                  value: warmupState.warmupEnabled,
+                  onChanged: warmupState.isLoading
+                      ? null
+                      : (value) {
+                          HapticFeedback.lightImpact();
+                          ref.read(warmupDurationProvider.notifier).setWarmupEnabled(value);
+                        },
+                  activeColor: orange,
+                ),
+              ],
+            ),
+          ),
+
+          Divider(height: 1, color: cardBorder, indent: 16, endIndent: 16),
+
+          // Warmup duration slider (only shown when enabled)
+          if (warmupState.warmupEnabled)
+            Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,10 +184,60 @@ class _WarmupSettingsCard extends ConsumerWidget {
             ),
           ),
 
-          Divider(height: 1, color: cardBorder, indent: 16, endIndent: 16),
+          if (warmupState.warmupEnabled)
+            Divider(height: 1, color: cardBorder, indent: 16, endIndent: 16),
 
-          // Stretch duration slider
+          // Stretch enabled toggle
           Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.self_improvement,
+                  color: textPrimary,
+                  size: 22,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Enable Cooldown Stretch',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Show stretch screen after workouts',
+                        style: TextStyle(fontSize: 12, color: textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch.adaptive(
+                  value: warmupState.stretchEnabled,
+                  onChanged: warmupState.isLoading
+                      ? null
+                      : (value) {
+                          HapticFeedback.lightImpact();
+                          ref.read(warmupDurationProvider.notifier).setStretchEnabled(value);
+                        },
+                  activeColor: cyan,
+                ),
+              ],
+            ),
+          ),
+
+          if (warmupState.stretchEnabled)
+            Divider(height: 1, color: cardBorder, indent: 16, endIndent: 16),
+
+          // Stretch duration slider (only shown when enabled)
+          if (warmupState.stretchEnabled)
+            Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,10 +325,12 @@ class _WarmupSettingsCard extends ConsumerWidget {
             ),
           ),
 
-          Divider(height: 1, color: cardBorder),
+          if (warmupState.warmupEnabled || warmupState.stretchEnabled)
+            Divider(height: 1, color: cardBorder),
 
-          // Info section
-          Padding(
+          // Info section (only show if warmup or stretch is enabled)
+          if (warmupState.warmupEnabled || warmupState.stretchEnabled)
+            Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

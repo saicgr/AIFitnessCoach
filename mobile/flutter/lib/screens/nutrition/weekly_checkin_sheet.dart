@@ -487,7 +487,7 @@ class _WeeklySummaryCard extends StatelessWidget {
                   label: 'Days Logged',
                   value: '${summary.daysLogged}/7',
                   icon: Icons.check_circle,
-                  color: const Color(0xFF6BCB77),
+                  color: AppColors.textPrimary,
                   isDark: isDark,
                 ),
               ),
@@ -497,7 +497,7 @@ class _WeeklySummaryCard extends StatelessWidget {
                   label: 'Avg Calories',
                   value: '${summary.avgCalories}',
                   icon: Icons.local_fire_department,
-                  color: const Color(0xFFFF6B6B),
+                  color: AppColors.textMuted,
                   isDark: isDark,
                 ),
               ),
@@ -511,7 +511,7 @@ class _WeeklySummaryCard extends StatelessWidget {
                   label: 'Avg Protein',
                   value: '${summary.avgProtein}g',
                   icon: Icons.fitness_center,
-                  color: const Color(0xFFFFD93D),
+                  color: AppColors.textSecondary,
                   isDark: isDark,
                 ),
               ),
@@ -540,9 +540,9 @@ class _WeeklySummaryCard extends StatelessWidget {
 
   Color _getWeightChangeColor(double? change) {
     if (change == null) return Colors.grey;
-    if (change.abs() < 0.2) return const Color(0xFF6BCB77); // Stable
-    if (change < 0) return const Color(0xFF4D96FF); // Loss
-    return const Color(0xFFFF9800); // Gain
+    if (change.abs() < 0.2) return AppColors.textPrimary; // Stable
+    if (change < 0) return AppColors.textSecondary; // Loss
+    return AppColors.textSecondary; // Gain
   }
 }
 
@@ -838,7 +838,7 @@ class _DetailedTdeeCard extends StatelessWidget {
                       '$dataQualityPercent%',
                       style: TextStyle(
                         fontSize: 13,
-                        color: dataQualityPercent >= 60 ? const Color(0xFF6BCB77) : Colors.orange,
+                        color: dataQualityPercent >= 60 ? AppColors.textPrimary : Colors.orange,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -851,7 +851,7 @@ class _DetailedTdeeCard extends StatelessWidget {
                     value: detailedTdee.dataQualityScore,
                     backgroundColor: Colors.orange.withValues(alpha: 0.2),
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      dataQualityPercent >= 60 ? const Color(0xFF6BCB77) : Colors.orange,
+                      dataQualityPercent >= 60 ? AppColors.textPrimary : Colors.orange,
                     ),
                     minHeight: 8,
                   ),
@@ -906,13 +906,13 @@ class _MetabolicAdaptationAlert extends StatelessWidget {
     Color alertColor;
     switch (adaptation.severity) {
       case 'high':
-        alertColor = const Color(0xFFFF6B6B);
+        alertColor = AppColors.textMuted;
         break;
       case 'medium':
-        alertColor = const Color(0xFFFF9800);
+        alertColor = AppColors.textSecondary;
         break;
       default:
-        alertColor = const Color(0xFFFFD93D);
+        alertColor = AppColors.textSecondary;
     }
 
     return Container(
@@ -1003,13 +1003,13 @@ class _AdherenceCard extends StatelessWidget {
     Color sustainColor;
     switch (adherence.sustainabilityRating) {
       case 'high':
-        sustainColor = const Color(0xFF6BCB77);
+        sustainColor = AppColors.textPrimary;
         break;
       case 'medium':
-        sustainColor = const Color(0xFFFF9800);
+        sustainColor = AppColors.textSecondary;
         break;
       default:
-        sustainColor = const Color(0xFFFF6B6B);
+        sustainColor = AppColors.textMuted;
     }
 
     return Container(
@@ -1045,7 +1045,7 @@ class _AdherenceCard extends StatelessWidget {
                 child: _ScoreCircle(
                   label: 'Adherence',
                   value: adherence.averageAdherence,
-                  color: const Color(0xFF4D96FF),
+                  color: AppColors.textSecondary,
                   isDark: isDark,
                 ),
               ),
@@ -1329,13 +1329,13 @@ class _RecommendationOptionCard extends StatelessWidget {
     Color optionColor;
     switch (option.optionType) {
       case 'aggressive':
-        optionColor = const Color(0xFFFF6B6B);
+        optionColor = AppColors.textMuted;
         break;
       case 'conservative':
-        optionColor = const Color(0xFF6BCB77);
+        optionColor = AppColors.textPrimary;
         break;
       default:
-        optionColor = const Color(0xFF4D96FF);
+        optionColor = AppColors.textSecondary;
     }
 
     return GestureDetector(
@@ -1447,25 +1447,25 @@ class _RecommendationOptionCard extends StatelessWidget {
               children: [
                 _MacroChip(
                   label: '${option.calories} cal',
-                  color: const Color(0xFFFF6B6B),
+                  color: AppColors.textMuted,
                   isDark: isDark,
                 ),
                 const SizedBox(width: 8),
                 _MacroChip(
                   label: '${option.proteinG}g P',
-                  color: const Color(0xFFFFD93D),
+                  color: AppColors.textSecondary,
                   isDark: isDark,
                 ),
                 const SizedBox(width: 8),
                 _MacroChip(
                   label: '${option.carbsG}g C',
-                  color: const Color(0xFF6BCB77),
+                  color: AppColors.textPrimary,
                   isDark: isDark,
                 ),
                 const SizedBox(width: 8),
                 _MacroChip(
                   label: '${option.fatG}g F',
-                  color: const Color(0xFF4D96FF),
+                  color: AppColors.textSecondary,
                   isDark: isDark,
                 ),
               ],
@@ -1619,7 +1619,7 @@ class _AdaptiveTdeeCard extends StatelessWidget {
                     : Icons.info_outline,
                 size: 16,
                 color: calculation.dataQualityScore >= 0.7
-                    ? const Color(0xFF6BCB77)
+                    ? AppColors.textPrimary
                     : Colors.orange,
               ),
               const SizedBox(width: 8),
@@ -1694,7 +1694,7 @@ class _AdaptiveTdeeCard extends StatelessWidget {
                   label: 'Food Logging',
                   current: calculation.daysLogged,
                   target: 6,
-                  color: calculation.daysLogged >= 6 ? const Color(0xFF6BCB77) : Colors.orange,
+                  color: calculation.daysLogged >= 6 ? AppColors.textPrimary : Colors.orange,
                   textPrimary: textPrimary,
                   textMuted: textMuted,
                 ),
@@ -1705,7 +1705,7 @@ class _AdaptiveTdeeCard extends StatelessWidget {
                   label: 'Weight Logs',
                   current: calculation.weightEntries,
                   target: 2,
-                  color: calculation.weightEntries >= 2 ? const Color(0xFF6BCB77) : Colors.orange,
+                  color: calculation.weightEntries >= 2 ? AppColors.textPrimary : Colors.orange,
                   textPrimary: textPrimary,
                   textMuted: textMuted,
                 ),
@@ -1760,7 +1760,7 @@ class _AdaptiveTdeeCard extends StatelessWidget {
                     isComplete ? 'Complete!' : '$current / $target days',
                     style: TextStyle(
                       fontSize: 12,
-                      color: isComplete ? const Color(0xFF6BCB77) : textMuted,
+                      color: isComplete ? AppColors.textPrimary : textMuted,
                       fontWeight: isComplete ? FontWeight.w600 : FontWeight.normal,
                     ),
                   ),
@@ -1893,7 +1893,7 @@ class _RecommendationCard extends StatelessWidget {
                   label: 'Calories',
                   value: '${recommendation.recommendedCalories}',
                   unit: 'kcal',
-                  color: const Color(0xFFFF6B6B),
+                  color: AppColors.textMuted,
                   isDark: isDark,
                 ),
               ),
@@ -1903,7 +1903,7 @@ class _RecommendationCard extends StatelessWidget {
                   label: 'Protein',
                   value: '${recommendation.recommendedProteinG}',
                   unit: 'g',
-                  color: const Color(0xFFFFD93D),
+                  color: AppColors.textSecondary,
                   isDark: isDark,
                 ),
               ),
@@ -1917,7 +1917,7 @@ class _RecommendationCard extends StatelessWidget {
                   label: 'Carbs',
                   value: '${recommendation.recommendedCarbsG}',
                   unit: 'g',
-                  color: const Color(0xFF6BCB77),
+                  color: AppColors.textPrimary,
                   isDark: isDark,
                 ),
               ),
@@ -1927,7 +1927,7 @@ class _RecommendationCard extends StatelessWidget {
                   label: 'Fat',
                   value: '${recommendation.recommendedFatG}',
                   unit: 'g',
-                  color: const Color(0xFF4D96FF),
+                  color: AppColors.textSecondary,
                   isDark: isDark,
                 ),
               ),
@@ -2147,7 +2147,7 @@ class _TipItem extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.check, size: 14, color: const Color(0xFF6BCB77)),
+          Icon(Icons.check, size: 14, color: AppColors.textPrimary),
           const SizedBox(width: 8),
           Expanded(
             child: Text(

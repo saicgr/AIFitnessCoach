@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/models/home_layout.dart';
 import '../../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../../data/repositories/auth_repository.dart';
@@ -118,6 +119,10 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
     final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
+    // Get accent color from provider
+    final accentColorEnum = ref.watch(accentColorProvider);
+    final accentColor = accentColorEnum.getColor(widget.isDark);
+
     final nutritionState = ref.watch(nutritionPreferencesProvider);
     final weightHistory = nutritionState.weightHistory;
     final lastWeight = weightHistory.isNotEmpty ? weightHistory.first : null;
@@ -150,14 +155,11 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
       margin: widget.size == TileSize.full
           ? const EdgeInsets.symmetric(horizontal: 16, vertical: 4)
           : null,
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: elevatedColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.cyan.withValues(alpha: 0.15),
+            color: accentColor.withValues(alpha: 0.15),
             blurRadius: 16,
             offset: const Offset(0, 6),
             spreadRadius: 1,
@@ -169,13 +171,26 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
           ),
         ],
       ),
-      child: Column(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: elevatedColor,
+            border: Border(
+              left: BorderSide(color: accentColor, width: 4),
+              top: BorderSide(color: cardBorder),
+              right: BorderSide(color: cardBorder),
+              bottom: BorderSide(color: cardBorder),
+            ),
+          ),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header row
           Row(
             children: [
-              Icon(Icons.monitor_weight_outlined, color: AppColors.cyan, size: 20),
+              Icon(Icons.monitor_weight_outlined, color: accentColor, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -183,7 +198,7 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: textMuted,
+                    color: textColor,
                   ),
                 ),
               ),
@@ -191,7 +206,7 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
                 onTap: _openFullSheet,
                 child: Icon(
                   Icons.open_in_new,
-                  color: textMuted,
+                  color: textColor,
                   size: 18,
                 ),
               ),
@@ -316,9 +331,9 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
                   child: ElevatedButton(
                     onPressed: _isSubmitting ? null : _logWeight,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.cyan,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: AppColors.cyan.withValues(alpha: 0.5),
+                      backgroundColor: accentColor,
+                      foregroundColor: widget.isDark ? Colors.black : Colors.white,
+                      disabledBackgroundColor: accentColor.withValues(alpha: 0.5),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -367,6 +382,8 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
             _buildTrendInfo(textMuted, ref),
           ],
         ],
+          ),
+        ),
       ),
     );
   }
@@ -378,33 +395,49 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
     required Color cardBorder,
     required double? lastWeight,
   }) {
+    // Get accent color from provider
+    final accentColorEnum = ref.watch(accentColorProvider);
+    final accentColor = accentColorEnum.getColor(widget.isDark);
+
     return GestureDetector(
       onTap: _openFullSheet,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: elevatedColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.monitor_weight_outlined,
-              color: AppColors.cyan,
-              size: 16,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              lastWeight != null ? '${lastWeight.toStringAsFixed(1)} lbs' : 'Log',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: textColor,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: elevatedColor,
+              border: Border(
+                left: BorderSide(color: accentColor, width: 4),
+                top: BorderSide(color: cardBorder),
+                right: BorderSide(color: cardBorder),
+                bottom: BorderSide(color: cardBorder),
               ),
             ),
-          ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.monitor_weight_outlined,
+                  color: accentColor,
+                  size: 16,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  lastWeight != null ? '${lastWeight.toStringAsFixed(1)} lbs' : 'Log',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

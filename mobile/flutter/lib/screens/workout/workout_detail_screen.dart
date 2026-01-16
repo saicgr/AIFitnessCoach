@@ -6,6 +6,8 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/user_provider.dart';
+import '../../core/providers/warmup_duration_provider.dart';
 import '../../core/utils/difficulty_utils.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
@@ -14,6 +16,7 @@ import '../../data/models/coach_persona.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/services/haptic_service.dart';
 import '../home/widgets/components/training_program_selector.dart';
 import 'widgets/workout_actions_sheet.dart';
 import 'widgets/exercise_swap_sheet.dart';
@@ -45,6 +48,15 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   WorkoutGenerationParams? _generationParams;  // AI reasoning and parameters
   bool _isLoadingParams = false;  // Loading state for generation params
   bool _isAIReasoningExpanded = false;  // For AI reasoning section
+  bool? _useKgOverride;  // Local override for kg/lbs toggle
+
+  /// Toggle between kg and lbs units locally
+  void _toggleUnit() {
+    setState(() {
+      final bool currentUseKg = _useKgOverride ?? ref.read(useKgProvider);
+      _useKgOverride = !currentUseKg;
+    });
+  }
 
   @override
   void initState() {
@@ -428,6 +440,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 isExpanded: _isWarmupExpanded,
                 onTap: () => setState(() => _isWarmupExpanded = !_isWarmupExpanded),
                 itemCount: _getWarmupExercises().length,
+                toggleValue: ref.watch(warmupDurationProvider).warmupEnabled,
+                onToggleChanged: (value) {
+                  ref.read(warmupDurationProvider.notifier).setWarmupEnabled(value);
+                },
               ),
             ),
           ),
@@ -487,6 +503,43 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                     ),
                   ),
                   const Spacer(),
+                  // kg/lb toggle button
+                  GestureDetector(
+                    onTap: () {
+                      HapticService.light();
+                      _toggleUnit();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.purple.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.purple.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.swap_horiz,
+                            color: AppColors.purple,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            (_useKgOverride ?? ref.watch(useKgProvider)) ? 'kg' : 'lbs',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.purple,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   // Add exercise button (+ icon)
                   GestureDetector(
                     onTap: () async {
@@ -505,10 +558,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: AppColors.cyan.withOpacity(0.1),
+                        color: AppColors.cyan.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: AppColors.cyan.withOpacity(0.3),
+                          color: AppColors.cyan.withValues(alpha: 0.3),
                         ),
                       ),
                       child: const Icon(
@@ -606,6 +659,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 isExpanded: _isStretchesExpanded,
                 onTap: () => setState(() => _isStretchesExpanded = !_isStretchesExpanded),
                 itemCount: _getStretchExercises().length,
+                toggleValue: ref.watch(warmupDurationProvider).stretchEnabled,
+                onToggleChanged: (value) {
+                  ref.read(warmupDurationProvider.notifier).setStretchEnabled(value);
+                },
               ),
             ),
           ),
@@ -1889,6 +1946,8 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     required VoidCallback onTap,
     required int itemCount,
     String? subtitle,
+    bool? toggleValue,
+    ValueChanged<bool>? onToggleChanged,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -1903,7 +1962,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
           color: elevatedColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: color.withOpacity(0.3),
+            color: color.withValues(alpha: 0.3),
           ),
         ),
         child: Row(
@@ -1911,7 +1970,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
+                color: color.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: color, size: 16),
@@ -1936,7 +1995,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: color.withOpacity(0.2),
+                          color: color.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -1956,13 +2015,28 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                       subtitle,
                       style: TextStyle(
                         fontSize: 11,
-                        color: textMuted.withOpacity(0.8),
+                        color: textMuted.withValues(alpha: 0.8),
                       ),
                     ),
                   ],
                 ],
               ),
             ),
+            // Toggle switch (if provided)
+            if (toggleValue != null && onToggleChanged != null) ...[
+              GestureDetector(
+                onTap: () {}, // Absorb tap to prevent collapse/expand
+                child: Switch.adaptive(
+                  value: toggleValue,
+                  onChanged: (value) {
+                    HapticFeedback.lightImpact();
+                    onToggleChanged(value);
+                  },
+                  activeColor: color,
+                ),
+              ),
+              const SizedBox(width: 4),
+            ],
             Icon(
               isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
               color: textMuted,

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import 'sections/sections.dart';
 import 'widgets/widgets.dart';
 
@@ -313,113 +314,118 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // Track if search bar is expanded
   bool _isSearchExpanded = false;
 
-  // Samsung-style settings groups
-  late final List<_SettingsGroup> _settingsGroups = [
-    _SettingsGroup(
-      id: 'ai_coach',
-      icon: Icons.auto_awesome,
-      title: 'AI Coach',
-      subtitle: 'Voice, personality, coaching style',
-      color: AppColors.cyan,
-      sectionKeys: ['ai_coach'],
-    ),
-    _SettingsGroup(
-      id: 'appearance',
-      icon: Icons.palette_outlined,
-      title: 'Appearance',
-      subtitle: 'Theme, haptics, app mode, accessibility',
-      color: AppColors.orange,
-      sectionKeys: ['preferences', 'haptics', 'app_mode', 'accessibility'],
-    ),
-    _SettingsGroup(
-      id: 'audio',
-      icon: Icons.volume_up_outlined,
-      title: 'Sound & Voice',
-      subtitle: 'Announcements, music, audio settings',
-      color: AppColors.orange,
-      sectionKeys: ['voice_announcements', 'audio_settings'],
-    ),
-    _SettingsGroup(
-      id: 'workout_settings',
-      icon: Icons.speed,
-      title: 'Workout Settings',
-      subtitle: 'Progression, intensity, splits, schedule',
-      color: AppColors.success,
-      sectionKeys: ['training'],
-    ),
-    _SettingsGroup(
-      id: 'nutrition_fasting',
-      icon: Icons.restaurant_outlined,
-      title: 'Nutrition & Fasting',
-      subtitle: 'Fasting protocol, eating window, sleep',
-      color: AppColors.orange,
-      sectionKeys: ['nutrition_fasting'],
-    ),
-    _SettingsGroup(
-      id: 'exercise_preferences',
-      icon: Icons.favorite_outline,
-      title: 'Exercise Preferences',
-      subtitle: 'Favorites, avoided, queue',
-      color: AppColors.error,
-      sectionKeys: ['training'],
-    ),
-    _SettingsGroup(
-      id: 'equipment',
-      icon: Icons.fitness_center,
-      title: 'Equipment & Environment',
-      subtitle: 'Calibration, equipment, warmup, supersets',
-      color: const Color(0xFF8E8E93),
-      sectionKeys: ['calibration', 'custom_content', 'warmup_settings', 'superset'],
-    ),
-    _SettingsGroup(
-      id: 'notifications',
-      icon: Icons.notifications_outlined,
-      title: 'Notifications',
-      subtitle: 'Workout reminders, push notifications',
-      color: AppColors.info,
-      sectionKeys: ['notifications'],
-    ),
-    _SettingsGroup(
-      id: 'connections',
-      icon: Icons.sync_alt,
-      title: 'Connections',
-      subtitle: 'Health sync, watch, email',
-      color: const Color(0xFF5AC8FA),
-      sectionKeys: ['health_sync', 'wear_os', 'email_preferences'],
-    ),
-    _SettingsGroup(
-      id: 'shop',
-      icon: Icons.storefront,
-      title: 'Shop',
-      subtitle: 'Apparel, gear & digital products',
-      color: AppColors.success,
-      sectionKeys: ['shop'],
-    ),
-    _SettingsGroup(
-      id: 'about',
-      icon: Icons.info_outline,
-      title: 'About & Support',
-      subtitle: 'Legal, version info',
-      color: AppColors.textMuted,
-      sectionKeys: ['support', 'app_info'],
-    ),
-    _SettingsGroup(
-      id: 'subscription',
-      icon: Icons.workspace_premium,
-      title: 'Subscription',
-      subtitle: 'Manage your plan and billing',
-      color: const Color(0xFFFFD700),
-      sectionKeys: ['subscription'],
-    ),
-    _SettingsGroup(
-      id: 'account',
-      icon: Icons.manage_accounts_outlined,
-      title: 'Account',
-      subtitle: 'Privacy, data export, delete account',
-      color: AppColors.error,
-      sectionKeys: ['social_privacy', 'data_management', 'danger_zone', 'logout'],
-    ),
-  ];
+  // Samsung-style settings groups - colors are set dynamically in build
+  List<_SettingsGroup> _getSettingsGroups(bool isDark) {
+    final iconColor = isDark ? AppColors.textSecondary : AppColorsLight.textPrimary;
+    final mutedColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return [
+      _SettingsGroup(
+        id: 'ai_coach',
+        icon: Icons.auto_awesome,
+        title: 'AI Coach',
+        subtitle: 'Voice, personality, coaching style',
+        color: iconColor,
+        sectionKeys: ['ai_coach'],
+      ),
+      _SettingsGroup(
+        id: 'appearance',
+        icon: Icons.palette_outlined,
+        title: 'Appearance',
+        subtitle: 'Theme, haptics, app mode, accessibility',
+        color: iconColor,
+        sectionKeys: ['preferences', 'haptics', 'app_mode', 'accessibility'],
+      ),
+      _SettingsGroup(
+        id: 'audio',
+        icon: Icons.volume_up_outlined,
+        title: 'Sound & Voice',
+        subtitle: 'Announcements, music, audio settings',
+        color: iconColor,
+        sectionKeys: ['voice_announcements', 'audio_settings'],
+      ),
+      _SettingsGroup(
+        id: 'workout_settings',
+        icon: Icons.speed,
+        title: 'Workout Settings',
+        subtitle: 'Progression, intensity, splits, schedule',
+        color: iconColor,
+        sectionKeys: ['training'],
+      ),
+      _SettingsGroup(
+        id: 'nutrition_fasting',
+        icon: Icons.restaurant_outlined,
+        title: 'Nutrition & Fasting',
+        subtitle: 'Fasting protocol, eating window, sleep',
+        color: iconColor,
+        sectionKeys: ['nutrition_fasting'],
+      ),
+      _SettingsGroup(
+        id: 'exercise_preferences',
+        icon: Icons.favorite_outline,
+        title: 'Exercise Preferences',
+        subtitle: 'Favorites, avoided, queue',
+        color: iconColor,
+        sectionKeys: ['training'],
+      ),
+      _SettingsGroup(
+        id: 'equipment',
+        icon: Icons.fitness_center,
+        title: 'Equipment & Environment',
+        subtitle: 'Calibration, equipment, warmup, supersets',
+        color: iconColor,
+        sectionKeys: ['calibration', 'custom_content', 'warmup_settings', 'superset'],
+      ),
+      _SettingsGroup(
+        id: 'notifications',
+        icon: Icons.notifications_outlined,
+        title: 'Notifications',
+        subtitle: 'Workout reminders, push notifications',
+        color: iconColor,
+        sectionKeys: ['notifications'],
+      ),
+      _SettingsGroup(
+        id: 'connections',
+        icon: Icons.sync_alt,
+        title: 'Connections',
+        subtitle: 'Health sync, watch, email',
+        color: iconColor,
+        sectionKeys: ['health_sync', 'wear_os', 'email_preferences'],
+      ),
+      _SettingsGroup(
+        id: 'shop',
+        icon: Icons.storefront,
+        title: 'Shop',
+        subtitle: 'Apparel, gear & digital products',
+        color: iconColor,
+        sectionKeys: ['shop'],
+      ),
+      _SettingsGroup(
+        id: 'about',
+        icon: Icons.info_outline,
+        title: 'About & Support',
+        subtitle: 'Legal, version info',
+        color: mutedColor,
+        sectionKeys: ['support', 'app_info'],
+      ),
+      _SettingsGroup(
+        id: 'subscription',
+        icon: Icons.workspace_premium,
+        title: 'Subscription',
+        subtitle: 'Manage your plan and billing',
+        color: isDark ? const Color(0xFFFFD700) : const Color(0xFFB8860B),
+        sectionKeys: ['subscription'],
+      ),
+      _SettingsGroup(
+        id: 'account',
+        icon: Icons.manage_accounts_outlined,
+        title: 'Account',
+        subtitle: 'Privacy, data export, delete account',
+        color: isDark ? AppColors.error : AppColorsLight.error,
+        sectionKeys: ['social_privacy', 'data_management', 'danger_zone', 'logout'],
+      ),
+    ];
+  }
 
   @override
   void dispose() {
@@ -803,6 +809,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   /// Build the collapsed search FAB
   Widget _buildSearchFAB(bool isDark) {
+    final accentColor = ref.colors(context).accent;
+
     return GestureDetector(
       key: const ValueKey('search_fab'),
       onTap: () {
@@ -819,28 +827,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         width: 56,
         height: 56,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              isDark ? AppColors.purple : AppColorsLight.purple,
-              isDark ? AppColors.cyan : AppColorsLight.cyan,
-            ],
-          ),
+          color: accentColor,
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: (isDark ? AppColors.purple : AppColorsLight.purple)
-                  .withValues(alpha: 0.4),
+              color: accentColor.withValues(alpha: 0.3),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: const Center(
+        child: Center(
           child: Icon(
             Icons.search,
-            color: Colors.white,
+            color: isDark ? Colors.black : Colors.white,
             size: 24,
           ),
         ),
@@ -881,7 +881,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               // AI sparkle icon
               Icon(
                 Icons.auto_awesome,
-                color: isDark ? AppColors.purple : AppColorsLight.purple,
+                color: textPrimary,
                 size: 20,
               ),
               const SizedBox(width: 12),
@@ -963,10 +963,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => context.push('/help'),
-            child: const Text(
+            child: Text(
               'Help',
               style: TextStyle(
-                color: Color(0xFFFF3B30), // Red color
+                color: AppColors.error,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -989,7 +989,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Samsung-style grouped settings cards
-                  ..._settingsGroups.asMap().entries.map((entry) {
+                  ..._getSettingsGroups(isDark).asMap().entries.map((entry) {
                     final index = entry.key;
                     final group = entry.value;
 

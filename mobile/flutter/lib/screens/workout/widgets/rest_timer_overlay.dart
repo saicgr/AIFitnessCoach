@@ -162,7 +162,7 @@ class RestTimerOverlay extends StatelessWidget {
               child: Column(
                 children: [
                   SizedBox(height: isCompactScreen ? 8 : 16),
-                  _buildRestLabel(),
+                  _buildRestLabel(isDark),
                   const SizedBox(height: 8),
                   _buildTimer(textColor),
                   const SizedBox(height: 12),
@@ -232,7 +232,7 @@ class RestTimerOverlay extends StatelessWidget {
                         !isLoadingWeightSuggestion &&
                         restSuggestion == null &&
                         !isLoadingRestSuggestion)
-                      _buildEncouragementMessage(cardBg, textColor),
+                      _buildEncouragementMessage(cardBg, textColor, isDark),
 
                     SizedBox(height: isCompactScreen ? 12 : 20),
 
@@ -243,7 +243,7 @@ class RestTimerOverlay extends StatelessWidget {
 
                     // Log 1RM button
                     if (onLog1RM != null)
-                      _build1RMPrompt(cardBg, textColor, subtitleColor),
+                      _build1RMPrompt(cardBg, textColor, subtitleColor, isDark),
 
                     // Ask AI Coach button
                     if (onAskAICoach != null) ...[
@@ -269,13 +269,14 @@ class RestTimerOverlay extends StatelessWidget {
     ).animate().fadeIn(duration: 200.ms);
   }
 
-  Widget _buildRestLabel() {
+  Widget _buildRestLabel(bool isDark) {
+    final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
     return Text(
       'REST',
       style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w600,
-        color: AppColors.purple.withOpacity(0.8),
+        color: purple.withOpacity(isDark ? 0.8 : 1.0),
         letterSpacing: 6,
       ),
     );
@@ -294,6 +295,7 @@ class RestTimerOverlay extends StatelessWidget {
   }
 
   Widget _buildProgressBar(bool isDark) {
+    final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
     return LayoutBuilder(
       builder: (context, constraints) {
         // Use responsive width: max 200px or 60% of available width
@@ -315,8 +317,8 @@ class RestTimerOverlay extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.purple,
-                    AppColors.purple.withOpacity(0.7),
+                    purple,
+                    purple.withOpacity(0.7),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(3),
@@ -328,14 +330,17 @@ class RestTimerOverlay extends StatelessWidget {
     );
   }
 
-  Widget _buildEncouragementMessage(Color cardBg, Color textColor) {
+  Widget _buildEncouragementMessage(Color cardBg, Color textColor, bool isDark) {
+    final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+    final bgOpacity = isDark ? 0.2 : 0.15;
+    final borderOpacity = isDark ? 0.3 : 0.4;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.purple.withOpacity(0.3),
+          color: purple.withOpacity(borderOpacity),
           width: 1,
         ),
       ),
@@ -344,12 +349,12 @@ class RestTimerOverlay extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.purple.withOpacity(0.2),
+              color: purple.withOpacity(bgOpacity),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.psychology,
-              color: AppColors.purple,
+              color: purple,
               size: 20,
             ),
           ),
@@ -587,7 +592,11 @@ class RestTimerOverlay extends StatelessWidget {
     Color cardBg,
     Color textColor,
     Color subtitleColor,
+    bool isDark,
   ) {
+    final orange = isDark ? AppColors.orange : _darkenColor(AppColors.orange);
+    final bgOpacity = isDark ? 0.2 : 0.15;
+    final borderOpacity = isDark ? 0.3 : 0.4;
     return GestureDetector(
       onTap: onLog1RM,
       child: Container(
@@ -596,7 +605,7 @@ class RestTimerOverlay extends StatelessWidget {
           color: cardBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppColors.orange.withOpacity(0.3),
+            color: orange.withOpacity(borderOpacity),
           ),
         ),
         child: Row(
@@ -605,12 +614,12 @@ class RestTimerOverlay extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: AppColors.orange.withOpacity(0.2),
+                color: orange.withOpacity(bgOpacity),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.fitness_center,
-                color: AppColors.orange,
+                color: orange,
                 size: 18,
               ),
             ),
@@ -619,12 +628,12 @@ class RestTimerOverlay extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   'Log 1RM',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.orange,
+                    color: orange,
                   ),
                 ),
                 Text(
@@ -639,7 +648,7 @@ class RestTimerOverlay extends StatelessWidget {
             const SizedBox(width: 8),
             Icon(
               Icons.chevron_right,
-              color: AppColors.orange.withOpacity(0.7),
+              color: orange.withOpacity(0.7),
               size: 20,
             ),
           ],
@@ -756,13 +765,16 @@ class RestTimerOverlay extends StatelessWidget {
     Color subtitleColor,
     bool isDark,
   ) {
+    final cyan = isDark ? AppColors.cyan : _darkenColor(AppColors.cyan);
+    final bgOpacity = isDark ? 0.2 : 0.15;
+    final borderOpacity = isDark ? 0.3 : 0.4;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.cyan.withValues(alpha: 0.3),
+          color: cyan.withValues(alpha: borderOpacity),
           width: 2,
         ),
       ),
@@ -771,7 +783,7 @@ class RestTimerOverlay extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.cyan.withValues(alpha: 0.2),
+              color: cyan.withValues(alpha: bgOpacity),
               borderRadius: BorderRadius.circular(12),
             ),
             child: SizedBox(
@@ -779,7 +791,7 @@ class RestTimerOverlay extends StatelessWidget {
               height: 24,
               child: CircularProgressIndicator(
                 strokeWidth: 2.5,
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.cyan),
+                valueColor: AlwaysStoppedAnimation<Color>(cyan),
               ),
             ),
           ),
@@ -793,7 +805,7 @@ class RestTimerOverlay extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.cyan,
+                    color: cyan,
                     letterSpacing: 1,
                   ),
                 ),
@@ -943,32 +955,36 @@ class RestTimerOverlay extends StatelessWidget {
               ),
               // AI badge (small, subtle)
               if (suggestion.aiPowered)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.purple.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.auto_awesome,
-                        size: 12,
-                        color: AppColors.purple,
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        'AI',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.purple,
+                Builder(builder: (context) {
+                  final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+                  final badgeBgOpacity = isDark ? 0.15 : 0.12;
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: purple.withValues(alpha: badgeBgOpacity),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.auto_awesome,
+                          size: 12,
+                          color: purple,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
+                        const SizedBox(width: 3),
+                        Text(
+                          'AI',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: purple,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
             ],
           ),
 
@@ -1209,6 +1225,7 @@ class RestTimerOverlay extends StatelessWidget {
   }
 
   Widget _buildSkipButton(bool isDark) {
+    final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
     return TextButton.icon(
       onPressed: onSkipRest,
       style: TextButton.styleFrom(
@@ -1219,11 +1236,11 @@ class RestTimerOverlay extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
       ),
-      icon: const Icon(Icons.skip_next, color: AppColors.purple, size: 20),
-      label: const Text(
+      icon: Icon(Icons.skip_next, color: purple, size: 20),
+      label: Text(
         'Skip Rest',
         style: TextStyle(
-          color: AppColors.purple,
+          color: purple,
           fontWeight: FontWeight.w600,
           fontSize: 15,
         ),
@@ -1251,45 +1268,49 @@ class RestTimerOverlay extends StatelessWidget {
       if (rir == 0) {
         feedback = "You went to failure. Make sure you can recover for the next set.";
         feedbackIcon = Icons.warning_amber_rounded;
-        feedbackColor = AppColors.coral;
+        feedbackColor = isDark ? AppColors.coral : _darkenColor(AppColors.coral);
       } else if (rir == 1) {
         feedback = "Great effort! One rep left is solid intensity.";
         feedbackIcon = Icons.check_circle;
-        feedbackColor = AppColors.success;
+        feedbackColor = isDark ? AppColors.success : _darkenColor(AppColors.success);
       } else if (rir == 2) {
         feedback = "Perfect zone! 2 RIR is ideal for hypertrophy.";
         feedbackIcon = Icons.star;
-        feedbackColor = AppColors.cyan;
+        feedbackColor = isDark ? AppColors.cyan : _darkenColor(AppColors.cyan);
       } else if (rir == 3) {
         feedback = "Good effort. Consider adding weight next set.";
         feedbackIcon = Icons.trending_up;
-        feedbackColor = AppColors.success;
+        feedbackColor = isDark ? AppColors.success : _darkenColor(AppColors.success);
       } else {
         feedback = "Plenty left in the tank. Try increasing the weight.";
         feedbackIcon = Icons.fitness_center;
-        feedbackColor = AppColors.orange;
+        feedbackColor = isDark ? AppColors.orange : _darkenColor(AppColors.orange);
       }
     } else if (rpe != null) {
       if (rpe >= 10) {
         feedback = "Max effort reached. Ensure adequate rest before the next set.";
         feedbackIcon = Icons.warning_amber_rounded;
-        feedbackColor = AppColors.coral;
+        feedbackColor = isDark ? AppColors.coral : _darkenColor(AppColors.coral);
       } else if (rpe >= 8) {
         feedback = "Great intensity! This is the ideal training zone.";
         feedbackIcon = Icons.star;
-        feedbackColor = AppColors.cyan;
+        feedbackColor = isDark ? AppColors.cyan : _darkenColor(AppColors.cyan);
       } else if (rpe >= 7) {
         feedback = "Moderate effort. You can push a bit harder next set.";
         feedbackIcon = Icons.trending_up;
-        feedbackColor = AppColors.success;
+        feedbackColor = isDark ? AppColors.success : _darkenColor(AppColors.success);
       } else {
         feedback = "Light effort. Consider increasing weight or reps.";
         feedbackIcon = Icons.fitness_center;
-        feedbackColor = AppColors.orange;
+        feedbackColor = isDark ? AppColors.orange : _darkenColor(AppColors.orange);
       }
     } else {
       return const SizedBox.shrink();
     }
+
+    final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+    final bgOpacity = isDark ? 0.15 : 0.12;
+    final borderOpacity = isDark ? 0.3 : 0.4;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -1297,7 +1318,7 @@ class RestTimerOverlay extends StatelessWidget {
         color: cardBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: feedbackColor.withValues(alpha: 0.3),
+          color: feedbackColor.withValues(alpha: borderOpacity),
           width: 1,
         ),
       ),
@@ -1306,7 +1327,7 @@ class RestTimerOverlay extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: feedbackColor.withValues(alpha: 0.15),
+              color: feedbackColor.withValues(alpha: bgOpacity),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -1325,7 +1346,7 @@ class RestTimerOverlay extends StatelessWidget {
                     Icon(
                       Icons.auto_awesome,
                       size: 12,
-                      color: AppColors.purple,
+                      color: purple,
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -1333,7 +1354,7 @@ class RestTimerOverlay extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.purple,
+                        color: purple,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -1369,13 +1390,16 @@ class RestTimerOverlay extends StatelessWidget {
     bool isDark,
     [bool isCompact = false]
   ) {
+    final orange = isDark ? AppColors.orange : _darkenColor(AppColors.orange);
+    final bgOpacity = isDark ? 0.2 : 0.15;
+    final borderOpacity = isDark ? 0.3 : 0.4;
     return Container(
       padding: EdgeInsets.all(isCompact ? 12 : 16),
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.orange.withValues(alpha: 0.3),
+          color: orange.withValues(alpha: borderOpacity),
           width: 1,
         ),
       ),
@@ -1388,12 +1412,12 @@ class RestTimerOverlay extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.orange.withValues(alpha: 0.2),
+                  color: orange.withValues(alpha: bgOpacity),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.speed,
-                  color: AppColors.orange,
+                  color: orange,
                   size: 18,
                 ),
               ),
@@ -1705,5 +1729,11 @@ class RestTimerOverlay extends StatelessWidget {
     if (rir >= 2) return AppColors.cyan;
     if (rir >= 1) return AppColors.orange;
     return AppColors.coral;
+  }
+
+  /// Darken a color for better visibility in light mode
+  Color _darkenColor(Color color) {
+    final hsl = HSLColor.fromColor(color);
+    return hsl.withLightness((hsl.lightness * 0.7).clamp(0.0, 1.0)).toColor();
   }
 }

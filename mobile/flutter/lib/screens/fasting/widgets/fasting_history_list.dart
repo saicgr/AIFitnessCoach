@@ -31,7 +31,7 @@ class FastingHistoryList extends StatelessWidget {
               child: Text(
                 'Load More',
                 style: TextStyle(
-                  color: isDark ? AppColors.purple : AppColorsLight.purple,
+                  color: isDark ? AppColors.accent : AppColorsLight.accent,
                 ),
               ),
             ),
@@ -184,7 +184,7 @@ class _FastingHistoryCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: (isDark ? AppColors.purple : AppColorsLight.purple)
+                    color: (isDark ? AppColors.accent : AppColorsLight.accent)
                         .withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -193,7 +193,7 @@ class _FastingHistoryCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.purple : AppColorsLight.purple,
+                      color: isDark ? AppColors.accent : AppColorsLight.accent,
                     ),
                   ),
                 ),

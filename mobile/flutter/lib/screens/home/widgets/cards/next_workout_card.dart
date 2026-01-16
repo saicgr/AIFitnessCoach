@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/theme_colors.dart';
 import '../../../../core/utils/difficulty_utils.dart';
 import '../../../../data/models/workout.dart';
 import '../../../../data/repositories/workout_repository.dart';
@@ -156,10 +157,9 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
         isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
     final workout = widget.workout;
-    final difficultyColor =
-        AppColors.getDifficultyColor(workout.difficulty ?? 'medium');
-    final typeColor =
-        AppColors.getWorkoutTypeColor(workout.type ?? 'strength');
+    // Use monochrome accent color
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final exercises = workout.exercises;
 
     return Padding(
@@ -169,13 +169,13 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
           gradient: LinearGradient(
             colors: [
               elevatedColor,
-              elevatedColor.withOpacity(0.9),
+              elevatedColor.withValues(alpha: 0.9),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+          border: Border.all(color: accentColor.withValues(alpha: 0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,24 +207,24 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.cyan.withOpacity(0.2),
+                                  color: textSecondary.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.calendar_today,
                                       size: 10,
-                                      color: AppColors.cyan,
+                                      color: textSecondary,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
                                       _getScheduledDateLabel(workout.scheduledDate),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold,
-                                        color: AppColors.cyan,
+                                        color: textSecondary,
                                         letterSpacing: 0.5,
                                       ),
                                     ),
@@ -238,7 +238,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: typeColor.withOpacity(0.2),
+                                  color: textSecondary.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
@@ -246,7 +246,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    color: typeColor,
+                                    color: textSecondary,
                                     letterSpacing: 0.5,
                                   ),
                                 ),
@@ -258,7 +258,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: difficultyColor.withOpacity(0.2),
+                                  color: textSecondary.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
@@ -266,7 +266,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
-                                    color: difficultyColor,
+                                    color: textSecondary,
                                   ),
                                 ),
                               ),
@@ -288,14 +288,14 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                               Text(
                                 'Upcoming',
                                 style: TextStyle(
-                                  color: AppColors.cyan,
+                                  color: ref.colors(context).accent,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
                               Icon(
                                 Icons.chevron_right,
-                                color: AppColors.cyan,
+                                color: ref.colors(context).accent,
                                 size: 16,
                               ),
                             ],

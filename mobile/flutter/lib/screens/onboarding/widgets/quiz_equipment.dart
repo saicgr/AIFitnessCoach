@@ -172,7 +172,7 @@ class QuizEquipment extends StatelessWidget {
               child: Icon(
                 Icons.info_outline,
                 size: 18,
-                color: AppColors.cyan,
+                color: AppColors.accent,
               ),
             ),
           ],
@@ -194,14 +194,14 @@ class QuizEquipment extends StatelessWidget {
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      gradient: isSelected ? AppColors.cyanGradient : null,
+                      gradient: isSelected ? AppColors.accentGradient : null,
                       color: isSelected
                           ? null
                           : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isSelected
-                            ? AppColors.cyan
+                            ? AppColors.accent
                             : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
                         width: isSelected ? 2 : 1,
                       ),
@@ -383,13 +383,13 @@ class QuizEquipment extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            gradient: isSelected ? AppColors.cyanGradient : null,
+            gradient: isSelected ? AppColors.accentGradient : null,
             color: isSelected
                 ? null
                 : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: isSelected ? AppColors.cyan : cardBorder,
+              color: isSelected ? AppColors.accent : cardBorder,
               width: isSelected ? 2 : 1,
             ),
           ),
@@ -582,13 +582,13 @@ class QuizEquipment extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            gradient: hasOtherSelected ? AppColors.cyanGradient : null,
+            gradient: hasOtherSelected ? AppColors.accentGradient : null,
             color: hasOtherSelected
                 ? null
                 : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: hasOtherSelected ? AppColors.cyan : cardBorder,
+              color: hasOtherSelected ? AppColors.accent : cardBorder,
               width: hasOtherSelected ? 2 : 1,
             ),
           ),

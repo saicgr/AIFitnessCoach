@@ -20,6 +20,8 @@ class WeightFastingChart extends StatelessWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    // Use monochrome accent
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
 
     // Filter days with weight data
     final daysWithWeight = dailyData.where((d) => d.weight != null).toList();
@@ -67,7 +69,7 @@ class WeightFastingChart extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.show_chart, color: AppColors.cyan, size: 20),
+              Icon(Icons.show_chart, color: accentColor, size: 20),
               const SizedBox(width: 8),
               Text(
                 'Weight Trend',
@@ -82,7 +84,7 @@ class WeightFastingChart extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              _buildLegendItem('Fasting days', AppColors.cyan),
+              _buildLegendItem('Fasting days', accentColor),
               const SizedBox(width: 16),
               _buildLegendItem('Non-fasting', textMuted),
             ],
@@ -95,7 +97,7 @@ class WeightFastingChart extends StatelessWidget {
                 data: daysWithWeight,
                 minWeight: paddedMin,
                 maxWeight: paddedMax,
-                fastingColor: AppColors.cyan,
+                fastingColor: accentColor,
                 nonFastingColor: textMuted.withOpacity(0.5),
                 gridColor: textMuted.withOpacity(0.2),
               ),

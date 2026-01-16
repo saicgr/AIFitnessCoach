@@ -316,7 +316,7 @@ class _UnitButton extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.cyan : Colors.transparent,
+          color: isSelected ? AppColors.accent : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Text(
@@ -482,7 +482,7 @@ class NumberStepperInput extends StatelessWidget {
                 icon: Icon(
                   Icons.add_circle_outline,
                   color: value < max
-                      ? AppColors.cyan
+                      ? AppColors.accent
                       : AppColors.textMuted,
                 ),
               ),

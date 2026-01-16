@@ -75,7 +75,9 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    // Use monochrome accent instead of purple
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     // Guest mode check
@@ -83,7 +85,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
     final fastingEnabled = ref.watch(isFastingEnabledProvider);
 
     if (isGuest && !fastingEnabled) {
-      return _buildGuestLockScreen(context, backgroundColor, textPrimary, textSecondary, purple);
+      return _buildGuestLockScreen(context, backgroundColor, textPrimary, textSecondary, accentColor, accentContrast);
     }
 
     final fastingState = ref.watch(fastingProvider);
@@ -95,7 +97,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
       return Scaffold(
         backgroundColor: backgroundColor,
         body: Center(
-          child: CircularProgressIndicator(color: purple),
+          child: CircularProgressIndicator(color: accentColor),
         ),
       );
     }
@@ -109,7 +111,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
             _buildAppBar(context, fastingState, textPrimary, textMuted),
 
             // Compact TabBar
-            _buildTabBar(elevated, purple, textMuted),
+            _buildTabBar(elevated, accentColor, accentContrast, textMuted),
 
             // Tab Content
             Expanded(
@@ -122,7 +124,8 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
                     fastingState,
                     userId,
                     isDark,
-                    purple,
+                    accentColor,
+                    accentContrast,
                     textPrimary,
                     textSecondary,
                     textMuted,
@@ -134,7 +137,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
                     fastingState,
                     userId,
                     isDark,
-                    purple,
+                    accentColor,
                     textPrimary,
                     textMuted,
                   ),
@@ -154,17 +157,31 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
     Color textPrimary,
     Color textMuted,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+
     return Container(
       height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(
         children: [
+          // Back button
+          IconButton(
+            onPressed: () => context.go('/home'),
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: accentColor,
+              size: 22,
+            ),
+            tooltip: 'Back to Home',
+          ),
+          const SizedBox(width: 4),
           Text(
             'Fasting',
             style: TextStyle(
               color: textPrimary,
               fontWeight: FontWeight.bold,
-              fontSize: 32,
+              fontSize: 28,
             ),
           ),
           const Spacer(),
@@ -183,7 +200,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
   }
 
   // ==================== TAB BAR ====================
-  Widget _buildTabBar(Color elevated, Color purple, Color textMuted) {
+  Widget _buildTabBar(Color elevated, Color accentColor, Color accentContrast, Color textMuted) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       padding: const EdgeInsets.all(4),
@@ -196,10 +213,10 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
         controller: _tabController,
         indicatorSize: TabBarIndicatorSize.tab,
         indicator: BoxDecoration(
-          color: purple,
+          color: accentColor,
           borderRadius: BorderRadius.circular(10),
         ),
-        labelColor: Colors.white,
+        labelColor: accentContrast,
         unselectedLabelColor: textMuted,
         dividerHeight: 0,
         labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
@@ -238,7 +255,8 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
     FastingState fastingState,
     String? userId,
     bool isDark,
-    Color purple,
+    Color accentColor,
+    Color accentContrast,
     Color textPrimary,
     Color textSecondary,
     Color textMuted,
@@ -272,7 +290,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
             activeFast,
             remainingMinutes,
             endTime,
-            purple,
+            accentColor,
             textPrimary,
             textSecondary,
             textMuted,
@@ -285,7 +303,8 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
             context,
             hasFast,
             userId,
-            purple,
+            accentColor,
+            accentContrast,
           ),
 
           const SizedBox(height: 12),
@@ -327,7 +346,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
           _buildStatsSection(
             fastingState,
             elevated,
-            purple,
+            accentColor,
             textPrimary,
             textSecondary,
             textMuted,
@@ -344,7 +363,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
     FastingRecord? activeFast,
     int remainingMinutes,
     DateTime endTime,
-    Color purple,
+    Color accentColor,
     Color textPrimary,
     Color textSecondary,
     Color textMuted,
@@ -372,7 +391,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: hasFast ? purple : textSecondary,
+            color: hasFast ? accentColor : textSecondary,
           ),
         ),
 
@@ -410,10 +429,10 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: purple.withValues(alpha: 0.15),
+                color: accentColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: purple.withValues(alpha: 0.3),
+                  color: accentColor.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -424,14 +443,14 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: purple,
+                      color: accentColor,
                     ),
                   ),
                   const SizedBox(width: 6),
                   Icon(
                     Icons.edit_outlined,
                     size: 14,
-                    color: purple,
+                    color: accentColor,
                   ),
                 ],
               ),
@@ -446,7 +465,8 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
     BuildContext context,
     bool hasFast,
     String? userId,
-    Color purple,
+    Color accentColor,
+    Color accentContrast,
   ) {
     return SizedBox(
       width: double.infinity,
@@ -462,20 +482,20 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
                 }
               },
         style: ElevatedButton.styleFrom(
-          backgroundColor: purple,
-          foregroundColor: Colors.white,
+          backgroundColor: accentColor,
+          foregroundColor: accentContrast,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           elevation: 0,
-          disabledBackgroundColor: purple.withValues(alpha: 0.5),
+          disabledBackgroundColor: accentColor.withValues(alpha: 0.5),
         ),
         child: _isProcessing
-            ? const SizedBox(
+            ? SizedBox(
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
-                  color: Colors.white,
+                  color: accentContrast,
                   strokeWidth: 2,
                 ),
               )
@@ -572,7 +592,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
   Widget _buildStatsSection(
     FastingState fastingState,
     Color elevated,
-    Color purple,
+    Color accentColor,
     Color textPrimary,
     Color textSecondary,
     Color textMuted,
@@ -622,7 +642,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
           value: '${fastingState.streak?.currentStreak ?? 0}',
           label: 'Streak',
           elevated: elevated,
-          purple: purple,
+          accentColor: accentColor,
           textPrimary: textPrimary,
           textMuted: textMuted,
         ),
@@ -631,7 +651,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
           value: '${stats.completedFasts}',
           label: 'Total Fasts',
           elevated: elevated,
-          purple: purple,
+          accentColor: accentColor,
           textPrimary: textPrimary,
           textMuted: textMuted,
         ),
@@ -640,7 +660,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
           value: '${(stats.avgDurationMinutes / 60).toStringAsFixed(1)}h',
           label: 'Avg Duration',
           elevated: elevated,
-          purple: purple,
+          accentColor: accentColor,
           textPrimary: textPrimary,
           textMuted: textMuted,
         ),
@@ -649,7 +669,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
           value: '${(stats.longestFastMinutes / 60).toStringAsFixed(1)}h',
           label: 'Longest Fast',
           elevated: elevated,
-          purple: purple,
+          accentColor: accentColor,
           textPrimary: textPrimary,
           textMuted: textMuted,
         ),
@@ -662,7 +682,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
     required String value,
     required String label,
     required Color elevated,
-    required Color purple,
+    required Color accentColor,
     required Color textPrimary,
     required Color textMuted,
   }) {
@@ -675,7 +695,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 24, color: purple),
+          Icon(icon, size: 24, color: accentColor),
           const SizedBox(height: 8),
           Text(
             value,
@@ -704,7 +724,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
     FastingState fastingState,
     String? userId,
     bool isDark,
-    Color purple,
+    Color accentColor,
     Color textPrimary,
     Color textMuted,
   ) {
@@ -756,7 +776,8 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
     Color backgroundColor,
     Color textPrimary,
     Color textSecondary,
-    Color purple,
+    Color accentColor,
+    Color accentContrast,
   ) {
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -771,13 +792,13 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: purple.withValues(alpha: 0.15),
+                    color: accentColor.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.timer_outlined,
                     size: 48,
-                    color: purple,
+                    color: accentColor,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -811,8 +832,8 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.cyan,
-                      foregroundColor: Colors.white,
+                      backgroundColor: accentColor,
+                      foregroundColor: accentContrast,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),

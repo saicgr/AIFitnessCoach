@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/models/home_layout.dart';
 import '../../../../data/repositories/nutrition_repository.dart';
 import '../../../../data/services/health_service.dart';
@@ -54,6 +55,10 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
+    // Get accent color from provider
+    final accentColorEnum = ref.watch(accentColorProvider);
+    final accentColor = accentColorEnum.getColor(isDark);
+
     // Get activity data (steps)
     final activityState = ref.watch(dailyActivityProvider);
     final steps = activityState.today?.steps ?? 0;
@@ -102,13 +107,13 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.purple.withOpacity(0.15),
+              color: accentColor.withValues(alpha: 0.15),
               blurRadius: 16,
               offset: const Offset(0, 6),
               spreadRadius: 1,
             ),
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -121,7 +126,7 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
             decoration: BoxDecoration(
               color: elevatedColor,
               border: Border(
-                left: BorderSide(color: AppColors.magenta, width: 4),
+                left: BorderSide(color: accentColor, width: 4),
                 top: BorderSide(color: cardBorder),
                 right: BorderSide(color: cardBorder),
                 bottom: BorderSide(color: cardBorder),
@@ -132,6 +137,7 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
                 : _buildContentState(
                     textColor: textColor,
                     textMuted: textMuted,
+                    accentColor: accentColor,
                     steps: steps,
                     stepsFormatted: stepsFormatted,
                     deficit: deficit,
@@ -156,6 +162,10 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
     required bool isInDeficit,
     required bool isLoading,
   }) {
+    // Get accent color from provider
+    final accentColorEnum = ref.watch(accentColorProvider);
+    final accentColor = accentColorEnum.getColor(widget.isDark);
+
     return InkWell(
       onTap: () {
         HapticService.light();
@@ -163,65 +173,70 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: elevatedColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border(
-            left: BorderSide(color: AppColors.magenta, width: 4),
-            top: BorderSide(color: cardBorder),
-            right: BorderSide(color: cardBorder),
-            bottom: BorderSide(color: cardBorder),
-          ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.purple.withOpacity(0.15),
+              color: accentColor.withValues(alpha: 0.15),
               blurRadius: 16,
               offset: const Offset(0, 6),
               spreadRadius: 1,
             ),
             BoxShadow(
-              color: Colors.black.withOpacity(widget.isDark ? 0.2 : 0.08),
+              color: Colors.black.withValues(alpha: widget.isDark ? 0.2 : 0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.directions_walk,
-              color: AppColors.cyan,
-              size: 16,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              isLoading ? '...' : stepsFormatted,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: textColor,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: elevatedColor,
+              border: Border(
+                left: BorderSide(color: accentColor, width: 4),
+                top: BorderSide(color: cardBorder),
+                right: BorderSide(color: cardBorder),
+                bottom: BorderSide(color: cardBorder),
               ),
             ),
-            const SizedBox(width: 12),
-            Icon(
-              isInDeficit ? Icons.trending_down : Icons.trending_up,
-              color: isInDeficit ? AppColors.success : AppColors.error,
-              size: 16,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.directions_walk,
+                  color: accentColor,
+                  size: 16,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  isLoading ? '...' : stepsFormatted,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Icon(
+                  isInDeficit ? Icons.trending_down : Icons.trending_up,
+                  color: textMuted,
+                  size: 16,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  isLoading ? '...' : deficitFormatted,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 4),
-            Text(
-              isLoading
-                  ? '...'
-                  : '${isInDeficit ? "-" : "+"}$deficitFormatted',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: isInDeficit ? AppColors.success : AppColors.error,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -253,6 +268,7 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
   Widget _buildContentState({
     required Color textColor,
     required Color textMuted,
+    required Color accentColor,
     required int steps,
     required String stepsFormatted,
     required int deficit,
@@ -270,7 +286,7 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
         // Header row
         Row(
           children: [
-            Icon(Icons.insights, color: AppColors.cyan, size: 20),
+            Icon(Icons.insights, color: accentColor, size: 20),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -278,13 +294,13 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: textMuted,
+                  color: textColor,
                 ),
               ),
             ),
             Icon(
               Icons.chevron_right,
-              color: textMuted,
+              color: textColor,
               size: 20,
             ),
           ],
@@ -298,7 +314,7 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
             Expanded(
               child: _StatItem(
                 icon: Icons.directions_walk,
-                iconColor: AppColors.cyan,
+                iconColor: accentColor,
                 value: stepsFormatted,
                 label: 'steps',
                 textColor: textColor,
@@ -314,10 +330,10 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
             Expanded(
               child: _StatItem(
                 icon: isInDeficit ? Icons.trending_down : Icons.trending_up,
-                iconColor: isInDeficit ? AppColors.success : AppColors.error,
-                value: '${isInDeficit ? "-" : "+"}$deficitFormatted',
+                iconColor: textMuted,
+                value: deficitFormatted,
                 label: isInDeficit ? 'deficit' : 'surplus',
-                textColor: isInDeficit ? AppColors.success : AppColors.error,
+                textColor: textColor,
                 textMuted: textMuted,
               ),
             ),
@@ -373,7 +389,7 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(3),
-                      color: stepsProgress >= 1.0 ? AppColors.success : AppColors.cyan,
+                      color: stepsProgress >= 1.0 ? AppColors.success : accentColor,
                     ),
                   ),
                 ),
@@ -385,7 +401,7 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
           // Exercise calories burned
           Row(
             children: [
-              Icon(Icons.local_fire_department, size: 16, color: AppColors.orange),
+              Icon(Icons.local_fire_department, size: 16, color: accentColor),
               const SizedBox(width: 6),
               Text(
                 '${caloriesBurned.round()} cal burned from exercise',

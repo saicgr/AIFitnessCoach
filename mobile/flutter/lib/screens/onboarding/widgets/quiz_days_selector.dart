@@ -120,19 +120,19 @@ class QuizDaysSelector extends StatelessWidget {
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      gradient: isSelected ? AppColors.cyanGradient : null,
+                      gradient: isSelected ? AppColors.accentGradient : null,
                       color: isSelected
                           ? null
                           : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected ? AppColors.cyan : cardBorder,
+                        color: isSelected ? AppColors.accent : cardBorder,
                         width: isSelected ? 2 : 1,
                       ),
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: AppColors.cyan.withValues(alpha: 0.3),
+                                color: AppColors.accent.withValues(alpha: 0.3),
                                 blurRadius: 6,
                                 spreadRadius: 0,
                               ),
@@ -171,14 +171,14 @@ class QuizDaysSelector extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.cyan.withValues(alpha: 0.1),
+                color: AppColors.accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
+                border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.timer_outlined, size: 16, color: AppColors.cyan),
+                  Icon(Icons.timer_outlined, size: 16, color: AppColors.accent),
                   const SizedBox(width: 6),
                   Text(
                     _getDurationHint(workoutDuration!),
@@ -251,19 +251,19 @@ class QuizDaysSelector extends StatelessWidget {
             width: 44,
             height: 64,
             decoration: BoxDecoration(
-              gradient: isSelected ? AppColors.cyanGradient : null,
+              gradient: isSelected ? AppColors.accentGradient : null,
               color: isSelected
                   ? null
                   : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? AppColors.cyan : cardBorder,
+                color: isSelected ? AppColors.accent : cardBorder,
                 width: isSelected ? 2 : 1,
               ),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: AppColors.cyan.withOpacity(0.3),
+                        color: AppColors.accent.withOpacity(0.3),
                         blurRadius: 8,
                         spreadRadius: 0,
                       ),
@@ -344,7 +344,7 @@ class QuizDaysSelector extends StatelessWidget {
                 width: 42,
                 height: 58,
                 decoration: BoxDecoration(
-                  gradient: isSelected ? AppColors.cyanGradient : null,
+                  gradient: isSelected ? AppColors.accentGradient : null,
                   color: isSelected
                       ? null
                       : isDisabled
@@ -355,7 +355,7 @@ class QuizDaysSelector extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: isSelected
-                        ? AppColors.cyan
+                        ? AppColors.accent
                         : isDisabled
                             ? Colors.transparent
                             : cardBorder,
@@ -364,7 +364,7 @@ class QuizDaysSelector extends StatelessWidget {
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: AppColors.cyan.withValues(alpha: 0.3),
+                            color: AppColors.accent.withValues(alpha: 0.3),
                             blurRadius: 6,
                             spreadRadius: 0,
                           ),
@@ -436,7 +436,7 @@ class QuizDaysSelector extends StatelessWidget {
             Icon(
               selectedCount >= requiredDays ? Icons.check_circle : Icons.calendar_today,
               size: 16,
-              color: selectedCount >= requiredDays ? AppColors.success : AppColors.cyan,
+              color: selectedCount >= requiredDays ? AppColors.success : AppColors.accent,
             ),
             const SizedBox(width: 6),
             Text(
@@ -495,13 +495,13 @@ class QuizDaysSelector extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.cyan.withOpacity(0.1),
+          color: AppColors.accent.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+          border: Border.all(color: AppColors.accent.withOpacity(0.3)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.lightbulb_outline, color: AppColors.cyan, size: 18),
+            const Icon(Icons.lightbulb_outline, color: AppColors.accent, size: 18),
             const SizedBox(width: 10),
             Expanded(
               child: Text(

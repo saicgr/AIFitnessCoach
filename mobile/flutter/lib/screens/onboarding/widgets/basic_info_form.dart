@@ -540,7 +540,7 @@ class _BasicInfoFormState extends State<BasicInfoForm> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          gradient: isEnabled ? AppColors.cyanGradient : null,
+          gradient: isEnabled ? AppColors.accentGradient : null,
           color: isEnabled ? null : colors.glassSurface,
           borderRadius: BorderRadius.circular(10),
           border: isEnabled ? null : Border.all(color: colors.cardBorder),

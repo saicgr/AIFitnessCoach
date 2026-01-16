@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/home_layout.dart';
 import '../../../../data/providers/ai_insights_provider.dart';
 import '../../../../data/repositories/workout_repository.dart';
@@ -143,7 +144,8 @@ class PersonalRecordsCard extends ConsumerWidget {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final goldColor = const Color(0xFFFFD700);
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accentColor = ref.colors(context).accent;
 
     // TODO: Connect to actual PR data from provider
     final mockPRs = [
@@ -158,7 +160,7 @@ class PersonalRecordsCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: goldColor.withValues(alpha: 0.3)),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,10 +170,10 @@ class PersonalRecordsCard extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: goldColor.withValues(alpha: 0.15),
+                  color: accentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.emoji_events, color: goldColor, size: 22),
+                child: Icon(Icons.emoji_events, color: accentColor, size: 22),
               ),
               const SizedBox(width: 12),
               Text(
@@ -192,7 +194,7 @@ class PersonalRecordsCard extends ConsumerWidget {
                   'View All',
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.cyan,
+                    color: accentColor,
                   ),
                 ),
               ),
@@ -203,7 +205,7 @@ class PersonalRecordsCard extends ConsumerWidget {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
-                    Icon(Icons.military_tech, color: goldColor, size: 16),
+                    Icon(Icons.military_tech, color: accentColor, size: 16),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -216,7 +218,7 @@ class PersonalRecordsCard extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: goldColor,
+                        color: accentColor,
                       ),
                     ),
                   ],
@@ -247,7 +249,8 @@ class AICoachTipCard extends ConsumerWidget {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cyanColor = AppColors.cyan;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accentColor = ref.colors(context).accent;
 
     // Watch the daily tip provider
     final tipAsync = ref.watch(dailyTipProvider);
@@ -258,7 +261,7 @@ class AICoachTipCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cyanColor.withValues(alpha: 0.3)),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,10 +271,10 @@ class AICoachTipCard extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: cyanColor.withValues(alpha: 0.15),
+                  color: accentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.tips_and_updates, color: cyanColor, size: 22),
+                child: Icon(Icons.tips_and_updates, color: accentColor, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -287,20 +290,20 @@ class AICoachTipCard extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: cyanColor.withValues(alpha: 0.15),
+                  color: accentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.auto_awesome, color: cyanColor, size: 12),
+                    Icon(Icons.auto_awesome, color: accentColor, size: 12),
                     const SizedBox(width: 4),
                     Text(
                       'AI',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: cyanColor,
+                        color: accentColor,
                       ),
                     ),
                   ],
@@ -341,12 +344,12 @@ class AICoachTipCard extends ConsumerWidget {
                   'Ask coach for more',
                   style: TextStyle(
                     fontSize: 13,
-                    color: cyanColor,
+                    color: accentColor,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(width: 4),
-                Icon(Icons.arrow_forward, color: cyanColor, size: 16),
+                Icon(Icons.arrow_forward, color: accentColor, size: 16),
               ],
             ),
           ),
@@ -410,7 +413,8 @@ class CaloriesSummaryCard extends ConsumerWidget {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final greenColor = AppColors.green;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accentColor = ref.colors(context).accent;
 
     // TODO: Connect to nutrition provider
     const consumed = 1850;
@@ -425,14 +429,14 @@ class CaloriesSummaryCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: greenColor.withValues(alpha: 0.3)),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.restaurant, color: greenColor, size: 20),
+              Icon(Icons.restaurant, color: accentColor, size: 20),
               const SizedBox(width: 8),
               Text(
                 'Calories',
@@ -473,7 +477,7 @@ class CaloriesSummaryCard extends ConsumerWidget {
               value: progress.clamp(0.0, 1.0),
               backgroundColor: textMuted.withValues(alpha: 0.2),
               valueColor: AlwaysStoppedAnimation<Color>(
-                progress > 1.0 ? AppColors.error : greenColor,
+                progress > 1.0 ? AppColors.error : accentColor,
               ),
               minHeight: 6,
             ),
@@ -508,12 +512,15 @@ class MacroRingsCard extends ConsumerWidget {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accentColor = ref.colors(context).accent;
 
     // TODO: Connect to nutrition provider
+    // Use accent color with varying opacity for visual distinction
     final macros = [
-      {'name': 'Protein', 'current': 120, 'target': 150, 'color': AppColors.cyan},
-      {'name': 'Carbs', 'current': 180, 'target': 250, 'color': AppColors.orange},
-      {'name': 'Fat', 'current': 55, 'target': 70, 'color': AppColors.purple},
+      {'name': 'Protein', 'current': 120, 'target': 150, 'color': accentColor},
+      {'name': 'Carbs', 'current': 180, 'target': 250, 'color': accentColor.withValues(alpha: 0.7)},
+      {'name': 'Fat', 'current': 55, 'target': 70, 'color': accentColor.withValues(alpha: 0.4)},
     ];
 
     return Container(
@@ -524,13 +531,14 @@ class MacroRingsCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.pie_chart, color: AppColors.purple, size: 20),
+              Icon(Icons.pie_chart, color: accentColor, size: 20),
               const SizedBox(width: 8),
               Text(
                 'Macros',
@@ -608,7 +616,8 @@ class BodyWeightCard extends ConsumerWidget {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purpleColor = AppColors.purple;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accentColor = ref.colors(context).accent;
 
     // TODO: Connect to measurements provider
     const currentWeight = 75.5;
@@ -630,14 +639,14 @@ class BodyWeightCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: purpleColor.withValues(alpha: 0.3)),
+          border: Border.all(color: cardBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.monitor_weight, color: purpleColor, size: 20),
+                Icon(Icons.monitor_weight, color: accentColor, size: 20),
                 const SizedBox(width: 8),
                 Text(
                   'Weight',
@@ -670,8 +679,7 @@ class BodyWeightCard extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: (isDown ? AppColors.green : AppColors.orange)
-                        .withValues(alpha: 0.15),
+                    color: accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -680,7 +688,7 @@ class BodyWeightCard extends ConsumerWidget {
                       Icon(
                         isDown ? Icons.trending_down : Icons.trending_up,
                         size: 14,
-                        color: isDown ? AppColors.green : AppColors.orange,
+                        color: accentColor,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -688,7 +696,7 @@ class BodyWeightCard extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: isDown ? AppColors.green : AppColors.orange,
+                          color: accentColor,
                         ),
                       ),
                     ],
@@ -722,7 +730,8 @@ class LeaderboardRankCard extends ConsumerWidget {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final goldColor = const Color(0xFFFFD700);
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accentColor = ref.colors(context).accent;
 
     // TODO: Connect to leaderboard provider
     const rank = 42;
@@ -743,14 +752,14 @@ class LeaderboardRankCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: goldColor.withValues(alpha: 0.3)),
+          border: Border.all(color: cardBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.leaderboard, color: goldColor, size: 20),
+                Icon(Icons.leaderboard, color: accentColor, size: 20),
                 const SizedBox(width: 8),
                 Text(
                   'Rank',
@@ -771,7 +780,7 @@ class LeaderboardRankCard extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: goldColor,
+                    color: accentColor,
                   ),
                 ),
                 const Spacer(),
@@ -783,7 +792,7 @@ class LeaderboardRankCard extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.green,
+                        color: accentColor,
                       ),
                     ),
                     Text(
@@ -820,7 +829,8 @@ class WaterIntakeCard extends ConsumerWidget {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final blueColor = const Color(0xFF2196F3);
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accentColor = ref.colors(context).accent;
 
     // TODO: Connect to hydration provider
     const glasses = 5;
@@ -841,14 +851,14 @@ class WaterIntakeCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: blueColor.withValues(alpha: 0.3)),
+          border: Border.all(color: cardBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.water_drop, color: blueColor, size: 20),
+                Icon(Icons.water_drop, color: accentColor, size: 20),
                 const SizedBox(width: 8),
                 Text(
                   'Water',
@@ -868,7 +878,7 @@ class WaterIntakeCard extends ConsumerWidget {
                   padding: const EdgeInsets.only(right: 4),
                   child: Icon(
                     isFilled ? Icons.water_drop : Icons.water_drop_outlined,
-                    color: isFilled ? blueColor : textMuted.withValues(alpha: 0.3),
+                    color: isFilled ? accentColor : textMuted.withValues(alpha: 0.3),
                     size: 18,
                   ),
                 );
@@ -1202,7 +1212,7 @@ class WorkoutHistoryMiniCard extends ConsumerWidget {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cyanColor = AppColors.cyan;
+    final cyanColor = ref.colors(context).accent;
 
     // TODO: Connect to workout history provider
     final recentWorkouts = [
@@ -1480,7 +1490,7 @@ class MyJourneyCard extends ConsumerWidget {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accentColor = AppColors.cyan;
+    final accentColor = ref.colors(context).accent;
 
     // Get workout data
     final workoutsNotifier = ref.read(workoutsProvider.notifier);

@@ -82,35 +82,26 @@ extension SheetColorsExtension on BuildContext {
   }
 }
 
-/// Utility function to get difficulty color
-Color getDifficultyColor(String difficulty) {
+/// Utility function to get difficulty color (monochrome)
+Color getDifficultyColor(String difficulty, {bool isDark = true}) {
   switch (difficulty.toLowerCase()) {
     case 'easy':
-      return AppColors.success;
+      return isDark ? const Color(0xFF808080) : const Color(0xFF808080);
     case 'medium':
-      return AppColors.orange;
+      return isDark ? const Color(0xFFA0A0A0) : const Color(0xFF606060);
     case 'hard':
-      return AppColors.purple; // Purple for hard
+      return isDark ? const Color(0xFFC0C0C0) : const Color(0xFF404040);
     case 'hell':
-      return AppColors.error; // Red for hell (most intense)
+      return isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     default:
-      return AppColors.cyan;
+      return isDark ? const Color(0xFFA0A0A0) : const Color(0xFF606060);
   }
 }
 
-/// Utility function to get workout type color
-Color getWorkoutTypeColor(String type) {
-  switch (type.toLowerCase()) {
-    case 'hiit':
-      return AppColors.error;
-    case 'cardio':
-      return AppColors.orange;
-    case 'flexibility':
-      return AppColors.purple;
-    case 'strength':
-    default:
-      return AppColors.cyan;
-  }
+/// Utility function to get workout type color (monochrome)
+Color getWorkoutTypeColor(String type, {bool isDark = true}) {
+  // All workout types use the same monochrome accent
+  return isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 }
 
 /// Utility function to get difficulty icon

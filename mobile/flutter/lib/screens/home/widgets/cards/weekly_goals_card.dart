@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/services/personal_goals_service.dart';
 import '../../../../data/services/haptic_service.dart';
@@ -113,11 +114,7 @@ class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: activeGoals > 0
-                    ? AppColors.cyan.withValues(alpha: 0.3)
-                    : cardBorder,
-              ),
+              border: Border.all(color: cardBorder),
             ),
             child: activeGoals > 0
                 ? _buildActiveGoalsContent(
@@ -141,6 +138,7 @@ class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
     Color textSecondary,
     Color textMuted,
   ) {
+    final accentColor = ref.colors(context).accent;
     return Row(
       children: [
         // Goal icon with badge
@@ -149,12 +147,12 @@ class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.cyan.withValues(alpha: 0.15),
+                color: accentColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.flag,
-                color: AppColors.cyan,
+                color: accentColor,
                 size: 24,
               ),
             ),
@@ -216,17 +214,18 @@ class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
   }
 
   Widget _buildEmptyState(Color textSecondary, Color textMuted) {
+    final accentColor = ref.colors(context).accent;
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.purple.withValues(alpha: 0.1),
+            color: accentColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
             Icons.emoji_events_outlined,
-            color: AppColors.purple.withValues(alpha: 0.6),
+            color: accentColor.withValues(alpha: 0.6),
             size: 24,
           ),
         ),
@@ -256,7 +255,7 @@ class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
         ),
         Icon(
           Icons.add_circle_outline,
-          color: AppColors.purple.withValues(alpha: 0.6),
+          color: accentColor.withValues(alpha: 0.6),
         ),
       ],
     );

@@ -307,6 +307,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
   }
 
   Widget _buildProgressDots(bool isDark) {
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
     return AnimatedBuilder(
       animation: _progressController,
       builder: (context, child) {
@@ -316,12 +317,8 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
             final isPast = index < _currentStatIndex;
             final isCurrent = index == _currentStatIndex;
 
-            // Gradient colors based on position
-            final activeColor = Color.lerp(
-              AppColors.cyan,
-              AppColors.teal,
-              index / (_stats.length - 1),
-            )!;
+            // Monochrome accent color
+            final activeColor = accentColor;
             final inactiveColor = isDark ? Colors.white12 : Colors.black12;
 
             // For past dots: fully filled
@@ -353,6 +350,8 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
   }
 
   Widget _buildBranding(bool isDark) {
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -361,11 +360,11 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: AppColors.teal,
+            color: accentColor,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: AppColors.teal.withOpacity(0.3),
+                color: accentColor.withOpacity(0.3),
                 blurRadius: 12,
                 spreadRadius: 1,
               ),
@@ -376,9 +375,9 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
             child: Image.asset(
               'assets/images/app_icon.png',
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => const Icon(
+              errorBuilder: (context, error, stackTrace) => Icon(
                 Icons.fitness_center,
-                color: AppColors.pureBlack,
+                color: accentContrast,
                 size: 24,
               ),
             ),
@@ -387,12 +386,12 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
 
         const SizedBox(width: 12),
 
-        // App name - single teal color instead of gradient
+        // App name - monochrome accent color
         Text(
           'FitWiz',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: AppColors.teal,
+                color: accentColor,
               ),
         ).animate().fadeIn(delay: 200.ms),
       ],
@@ -401,9 +400,10 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
 
   Widget _buildStatsCarousel(bool isDark) {
     final cardColor = isDark ? AppColors.elevated : Colors.white;
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
     final borderColor = isDark
         ? AppColors.cardBorder.withOpacity(0.3)
-        : AppColors.cyan.withOpacity(0.2);
+        : accentColor.withOpacity(0.2);
 
     return Center(
       child: SizedBox(
@@ -535,9 +535,11 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
   /// Build a compact pricing transparency section showing all 4 tiers before signup
   Widget _buildPricingTransparencySection(bool isDark) {
     final cardColor = isDark ? AppColors.elevated : Colors.white;
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
     final borderColor = isDark
         ? AppColors.cardBorder.withOpacity(0.3)
-        : AppColors.cyan.withOpacity(0.15);
+        : accentColor.withOpacity(0.15);
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     return Container(
@@ -556,20 +558,18 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.teal, AppColors.cyan],
-                  ),
+                  color: accentColor,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.check_circle, color: Colors.white, size: 10),
+                    Icon(Icons.check_circle, color: accentContrast, size: 10),
                     const SizedBox(width: 3),
                     Text(
                       'FREE FOREVER',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: accentContrast,
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.5,
@@ -600,10 +600,10 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                   price: '\$0',
                   period: '/forever',
                   highlight: 'Start here',
-                  accentColor: AppColors.teal,
+                  accentColor: accentColor,
                   isDark: isDark,
                   icon: Icons.person_outline,
-                  onInfoTap: () => _showTierFeaturesSheet(context, isDark, 'Free', AppColors.teal),
+                  onInfoTap: () => _showTierFeaturesSheet(context, isDark, 'Free', accentColor),
                 ),
               ),
               const SizedBox(width: 6),
@@ -614,11 +614,11 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                   price: '\$4',
                   period: '/mo',
                   highlight: '7-day trial',
-                  accentColor: AppColors.cyan,
+                  accentColor: accentColor,
                   isDark: isDark,
                   icon: Icons.workspace_premium,
                   isPopular: true,
-                  onInfoTap: () => _showTierFeaturesSheet(context, isDark, 'Premium', AppColors.cyan),
+                  onInfoTap: () => _showTierFeaturesSheet(context, isDark, 'Premium', accentColor),
                 ),
               ),
             ],
@@ -633,10 +633,10 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                   price: '\$6.67',
                   period: '/mo',
                   highlight: 'Unlimited',
-                  accentColor: AppColors.purple,
+                  accentColor: accentColor,
                   isDark: isDark,
                   icon: Icons.diamond_outlined,
-                  onInfoTap: () => _showTierFeaturesSheet(context, isDark, 'Premium Plus', AppColors.purple),
+                  onInfoTap: () => _showTierFeaturesSheet(context, isDark, 'Premium Plus', accentColor),
                 ),
               ),
               const SizedBox(width: 6),
@@ -647,10 +647,10 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                   price: '\$99.99',
                   period: 'once',
                   highlight: 'Best value',
-                  accentColor: const Color(0xFFFFB800), // Gold
+                  accentColor: accentColor,
                   isDark: isDark,
                   icon: Icons.all_inclusive,
-                  onInfoTap: () => _showTierFeaturesSheet(context, isDark, 'Lifetime', const Color(0xFFFFB800)),
+                  onInfoTap: () => _showTierFeaturesSheet(context, isDark, 'Lifetime', accentColor),
                 ),
               ),
             ],
@@ -1153,74 +1153,79 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
 
         // Secondary CTAs in a horizontal row
         if (!_showSignInButtons)
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 4,
-            runSpacing: 0,
-            children: [
-              // See Pricing link
-              TextButton(
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  context.push('/pricing-preview');
-                },
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  'Full Pricing',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.cyan,
-                    fontWeight: FontWeight.w500,
+          Builder(
+            builder: (context) {
+              final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+              return Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 4,
+                runSpacing: 0,
+                children: [
+                  // See Pricing link
+                  TextButton(
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      context.push('/pricing-preview');
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      'Full Pricing',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: accentColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              Text('•', style: TextStyle(color: textSecondary, fontSize: 13)),
-              // All Features link
-              TextButton(
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  _showFeaturesBottomSheet(context, isDark);
-                },
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  'All Features',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.purple,
-                    fontWeight: FontWeight.w500,
+                  Text('•', style: TextStyle(color: textSecondary, fontSize: 13)),
+                  // All Features link
+                  TextButton(
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      _showFeaturesBottomSheet(context, isDark);
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      'All Features',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: accentColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              Text('•', style: TextStyle(color: textSecondary, fontSize: 13)),
-              // Try Sample Workout
-              TextButton(
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  context.push('/demo-workout');
-                },
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  'Try Sample',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.teal,
-                    fontWeight: FontWeight.w500,
+                  Text('•', style: TextStyle(color: textSecondary, fontSize: 13)),
+                  // Try Sample Workout
+                  TextButton(
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      context.push('/demo-workout');
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      'Try Sample',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: accentColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ).animate().fadeIn(delay: 600.ms),
 
         // Already have account - sign in section
@@ -1392,16 +1397,21 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
         const SizedBox(height: 8),
 
         // Email Sign In link
-        TextButton(
-          onPressed: _isSigningIn ? null : () => context.push('/email-sign-in'),
-          child: Text(
-            'Sign in with Email',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: AppColors.cyan,
-            ),
-          ),
+        Builder(
+          builder: (context) {
+            final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+            return TextButton(
+              onPressed: _isSigningIn ? null : () => context.push('/email-sign-in'),
+              child: Text(
+                'Sign in with Email',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: accentColor,
+                ),
+              ),
+            );
+          },
         ).animate().fadeIn(delay: 150.ms),
 
         // Cancel/back to get started
@@ -1423,6 +1433,8 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
   }
 
   Widget _buildGetStartedButton(bool isDark) {
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
     return SizedBox(
       width: double.infinity,
       height: 48,
@@ -1435,15 +1447,15 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
           context.go('/pre-auth-quiz');
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.cyan,
-          foregroundColor: Colors.white,
+          backgroundColor: accentColor,
+          foregroundColor: accentContrast,
           elevation: 4,
-          shadowColor: AppColors.cyan.withOpacity(0.4),
+          shadowColor: accentColor.withOpacity(0.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
         ),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
@@ -1451,10 +1463,11 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
+                color: accentContrast,
               ),
             ),
             SizedBox(width: 6),
-            Icon(Icons.arrow_forward_rounded, size: 18),
+            Icon(Icons.arrow_forward_rounded, size: 18, color: accentContrast),
           ],
         ),
       ),
@@ -1467,6 +1480,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
     Color elevated,
     Color textSecondary,
   ) {
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1483,7 +1497,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
               color: elevated,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: _isDropdownOpen ? AppColors.cyan : cardBorder,
+                color: _isDropdownOpen ? accentColor : cardBorder,
                 width: _isDropdownOpen ? 2 : 1,
               ),
             ),
@@ -1494,16 +1508,16 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                   width: 24,
                   height: 24,
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withOpacity(0.1),
+                    color: accentColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Center(
                     child: Text(
                       _selectedLanguage.code.toUpperCase(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 10,
-                        color: AppColors.cyan,
+                        color: accentColor,
                       ),
                     ),
                   ),
@@ -1590,7 +1604,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                           ),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? AppColors.cyan.withOpacity(0.1)
+                                ? accentColor.withOpacity(0.1)
                                 : Colors.transparent,
                             border: Border(
                               top: BorderSide(
@@ -1605,7 +1619,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                                 height: 24,
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? AppColors.cyan.withOpacity(0.2)
+                                      ? accentColor.withOpacity(0.2)
                                       : (isDark
                                           ? AppColors.glassSurface
                                           : AppColorsLight.glassSurface),
@@ -1618,7 +1632,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                                       fontWeight: FontWeight.bold,
                                       fontSize: 10,
                                       color: isSelected
-                                          ? AppColors.cyan
+                                          ? accentColor
                                           : textSecondary,
                                     ),
                                   ),
@@ -1636,7 +1650,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                                             ? FontWeight.w600
                                             : FontWeight.w500,
                                         color: isSelected
-                                            ? AppColors.cyan
+                                            ? accentColor
                                             : (isDark
                                                 ? AppColors.textPrimary
                                                 : AppColorsLight.textPrimary),
@@ -1650,15 +1664,15 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                                           vertical: 2,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: AppColors.teal.withOpacity(0.15),
+                                          color: accentColor.withOpacity(0.15),
                                           borderRadius: BorderRadius.circular(4),
                                         ),
-                                        child: const Text(
+                                        child: Text(
                                           'Soon',
                                           style: TextStyle(
                                             fontSize: 8,
                                             fontWeight: FontWeight.w600,
-                                            color: AppColors.teal,
+                                            color: accentColor,
                                           ),
                                         ),
                                       ),
@@ -1667,9 +1681,9 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                                 ),
                               ),
                               if (isSelected)
-                                const Icon(
+                                Icon(
                                   Icons.check_circle,
-                                  color: AppColors.cyan,
+                                  color: accentColor,
                                   size: 16,
                                 ),
                             ],
@@ -1935,6 +1949,7 @@ class _FeatureComparisonItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -1964,7 +1979,7 @@ class _FeatureComparisonItem extends StatelessWidget {
             Text(
               paid,
               style: TextStyle(
-                color: AppColors.cyan,
+                color: accentColor,
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
               ),

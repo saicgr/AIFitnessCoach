@@ -8,6 +8,9 @@ import 'cards/roi_summary_card.dart';
 import 'cards/weekly_plan_card.dart';
 import 'daily_activity_card.dart';
 import 'components/components.dart';
+import 'habits_section.dart';
+import 'body_metrics_section.dart';
+import 'achievements_section.dart';
 
 /// Factory class for creating tile widgets based on TileType
 class TileFactory {
@@ -61,7 +64,7 @@ class TileFactory {
       case TileType.macroRings:
         return MacroRingsCard(size: tile.size, isDark: isDark);
       case TileType.bodyWeight:
-        return BodyWeightCard(size: tile.size, isDark: isDark);
+        return const BodyMetricsSection();
       case TileType.progressPhoto:
         return _buildPlaceholderTile(tile, isDark, 'Progress Photo');
       case TileType.socialFeed:
@@ -94,7 +97,7 @@ class TileFactory {
       case TileType.dailyStats:
         return DailyStatsCard(size: tile.size, isDark: isDark);
       case TileType.achievements:
-        return AchievementsCard(size: tile.size, isDark: isDark);
+        return const AchievementsSection();
       case TileType.heroSection:
         // Hero section removed - return empty widget
         return const SizedBox.shrink();
@@ -103,7 +106,7 @@ class TileFactory {
       case TileType.quickLogMeasurements:
         return QuickLogMeasurementsCard(size: tile.size, isDark: isDark);
       case TileType.habits:
-        return HabitsTileCard(size: tile.size, isDark: isDark);
+        return const HabitsSection();
     }
   }
 

@@ -25,14 +25,14 @@ class QuizLifestyle extends StatelessWidget {
       'emoji': '😴',
       'label': 'Poor',
       'description': '<5 hrs or restless',
-      'color': AppColors.coral,
+      'color': AppColors.accent,
     },
     {
       'id': 'fair',
       'emoji': '😐',
       'label': 'Fair',
       'description': '5-6 hrs',
-      'color': AppColors.orange,
+      'color': AppColors.accent,
     },
     {
       'id': 'good',
@@ -46,7 +46,7 @@ class QuizLifestyle extends StatelessWidget {
       'emoji': '🌟',
       'label': 'Excellent',
       'description': '8+ hrs, well-rested',
-      'color': AppColors.cyan,
+      'color': AppColors.accent,
     },
   ];
 
@@ -267,7 +267,7 @@ class QuizLifestyle extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withValues(alpha: 0.2),
+                  color: AppColors.accent.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -275,7 +275,7 @@ class QuizLifestyle extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.cyan,
+                    color: AppColors.accent,
                   ),
                 ),
               ),
@@ -303,7 +303,7 @@ class QuizLifestyle extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  gradient: isSelected ? AppColors.cyanGradient : null,
+                  gradient: isSelected ? AppColors.accentGradient : null,
                   color: isSelected
                       ? null
                       : isDisabled
@@ -314,7 +314,7 @@ class QuizLifestyle extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected
-                        ? AppColors.cyan
+                        ? AppColors.accent
                         : isDisabled
                             ? cardBorder.withValues(alpha: 0.3)
                             : cardBorder,

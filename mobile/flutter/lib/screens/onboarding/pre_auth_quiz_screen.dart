@@ -1696,20 +1696,20 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withOpacity(0.1),
+                  color: AppColors.accent.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+                  border: Border.all(color: AppColors.accent.withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.lightbulb_outline, color: AppColors.cyan, size: 20),
+                    Icon(Icons.lightbulb_outline, color: AppColors.accent, size: 20),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         'You can always change these later in Settings',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.cyan,
+                          color: AppColors.accent,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -1742,7 +1742,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.cyan,
+              backgroundColor: AppColors.accent,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1773,10 +1773,10 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: AppColors.purple.withOpacity(0.15),
+              color: AppColors.accent.withOpacity(0.15),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: AppColors.purple, size: 16),
+            child: Icon(icon, color: AppColors.accent, size: 16),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -2151,9 +2151,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
 
   Widget _buildGoalQuestion() {
     final goals = [
-      {'id': 'build_muscle', 'label': 'Build Muscle', 'icon': Icons.fitness_center, 'color': AppColors.purple},
-      {'id': 'lose_weight', 'label': 'Lose Weight', 'icon': Icons.monitor_weight_outlined, 'color': AppColors.coral},
-      {'id': 'increase_strength', 'label': 'Get Stronger', 'icon': Icons.bolt, 'color': AppColors.orange},
+      {'id': 'build_muscle', 'label': 'Build Muscle', 'icon': Icons.fitness_center, 'color': AppColors.accent},
+      {'id': 'lose_weight', 'label': 'Lose Weight', 'icon': Icons.monitor_weight_outlined, 'color': AppColors.accent},
+      {'id': 'increase_strength', 'label': 'Get Stronger', 'icon': Icons.bolt, 'color': AppColors.accent},
       {'id': 'improve_endurance', 'label': 'Build Endurance', 'icon': Icons.directions_run, 'color': AppColors.teal},
       {'id': 'stay_active', 'label': 'Stay Active', 'icon': Icons.favorite_outline, 'color': AppColors.success},
       {'id': 'athletic_performance', 'label': 'Athletic Performance', 'icon': Icons.sports_martial_arts, 'color': AppColors.electricBlue},
@@ -2326,7 +2326,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             ),
             Row(
               children: [
-                Icon(Icons.info_outline, color: AppColors.cyan),
+                Icon(Icons.info_outline, color: AppColors.accent),
                 const SizedBox(width: 12),
                 Text(
                   title,
@@ -2353,7 +2353,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(ctx),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: AppColors.accent,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(

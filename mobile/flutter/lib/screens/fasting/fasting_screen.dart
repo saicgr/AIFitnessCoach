@@ -79,7 +79,9 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    // Use monochrome accent instead of purple
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     // Check if guest - fasting is disabled for guests
@@ -100,13 +102,13 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: purple.withValues(alpha: 0.15),
+                      color: accentColor.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.timer_outlined,
                       size: 48,
-                      color: purple,
+                      color: accentColor,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -140,8 +142,8 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.cyan,
-                        foregroundColor: Colors.white,
+                        backgroundColor: accentColor,
+                        foregroundColor: accentContrast,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -191,7 +193,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
       return Scaffold(
         backgroundColor: backgroundColor,
         body: Center(
-          child: CircularProgressIndicator(color: purple),
+          child: CircularProgressIndicator(color: accentColor),
         ),
       );
     }
@@ -225,7 +227,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: purple.withValues(alpha: 0.15),
+                        color: accentColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -236,7 +238,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                           Text(
                             '${fastingState.streak!.currentStreak}',
                             style: TextStyle(
-                              color: purple,
+                              color: accentColor,
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                             ),
@@ -269,10 +271,10 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                       controller: _tabController,
                       indicatorSize: TabBarIndicatorSize.tab,
                       indicator: BoxDecoration(
-                        color: purple,
+                        color: isDark ? AppColors.accent : AppColorsLight.accent,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      labelColor: Colors.white,
+                      labelColor: isDark ? AppColors.accentContrast : AppColorsLight.accentContrast,
                       unselectedLabelColor: textMuted,
                       dividerHeight: 0,
                       labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
@@ -316,7 +318,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                 fastingState,
                 userId,
                 isDark,
-                purple,
+                accentColor,
                 textPrimary,
                 textMuted,
                 elevated,
@@ -327,7 +329,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                 fastingState,
                 userId,
                 isDark,
-                purple,
+                accentColor,
                 textPrimary,
                 textMuted,
               ),
@@ -345,11 +347,12 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
     FastingState fastingState,
     String? userId,
     bool isDark,
-    Color purple,
+    Color accentColor,
     Color textPrimary,
     Color textMuted,
     Color elevated,
   ) {
+    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
     final hasFast = fastingState.hasFast;
     final durationMinutes = _selectedProtocol == FastingProtocol.custom
         ? _customHours * 60
@@ -407,13 +410,13 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                       ? null
                       : () => _startFastDirectly(userId),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: purple,
-                    foregroundColor: Colors.white,
+                    backgroundColor: accentColor,
+                    foregroundColor: accentContrast,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                     elevation: 0,
-                    disabledBackgroundColor: purple.withValues(alpha: 0.5),
+                    disabledBackgroundColor: accentColor.withValues(alpha: 0.5),
                   ),
                   child: _isStartingFast
                       ? const SizedBox(
@@ -478,7 +481,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
     FastingState fastingState,
     String? userId,
     bool isDark,
-    Color purple,
+    Color accentColor,
     Color textPrimary,
     Color textMuted,
   ) {
@@ -490,7 +493,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
             Icon(
               Icons.history,
               size: 64,
-              color: purple.withValues(alpha: 0.3),
+              color: accentColor.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 16),
             Text(
@@ -685,7 +688,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
             child: Text(
               'Continue Fasting',
               style: TextStyle(
-                color: isDark ? AppColors.purple : AppColorsLight.purple,
+                color: isDark ? AppColors.accent : AppColorsLight.accent,
               ),
             ),
           ),

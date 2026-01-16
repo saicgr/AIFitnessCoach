@@ -5,12 +5,12 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/inflammation_analysis.dart';
 import '../../../data/providers/inflammation_analysis_provider.dart';
 
-/// Colors for inflammation display
+/// Colors for inflammation display - monochrome
 class InflammationColors {
-  static const Color inflammatory = Color(0xFFEF4444); // Red
-  static const Color antiInflammatory = Color(0xFF22C55E); // Green
-  static const Color neutral = Color(0xFF71717A); // Gray
-  static const Color additive = Color(0xFFF97316); // Orange
+  static Color get inflammatory => AppColors.textMuted; // Gray for inflammatory
+  static Color get antiInflammatory => AppColors.textPrimary; // White for anti-inflammatory
+  static Color get neutral => AppColors.textMuted; // Gray
+  static Color get additive => AppColors.textSecondary; // Secondary gray
 
   static Color getColor(InflammationType type) {
     switch (type) {

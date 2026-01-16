@@ -445,7 +445,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
               ),
             ],
           ),
-          backgroundColor: const Color(0xFF34C759),
+          backgroundColor: AppColors.textPrimary,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
         ),
@@ -463,7 +463,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to log: $e'),
-          backgroundColor: const Color(0xFFEF4444),
+          backgroundColor: AppColors.textMuted,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -520,7 +520,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Failed to load recipe: $e'),
-                    backgroundColor: const Color(0xFFEF4444),
+                    backgroundColor: AppColors.textMuted,
                   ),
                 );
               }
@@ -571,7 +571,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
             onPressed: () => Navigator.pop(context, true),
             child: Text(
               'Delete',
-              style: TextStyle(color: const Color(0xFFEF4444)),
+              style: TextStyle(color: AppColors.textMuted),
             ),
           ),
         ],
@@ -609,7 +609,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to delete'),
-          backgroundColor: const Color(0xFFEF4444),
+          backgroundColor: AppColors.textMuted,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -683,7 +683,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
                 boxShadow: _isSearchFocused
                     ? [
                         BoxShadow(
-                          color: accentColor.withOpacity(0.2),
+                          color: accentColor.withValues(alpha:0.2),
                           blurRadius: 8,
                         ),
                       ]
@@ -863,7 +863,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
             Icon(
               Icons.error_outline_rounded,
               size: 48,
-              color: const Color(0xFFEF4444),
+              color: AppColors.textMuted,
             ),
             const SizedBox(height: 16),
             Text(
@@ -953,7 +953,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
               height: 80,
               decoration: BoxDecoration(
                 color: (isDark ? AppColors.elevated : AppColorsLight.elevated)
-                    .withOpacity(0.5),
+                    .withValues(alpha:0.5),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -1015,8 +1015,8 @@ class _FoodLibraryCard extends StatelessWidget {
 
     final isRecipe = item is RecipeLibraryItem;
     final typeColor = isRecipe
-        ? const Color(0xFF8B5CF6) // Purple for recipes
-        : const Color(0xFF34C759); // Green for saved foods
+        ? AppColors.textSecondary // Purple for recipes
+        : AppColors.textPrimary; // Green for saved foods
 
     return Dismissible(
       key: Key(item.id),
@@ -1024,7 +1024,7 @@ class _FoodLibraryCard extends StatelessWidget {
       background: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFEF4444),
+          color: AppColors.textMuted,
           borderRadius: BorderRadius.circular(16),
         ),
         alignment: Alignment.centerRight,
@@ -1057,7 +1057,7 @@ class _FoodLibraryCard extends StatelessWidget {
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
                 child: Text('Delete',
-                    style: TextStyle(color: const Color(0xFFEF4444))),
+                    style: TextStyle(color: AppColors.textMuted)),
               ),
             ],
           ),
@@ -1085,7 +1085,7 @@ class _FoodLibraryCard extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: typeColor.withOpacity(0.15),
+                      color: typeColor.withValues(alpha:0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
@@ -1169,7 +1169,7 @@ class _FoodLibraryCard extends StatelessWidget {
 
                   // Quick log button
                   Material(
-                    color: accentColor.withOpacity(0.15),
+                    color: accentColor.withValues(alpha:0.15),
                     borderRadius: BorderRadius.circular(10),
                     child: InkWell(
                       onTap: onLog,
@@ -1246,7 +1246,7 @@ class _SortOptionsSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: textMuted.withOpacity(0.3),
+                color: textMuted.withValues(alpha:0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1277,8 +1277,8 @@ class _SortOptionsSheet extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? accentColor.withOpacity(0.15)
-                        : textMuted.withOpacity(0.1),
+                        ? accentColor.withValues(alpha:0.15)
+                        : textMuted.withValues(alpha:0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
@@ -1336,7 +1336,7 @@ class _MealTypeSelector extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: textMuted.withOpacity(0.3),
+                color: textMuted.withValues(alpha:0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1411,8 +1411,8 @@ class _FoodDetailSheet extends StatelessWidget {
 
     final isRecipe = item is RecipeLibraryItem;
     final typeColor = isRecipe
-        ? const Color(0xFF8B5CF6)
-        : const Color(0xFF34C759);
+        ? AppColors.textSecondary
+        : AppColors.textPrimary;
 
     // Extract details based on type
     RecipeSummary? recipe;
@@ -1440,7 +1440,7 @@ class _FoodDetailSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: textMuted.withOpacity(0.3),
+                color: textMuted.withValues(alpha:0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1455,7 +1455,7 @@ class _FoodDetailSheet extends StatelessWidget {
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: typeColor.withOpacity(0.15),
+                      color: typeColor.withValues(alpha:0.15),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
@@ -1490,7 +1490,7 @@ class _FoodDetailSheet extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: typeColor.withOpacity(0.1),
+                                color: typeColor.withValues(alpha:0.1),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
@@ -1555,14 +1555,14 @@ class _FoodDetailSheet extends StatelessWidget {
                           label: 'Calories',
                           value: item.calories?.toString() ?? '-',
                           unit: 'kcal',
-                          color: const Color(0xFFFF9500),
+                          color: AppColors.textPrimary,
                           isDark: isDark,
                         ),
                         _NutrientStat(
                           label: 'Protein',
                           value: item.protein?.round().toString() ?? '-',
                           unit: 'g',
-                          color: const Color(0xFF34C759),
+                          color: AppColors.textPrimary,
                           isDark: isDark,
                         ),
                         if (savedFood != null) ...[
@@ -1570,14 +1570,14 @@ class _FoodDetailSheet extends StatelessWidget {
                             label: 'Carbs',
                             value: savedFood.totalCarbsG?.round().toString() ?? '-',
                             unit: 'g',
-                            color: const Color(0xFF007AFF),
+                            color: AppColors.textPrimary,
                             isDark: isDark,
                           ),
                           _NutrientStat(
                             label: 'Fat',
                             value: savedFood.totalFatG?.round().toString() ?? '-',
                             unit: 'g',
-                            color: const Color(0xFFFF2D55),
+                            color: AppColors.textMuted,
                             isDark: isDark,
                           ),
                         ],
@@ -1586,14 +1586,14 @@ class _FoodDetailSheet extends StatelessWidget {
                             label: 'Servings',
                             value: recipe.servings.toString(),
                             unit: '',
-                            color: const Color(0xFF8B5CF6),
+                            color: AppColors.textSecondary,
                             isDark: isDark,
                           ),
                           _NutrientStat(
                             label: 'Ingredients',
                             value: recipe.ingredientCount.toString(),
                             unit: '',
-                            color: const Color(0xFF5856D6),
+                            color: AppColors.textSecondary,
                             isDark: isDark,
                           ),
                         ],
@@ -1710,9 +1710,9 @@ class _FoodDetailSheet extends StatelessWidget {
                           child: OutlinedButton.icon(
                             onPressed: onDelete,
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFFEF4444),
+                              foregroundColor: AppColors.textMuted,
                               side: BorderSide(
-                                  color: const Color(0xFFEF4444).withOpacity(0.3)),
+                                  color: AppColors.textMuted.withValues(alpha:0.3)),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -1764,7 +1764,7 @@ class _NutrientStat extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
+            color: color.withValues(alpha:0.15),
             shape: BoxShape.circle,
           ),
           child: Center(

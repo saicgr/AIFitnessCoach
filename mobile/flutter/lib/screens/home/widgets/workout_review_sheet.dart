@@ -205,9 +205,10 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
   }
 
   Widget _buildWorkoutSummary(SheetColors colors) {
-    final typeColor = getWorkoutTypeColor(_currentWorkout.type ?? 'strength');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final typeColor = getWorkoutTypeColor(_currentWorkout.type ?? 'strength', isDark: isDark);
     final difficultyColor =
-        getDifficultyColor(_currentWorkout.difficulty ?? 'medium');
+        getDifficultyColor(_currentWorkout.difficulty ?? 'medium', isDark: isDark);
 
     return Padding(
       padding: const EdgeInsets.all(16),

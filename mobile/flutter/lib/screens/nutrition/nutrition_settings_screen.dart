@@ -34,7 +34,7 @@ class _NutritionSettingsScreenState
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder =
         isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final green = const Color(0xFF34C759);
+    final accentColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     final prefsState = ref.watch(nutritionPreferencesProvider);
     final preferences = prefsState.preferences;
@@ -60,7 +60,7 @@ class _NutritionSettingsScreenState
         centerTitle: true,
       ),
       body: prefsState.isLoading || preferences == null
-          ? Center(child: CircularProgressIndicator(color: green))
+          ? Center(child: CircularProgressIndicator(color: accentColor))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -71,7 +71,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Mental Health & Wellbeing',
                     Icons.favorite_rounded,
-                    const Color(0xFFFF2D55), // Pink
+                    textPrimary,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -90,7 +90,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, calmModeEnabled: value),
                         icon: Icons.spa_rounded,
-                        iconColor: const Color(0xFF5856D6), // Purple
+                        iconColor: textPrimary,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -104,7 +104,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, showWeeklyInsteadOfDaily: value),
                         icon: Icons.calendar_view_week_rounded,
-                        iconColor: const Color(0xFF007AFF), // Blue
+                        iconColor: textPrimary,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -118,7 +118,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Streaks & Weekly Goals',
                     Icons.local_fire_department,
-                    const Color(0xFFFF9500), // Orange
+                    textPrimary,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -140,7 +140,7 @@ class _NutritionSettingsScreenState
                     context,
                     'AI Assistance',
                     Icons.auto_awesome,
-                    const Color(0xFF5856D6), // Purple
+                    textPrimary,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -159,7 +159,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, showAiFeedbackAfterLogging: !value),
                         icon: Icons.lightbulb_outline_rounded,
-                        iconColor: const Color(0xFFFF9500), // Orange
+                        iconColor: textPrimary,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -173,7 +173,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Logging',
                     Icons.edit_note_rounded,
-                    const Color(0xFF34C759), // Green
+                    textPrimary,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -192,7 +192,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, quickLogModeEnabled: value),
                         icon: Icons.bolt_rounded,
-                        iconColor: const Color(0xFFFF9500), // Orange
+                        iconColor: textPrimary,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -206,7 +206,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, showMacrosOnLog: value),
                         icon: Icons.pie_chart_rounded,
-                        iconColor: const Color(0xFF007AFF), // Blue
+                        iconColor: textPrimary,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -220,7 +220,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Food Library',
                     Icons.menu_book_rounded,
-                    const Color(0xFF8B5CF6), // Purple
+                    textPrimary,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -234,7 +234,7 @@ class _NutritionSettingsScreenState
                     title: 'Saved Foods & Recipes',
                     subtitle: 'Manage your food library for quick logging',
                     icon: Icons.bookmark_rounded,
-                    iconColor: const Color(0xFF8B5CF6),
+                    iconColor: textPrimary,
                     onTap: () {
                       HapticService.light();
                       Navigator.push(
@@ -253,7 +253,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Display',
                     Icons.view_compact_rounded,
-                    const Color(0xFF00C7BE), // Teal
+                    textPrimary,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -272,7 +272,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, compactTrackerViewEnabled: value),
                         icon: Icons.density_small_rounded,
-                        iconColor: const Color(0xFF5856D6), // Purple
+                        iconColor: textPrimary,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -286,7 +286,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Dynamic Calorie Adjustments',
                     Icons.trending_up_rounded,
-                    const Color(0xFF00C7BE), // Teal
+                    textPrimary,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -305,7 +305,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, adjustCaloriesForTraining: value),
                         icon: Icons.fitness_center_rounded,
-                        iconColor: const Color(0xFFFF3B30), // Red
+                        iconColor: textPrimary,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -319,7 +319,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, adjustCaloriesForRest: value),
                         icon: Icons.nightlight_round,
-                        iconColor: const Color(0xFF5856D6), // Purple
+                        iconColor: textPrimary,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -334,7 +334,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, weeklyCheckinEnabled: value),
                         icon: Icons.calendar_today_rounded,
-                        iconColor: const Color(0xFF00C7BE), // Teal
+                        iconColor: textPrimary,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -348,7 +348,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Nutrition Goals',
                     Icons.track_changes_rounded,
-                    const Color(0xFF34C759), // Green
+                    textPrimary,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -370,7 +370,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Weekly Check-In',
                     Icons.event_note_rounded,
-                    const Color(0xFF007AFF), // Blue
+                    textPrimary,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -428,8 +428,7 @@ class _NutritionSettingsScreenState
     String? userId,
     NutritionStreak? streak,
   ) {
-    final orange = const Color(0xFFFF9500);
-    final teal = const Color(0xFF4ECDC4);
+    final accentLight = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     return Container(
       decoration: BoxDecoration(
@@ -448,7 +447,7 @@ class _NutritionSettingsScreenState
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: orange.withValues(alpha: 0.15),
+                    color: textPrimary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
@@ -457,7 +456,7 @@ class _NutritionSettingsScreenState
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: orange,
+                        color: textPrimary,
                       ),
                     ),
                   ),
@@ -495,10 +494,10 @@ class _NutritionSettingsScreenState
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: teal.withValues(alpha: 0.15),
+                    color: accentLight.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(Icons.ac_unit, color: teal, size: 20),
+                  child: Icon(Icons.ac_unit, color: accentLight, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -528,8 +527,8 @@ class _NutritionSettingsScreenState
                         ? null
                         : () => _useStreakFreeze(userId),
                     style: TextButton.styleFrom(
-                      backgroundColor: teal.withValues(alpha: 0.15),
-                      foregroundColor: teal,
+                      backgroundColor: accentLight.withValues(alpha: 0.15),
+                      foregroundColor: accentLight,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 8,
@@ -565,12 +564,12 @@ class _NutritionSettingsScreenState
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF007AFF).withValues(alpha: 0.15),
+                    color: textPrimary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     Icons.calendar_view_week_rounded,
-                    color: const Color(0xFF007AFF),
+                    color: textPrimary,
                     size: 20,
                   ),
                 ),
@@ -607,7 +606,7 @@ class _NutritionSettingsScreenState
                     color: (streak?.weeklyGoalEnabled == true &&
                             (streak?.daysLoggedThisWeek ?? 0) >=
                                 (streak?.weeklyGoalDays ?? 5))
-                        ? const Color(0xFF34C759).withValues(alpha: 0.15)
+                        ? textPrimary.withValues(alpha: 0.15)
                         : textMuted.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -621,7 +620,7 @@ class _NutritionSettingsScreenState
                       color: (streak?.weeklyGoalEnabled == true &&
                               (streak?.daysLoggedThisWeek ?? 0) >=
                                   (streak?.weeklyGoalDays ?? 5))
-                          ? const Color(0xFF34C759)
+                          ? textPrimary
                           : textMuted,
                     ),
                   ),
@@ -651,7 +650,7 @@ class _NutritionSettingsScreenState
                 Text('Streak freeze used! Your streak is protected.'),
               ],
             ),
-            backgroundColor: const Color(0xFF4ECDC4),
+            backgroundColor: AppColors.textMuted,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -661,7 +660,7 @@ class _NutritionSettingsScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: const Color(0xFFFF3B30),
+            backgroundColor: AppColors.textMuted,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -767,7 +766,8 @@ class _NutritionSettingsScreenState
                 HapticService.light();
                 onChanged(newValue);
               },
-        activeColor: const Color(0xFF34C759),
+        activeTrackColor: textPrimary.withValues(alpha: 0.5),
+        activeThumbColor: textPrimary,
       ),
     );
   }
@@ -880,7 +880,7 @@ class _NutritionSettingsScreenState
             children: [
               Icon(
                 Icons.info_outline_rounded,
-                color: const Color(0xFF007AFF),
+                color: textPrimary,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -898,7 +898,7 @@ class _NutritionSettingsScreenState
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFF3B30).withValues(alpha: 0.15),
+                    color: textMuted.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -907,7 +907,7 @@ class _NutritionSettingsScreenState
                       Icon(
                         Icons.fitness_center,
                         size: 14,
-                        color: const Color(0xFFFF3B30),
+                        color: textMuted,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -915,7 +915,7 @@ class _NutritionSettingsScreenState
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFFFF3B30),
+                          color: textMuted,
                         ),
                       ),
                     ],
@@ -937,13 +937,13 @@ class _NutritionSettingsScreenState
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF007AFF).withValues(alpha: 0.1),
+                    color: textPrimary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     Icons.edit_outlined,
                     size: 18,
-                    color: const Color(0xFF007AFF),
+                    color: textPrimary,
                   ),
                 ),
               ),
@@ -988,7 +988,7 @@ class _NutritionSettingsScreenState
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF007AFF).withValues(alpha: 0.1),
+                color: textPrimary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -996,7 +996,7 @@ class _NutritionSettingsScreenState
                   Icon(
                     Icons.lightbulb_outline,
                     size: 16,
-                    color: const Color(0xFF007AFF),
+                    color: textPrimary,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -1094,7 +1094,7 @@ class _NutritionSettingsScreenState
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: const Text('Targets recalculated!'),
-                          backgroundColor: const Color(0xFF34C759),
+                          backgroundColor: AppColors.textMuted,
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -1104,7 +1104,7 @@ class _NutritionSettingsScreenState
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Error: $e'),
-                          backgroundColor: const Color(0xFFFF3B30),
+                          backgroundColor: AppColors.textMuted,
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -1126,13 +1126,13 @@ class _NutritionSettingsScreenState
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: const Color(0xFF007AFF),
+                      color: textPrimary,
                     ),
                   )
                 else
                   Icon(
                     Icons.refresh_rounded,
-                    color: const Color(0xFF007AFF),
+                    color: textPrimary,
                     size: 20,
                   ),
                 const SizedBox(width: 8),
@@ -1141,7 +1141,7 @@ class _NutritionSettingsScreenState
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF007AFF),
+                    color: textPrimary,
                   ),
                 ),
               ],
@@ -1194,7 +1194,7 @@ class _NutritionSettingsScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error saving settings: $e'),
-            backgroundColor: const Color(0xFFFF3B30),
+            backgroundColor: AppColors.textMuted,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1406,7 +1406,7 @@ class _NutritionSettingsScreenState
     NutritionPreferences preferences,
     String? userId,
   ) {
-    final green = const Color(0xFF34C759);
+    final green = textPrimary;
     final goals = preferences.nutritionGoals;
     final primaryGoal = preferences.nutritionGoal;
 
@@ -1553,7 +1553,7 @@ class _NutritionSettingsScreenState
     if (userId == null) return;
 
     final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
-    final green = const Color(0xFF34C759);
+    final green = textPrimary;
 
     // Available goals
     final allGoals = [
@@ -1794,7 +1794,7 @@ class _NutritionSettingsScreenState
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text('Error: $e'),
-                                    backgroundColor: const Color(0xFFFF3B30),
+                                    backgroundColor: textMuted,
                                     behavior: SnackBarBehavior.floating,
                                   ),
                                 );
@@ -1845,7 +1845,7 @@ class _NutritionSettingsScreenState
     Color textMuted,
     NutritionPreferences preferences,
   ) {
-    final blue = const Color(0xFF007AFF);
+    final blue = textPrimary;
     final isDue = preferences.isWeeklyCheckinDue;
     final lastCheckin = preferences.lastWeeklyCheckinAt;
     final daysSince = preferences.daysSinceLastCheckin;

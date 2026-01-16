@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/home_layout.dart';
 import '../../../../data/repositories/measurements_repository.dart';
 import '../../../../data/repositories/auth_repository.dart';
@@ -25,6 +26,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accentColor = ref.colors(context).accent;
 
     final measurementsState = ref.watch(measurementsProvider);
     final summary = measurementsState.summary;
@@ -65,6 +67,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
         textColor: textColor,
         textMuted: textMuted,
         cardBorder: cardBorder,
+        accentColor: accentColor,
         hasMeasurements: waist != null || chest != null || hips != null,
       );
     }
@@ -80,17 +83,18 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.purple.withValues(alpha: 0.3)),
+          border: Border.all(color: cardBorder),
         ),
         child: isLoading
             ? _buildLoadingState(textMuted)
             : (waist == null && chest == null && hips == null)
-                ? _buildEmptyState(textMuted, context, ref)
+                ? _buildEmptyState(textMuted, accentColor, context, ref)
                 : _buildContentState(
                     context,
                     ref,
                     textColor: textColor,
                     textMuted: textMuted,
+                    accentColor: accentColor,
                     waist: waist,
                     chest: chest,
                     hips: hips,
@@ -107,6 +111,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
     required Color textColor,
     required Color textMuted,
     required Color cardBorder,
+    required Color accentColor,
     required bool hasMeasurements,
   }) {
     return InkWell(
@@ -117,14 +122,14 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.purple.withValues(alpha: 0.3)),
+          border: Border.all(color: cardBorder),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.straighten,
-              color: AppColors.purple,
+              color: accentColor,
               size: 16,
             ),
             const SizedBox(width: 6),
@@ -165,13 +170,13 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(Color textMuted, BuildContext context, WidgetRef ref) {
+  Widget _buildEmptyState(Color textMuted, Color accentColor, BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(Icons.straighten, color: AppColors.purple, size: 20),
+            Icon(Icons.straighten, color: accentColor, size: 20),
             const SizedBox(width: 8),
             Text(
               'Body Measurements',
@@ -197,8 +202,8 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
           icon: Icon(Icons.add, size: 18),
           label: Text('Log Measurements'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.purple,
-            foregroundColor: Colors.white,
+            backgroundColor: accentColor,
+            foregroundColor: isDark ? Colors.black : Colors.white,
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -215,6 +220,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
     WidgetRef ref, {
     required Color textColor,
     required Color textMuted,
+    required Color accentColor,
     required MeasurementEntry? waist,
     required MeasurementEntry? chest,
     required MeasurementEntry? hips,
@@ -226,7 +232,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
         // Header row
         Row(
           children: [
-            Icon(Icons.straighten, color: AppColors.purple, size: 20),
+            Icon(Icons.straighten, color: accentColor, size: 20),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -255,7 +261,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
                 child: _MeasurementItem(
                   label: 'Waist',
                   value: '${waist.getValueInUnit(false).toStringAsFixed(1)}"',
-                  color: AppColors.purple,
+                  color: accentColor,
                   textColor: textColor,
                   textMuted: textMuted,
                 ),
@@ -271,7 +277,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
                 child: _MeasurementItem(
                   label: 'Chest',
                   value: '${chest.getValueInUnit(false).toStringAsFixed(1)}"',
-                  color: AppColors.cyan,
+                  color: accentColor,
                   textColor: textColor,
                   textMuted: textMuted,
                 ),
@@ -287,7 +293,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
                 child: _MeasurementItem(
                   label: 'Hips',
                   value: '${hips.getValueInUnit(false).toStringAsFixed(1)}"',
-                  color: AppColors.orange,
+                  color: accentColor,
                   textColor: textColor,
                   textMuted: textMuted,
                 ),
@@ -315,7 +321,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.purple.withValues(alpha: 0.15),
+                  color: accentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -323,7 +329,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.purple,
+                    color: accentColor,
                   ),
                 ),
               ),

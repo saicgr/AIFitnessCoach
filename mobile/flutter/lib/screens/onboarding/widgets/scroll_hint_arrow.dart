@@ -116,7 +116,7 @@ class _ScrollHintArrowState extends State<ScrollHintArrow> {
             ),
             child: Icon(
               Icons.keyboard_arrow_down,
-              color: isDark ? AppColors.cyan : AppColors.teal,
+              color: isDark ? AppColors.accent : AppColors.teal,
               size: 24,
             ),
           )

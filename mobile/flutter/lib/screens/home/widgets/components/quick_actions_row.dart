@@ -35,7 +35,7 @@ class QuickActionsRow extends ConsumerWidget {
               child: _QuickActionButton(
                 icon: Icons.restaurant_outlined,
                 label: 'Log Food',
-                color: const Color(0xFF34C759),
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                 onTap: () {
                   HapticService.light();
                   showLogMealSheet(context, ref);
@@ -48,7 +48,7 @@ class QuickActionsRow extends ConsumerWidget {
               child: _QuickActionButton(
                 icon: Icons.insights_outlined,
                 label: 'Stats',
-                color: AppColors.purple,
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                 onTap: () {
                   HapticService.light();
                   context.push('/stats');
@@ -103,7 +103,7 @@ class _QuickActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     return Material(
       color: Colors.transparent,
@@ -126,7 +126,7 @@ class _QuickActionButton extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
-                  color: textMuted,
+                  color: textColor,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -337,8 +337,8 @@ class _WaterQuickActionButtonState
 
   @override
   Widget build(BuildContext context) {
-    final textMuted =
-        widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textColor =
+        widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     return Material(
       color: Colors.transparent,
@@ -357,13 +357,13 @@ class _WaterQuickActionButtonState
                       height: 22,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.electricBlue,
+                        color: textColor,
                       ),
                     )
                   : Icon(
                       Icons.water_drop_outlined,
                       size: 22,
-                      color: AppColors.electricBlue,
+                      color: textColor,
                     ),
               const SizedBox(height: 4),
               Text(
@@ -371,7 +371,7 @@ class _WaterQuickActionButtonState
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
-                  color: textMuted,
+                  color: textColor,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -392,7 +392,7 @@ class _FastingQuickActionButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final fastingState = ref.watch(fastingProvider);
     final hasFast = fastingState.hasFast;
 
@@ -424,7 +424,7 @@ class _FastingQuickActionButton extends ConsumerWidget {
                   Icon(
                     hasFast ? Icons.timer : Icons.timer_outlined,
                     size: 22,
-                    color: hasFast ? AppColors.purple : AppColors.orange,
+                    color: textColor,
                   ),
                   if (hasFast)
                     Positioned(
@@ -451,7 +451,7 @@ class _FastingQuickActionButton extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
-                  color: hasFast ? AppColors.purple : textMuted,
+                  color: textColor,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -531,7 +531,7 @@ class _GenerateQuickActionButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     return Material(
       color: Colors.transparent,
@@ -549,7 +549,7 @@ class _GenerateQuickActionButton extends ConsumerWidget {
               Icon(
                 Icons.auto_awesome,
                 size: 22,
-                color: AppColors.electricBlue,
+                color: textColor,
               ),
               const SizedBox(height: 4),
               Text(
@@ -557,7 +557,7 @@ class _GenerateQuickActionButton extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
-                  color: textMuted,
+                  color: textColor,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

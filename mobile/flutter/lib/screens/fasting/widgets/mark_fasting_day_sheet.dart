@@ -132,7 +132,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.fromSeed(
-              seedColor: isDark ? AppColors.purple : AppColorsLight.purple,
+              seedColor: isDark ? AppColors.accent : AppColorsLight.accent,
               brightness: isDark ? Brightness.dark : Brightness.light,
             ),
           ),
@@ -215,7 +215,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
     final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Container(
@@ -253,7 +253,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
                 children: [
                   Icon(
                     Icons.calendar_month,
-                    color: purple,
+                    color: accentColor,
                     size: 28,
                   ),
                   const SizedBox(width: 12),
@@ -300,7 +300,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
                     children: [
                       Icon(
                         Icons.event,
-                        color: purple,
+                        color: accentColor,
                         size: 24,
                       ),
                       const SizedBox(width: 12),
@@ -355,11 +355,11 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? purple.withValues(alpha: 0.15)
+                            ? accentColor.withValues(alpha: 0.15)
                             : cardBorder.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isSelected ? purple : Colors.transparent,
+                          color: isSelected ? accentColor : Colors.transparent,
                           width: 2,
                         ),
                       ),
@@ -368,7 +368,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                          color: isSelected ? purple : textPrimary,
+                          color: isSelected ? accentColor : textPrimary,
                         ),
                       ),
                     ),
@@ -410,7 +410,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: purple,
+                            color: accentColor,
                           ),
                         ),
                       ],
@@ -421,8 +421,8 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
                       min: 12,
                       max: 48,
                       divisions: 36,
-                      activeColor: purple,
-                      inactiveColor: purple.withValues(alpha: 0.2),
+                      activeColor: accentColor,
+                      inactiveColor: accentColor.withValues(alpha: 0.2),
                       onChanged: (value) {
                         HapticService.light();
                         setState(() {
@@ -476,7 +476,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: purple, width: 2),
+                    borderSide: BorderSide(color: accentColor, width: 2),
                   ),
                 ),
                 style: TextStyle(color: textPrimary),
@@ -517,13 +517,13 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
                 child: ElevatedButton(
                   onPressed: _isSubmitting ? null : _submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: purple,
+                    backgroundColor: accentColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    disabledBackgroundColor: purple.withValues(alpha: 0.5),
+                    disabledBackgroundColor: accentColor.withValues(alpha: 0.5),
                   ),
                   child: _isSubmitting
                       ? const SizedBox(

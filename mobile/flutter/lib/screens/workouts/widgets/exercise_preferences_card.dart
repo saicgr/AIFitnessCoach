@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
@@ -6,7 +7,10 @@ import '../../../core/providers/avoided_provider.dart';
 import '../../../core/providers/favorites_provider.dart';
 import '../../../core/providers/staples_provider.dart';
 import '../../../core/providers/exercise_queue_provider.dart';
+import '../../../core/providers/warmup_duration_provider.dart';
+import '../../../core/providers/weight_increments_provider.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/weight_increments_sheet.dart';
 
 /// Expandable card showing exercise preferences in the Workouts screen
 class ExercisePreferencesCard extends ConsumerStatefulWidget {
@@ -38,13 +42,15 @@ class _ExercisePreferencesCardState
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final coral = AppColors.coral;
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
 
     // Watch providers for counts
     final favoritesState = ref.watch(favoritesProvider);
     final staplesState = ref.watch(staplesProvider);
     final queueState = ref.watch(exerciseQueueProvider);
     final avoidedState = ref.watch(avoidedProvider);
+    final warmupState = ref.watch(warmupDurationProvider);
+    final weightIncrementsState = ref.watch(weightIncrementsProvider);
 
     final favoriteCount = favoritesState.favorites.length;
     final stapleCount = staplesState.staples.length;
@@ -78,12 +84,12 @@ class _ExercisePreferencesCardState
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: coral.withValues(alpha: 0.15),
+                      color: accentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       Icons.favorite,
-                      color: coral,
+                      color: accentColor,
                       size: 22,
                     ),
                   ),
@@ -210,6 +216,71 @@ class _ExercisePreferencesCardState
                   isDark: isDark,
                   textPrimary: textPrimary,
                   textMuted: textMuted,
+                ),
+                _buildPreferenceItem(
+                  context,
+                  icon: Icons.tune,
+                  title: 'Weight Increments',
+                  subtitle: 'Customize +/- step per equipment',
+                  trailing: weightIncrementsState.unit.toUpperCase(),
+                  onTap: () => showWeightIncrementsSheet(context),
+                  isDark: isDark,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+                // Warmup & Stretch section header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'WARMUP & COOLDOWN',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                          color: textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Enable or disable workout phases',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _buildToggleItem(
+                  context,
+                  icon: Icons.whatshot,
+                  title: 'Warmup Phase',
+                  subtitle: 'Dynamic warmup before workouts',
+                  value: warmupState.warmupEnabled,
+                  onChanged: (value) {
+                    HapticFeedback.lightImpact();
+                    ref.read(warmupDurationProvider.notifier).setWarmupEnabled(value);
+                  },
+                  isDark: isDark,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+                _buildToggleItem(
+                  context,
+                  icon: Icons.self_improvement,
+                  title: 'Cooldown Stretch',
+                  subtitle: 'Stretching after workouts',
+                  value: warmupState.stretchEnabled,
+                  onChanged: (value) {
+                    HapticFeedback.lightImpact();
+                    ref.read(warmupDurationProvider.notifier).setStretchEnabled(value);
+                  },
+                  isDark: isDark,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
                   isLast: true,
                 ),
               ],
@@ -289,6 +360,68 @@ class _ExercisePreferencesCardState
                 ),
               ],
             ),
+          ),
+        ),
+        if (!isLast)
+          Padding(
+            padding: const EdgeInsets.only(left: 48),
+            child: Divider(height: 1, color: cardBorder),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildToggleItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    required bool isDark,
+    required Color textPrimary,
+    required Color textMuted,
+    bool isLast = false,
+  }) {
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: textMuted),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: textPrimary,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch.adaptive(
+                value: value,
+                onChanged: onChanged,
+                activeColor: orange,
+              ),
+            ],
           ),
         ),
         if (!isLast)

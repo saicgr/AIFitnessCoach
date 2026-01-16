@@ -107,19 +107,19 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.cyan.withOpacity(0.1),
+              color: AppColors.accent.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+              border: Border.all(color: AppColors.accent.withOpacity(0.3)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.check_circle, color: AppColors.cyan, size: 16),
+                const Icon(Icons.check_circle, color: AppColors.accent, size: 16),
                 const SizedBox(width: 6),
                 Text(
                   '90% Complete',
                   style: TextStyle(
-                    color: AppColors.cyan,
+                    color: AppColors.accent,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -148,11 +148,11 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  gradient: AppColors.cyanGradient,
+                  gradient: AppColors.accentGradient,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.cyan.withOpacity(0.3 + _pulseController.value * 0.2),
+                      color: AppColors.accent.withOpacity(0.3 + _pulseController.value * 0.2),
                       blurRadius: 20 + _pulseController.value * 10,
                       spreadRadius: 2,
                     ),
@@ -262,11 +262,11 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            gradient: AppColors.cyanGradient,
+            gradient: AppColors.accentGradient,
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: AppColors.cyan.withOpacity(0.3),
+                color: AppColors.accent.withOpacity(0.3),
                 blurRadius: 16,
                 spreadRadius: 0,
               ),
@@ -327,7 +327,7 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: AppColors.cyan.withOpacity(0.1),
+            color: AppColors.accent.withOpacity(0.1),
             blurRadius: 20,
             spreadRadius: 0,
             offset: const Offset(0, 4),
@@ -340,7 +340,7 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              gradient: AppColors.cyanGradient,
+              gradient: AppColors.accentGradient,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -417,7 +417,7 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
   ) {
     return Column(
       children: [
-        Icon(icon, color: AppColors.cyan, size: 20),
+        Icon(icon, color: AppColors.accent, size: 20),
         const SizedBox(height: 8),
         Text(
           value,
@@ -476,7 +476,7 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
         children: [
           Row(
             children: [
-              const Icon(Icons.calendar_month, color: AppColors.cyan, size: 20),
+              const Icon(Icons.calendar_month, color: AppColors.accent, size: 20),
               const SizedBox(width: 8),
               Text(
                 'Your Week Preview',
@@ -580,13 +580,13 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
       case 'build_muscle':
       case 'increase_strength':
         final types = [
-          {'name': 'Push', 'icon': Icons.fitness_center, 'color': AppColors.purple},
+          {'name': 'Push', 'icon': Icons.fitness_center, 'color': AppColors.accent},
           {'name': 'Pull', 'icon': Icons.fitness_center, 'color': AppColors.electricBlue},
           {'name': 'Legs', 'icon': Icons.directions_walk, 'color': AppColors.teal},
-          {'name': 'Upper', 'icon': Icons.fitness_center, 'color': AppColors.purple},
+          {'name': 'Upper', 'icon': Icons.fitness_center, 'color': AppColors.accent},
           {'name': 'Lower', 'icon': Icons.directions_walk, 'color': AppColors.teal},
-          {'name': 'Full Body', 'icon': Icons.accessibility_new, 'color': AppColors.orange},
-          {'name': 'Arms', 'icon': Icons.fitness_center, 'color': AppColors.coral},
+          {'name': 'Full Body', 'icon': Icons.accessibility_new, 'color': AppColors.accent},
+          {'name': 'Arms', 'icon': Icons.fitness_center, 'color': AppColors.accent},
         ];
         for (int i = 0; i < daysPerWeek && i < types.length; i++) {
           workouts.add(types[i]);
@@ -595,13 +595,13 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
 
       case 'lose_weight':
         final types = [
-          {'name': 'HIIT', 'icon': Icons.flash_on, 'color': AppColors.coral},
-          {'name': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.orange},
-          {'name': 'Strength', 'icon': Icons.fitness_center, 'color': AppColors.purple},
-          {'name': 'HIIT', 'icon': Icons.flash_on, 'color': AppColors.coral},
+          {'name': 'HIIT', 'icon': Icons.flash_on, 'color': AppColors.accent},
+          {'name': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.accent},
+          {'name': 'Strength', 'icon': Icons.fitness_center, 'color': AppColors.accent},
+          {'name': 'HIIT', 'icon': Icons.flash_on, 'color': AppColors.accent},
           {'name': 'Active Recovery', 'icon': Icons.self_improvement, 'color': AppColors.teal},
-          {'name': 'Full Body', 'icon': Icons.accessibility_new, 'color': AppColors.purple},
-          {'name': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.orange},
+          {'name': 'Full Body', 'icon': Icons.accessibility_new, 'color': AppColors.accent},
+          {'name': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.accent},
         ];
         for (int i = 0; i < daysPerWeek && i < types.length; i++) {
           workouts.add(types[i]);
@@ -610,13 +610,13 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
 
       case 'improve_endurance':
         final types = [
-          {'name': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.orange},
-          {'name': 'Intervals', 'icon': Icons.timer, 'color': AppColors.coral},
+          {'name': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.accent},
+          {'name': 'Intervals', 'icon': Icons.timer, 'color': AppColors.accent},
           {'name': 'Endurance', 'icon': Icons.directions_bike, 'color': AppColors.teal},
           {'name': 'Tempo', 'icon': Icons.speed, 'color': AppColors.electricBlue},
-          {'name': 'Long Run', 'icon': Icons.directions_run, 'color': AppColors.orange},
+          {'name': 'Long Run', 'icon': Icons.directions_run, 'color': AppColors.accent},
           {'name': 'Recovery', 'icon': Icons.self_improvement, 'color': AppColors.success},
-          {'name': 'Cross Train', 'icon': Icons.pool, 'color': AppColors.purple},
+          {'name': 'Cross Train', 'icon': Icons.pool, 'color': AppColors.accent},
         ];
         for (int i = 0; i < daysPerWeek && i < types.length; i++) {
           workouts.add(types[i]);
@@ -625,13 +625,13 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
 
       default:
         final types = [
-          {'name': 'Full Body', 'icon': Icons.accessibility_new, 'color': AppColors.purple},
-          {'name': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.orange},
+          {'name': 'Full Body', 'icon': Icons.accessibility_new, 'color': AppColors.accent},
+          {'name': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.accent},
           {'name': 'Strength', 'icon': Icons.fitness_center, 'color': AppColors.electricBlue},
           {'name': 'Flexibility', 'icon': Icons.self_improvement, 'color': AppColors.teal},
-          {'name': 'HIIT', 'icon': Icons.flash_on, 'color': AppColors.coral},
+          {'name': 'HIIT', 'icon': Icons.flash_on, 'color': AppColors.accent},
           {'name': 'Active', 'icon': Icons.directions_walk, 'color': AppColors.success},
-          {'name': 'Core', 'icon': Icons.circle_outlined, 'color': AppColors.purple},
+          {'name': 'Core', 'icon': Icons.circle_outlined, 'color': AppColors.accent},
         ];
         for (int i = 0; i < daysPerWeek && i < types.length; i++) {
           workouts.add(types[i]);
@@ -689,7 +689,7 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
         children: [
           Row(
             children: [
-              const Icon(Icons.restaurant_menu, color: AppColors.orange, size: 20),
+              const Icon(Icons.restaurant_menu, color: AppColors.accent, size: 20),
               const SizedBox(width: 8),
               Text(
                 'Nutrition & Fasting',
@@ -750,7 +750,7 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
               icon: Icons.local_fire_department,
               value: '${estimate.calories}',
               label: 'kcal',
-              color: AppColors.coral,
+              color: AppColors.accent,
               textPrimary: textPrimary,
               textSecondary: textSecondary,
             ),
@@ -758,7 +758,7 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
               icon: Icons.fitness_center,
               value: '${estimate.protein}g',
               label: 'protein',
-              color: AppColors.purple,
+              color: AppColors.accent,
               textPrimary: textPrimary,
               textSecondary: textSecondary,
             ),
@@ -766,7 +766,7 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
               icon: Icons.grain,
               value: '${estimate.carbs}g',
               label: 'carbs',
-              color: AppColors.orange,
+              color: AppColors.accent,
               textPrimary: textPrimary,
               textSecondary: textSecondary,
             ),
@@ -796,7 +796,7 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
             _buildInsightPill(
               icon: Icons.psychology,
               text: 'Target: body of a ${estimate.metabolicAge}-year-old',
-              color: AppColors.purple,
+              color: AppColors.accent,
             ),
             if (estimate.weeksToGoal != null)
               _buildInsightPill(
@@ -1025,13 +1025,13 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
         return {
           'label': 'Lose Fat',
           'icon': Icons.local_fire_department,
-          'color': AppColors.coral,
+          'color': AppColors.accent,
         };
       case 'build_muscle':
         return {
           'label': 'Build Muscle',
           'icon': Icons.fitness_center,
-          'color': AppColors.purple,
+          'color': AppColors.accent,
         };
       case 'maintain':
         return {
@@ -1043,7 +1043,7 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
         return {
           'label': 'More Energy',
           'icon': Icons.bolt,
-          'color': AppColors.orange,
+          'color': AppColors.accent,
         };
       case 'eat_healthier':
         return {
@@ -1131,13 +1131,13 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
         'icon': Icons.auto_awesome,
         'title': 'AI-Powered Coaching',
         'description': 'Personalized workouts that adapt to your progress',
-        'color': AppColors.cyan,
+        'color': AppColors.accent,
       },
       {
         'icon': Icons.play_circle_outline,
         'title': '1,700+ Exercise Videos',
         'description': 'HD demos for perfect form every time',
-        'color': AppColors.purple,
+        'color': AppColors.accent,
       },
       {
         'icon': Icons.trending_up,
@@ -1149,7 +1149,7 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
         'icon': Icons.restaurant_menu,
         'title': 'Nutrition Guidance',
         'description': 'Meal suggestions aligned with your goals',
-        'color': AppColors.orange,
+        'color': AppColors.accent,
       },
     ];
 
@@ -1239,10 +1239,10 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
                 context.go('/sign-in');
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.cyan,
+                backgroundColor: AppColors.accent,
                 foregroundColor: Colors.white,
                 elevation: 4,
-                shadowColor: AppColors.cyan.withOpacity(0.4),
+                shadowColor: AppColors.accent.withOpacity(0.4),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),

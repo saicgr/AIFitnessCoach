@@ -66,6 +66,7 @@ from api.v1 import inflammation  # Food inflammation analysis from barcode scans
 from api.v1 import admin  # Admin backend for live chat management and support
 from api.v1 import habits  # Simple habit tracking (not eating outside, no doordash, etc.)
 from api.v1 import watch_sync  # WearOS watch sync (batch sync, activity goals)
+from api.v1 import weight_increments  # Equipment-specific weight increment preferences
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -304,3 +305,6 @@ router.include_router(habits.router, prefix="/habits", tags=["Habits"])
 
 # WearOS watch sync (batch sync, activity goals)
 router.include_router(watch_sync.router, tags=["Watch Sync"])
+
+# Equipment-specific weight increment preferences (kg/lbs, per equipment type)
+router.include_router(weight_increments.router, prefix="/weight-increments", tags=["Weight Increments"])

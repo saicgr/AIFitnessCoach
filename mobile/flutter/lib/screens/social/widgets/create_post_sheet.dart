@@ -196,7 +196,9 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                   onPressed: () => Navigator.pop(context),
                   child: Text(
                     'Cancel',
-                    style: TextStyle(color: AppColors.textMuted),
+                    style: TextStyle(
+                      color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                    ),
                   ),
                 ),
                 const Text(
@@ -209,8 +211,8 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                 FilledButton(
                   onPressed: _isPosting ? null : _createPost,
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.cyan,
-                    foregroundColor: Colors.white,
+                    backgroundColor: isDark ? AppColors.accent : AppColorsLight.accent,
+                    foregroundColor: isDark ? AppColors.accentContrast : AppColorsLight.accentContrast,
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   ),
                   child: _isPosting
@@ -267,6 +269,10 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   }
 
   Widget _buildPostTypeSelector(bool isDark, Color cardBorder) {
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -275,7 +281,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: AppColors.textMuted,
+            color: textColor,
           ),
         ),
         const SizedBox(height: 12),
@@ -297,11 +303,11 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.cyan.withValues(alpha: 0.15)
+                          ? accentColor.withValues(alpha: 0.1)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected ? AppColors.cyan : cardBorder.withValues(alpha: 0.5),
+                        color: isSelected ? accentColor : cardBorder.withValues(alpha: 0.5),
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -309,7 +315,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                       children: [
                         Icon(
                           type.icon,
-                          color: isSelected ? AppColors.cyan : AppColors.textMuted,
+                          color: isSelected ? accentColor : textMuted,
                           size: 24,
                         ),
                         const SizedBox(height: 4),
@@ -318,7 +324,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            color: isSelected ? AppColors.cyan : AppColors.textMuted,
+                            color: isSelected ? accentColor : textMuted,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -335,6 +341,10 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   }
 
   Widget _buildCaptionInput(bool isDark, Color cardBorder) {
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -343,7 +353,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: AppColors.textMuted,
+            color: textColor,
           ),
         ),
         const SizedBox(height: 12),
@@ -354,7 +364,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
           textCapitalization: TextCapitalization.sentences,
           decoration: InputDecoration(
             hintText: _getHintText(),
-            hintStyle: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.5)),
+            hintStyle: TextStyle(color: textMuted.withValues(alpha: 0.5)),
             filled: true,
             fillColor: isDark
                 ? AppColors.pureBlack.withValues(alpha: 0.5)
@@ -369,9 +379,9 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.cyan, width: 2),
+              borderSide: BorderSide(color: accentColor, width: 2),
             ),
-            counterStyle: TextStyle(color: AppColors.textMuted),
+            counterStyle: TextStyle(color: textMuted),
           ),
         ),
       ],
@@ -390,6 +400,8 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   }
 
   Widget _buildImageSection(bool isDark, Color cardBorder) {
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -398,7 +410,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: AppColors.textMuted,
+            color: textColor,
           ),
         ),
         const SizedBox(height: 12),
@@ -471,6 +483,8 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
     required bool isDark,
     required Color cardBorder,
   }) {
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
@@ -487,12 +501,12 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
         ),
         child: Column(
           children: [
-            Icon(icon, color: AppColors.textMuted, size: 32),
+            Icon(icon, color: textColor, size: 32),
             const SizedBox(height: 8),
             Text(
               label,
               style: TextStyle(
-                color: AppColors.textMuted,
+                color: textColor,
                 fontSize: 14,
               ),
             ),
@@ -503,6 +517,10 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   }
 
   Widget _buildVisibilitySelector(bool isDark, Color cardBorder) {
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -511,7 +529,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: AppColors.textMuted,
+            color: textColor,
           ),
         ),
         const SizedBox(height: 12),
@@ -527,11 +545,11 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppColors.cyan.withValues(alpha: 0.15)
+                    ? accentColor.withValues(alpha: 0.1)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isSelected ? AppColors.cyan : cardBorder.withValues(alpha: 0.5),
+                  color: isSelected ? accentColor : cardBorder.withValues(alpha: 0.5),
                   width: isSelected ? 2 : 1,
                 ),
               ),
@@ -539,7 +557,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                 children: [
                   Icon(
                     visibility.icon,
-                    color: isSelected ? AppColors.cyan : AppColors.textMuted,
+                    color: isSelected ? accentColor : textMuted,
                     size: 24,
                   ),
                   const SizedBox(width: 12),
@@ -551,23 +569,23 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                           visibility.label,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: isSelected ? AppColors.cyan : null,
+                            color: isSelected ? accentColor : null,
                           ),
                         ),
                         Text(
                           visibility.description,
                           style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.textMuted,
+                            color: textMuted,
                           ),
                         ),
                       ],
                     ),
                   ),
                   if (isSelected)
-                    const Icon(
+                    Icon(
                       Icons.check_circle_rounded,
-                      color: AppColors.cyan,
+                      color: accentColor,
                       size: 24,
                     ),
                 ],

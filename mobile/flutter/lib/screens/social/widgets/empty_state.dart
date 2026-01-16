@@ -21,6 +21,9 @@ class SocialEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Monochrome accent
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Center(
       child: Padding(
@@ -33,20 +36,13 @@ class SocialEmptyState extends StatelessWidget {
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.purple.withValues(alpha: 0.2),
-                    AppColors.cyan.withValues(alpha: 0.2),
-                  ],
-                ),
+                color: accentColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
                 size: 60,
-                color: AppColors.cyan,
+                color: textMuted,
               ),
             ),
 
@@ -68,7 +64,7 @@ class SocialEmptyState extends StatelessWidget {
               description,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.textMuted,
+                    color: textMuted,
                     height: 1.5,
                   ),
             ),
@@ -85,8 +81,8 @@ class SocialEmptyState extends StatelessWidget {
                   label: Text(actionLabel!),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: AppColors.cyan,
-                    foregroundColor: Colors.white,
+                    backgroundColor: accentColor,
+                    foregroundColor: isDark ? AppColors.accentContrast : AppColorsLight.accentContrast,
                   ),
                 ),
               ),

@@ -29,7 +29,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -97,6 +97,23 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
               );
             },
           ),
+          // Messages button
+          IconButton(
+            icon: Icon(
+              Icons.chat_bubble_rounded,
+              color: isDark ? Colors.white : AppColors.pureBlack,
+            ),
+            tooltip: 'Messages',
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const _MessagesScreen(),
+                ),
+              );
+            },
+          ),
           const SizedBox(width: 8),
         ],
       ),
@@ -112,7 +129,6 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
               controller: _tabController,
               children: const [
                 FeedTab(),
-                MessagesTab(),
                 ChallengesTab(),
                 LeaderboardTab(),
                 FriendsTab(),
@@ -159,27 +175,20 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                 _buildTabItem(
                   context,
                   index: 1,
-                  icon: Icons.chat_bubble_rounded,
-                  label: 'Messages',
-                  isDark: isDark,
-                ),
-                _buildTabItem(
-                  context,
-                  index: 2,
                   icon: Icons.emoji_events_rounded,
                   label: 'Challenges',
                   isDark: isDark,
                 ),
                 _buildTabItem(
                   context,
-                  index: 3,
+                  index: 2,
                   icon: Icons.leaderboard_rounded,
                   label: 'Ranks',
                   isDark: isDark,
                 ),
                 _buildTabItem(
                   context,
-                  index: 4,
+                  index: 3,
                   icon: Icons.people_rounded,
                   label: 'Friends',
                   isDark: isDark,
@@ -202,14 +211,17 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     final isSelected = _tabController.index == index;
     final animationValue = _tabController.animation?.value ?? 0.0;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    // Monochrome accent - white in dark mode, black in light mode
+    final accentColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     // Calculate selection progress for smooth animation
     final selectionProgress = (1.0 - (animationValue - index).abs()).clamp(0.0, 1.0);
 
-    // Colors - use consistent app colors
-    final selectedBg = AppColors.cyan;
+    // Colors - monochrome style
+    final selectedBg = accentColor;
     final unselectedBg = Colors.transparent;
-    final selectedFg = Colors.white;
+    // Contrast text: black on white button, white on black button
+    final selectedFg = isDark ? Colors.black : Colors.white;
     final unselectedFg = textMuted;
 
     // Interpolate colors based on selection progress
@@ -232,7 +244,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: AppColors.cyan.withValues(alpha: 0.4),
+                      color: accentColor.withValues(alpha: 0.4),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
@@ -283,6 +295,8 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
 
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    // Monochrome accent
+    final accentColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -309,10 +323,10 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                 icon: Icons.people_rounded,
                 value: friendsCount,
                 label: 'Friends',
-                color: AppColors.cyan,
+                color: accentColor,
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  _tabController.animateTo(4); // Friends tab
+                  _tabController.animateTo(3); // Friends tab
                 },
               ),
             ),
@@ -329,10 +343,10 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                 icon: Icons.emoji_events_rounded,
                 value: challengesCount,
                 label: 'Challenges',
-                color: AppColors.orange,
+                color: accentColor,
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  _tabController.animateTo(2); // Challenges tab
+                  _tabController.animateTo(1); // Challenges tab
                 },
               ),
             ),
@@ -349,7 +363,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                 icon: Icons.favorite_rounded,
                 value: reactionsCount,
                 label: 'Likes',
-                color: AppColors.coral,
+                color: accentColor,
                 onTap: () {
                   HapticFeedback.lightImpact();
                   _tabController.animateTo(0); // Feed tab (where reactions are)
@@ -424,6 +438,8 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     final userId = user?.id as String?;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    // Monochrome text color
+    final textColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     // Show username if available, otherwise show truncated user ID
     String displayText;
@@ -472,9 +488,9 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
               Flexible(
                 child: Text(
                   '@$displayText',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.cyan,
+                    color: textColor,
                     fontWeight: FontWeight.w600,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -484,13 +500,48 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
               const SizedBox(width: 4),
               Icon(
                 Icons.copy_rounded,
-                color: AppColors.cyan.withValues(alpha: 0.7),
+                color: textColor.withValues(alpha: 0.7),
                 size: 14,
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Standalone Messages screen with proper AppBar for navigation
+class _MessagesScreen extends StatelessWidget {
+  const _MessagesScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_rounded,
+            color: isDark ? Colors.white : AppColors.pureBlack,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Messages',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        centerTitle: false,
+      ),
+      body: const MessagesTab(),
     );
   }
 }

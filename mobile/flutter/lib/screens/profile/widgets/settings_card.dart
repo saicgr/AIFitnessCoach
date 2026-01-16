@@ -37,6 +37,8 @@ class SettingsCard extends ConsumerWidget {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    // Use monochrome accent
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
 
     return Material(
       color: elevatedColor,
@@ -84,7 +86,7 @@ class SettingsCard extends ConsumerWidget {
                           onChanged: (value) {
                             ref.read(themeModeProvider.notifier).toggle();
                           },
-                          activeThumbColor: AppColors.cyan,
+                          activeThumbColor: accentColor,
                         )
                       else if (item.trailing != null)
                         item.trailing!

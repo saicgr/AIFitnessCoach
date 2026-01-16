@@ -176,15 +176,15 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.person_add_alt_1_rounded,
-                color: AppColors.cyan,
+                color: isDark ? AppColors.accent : AppColorsLight.accent,
                 size: 20,
               ),
               const SizedBox(width: 8),
-              Text(
+              const Text(
                 'Friend Requests',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
@@ -193,15 +193,15 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withValues(alpha: 0.2),
+                  color: (isDark ? AppColors.accent : AppColorsLight.accent).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   '$_pendingCount',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.cyan,
+                    color: isDark ? AppColors.accent : AppColorsLight.accent,
                   ),
                 ),
               ),

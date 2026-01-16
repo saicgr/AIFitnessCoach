@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/scores.dart';
 import '../../../../data/providers/scores_provider.dart';
 import '../../../../data/repositories/auth_repository.dart';
@@ -86,27 +87,30 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
               context.push('/scores');
             },
             borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border(
-                  left: BorderSide(color: AppColors.cyan, width: 4),
-                  top: BorderSide(color: _getScoreColor(overallScore).withOpacity(0.3)),
-                  right: BorderSide(color: _getScoreColor(overallScore).withOpacity(0.3)),
-                  bottom: BorderSide(color: _getScoreColor(overallScore).withOpacity(0.3)),
-                ),
-              ),
-              child: Column(
-              children: [
-                // Title row
-                Row(
-                  children: [
-                    Icon(
-                      Icons.insights,
-                      color: AppColors.cyan,
-                      size: 20,
+            child: Builder(
+              builder: (context) {
+                final accentColor = ref.colors(context).accent;
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border(
+                      left: BorderSide(color: accentColor, width: 4),
+                      top: BorderSide(color: _getScoreColor(overallScore).withOpacity(0.3)),
+                      right: BorderSide(color: _getScoreColor(overallScore).withOpacity(0.3)),
+                      bottom: BorderSide(color: _getScoreColor(overallScore).withOpacity(0.3)),
                     ),
+                  ),
+                  child: Column(
+                  children: [
+                    // Title row
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.insights,
+                          color: accentColor,
+                          size: 20,
+                        ),
                     const SizedBox(width: 8),
                     Text(
                       'Fitness Score',
@@ -189,8 +193,10 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
                     ),
                   ],
                 ),
-              ],
-              ),
+                  ],
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -201,6 +207,7 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
   Widget _buildLoadingCard(bool isDark) {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final accentColor = ref.colors(context).accent;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -212,10 +219,10 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border(
-              left: BorderSide(color: AppColors.cyan, width: 4),
-              top: BorderSide(color: AppColors.cyan.withOpacity(0.2)),
-              right: BorderSide(color: AppColors.cyan.withOpacity(0.2)),
-              bottom: BorderSide(color: AppColors.cyan.withOpacity(0.2)),
+              left: BorderSide(color: accentColor, width: 4),
+              top: BorderSide(color: accentColor.withOpacity(0.2)),
+              right: BorderSide(color: accentColor.withOpacity(0.2)),
+              bottom: BorderSide(color: accentColor.withOpacity(0.2)),
             ),
           ),
           child: Column(
@@ -225,7 +232,7 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
                 height: 24,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.cyan),
+                  valueColor: AlwaysStoppedAnimation<Color>(accentColor),
                 ),
               ),
               const SizedBox(height: 12),

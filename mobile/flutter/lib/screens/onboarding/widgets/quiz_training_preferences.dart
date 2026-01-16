@@ -48,34 +48,34 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
 
   // All 5 training splits with colors + "Nothing structured" option first
   static final _splits = [
-    {'id': 'nothing_structured', 'label': 'Nothing structured', 'icon': Icons.shuffle, 'color': AppColors.cyan, 'desc': "I'll let AI decide"},
-    {'id': 'push_pull_legs', 'label': 'Push/Pull/Legs', 'icon': Icons.splitscreen, 'color': AppColors.purple, 'desc': '6 days • Popular'},
+    {'id': 'nothing_structured', 'label': 'Nothing structured', 'icon': Icons.shuffle, 'color': AppColors.accent, 'desc': "I'll let AI decide"},
+    {'id': 'push_pull_legs', 'label': 'Push/Pull/Legs', 'icon': Icons.splitscreen, 'color': AppColors.accent, 'desc': '6 days • Popular'},
     {'id': 'full_body', 'label': 'Full Body', 'icon': Icons.accessibility_new, 'color': AppColors.success, 'desc': '3 days • Beginners'},
     {'id': 'upper_lower', 'label': 'Upper/Lower', 'icon': Icons.swap_vert, 'color': AppColors.electricBlue, 'desc': '4 days • Balanced'},
-    {'id': 'phul', 'label': 'PHUL', 'icon': Icons.flash_on, 'color': AppColors.orange, 'desc': '4 days • Power + Hypertrophy'},
-    {'id': 'body_part', 'label': 'Body Part Split', 'icon': Icons.view_week, 'color': AppColors.coral, 'desc': '5-6 days • Advanced'},
+    {'id': 'phul', 'label': 'PHUL', 'icon': Icons.flash_on, 'color': AppColors.accent, 'desc': '4 days • Power + Hypertrophy'},
+    {'id': 'body_part', 'label': 'Body Part Split', 'icon': Icons.view_week, 'color': AppColors.accent, 'desc': '5-6 days • Advanced'},
   ];
 
   // Workout types with colors
   static final _workoutTypes = [
-    {'id': 'strength', 'label': 'Strength', 'icon': Icons.fitness_center, 'color': AppColors.cyan},
-    {'id': 'cardio', 'label': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.orange},
-    {'id': 'mixed', 'label': 'Mixed', 'icon': Icons.sports_gymnastics, 'color': AppColors.purple},
+    {'id': 'strength', 'label': 'Strength', 'icon': Icons.fitness_center, 'color': AppColors.accent},
+    {'id': 'cardio', 'label': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.accent},
+    {'id': 'mixed', 'label': 'Mixed', 'icon': Icons.sports_gymnastics, 'color': AppColors.accent},
   ];
 
   // Progression pace with colors
   static final _paces = [
     {'id': 'slow', 'label': 'Slow', 'desc': '3-4 weeks', 'color': AppColors.success},
     {'id': 'medium', 'label': 'Medium', 'desc': '1-2 weeks', 'color': AppColors.electricBlue},
-    {'id': 'fast', 'label': 'Fast', 'desc': 'Every session', 'color': AppColors.orange},
+    {'id': 'fast', 'label': 'Fast', 'desc': 'Every session', 'color': AppColors.accent},
   ];
 
   // Sleep quality options
   static final _sleepQualityOptions = [
-    {'id': 'poor', 'emoji': '😴', 'label': 'Poor', 'desc': '<5 hrs', 'color': AppColors.coral},
-    {'id': 'fair', 'emoji': '😐', 'label': 'Fair', 'desc': '5-6 hrs', 'color': AppColors.orange},
+    {'id': 'poor', 'emoji': '😴', 'label': 'Poor', 'desc': '<5 hrs', 'color': AppColors.accent},
+    {'id': 'fair', 'emoji': '😐', 'label': 'Fair', 'desc': '5-6 hrs', 'color': AppColors.accent},
     {'id': 'good', 'emoji': '😊', 'label': 'Good', 'desc': '7-8 hrs', 'color': AppColors.success},
-    {'id': 'excellent', 'emoji': '🌟', 'label': 'Excellent', 'desc': '8+ hrs', 'color': AppColors.cyan},
+    {'id': 'excellent', 'emoji': '🌟', 'label': 'Excellent', 'desc': '8+ hrs', 'color': AppColors.accent},
   ];
 
   // Obstacle options
@@ -150,9 +150,9 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                 ),
               ),
               const SizedBox(height: 12),
-              _buildExplanationItem('Strength', 'Focus on building muscle and power with weights', AppColors.cyan, Icons.fitness_center, textPrimary, textSecondary),
-              _buildExplanationItem('Cardio', 'Running, cycling, rowing for heart health', AppColors.orange, Icons.directions_run, textPrimary, textSecondary),
-              _buildExplanationItem('Mixed', 'Combination of strength training and cardio', AppColors.purple, Icons.sports_gymnastics, textPrimary, textSecondary),
+              _buildExplanationItem('Strength', 'Focus on building muscle and power with weights', AppColors.accent, Icons.fitness_center, textPrimary, textSecondary),
+              _buildExplanationItem('Cardio', 'Running, cycling, rowing for heart health', AppColors.accent, Icons.directions_run, textPrimary, textSecondary),
+              _buildExplanationItem('Mixed', 'Combination of strength training and cardio', AppColors.accent, Icons.sports_gymnastics, textPrimary, textSecondary),
               const SizedBox(height: 24),
               Text(
                 'Progression Pace',
@@ -165,7 +165,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
               const SizedBox(height: 12),
               _buildExplanationItem('Slow', 'Increase weight every 3-4 weeks. Best for beginners.', AppColors.success, Icons.trending_up, textPrimary, textSecondary),
               _buildExplanationItem('Medium', 'Increase weight every 1-2 weeks. Standard progression.', AppColors.electricBlue, Icons.trending_up, textPrimary, textSecondary),
-              _buildExplanationItem('Fast', 'Increase weight every session if ready. For experienced lifters.', AppColors.orange, Icons.trending_up, textPrimary, textSecondary),
+              _buildExplanationItem('Fast', 'Increase weight every session if ready. For experienced lifters.', AppColors.accent, Icons.trending_up, textPrimary, textSecondary),
               const SizedBox(height: 20),
             ],
           ),
@@ -277,7 +277,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                   'Not sure? Tap to learn more',
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.cyan,
+                    color: AppColors.accent,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -702,7 +702,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withValues(alpha: 0.2),
+                  color: AppColors.accent.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -710,7 +710,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.cyan,
+                    color: AppColors.accent,
                   ),
                 ),
               ),
@@ -737,7 +737,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
-                  gradient: isSelected ? AppColors.cyanGradient : null,
+                  gradient: isSelected ? AppColors.accentGradient : null,
                   color: isSelected
                       ? null
                       : isDisabled
@@ -748,7 +748,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: isSelected
-                        ? AppColors.cyan
+                        ? AppColors.accent
                         : isDisabled
                             ? cardBorder.withValues(alpha: 0.3)
                             : cardBorder,

@@ -88,7 +88,7 @@ class _QuizCustomGoalsState extends State<QuizCustomGoals> {
           children: [
             Icon(
               Icons.flag_outlined,
-              color: AppColors.cyan,
+              color: AppColors.accent,
               size: 20,
             ),
             const SizedBox(width: 8),
@@ -141,14 +141,14 @@ class _QuizCustomGoalsState extends State<QuizCustomGoals> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.cyan, width: 2),
+              borderSide: BorderSide(color: AppColors.accent, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 14,
             ),
             suffixIcon: IconButton(
-              icon: Icon(Icons.add_circle, color: AppColors.cyan),
+              icon: Icon(Icons.add_circle, color: AppColors.accent),
               onPressed: widget.disabled
                   ? null
                   : () => _addGoal(_controller.text),
@@ -193,7 +193,7 @@ class _QuizCustomGoalsState extends State<QuizCustomGoals> {
                       Icon(
                         Icons.add,
                         size: 14,
-                        color: AppColors.cyan,
+                        color: AppColors.accent,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -233,10 +233,10 @@ class _QuizCustomGoalsState extends State<QuizCustomGoals> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withValues(alpha: 0.15),
+                  color: AppColors.accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: AppColors.cyan.withValues(alpha: 0.5),
+                    color: AppColors.accent.withValues(alpha: 0.5),
                   ),
                 ),
                 child: Row(
@@ -245,7 +245,7 @@ class _QuizCustomGoalsState extends State<QuizCustomGoals> {
                     Icon(
                       Icons.flag,
                       size: 14,
-                      color: AppColors.cyan,
+                      color: AppColors.accent,
                     ),
                     const SizedBox(width: 6),
                     Text(

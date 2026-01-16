@@ -7,7 +7,7 @@
 you would have to populate them by reviewing the code   
 use multiple agents to run in parallel 
 -->
-
+<!-- In the settings I want to add something called theme engine where in users can like select any color they want the app follows it thourhgout -->
 <!--  
 So what features are added? how does it work whats the user flow?
 -->

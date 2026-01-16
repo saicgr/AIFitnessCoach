@@ -239,7 +239,7 @@ class _WeightProjectionScreenState
                                 TextSpan(
                                   text: formattedGoalDate,
                                   style: TextStyle(
-                                    color: AppColors.cyan,
+                                    color: AppColors.accent,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
@@ -356,7 +356,7 @@ class _WeightProjectionScreenState
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        AppColors.cyan.withOpacity(0.05),
+                        AppColors.accent.withOpacity(0.05),
                         Colors.transparent,
                       ],
                     ),
@@ -430,7 +430,7 @@ class _WeightProjectionScreenState
                       }).toList(),
                       isCurved: true,
                       curveSmoothness: 0.35,
-                      color: AppColors.cyan,
+                      color: AppColors.accent,
                       barWidth: 3,
                       isStrokeCapRound: true,
                       dotData: FlDotData(
@@ -441,7 +441,7 @@ class _WeightProjectionScreenState
                               index == 0 || index == visibleData.length - 1;
                           return FlDotCirclePainter(
                             radius: isEndpoint ? 6 : 4,
-                            color: AppColors.cyan,
+                            color: AppColors.accent,
                             strokeWidth: 2,
                             strokeColor: Colors.white,
                           );
@@ -453,8 +453,8 @@ class _WeightProjectionScreenState
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            AppColors.cyan.withOpacity(0.3),
-                            AppColors.cyan.withOpacity(0.05),
+                            AppColors.accent.withOpacity(0.3),
+                            AppColors.accent.withOpacity(0.05),
                           ],
                         ),
                       ),
@@ -514,11 +514,11 @@ class _WeightProjectionScreenState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        gradient: AppColors.cyanGradient,
+        gradient: AppColors.accentGradient,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.cyan.withOpacity(0.3),
+            color: AppColors.accent.withOpacity(0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -568,7 +568,7 @@ class _WeightProjectionScreenState
               TextSpan(
                 text: 'Free',
                 style: TextStyle(
-                  color: AppColors.cyan,
+                  color: AppColors.accent,
                 ),
               ),
             ],
@@ -602,11 +602,11 @@ class _WeightProjectionScreenState
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 18),
             decoration: BoxDecoration(
-              gradient: AppColors.cyanGradient,
+              gradient: AppColors.accentGradient,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.cyan.withOpacity(0.4),
+                  color: AppColors.accent.withOpacity(0.4),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -697,7 +697,7 @@ class _WeightProjectionScreenState
                           end: Alignment.bottomRight,
                           colors: [
                             AppColors.success.withValues(alpha: 0.2),
-                            AppColors.cyan.withValues(alpha: 0.2),
+                            AppColors.accent.withValues(alpha: 0.2),
                           ],
                         ),
                         shape: BoxShape.circle,
@@ -780,7 +780,7 @@ class _WeightProjectionScreenState
                       Icons.fitness_center,
                       'Build Strength',
                       'Gain muscle while maintaining weight',
-                      AppColors.purple,
+                      AppColors.accent,
                       600,
                     ),
                     const SizedBox(height: 12),
@@ -791,7 +791,7 @@ class _WeightProjectionScreenState
                       Icons.bolt,
                       'Boost Energy',
                       'Optimize nutrition for peak performance',
-                      AppColors.orange,
+                      AppColors.accent,
                       700,
                     ),
                     const SizedBox(height: 12),
@@ -802,7 +802,7 @@ class _WeightProjectionScreenState
                       Icons.favorite,
                       'Stay Healthy',
                       'Balanced lifestyle for long-term wellness',
-                      AppColors.coral,
+                      AppColors.accent,
                       800,
                     ),
 
@@ -818,11 +818,11 @@ class _WeightProjectionScreenState
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 18),
                         decoration: BoxDecoration(
-                          gradient: AppColors.cyanGradient,
+                          gradient: AppColors.accentGradient,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.cyan.withValues(alpha: 0.4),
+                              color: AppColors.accent.withValues(alpha: 0.4),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
@@ -934,12 +934,12 @@ class _WeightProjectionScreenState
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withOpacity(0.15),
+                      color: AppColors.accent.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       Icons.calculate_outlined,
-                      color: AppColors.cyan,
+                      color: AppColors.accent,
                       size: 20,
                     ),
                   ),
@@ -1015,10 +1015,10 @@ class _WeightProjectionScreenState
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withOpacity(0.1),
+                  color: AppColors.accent.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: AppColors.cyan.withOpacity(0.2),
+                    color: AppColors.accent.withOpacity(0.2),
                   ),
                 ),
                 child: Row(
@@ -1027,7 +1027,7 @@ class _WeightProjectionScreenState
                     Icon(
                       Icons.lightbulb_outline,
                       size: 16,
-                      color: AppColors.cyan,
+                      color: AppColors.accent,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -1053,7 +1053,7 @@ class _WeightProjectionScreenState
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(ctx),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cyan,
+                    backgroundColor: AppColors.accent,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -1097,7 +1097,7 @@ class _WeightProjectionScreenState
           style: TextStyle(
             fontSize: 14,
             fontWeight: highlight ? FontWeight.w700 : FontWeight.w500,
-            color: highlight ? AppColors.cyan : textPrimary,
+            color: highlight ? AppColors.accent : textPrimary,
           ),
         ),
       ],

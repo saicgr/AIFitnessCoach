@@ -1,11 +1,12 @@
 import 'dart:io';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/providers/subscription_provider.dart';
 import '../../core/constants/api_constants.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -33,7 +34,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
+    // Use ref.colors(context) to get dynamic accent color from provider
+    final colors = ref.colors(context);
     final subscriptionState = ref.watch(subscriptionProvider);
     final currentTier = subscriptionState.tier;
     final isSubscribed = currentTier != SubscriptionTier.free;
@@ -180,16 +182,17 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       // Plan options based on selected billing cycle
                       Column(
                           children: [
-                            // Premium Plus plan (with rainbow border if yearly)
+                            // Premium Plus plan (with accent border if yearly)
                             if (_selectedBillingCycle == 'yearly')
-                              _RainbowBorderCard(
+                              _AccentBorderCard(
                                 isSelected: _selectedPlan == 'premium_plus_yearly',
+                                colors: colors,
                                 child: _TierPlanCard(
                                   planId: 'premium_plus_yearly',
                                   tierName: 'Premium Plus',
                                   badge: 'BEST VALUE',
-                                  badgeColor: const Color(0xFF00D9FF),
-                                  accentColor: const Color(0xFF00D9FF),
+                                  badgeColor: colors.accent,
+                                  accentColor: colors.accent,
                                   price: '\$6.67',
                                   period: '/mo',
                                   billedAs: '\$79.99/year',
@@ -209,8 +212,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                                 planId: 'premium_plus_monthly',
                                 tierName: 'Premium Plus',
                                 badge: 'MOST POPULAR',
-                                badgeColor: const Color(0xFFAA66FF),
-                                accentColor: const Color(0xFFAA66FF),
+                                badgeColor: colors.accent,
+                                accentColor: colors.accent,
                                 price: '\$9.99',
                                 period: '/mo',
                                 billedAs: 'Billed monthly',
@@ -232,8 +235,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                               planId: _selectedBillingCycle == 'yearly' ? 'premium_yearly' : 'premium_monthly',
                               tierName: 'Premium',
                               badge: _selectedBillingCycle == 'yearly' ? 'SAVE 33%' : '',
-                              badgeColor: const Color(0xFF00CC66),
-                              accentColor: const Color(0xFF00CC66),
+                              badgeColor: colors.accent,
+                              accentColor: colors.accent,
                               price: _selectedBillingCycle == 'yearly' ? '\$4.00' : '\$5.99',
                               period: '/mo',
                               billedAs: _selectedBillingCycle == 'yearly' ? '\$47.99/year' : 'Billed monthly',
@@ -261,19 +264,19 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                             : () => _handleAction(context, ref, isSubscribed, currentTier),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _getButtonColor(),
-                            foregroundColor: Colors.white,
+                            foregroundColor: colors.accentContrast,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),
                             elevation: 0,
                           ),
                           child: subscriptionState.isLoading
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 24,
                                 height: 24,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation(colors.accentContrast),
                                 ),
                               )
                             : Text(
@@ -432,18 +435,10 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   }
 
   Color _getButtonColor() {
-    switch (_selectedPlan) {
-      case 'premium_plus_yearly':
-        return const Color(0xFF00D9FF); // Cyan
-      case 'premium_plus_monthly':
-        return const Color(0xFFAA66FF); // Purple
-      case 'premium_yearly':
-        return const Color(0xFF00CC66); // Green
-      case 'premium_monthly':
-        return const Color(0xFFFF8C42); // Orange
-      default:
-        return const Color(0xFF00D9FF);
-    }
+    // Get dynamic accent color from provider
+    final colors = ref.read(accentColorProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return colors.getColor(isDark);
   }
 
   String _getButtonText(bool isSubscribed, SubscriptionTier currentTier) {
@@ -525,7 +520,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   }
 
   Future<bool?> _showDiscountPopup(BuildContext context) {
-    final colors = context.colors;
+    // Use ref.colors(context) for dynamic accent color
+    final colors = ref.colors(context);
     return showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -628,7 +624,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
   /// Show plan change confirmation dialog
   Future<bool?> _showPlanChangeConfirmation(BuildContext context, SubscriptionTier currentTier) {
-    final colors = context.colors;
+    // Use ref.colors(context) for dynamic accent color
+    final colors = ref.colors(context);
     final subscriptionState = ref.read(subscriptionProvider);
     final currentPlanId = _getCurrentPlanId(currentTier, subscriptionState);
     final currentPlan = _getPlanDetails(currentPlanId);
@@ -718,21 +715,23 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
 }
 
-/// Rainbow animated border for recommended plan
-class _RainbowBorderCard extends StatefulWidget {
+/// Monochrome accent border for recommended plan
+class _AccentBorderCard extends StatefulWidget {
   final Widget child;
   final bool isSelected;
+  final ThemeColors colors;
 
-  const _RainbowBorderCard({
+  const _AccentBorderCard({
     required this.child,
     required this.isSelected,
+    required this.colors,
   });
 
   @override
-  State<_RainbowBorderCard> createState() => _RainbowBorderCardState();
+  State<_AccentBorderCard> createState() => _AccentBorderCardState();
 }
 
-class _RainbowBorderCardState extends State<_RainbowBorderCard>
+class _AccentBorderCardState extends State<_AccentBorderCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
@@ -740,9 +739,9 @@ class _RainbowBorderCardState extends State<_RainbowBorderCard>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(seconds: 3),
+      duration: const Duration(seconds: 2),
       vsync: this,
-    )..repeat();
+    )..repeat(reverse: true);
   }
 
   @override
@@ -753,6 +752,7 @@ class _RainbowBorderCardState extends State<_RainbowBorderCard>
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = widget.colors.accent;
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -761,16 +761,19 @@ class _RainbowBorderCardState extends State<_RainbowBorderCard>
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: _getGlowColor(_controller.value).withOpacity(0.4),
+                color: accentColor.withOpacity(0.2 + (_controller.value * 0.2)),
                 blurRadius: 16,
                 spreadRadius: 2,
               ),
             ],
           ),
-          child: CustomPaint(
-            painter: _RainbowBorderPainter(
-              progress: _controller.value,
-              isSelected: widget.isSelected,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: accentColor,
+                width: 3,
+              ),
             ),
             child: child,
           ),
@@ -779,64 +782,6 @@ class _RainbowBorderCardState extends State<_RainbowBorderCard>
       child: widget.child,
     );
   }
-
-  Color _getGlowColor(double progress) {
-    // Cycle through colors based on animation progress
-    final colors = [
-      const Color(0xFF00D9FF), // Cyan
-      const Color(0xFF00FF88), // Green
-      const Color(0xFFFFB800), // Gold
-      const Color(0xFFFF6B6B), // Coral
-      const Color(0xFFAA66FF), // Purple
-      const Color(0xFF00D9FF), // Back to Cyan
-    ];
-
-    final index = (progress * (colors.length - 1)).floor();
-    final t = (progress * (colors.length - 1)) - index;
-
-    return Color.lerp(colors[index], colors[(index + 1) % colors.length], t)!;
-  }
-}
-
-class _RainbowBorderPainter extends CustomPainter {
-  final double progress;
-  final bool isSelected;
-
-  _RainbowBorderPainter({required this.progress, required this.isSelected});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      const Radius.circular(20),
-    );
-
-    // Rainbow gradient that rotates
-    final gradient = SweepGradient(
-      startAngle: progress * 2 * math.pi,
-      endAngle: progress * 2 * math.pi + 2 * math.pi,
-      colors: const [
-        Color(0xFF00D9FF), // Cyan
-        Color(0xFF00FF88), // Green
-        Color(0xFFFFB800), // Gold
-        Color(0xFFFF6B6B), // Coral
-        Color(0xFFAA66FF), // Purple
-        Color(0xFF00D9FF), // Back to Cyan
-      ],
-      stops: const [0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
-    );
-
-    final paint = Paint()
-      ..shader = gradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
-
-    canvas.drawRRect(rect, paint);
-  }
-
-  @override
-  bool shouldRepaint(_RainbowBorderPainter oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.isSelected != isSelected;
 }
 
 /// Billing cycle tab selector
@@ -863,7 +808,7 @@ class _BillingTab extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? colors.cyan : Colors.transparent,
+            color: isSelected ? colors.accent : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Column(
@@ -873,14 +818,14 @@ class _BillingTab extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: isSelected ? Colors.white : colors.textSecondary,
+                  color: isSelected ? colors.accentContrast : colors.textSecondary,
                 ),
               ),
               Text(
                 sublabel,
                 style: TextStyle(
                   fontSize: 10,
-                  color: isSelected ? Colors.white.withOpacity(0.8) : colors.textSecondary.withOpacity(0.7),
+                  color: isSelected ? colors.accentContrast.withOpacity(0.8) : colors.textSecondary.withOpacity(0.7),
                 ),
               ),
             ],
@@ -953,7 +898,7 @@ class _TierPlanCard extends StatelessWidget {
                     color: isSelected ? accentColor : Colors.transparent,
                   ),
                   child: isSelected
-                    ? const Icon(Icons.check, size: 14, color: Colors.white)
+                    ? Icon(Icons.check, size: 14, color: colors.accentContrast)
                     : null,
                 ),
                 const SizedBox(width: 10),
@@ -977,10 +922,10 @@ class _TierPlanCard extends StatelessWidget {
                     ),
                     child: Text(
                       badge,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: colors.accentContrast,
                       ),
                     ),
                   ),
@@ -1077,18 +1022,14 @@ class _CurrentPlanCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [colors.cyan, colors.cyanDark],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: colors.accentGradient,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
           Icon(
             tier == SubscriptionTier.lifetime ? Icons.workspace_premium : Icons.star,
-            color: Colors.white,
+            color: colors.accentContrast,
             size: 24,
           ),
           const SizedBox(width: 12),
@@ -1100,10 +1041,10 @@ class _CurrentPlanCard extends StatelessWidget {
                   children: [
                     Text(
                       _getTierName(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: colors.accentContrast,
                       ),
                     ),
                     if (isTrialActive) ...[
@@ -1111,15 +1052,15 @@ class _CurrentPlanCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: colors.accentContrast.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Text(
+                        child: Text(
                           'TRIAL',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: colors.accentContrast,
                           ),
                         ),
                       ),
@@ -1131,7 +1072,7 @@ class _CurrentPlanCard extends StatelessWidget {
                   _getStatusText(),
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.white.withOpacity(0.85),
+                    color: colors.accentContrast.withOpacity(0.85),
                   ),
                 ),
               ],
@@ -1175,7 +1116,7 @@ class _DiscountPopup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const accentColor = Color(0xFF00D9FF); // Cyan for yearly
+    final accentColor = colors.accent; // Theme-aware monochrome accent
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
@@ -1364,7 +1305,7 @@ class _DiscountPopup extends StatelessWidget {
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: accentColor,
-                  foregroundColor: Colors.white,
+                  foregroundColor: colors.accentContrast,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -1442,7 +1383,7 @@ class _PlanChangeConfirmationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = isUpgrade ? colors.cyan : Colors.orange;
+    final accentColor = colors.accent; // Theme-aware monochrome accent
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -1630,7 +1571,7 @@ class _PlanChangeConfirmationDialog extends StatelessWidget {
                       onPressed: () => Navigator.pop(context, true),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: accentColor,
-                        foregroundColor: Colors.white,
+                        foregroundColor: colors.accentContrast,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),

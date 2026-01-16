@@ -106,7 +106,7 @@ class _QuizOptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final color = option['color'] as Color? ?? AppColors.cyan;
+    final color = option['color'] as Color? ?? AppColors.accent;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -116,19 +116,19 @@ class _QuizOptionCard extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            gradient: isSelected ? AppColors.cyanGradient : null,
+            gradient: isSelected ? AppColors.accentGradient : null,
             color: isSelected
                 ? null
                 : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? AppColors.cyan : cardBorder,
+              color: isSelected ? AppColors.accent : cardBorder,
               width: isSelected ? 2 : 1,
             ),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: AppColors.cyan.withOpacity(0.3),
+                      color: AppColors.accent.withOpacity(0.3),
                       blurRadius: 8,
                       spreadRadius: 0,
                     ),

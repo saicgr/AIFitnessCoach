@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/models/micronutrients.dart';
 import '../../data/models/nutrition_preferences.dart';
@@ -227,6 +228,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    // Get dynamic accent color from provider
+    final accentColor = ref.colors(context).accent;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -234,10 +237,19 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         backgroundColor: backgroundColor,
         foregroundColor: textPrimary,
         automaticallyImplyLeading: false,
+        leading: IconButton(
+          onPressed: () => context.go('/home'),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: accentColor,
+            size: 22,
+          ),
+          tooltip: 'Back to Home',
+        ),
         title: Text(
           'Food Diary',
           style: TextStyle(
-            fontSize: 32,
+            fontSize: 28,
             fontWeight: FontWeight.bold,
             color: textPrimary,
           ),
@@ -2481,7 +2493,7 @@ class _QuickFavoritesBar extends StatelessWidget {
         // Header
         Row(
           children: [
-            Icon(Icons.star, size: 16, color: const Color(0xFFFFD93D)),
+            Icon(Icons.star, size: 16, color: AppColors.textSecondary),
             const SizedBox(width: 8),
             Text(
               'QUICK ADD',
@@ -4981,7 +4993,7 @@ class _NutritionStreakCard extends ConsumerWidget {
                                 : Icons.ac_unit_outlined,
                             size: 18,
                             color: index < streak.freezesAvailable
-                                ? const Color(0xFF4ECDC4)
+                                ? textPrimary
                                 : textMuted.withValues(alpha: 0.3),
                           ),
                         ),

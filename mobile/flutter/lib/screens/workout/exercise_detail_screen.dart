@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/warmup_duration_provider.dart';
 import '../../data/models/exercise.dart';
 import '../../data/services/api_client.dart';
 
@@ -28,12 +29,16 @@ class PreviousSetData {
   final double? weightKg;
   final int? reps;
   final String setType;
+  final int? rir;
+  final int? rpe;
 
   PreviousSetData({
     required this.setNumber,
     this.weightKg,
     this.reps,
     required this.setType,
+    this.rir,
+    this.rpe,
   });
 }
 
@@ -85,6 +90,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
             weightKg: (s['weight_kg'] as num?)?.toDouble(),
             reps: s['reps_completed'] as int?,
             setType: s['set_type'] ?? 'working',
+            rir: s['rir'] as int?,
+            rpe: s['rpe'] as int?,
           )).toList();
         }
       }
@@ -280,15 +287,15 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.cyan.withOpacity(0.2),
+                            color: (isDark ? AppColors.accent : AppColorsLight.accent).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             exercise.primaryMuscle ?? exercise.muscleGroup ?? '',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.cyan,
+                              color: isDark ? AppColors.accent : AppColorsLight.accent,
                             ),
                           ),
                         ),
@@ -337,6 +344,10 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
 
                   // Set table
                   _buildSetTable(warmupSets, totalSets, repRange, exercise.weight, elevated, glassSurface, cardBorder, textPrimary, textMuted, textSecondary),
+                  const SizedBox(height: 24),
+
+                  // Workout Preferences section
+                  _buildWorkoutPreferencesSection(elevated, cardBorder, textPrimary, textMuted),
                   const SizedBox(height: 100),
                 ],
               ),
@@ -348,6 +359,9 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
   }
 
   Widget _buildVideoSection(Color elevated, Color textMuted) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+
     return GestureDetector(
       onTap: _toggleVideo,
       child: Container(
@@ -356,8 +370,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
           fit: StackFit.expand,
           children: [
             if (_isLoadingMedia)
-              const Center(
-                child: CircularProgressIndicator(color: AppColors.cyan),
+              Center(
+                child: CircularProgressIndicator(color: accentColor),
               )
             else if (_videoInitialized && _showVideo && _videoController != null)
               FittedBox(
@@ -372,8 +386,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
               CachedNetworkImage(
                 imageUrl: _imageUrl!,
                 fit: BoxFit.cover,
-                placeholder: (_, __) => const Center(
-                  child: CircularProgressIndicator(color: AppColors.cyan),
+                placeholder: (_, __) => Center(
+                  child: CircularProgressIndicator(color: accentColor),
                 ),
                 errorWidget: (_, __, ___) => _buildPlaceholder(elevated, textMuted),
               )
@@ -479,17 +493,16 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.lightbulb_outline,
                 size: 18,
-                color: AppColors.orange,
+                color: textSecondary,
               ),
               const SizedBox(width: 8),
               Text(
                 'Instructions',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.orange,
                     ),
               ),
             ],
@@ -510,6 +523,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
   Widget _buildRestTimerCard(int defaultSeconds, Color elevated, Color textMuted, Color textPrimary) {
     final mins = defaultSeconds ~/ 60;
     final secs = defaultSeconds % 60;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
 
     return GestureDetector(
       onTap: _isResting ? _stopRestTimer : _startRestTimer,
@@ -519,8 +534,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
           gradient: _isResting
               ? LinearGradient(
                   colors: [
-                    AppColors.purple.withOpacity(0.3),
-                    AppColors.purple.withOpacity(0.1),
+                    accentColor.withValues(alpha: 0.2),
+                    accentColor.withValues(alpha: 0.05),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -529,14 +544,14 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
           color: _isResting ? null : elevated,
           borderRadius: BorderRadius.circular(12),
           border: _isResting
-              ? Border.all(color: AppColors.purple.withOpacity(0.5))
+              ? Border.all(color: accentColor.withValues(alpha: 0.5))
               : null,
         ),
         child: Row(
           children: [
             Icon(
               Icons.timer_outlined,
-              color: _isResting ? AppColors.purple : textMuted,
+              color: _isResting ? accentColor : textMuted,
               size: 28,
             ),
             const SizedBox(width: 12),
@@ -548,7 +563,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                     'Rest Timer',
                     style: TextStyle(
                       fontSize: 12,
-                      color: _isResting ? AppColors.purple : textMuted,
+                      color: _isResting ? accentColor : textMuted,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -560,7 +575,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: _isResting ? AppColors.purple : textPrimary,
+                      color: _isResting ? accentColor : textPrimary,
                       fontFamily: 'monospace',
                     ),
                   ),
@@ -570,9 +585,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: _isResting
-                    ? AppColors.purple.withOpacity(0.2)
-                    : AppColors.cyan.withOpacity(0.2),
+                color: accentColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -580,13 +593,126 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: _isResting ? AppColors.purple : AppColors.cyan,
+                  color: accentColor,
                 ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildWorkoutPreferencesSection(Color elevated, Color cardBorder, Color textPrimary, Color textMuted) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final warmupState = ref.watch(warmupDurationProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'WORKOUT PREFERENCES',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: textMuted,
+            letterSpacing: 1.5,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: elevated,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cardBorder),
+          ),
+          child: Column(
+            children: [
+              // Warmup toggle
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(Icons.whatshot, color: orange, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Warmup Phase',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: textPrimary,
+                            ),
+                          ),
+                          Text(
+                            'Dynamic warmup before workouts',
+                            style: TextStyle(fontSize: 11, color: textMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: warmupState.warmupEnabled,
+                      onChanged: warmupState.isLoading
+                          ? null
+                          : (value) {
+                              HapticFeedback.lightImpact();
+                              ref.read(warmupDurationProvider.notifier).setWarmupEnabled(value);
+                            },
+                      activeColor: orange,
+                    ),
+                  ],
+                ),
+              ),
+              Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+              // Stretch toggle
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(Icons.self_improvement, color: cyan, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Cooldown Stretch',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: textPrimary,
+                            ),
+                          ),
+                          Text(
+                            'Stretching after workouts',
+                            style: TextStyle(fontSize: 11, color: textMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: warmupState.stretchEnabled,
+                      onChanged: warmupState.isLoading
+                          ? null
+                          : (value) {
+                              HapticFeedback.lightImpact();
+                              ref.read(warmupDurationProvider.notifier).setStretchEnabled(value);
+                            },
+                      activeColor: cyan,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -607,19 +733,35 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     }
   }
 
-  /// Format previous set display (e.g., "40kg × 7")
+  /// Format previous set display (e.g., "40 × 7")
   String _formatPreviousSet(PreviousSetData? previous) {
     if (previous == null) return '-';
     final weight = previous.weightKg;
     final reps = previous.reps;
     if (weight == null && reps == null) return '-';
     if (weight == null) return '× $reps';
-    if (reps == null) return '${weight.toInt()}kg';
-    return '${weight.toInt()}kg × $reps';
+    if (reps == null) return '${weight.toInt()}';
+    return '${weight.toInt()} × $reps';
+  }
+
+  /// Get RIR color based on value (matching WorkoutDesign colors)
+  Color _getRirColor(int rir) {
+    if (rir <= 0) return const Color(0xFFEF4444); // Red - failure
+    if (rir == 1) return const Color(0xFFF97316); // Orange
+    if (rir == 2) return const Color(0xFFEAB308); // Yellow
+    return const Color(0xFF22C55E); // Green for 3+
+  }
+
+  /// Get RIR text color for contrast
+  Color _getRirTextColor(int rir) {
+    if (rir == 2) return Colors.black87; // Dark text on yellow
+    return Colors.white;
   }
 
   Widget _buildSetTable(int warmupSets, int workingSets, String repRange, double? weight, Color elevated, Color glassSurface, Color cardBorder, Color textPrimary, Color textMuted, Color textSecondary) {
     final hasPrevious = _previousSets.isNotEmpty;
+    final exercise = widget.exercise;
+    final setTargets = exercise.setTargets ?? [];
 
     return Container(
       decoration: BoxDecoration(
@@ -628,7 +770,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
       ),
       child: Column(
         children: [
-          // Header
+          // Header - matches active workout screen: Set | Previous | Target (weight × reps + RIR)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
@@ -637,48 +779,35 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
             ),
             child: Row(
               children: [
-                SizedBox(width: 40, child: Text('SET', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textMuted, letterSpacing: 0.5))),
-                if (hasPrevious)
-                  SizedBox(width: 80, child: Center(child: Text('PREVIOUS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textMuted, letterSpacing: 0.5)))),
-                Expanded(child: Center(child: Text('LBS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textMuted, letterSpacing: 0.5)))),
-                SizedBox(width: 70, child: Center(child: Text('REPS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textMuted, letterSpacing: 0.5)))),
+                SizedBox(width: 36, child: Text('Set', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3))),
+                Expanded(
+                  flex: 2,
+                  child: Text('Previous', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3)),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text('Target', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3)),
+                ),
               ],
             ),
           ),
 
-          // Warmup rows
-          ...List.generate(warmupSets, (i) {
-            final previous = _getPreviousSet(i + 1, true);
-            return _buildTableRow(
-              setLabel: 'W',
-              setIndex: i + 1,
-              isWarmup: true,
-              weight: null,
-              repRange: repRange,
-              previousDisplay: _formatPreviousSet(previous),
-              hasPrevious: hasPrevious,
-              isLast: false,
-              glassSurface: glassSurface,
-              cardBorder: cardBorder,
-              textPrimary: textPrimary,
-              textMuted: textMuted,
-              textSecondary: textSecondary,
-            );
-          }),
+          // Build rows from setTargets - NO FALLBACK, must fail if setTargets is empty
+          ...setTargets.asMap().entries.map((entry) {
+            final index = entry.key;
+            final target = entry.value;
+            final isWarmup = target.setType == 'warmup';
+            final previous = _getPreviousSet(target.setNumber, isWarmup);
 
-          // Working set rows
-          ...List.generate(workingSets, (i) {
-            final previous = _getPreviousSet(i + 1, false);
             return _buildTableRow(
-              setLabel: '${i + 1}',
-              setIndex: i + 1,
-              isWarmup: false,
-              weight: weight,
-              repRange: repRange,
-              previousDisplay: _formatPreviousSet(previous),
+              setLabel: isWarmup ? 'W' : '${target.setNumber}',
+              isWarmup: isWarmup,
+              previousData: previous,
               hasPrevious: hasPrevious,
-              isLast: i == workingSets - 1,
-              glassSurface: glassSurface,
+              targetWeight: target.targetWeightKg,
+              targetReps: target.targetReps,
+              targetRir: target.targetRir,
+              isLast: index == setTargets.length - 1,
               cardBorder: cardBorder,
               textPrimary: textPrimary,
               textMuted: textMuted,
@@ -692,27 +821,36 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
 
   Widget _buildTableRow({
     required String setLabel,
-    required int setIndex,
     required bool isWarmup,
-    double? weight,
-    required String repRange,
-    required String previousDisplay,
+    PreviousSetData? previousData,
     required bool hasPrevious,
+    double? targetWeight,
+    int? targetReps,
+    int? targetRir,
     required bool isLast,
-    required Color glassSurface,
     required Color cardBorder,
     required Color textPrimary,
     required Color textMuted,
     required Color textSecondary,
   }) {
+    final previousDisplay = _formatPreviousSet(previousData);
+
+    // Format target display
+    String targetDisplay = '-';
+    if (targetWeight != null && targetReps != null) {
+      targetDisplay = '${targetWeight.toInt()} × $targetReps';
+    } else if (targetReps != null) {
+      targetDisplay = '× $targetReps';
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
         border: isLast
             ? null
             : Border(
                 bottom: BorderSide(
-                  color: cardBorder.withOpacity(0.2),
+                  color: cardBorder.withValues(alpha: 0.2),
                 ),
               ),
         borderRadius: isLast
@@ -723,35 +861,38 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
         children: [
           // Set badge
           SizedBox(
-            width: 40,
+            width: 36,
             child: Container(
-              width: 32,
-              height: 32,
+              width: 28,
+              height: 28,
               decoration: BoxDecoration(
                 color: isWarmup
-                    ? AppColors.orange.withOpacity(0.2)
-                    : AppColors.cyan.withOpacity(0.2),
+                    ? textMuted.withValues(alpha: 0.15)
+                    : textPrimary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Center(
                 child: Text(
                   setLabel,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: isWarmup ? AppColors.orange : AppColors.cyan,
+                    color: isWarmup ? textMuted : textPrimary,
                   ),
                 ),
               ),
             ),
           ),
 
-          // Previous performance (only show if we have previous data)
-          if (hasPrevious)
-            SizedBox(
-              width: 80,
-              child: Center(
-                child: Text(
+          // Previous column - weight × reps + RIR
+          Expanded(
+            flex: 2,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Weight x Reps
+                Text(
                   previousDisplay,
                   style: TextStyle(
                     fontSize: 13,
@@ -759,41 +900,65 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                     fontWeight: previousDisplay != '-' ? FontWeight.w500 : FontWeight.normal,
                   ),
                 ),
-              ),
-            ),
-
-          // Weight
-          Expanded(
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                decoration: BoxDecoration(
-                  color: glassSurface,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  weight != null ? '${weight.toInt()}' : '-',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: weight != null ? textPrimary : textMuted,
+                // RIR pill (if available)
+                if (previousData?.rir != null) ...[
+                  const SizedBox(height: 3),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: _getRirColor(previousData!.rir!).withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'RIR ${previousData.rir}',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: _getRirColor(previousData.rir!),
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                ],
+              ],
             ),
           ),
 
-          // Rep range
-          SizedBox(
-            width: 70,
-            child: Center(
-              child: Text(
-                repRange,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: textSecondary,
+          // Target column - weight × reps + RIR
+          Expanded(
+            flex: 2,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Target weight x reps
+                Text(
+                  targetDisplay,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: targetDisplay == '-' ? textMuted : textPrimary,
+                    fontWeight: targetDisplay != '-' ? FontWeight.w600 : FontWeight.normal,
+                  ),
                 ),
-              ),
+                // Target RIR pill
+                if (targetRir != null) ...[
+                  const SizedBox(height: 3),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: _getRirColor(targetRir).withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'RIR $targetRir',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: _getRirColor(targetRir),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ],

@@ -1,6 +1,6 @@
 # FitWiz - Complete Feature List
 <!-- you are in control of equipment mix and availability. -->
-> **Total Features: 1070+** across 27 user-facing categories and 7 technical categories (includes Break Detection/Comeback, Age-Based Safety Caps, Skill Progressions, Cardio/Endurance with HR Zones & Session Logging, Flexibility/Mobility Assessment, AI Consistency, Voice Guidance, Adaptive Difficulty, Dynamic Set Management, Pre-Auth Previews, Email Preferences, Leverage-Based Progressions, Rep Range Preferences, Rep Accuracy Tracking, User-Customizable Sets/Reps Limits, Compound Exercise Muscle Mapping, History-Based Workout Generation, Background Music/Audio Session Management, Warmup Exercise Ordering, Customizable Sound Effects, Exercise Swap Tracking, HIIT/Interval Workout Safety, **Full Plan Preview Before Paywall**, **Try One Workout Free**, **Pre-Signup Pricing Transparency**, **Subscription Journey AI Context**, **Quick Start Today Widget**, **Visual Progress Charts**, **Subjective Results Tracking**, **Consistency Insights Dashboard**, **Smart Rescheduling**, **Progress Milestones & ROI**, **Split Screen/Multi-Window Support**, **Branded Workout Programs**, **Responsive Window Mode Detection**, **Lifetime Member Tiers & Benefits**, **Subscription Pause/Resume**, **Retention Offers System**, **NEAT Improvement System with Progressive Step Goals, Hourly Movement Reminders, Gamification & 35+ Achievements**, **Strength Calibration/Test Workout System with AI Analysis**, **Gradual Cardio Progression (Couch-to-5K)**, **Strain/Overuse Injury Prevention with 10% Rule**, **Injury Tracking & Body Part Exclusion**, **User-Controlled Progression Pace Settings**, **Senior-Aware Recovery Scaling**, **Enhanced Nutrition with Cooked Food Converter, Frequent Foods, Barcode Fuzzy Fallback**, **Per-Exercise Workout History & Muscle Analytics with Body Heatmap, Balance Analysis, Training Frequency**, **Hormonal Health Tracking with Testosterone/Estrogen Optimization, Menstrual Cycle Phase Tracking, Cycle-Aware Workout Intensity**, **Kegel/Pelvic Floor Exercises with 16 Gender-Specific Exercises, Warmup/Cooldown Integration, Streak Tracking**, **Hormonal Diet Recommendations with 50+ Foods for Testosterone, Estrogen, PCOS, Menopause, Fertility, Postpartum**, **AI-Powered Food Inflammation Analysis with Color-Coded Ingredient Display, Inflammation Score, Scan History & Favorites**, **Simple Habit Tracking with Templates, Streaks, AI Suggestions, Positive/Negative Habits, Category Organization**, **MacroFactor-Style Adaptive TDEE with EMA Smoothing, Confidence Intervals, Metabolic Adaptation Detection, Adherence Tracking, Sustainability Scores, Multi-Option Recommendations**, and **WearOS Companion App with Workout Tracking, Voice Food Logging via Gemini, Fasting Timer, Heart Rate Monitoring, and Hybrid Phone/Direct Sync**)
+> **Total Features: 1072+** across 27 user-facing categories and 7 technical categories (includes Break Detection/Comeback, Age-Based Safety Caps, Skill Progressions, Cardio/Endurance with HR Zones & Session Logging, Flexibility/Mobility Assessment, AI Consistency, Voice Guidance, Adaptive Difficulty, Dynamic Set Management, Pre-Auth Previews, Email Preferences, Leverage-Based Progressions, Rep Range Preferences, Rep Accuracy Tracking, User-Customizable Sets/Reps Limits, Compound Exercise Muscle Mapping, History-Based Workout Generation, Background Music/Audio Session Management, Warmup Exercise Ordering, Customizable Sound Effects, Exercise Swap Tracking, HIIT/Interval Workout Safety, **Full Plan Preview Before Paywall**, **Try One Workout Free**, **Pre-Signup Pricing Transparency**, **Subscription Journey AI Context**, **Quick Start Today Widget**, **Visual Progress Charts**, **Subjective Results Tracking**, **Consistency Insights Dashboard**, **Smart Rescheduling**, **Progress Milestones & ROI**, **Split Screen/Multi-Window Support**, **Branded Workout Programs**, **Responsive Window Mode Detection**, **Lifetime Member Tiers & Benefits**, **Subscription Pause/Resume**, **Retention Offers System**, **NEAT Improvement System with Progressive Step Goals, Hourly Movement Reminders, Gamification & 35+ Achievements**, **Strength Calibration/Test Workout System with AI Analysis**, **Gradual Cardio Progression (Couch-to-5K)**, **Strain/Overuse Injury Prevention with 10% Rule**, **Injury Tracking & Body Part Exclusion**, **User-Controlled Progression Pace Settings**, **Senior-Aware Recovery Scaling**, **Enhanced Nutrition with Cooked Food Converter, Frequent Foods, Barcode Fuzzy Fallback**, **Per-Exercise Workout History & Muscle Analytics with Body Heatmap, Balance Analysis, Training Frequency**, **Hormonal Health Tracking with Testosterone/Estrogen Optimization, Menstrual Cycle Phase Tracking, Cycle-Aware Workout Intensity**, **Kegel/Pelvic Floor Exercises with 16 Gender-Specific Exercises, Warmup/Cooldown Integration, Streak Tracking**, **Hormonal Diet Recommendations with 50+ Foods for Testosterone, Estrogen, PCOS, Menopause, Fertility, Postpartum**, **AI-Powered Food Inflammation Analysis with Color-Coded Ingredient Display, Inflammation Score, Scan History & Favorites**, **Simple Habit Tracking with Templates, Streaks, AI Suggestions, Positive/Negative Habits, Category Organization**, **MacroFactor-Style Adaptive TDEE with EMA Smoothing, Confidence Intervals, Metabolic Adaptation Detection, Adherence Tracking, Sustainability Scores, Multi-Option Recommendations**, and **WearOS Companion App with Workout Tracking, Voice Food Logging via Gemini, Fasting Timer, Heart Rate Monitoring, and Hybrid Phone/Direct Sync**)
 
 ---
 
@@ -45,6 +45,41 @@
 - `[PREMIUM PLUS]` - Requires Premium Plus or Lifetime subscription
 
 > **Note:** Most features are available to all tiers with quantity/time limits. See section-specific tier tables for details on limits per feature category. Features without limits are generally FREE to all users.
+
+---
+
+## Implementation Status Legend
+
+> **Added January 2026** - Each feature table now includes implementation audit columns.
+
+### Column Key
+
+| Column | Description |
+|--------|-------------|
+| **Impl** | Implementation Status: ✅ Fully Built, 🔄 Partial, ❌ Not Built, ⚠️ Claimed but Missing Code |
+| **Comp** | Competitors with feature: **MF**=MacroFactor, **Fb**=Fitbod, **Hv**=Hevy, **Gr**=Gravl |
+| **BE Loc** | Backend file:line in `/backend/` (— if frontend-only) |
+| **FE Loc** | Frontend file:line in `/mobile/flutter/lib/` (— if backend-only) |
+
+> **Detailed Audit**: See [FEATURES_AUDIT.md](FEATURES_AUDIT.md) for complete implementation locations with file paths and line numbers for all 1,070+ features.
+
+### Competitor Feature Matrix (Quick Reference)
+
+| Feature Category | MF | Fb | Hv | Gr | FitWiz |
+|-----------------|:--:|:--:|:--:|:--:|:------:|
+| AI Workout Generation | ❌ | ✅ | ❌ | ✅ | ✅ |
+| Conversational AI Coach | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Exercise Videos | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Nutrition Tracking | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Fasting Timer | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Progress Photos | ✅ | ❌ | ✅ | ✅ | ✅ |
+| Social Feed | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Adaptive TDEE | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Apple Watch | ❌ | ✅ | ✅ | ✅ | ❌ |
+| WearOS | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Senior Mode | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Injury Tracking | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Cardio Progression | ❌ | ✅ | ❌ | ❌ | ✅ |
 
 ---
 
@@ -2896,8 +2931,11 @@ GET    /api/v1/workouts/{user_id}  - List all workouts
 | 21a | Performance Comparison | Show improvements/setbacks vs previous sessions for each exercise and overall workout (volume, weight, reps, time) | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Workout Complete → Comparison |
 | 22 | Social Share | Share workout to social | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Partially Implemented | User | Workout Complete → Share |
 | 23 | RPE Tracking | Rate of Perceived Exertion (6-10) logging per set | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User | Active Workout → RPE Input |
-| 24 | RIR Tracking | Reps in Reserve (0-5) logging per set | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User | Active Workout → RIR Input |
-| 25 | RPE/RIR Help System | Educational tooltips explaining intensity scales | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Partially Implemented | User | Active Workout → RPE/RIR → Help |
+| 24 | RIR Tracking | Reps in Reserve (0-5) logging per set with colored pills (Green/Yellow/Orange/Red) and "X in tank" labels | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User | Active Workout → RIR Input |
+| 24a | Quick RIR Selector | Post-set 3-option feedback: "Could do more" (RIR 3+), "Just right" (RIR 1-2), "Struggled" (RIR 0) | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Active Workout → Complete Set → RIR Sheet |
+| 24b | RIR-Based Auto-Weight | Automatic weight adjustment for next set based on logged RIR vs target RIR (±5-15% based on effort) | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Active Workout → Complete Set → Weight Adjust |
+| 24c | AI-Generated RIR Targets | Backend generates per-set RIR targets based on exercise type (compound vs isolation), fitness level, and progressive fatigue | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | Fully Implemented | Dev | Backend RAG → set_targets |
+| 25 | RPE/RIR Help System | Educational tooltips explaining intensity scales with "in tank" concept explanation | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Active Workout → RPE/RIR → Help |
 | 26 | AI Weight Suggestion | Real-time AI-powered weight recommendations during rest | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User | Active Workout → Rest → Suggestion |
 | 27 | Weight Suggestion Loading | Visual loading state during AI processing | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | Fully Implemented | User | Active Workout → Rest → Loading |
 | 28 | Rule-Based Fallback | Fallback weight suggestions when AI unavailable | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | Fully Implemented | Dev | Backend system |
@@ -3655,7 +3693,7 @@ Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10
 | 13 | Mark as Read | Clear notifications | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
 | 14 | Preferences Screen | Manage all settings | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
 
-### 19. Settings (102 Features)
+### 19. Settings (104 Features)
 
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus | Navigation |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|-------|
@@ -3776,6 +3814,8 @@ Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10
 | 114 | Mute Voice During Videos | Option to silence TTS during exercise demo videos | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | — |
 | 115 | Audio Preferences API | Backend API for storing and retrieving audio settings | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev | Backend system |
 | 116 | Audio Settings Section | Dedicated settings section for all audio controls | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Settings |
+| 117 | Weight Increments Customization | Equipment-specific weight increments (dumbbell, barbell, machine, kettlebell, cable) with kg/lbs toggle. Accessible from Settings, Exercise Preferences, and Active Workout | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Settings → Preferences → Weight Increments |
+| 118 | Weight Increments API | Backend API for storing and retrieving equipment-specific weight increments per user | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev | Backend system |
 
 ### 20. Accessibility (8 Features)
 
@@ -4767,6 +4807,136 @@ Based on the Tuchscherer/Helms RPE-Reps-Percentage tables:
 - 45/60 = 75% of 1RM
 - At 8 reps, 75% falls between RPE 8-9
 - System displays: "Estimated RPE: 8.5"
+
+---
+
+### Feature 6: RIR-Based Intensity & Auto-Weight Adjustment
+
+**What it does:** Displays AI-generated RIR (Reps in Reserve) targets for each set using colored pills, then auto-adjusts weight for the next set based on your actual effort feedback.
+
+#### RIR Display (Colored Pills)
+
+The "Auto" column in the set tracking table shows target weight, reps, AND RIR using intuitive colored pills:
+
+```
+┌──────────────────────────────────────────────────────┐
+│ Set │  Auto                    │  kg  │ Reps │ ✓    │
+├──────────────────────────────────────────────────────┤
+│  1  │ 40 × 8  [2 in tank](?) │ [  ] │ [  ] │ ☐    │
+│  2  │ 40 × 8  [1 in tank](?) │ [  ] │ [  ] │ ☐    │
+│  3  │ 40 × 8  [MAX](?)       │ [  ] │ [  ] │ ☐    │
+└──────────────────────────────────────────────────────┘
+```
+
+**RIR Pill Colors:**
+| RIR | Color | Label | Meaning |
+|-----|-------|-------|---------|
+| 3+ | 🟢 Green | "3+ in tank" | Easy/warmup - stop with 3+ reps left |
+| 2 | 🟡 Yellow | "2 in tank" | Moderate - stop with 2 reps left |
+| 1 | 🟠 Orange | "1 in tank" | Challenging - stop with 1 rep left |
+| 0 | 🔴 Red | "MAX" | Max effort - go to failure |
+
+**Info Icon (?):** Always visible next to each pill. Tapping shows explanation:
+> "In tank" means how many more reps you could do after finishing the set.
+> • MAX = Go to failure, give everything
+> • 1 in tank = Stop when you could do 1 more
+> • 2 in tank = Stop when you could do 2 more
+> • 3+ in tank = Easy effort, lots left
+
+#### AI-Generated RIR Targets (Backend)
+
+The backend generates per-set RIR targets based on:
+
+1. **Exercise Type:**
+   - Compound exercises (squats, bench, deadlift): Higher RIR (2-3) for safety
+   - Isolation exercises (curls, tricep extensions): Lower RIR (1-2) - can push harder
+
+2. **Fitness Level:**
+   - Beginner: Base RIR 3 (conservative, learn form)
+   - Intermediate: Base RIR 2 (moderate intensity)
+   - Advanced: Base RIR 2, can go to failure on last set
+
+3. **Progressive Fatigue Model:**
+   - Set 1: Base RIR
+   - Set 2: Base RIR - 0.5 (slightly harder)
+   - Set 3+: Base RIR - 1.0 (push harder on later sets)
+
+#### Quick RIR Selector (Post-Set Feedback)
+
+After completing a set, a simple 3-option bottom sheet appears:
+
+```
+┌─────────────────────────────────────────────┐
+│  How'd it feel?                      Skip   │
+├─────────────────────────────────────────────┤
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐    │
+│  │   🟢     │ │   🟡     │ │   🔴     │    │
+│  │ Could do │ │  Just    │ │ Struggled│    │
+│  │   more   │ │  right   │ │          │    │
+│  │ 3+ tank  │ │ 1-2 tank │ │   MAX    │    │
+│  └──────────┘ └──────────┘ └──────────┘    │
+└─────────────────────────────────────────────┘
+```
+
+- **Could do more** → RIR 3+ (weight was too light)
+- **Just right** → RIR 1-2 (perfect intensity)
+- **Struggled** → RIR 0 (weight was too heavy or max effort)
+- **Skip** → Dismiss without logging RIR
+
+#### Auto-Weight Adjustment Logic
+
+When user logs their actual RIR, the system compares it to the target RIR and adjusts:
+
+| Logged RIR vs Target | Weight Change | Reason |
+|---------------------|---------------|--------|
+| RIR diff ≤ -2 | -15% | Much harder than expected |
+| RIR diff = -1 | -7.5% | Slightly harder |
+| RIR diff = 0 | No change | Perfect! |
+| RIR diff = +1 | +5% | Slightly easier |
+| RIR diff ≥ +2 | +10% | Much easier |
+
+**Example:**
+- Target RIR: 2 ("2 in tank")
+- User logs: "Struggled" (RIR 0)
+- Difference: 0 - 2 = -2
+- Action: Reduce weight by 15%
+- 40kg → 34kg (rounded to 35kg for equipment increment)
+- SnackBar: "Weight adjusted: 40.0 → 35.0 kg"
+
+#### User Flow (Complete)
+
+```
+1. START SET
+   └─> See target: "40 × 8 [2 in tank](?)"
+   └─> Understand: Stop when I could do 2 more reps
+
+2. PERFORM SET
+   └─> User completes 8 reps at 40kg
+   └─> Taps checkmark to complete
+
+3. RIR FEEDBACK
+   └─> Quick selector appears
+   └─> User selects "Struggled" (was harder than expected)
+
+4. AUTO-ADJUST
+   └─> System detects: Target RIR 2, Actual RIR 0
+   └─> Calculates: -15% adjustment
+   └─> Updates weight controller: 40 → 35kg
+   └─> Shows SnackBar: "Weight adjusted: 40.0 → 35.0 kg"
+
+5. NEXT SET
+   └─> Weight field pre-filled with 35kg
+   └─> Target still shows: "35 × 8 [1 in tank]"
+   └─> User can accept or manually adjust
+```
+
+#### Data Persistence
+
+All RIR data is saved to the database for:
+- **Performance logs:** `rir` field in `performance_logs` table
+- **User context:** Events logged for AI personalization:
+  - `SET_RIR_FEEDBACK`: Tracks target vs actual RIR
+  - `WEIGHT_AUTO_ADJUSTED`: Tracks weight adjustments made
 
 ---
 

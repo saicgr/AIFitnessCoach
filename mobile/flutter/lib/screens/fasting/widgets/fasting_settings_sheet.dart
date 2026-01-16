@@ -139,7 +139,9 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    // Use monochrome accent instead of purple
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     return Container(
@@ -171,7 +173,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Icon(Icons.settings, color: purple, size: 24),
+                    Icon(Icons.settings, color: accentColor, size: 24),
                     const SizedBox(width: 12),
                     Text(
                       'Fasting Settings',
@@ -204,7 +206,8 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
                   const SizedBox(height: 12),
                   _buildProtocolSelector(
                     isDark: isDark,
-                    purple: purple,
+                    accentColor: accentColor,
+                    accentContrast: accentContrast,
                     textPrimary: textPrimary,
                     textSecondary: textSecondary,
                     cardBg: cardBg,
@@ -216,7 +219,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
                   const SizedBox(height: 12),
                   _buildScheduleSection(
                     isDark: isDark,
-                    purple: purple,
+                    accentColor: accentColor,
                     textPrimary: textPrimary,
                     textSecondary: textSecondary,
                     cardBg: cardBg,
@@ -228,7 +231,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
                   const SizedBox(height: 12),
                   _buildNotificationsSection(
                     isDark: isDark,
-                    purple: purple,
+                    accentColor: accentColor,
                     textPrimary: textPrimary,
                     textSecondary: textSecondary,
                     cardBg: cardBg,
@@ -242,20 +245,20 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
                     child: ElevatedButton(
                       onPressed: _isSaving ? null : _saveSettings,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: purple,
-                        foregroundColor: Colors.white,
+                        backgroundColor: accentColor,
+                        foregroundColor: accentContrast,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                         elevation: 0,
-                        disabledBackgroundColor: purple.withValues(alpha: 0.5),
+                        disabledBackgroundColor: accentColor.withValues(alpha: 0.5),
                       ),
                       child: _isSaving
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 24,
                               height: 24,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: accentContrast,
                                 strokeWidth: 2,
                               ),
                             )
@@ -293,7 +296,8 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
 
   Widget _buildProtocolSelector({
     required bool isDark,
-    required Color purple,
+    required Color accentColor,
+    required Color accentContrast,
     required Color textPrimary,
     required Color textSecondary,
     required Color cardBg,
@@ -330,10 +334,10 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
-                    color: isSelected ? purple : purple.withValues(alpha: 0.1),
+                    color: isSelected ? accentColor : accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isSelected ? purple : Colors.transparent,
+                      color: isSelected ? accentColor : Colors.transparent,
                       width: 1.5,
                     ),
                   ),
@@ -342,7 +346,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: isSelected ? Colors.white : textPrimary,
+                      color: isSelected ? accentContrast : textPrimary,
                     ),
                   ),
                 ),
@@ -362,12 +366,12 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: _selectedProtocol == FastingProtocol.custom
-                    ? purple.withValues(alpha: 0.15)
+                    ? accentColor.withValues(alpha: 0.15)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: _selectedProtocol == FastingProtocol.custom
-                      ? purple
+                      ? accentColor
                       : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
                   width: 1.5,
                 ),
@@ -376,7 +380,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
                 children: [
                   Icon(
                     Icons.tune,
-                    color: _selectedProtocol == FastingProtocol.custom ? purple : textSecondary,
+                    color: _selectedProtocol == FastingProtocol.custom ? accentColor : textSecondary,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -395,7 +399,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
                       '${_customHours}h fasting',
                       style: TextStyle(
                         fontSize: 14,
-                        color: purple,
+                        color: accentColor,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -420,8 +424,8 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
                     min: 12,
                     max: 23,
                     divisions: 11,
-                    activeColor: purple,
-                    inactiveColor: purple.withValues(alpha: 0.2),
+                    activeColor: accentColor,
+                    inactiveColor: accentColor.withValues(alpha: 0.2),
                     onChanged: (value) {
                       setState(() => _customHours = value.round());
                     },
@@ -435,7 +439,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: purple,
+                      color: accentColor,
                     ),
                   ),
                 ),
@@ -449,7 +453,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
 
   Widget _buildScheduleSection({
     required bool isDark,
-    required Color purple,
+    required Color accentColor,
     required Color textPrimary,
     required Color textSecondary,
     required Color cardBg,
@@ -468,7 +472,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
             label: 'Start fasting at',
             time: _formatHour(_fastStartHour),
             onTap: () => _selectTime(true),
-            purple: purple,
+            accentColor: accentColor,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),
@@ -484,7 +488,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
             label: 'Start eating at',
             time: _formatHour(_eatingStartHour),
             onTap: () => _selectTime(false),
-            purple: purple,
+            accentColor: accentColor,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),
@@ -498,7 +502,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
     required String label,
     required String time,
     required VoidCallback onTap,
-    required Color purple,
+    required Color accentColor,
     required Color textPrimary,
     required Color textSecondary,
   }) {
@@ -510,7 +514,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
       behavior: HitTestBehavior.opaque,
       child: Row(
         children: [
-          Icon(icon, color: purple, size: 22),
+          Icon(icon, color: accentColor, size: 22),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -524,7 +528,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: purple.withValues(alpha: 0.1),
+              color: accentColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -532,7 +536,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: purple,
+                color: accentColor,
               ),
             ),
           ),
@@ -545,7 +549,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
 
   Widget _buildNotificationsSection({
     required bool isDark,
-    required Color purple,
+    required Color accentColor,
     required Color textPrimary,
     required Color textSecondary,
     required Color cardBg,
@@ -564,7 +568,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
             subtitle: 'Notify when entering new fasting zones',
             value: _notifyZoneTransitions,
             onChanged: (v) => setState(() => _notifyZoneTransitions = v),
-            purple: purple,
+            accentColor: accentColor,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),
@@ -574,7 +578,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
             subtitle: 'Notify when you reach your fasting goal',
             value: _notifyGoalReached,
             onChanged: (v) => setState(() => _notifyGoalReached = v),
-            purple: purple,
+            accentColor: accentColor,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),
@@ -584,7 +588,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
             subtitle: 'Remind before eating window closes',
             value: _notifyEatingWindowEnd,
             onChanged: (v) => setState(() => _notifyEatingWindowEnd = v),
-            purple: purple,
+            accentColor: accentColor,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),
@@ -594,7 +598,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
             subtitle: 'Remind when it\'s time to start fasting',
             value: _notifyFastStartReminder,
             onChanged: (v) => setState(() => _notifyFastStartReminder = v),
-            purple: purple,
+            accentColor: accentColor,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
             isLast: true,
@@ -610,7 +614,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
     required String subtitle,
     required bool value,
     required ValueChanged<bool> onChanged,
-    required Color purple,
+    required Color accentColor,
     required Color textPrimary,
     required Color textSecondary,
     bool isLast = false,
@@ -621,7 +625,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              Icon(icon, color: purple.withValues(alpha: 0.8), size: 20),
+              Icon(icon, color: accentColor.withValues(alpha: 0.8), size: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -649,7 +653,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
               Switch.adaptive(
                 value: value,
                 onChanged: onChanged,
-                activeTrackColor: purple,
+                activeTrackColor: accentColor,
                 activeThumbColor: Colors.white,
               ),
             ],

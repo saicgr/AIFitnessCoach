@@ -413,12 +413,12 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                               height: 8,
                               decoration: BoxDecoration(
                                 color: index == _currentPageIndex
-                                    ? AppColors.cyan
+                                    ? AppColors.accent
                                     : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
                                   color: index == _currentPageIndex
-                                      ? AppColors.cyan
+                                      ? AppColors.accent
                                       : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
                                 ),
                               ),
@@ -503,12 +503,12 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: TextButton.styleFrom(
-              backgroundColor: AppColors.cyan.withValues(alpha: 0.1),
+              backgroundColor: AppColors.accent.withValues(alpha: 0.1),
             ),
             child: Text(
               'Start Over',
               style: TextStyle(
-                color: AppColors.cyan,
+                color: AppColors.accent,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -572,12 +572,12 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withValues(alpha: 0.1),
+                    color: AppColors.accent.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.arrow_back,
-                    color: AppColors.cyan,
+                    color: AppColors.accent,
                     size: 20,
                   ),
                 ),
@@ -588,7 +588,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  gradient: AppColors.cyanGradient,
+                  gradient: AppColors.accentGradient,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(Icons.smart_toy, color: Colors.white, size: 26),
@@ -627,10 +627,10 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withValues(alpha: 0.1),
+                    color: AppColors.accent.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: AppColors.cyan.withValues(alpha: 0.3),
+                      color: AppColors.accent.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
@@ -639,7 +639,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                       Icon(
                         Icons.refresh,
                         size: 14,
-                        color: AppColors.cyan,
+                        color: AppColors.accent,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -647,7 +647,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.cyan,
+                          color: AppColors.accent,
                         ),
                       ),
                     ],
@@ -670,13 +670,13 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          gradient: _isCustomMode ? AppColors.cyanGradient : null,
+          gradient: _isCustomMode ? AppColors.accentGradient : null,
           color: _isCustomMode
               ? null
               : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: _isCustomMode ? AppColors.cyan : cardBorder,
+            color: _isCustomMode ? AppColors.accent : cardBorder,
             width: _isCustomMode ? 2 : 1,
           ),
         ),
@@ -685,7 +685,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
           children: [
             Icon(
               Icons.auto_awesome,
-              color: _isCustomMode ? Colors.white : AppColors.cyan,
+              color: _isCustomMode ? Colors.white : AppColors.accent,
               size: 18,
             ),
             const SizedBox(width: 8),
@@ -733,7 +733,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
             width: double.infinity,
             height: 56,
             decoration: BoxDecoration(
-              gradient: isEnabled ? AppColors.cyanGradient : null,
+              gradient: isEnabled ? AppColors.accentGradient : null,
               color: isEnabled ? null : (isDark ? AppColors.elevated : AppColorsLight.elevated),
               borderRadius: BorderRadius.circular(14),
               border: isEnabled

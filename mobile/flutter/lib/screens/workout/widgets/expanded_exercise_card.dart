@@ -6,6 +6,7 @@ import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/week_comparison_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
+import '../../../data/services/haptic_service.dart';
 
 /// Expanded exercise card that shows the SET/LBS/REP table inline
 /// Collapsible by default - shows sets/reps summary when collapsed
@@ -36,6 +37,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
   String? _imageUrl;
   bool _isLoadingImage = true;
   late bool _isExpanded;
+  bool? _useKgOverride; // Local override for kg/lbs toggle, null = use provider
   static final Map<String, String> _imageCache = {};
 
   @override
@@ -43,6 +45,14 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     super.initState();
     _isExpanded = widget.initiallyExpanded;
     _loadImage();
+  }
+
+  /// Toggle between kg and lbs units locally
+  void _toggleUnit() {
+    setState(() {
+      final bool currentUseKg = _useKgOverride ?? ref.read(useKgProvider);
+      _useKgOverride = !currentUseKg;
+    });
   }
 
   Future<void> _loadImage() async {
@@ -119,6 +129,21 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     if (mins > 0 && secs > 0) return '${mins}m ${secs}s';
     if (mins > 0) return '${mins}m';
     return '${secs}s';
+  }
+
+  /// Get the actual number of sets that will be displayed
+  /// Uses AI setTargets if available, otherwise fallback to 2 warmups + working sets
+  int _getActualSetCount() {
+    final exercise = widget.exercise;
+
+    // If AI setTargets exist, count them
+    if (exercise.hasSetTargets && exercise.setTargets!.isNotEmpty) {
+      return exercise.setTargets!.length;
+    }
+
+    // Fallback: 2 warmups + working sets
+    final totalSets = exercise.sets ?? 3;
+    return 2 + totalSets;
   }
 
   /// Build set rows from AI setTargets or fallback to legacy format
@@ -202,8 +227,8 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     final repRange = _getRepRange();
     final restSeconds = exercise.restSeconds ?? 90;
 
-    // Get user's weight unit preference (kg or lbs)
-    final useKg = ref.watch(useKgProvider);
+    // Get user's weight unit preference (kg or lbs), with local override
+    final bool useKg = _useKgOverride ?? ref.watch(useKgProvider);
 
     // Theme-aware colors
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -300,10 +325,10 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
       ),
       child: Row(
         children: [
-          // Sets info
+          // Sets info - use actual set count from AI setTargets or fallback
           _buildSummaryChip(
             Icons.repeat,
-            '${totalSets + 2} sets',
+            '${_getActualSetCount()} sets',
             AppColors.cyan,
           ),
           const SizedBox(width: 12),
@@ -322,55 +347,104 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
           ),
           const Spacer(),
           // Expand button
-          GestureDetector(
-            onTap: () => setState(() => _isExpanded = true),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.cyan.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Details',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.cyan,
+          Builder(builder: (context) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            final cyanColor = isDark ? AppColors.cyan : _darkenColor(AppColors.cyan);
+            return GestureDetector(
+              onTap: () => setState(() => _isExpanded = true),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.cyan.withOpacity(isDark ? 0.1 : 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: isDark ? null : Border.all(color: cyanColor.withOpacity(0.3), width: 0.5),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Details',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: cyanColor,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.keyboard_arrow_down,
-                    size: 16,
-                    color: AppColors.cyan,
-                  ),
-                ],
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 16,
+                      color: cyanColor,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );
   }
 
   Widget _buildSummaryChip(IconData icon, String text, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final displayColor = isDark ? color : _darkenColor(color);
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: color),
+        Icon(icon, size: 14, color: displayColor),
         const SizedBox(width: 4),
         Text(
           text,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: color,
+            color: displayColor,
           ),
         ),
       ],
+    );
+  }
+
+  /// Build kg/lb toggle button
+  Widget _buildUnitToggle() {
+    final bool useKg = _useKgOverride ?? ref.read(useKgProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final purpleColor = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        _toggleUnit();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppColors.purple.withValues(alpha: isDark ? 0.1 : 0.15),
+          borderRadius: BorderRadius.circular(8),
+          border: isDark ? null : Border.all(color: purpleColor.withOpacity(0.3), width: 0.5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.swap_horiz,
+              size: 14,
+              color: purpleColor,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              useKg ? 'kg' : 'lbs',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: purpleColor,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -419,37 +493,38 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                         builder: (context, ref, _) {
                           final isNew = ref.watch(isExerciseNewThisWeekProvider(exercise.name));
                           if (!isNew) return const SizedBox.shrink();
+                          final isDark = Theme.of(context).brightness == Brightness.dark;
+                          final badgeColor = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+                          final badgeTextColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
                           return Container(
                             margin: const EdgeInsets.only(left: 8),
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [AppColors.cyan, AppColors.cyan.withOpacity(0.7)],
-                              ),
+                              color: badgeColor,
                               borderRadius: BorderRadius.circular(6),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.cyan.withOpacity(0.3),
+                                  color: badgeColor.withValues(alpha: 0.3),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
                                   Icons.fiber_new,
                                   size: 12,
-                                  color: Colors.black,
+                                  color: badgeTextColor,
                                 ),
-                                SizedBox(width: 3),
+                                const SizedBox(width: 3),
                                 Text(
                                   'NEW',
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.black,
+                                    color: badgeTextColor,
                                     letterSpacing: 0.5,
                                   ),
                                 ),
@@ -579,6 +654,9 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
               color: AppColors.purple,
             ),
           ),
+          const SizedBox(width: 12),
+          // kg/lb toggle button
+          _buildUnitToggle(),
           const Spacer(),
           // Collapse button
           GestureDetector(
@@ -668,28 +746,41 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
   }
 
   Widget _buildInfoChip(IconData icon, String text, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Use higher opacity for light mode for better visibility
+    final bgOpacity = isDark ? 0.1 : 0.15;
+    // Darken colors for light mode for better contrast
+    final displayColor = isDark ? color : _darkenColor(color);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withOpacity(bgOpacity),
         borderRadius: BorderRadius.circular(6),
+        border: isDark ? null : Border.all(color: displayColor.withOpacity(0.3), width: 0.5),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: color),
+          Icon(icon, size: 12, color: displayColor),
           const SizedBox(width: 4),
           Text(
             text,
             style: TextStyle(
               fontSize: 11,
-              color: color,
+              color: displayColor,
               fontWeight: FontWeight.w500,
             ),
           ),
         ],
       ),
     );
+  }
+
+  /// Darken a color for better visibility on light backgrounds
+  Color _darkenColor(Color color) {
+    final hsl = HSLColor.fromColor(color);
+    return hsl.withLightness((hsl.lightness * 0.7).clamp(0.0, 1.0)).toColor();
   }
 
   String _shortenMuscle(String muscle) {
@@ -724,24 +815,29 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
   }
 
   Widget _buildBreathingChip(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgOpacity = isDark ? 0.1 : 0.15;
+    final displayColor = isDark ? AppColors.green : _darkenColor(AppColors.green);
+
     return GestureDetector(
       onTap: () => _showBreathingGuidance(context),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: AppColors.green.withOpacity(0.1),
+          color: AppColors.green.withOpacity(bgOpacity),
           borderRadius: BorderRadius.circular(6),
+          border: isDark ? null : Border.all(color: displayColor.withOpacity(0.3), width: 0.5),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.air, size: 12, color: AppColors.green),
+            Icon(Icons.air, size: 12, color: displayColor),
             const SizedBox(width: 4),
             Text(
               'Breathing',
               style: TextStyle(
                 fontSize: 11,
-                color: AppColors.green,
+                color: displayColor,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -752,22 +848,27 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
   }
 
   Widget _buildAlternatingHandsChip() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgOpacity = isDark ? 0.1 : 0.15;
+    final displayColor = isDark ? AppColors.orange : _darkenColor(AppColors.orange);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.orange.withOpacity(0.1),
+        color: AppColors.orange.withOpacity(bgOpacity),
         borderRadius: BorderRadius.circular(6),
+        border: isDark ? null : Border.all(color: displayColor.withOpacity(0.3), width: 0.5),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.sync_alt, size: 12, color: AppColors.orange),
+          Icon(Icons.sync_alt, size: 12, color: displayColor),
           const SizedBox(width: 4),
           Text(
             'Alternating Hands',
             style: TextStyle(
               fontSize: 11,
-              color: AppColors.orange,
+              color: displayColor,
               fontWeight: FontWeight.w500,
             ),
           ),

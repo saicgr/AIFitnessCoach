@@ -15,6 +15,9 @@ import '../../../core/providers/variation_provider.dart';
 import '../../../core/providers/training_intensity_provider.dart';
 import '../../../core/providers/video_cache_provider.dart';
 import '../../../core/theme/theme_provider.dart';
+import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/providers/weight_increments_provider.dart';
+import '../../../widgets/weight_increments_sheet.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../core/providers/user_provider.dart';
@@ -1176,6 +1179,38 @@ class SettingsCard extends ConsumerWidget {
               ],
             );
             onTap = () => _showWeightUnitSelector(context, ref);
+          } else if (item.isAccentColorSelector) {
+            // Inline accent color selector with color swatches
+            final accentColor = ref.watch(accentColorProvider);
+            trailing = _InlineAccentColorSelector(
+              currentAccent: accentColor,
+              onChanged: (accent) {
+                HapticFeedback.selectionClick();
+                ref.read(accentColorProvider.notifier).setAccent(accent);
+              },
+            );
+            onTap = null; // Disable row tap since swatches handle selection
+          } else if (item.isWeightIncrementsSelector) {
+            final weightIncrementsState = ref.watch(weightIncrementsProvider);
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  weightIncrementsState.unit.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () => showWeightIncrementsSheet(context);
           } else {
             trailing = item.trailing;
           }
@@ -1212,7 +1247,9 @@ class SettingsCard extends ConsumerWidget {
                     !item.isWorkoutDaysSelector &&
                     !item.isProgressChartsScreen &&
                     !item.isCalibrationTestScreen &&
-                    !item.isWeightUnitSelector,
+                    !item.isWeightUnitSelector &&
+                    !item.isAccentColorSelector &&
+                    !item.isWeightIncrementsSelector,
                 borderRadius: index == 0
                     ? const BorderRadius.vertical(top: Radius.circular(16))
                     : index == items.length - 1
@@ -1412,6 +1449,107 @@ class _ThemeButton extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Inline accent color selector with color swatches
+/// Allows quick selection of app accent color
+class _InlineAccentColorSelector extends StatelessWidget {
+  final AccentColor currentAccent;
+  final ValueChanged<AccentColor> onChanged;
+
+  const _InlineAccentColorSelector({
+    required this.currentAccent,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark
+        ? AppColors.pureBlack.withValues(alpha: 0.5)
+        : AppColorsLight.cardBorder.withValues(alpha: 0.5);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: AccentColor.values.map((accent) {
+          final isSelected = accent == currentAccent;
+          return _AccentColorSwatch(
+            accent: accent,
+            isSelected: isSelected,
+            onTap: () => onChanged(accent),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+/// Individual color swatch button for the accent color selector
+class _AccentColorSwatch extends StatelessWidget {
+  final AccentColor accent;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _AccentColorSwatch({
+    required this.accent,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = accent.previewColor;
+
+    // For monochrome, show white in dark mode preview
+    final displayColor = accent == AccentColor.black && isDark
+        ? Colors.white
+        : color;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 28,
+        height: 28,
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        decoration: BoxDecoration(
+          color: displayColor,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isSelected
+                ? (isDark ? Colors.white : Colors.black)
+                : Colors.transparent,
+            width: 2,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: displayColor.withValues(alpha: 0.4),
+                    blurRadius: 6,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : null,
+        ),
+        child: isSelected
+            ? Icon(
+                Icons.check,
+                size: 14,
+                color: accent == AccentColor.black
+                    ? (isDark ? Colors.black : Colors.white)
+                    : Colors.white,
+              )
+            : null,
       ),
     );
   }

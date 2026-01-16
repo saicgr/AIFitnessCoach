@@ -189,7 +189,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: LinearProgressIndicator(
                 value: (_currentStep + 1) / 6,
                 backgroundColor: AppColors.glassSurface,
-                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.cyan),
+                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
                 minHeight: 4,
               ),
             ),
@@ -290,14 +290,14 @@ class _StepIndicator extends StatelessWidget {
                     height: 36,
                     decoration: BoxDecoration(
                       color: isActive
-                          ? AppColors.cyan
+                          ? AppColors.accent
                           : isCompleted
                               ? AppColors.success.withOpacity(0.2)
                               : AppColors.glassSurface,
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: isActive
-                            ? AppColors.cyan
+                            ? AppColors.accent
                             : isCompleted
                                 ? AppColors.success
                                 : AppColors.cardBorder,
@@ -327,7 +327,7 @@ class _StepIndicator extends StatelessWidget {
                       fontSize: 10,
                       fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                       color: isActive
-                          ? AppColors.cyan
+                          ? AppColors.accent
                           : isCompleted
                               ? AppColors.success
                               : AppColors.textMuted,
@@ -377,7 +377,7 @@ class _BottomButton extends StatelessWidget {
         child: ElevatedButton(
           onPressed: isEnabled ? onPressed : null,
           style: ElevatedButton.styleFrom(
-            backgroundColor: isLastStep ? AppColors.success : AppColors.cyan,
+            backgroundColor: isLastStep ? AppColors.success : AppColors.accent,
             foregroundColor: Colors.white,
             disabledBackgroundColor: AppColors.glassSurface,
             disabledForegroundColor: AppColors.textMuted,

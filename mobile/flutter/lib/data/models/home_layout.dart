@@ -446,16 +446,18 @@ extension TileTypeExtension on TileType {
       case TileType.streakCounter:
       case TileType.caloriesSummary:
       case TileType.macroRings:
-      case TileType.bodyWeight:
       case TileType.leaderboardRank:
       case TileType.sleepScore:
       case TileType.weightTrend:
       case TileType.dailyStats:
-      case TileType.achievements:
       case TileType.quickLogWeight:
       case TileType.quickLogMeasurements:
-      case TileType.habits:
         return TileSize.half;
+      // Section tiles - always full width
+      case TileType.habits:
+      case TileType.bodyWeight:
+      case TileType.achievements:
+        return TileSize.full;
       default:
         return TileSize.full;
     }
@@ -739,31 +741,72 @@ class UpdateLayoutRequest {
   Map<String, dynamic> toJson() => _$UpdateLayoutRequestToJson(this);
 }
 
-/// Default tile order for new users
-const List<TileType> defaultTileOrder = [
-  TileType.quickStart, // Quick start at the top for easy workout access
-  TileType.nextWorkout,
+/// Default tile order for new users (visible tiles first, then hidden)
+const List<TileType> defaultVisibleTiles = [
+  TileType.nextWorkout, // Hero workout card at the top
+  TileType.quickActions, // Quick actions row (Log Food, Stats, etc.)
+  TileType.dailyStats, // Daily stats (steps, calories)
+  TileType.quickLogWeight, // Quick log weight
+  TileType.habits, // Habits section (GitHub-style graphs)
+  TileType.bodyWeight, // Weight tracker with trend
+  TileType.achievements, // Achievements section
+];
+
+/// Hidden tiles available in the layout editor
+const List<TileType> defaultHiddenTiles = [
+  TileType.weeklyProgress,
+  TileType.upcomingWorkouts,
+  TileType.aiCoachTip,
+  TileType.personalRecords,
+  TileType.weeklyGoals,
+  TileType.weekChanges,
+  TileType.quickStart,
   TileType.fitnessScore,
   TileType.moodPicker,
   TileType.dailyActivity,
-  TileType.quickActions,
-  TileType.weeklyProgress,
-  TileType.weeklyGoals,
-  TileType.weekChanges,
-  TileType.upcomingWorkouts,
+  TileType.quickLogMeasurements,
+  TileType.caloriesSummary,
+  TileType.macroRings,
+  TileType.myJourney,
+  TileType.progressCharts,
+  TileType.roiSummary,
+  TileType.weeklyPlan,
+  TileType.restDayTip,
+  TileType.leaderboardRank,
+  TileType.challengeProgress,
+  TileType.socialFeed,
 ];
 
 /// Create default tiles for a new user
 List<HomeTile> createDefaultTiles() {
-  return defaultTileOrder.asMap().entries.map((entry) {
-    return HomeTile(
-      id: 'tile_${entry.key}',
-      type: entry.value,
-      size: entry.value.defaultSize,
-      order: entry.key,
+  final tiles = <HomeTile>[];
+  int order = 0;
+
+  // Add visible tiles first
+  for (final type in defaultVisibleTiles) {
+    tiles.add(HomeTile(
+      id: 'tile_$order',
+      type: type,
+      size: type.defaultSize,
+      order: order,
       isVisible: true,
-    );
-  }).toList();
+    ));
+    order++;
+  }
+
+  // Add hidden tiles
+  for (final type in defaultHiddenTiles) {
+    tiles.add(HomeTile(
+      id: 'tile_$order',
+      type: type,
+      size: type.defaultSize,
+      order: order,
+      isVisible: false,
+    ));
+    order++;
+  }
+
+  return tiles;
 }
 
 /// Layout preset types

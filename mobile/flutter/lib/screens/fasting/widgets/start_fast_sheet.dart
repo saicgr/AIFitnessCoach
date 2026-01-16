@@ -61,7 +61,9 @@ class _StartFastSheetState extends State<StartFastSheet> {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    // Use monochrome accent instead of purple
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Container(
@@ -172,7 +174,7 @@ class _StartFastSheetState extends State<StartFastSheet> {
                     Icon(
                       _showExtended ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                       size: 20,
-                      color: purple,
+                      color: accentColor,
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -187,7 +189,7 @@ class _StartFastSheetState extends State<StartFastSheet> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.orange.withValues(alpha: 0.15),
+                        color: textMuted.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -195,7 +197,7 @@ class _StartFastSheetState extends State<StartFastSheet> {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: Colors.orange,
+                          color: textMuted,
                         ),
                       ),
                     ),
@@ -247,7 +249,7 @@ class _StartFastSheetState extends State<StartFastSheet> {
                         Text('Duration', style: TextStyle(fontSize: 13, color: textPrimary)),
                         Text(
                           '$_customHours hours',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: purple),
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: accentColor),
                         ),
                       ],
                     ),
@@ -261,8 +263,8 @@ class _StartFastSheetState extends State<StartFastSheet> {
                         min: 12,
                         max: 72,
                         divisions: 60,
-                        activeColor: purple,
-                        inactiveColor: purple.withValues(alpha: 0.2),
+                        activeColor: accentColor,
+                        inactiveColor: accentColor.withValues(alpha: 0.2),
                         onChanged: (value) {
                           setState(() => _customHours = value.round());
                           HapticService.light();
@@ -306,23 +308,23 @@ class _StartFastSheetState extends State<StartFastSheet> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: _startNow ? purple.withValues(alpha: 0.15) : cardBorder.withValues(alpha: 0.5),
+                        color: _startNow ? accentColor.withValues(alpha: 0.15) : cardBorder.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: _startNow ? purple : Colors.transparent,
+                          color: _startNow ? accentColor : Colors.transparent,
                           width: 2,
                         ),
                       ),
                       child: Column(
                         children: [
-                          Icon(Icons.play_arrow, color: _startNow ? purple : textMuted, size: 24),
+                          Icon(Icons.play_arrow, color: _startNow ? accentColor : textMuted, size: 24),
                           const SizedBox(height: 4),
                           Text(
                             'Start Now',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: _startNow ? FontWeight.bold : FontWeight.w500,
-                              color: _startNow ? purple : textPrimary,
+                              color: _startNow ? accentColor : textPrimary,
                             ),
                           ),
                         ],
@@ -341,16 +343,16 @@ class _StartFastSheetState extends State<StartFastSheet> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: !_startNow ? purple.withValues(alpha: 0.15) : cardBorder.withValues(alpha: 0.5),
+                        color: !_startNow ? accentColor.withValues(alpha: 0.15) : cardBorder.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: !_startNow ? purple : Colors.transparent,
+                          color: !_startNow ? accentColor : Colors.transparent,
                           width: 2,
                         ),
                       ),
                       child: Column(
                         children: [
-                          Icon(Icons.schedule, color: !_startNow ? purple : textMuted, size: 24),
+                          Icon(Icons.schedule, color: !_startNow ? accentColor : textMuted, size: 24),
                           const SizedBox(height: 4),
                           Text(
                             !_startNow
@@ -359,7 +361,7 @@ class _StartFastSheetState extends State<StartFastSheet> {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: !_startNow ? FontWeight.bold : FontWeight.w500,
-                              color: !_startNow ? purple : textPrimary,
+                              color: !_startNow ? accentColor : textPrimary,
                             ),
                           ),
                         ],
@@ -375,13 +377,13 @@ class _StartFastSheetState extends State<StartFastSheet> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: purple.withValues(alpha: 0.08),
+                color: accentColor.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: purple.withValues(alpha: 0.2)),
+                border: Border.all(color: accentColor.withValues(alpha: 0.2)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: purple, size: 18),
+                  Icon(Icons.info_outline, color: accentColor, size: 18),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -401,20 +403,20 @@ class _StartFastSheetState extends State<StartFastSheet> {
               child: ElevatedButton(
                 onPressed: _isStarting ? null : _startFast,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: purple,
-                  foregroundColor: Colors.white,
+                  backgroundColor: accentColor,
+                  foregroundColor: accentContrast,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   elevation: 0,
-                  disabledBackgroundColor: purple.withValues(alpha: 0.5),
+                  disabledBackgroundColor: accentColor.withValues(alpha: 0.5),
                 ),
                 child: _isStarting
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 24,
                         height: 24,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: accentContrast,
                           strokeWidth: 2,
                         ),
                       )
@@ -461,12 +463,18 @@ class _StartFastSheetState extends State<StartFastSheet> {
       context: context,
       initialTime: TimeOfDay.fromDateTime(_customStartTime),
       builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: AppColors.purple,
-              surface: AppColors.elevated,
-            ),
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: AppColors.accent,
+                    surface: AppColors.elevated,
+                  )
+                : ColorScheme.light(
+                    primary: AppColorsLight.accent,
+                    surface: AppColorsLight.elevated,
+                  ),
           ),
           child: child!,
         );
@@ -537,10 +545,13 @@ class _ProtocolChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    // Use monochrome accent for all chips
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final accentColor = isExtended ? Colors.orange : purple;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    // Extended protocols use muted color for differentiation
+    final chipAccent = isExtended ? textMuted : accentColor;
 
     return GestureDetector(
       onTap: onTap,
@@ -549,11 +560,11 @@ class _ProtocolChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? accentColor.withValues(alpha: 0.15)
+              ? chipAccent.withValues(alpha: 0.15)
               : cardBorder.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? accentColor : Colors.transparent,
+            color: isSelected ? chipAccent : Colors.transparent,
             width: 2,
           ),
         ),
@@ -562,7 +573,7 @@ class _ProtocolChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? accentColor : textPrimary,
+            color: isSelected ? chipAccent : textPrimary,
           ),
         ),
       ),

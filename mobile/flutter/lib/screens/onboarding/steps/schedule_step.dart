@@ -46,7 +46,7 @@ class ScheduleStep extends StatelessWidget {
             '${data.workoutDays.length} days selected',
             style: const TextStyle(
               fontSize: 12,
-              color: AppColors.cyan,
+              color: AppColors.accent,
             ),
           ),
           const SizedBox(height: 12),
@@ -159,11 +159,11 @@ class _DurationSelector extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.cyan.withOpacity(0.15)
+                  ? AppColors.accent.withOpacity(0.15)
                   : AppColors.glassSurface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? AppColors.cyan : AppColors.cardBorder,
+                color: isSelected ? AppColors.accent : AppColors.cardBorder,
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -172,7 +172,7 @@ class _DurationSelector extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? AppColors.cyan : AppColors.textPrimary,
+                color: isSelected ? AppColors.accent : AppColors.textPrimary,
               ),
             ),
           ),

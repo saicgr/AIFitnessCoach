@@ -64,7 +64,7 @@ class QuizWeightRate extends StatelessWidget {
               'rate': 0.75,
               'rateLabel': useMetric ? '0.75 kg/week' : '1.5 lbs/week',
               'safety': 'Moderate',
-              'safetyColor': AppColors.orange,
+              'safetyColor': AppColors.accent,
               'icon': Icons.speed_outlined,
               'desc': 'Requires discipline and careful nutrition',
               'recommended': false,
@@ -75,7 +75,7 @@ class QuizWeightRate extends StatelessWidget {
               'rate': 1.0,
               'rateLabel': useMetric ? '1 kg/week' : '2 lbs/week',
               'safety': 'Intense',
-              'safetyColor': AppColors.coral,
+              'safetyColor': AppColors.accent,
               'icon': Icons.whatshot_outlined,
               'desc': 'Maximum safe rate, requires strict adherence',
               'recommended': false,
@@ -110,7 +110,7 @@ class QuizWeightRate extends StatelessWidget {
               'rate': 0.5,
               'rateLabel': useMetric ? '0.5 kg/week' : '1 lb/week',
               'safety': 'Moderate',
-              'safetyColor': AppColors.orange,
+              'safetyColor': AppColors.accent,
               'icon': Icons.rocket_launch_outlined,
               'desc': 'Maximizes growth, may gain some fat',
               'recommended': false,
@@ -172,19 +172,19 @@ class QuizWeightRate extends StatelessWidget {
                           duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            gradient: isSelected ? AppColors.cyanGradient : null,
+                            gradient: isSelected ? AppColors.accentGradient : null,
                             color: isSelected ? null : cardBg,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: isRecommended && !isSelected
                                   ? AppColors.success
-                                  : (isSelected ? AppColors.cyan : cardBorder),
+                                  : (isSelected ? AppColors.accent : cardBorder),
                               width: isSelected || isRecommended ? 2 : 1,
                             ),
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: AppColors.cyan.withOpacity(0.3),
+                                      color: AppColors.accent.withOpacity(0.3),
                                       blurRadius: 12,
                                       spreadRadius: 0,
                                     ),
@@ -262,7 +262,7 @@ class QuizWeightRate extends StatelessWidget {
                                               style: TextStyle(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.w500,
-                                                color: isSelected ? Colors.white70 : AppColors.cyan,
+                                                color: isSelected ? Colors.white70 : AppColors.accent,
                                               ),
                                             ),
                                             if (isRecommended) ...[
@@ -272,7 +272,7 @@ class QuizWeightRate extends StatelessWidget {
                                                 decoration: BoxDecoration(
                                                   color: isSelected
                                                       ? Colors.white.withOpacity(0.2)
-                                                      : AppColors.cyan.withOpacity(0.15),
+                                                      : AppColors.accent.withOpacity(0.15),
                                                   borderRadius: BorderRadius.circular(4),
                                                 ),
                                                 child: Row(
@@ -281,7 +281,7 @@ class QuizWeightRate extends StatelessWidget {
                                                     Icon(
                                                       Icons.star,
                                                       size: 9,
-                                                      color: isSelected ? Colors.white : AppColors.cyan,
+                                                      color: isSelected ? Colors.white : AppColors.accent,
                                                     ),
                                                     const SizedBox(width: 2),
                                                     Text(
@@ -289,7 +289,7 @@ class QuizWeightRate extends StatelessWidget {
                                                       style: TextStyle(
                                                         fontSize: 9,
                                                         fontWeight: FontWeight.w600,
-                                                        color: isSelected ? Colors.white : AppColors.cyan,
+                                                        color: isSelected ? Colors.white : AppColors.accent,
                                                       ),
                                                     ),
                                                   ],
@@ -374,16 +374,16 @@ class QuizWeightRate extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withOpacity(0.1),
+                      color: AppColors.accent.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.cyan.withOpacity(0.2)),
+                      border: Border.all(color: AppColors.accent.withOpacity(0.2)),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           Icons.lightbulb_outline,
                           size: 16,
-                          color: AppColors.cyan,
+                          color: AppColors.accent,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
