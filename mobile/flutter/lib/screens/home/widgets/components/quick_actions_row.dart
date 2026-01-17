@@ -35,7 +35,7 @@ class QuickActionsRow extends ConsumerWidget {
               child: _QuickActionButton(
                 icon: Icons.restaurant_outlined,
                 label: 'Log Food',
-                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                color: AppColors.quickActionFood, // Static green for food/nutrition
                 onTap: () {
                   HapticService.light();
                   showLogMealSheet(context, ref);
@@ -48,7 +48,7 @@ class QuickActionsRow extends ConsumerWidget {
               child: _QuickActionButton(
                 icon: Icons.insights_outlined,
                 label: 'Stats',
-                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                color: AppColors.quickActionStats, // Static purple for analytics
                 onTap: () {
                   HapticService.light();
                   context.push('/stats');
@@ -203,7 +203,7 @@ class _WaterQuickActionButtonState
                   Text('+${amountMl}ml water logged'),
                 ],
               ),
-              backgroundColor: AppColors.electricBlue,
+              backgroundColor: AppColors.quickActionWater,
               behavior: SnackBarBehavior.floating,
               margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
               duration: const Duration(seconds: 2),
@@ -319,7 +319,7 @@ class _WaterQuickActionButtonState
                 child: Text(
                   'Open Hydration Tracker',
                   style: TextStyle(
-                    color: AppColors.electricBlue,
+                    color: AppColors.quickActionWater,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -337,6 +337,8 @@ class _WaterQuickActionButtonState
 
   @override
   Widget build(BuildContext context) {
+    // Static blue color for water/hydration
+    const iconColor = AppColors.quickActionWater;
     final textColor =
         widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
@@ -357,13 +359,13 @@ class _WaterQuickActionButtonState
                       height: 22,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: textColor,
+                        color: iconColor,
                       ),
                     )
                   : Icon(
                       Icons.water_drop_outlined,
                       size: 22,
-                      color: textColor,
+                      color: iconColor,
                     ),
               const SizedBox(height: 4),
               Text(
@@ -392,6 +394,8 @@ class _FastingQuickActionButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Static orange color for fasting/timer
+    const iconColor = AppColors.quickActionFasting;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final fastingState = ref.watch(fastingProvider);
     final hasFast = fastingState.hasFast;
@@ -424,7 +428,7 @@ class _FastingQuickActionButton extends ConsumerWidget {
                   Icon(
                     hasFast ? Icons.timer : Icons.timer_outlined,
                     size: 22,
-                    color: textColor,
+                    color: iconColor,
                   ),
                   if (hasFast)
                     Positioned(
@@ -504,7 +508,7 @@ class _WaterSizeOption extends StatelessWidget {
               Icon(
                 icon,
                 size: 28,
-                color: AppColors.electricBlue,
+                color: AppColors.quickActionWater,
               ),
               const SizedBox(height: 8),
               Text(
@@ -531,6 +535,8 @@ class _GenerateQuickActionButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Static yellow/gold color for AI/generate magic
+    const iconColor = AppColors.quickActionGenerate;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     return Material(
@@ -549,7 +555,7 @@ class _GenerateQuickActionButton extends ConsumerWidget {
               Icon(
                 Icons.auto_awesome,
                 size: 22,
-                color: textColor,
+                color: iconColor,
               ),
               const SizedBox(height: 4),
               Text(

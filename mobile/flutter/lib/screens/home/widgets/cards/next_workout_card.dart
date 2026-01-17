@@ -157,14 +157,13 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
         isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
     final workout = widget.workout;
-    // Use monochrome accent color
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    // Use dynamic accent color from provider
+    final accentColor = ref.colors(context).accent;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final exercises = workout.exercises;
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Container(
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -365,7 +364,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                       Container(
                         decoration: BoxDecoration(
                           border: Border.all(
-                            color: AppColors.purple.withOpacity(0.5),
+                            color: accentColor.withValues(alpha: 0.5),
                           ),
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -375,7 +374,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                             _regenerateWorkout();
                           },
                           icon: const Icon(Icons.refresh, size: 20),
-                          color: AppColors.purple,
+                          color: accentColor,
                           tooltip: 'Regenerate',
                         ),
                       ),
@@ -384,7 +383,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                       Container(
                         decoration: BoxDecoration(
                           border: Border.all(
-                            color: AppColors.textMuted.withOpacity(0.5),
+                            color: AppColors.textMuted.withValues(alpha: 0.5),
                           ),
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -451,7 +450,6 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
               ),
           ],
         ),
-      ),
     );
   }
 }

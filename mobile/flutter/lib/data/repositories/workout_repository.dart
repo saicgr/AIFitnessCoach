@@ -1719,6 +1719,7 @@ class WorkoutRepository {
     String setType = 'working', // 'working', 'warmup', 'failure', 'amrap'
     double? rpe,
     int? rir,
+    String? notes,
   }) async {
     try {
       debugPrint('🔍 [Workout] Logging set $setNumber ($setType) for $exerciseName');
@@ -1736,6 +1737,7 @@ class WorkoutRepository {
           'set_type': setType,
           if (rpe != null) 'rpe': rpe,
           if (rir != null) 'rir': rir,
+          if (notes != null && notes.isNotEmpty) 'notes': notes,
         },
       );
       if (response.statusCode == 200) {

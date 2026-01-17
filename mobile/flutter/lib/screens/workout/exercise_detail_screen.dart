@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/providers/warmup_duration_provider.dart';
 import '../../data/models/exercise.dart';
 import '../../data/services/api_client.dart';
@@ -233,6 +234,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    // Use dynamic accent color from provider
+    final accentColor = ref.colors(context).accent;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -287,7 +290,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: (isDark ? AppColors.accent : AppColorsLight.accent).withValues(alpha: 0.15),
+                            color: accentColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -295,7 +298,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? AppColors.accent : AppColorsLight.accent,
+                              color: accentColor,
                             ),
                           ),
                         ),
@@ -359,8 +362,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
   }
 
   Widget _buildVideoSection(Color elevated, Color textMuted) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    // Use dynamic accent color from provider
+    final accentColor = ref.colors(context).accent;
 
     return GestureDetector(
       onTap: _toggleVideo,
@@ -523,8 +526,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
   Widget _buildRestTimerCard(int defaultSeconds, Color elevated, Color textMuted, Color textPrimary) {
     final mins = defaultSeconds ~/ 60;
     final secs = defaultSeconds % 60;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    // Use dynamic accent color from provider
+    final accentColor = ref.colors(context).accent;
 
     return GestureDetector(
       onTap: _isResting ? _stopRestTimer : _startRestTimer,
@@ -664,7 +667,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                               HapticFeedback.lightImpact();
                               ref.read(warmupDurationProvider.notifier).setWarmupEnabled(value);
                             },
-                      activeColor: orange,
+                      activeTrackColor: orange,
                     ),
                   ],
                 ),
@@ -704,7 +707,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                               HapticFeedback.lightImpact();
                               ref.read(warmupDurationProvider.notifier).setStretchEnabled(value);
                             },
-                      activeColor: cyan,
+                      activeTrackColor: cyan,
                     ),
                   ],
                 ),

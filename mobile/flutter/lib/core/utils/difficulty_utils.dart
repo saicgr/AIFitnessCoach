@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
 
 /// Utility class for difficulty-related display and formatting.
 ///
@@ -48,21 +47,21 @@ class DifficultyUtils {
   /// Get the color associated with a difficulty level.
   ///
   /// [internal] - The internal difficulty value
-  /// [isDark] - Whether the app is in dark mode
-  /// Returns the appropriate monochrome color for the difficulty
+  /// [isDark] - Whether the app is in dark mode (ignored - colors are semantic)
+  /// Returns the appropriate semantic color for the difficulty
   static Color getColor(String internal, {bool isDark = true}) {
-    // Use monochrome grayscale tones for difficulty levels
+    // Semantic colors: green (easy) -> amber -> orange -> red (hell)
     switch (internal.toLowerCase()) {
       case 'easy':
-        return isDark ? const Color(0xFF808080) : const Color(0xFF808080);
+        return const Color(0xFF22C55E);  // Green - beginner friendly
       case 'medium':
-        return isDark ? const Color(0xFFA0A0A0) : const Color(0xFF606060);
+        return const Color(0xFFF59E0B);  // Amber - moderate challenge
       case 'hard':
-        return isDark ? const Color(0xFFC0C0C0) : const Color(0xFF404040);
+        return const Color(0xFFF97316);  // Orange - challenging
       case 'hell':
-        return isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        return const Color(0xFFEF4444);  // Red - maximum intensity
       default:
-        return isDark ? const Color(0xFFA0A0A0) : const Color(0xFF606060);
+        return const Color(0xFFF59E0B);  // Default amber
     }
   }
 

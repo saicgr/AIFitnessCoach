@@ -143,9 +143,7 @@ class ActiveWorkoutBodyV2 extends StatelessWidget {
             ActionChipsRow(
               chips: _buildChips(),
               onChipTapped: onChipTapped,
-              showAiChip: true,
-              hasAiNotification: hasAiSuggestion,
-              onAiChipTapped: onAiChipTapped,
+              showAiChip: false,
             ),
 
             const SizedBox(height: 8),

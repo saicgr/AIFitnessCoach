@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../core/providers/avoided_provider.dart';
 import '../../../core/providers/favorites_provider.dart';
 import '../../../core/providers/staples_provider.dart';
@@ -42,7 +43,8 @@ class _ExercisePreferencesCardState
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    // Use dynamic accent color from provider
+    final accentColor = ref.colors(context).accent;
 
     // Watch providers for counts
     final favoritesState = ref.watch(favoritesProvider);
@@ -419,7 +421,7 @@ class _ExercisePreferencesCardState
               Switch.adaptive(
                 value: value,
                 onChanged: onChanged,
-                activeColor: orange,
+                activeTrackColor: orange,
               ),
             ],
           ),

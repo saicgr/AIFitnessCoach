@@ -4,11 +4,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Available accent colors for the app
 enum AccentColor {
-  black,   // Pure black/white (monochrome) - default
-  cyan,    // Original cyan accent
+  black,   // Pure black/white (monochrome)
+  cyan,    // Cyan accent
   purple,  // Purple accent
-  orange,  // Orange accent
+  orange,  // Orange accent - default
   green,   // Green accent
+  blue,    // Blue accent
+  red,     // Red accent
+  pink,    // Pink accent
+  teal,    // Teal accent
+  indigo,  // Indigo accent
+  amber,   // Amber/Gold accent
+  lime,    // Lime green accent
 }
 
 /// Extension to get display name and color value
@@ -25,6 +32,20 @@ extension AccentColorExtension on AccentColor {
         return 'Orange';
       case AccentColor.green:
         return 'Green';
+      case AccentColor.blue:
+        return 'Blue';
+      case AccentColor.red:
+        return 'Red';
+      case AccentColor.pink:
+        return 'Pink';
+      case AccentColor.teal:
+        return 'Teal';
+      case AccentColor.indigo:
+        return 'Indigo';
+      case AccentColor.amber:
+        return 'Amber';
+      case AccentColor.lime:
+        return 'Lime';
     }
   }
 
@@ -42,6 +63,20 @@ extension AccentColorExtension on AccentColor {
         return const Color(0xFFFF9800);
       case AccentColor.green:
         return const Color(0xFF4CAF50);
+      case AccentColor.blue:
+        return const Color(0xFF2196F3);
+      case AccentColor.red:
+        return const Color(0xFFF44336);
+      case AccentColor.pink:
+        return const Color(0xFFE91E63);
+      case AccentColor.teal:
+        return const Color(0xFF009688);
+      case AccentColor.indigo:
+        return const Color(0xFF3F51B5);
+      case AccentColor.amber:
+        return const Color(0xFFFFC107);
+      case AccentColor.lime:
+        return const Color(0xFFCDDC39);
     }
   }
 
@@ -58,6 +93,31 @@ extension AccentColorExtension on AccentColor {
         return const Color(0xFFFF9800);
       case AccentColor.green:
         return const Color(0xFF4CAF50);
+      case AccentColor.blue:
+        return const Color(0xFF2196F3);
+      case AccentColor.red:
+        return const Color(0xFFF44336);
+      case AccentColor.pink:
+        return const Color(0xFFE91E63);
+      case AccentColor.teal:
+        return const Color(0xFF009688);
+      case AccentColor.indigo:
+        return const Color(0xFF3F51B5);
+      case AccentColor.amber:
+        return const Color(0xFFFFC107);
+      case AccentColor.lime:
+        return const Color(0xFFCDDC39);
+    }
+  }
+
+  /// Whether this is a light color that needs dark text/icons on top
+  bool get isLightColor {
+    switch (this) {
+      case AccentColor.amber:
+      case AccentColor.lime:
+        return true;
+      default:
+        return false;
     }
   }
 }
@@ -71,7 +131,7 @@ final accentColorProvider = StateNotifierProvider<AccentColorNotifier, AccentCol
 class AccentColorNotifier extends StateNotifier<AccentColor> {
   static const _key = 'accent_color';
 
-  AccentColorNotifier() : super(AccentColor.black) {
+  AccentColorNotifier() : super(AccentColor.orange) {
     _load();
   }
 
@@ -79,11 +139,11 @@ class AccentColorNotifier extends StateNotifier<AccentColor> {
   Future<void> _load() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final value = prefs.getString(_key) ?? 'black';
+      final value = prefs.getString(_key) ?? 'orange';
       debugPrint('🎨 [AccentColor] Loaded accent: $value');
       state = AccentColor.values.firstWhere(
         (e) => e.name == value,
-        orElse: () => AccentColor.black,
+        orElse: () => AccentColor.orange,
       );
     } catch (e) {
       debugPrint('❌ [AccentColor] Error loading: $e');
@@ -120,9 +180,9 @@ class AccentColorScope extends InheritedWidget {
     return context.dependOnInheritedWidgetOfExactType<AccentColorScope>()?.accent;
   }
 
-  /// Get the current accent color, or default to black if not found
+  /// Get the current accent color, or default to orange if not found
   static AccentColor of(BuildContext context) {
-    return maybeOf(context) ?? AccentColor.black;
+    return maybeOf(context) ?? AccentColor.orange;
   }
 
   @override

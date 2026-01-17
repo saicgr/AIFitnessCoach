@@ -669,6 +669,70 @@ class SettingsCard extends ConsumerWidget {
     }
   }
 
+  void _showAccentColorPicker(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentAccent = ref.read(accentColorProvider);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Accent Color',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Choose an accent color for buttons and highlights',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Color Palette
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _AccentColorPalette(
+                currentAccent: currentAccent,
+                onColorSelected: (accent) {
+                  ref.read(accentColorProvider.notifier).setAccent(accent);
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showWorkoutDaysSelector(BuildContext context, WidgetRef ref) {
     final authState = ref.read(authStateProvider);
     final user = authState.user;
@@ -1180,16 +1244,42 @@ class SettingsCard extends ConsumerWidget {
             );
             onTap = () => _showWeightUnitSelector(context, ref);
           } else if (item.isAccentColorSelector) {
-            // Inline accent color selector with color swatches
+            // Show current accent color preview and open full grid on tap
             final accentColor = ref.watch(accentColorProvider);
-            trailing = _InlineAccentColorSelector(
-              currentAccent: accentColor,
-              onChanged: (accent) {
-                HapticFeedback.selectionClick();
-                ref.read(accentColorProvider.notifier).setAccent(accent);
-              },
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: accentColor.previewColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: accentColor == AccentColor.black
+                          ? (isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.3))
+                          : Colors.white.withValues(alpha: 0.3),
+                      width: 2,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  accentColor.displayName,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
             );
-            onTap = null; // Disable row tap since swatches handle selection
+            onTap = () => _showAccentColorPicker(context, ref);
           } else if (item.isWeightIncrementsSelector) {
             final weightIncrementsState = ref.watch(weightIncrementsProvider);
             trailing = Row(
@@ -1248,7 +1338,7 @@ class SettingsCard extends ConsumerWidget {
                     !item.isProgressChartsScreen &&
                     !item.isCalibrationTestScreen &&
                     !item.isWeightUnitSelector &&
-                    !item.isAccentColorSelector &&
+                    !item.isAccentColorSelector && // Has custom trailing with chevron
                     !item.isWeightIncrementsSelector,
                 borderRadius: index == 0
                     ? const BorderRadius.vertical(top: Radius.circular(16))
@@ -1454,105 +1544,302 @@ class _ThemeButton extends StatelessWidget {
   }
 }
 
-/// Inline accent color selector with color swatches
-/// Allows quick selection of app accent color
-class _InlineAccentColorSelector extends StatelessWidget {
+/// HSV Color Picker with saturation/brightness area and hue slider
+class _AccentColorPalette extends StatefulWidget {
   final AccentColor currentAccent;
-  final ValueChanged<AccentColor> onChanged;
+  final ValueChanged<AccentColor> onColorSelected;
 
-  const _InlineAccentColorSelector({
+  const _AccentColorPalette({
     required this.currentAccent,
-    required this.onChanged,
+    required this.onColorSelected,
   });
+
+  @override
+  State<_AccentColorPalette> createState() => _AccentColorPaletteState();
+}
+
+class _AccentColorPaletteState extends State<_AccentColorPalette> {
+  late double _hue;        // 0-360
+  late double _saturation; // 0-1
+  late double _brightness; // 0-1
+  late AccentColor? _matchedPreset;
+
+  @override
+  void initState() {
+    super.initState();
+    _initFromAccentColor(widget.currentAccent);
+  }
+
+  void _initFromAccentColor(AccentColor accent) {
+    final color = accent.previewColor;
+    final hsv = HSVColor.fromColor(color);
+    _hue = hsv.hue;
+    _saturation = hsv.saturation;
+    _brightness = hsv.value;
+    _matchedPreset = accent;
+  }
+
+  Color get _currentColor => HSVColor.fromAHSV(1.0, _hue, _saturation, _brightness).toColor();
+
+  /// Find the closest AccentColor preset to the current HSV selection
+  AccentColor _findClosestPreset() {
+    final currentColor = _currentColor;
+    AccentColor closest = AccentColor.orange;
+    double minDistance = double.infinity;
+
+    for (final accent in AccentColor.values) {
+      final presetColor = accent.previewColor;
+      // Calculate color distance (simple RGB distance using new API)
+      final dr = ((currentColor.r - presetColor.r) * 255).abs();
+      final dg = ((currentColor.g - presetColor.g) * 255).abs();
+      final db = ((currentColor.b - presetColor.b) * 255).abs();
+      final distance = dr + dg + db;
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        closest = accent;
+      }
+    }
+
+    return closest;
+  }
+
+  void _onColorChanged() {
+    final closest = _findClosestPreset();
+    setState(() => _matchedPreset = closest);
+    widget.onColorSelected(closest);
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark
-        ? AppColors.pureBlack.withValues(alpha: 0.5)
-        : AppColorsLight.cardBorder.withValues(alpha: 0.5);
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      padding: const EdgeInsets.all(4),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: AccentColor.values.map((accent) {
-          final isSelected = accent == currentAccent;
-          return _AccentColorSwatch(
-            accent: accent,
-            isSelected: isSelected,
-            onTap: () => onChanged(accent),
-          );
-        }).toList(),
-      ),
+    return Column(
+      children: [
+        // Saturation/Brightness picker area
+        Container(
+          height: 200,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: cardBorder, width: 1),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return GestureDetector(
+                onPanStart: (details) => _updateSaturationBrightness(details.localPosition, constraints),
+                onPanUpdate: (details) => _updateSaturationBrightness(details.localPosition, constraints),
+                onTapDown: (details) => _updateSaturationBrightness(details.localPosition, constraints),
+                child: Stack(
+                  children: [
+                    // Background: saturation/brightness gradient
+                    CustomPaint(
+                      size: Size(constraints.maxWidth, constraints.maxHeight),
+                      painter: _SaturationBrightnessPainter(hue: _hue),
+                    ),
+                    // Selection indicator (circle)
+                    Positioned(
+                      left: _saturation * constraints.maxWidth - 12,
+                      top: (1 - _brightness) * constraints.maxHeight - 12,
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _currentColor,
+                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Hue slider with preview circle
+        Row(
+          children: [
+            // Color preview circle
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: _currentColor,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.2),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _currentColor.withValues(alpha: 0.4),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Hue slider
+            Expanded(
+              child: Container(
+                height: 32,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: cardBorder, width: 1),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return GestureDetector(
+                      onPanStart: (details) => _updateHue(details.localPosition.dx, constraints.maxWidth),
+                      onPanUpdate: (details) => _updateHue(details.localPosition.dx, constraints.maxWidth),
+                      onTapDown: (details) => _updateHue(details.localPosition.dx, constraints.maxWidth),
+                      child: Stack(
+                        children: [
+                          // Hue gradient background
+                          CustomPaint(
+                            size: Size(constraints.maxWidth, 32),
+                            painter: _HueGradientPainter(),
+                          ),
+                          // Hue indicator
+                          Positioned(
+                            left: (_hue / 360) * constraints.maxWidth - 8,
+                            top: 0,
+                            bottom: 0,
+                            child: Center(
+                              child: Container(
+                                width: 16,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(4),
+                                  color: HSVColor.fromAHSV(1.0, _hue, 1.0, 1.0).toColor(),
+                                  border: Border.all(color: Colors.white, width: 2),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.3),
+                                      blurRadius: 4,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Matched preset indicator
+        if (_matchedPreset != null)
+          Text(
+            'Matched: ${_matchedPreset!.displayName}',
+            style: TextStyle(
+              fontSize: 12,
+              color: textMuted,
+            ),
+          ),
+      ],
     );
+  }
+
+  void _updateSaturationBrightness(Offset position, BoxConstraints constraints) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _saturation = (position.dx / constraints.maxWidth).clamp(0.0, 1.0);
+      _brightness = 1.0 - (position.dy / constraints.maxHeight).clamp(0.0, 1.0);
+    });
+    _onColorChanged();
+  }
+
+  void _updateHue(double x, double width) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _hue = ((x / width) * 360).clamp(0.0, 360.0);
+    });
+    _onColorChanged();
   }
 }
 
-/// Individual color swatch button for the accent color selector
-class _AccentColorSwatch extends StatelessWidget {
-  final AccentColor accent;
-  final bool isSelected;
-  final VoidCallback onTap;
+/// Painter for the saturation/brightness gradient area
+class _SaturationBrightnessPainter extends CustomPainter {
+  final double hue;
 
-  const _AccentColorSwatch({
-    required this.accent,
-    required this.isSelected,
-    required this.onTap,
-  });
+  _SaturationBrightnessPainter({required this.hue});
 
   @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = accent.previewColor;
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
 
-    // For monochrome, show white in dark mode preview
-    final displayColor = accent == AccentColor.black && isDark
-        ? Colors.white
-        : color;
+    // Base color (full saturation, full brightness at the given hue)
+    final baseColor = HSVColor.fromAHSV(1.0, hue, 1.0, 1.0).toColor();
 
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 28,
-        height: 28,
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        decoration: BoxDecoration(
-          color: displayColor,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isSelected
-                ? (isDark ? Colors.white : Colors.black)
-                : Colors.transparent,
-            width: 2,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: displayColor.withValues(alpha: 0.4),
-                    blurRadius: 6,
-                    spreadRadius: 1,
-                  ),
-                ]
-              : null,
-        ),
-        child: isSelected
-            ? Icon(
-                Icons.check,
-                size: 14,
-                color: accent == AccentColor.black
-                    ? (isDark ? Colors.black : Colors.white)
-                    : Colors.white,
-              )
-            : null,
-      ),
+    // Horizontal gradient: white to base color (saturation)
+    final saturationGradient = LinearGradient(
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+      colors: [Colors.white, baseColor],
     );
+
+    // Vertical gradient: transparent to black (brightness)
+    final brightnessGradient = const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Colors.transparent, Colors.black],
+    );
+
+    // Draw saturation gradient first
+    final satPaint = Paint()..shader = saturationGradient.createShader(rect);
+    canvas.drawRect(rect, satPaint);
+
+    // Overlay brightness gradient
+    final brightPaint = Paint()..shader = brightnessGradient.createShader(rect);
+    canvas.drawRect(rect, brightPaint);
   }
+
+  @override
+  bool shouldRepaint(_SaturationBrightnessPainter oldDelegate) {
+    return oldDelegate.hue != hue;
+  }
+}
+
+/// Custom painter for the rainbow hue gradient strip
+class _HueGradientPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+
+    // Create hue gradient (full spectrum)
+    final colors = List.generate(
+      13,
+      (i) => HSVColor.fromAHSV(1.0, i * 30.0, 1.0, 1.0).toColor(),
+    );
+
+    final gradient = LinearGradient(colors: colors);
+    final paint = Paint()..shader = gradient.createShader(rect);
+    canvas.drawRect(rect, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 /// A tile for progression pace selection in the bottom sheet.

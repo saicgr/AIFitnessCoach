@@ -7,12 +7,16 @@ This module handles activity feed operations:
 - DELETE /feed/{activity_id} - Delete an activity
 - POST /feed/{activity_id}/pin - Pin an activity (admin only)
 - DELETE /feed/{activity_id}/pin - Unpin an activity (admin only)
+- POST /images/upload - Upload image for social post
 """
+import uuid
+import boto3
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, UploadFile, File, Form
 
+from core.config import get_settings
 from models.social import (
     ActivityFeedItem, ActivityFeedItemCreate, ActivityFeedResponse, ActivityType,
 )
@@ -21,6 +25,79 @@ from services.admin_service import get_admin_service
 from .utils import get_supabase_client
 
 router = APIRouter()
+
+
+# ============================================================================
+# S3 Upload Helper for Social Posts
+# ============================================================================
+
+def get_s3_client():
+    """Get S3 client with configured credentials."""
+    settings = get_settings()
+    return boto3.client(
+        's3',
+        aws_access_key_id=settings.aws_access_key_id,
+        aws_secret_access_key=settings.aws_secret_access_key,
+        region_name=settings.aws_default_region,
+    )
+
+
+@router.post("/images/upload")
+async def upload_post_image(
+    user_id: str = Form(...),
+    file: UploadFile = File(...),
+):
+    """
+    Upload an image for a social post to S3.
+
+    Args:
+        user_id: User ID uploading the image
+        file: Image file
+
+    Returns:
+        dict with image_url and storage_key
+    """
+    # Validate file type
+    allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type. Allowed: {', '.join(allowed_types)}"
+        )
+
+    # Generate unique storage key
+    timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+    ext = file.filename.split('.')[-1] if file.filename else 'jpg'
+    storage_key = f"social_posts/{user_id}/{timestamp}_{uuid.uuid4().hex[:8]}.{ext}"
+
+    try:
+        # Upload to S3
+        s3 = get_s3_client()
+        contents = await file.read()
+
+        settings = get_settings()
+        s3.put_object(
+            Bucket=settings.s3_bucket_name,
+            Key=storage_key,
+            Body=contents,
+            ContentType=file.content_type or 'image/jpeg',
+        )
+
+        # Generate public URL
+        image_url = f"https://{settings.s3_bucket_name}.s3.{settings.aws_default_region}.amazonaws.com/{storage_key}"
+
+        print(f"[Social] Image uploaded: {storage_key}")
+        return {
+            "image_url": image_url,
+            "storage_key": storage_key,
+        }
+
+    except Exception as e:
+        print(f"[Social] Error uploading image to S3: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to upload image: {str(e)}"
+        )
 
 
 @router.get("/feed/{user_id}")

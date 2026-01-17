@@ -16,6 +16,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../models/workout_state.dart';
 import 'exercise_analytics_page.dart';
+import 'inline_rest_row.dart';
 import 'number_input_widgets.dart';
 
 /// Set tracking overlay for logging sets during workout
@@ -142,6 +143,47 @@ class SetTrackingOverlay extends StatefulWidget {
   /// Callback to open rep progression picker
   final VoidCallback? onOpenProgressionPicker;
 
+  /// Callback to edit target (Auto column) for a set
+  final void Function(int setIndex, double? weight, int reps, int? rir)? onEditTarget;
+
+  // ========== Inline Rest Row Props ==========
+
+  /// Whether to show inline rest row (between completed and active set)
+  final bool showInlineRest;
+
+  /// Remaining rest time in seconds
+  final int restTimeRemaining;
+
+  /// Total rest duration in seconds (for progress calculation)
+  final int restDurationTotal;
+
+  /// Callback when rest timer completes
+  final VoidCallback? onRestComplete;
+
+  /// Callback when user skips rest
+  final VoidCallback? onSkipRest;
+
+  /// Callback when user adjusts time (+/- seconds)
+  final void Function(int adjustment)? onAdjustTime;
+
+  /// Callback when user rates the set (RPE 1-10)
+  final void Function(int rpe)? onRateRpe;
+
+  /// Callback when user adds a note
+  final void Function(String note)? onAddSetNote;
+
+  /// Current RPE value (null if not rated yet)
+  final int? currentRpe;
+
+  /// Achievement prompt to display during rest
+  final String? achievementPrompt;
+
+  /// AI-generated tip to display during rest
+  final String? aiTip;
+
+  /// Whether AI tip is loading
+  final bool isLoadingAiTip;
+
   const SetTrackingOverlay({
     super.key,
     required this.exercise,
@@ -184,6 +226,19 @@ class SetTrackingOverlay extends StatefulWidget {
     this.onWeightIncrementChanged,
     this.currentProgressionType,
     this.onOpenProgressionPicker,
+    this.onEditTarget,
+    this.showInlineRest = false,
+    this.restTimeRemaining = 0,
+    this.restDurationTotal = 120,
+    this.onRestComplete,
+    this.onSkipRest,
+    this.onAdjustTime,
+    this.onRateRpe,
+    this.onAddSetNote,
+    this.currentRpe,
+    this.achievementPrompt,
+    this.aiTip,
+    this.isLoadingAiTip = false,
   });
 
   @override
@@ -301,6 +356,217 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     });
   }
 
+  /// Show sheet to edit target (Auto column) for a set
+  void _showTargetEditSheet(int setIndex) {
+    final exercise = widget.exercise;
+    final existingTarget = exercise.getTargetForSet(setIndex + 1); // 1-indexed
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final weightController = TextEditingController(
+      text: existingTarget?.targetWeightKg?.toStringAsFixed(0) ?? '',
+    );
+    final repsController = TextEditingController(
+      text: existingTarget?.targetReps.toString() ?? '8',
+    );
+    int selectedRir = existingTarget?.targetRir ?? 2;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+            top: 16,
+            left: 20,
+            right: 20,
+          ),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surface : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Title
+              Text(
+                'Set Target',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Weight & Reps inputs
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: weightController,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(
+                        color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: widget.useKg ? 'Weight (kg)' : 'Weight (lbs)',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: repsController,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(
+                        color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Reps',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // RIR selector label
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Target RIR',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // RIR selector pills (5 to 0)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: List.generate(6, (i) {
+                  final rir = 5 - i; // 5, 4, 3, 2, 1, 0
+                  final isSelected = selectedRir == rir;
+                  return GestureDetector(
+                    onTap: () {
+                      setSheetState(() => selectedRir = rir);
+                      HapticFeedback.selectionClick();
+                    },
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? _getTargetRirColor(rir)
+                            : (isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.15)),
+                        borderRadius: BorderRadius.circular(12),
+                        border: isSelected
+                            ? null
+                            : Border.all(
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.15)
+                                    : Colors.grey.withOpacity(0.3),
+                              ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '$rir',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected
+                                ? _getTargetRirTextColor(rir)
+                                : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 24),
+
+              // Save button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    // Convert weight to kg if using lbs
+                    final weightValue = double.tryParse(weightController.text);
+                    final weightInKg = weightValue != null && !widget.useKg
+                        ? weightValue / 2.20462
+                        : weightValue;
+                    widget.onEditTarget?.call(
+                      setIndex,
+                      weightInKg,
+                      int.tryParse(repsController.text) ?? 8,
+                      selectedRir,
+                    );
+                    HapticFeedback.mediumImpact();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.purple,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Save Target',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Get RIR color for target edit sheet
+  Color _getTargetRirColor(int rir) {
+    if (rir <= 0) return const Color(0xFFEF4444); // Red - failure
+    if (rir == 1) return const Color(0xFFF97316); // Orange
+    if (rir == 2) return const Color(0xFFEAB308); // Yellow
+    return const Color(0xFF22C55E); // Green for 3+
+  }
+
+  /// Get RIR text color for contrast
+  Color _getTargetRirTextColor(int rir) {
+    if (rir == 2) return Colors.black87; // Dark text on yellow
+    return Colors.white;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -355,10 +621,8 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
                     textMuted: textMuted,
                   ),
 
-                  // Working set rows
-                  ...List.generate(widget.totalSets, (index) {
-                    return _buildSetRow(context, index, isDark, textPrimary, textMuted);
-                  }),
+                  // Working set rows with inline rest row
+                  ..._buildSetRowsWithInlineRest(context, isDark, textPrimary, textMuted),
 
                   // Complete Set button (only CTA)
                   if (isViewingCurrent && !allSetsCompleted)
@@ -955,6 +1219,8 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      enableDrag: true,
       builder: (ctx) => Container(
         decoration: BoxDecoration(
           color: isDark ? AppColors.surface : Colors.white,
@@ -965,7 +1231,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handle bar
+            // Handle bar (draggable indicator)
             Center(
               child: Container(
                 width: 40,
@@ -978,30 +1244,48 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
             ),
             const SizedBox(height: 20),
 
-            // Title
+            // Title with close button
             Row(
               children: [
                 Icon(Icons.tune_rounded, color: AppColors.orange, size: 24),
                 const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Weight Increment',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Weight Increment',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: textPrimary,
+                        ),
                       ),
-                    ),
-                    Text(
-                      'Amount to adjust weight by',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: textMuted,
+                      Text(
+                        'Amount to adjust weight by',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: textMuted,
+                        ),
                       ),
+                    ],
+                  ),
+                ),
+                // Close button
+                GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                      shape: BoxShape.circle,
                     ),
-                  ],
+                    child: Icon(
+                      Icons.close,
+                      size: 20,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -1989,6 +2273,176 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     );
   }
 
+  /// Build set rows with inline rest row inserted between completed and active sets
+  List<Widget> _buildSetRowsWithInlineRest(
+    BuildContext context,
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+  ) {
+    final widgets = <Widget>[];
+    final completedCount = widget.completedSets.length;
+
+    debugPrint('🔵 [InlineRest] showInlineRest=${widget.showInlineRest}, completedCount=$completedCount, totalSets=${widget.totalSets}, isViewingCurrent=$isViewingCurrent');
+
+    for (int index = 0; index < widget.totalSets; index++) {
+      // Add the set row
+      widgets.add(_buildSetRow(context, index, isDark, textPrimary, textMuted));
+
+      // Insert inline rest row after the last completed set (before the active set)
+      // Only show when resting and viewing current exercise
+      if (widget.showInlineRest &&
+          isViewingCurrent &&
+          index == completedCount - 1 &&
+          completedCount < widget.totalSets) {
+        debugPrint('🟢 [InlineRest] SHOWING inline rest row after set index $index');
+        widgets.add(_buildInlineRestRow(isDark));
+      }
+    }
+
+    return widgets;
+  }
+
+  /// Build the inline rest row widget
+  Widget _buildInlineRestRow(bool isDark) {
+    return InlineRestRow(
+      restDurationSeconds: widget.restDurationTotal,
+      onRestComplete: widget.onRestComplete ?? () {},
+      onSkipRest: widget.onSkipRest ?? () {},
+      onAdjustTime: widget.onAdjustTime ?? (_) {},
+      onRateSet: widget.onRateRpe ?? (_) {},
+      onAddNote: widget.onAddSetNote ?? (_) {},
+      onShowRpeInfo: _showRpeInfoSheet,
+      achievementPrompt: widget.achievementPrompt,
+      aiTip: widget.aiTip,
+      isLoadingAiTip: widget.isLoadingAiTip,
+      currentRpe: widget.currentRpe,
+    );
+  }
+
+  /// Show RPE info bottom sheet
+  void _showRpeInfoSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surface : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Title
+            Text(
+              'What is RPE?',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Description
+            Text(
+              'Rate of Perceived Exertion measures how hard a set felt:',
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // RPE scale
+            _buildRpeScaleRow('1-4', 'Very easy, lots left in tank', AppColors.success, isDark),
+            _buildRpeScaleRow('5-6', 'Moderate effort', AppColors.cyan, isDark),
+            _buildRpeScaleRow('7-8', 'Hard, could do 2-3 more reps', AppColors.orange, isDark),
+            _buildRpeScaleRow('9', 'Very hard, maybe 1 more rep', AppColors.orange, isDark),
+            _buildRpeScaleRow('10', 'Maximum effort, couldn\'t do more', AppColors.error, isDark),
+
+            const SizedBox(height: 24),
+
+            // Got it button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.electricBlue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Got it',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRpeScaleRow(String range, String description, Color color, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              range,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              description,
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSetRow(
     BuildContext context,
     int index,
@@ -2337,19 +2791,36 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
             ),
           ),
 
-          // TARGET column - AI recommended weight × reps
+          // TARGET column - AI recommended weight × reps (tappable for current row)
           Expanded(
             flex: 3,
-            child: Text(
-              targetDisplay,
-              style: TextStyle(
-                fontSize: 12,
-                color: isPending
-                    ? AppColors.purple.withOpacity(0.4)
-                    : AppColors.purple.withOpacity(0.8),
-                fontWeight: FontWeight.w500,
+            child: GestureDetector(
+              onTap: isCurrent ? () => _showTargetEditSheet(index) : null,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                decoration: isCurrent && (targetDisplay == '—' || targetDisplay.isEmpty)
+                    ? BoxDecoration(
+                        color: AppColors.purple.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: AppColors.purple.withOpacity(0.3)),
+                      )
+                    : null,
+                child: Text(
+                  isCurrent && (targetDisplay == '—' || targetDisplay.isEmpty)
+                      ? 'Tap to set'
+                      : targetDisplay,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isCurrent
+                        ? AppColors.purple
+                        : isPending
+                            ? AppColors.purple.withOpacity(0.4)
+                            : AppColors.purple.withOpacity(0.8),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
-              textAlign: TextAlign.center,
             ),
           ),
 

@@ -6,6 +6,7 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/providers/warmup_duration_provider.dart';
 import '../../core/utils/difficulty_utils.dart';
@@ -217,12 +218,14 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    // Use dynamic accent color from provider
+    final accentColor = ref.colors(context).accent;
 
     if (_isLoading) {
       return Scaffold(
         backgroundColor: backgroundColor,
-        body: const Center(
-          child: CircularProgressIndicator(color: AppColors.cyan),
+        body: Center(
+          child: CircularProgressIndicator(color: accentColor),
         ),
       );
     }
@@ -259,7 +262,6 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     }
 
     final workout = _workout!;
-    final typeColor = AppColors.getWorkoutTypeColor(workout.type ?? 'strength');
     final exercises = workout.exercises;
 
     return Scaffold(
@@ -281,27 +283,30 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      // Workout Type Badge
+                      // Workout Type Badge - now with semantic color
                       _buildLabeledBadge(
                         label: 'Type',
                         value: (workout.type ?? 'strength').capitalize(),
-                        color: typeColor,
-                        backgroundColor: typeColor.withOpacity(0.2),
+                        color: AppColors.getWorkoutTypeColor(workout.type ?? 'strength'),
+                        backgroundColor: AppColors.getWorkoutTypeColor(workout.type ?? 'strength').withOpacity(0.15),
                       ),
-                      // Difficulty Badge
-                      _buildLabeledBadge(
-                        label: 'Difficulty',
-                        value: DifficultyUtils.getDisplayName(workout.difficulty ?? 'medium'),
-                        color: DifficultyUtils.getColor(workout.difficulty ?? 'medium'),
-                        backgroundColor: glassSurface,
-                      ),
+                      // Difficulty Badge - special animated version for Hell
+                      if ((workout.difficulty ?? 'medium').toLowerCase() == 'hell')
+                        const AnimatedHellBadge()
+                      else
+                        _buildLabeledBadge(
+                          label: 'Difficulty',
+                          value: DifficultyUtils.getDisplayName(workout.difficulty ?? 'medium'),
+                          color: DifficultyUtils.getColor(workout.difficulty ?? 'medium'),
+                          backgroundColor: DifficultyUtils.getColor(workout.difficulty ?? 'medium').withOpacity(0.15),
+                        ),
                       // Training Program Badge (only show if we have a valid program name)
                       if (_trainingSplit != null && _getTrainingProgramName(_trainingSplit!) != null)
                         _buildLabeledBadge(
                           label: 'Program',
                           value: _getTrainingProgramName(_trainingSplit!)!,
-                          color: AppColors.purple,
-                          backgroundColor: AppColors.purple.withOpacity(0.15),
+                          color: accentColor,
+                          backgroundColor: accentColor.withOpacity(0.15),
                         ),
                     ],
                   ),
@@ -344,21 +349,22 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                     icon: Icons.timer_outlined,
                     value: '${workout.durationMinutes ?? 45}',
                     label: 'min',
-                    color: AppColors.cyan,
+                    color: accentColor,
                   ),
                   const SizedBox(width: 12),
                   _StatCard(
                     icon: Icons.fitness_center,
                     value: '${exercises.length}',
                     label: 'exercises',
-                    color: AppColors.purple,
+                    color: accentColor,
                   ),
                   const SizedBox(width: 12),
                   _StatCard(
                     icon: Icons.local_fire_department,
                     value: '${workout.estimatedCalories}',
                     label: 'cal',
-                    color: AppColors.orange,
+                    color: const Color(0xFFF97316),  // Orange fire color
+                    useAnimatedFire: true,
                   ),
                 ],
               ),
@@ -471,10 +477,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withOpacity(0.2),
+                      color: accentColor.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.fitness_center, color: AppColors.cyan, size: 16),
+                    child: Icon(Icons.fitness_center, color: accentColor, size: 16),
                   ),
                   const SizedBox(width: 12),
                   Text(
@@ -490,15 +496,15 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withOpacity(0.2),
+                      color: accentColor.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       '${exercises.length}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.cyan,
+                        color: accentColor,
                       ),
                     ),
                   ),
@@ -512,27 +518,27 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.purple.withValues(alpha: 0.1),
+                        color: accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: AppColors.purple.withValues(alpha: 0.3),
+                          color: accentColor.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.swap_horiz,
-                            color: AppColors.purple,
+                            color: accentColor,
                             size: 14,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             (_useKgOverride ?? ref.watch(useKgProvider)) ? 'kg' : 'lbs',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.purple,
+                              color: accentColor,
                             ),
                           ),
                         ],
@@ -558,15 +564,15 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: AppColors.cyan.withValues(alpha: 0.1),
+                        color: accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: AppColors.cyan.withValues(alpha: 0.3),
+                          color: accentColor.withValues(alpha: 0.3),
                         ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.add,
-                        color: AppColors.cyan,
+                        color: accentColor,
                         size: 18,
                       ),
                     ),
@@ -790,6 +796,8 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   Widget _buildFloatingButtons(BuildContext context, WidgetRef ref, Workout workout) {
     final aiSettings = ref.watch(aiSettingsProvider);
     final coach = CoachPersona.findById(aiSettings.coachPersonaId) ?? CoachPersona.defaultCoach;
+    final accentColor = ref.colors(context).accent;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -816,11 +824,11 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
             height: 56,
             padding: const EdgeInsets.symmetric(horizontal: 28),
             decoration: BoxDecoration(
-              color: AppColors.cyan,
+              color: accentColor,
               borderRadius: BorderRadius.circular(28),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.cyan.withOpacity(0.4),
+                  color: accentColor.withOpacity(0.4),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                   spreadRadius: 1,
@@ -830,19 +838,19 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.bolt_rounded,
                   size: 24,
-                  color: AppColors.pureBlack,
+                  color: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
                 ),
                 const SizedBox(width: 8),
-                const Text(
+                Text(
                   "Let's Go",
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
                     letterSpacing: 0.5,
-                    color: AppColors.pureBlack,
+                    color: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
                   ),
                 ),
               ],
@@ -882,18 +890,18 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   }
 
   /// Get color from string name
-  Color _getColorFromName(String colorName) {
+  Color _getColorFromName(String colorName, Color accentColor) {
     switch (colorName.toLowerCase()) {
       case 'cyan':
-        return AppColors.cyan;
+        return accentColor;
       case 'purple':
-        return AppColors.purple;
+        return accentColor;
       case 'orange':
         return AppColors.orange;
       case 'green':
         return AppColors.green;
       default:
-        return AppColors.cyan;
+        return accentColor;
     }
   }
 
@@ -952,6 +960,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final accentColor = ref.colors(context).accent;
 
     // Try to parse JSON insights
     final insights = _parseInsightsJson(_workoutSummary);
@@ -982,13 +991,13 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                AppColors.purple.withOpacity(0.15),
-                AppColors.cyan.withOpacity(0.1),
+                accentColor.withOpacity(0.15),
+                accentColor.withOpacity(0.1),
               ],
             ),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppColors.purple.withOpacity(0.3),
+              color: accentColor.withOpacity(0.3),
             ),
           ),
           child: Row(
@@ -996,12 +1005,12 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.purple.withOpacity(0.2),
+                  color: accentColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.auto_awesome,
-                  color: AppColors.purple,
+                  color: accentColor,
                   size: 18,
                 ),
               ),
@@ -1046,7 +1055,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
               if (!_isLoadingSummary && _workoutSummary != null)
                 Icon(
                   Icons.open_in_new,
-                  color: AppColors.purple.withOpacity(0.7),
+                  color: accentColor.withOpacity(0.7),
                   size: 18,
                 ),
             ],
@@ -1066,6 +1075,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final accentColor = ref.colors(context).accent;
 
     // Parse JSON insights - use mutable state that persists across rebuilds
     var currentSummary = summaryJson;
@@ -1138,15 +1148,15 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                AppColors.purple.withOpacity(0.3),
-                                AppColors.cyan.withOpacity(0.2),
+                                accentColor.withOpacity(0.3),
+                                accentColor.withOpacity(0.2),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.auto_awesome,
-                            color: AppColors.purple,
+                            color: accentColor,
                             size: 22,
                           ),
                         ),
@@ -1170,10 +1180,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                                   height: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: AppColors.cyan,
+                                    color: accentColor,
                                   ),
                                 )
-                              : Icon(Icons.refresh, color: AppColors.cyan),
+                              : Icon(Icons.refresh, color: accentColor),
                         ),
                         IconButton(
                           onPressed: () => Navigator.pop(context),
@@ -1194,7 +1204,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                CircularProgressIndicator(color: AppColors.cyan),
+                                CircularProgressIndicator(color: accentColor),
                                 const SizedBox(height: 16),
                                 Text(
                                   'Generating new insights...',
@@ -1213,7 +1223,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                                   final title = section['title'] as String? ?? 'Tip';
                                   final content = section['content'] as String? ?? '';
                                   final colorName = section['color'] as String? ?? 'cyan';
-                                  final color = _getColorFromName(colorName);
+                                  final color = _getColorFromName(colorName, accentColor);
 
                                   return _buildInsightSection(icon, title, content, color, textPrimary);
                                 })
@@ -1314,6 +1324,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accentColor = ref.colors(context).accent;
 
     // Extract unique short muscle names, filtering out empty strings
     final shortMuscles = muscles
@@ -1339,12 +1350,12 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: AppColors.cyan.withOpacity(0.2),
+                color: accentColor.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.accessibility_new,
-                color: AppColors.cyan,
+                color: accentColor,
                 size: 16,
               ),
             ),
@@ -1357,14 +1368,14 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withOpacity(0.1),
+                      color: accentColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       muscle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.cyan,
+                        color: accentColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -1388,6 +1399,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accentColor = ref.colors(context).accent;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -1404,7 +1416,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                   end: Alignment.bottomRight,
                   colors: [
                     AppColors.green.withOpacity(0.15),
-                    AppColors.cyan.withOpacity(0.1),
+                    accentColor.withOpacity(0.1),
                   ],
                 ),
                 borderRadius: BorderRadius.only(
@@ -1503,7 +1515,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                           children: [
                             Icon(
                               Icons.auto_awesome,
-                              color: AppColors.purple,
+                              color: accentColor,
                               size: 16,
                             ),
                             const SizedBox(width: 8),
@@ -1512,7 +1524,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.purple,
+                                color: accentColor,
                               ),
                             ),
                           ],
@@ -1541,7 +1553,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                             children: [
                               Icon(
                                 Icons.fitness_center,
-                                color: AppColors.cyan,
+                                color: accentColor,
                                 size: 16,
                               ),
                               const SizedBox(width: 8),
@@ -1550,7 +1562,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.cyan,
+                                  color: accentColor,
                                 ),
                               ),
                             ],
@@ -1567,7 +1579,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                                     height: 6,
                                     margin: const EdgeInsets.only(top: 6, right: 10),
                                     decoration: BoxDecoration(
-                                      color: AppColors.cyan,
+                                      color: accentColor,
                                       shape: BoxShape.circle,
                                     ),
                                   ),
@@ -1667,6 +1679,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accentColor = ref.colors(context).accent;
 
     final params = _generationParams!;
 
@@ -1708,7 +1721,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                         gradient: LinearGradient(
                           colors: [
                             AppColors.orange.withOpacity(0.3),
-                            AppColors.purple.withOpacity(0.2),
+                            accentColor.withOpacity(0.2),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(12),
@@ -1747,7 +1760,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                     _buildParamsSection(
                       title: 'User Profile',
                       icon: Icons.person,
-                      color: AppColors.cyan,
+                      color: accentColor,
                       items: [
                         if (params.userProfile.fitnessLevel != null)
                           _ParamItem('Fitness Level', params.userProfile.fitnessLevel!.capitalize()),
@@ -1770,7 +1783,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                     _buildParamsSection(
                       title: 'Program Preferences',
                       icon: Icons.settings,
-                      color: AppColors.purple,
+                      color: accentColor,
                       items: [
                         if (params.programPreferences.difficulty != null)
                           _ParamItem('Difficulty', DifficultyUtils.getDisplayName(params.programPreferences.difficulty!)),
@@ -1811,10 +1824,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.cyan.withOpacity(0.1),
+                        color: accentColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppColors.cyan.withOpacity(0.3),
+                          color: accentColor.withOpacity(0.3),
                         ),
                       ),
                       child: Row(
@@ -1822,7 +1835,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                         children: [
                           Icon(
                             Icons.info_outline,
-                            color: AppColors.cyan,
+                            color: accentColor,
                             size: 20,
                           ),
                           const SizedBox(width: 12),
@@ -2291,12 +2304,14 @@ class _StatCard extends StatelessWidget {
   final String value;
   final String label;
   final Color color;
+  final bool useAnimatedFire;
 
   const _StatCard({
     required this.icon,
     required this.value,
     required this.label,
     required this.color,
+    this.useAnimatedFire = false,
   });
 
   @override
@@ -2314,7 +2329,11 @@ class _StatCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(icon, color: color, size: 24),
+            // Use animated fire icon for calories, static icon otherwise
+            if (useAnimatedFire)
+              AnimatedFireIcon(size: 24, color: color)
+            else
+              Icon(icon, color: color, size: 24),
             const SizedBox(height: 8),
             RichText(
               text: TextSpan(
@@ -2365,5 +2384,143 @@ extension _StringExtension on String {
   String capitalize() {
     if (isEmpty) return this;
     return '${this[0].toUpperCase()}${substring(1).toLowerCase()}';
+  }
+}
+
+
+// ─────────────────────────────────────────────────────────────────
+// Animated Fire Icon - Pulsing fire for calorie stat
+// ─────────────────────────────────────────────────────────────────
+
+class AnimatedFireIcon extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const AnimatedFireIcon({
+    super.key,
+    this.size = 24,
+    this.color = const Color(0xFFF97316),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      Icons.local_fire_department,
+      size: size,
+      color: color,
+    )
+    .animate(onPlay: (c) => c.repeat())
+    .shimmer(duration: 1200.ms, color: Colors.orange.withOpacity(0.5))
+    .scale(
+      begin: const Offset(1.0, 1.0),
+      end: const Offset(1.08, 1.08),
+      duration: 600.ms,
+      curve: Curves.easeInOut,
+    )
+    .then()
+    .scale(
+      begin: const Offset(1.08, 1.08),
+      end: const Offset(1.0, 1.0),
+      duration: 600.ms,
+      curve: Curves.easeInOut,
+    );
+  }
+}
+
+
+// ─────────────────────────────────────────────────────────────────
+// Animated Hell Badge - Radiating glow for maximum intensity
+// ─────────────────────────────────────────────────────────────────
+
+class AnimatedHellBadge extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const AnimatedHellBadge({
+    super.key,
+    this.label = 'Difficulty',
+    this.value = 'Hell',
+  });
+
+  static const Color hellRed = Color(0xFFEF4444);
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: hellRed.withOpacity(isDark ? 0.15 : 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: hellRed.withOpacity(0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Animated fire icon for Hell
+          Icon(
+            Icons.local_fire_department,
+            size: 16,
+            color: hellRed,
+          )
+          .animate(onPlay: (c) => c.repeat())
+          .shimmer(duration: 800.ms, color: Colors.orange)
+          .scale(
+            begin: const Offset(1.0, 1.0),
+            end: const Offset(1.15, 1.15),
+            duration: 400.ms,
+          )
+          .then()
+          .scale(
+            begin: const Offset(1.15, 1.15),
+            end: const Offset(1.0, 1.0),
+            duration: 400.ms,
+          ),
+          const SizedBox(width: 6),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: hellRed.withOpacity(0.8),
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: hellRed,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    )
+    .animate(onPlay: (c) => c.repeat(reverse: true))
+    .custom(
+      duration: 1500.ms,
+      curve: Curves.easeInOut,
+      builder: (context, value, child) {
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: hellRed.withOpacity(0.2 + (value * 0.3)),
+                blurRadius: 8 + (value * 8),
+                spreadRadius: value * 4,
+              ),
+            ],
+          ),
+          child: child,
+        );
+      },
+    );
   }
 }

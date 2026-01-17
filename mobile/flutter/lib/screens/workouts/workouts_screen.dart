@@ -603,16 +603,13 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
           textSecondary,
         ),
         const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: NextWorkoutCard(
-            workout: todayOrNextWorkout,
-            onStart: () {
-              HapticService.medium();
-              context.push('/active-workout', extra: todayOrNextWorkout);
-            },
-            showUpcomingLink: false,
-          ),
+        NextWorkoutCard(
+          workout: todayOrNextWorkout,
+          onStart: () {
+            HapticService.medium();
+            context.push('/active-workout', extra: todayOrNextWorkout);
+          },
+          showUpcomingLink: false,
         ),
         const SizedBox(height: 24),
       ];

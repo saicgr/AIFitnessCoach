@@ -97,6 +97,17 @@ class WorkoutTimerController {
     _endRest();
   }
 
+  /// Adjust the rest timer by adding or subtracting seconds
+  void adjustRestTime(int adjustment) {
+    _restSecondsRemaining = (_restSecondsRemaining + adjustment).clamp(0, 600);
+    // Also update initial duration so progress bar stays accurate
+    if (adjustment > 0) {
+      _initialRestDuration = (_initialRestDuration + adjustment).clamp(1, 600);
+    }
+    onRestTick?.call(_restSecondsRemaining);
+    HapticService.selection();
+  }
+
   /// Toggle pause state
   void togglePause() {
     _isPaused = !_isPaused;

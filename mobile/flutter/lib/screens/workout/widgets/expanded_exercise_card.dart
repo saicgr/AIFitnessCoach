@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/week_comparison_provider.dart';
 import '../../../data/models/exercise.dart';
@@ -155,6 +156,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     required Color textPrimary,
     required Color textMuted,
     required Color textSecondary,
+    required Color accentColor,
   }) {
     // Use AI-generated setTargets if available
     if (exercise.hasSetTargets && exercise.setTargets!.isNotEmpty) {
@@ -181,6 +183,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
           textPrimary: textPrimary,
           textMuted: textMuted,
           textSecondary: textSecondary,
+          accentColor: accentColor,
         );
       }).toList();
     }
@@ -203,6 +206,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
         textPrimary: textPrimary,
         textMuted: textMuted,
         textSecondary: textSecondary,
+        accentColor: accentColor,
       )),
       ...List.generate(totalSets, (i) => _buildSetRow(
         setLabel: '${i + 1}',
@@ -216,6 +220,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
         textPrimary: textPrimary,
         textMuted: textMuted,
         textSecondary: textSecondary,
+        accentColor: accentColor,
       )),
     ];
   }
@@ -238,6 +243,8 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    // Use dynamic accent color from provider
+    final accentColor = ref.colors(context).accent;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -256,11 +263,11 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header: Image + Exercise Name + Actions (TAPPABLE)
-            _buildHeader(context, exercise, glassSurface, textMuted),
+            _buildHeader(context, exercise, glassSurface, textMuted, accentColor),
 
             // Collapsed summary - shows sets/reps when collapsed
             if (!_isExpanded)
-              _buildCollapsedSummary(totalSets, repRange, restSeconds, glassSurface, cardBorder),
+              _buildCollapsedSummary(totalSets, repRange, restSeconds, glassSurface, cardBorder, accentColor),
 
             // Expandable section
             AnimatedCrossFade(
@@ -277,7 +284,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                   ),
 
                   // Rest Timer Row
-                  _buildRestTimerRow(restSeconds, textSecondary, textMuted),
+                  _buildRestTimerRow(restSeconds, textSecondary, textMuted, accentColor),
 
                   // Divider
                   Divider(
@@ -286,7 +293,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                   ),
 
                   // Set Table Header
-                  _buildTableHeader(glassSurface, textMuted),
+                  _buildTableHeader(glassSurface, textMuted, accentColor),
 
                   // Set Rows - use AI setTargets if available
                   ..._buildSetRows(
@@ -297,6 +304,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                     textPrimary: textPrimary,
                     textMuted: textMuted,
                     textSecondary: textSecondary,
+                    accentColor: accentColor,
                   ),
 
                   const SizedBox(height: 8),
@@ -312,7 +320,10 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
   }
 
   /// Collapsed summary showing sets x reps when card is collapsed
-  Widget _buildCollapsedSummary(int totalSets, String repRange, int restSeconds, Color glassSurface, Color cardBorder) {
+  Widget _buildCollapsedSummary(int totalSets, String repRange, int restSeconds, Color glassSurface, Color cardBorder, Color accentColor) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final displayAccent = isDark ? accentColor : _darkenColor(accentColor);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -329,14 +340,14 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
           _buildSummaryChip(
             Icons.repeat,
             '${_getActualSetCount()} sets',
-            AppColors.cyan,
+            accentColor,
           ),
           const SizedBox(width: 12),
           // Reps info
           _buildSummaryChip(
             Icons.fitness_center,
             '$repRange reps',
-            AppColors.purple,
+            accentColor,
           ),
           const SizedBox(width: 12),
           // Rest time
@@ -347,40 +358,36 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
           ),
           const Spacer(),
           // Expand button
-          Builder(builder: (context) {
-            final isDark = Theme.of(context).brightness == Brightness.dark;
-            final cyanColor = isDark ? AppColors.cyan : _darkenColor(AppColors.cyan);
-            return GestureDetector(
-              onTap: () => setState(() => _isExpanded = true),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.cyan.withOpacity(isDark ? 0.1 : 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                  border: isDark ? null : Border.all(color: cyanColor.withOpacity(0.3), width: 0.5),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Details',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: cyanColor,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.keyboard_arrow_down,
-                      size: 16,
-                      color: cyanColor,
-                    ),
-                  ],
-                ),
+          GestureDetector(
+            onTap: () => setState(() => _isExpanded = true),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: isDark ? 0.1 : 0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: isDark ? null : Border.all(color: displayAccent.withOpacity(0.3), width: 0.5),
               ),
-            );
-          }),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Details',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: displayAccent,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.keyboard_arrow_down,
+                    size: 16,
+                    color: displayAccent,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -408,10 +415,10 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
   }
 
   /// Build kg/lb toggle button
-  Widget _buildUnitToggle() {
+  Widget _buildUnitToggle(Color accentColor) {
     final bool useKg = _useKgOverride ?? ref.read(useKgProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final purpleColor = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+    final displayAccent = isDark ? accentColor : _darkenColor(accentColor);
 
     return GestureDetector(
       onTap: () {
@@ -421,9 +428,9 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.purple.withValues(alpha: isDark ? 0.1 : 0.15),
+          color: accentColor.withValues(alpha: isDark ? 0.1 : 0.15),
           borderRadius: BorderRadius.circular(8),
-          border: isDark ? null : Border.all(color: purpleColor.withOpacity(0.3), width: 0.5),
+          border: isDark ? null : Border.all(color: displayAccent.withOpacity(0.3), width: 0.5),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -431,7 +438,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
             Icon(
               Icons.swap_horiz,
               size: 14,
-              color: purpleColor,
+              color: displayAccent,
             ),
             const SizedBox(width: 4),
             Text(
@@ -439,7 +446,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: purpleColor,
+                color: displayAccent,
               ),
             ),
           ],
@@ -448,7 +455,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, WorkoutExercise exercise, Color glassSurface, Color textMuted) {
+  Widget _buildHeader(BuildContext context, WorkoutExercise exercise, Color glassSurface, Color textMuted, Color accentColor) {
     return InkWell(
       onTap: () {
         debugPrint('🎯 [ExerciseCard] Header tapped: ${widget.exercise.name}');
@@ -467,7 +474,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                 borderRadius: BorderRadius.circular(12),
               ),
               clipBehavior: Clip.hardEdge,
-              child: _buildImage(glassSurface, textMuted),
+              child: _buildImage(glassSurface, textMuted, accentColor),
             ),
             const SizedBox(width: 12),
 
@@ -545,13 +552,13 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                         _buildInfoChip(
                           Icons.fitness_center,
                           _shortenMuscle(exercise.primaryMuscle ?? exercise.muscleGroup ?? ''),
-                          AppColors.cyan,
+                          accentColor,
                         ),
                       if (exercise.equipment != null && exercise.equipment!.isNotEmpty)
                         _buildInfoChip(
                           Icons.sports_gymnastics,
                           _shortenEquipment(exercise.equipment!),
-                          AppColors.purple,
+                          accentColor,
                         ),
                       // Breathing guidance chip
                       _buildBreathingChip(context),
@@ -570,13 +577,13 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                 icon: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withOpacity(0.1),
+                    color: accentColor.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.swap_horiz,
                     size: 18,
-                    color: AppColors.cyan,
+                    color: accentColor,
                   ),
                 ),
                 onPressed: widget.onSwap,
@@ -588,15 +595,15 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     );
   }
 
-  Widget _buildImage(Color glassSurface, Color textMuted) {
+  Widget _buildImage(Color glassSurface, Color textMuted, Color accentColor) {
     if (_isLoadingImage) {
-      return const Center(
+      return Center(
         child: SizedBox(
           width: 24,
           height: 24,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: AppColors.cyan,
+            color: accentColor,
           ),
         ),
       );
@@ -606,8 +613,8 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
       return CachedNetworkImage(
         imageUrl: _imageUrl!,
         fit: BoxFit.cover,
-        placeholder: (_, __) => const Center(
-          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.cyan),
+        placeholder: (_, __) => Center(
+          child: CircularProgressIndicator(strokeWidth: 2, color: accentColor),
         ),
         errorWidget: (_, __, ___) => _buildPlaceholder(glassSurface, textMuted),
       );
@@ -627,15 +634,15 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     );
   }
 
-  Widget _buildRestTimerRow(int seconds, Color textSecondary, Color textMuted) {
+  Widget _buildRestTimerRow(int seconds, Color textSecondary, Color textMuted, Color accentColor) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.timer_outlined,
             size: 18,
-            color: AppColors.purple,
+            color: accentColor,
           ),
           const SizedBox(width: 8),
           Text(
@@ -648,15 +655,15 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
           const SizedBox(width: 8),
           Text(
             _formatRestTime(seconds),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: AppColors.purple,
+              color: accentColor,
             ),
           ),
           const SizedBox(width: 12),
           // kg/lb toggle button
-          _buildUnitToggle(),
+          _buildUnitToggle(accentColor),
           const Spacer(),
           // Collapse button
           GestureDetector(
@@ -693,7 +700,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     );
   }
 
-  Widget _buildTableHeader(Color glassSurface, Color textMuted) {
+  Widget _buildTableHeader(Color glassSurface, Color textMuted, Color accentColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
@@ -735,7 +742,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: AppColors.purple.withOpacity(0.9),
+                color: accentColor.withOpacity(0.9),
                 letterSpacing: 0.3,
               ),
             ),
@@ -953,7 +960,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
               icon: Icons.arrow_downward_rounded,
               title: breathingPattern['inhale']!['phase']!,
               description: breathingPattern['inhale']!['action']!,
-              color: AppColors.cyan,
+              color: ref.colors(context).accent,
             ),
             const SizedBox(height: 16),
             _buildBreathingStep(
@@ -1222,17 +1229,17 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
   }
 
   /// Get color for set type (matching active workout set_row.dart)
-  Color _getSetTypeColor(String setType) {
+  Color _getSetTypeColor(String setType, Color accentColor) {
     switch (setType.toLowerCase()) {
       case 'warmup':
         return AppColors.orange;
       case 'drop':
-        return AppColors.purple;
+        return accentColor;
       case 'failure':
       case 'amrap':
         return Colors.red;
       default:
-        return AppColors.cyan; // working
+        return accentColor; // working
     }
   }
 
@@ -1248,8 +1255,9 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     required Color textPrimary,
     required Color textMuted,
     required Color textSecondary,
+    required Color accentColor,
   }) {
-    final setColor = _getSetTypeColor(setType);
+    final setColor = _getSetTypeColor(setType, accentColor);
 
     // Convert weight to user's preferred unit (matching active workout screen)
     // All weights are stored in kg internally
@@ -1333,7 +1341,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: targetDisplay != '—' ? AppColors.purple : textMuted,
+                color: targetDisplay != '—' ? accentColor : textMuted,
               ),
             ),
           ),

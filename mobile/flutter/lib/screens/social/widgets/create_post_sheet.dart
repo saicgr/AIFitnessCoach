@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/social_service.dart' show PostVisibility, SocialActivityType;
+import '../../../data/services/social_image_service.dart';
 
 /// UI representation for post visibility options
 enum PostVisibilityOption {
@@ -122,12 +123,26 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
         'post_type': _selectedType.name,
       };
 
-      // If there's an image, we'd normally upload it here
-      // For now, we'll just include a flag
+      // Upload image if selected
       if (_selectedImage != null) {
-        activityData['has_image'] = true;
-        // TODO: Implement image upload to storage
-        // activityData['image_url'] = await uploadImage(_selectedImage!);
+        _showSnackBar('Uploading image...');
+
+        final imageService = ref.read(socialImageServiceProvider);
+        final imageUrl = await imageService.uploadPostImage(
+          imageFile: _selectedImage!,
+          userId: _userId!,
+        );
+
+        if (imageUrl != null) {
+          activityData['has_image'] = true;
+          activityData['image_url'] = imageUrl;
+        } else {
+          if (mounted) {
+            _showSnackBar('Failed to upload image. Please try again.');
+            setState(() => _isPosting = false);
+          }
+          return;
+        }
       }
 
       await socialService.createActivity(

@@ -94,6 +94,14 @@ class SetTrackingTable extends StatefulWidget {
   /// Callback when a set is deleted via swipe
   final void Function(int setIndex)? onSetDeleted;
 
+  // ========== Inline Rest Row Props ==========
+
+  /// Whether to show inline rest row (between last completed and active set)
+  final bool showInlineRest;
+
+  /// Inline rest row widget (passed from parent to keep state management centralized)
+  final Widget? inlineRestRowWidget;
+
   const SetTrackingTable({
     super.key,
     required this.exercise,
@@ -109,6 +117,8 @@ class SetTrackingTable extends StatefulWidget {
     this.allSetsCompleted = false,
     this.onSelectAllTapped,
     this.onSetDeleted,
+    this.showInlineRest = false,
+    this.inlineRestRowWidget,
   });
 
   @override
@@ -180,61 +190,84 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
     final theme = context.workoutDesign;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // Find the index where inline rest should be inserted (after last completed set)
+    int? inlineRestInsertIndex;
+    if (widget.showInlineRest && widget.inlineRestRowWidget != null) {
+      // Find the last completed set index
+      for (int i = widget.sets.length - 1; i >= 0; i--) {
+        if (widget.sets[i].isCompleted) {
+          inlineRestInsertIndex = i;
+          break;
+        }
+      }
+    }
+
+    // Build set rows with inline rest inserted at the right position
+    final List<Widget> setRows = [];
+    for (int index = 0; index < widget.sets.length; index++) {
+      final set = widget.sets[index];
+
+      // Only allow deletion for completed sets or extra sets (not current active)
+      final canDelete = widget.onSetDeleted != null &&
+          (set.isCompleted || index >= widget.activeSetIndex);
+
+      Widget row;
+      if (canDelete) {
+        row = Dismissible(
+          key: ValueKey('set_${index}_${set.setNumber}'),
+          direction: DismissDirection.endToStart,
+          confirmDismiss: (direction) async {
+            HapticFeedback.mediumImpact();
+            return true;
+          },
+          onDismissed: (direction) {
+            widget.onSetDeleted?.call(index);
+          },
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            color: AppColors.error,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'Delete',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.delete_outline,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ],
+            ),
+          ),
+          child: _buildSetRow(context, theme, index, set),
+        );
+      } else {
+        row = _buildSetRow(context, theme, index, set);
+      }
+
+      setRows.add(row);
+
+      // Insert inline rest row after the last completed set
+      if (inlineRestInsertIndex != null && index == inlineRestInsertIndex) {
+        setRows.add(widget.inlineRestRowWidget!);
+      }
+    }
+
     return Column(
       children: [
         // Table header
         _buildTableHeader(context, theme),
 
-        // Set rows with swipe-to-delete
-        ...widget.sets.asMap().entries.map((entry) {
-          final index = entry.key;
-          final set = entry.value;
-
-          // Only allow deletion for completed sets or extra sets (not current active)
-          final canDelete = widget.onSetDeleted != null &&
-              (set.isCompleted || index >= widget.activeSetIndex);
-
-          if (canDelete) {
-            return Dismissible(
-              key: ValueKey('set_${index}_${set.setNumber}'),
-              direction: DismissDirection.endToStart,
-              confirmDismiss: (direction) async {
-                HapticFeedback.mediumImpact();
-                return true;
-              },
-              onDismissed: (direction) {
-                widget.onSetDeleted?.call(index);
-              },
-              background: Container(
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.only(right: 20),
-                color: AppColors.error,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Delete',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Icon(
-                      Icons.delete_outline,
-                      color: Colors.white,
-                      size: 22,
-                    ),
-                  ],
-                ),
-              ),
-              child: _buildSetRow(context, theme, index, set),
-            );
-          }
-
-          return _buildSetRow(context, theme, index, set);
-        }),
+        // Set rows with inline rest inserted
+        ...setRows,
 
         // Add set button
         _buildAddSetButton(context, theme),

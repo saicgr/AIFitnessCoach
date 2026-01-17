@@ -263,19 +263,19 @@ class WorkoutDesign {
     }
   }
 
-  /// Get RIR label text (user-friendly format)
+  /// Get RIR label text (compact format for UI display)
   static String getRirLabel(int rir) {
     switch (rir) {
       case 0:
-        return 'MAX · RIR 0';
+        return 'RIR 0';
       case 1:
-        return '1 in tank · RIR 1';
+        return 'RIR 1';
       case 2:
-        return '2 in tank · RIR 2';
+        return 'RIR 2';
       case 3:
-        return '3 in tank · RIR 3';
+        return 'RIR 3';
       default:
-        return '${rir}+ in tank · RIR $rir';
+        return 'RIR $rir';
     }
   }
 

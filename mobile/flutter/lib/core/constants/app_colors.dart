@@ -65,6 +65,15 @@ class AppColors {
   // AI/Smart Progression Accent
   static const Color aiAccent = Color(0xFFFFFFFF); // White for AI features
 
+  // ═══════════════════════════════════════════════════════════════
+  // Quick Action Semantic Colors - ALWAYS colorful (not affected by theme)
+  // ═══════════════════════════════════════════════════════════════
+  static const Color quickActionFood = Color(0xFF22C55E); // Green for food/nutrition
+  static const Color quickActionStats = Color(0xFFA855F7); // Purple for analytics
+  static const Color quickActionFasting = Color(0xFFF97316); // Orange for fasting/timer
+  static const Color quickActionWater = Color(0xFF3B82F6); // Blue for hydration
+  static const Color quickActionGenerate = Color(0xFFEAB308); // Yellow/gold for AI magic
+
   /// Get RIR badge color based on RIR value
   static Color getRirColor(int rir) {
     switch (rir) {
@@ -136,39 +145,39 @@ class AppColors {
     end: Alignment.bottomRight,
   );
 
-  /// Get color for workout type - all return monochrome
+  /// Get color for workout type - semantic colors
   static Color getWorkoutTypeColor(String type) {
     switch (type.toLowerCase()) {
       case 'strength':
-        return strength;
+        return const Color(0xFF3B82F6);  // Blue - solid, stable
       case 'cardio':
-        return cardio;
+        return const Color(0xFFEF4444);  // Red - heart, intensity
       case 'flexibility':
       case 'stretching':
-        return flexibility;
+        return const Color(0xFF22C55E);  // Green - calm, recovery
       case 'hiit':
-        return hiit;
+        return const Color(0xFFF97316);  // Orange - high energy
       default:
-        return cyan;
+        return const Color(0xFF3B82F6);  // Default blue
     }
   }
 
-  /// Get color for difficulty - monochrome with subtle variation
+  /// Get color for difficulty - semantic progression (green to red)
   static Color getDifficultyColor(String difficulty) {
     switch (difficulty.toLowerCase()) {
       case 'easy':
       case 'beginner':
-        return const Color(0xFFA0A0A0);
+        return const Color(0xFF22C55E);  // Green
       case 'medium':
       case 'intermediate':
-        return const Color(0xFFC0C0C0);
+        return const Color(0xFFF59E0B);  // Amber
       case 'hard':
       case 'advanced':
-        return const Color(0xFFE0E0E0);
+        return const Color(0xFFF97316);  // Orange
       case 'hell':
-        return const Color(0xFFFFFFFF);
+        return const Color(0xFFEF4444);  // Red
       default:
-        return textSecondary;
+        return const Color(0xFFF59E0B);  // Default amber
     }
   }
 }

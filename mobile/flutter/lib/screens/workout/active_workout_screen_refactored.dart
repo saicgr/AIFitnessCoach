@@ -50,6 +50,8 @@ import 'widgets/fatigue_alert_modal.dart';
 import 'widgets/workout_plan_drawer.dart';
 import 'widgets/breathing_guide_sheet.dart';
 import 'widgets/hydration_dialog.dart';
+import 'widgets/hydration_quick_actions.dart';
+import '../../data/models/hydration.dart';
 import 'widgets/workout_ai_coach_sheet.dart';
 import 'widgets/exercise_info_sheet.dart';
 import 'widgets/exercise_options_sheet.dart';
@@ -60,6 +62,7 @@ import 'widgets/workout_top_bar_v2.dart';
 import 'widgets/exercise_thumbnail_strip_v2.dart';
 import 'widgets/action_chips_row.dart';
 import 'widgets/set_tracking_table.dart';
+import 'widgets/inline_rest_row.dart';
 import '../../data/models/rest_suggestion.dart';
 import '../../data/repositories/hydration_repository.dart';
 import '../../core/services/fatigue_service.dart';
@@ -70,6 +73,8 @@ import '../../data/services/pr_detection_service.dart';
 import '../../data/models/coach_persona.dart';
 import '../../widgets/coach_avatar.dart';
 import 'widgets/pr_inline_celebration.dart';
+import '../../core/services/rest_tip_service.dart';
+import '../../core/services/achievement_prompt_service.dart';
 
 /// Active workout screen with modular composition
 class ActiveWorkoutScreen extends ConsumerStatefulWidget {
@@ -172,6 +177,14 @@ class _ActiveWorkoutScreenState
   // Rest suggestion state (AI-powered)
   RestSuggestion? _restSuggestion;
   bool _isLoadingRestSuggestion = false;
+
+  // Inline rest row state
+  bool _showInlineRest = false;
+  int _inlineRestDuration = 90; // Default rest duration
+  String? _inlineRestAiTip;
+  bool _isLoadingAiTip = false;
+  String? _inlineRestAchievementPrompt;
+  int? _inlineRestCurrentRpe;
 
   // Warmup/stretch state (fetched from API)
   List<WarmupExerciseData>? _warmupExercises;
@@ -418,6 +431,10 @@ class _ActiveWorkoutScreenState
     setState(() {
       _isResting = false;
       _isRestingBetweenExercises = false;
+      // Hide inline rest row and clear its state
+      _showInlineRest = false;
+      _inlineRestAiTip = null;
+      _inlineRestAchievementPrompt = null;
     });
     HapticFeedback.heavyImpact();
   }
@@ -906,9 +923,22 @@ class _ActiveWorkoutScreenState
       _isResting = true;
       _isRestingBetweenExercises = betweenExercises;
       _currentRestMessage = message;
+      // Show inline rest row (only between sets, not between exercises)
+      _showInlineRest = !betweenExercises;
+      _inlineRestDuration = restSeconds;
+      _inlineRestCurrentRpe = null; // Reset for new rest period
     });
 
+    debugPrint('🔴 [StartRest] betweenExercises=$betweenExercises, _showInlineRest=$_showInlineRest, _isResting=$_isResting');
+
     _timerController.startRestTimer(restSeconds);
+
+    // Fetch AI tip and achievement prompt for inline rest
+    if (!betweenExercises) {
+      debugPrint('🔴 [StartRest] Fetching AI tip and achievement prompt');
+      _fetchInlineRestAiTip(exercise);
+      _fetchInlineRestAchievementPrompt(exercise);
+    }
 
     // Track rest interval
     _restIntervals.add({
@@ -918,6 +948,260 @@ class _ActiveWorkoutScreenState
       'rest_type': betweenExercises ? 'between_exercises' : 'between_sets',
       'recorded_at': DateTime.now().toIso8601String(),
     });
+  }
+
+  /// Fetch AI tip for inline rest row
+  Future<void> _fetchInlineRestAiTip(WorkoutExercise exercise) async {
+    final exerciseSets = _completedSets[_currentExerciseIndex];
+    if (exerciseSets == null || exerciseSets.isEmpty) return;
+
+    final lastSet = exerciseSets.last;
+    final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
+    final setsRemaining = totalSets - exerciseSets.length;
+
+    setState(() => _isLoadingAiTip = true);
+
+    try {
+      final restTipService = ref.read(restTipServiceProvider);
+      final tip = await restTipService.getRestTip(
+        exerciseName: exercise.name,
+        weightKg: lastSet.weight,
+        reps: lastSet.reps,
+        rpe: lastSet.rpe,
+        setsRemaining: setsRemaining,
+        exerciseInstructions: exercise.instructions,
+      );
+
+      if (mounted) {
+        setState(() {
+          _inlineRestAiTip = tip;
+          _isLoadingAiTip = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ [ActiveWorkout] Error fetching AI tip: $e');
+      if (mounted) {
+        setState(() => _isLoadingAiTip = false);
+      }
+    }
+  }
+
+  /// Fetch achievement prompt for inline rest row
+  Future<void> _fetchInlineRestAchievementPrompt(WorkoutExercise exercise) async {
+    final exerciseSets = _completedSets[_currentExerciseIndex];
+    if (exerciseSets == null || exerciseSets.isEmpty) return;
+
+    final lastSet = exerciseSets.last;
+    final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
+
+    try {
+      final achievementService = ref.read(achievementPromptServiceProvider);
+      final prompt = await achievementService.getPromptForSet(
+        exerciseName: exercise.name,
+        currentWeight: lastSet.weight,
+        currentReps: lastSet.reps,
+        setNumber: exerciseSets.length,
+        totalSets: totalSets,
+      );
+
+      if (mounted) {
+        setState(() {
+          _inlineRestAchievementPrompt = prompt;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ [ActiveWorkout] Error fetching achievement prompt: $e');
+    }
+  }
+
+  /// Handle inline rest RPE rating
+  void _handleInlineRestRpeRating(int rpe) {
+    setState(() {
+      _inlineRestCurrentRpe = rpe;
+      _lastSetRpe = rpe;
+    });
+
+    // Update the last completed set with the RPE
+    final exerciseSets = _completedSets[_currentExerciseIndex];
+    if (exerciseSets != null && exerciseSets.isNotEmpty) {
+      final lastIndex = exerciseSets.length - 1;
+      exerciseSets[lastIndex] = exerciseSets[lastIndex].copyWith(rpe: rpe);
+    }
+
+    HapticFeedback.selectionClick();
+  }
+
+  /// Handle inline rest note added
+  void _handleInlineRestNote(String note) {
+    // Update the last completed set with the note
+    final exerciseSets = _completedSets[_currentExerciseIndex];
+    if (exerciseSets != null && exerciseSets.isNotEmpty) {
+      final lastIndex = exerciseSets.length - 1;
+      exerciseSets[lastIndex] = exerciseSets[lastIndex].copyWith(notes: note);
+    }
+    HapticFeedback.mediumImpact();
+  }
+
+  /// Handle inline rest skip
+  void _handleInlineRestSkip() {
+    _timerController.skipRest();
+  }
+
+  /// Handle inline rest complete
+  void _handleInlineRestComplete() {
+    setState(() {
+      _showInlineRest = false;
+      _inlineRestAiTip = null;
+      _inlineRestAchievementPrompt = null;
+    });
+  }
+
+  /// Handle inline rest time adjustment
+  void _handleInlineRestTimeAdjust(int adjustment) {
+    setState(() {
+      _inlineRestDuration = (_inlineRestDuration + adjustment).clamp(0, 600);
+    });
+    _timerController.adjustRestTime(adjustment);
+  }
+
+  /// Build inline rest row for V2 design
+  Widget _buildInlineRestRowV2() {
+    return InlineRestRow(
+      restDurationSeconds: _inlineRestDuration,
+      onRestComplete: _handleInlineRestComplete,
+      onSkipRest: _handleInlineRestSkip,
+      onAdjustTime: _handleInlineRestTimeAdjust,
+      onRateSet: _handleInlineRestRpeRating,
+      onAddNote: _handleInlineRestNote,
+      onShowRpeInfo: _showRpeInfoSheet,
+      achievementPrompt: _inlineRestAchievementPrompt,
+      aiTip: _inlineRestAiTip,
+      isLoadingAiTip: _isLoadingAiTip,
+      currentRpe: _inlineRestCurrentRpe,
+    );
+  }
+
+  /// Show RPE info sheet (for inline rest row)
+  void _showRpeInfoSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surface : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Title
+            Text(
+              'What is RPE?',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Description
+            Text(
+              'Rate of Perceived Exertion measures how hard a set felt:',
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // RPE scale
+            _buildRpeScaleRowV2('1-4', 'Very easy, lots left in tank', AppColors.success, isDark),
+            _buildRpeScaleRowV2('5-6', 'Moderate effort', AppColors.cyan, isDark),
+            _buildRpeScaleRowV2('7-8', 'Hard, could do 2-3 more reps', AppColors.orange, isDark),
+            _buildRpeScaleRowV2('9', 'Very hard, maybe 1 more rep', AppColors.orange, isDark),
+            _buildRpeScaleRowV2('10', 'Maximum effort, couldn\'t do more', AppColors.error, isDark),
+
+            const SizedBox(height: 24),
+
+            // Got it button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.electricBlue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Got it',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRpeScaleRowV2(String range, String description, Color color, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              range,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              description,
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _moveToNextExercise() {
@@ -1538,6 +1822,7 @@ class _ActiveWorkoutScreenState
             userId: userId,
             rpe: setLog.rpe?.toDouble(),
             rir: setLog.rir,
+            notes: setLog.notes,
           );
         } catch (e) {
           debugPrint('⚠️ Failed to log set performance: $e');
@@ -1774,8 +2059,9 @@ class _ActiveWorkoutScreenState
               ),
             ),
 
-            // Rest overlay with weight suggestion
-            if (_isResting)
+            // Rest overlay with weight suggestion (only for rest between exercises)
+            // Between-sets rest is handled by inline rest row in SetTrackingOverlay
+            if (_isResting && _isRestingBetweenExercises)
               Positioned.fill(
                 child: RestTimerOverlay(
                   restSecondsRemaining: _timerController.restSecondsRemaining,
@@ -1833,8 +2119,8 @@ class _ActiveWorkoutScreenState
                 ),
               ),
 
-            // Top overlay
-            if (!_isResting)
+            // Top overlay (show during active workout OR between-sets rest)
+            if (!_isResting || (_isResting && !_isRestingBetweenExercises))
               WorkoutTopOverlay(
                 workoutSeconds: _timerController.workoutSeconds,
                 isPaused: _isPaused,
@@ -1849,7 +2135,8 @@ class _ActiveWorkoutScreenState
               ),
 
             // Set tracking overlay - full screen (no floating card, no minimize)
-            if (!_isResting)
+            // Show during active workout OR during between-sets rest (for inline rest row)
+            if (!_isResting || (_isResting && !_isRestingBetweenExercises))
               Positioned(
                 left: 0,
                 right: 0,
@@ -1913,11 +2200,53 @@ class _ActiveWorkoutScreenState
                       setState(() => _weightIncrement = value),
                   currentProgressionType: (_repProgressionPerExercise[_viewingExerciseIndex] ?? RepProgressionType.straight).displayName,
                   onOpenProgressionPicker: () => _showProgressionPicker(_viewingExerciseIndex),
+                  onEditTarget: (setIndex, weight, reps, rir) {
+                    setState(() {
+                      final exercise = _exercises[_viewingExerciseIndex];
+                      final existingTargets = List<SetTarget>.from(exercise.setTargets ?? []);
+
+                      // Find or create target for this set (setIndex is 0-indexed, setNumber is 1-indexed)
+                      final setNumber = setIndex + 1;
+                      final targetIndex = existingTargets.indexWhere((t) => t.setNumber == setNumber);
+                      final newTarget = SetTarget(
+                        setNumber: setNumber,
+                        setType: 'working',
+                        targetReps: reps,
+                        targetWeightKg: weight,
+                        targetRir: rir,
+                      );
+
+                      if (targetIndex >= 0) {
+                        existingTargets[targetIndex] = newTarget;
+                      } else {
+                        existingTargets.add(newTarget);
+                      }
+
+                      _exercises[_viewingExerciseIndex] = exercise.copyWith(setTargets: existingTargets);
+                    });
+                  },
+                  // Inline rest row props
+                  showInlineRest: (() {
+                    final show = _showInlineRest && _viewingExerciseIndex == _currentExerciseIndex;
+                    debugPrint('🟡 [SetTrackingOverlay] showInlineRest=$show (_showInlineRest=$_showInlineRest, viewing=$_viewingExerciseIndex, current=$_currentExerciseIndex, isResting=$_isResting, isBetweenEx=$_isRestingBetweenExercises)');
+                    return show;
+                  })(),
+                  restTimeRemaining: _timerController.restSecondsRemaining,
+                  restDurationTotal: _inlineRestDuration,
+                  onRestComplete: _handleInlineRestComplete,
+                  onSkipRest: _handleInlineRestSkip,
+                  onAdjustTime: _handleInlineRestTimeAdjust,
+                  onRateRpe: _handleInlineRestRpeRating,
+                  onAddSetNote: _handleInlineRestNote,
+                  currentRpe: _inlineRestCurrentRpe,
+                  achievementPrompt: _inlineRestAchievementPrompt,
+                  aiTip: _inlineRestAiTip,
+                  isLoadingAiTip: _isLoadingAiTip,
                 ),
               ),
 
-            // Bottom bar with action buttons
-            if (!_isResting)
+            // Bottom bar with action buttons (show during active workout OR between-sets rest)
+            if (!_isResting || (_isResting && !_isRestingBetweenExercises))
               Positioned(
                 left: 0,
                 right: 0,
@@ -2090,45 +2419,60 @@ class _ActiveWorkoutScreenState
                         ActionChipsRow(
                           chips: _buildActionChipsForCurrentExercise(),
                           onChipTapped: _handleChipTapped,
-                          showAiChip: true,
+                          showAiChip: false,
                           hasAiNotification: _currentWeightSuggestion != null,
                           onAiChipTapped: () => _showAICoachSheet(currentExercise),
                         ),
 
                         const SizedBox(height: 8),
 
-                        // Set tracking table
+                        // Set tracking table with inline rest row
                         Expanded(
                           child: SingleChildScrollView(
-                            child: SetTrackingTable(
-                              exercise: _exercises[_viewingExerciseIndex],
-                              sets: setRows,
-                              useKg: _useKg,
-                              activeSetIndex: _completedSets[_viewingExerciseIndex]?.length ?? 0,
-                              weightController: _weightController,
-                              repsController: _repsController,
-                              onSetCompleted: _handleSetCompletedV2,
-                              onSetUpdated: _updateCompletedSet,
-                              onAddSet: () => setState(() {
-                                _totalSetsPerExercise[_viewingExerciseIndex] =
-                                    (_totalSetsPerExercise[_viewingExerciseIndex] ?? 3) + 1;
-                              }),
-                              isLeftRightMode: _isLeftRightMode,
-                              allSetsCompleted: _isExerciseCompleted(_viewingExerciseIndex),
-                              onSelectAllTapped: () {
-                                // Toggle all sets completed
-                                if (_isExerciseCompleted(_viewingExerciseIndex)) {
-                                  // Already complete - do nothing or show message
-                                  HapticFeedback.lightImpact();
-                                }
-                              },
-                              onSetDeleted: (index) => _deleteCompletedSet(index),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SetTrackingTable(
+                                  exercise: _exercises[_viewingExerciseIndex],
+                                  sets: setRows,
+                                  useKg: _useKg,
+                                  activeSetIndex: _completedSets[_viewingExerciseIndex]?.length ?? 0,
+                                  weightController: _weightController,
+                                  repsController: _repsController,
+                                  onSetCompleted: _handleSetCompletedV2,
+                                  onSetUpdated: _updateCompletedSet,
+                                  onAddSet: () => setState(() {
+                                    _totalSetsPerExercise[_viewingExerciseIndex] =
+                                        (_totalSetsPerExercise[_viewingExerciseIndex] ?? 3) + 1;
+                                  }),
+                                  isLeftRightMode: _isLeftRightMode,
+                                  allSetsCompleted: _isExerciseCompleted(_viewingExerciseIndex),
+                                  onSelectAllTapped: () {
+                                    // Toggle all sets completed
+                                    if (_isExerciseCompleted(_viewingExerciseIndex)) {
+                                      // Already complete - do nothing or show message
+                                      HapticFeedback.lightImpact();
+                                    }
+                                  },
+                                  onSetDeleted: (index) => _deleteCompletedSet(index),
+                                  // Inline rest row - shows between completed and active sets
+                                  showInlineRest: _showInlineRest &&
+                                      _viewingExerciseIndex == _currentExerciseIndex &&
+                                      !_isRestingBetweenExercises,
+                                  inlineRestRowWidget: _buildInlineRestRowV2(),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
+                ),
+
+                // Hydration quick actions row
+                HydrationQuickActions(
+                  onTap: () => _showHydrationDialog(),
                 ),
 
                 // Exercise thumbnail strip (bottom navigation style)
@@ -2171,8 +2515,9 @@ class _ActiveWorkoutScreenState
               ],
             ),
 
-            // Rest overlay (shows on top)
-            if (_isResting)
+            // Rest overlay (shows on top) - only for rest between exercises
+            // Between-sets rest is handled by inline rest row
+            if (_isResting && _isRestingBetweenExercises)
               Positioned.fill(
                 child: RestTimerOverlay(
                   restSecondsRemaining: _timerController.restSecondsRemaining,
@@ -2945,23 +3290,24 @@ class _ActiveWorkoutScreenState
   // ========================================================================
 
   /// Show hydration dialog and sync with nutrition tab
-  Future<void> _showHydrationDialog() async {
-    final amount = await showHydrationDialog(
+  Future<void> _showHydrationDialog([DrinkType initialType = DrinkType.water]) async {
+    final result = await showHydrationDialog(
       context: context,
       totalIntakeMl: _totalDrinkIntakeMl,
+      initialDrinkType: initialType,
     );
 
-    if (amount != null && amount > 0) {
+    if (result != null && result.amountMl > 0) {
       // Update local workout state
-      setState(() => _totalDrinkIntakeMl += amount);
+      setState(() => _totalDrinkIntakeMl += result.amountMl);
 
       // Sync with hydration provider (nutrition tab)
       final userId = ref.read(currentUserIdProvider);
       if (userId != null) {
         final success = await ref.read(hydrationProvider.notifier).logHydration(
           userId: userId,
-          drinkType: 'water',
-          amountMl: amount,
+          drinkType: result.drinkType.value,
+          amountMl: result.amountMl,
           workoutId: widget.workout.id,
           notes: 'Logged during workout',
         );
@@ -2971,8 +3317,8 @@ class _ActiveWorkoutScreenState
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(success
-                  ? '${amount}ml water logged'
-                  : 'Water logged locally (sync failed)'),
+                  ? '${result.amountMl}ml ${result.drinkType.label} logged'
+                  : '${result.drinkType.label} logged locally (sync failed)'),
               duration: const Duration(seconds: 2),
               backgroundColor: success ? AppColors.success : AppColors.orange,
             ),
@@ -2983,7 +3329,7 @@ class _ActiveWorkoutScreenState
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${amount}ml water logged'),
+              content: Text('${result.amountMl}ml ${result.drinkType.label} logged'),
               duration: const Duration(seconds: 2),
             ),
           );
