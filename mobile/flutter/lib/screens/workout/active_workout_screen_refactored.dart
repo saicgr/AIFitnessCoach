@@ -75,6 +75,7 @@ import '../../widgets/coach_avatar.dart';
 import 'widgets/pr_inline_celebration.dart';
 import '../../core/services/rest_tip_service.dart';
 import '../../core/services/achievement_prompt_service.dart';
+import '../../core/services/exercise_info_service.dart';
 
 /// Active workout screen with modular composition
 class ActiveWorkoutScreen extends ConsumerStatefulWidget {
@@ -269,7 +270,10 @@ class _ActiveWorkoutScreenState
     for (int i = 0; i < _exercises.length; i++) {
       _completedSets[i] = [];
       final exercise = _exercises[i];
-      _totalSetsPerExercise[i] = exercise.sets ?? 3;
+      // Use setTargets length if available (includes warmup sets), otherwise fall back to exercise.sets
+      _totalSetsPerExercise[i] = exercise.hasSetTargets && exercise.setTargets!.isNotEmpty
+          ? exercise.setTargets!.length
+          : exercise.sets ?? 3;
       _previousSets[i] = [];
     }
 
@@ -2470,45 +2474,33 @@ class _ActiveWorkoutScreenState
                   ),
                 ),
 
-                // Hydration quick actions row
+                // Hydration and Note quick actions row
                 HydrationQuickActions(
                   onTap: () => _showHydrationDialog(),
+                  onNoteTap: () => _showNotesSheet(_exercises[_viewingExerciseIndex]),
                 ),
 
                 // Exercise thumbnail strip (bottom navigation style)
-                // Exercise thumbnail strip with accent top border
+                // Active exercise has animated border instead of top accent line
                 Builder(
                   builder: (context) {
                     final isDark = Theme.of(context).brightness == Brightness.dark;
-                    // Get dynamic accent color from provider
-                    final accentColor = ref.watch(accentColorProvider).getColor(isDark);
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Accent top border (uses selected accent color)
-                        Container(
-                          height: 3,
-                          color: accentColor,
+                    return Container(
+                      color: isDark ? WorkoutDesign.surface : Colors.white,
+                      child: SafeArea(
+                        top: false,
+                        child: ExerciseThumbnailStripV2(
+                          exercises: _exercises,
+                          currentIndex: _viewingExerciseIndex,
+                          completedExercises: completedExerciseIndices,
+                          onExerciseTap: (index) {
+                            HapticFeedback.selectionClick();
+                            setState(() => _viewingExerciseIndex = index);
+                          },
+                          onAddTap: () => _showExerciseAddSheet(),
+                          showAddButton: true,
                         ),
-                        // Thumbnail strip container
-                        Container(
-                          color: isDark ? WorkoutDesign.surface : Colors.white,
-                          child: SafeArea(
-                            top: false,
-                            child: ExerciseThumbnailStripV2(
-                              exercises: _exercises,
-                              currentIndex: _viewingExerciseIndex,
-                              completedExercises: completedExerciseIndices,
-                              onExerciseTap: (index) {
-                                HapticFeedback.selectionClick();
-                                setState(() => _viewingExerciseIndex = index);
-                              },
-                              onAddTap: () => _showExerciseAddSheet(),
-                              showAddButton: true,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     );
                   },
                 ),
@@ -2660,18 +2652,18 @@ class _ActiveWorkoutScreenState
   }
 
   /// Build action chips for current exercise
+  /// Order: Video (leftmost), Superset, Info, Warm Up, Targets, Swap, History, Increments, L/R
+  /// Note is moved to bottom bar area
   List<ActionChipData> _buildActionChipsForCurrentExercise() {
     return [
+      WorkoutActionChips.video,
+      WorkoutActionChips.superset,
       WorkoutActionChips.info,
       WorkoutActionChips.warmUp,
       WorkoutActionChips.targets,
       WorkoutActionChips.swap,
-      WorkoutActionChips.note,
-      WorkoutActionChips.superset,
-      WorkoutActionChips.equipment,
-      WorkoutActionChips.increments,
-      WorkoutActionChips.video,
       WorkoutActionChips.history,
+      WorkoutActionChips.increments,
       WorkoutActionChips.leftRight(isActive: _isLeftRightMode),
     ];
   }
@@ -2683,10 +2675,8 @@ class _ActiveWorkoutScreenState
 
     switch (chipId) {
       case 'info':
-        showExerciseInfoSheet(
-          context: context,
-          exercise: currentExercise,
-        );
+        // Show exercise details (muscles, description, etc.)
+        _showExerciseDetailsSheet(currentExercise);
         break;
       case 'warmup':
         // Show warmup info or toggle warmup sets
@@ -2707,12 +2697,8 @@ class _ActiveWorkoutScreenState
         // Show superset pairing
         _showSupersetSheet();
         break;
-      case 'equipment':
-        // Show equipment requirements
-        _showEquipmentSheet(currentExercise);
-        break;
       case 'video':
-        // Show exercise video
+        // Show exercise video/instructions
         showExerciseInfoSheet(
           context: context,
           exercise: currentExercise,
@@ -2734,6 +2720,71 @@ class _ActiveWorkoutScreenState
   /// Show weight increments sheet
   void _showWeightIncrementsSheet() {
     showWeightIncrementsSheet(context);
+  }
+
+  /// Show exercise details sheet (muscles, description, etc.)
+  /// Hybrid approach: shows static data immediately, then loads AI insights
+  void _showExerciseDetailsSheet(WorkoutExercise exercise) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => _ExerciseDetailsSheetContent(
+        exercise: exercise,
+        buildDetailRow: _buildDetailRow,
+      ),
+    );
+  }
+
+  /// Build a detail row for exercise info sheet
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? Colors.white : Colors.grey.shade800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Show warmup sheet
@@ -4011,6 +4062,384 @@ class _CompletionStat extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Exercise Details Sheet Content - Hybrid approach
+/// Shows static data immediately, then loads AI insights in the background
+class _ExerciseDetailsSheetContent extends ConsumerStatefulWidget {
+  final WorkoutExercise exercise;
+  final Widget Function({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+    required bool isDark,
+  }) buildDetailRow;
+
+  const _ExerciseDetailsSheetContent({
+    required this.exercise,
+    required this.buildDetailRow,
+  });
+
+  @override
+  ConsumerState<_ExerciseDetailsSheetContent> createState() =>
+      _ExerciseDetailsSheetContentState();
+}
+
+class _ExerciseDetailsSheetContentState
+    extends ConsumerState<_ExerciseDetailsSheetContent> {
+  ExerciseInsights? _aiInsights;
+  bool _isLoadingInsights = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAiInsights();
+  }
+
+  Future<void> _loadAiInsights() async {
+    try {
+      final service = ref.read(exerciseInfoServiceProvider);
+      final insights = await service.getExerciseInsights(
+        exerciseName: widget.exercise.name,
+        primaryMuscle: widget.exercise.primaryMuscle ?? widget.exercise.muscleGroup,
+        equipment: widget.exercise.equipment,
+        difficulty: widget.exercise.difficulty,
+      );
+      if (mounted) {
+        setState(() {
+          _aiInsights = insights;
+          _isLoadingInsights = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingInsights = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? Colors.white : Colors.grey.shade800;
+    final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final exercise = widget.exercise;
+
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.8,
+      ),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? WorkoutDesign.surface : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Icon(Icons.info_outline, color: WorkoutDesign.accentBlue),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    exercise.name,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // === STATIC DATA (shown immediately) ===
+
+            // Primary Muscle
+            widget.buildDetailRow(
+              icon: Icons.fitness_center,
+              label: 'Primary Muscle',
+              value: exercise.primaryMuscle ?? exercise.muscleGroup ?? 'Not specified',
+              color: WorkoutDesign.accentBlue,
+              isDark: isDark,
+            ),
+
+            // Secondary Muscles (if available)
+            if (exercise.secondaryMuscles != null)
+              Builder(
+                builder: (context) {
+                  final secondary = exercise.secondaryMuscles;
+                  String value;
+                  if (secondary is List) {
+                    value = secondary.join(', ');
+                  } else if (secondary is String && secondary.isNotEmpty) {
+                    value = secondary;
+                  } else {
+                    return const SizedBox.shrink();
+                  }
+                  return widget.buildDetailRow(
+                    icon: Icons.accessibility_new,
+                    label: 'Secondary Muscles',
+                    value: value,
+                    color: const Color(0xFFA855F7), // Purple
+                    isDark: isDark,
+                  );
+                },
+              ),
+
+            // Equipment
+            widget.buildDetailRow(
+              icon: Icons.hardware,
+              label: 'Equipment',
+              value: exercise.equipment ?? 'Bodyweight',
+              color: const Color(0xFF06B6D4), // Cyan
+              isDark: isDark,
+            ),
+
+            // Difficulty (if available)
+            if (exercise.difficulty != null)
+              widget.buildDetailRow(
+                icon: Icons.speed,
+                label: 'Difficulty',
+                value: exercise.difficulty!,
+                color: const Color(0xFFF59E0B), // Amber
+                isDark: isDark,
+              ),
+
+            // Instructions (if available)
+            if (exercise.instructions != null && exercise.instructions!.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                'Instructions',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                exercise.instructions!,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: textPrimary,
+                  height: 1.5,
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 20),
+
+            // === AI INSIGHTS (loaded in background) ===
+            _buildAiInsightsSection(isDark, textPrimary, textSecondary),
+
+            // Tip about Video button
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: WorkoutDesign.accentBlue.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.play_circle_outline,
+                    size: 20,
+                    color: WorkoutDesign.accentBlue,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Tap "Video" to watch form demonstration',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAiInsightsSection(bool isDark, Color textPrimary, Color textSecondary) {
+    if (_isLoadingInsights) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.grey.shade300,
+          ),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: WorkoutDesign.accentBlue,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Loading AI insights...',
+              style: TextStyle(
+                fontSize: 13,
+                color: textSecondary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_aiInsights == null || _aiInsights!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFFA855F7).withValues(alpha: 0.1),
+            const Color(0xFF3B82F6).withValues(alpha: 0.1),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFA855F7).withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // AI Badge
+          Row(
+            children: [
+              Icon(
+                Icons.auto_awesome,
+                size: 16,
+                color: const Color(0xFFA855F7),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'AI Coach Tips',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFFA855F7),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Form Cues
+          if (_aiInsights!.formCues != null) ...[
+            _buildInsightItem(
+              icon: Icons.check_circle_outline,
+              title: 'Form Cues',
+              content: _aiInsights!.formCues!,
+              color: const Color(0xFF22C55E),
+              isDark: isDark,
+              textPrimary: textPrimary,
+            ),
+            const SizedBox(height: 10),
+          ],
+
+          // Common Mistakes
+          if (_aiInsights!.commonMistakes != null) ...[
+            _buildInsightItem(
+              icon: Icons.warning_amber_outlined,
+              title: 'Watch Out For',
+              content: _aiInsights!.commonMistakes!,
+              color: const Color(0xFFF59E0B),
+              isDark: isDark,
+              textPrimary: textPrimary,
+            ),
+            const SizedBox(height: 10),
+          ],
+
+          // Pro Tip
+          if (_aiInsights!.proTip != null)
+            _buildInsightItem(
+              icon: Icons.lightbulb_outline,
+              title: 'Pro Tip',
+              content: _aiInsights!.proTip!,
+              color: const Color(0xFF3B82F6),
+              isDark: isDark,
+              textPrimary: textPrimary,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInsightItem({
+    required IconData icon,
+    required String title,
+    required String content,
+    required Color color,
+    required bool isDark,
+    required Color textPrimary,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                content,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: textPrimary,
+                  height: 1.4,
+                ),
+              ),
+            ],
           ),
         ),
       ],

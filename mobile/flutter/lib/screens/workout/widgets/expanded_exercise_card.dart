@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/workout_design.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/week_comparison_provider.dart';
@@ -132,19 +133,18 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     return '${secs}s';
   }
 
-  /// Get the actual number of sets that will be displayed
-  /// Uses AI setTargets if available, otherwise fallback to 2 warmups + working sets
-  int _getActualSetCount() {
+  /// Get the total number of sets (including warmup) to match active workout screen
+  /// Uses AI setTargets length if available, otherwise fallback to exercise.sets
+  int _getTotalSetCount() {
     final exercise = widget.exercise;
 
-    // If AI setTargets exist, count them
+    // If AI setTargets exist, use total count (including warmup) to match active workout
     if (exercise.hasSetTargets && exercise.setTargets!.isNotEmpty) {
       return exercise.setTargets!.length;
     }
 
-    // Fallback: 2 warmups + working sets
-    final totalSets = exercise.sets ?? 3;
-    return 2 + totalSets;
+    // Fallback: use exercise.sets
+    return exercise.sets ?? 3;
   }
 
   /// Build set rows from AI setTargets or fallback to legacy format
@@ -177,6 +177,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
           setType: target.setType,
           weightKg: target.targetWeightKg,
           targetReps: target.targetReps,
+          targetRir: target.targetRir,
           useKg: useKg,
           cardBorder: cardBorder,
           glassSurface: glassSurface,
@@ -336,10 +337,10 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
       ),
       child: Row(
         children: [
-          // Sets info - use actual set count from AI setTargets or fallback
+          // Sets info - total sets (including warmup) to match active workout
           _buildSummaryChip(
             Icons.repeat,
-            '${_getActualSetCount()} sets',
+            '${_getTotalSetCount()} sets',
             accentColor,
           ),
           const SizedBox(width: 12),
@@ -1249,6 +1250,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     String setType = 'working',
     double? weightKg,
     int? targetReps,
+    int? targetRir,
     required bool useKg,
     required Color cardBorder,
     required Color glassSurface,
@@ -1333,16 +1335,43 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
             ),
           ),
 
-          // TARGET column - AI recommended weight × reps
+          // TARGET column - AI recommended weight × reps with RIR badge
           Expanded(
             flex: 3,
-            child: Text(
-              targetDisplay,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: targetDisplay != '—' ? accentColor : textMuted,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  targetDisplay,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: targetDisplay != '—' ? accentColor : textMuted,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                // RIR pill (matching active workout screen)
+                if (targetRir != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: WorkoutDesign.getRirColor(targetRir),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        WorkoutDesign.getRirLabel(targetRir),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: WorkoutDesign.getRirTextColor(targetRir),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ],

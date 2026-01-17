@@ -1,23 +1,25 @@
 /// Hydration Quick Actions Widget
 ///
-/// Single water button that opens a sheet for logging drinks during workout.
-/// Displays above the exercise thumbnail strip.
+/// Quick action buttons (Log Drink, Note) displayed above the exercise thumbnail strip.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../data/models/hydration.dart';
 
-/// Single hydration button for the active workout screen
+/// Quick action buttons for the active workout screen (hydration + note)
 class HydrationQuickActions extends StatelessWidget {
   /// Callback when the hydration button is tapped
   final VoidCallback onTap;
 
+  /// Callback when the note button is tapped (optional)
+  final VoidCallback? onNoteTap;
+
   const HydrationQuickActions({
     super.key,
     required this.onTap,
+    this.onNoteTap,
   });
 
   @override
@@ -36,50 +38,69 @@ class HydrationQuickActions extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Hydration button
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              onTap();
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.teal.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: AppColors.teal.withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.water_drop,
-                    size: 18,
-                    color: AppColors.teal,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Log Drink',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.teal,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.add,
-                    size: 16,
-                    color: AppColors.teal,
-                  ),
-                ],
+          // Hydration button - vibrant blue
+          _buildActionButton(
+            icon: Icons.water_drop,
+            label: 'Log Drink',
+            color: AppColors.quickActionWater, // Vibrant blue
+            onTap: onTap,
+          ),
+
+          // Note button (if callback provided) - vibrant amber/yellow
+          if (onNoteTap != null) ...[
+            const SizedBox(width: 10),
+            _buildActionButton(
+              icon: Icons.sticky_note_2_outlined,
+              label: 'Note',
+              color: const Color(0xFFF59E0B), // Vibrant amber
+              onTap: onNoteTap!,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: color.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: color,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: color,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

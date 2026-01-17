@@ -428,15 +428,22 @@ class _InlineRestRowState extends State<InlineRestRow>
               const Text('😌', style: TextStyle(fontSize: 20)),
               const SizedBox(width: 8),
 
-              // 10 stars
+              // 10 stars - always golden/yellow
               ...List.generate(10, (index) {
                 final rpeValue = index + 1;
                 final isSelected =
                     widget.currentRpe != null && rpeValue <= widget.currentRpe!;
+                final isExactSelection = widget.currentRpe == rpeValue;
                 return GestureDetector(
                   onTap: () {
                     HapticFeedback.selectionClick();
-                    widget.onRateSet(rpeValue);
+                    // If tapping the same star, deselect (set to 0)
+                    // Otherwise, select this rating
+                    if (isExactSelection) {
+                      widget.onRateSet(0); // Deselect
+                    } else {
+                      widget.onRateSet(rpeValue);
+                    }
                   },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -444,7 +451,7 @@ class _InlineRestRowState extends State<InlineRestRow>
                       isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
                       size: 24,
                       color: isSelected
-                          ? _getRpeColor(widget.currentRpe!)
+                          ? Colors.amber.shade600 // Golden yellow for selected
                           : textMuted.withValues(alpha: 0.5),
                     ),
                   ),
@@ -461,12 +468,6 @@ class _InlineRestRowState extends State<InlineRestRow>
     );
   }
 
-  Color _getRpeColor(int rpe) {
-    if (rpe <= 4) return AppColors.success; // Green - easy
-    if (rpe <= 6) return AppColors.cyan; // Cyan - moderate
-    if (rpe <= 8) return AppColors.orange; // Orange - hard
-    return AppColors.error; // Red - max effort
-  }
 
   Widget _buildNoteInput(bool isDark, Color textPrimary, Color textMuted) {
     return Padding(

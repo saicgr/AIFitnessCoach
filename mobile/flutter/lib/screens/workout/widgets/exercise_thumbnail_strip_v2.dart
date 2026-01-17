@@ -11,9 +11,12 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/workout_design.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
+import '../../../data/services/api_client.dart';
 
 /// MacroFactor-style exercise thumbnail strip
 class ExerciseThumbnailStripV2 extends StatefulWidget {
@@ -56,7 +59,6 @@ class _ExerciseThumbnailStripV2State extends State<ExerciseThumbnailStripV2> {
   static const double _thumbnailWidth = 44.0;
   static const double _thumbnailHeight = 56.0;
   static const double _thumbnailSpacing = 6.0;
-  static const double _indicatorHeight = 2.0;
 
   @override
   void initState() {
@@ -111,7 +113,7 @@ class _ExerciseThumbnailStripV2State extends State<ExerciseThumbnailStripV2> {
     final itemCount = widget.exercises.length + (widget.showAddButton ? 1 : 0);
 
     return SizedBox(
-      height: _thumbnailHeight + _indicatorHeight + 8, // Extra padding
+      height: _thumbnailHeight + 16, // Extra padding for prominent animated border
       child: ListView.builder(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
@@ -143,7 +145,8 @@ class _ExerciseThumbnailStripV2State extends State<ExerciseThumbnailStripV2> {
 }
 
 /// Individual exercise thumbnail with MacroFactor styling
-class _ExerciseThumbnail extends StatelessWidget {
+/// Now fetches images from API if not available in exercise model
+class _ExerciseThumbnail extends ConsumerStatefulWidget {
   final WorkoutExercise exercise;
   final bool isActive;
   final bool isCompleted;
@@ -160,77 +163,220 @@ class _ExerciseThumbnail extends StatelessWidget {
   });
 
   @override
+  ConsumerState<_ExerciseThumbnail> createState() => _ExerciseThumbnailState();
+}
+
+class _ExerciseThumbnailState extends ConsumerState<_ExerciseThumbnail>
+    with SingleTickerProviderStateMixin {
+  String? _imageUrl;
+  bool _isLoadingImage = true;
+
+  // Static cache shared across all thumbnails
+  static final Map<String, String> _imageCache = {};
+
+  // Animation controller for the rotating border
+  late AnimationController _borderAnimController;
+
+  @override
+  void initState() {
+    super.initState();
+    _borderAnimController = AnimationController(
+      duration: const Duration(milliseconds: 1500), // Faster rotation
+      vsync: this,
+    );
+    if (widget.isActive) {
+      _borderAnimController.repeat();
+    }
+    _loadImage();
+  }
+
+  @override
+  void didUpdateWidget(_ExerciseThumbnail oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) {
+      _borderAnimController.repeat();
+    } else if (!widget.isActive && oldWidget.isActive) {
+      _borderAnimController.stop();
+      _borderAnimController.reset();
+    }
+  }
+
+  @override
+  void dispose() {
+    _borderAnimController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadImage() async {
+    final exerciseName = widget.exercise.name;
+    if (exerciseName.isEmpty || exerciseName == 'Exercise') {
+      setState(() => _isLoadingImage = false);
+      return;
+    }
+
+    // First check if exercise already has a gifUrl from the database
+    final exerciseGifUrl = widget.exercise.gifUrl ?? widget.exercise.imageS3Path;
+    if (exerciseGifUrl != null && exerciseGifUrl.isNotEmpty) {
+      final cacheKey = exerciseName.toLowerCase();
+      _imageCache[cacheKey] = exerciseGifUrl;
+      if (mounted) {
+        setState(() {
+          _imageUrl = exerciseGifUrl;
+          _isLoadingImage = false;
+        });
+      }
+      return;
+    }
+
+    // Fall back to cache
+    final cacheKey = exerciseName.toLowerCase();
+    if (_imageCache.containsKey(cacheKey)) {
+      if (mounted) {
+        setState(() {
+          _imageUrl = _imageCache[cacheKey];
+          _isLoadingImage = false;
+        });
+      }
+      return;
+    }
+
+    // Last resort: fetch from API
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.get(
+        '/exercise-images/${Uri.encodeComponent(exerciseName)}',
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final url = response.data['url'] as String?;
+        if (url != null && mounted) {
+          _imageCache[cacheKey] = url;
+          setState(() {
+            _imageUrl = url;
+            _isLoadingImage = false;
+          });
+          return;
+        }
+      }
+    } catch (e) {
+      // Image not found - fail silently
+    }
+
+    if (mounted) {
+      setState(() => _isLoadingImage = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final imageUrl = exercise.gifUrl ?? exercise.imageS3Path;
+
+    // Get accent color from settings
+    final accentColor = ref.watch(accentColorProvider).getColor(isDark);
+
+    // Create lighter variants of the accent color for the gradient
+    final HSLColor hsl = HSLColor.fromColor(accentColor);
+    final lighterAccent = hsl.withLightness((hsl.lightness + 0.15).clamp(0.0, 1.0)).toColor();
+    final lightestAccent = hsl.withLightness((hsl.lightness + 0.25).clamp(0.0, 1.0)).toColor();
+
+    // Build the core thumbnail content
+    Widget thumbnailContent = ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        width: _ExerciseThumbnail._width,
+        height: _ExerciseThumbnail._height,
+        color: isDark ? WorkoutDesign.inputField : Colors.grey.shade100,
+        child: Stack(
+          children: [
+            // Image
+            if (_isLoadingImage)
+              _buildLoadingPlaceholder(isDark)
+            else if (_imageUrl != null && _imageUrl!.isNotEmpty)
+              CachedNetworkImage(
+                imageUrl: _imageUrl!,
+                fit: BoxFit.cover,
+                width: _ExerciseThumbnail._width,
+                height: _ExerciseThumbnail._height,
+                placeholder: (_, __) => _buildPlaceholder(isDark),
+                errorWidget: (_, __, ___) => _buildPlaceholder(isDark),
+              )
+            else
+              _buildPlaceholder(isDark),
+
+            // Completed checkmark overlay
+            if (widget.isCompleted)
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.check_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+
+    // Wrap with animated border if active
+    if (widget.isActive) {
+      thumbnailContent = AnimatedBuilder(
+        animation: _borderAnimController,
+        builder: (context, child) {
+          // Calculate rotation angle - full circle
+          final angle = _borderAnimController.value * 2 * 3.14159;
+          return Container(
+            padding: const EdgeInsets.all(2.5), // Border width
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              // Use a conic gradient for smooth continuous rotation
+              gradient: SweepGradient(
+                startAngle: angle,
+                endAngle: angle + 2 * 3.14159,
+                colors: [
+                  accentColor, // Accent color from settings
+                  lighterAccent, // Lighter variant
+                  lightestAccent, // Lightest variant
+                  lighterAccent, // Lighter variant
+                  accentColor, // Back to accent (matches start for seamless loop)
+                ],
+                stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
+              ),
+            ),
+            child: child,
+          );
+        },
+        child: thumbnailContent,
+      );
+    }
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Padding(
         padding: const EdgeInsets.only(right: 6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Thumbnail image
-            SizedBox(
-              width: _width,
-              height: _height,
-              child: Stack(
-                children: [
-                  // Image container
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      width: _width,
-                      height: _height,
-                      color: isDark ? WorkoutDesign.inputField : Colors.grey.shade100,
-                      child: imageUrl != null && imageUrl.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: imageUrl,
-                              fit: BoxFit.cover,
-                              placeholder: (_, __) => _buildPlaceholder(isDark),
-                              errorWidget: (_, __, ___) => _buildPlaceholder(isDark),
-                            )
-                          : _buildPlaceholder(isDark),
-                    ),
-                  ),
+        child: thumbnailContent,
+      ),
+    );
+  }
 
-                  // Completed checkmark overlay
-                  if (isCompleted)
-                    Positioned.fill(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.check_rounded,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 3),
-
-            // Active indicator line
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: _width,
-              height: 2,
-              decoration: BoxDecoration(
-                color: isActive
-                    ? WorkoutDesign.accentBlue
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(1),
-              ),
-            ),
-          ],
+  Widget _buildLoadingPlaceholder(bool isDark) {
+    return Container(
+      width: _ExerciseThumbnail._width,
+      height: _ExerciseThumbnail._height,
+      color: isDark ? WorkoutDesign.inputField : Colors.grey.shade100,
+      child: Center(
+        child: SizedBox(
+          width: 14,
+          height: 14,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade400,
+          ),
         ),
       ),
     );
@@ -238,8 +384,8 @@ class _ExerciseThumbnail extends StatelessWidget {
 
   Widget _buildPlaceholder(bool isDark) {
     return Container(
-      width: _width,
-      height: _height,
+      width: _ExerciseThumbnail._width,
+      height: _ExerciseThumbnail._height,
       color: isDark ? WorkoutDesign.inputField : Colors.grey.shade100,
       child: Icon(
         Icons.fitness_center,
@@ -286,3 +432,4 @@ class _AddExerciseButton extends StatelessWidget {
     );
   }
 }
+

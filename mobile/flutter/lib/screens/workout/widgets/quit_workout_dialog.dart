@@ -245,23 +245,19 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
+                    child: ElevatedButton(
                       onPressed: () => Navigator.pop(ctx),
-                      style: OutlinedButton.styleFrom(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF22C55E), // Green - always
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(
-                          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: Text(
+                      child: const Text(
                         'Keep Going',
-                        style: TextStyle(
-                          color: isDark ? AppColors.cyan : AppColorsLight.cyan,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -283,7 +279,7 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                         });
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isDark ? AppColors.orange : AppColorsLight.orange,
+                        backgroundColor: const Color(0xFFEF4444), // Red - always
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(

@@ -322,13 +322,16 @@ class WorkoutActionChips {
       );
 
   /// Get default chips list
+  /// Order: Video first, Superset, Info, then others
+  /// Note is now in the bottom quick actions row
   static List<ActionChipData> defaultChips({bool showLR = false}) => [
+        video,
+        superset,
         info,
+        warmUp,
         targets,
         swap,
-        note,
-        superset,
-        equipment,
+        history,
         increments,
         if (showLR) leftRight(),
       ];

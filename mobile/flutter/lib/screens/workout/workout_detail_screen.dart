@@ -2389,10 +2389,10 @@ extension _StringExtension on String {
 
 
 // ─────────────────────────────────────────────────────────────────
-// Animated Fire Icon - Pulsing fire for calorie stat
+// Animated Fire Icon - Flickering flame effect for calorie stat
 // ─────────────────────────────────────────────────────────────────
 
-class AnimatedFireIcon extends StatelessWidget {
+class AnimatedFireIcon extends StatefulWidget {
   final double size;
   final Color color;
 
@@ -2403,26 +2403,106 @@ class AnimatedFireIcon extends StatelessWidget {
   });
 
   @override
+  State<AnimatedFireIcon> createState() => _AnimatedFireIconState();
+}
+
+class _AnimatedFireIconState extends State<AnimatedFireIcon>
+    with TickerProviderStateMixin {
+  late AnimationController _flickerController;
+  late AnimationController _glowController;
+  late Animation<double> _flickerAnimation;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _rotationAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Fast flicker for flame movement (quick random-ish changes)
+    _flickerController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+
+    // Slower breathing/glow pulse
+    _glowController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    // Flicker intensity - simulates flame brightness variation
+    _flickerAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.8), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.8, end: 1.0), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.85), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.85, end: 0.95), weight: 1),
+    ]).animate(_flickerController);
+
+    // Scale breathing - flame grows and shrinks
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.12), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 1.12, end: 0.95), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.95, end: 1.08), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 1.08, end: 1.0), weight: 1),
+    ]).animate(CurvedAnimation(
+      parent: _glowController,
+      curve: Curves.easeInOut,
+    ));
+
+    // Slight rotation wobble - flame dancing
+    _rotationAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 0.05), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.05, end: -0.04), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: -0.04, end: 0.03), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.03, end: 0.0), weight: 1),
+    ]).animate(CurvedAnimation(
+      parent: _glowController,
+      curve: Curves.easeInOut,
+    ));
+
+    _flickerController.repeat();
+    _glowController.repeat();
+  }
+
+  @override
+  void dispose() {
+    _flickerController.dispose();
+    _glowController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Icon(
-      Icons.local_fire_department,
-      size: size,
-      color: color,
-    )
-    .animate(onPlay: (c) => c.repeat())
-    .shimmer(duration: 1200.ms, color: Colors.orange.withOpacity(0.5))
-    .scale(
-      begin: const Offset(1.0, 1.0),
-      end: const Offset(1.08, 1.08),
-      duration: 600.ms,
-      curve: Curves.easeInOut,
-    )
-    .then()
-    .scale(
-      begin: const Offset(1.08, 1.08),
-      end: const Offset(1.0, 1.0),
-      duration: 600.ms,
-      curve: Curves.easeInOut,
+    return AnimatedBuilder(
+      animation: Listenable.merge([_flickerController, _glowController]),
+      builder: (context, child) {
+        return Transform.rotate(
+          angle: _rotationAnimation.value,
+          child: Transform.scale(
+            scale: _scaleAnimation.value,
+            child: ShaderMask(
+              shaderCallback: (bounds) {
+                return LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.yellow.withValues(alpha: _flickerAnimation.value),
+                    widget.color,
+                    const Color(0xFFDC2626).withValues(alpha: 0.9), // Darker red at base
+                  ],
+                  stops: const [0.0, 0.45, 1.0],
+                ).createShader(bounds);
+              },
+              blendMode: BlendMode.srcATop,
+              child: Icon(
+                Icons.local_fire_department,
+                size: widget.size,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -2432,7 +2512,7 @@ class AnimatedFireIcon extends StatelessWidget {
 // Animated Hell Badge - Radiating glow for maximum intensity
 // ─────────────────────────────────────────────────────────────────
 
-class AnimatedHellBadge extends StatelessWidget {
+class AnimatedHellBadge extends StatefulWidget {
   final String label;
   final String value;
 
@@ -2442,83 +2522,155 @@ class AnimatedHellBadge extends StatelessWidget {
     this.value = 'Hell',
   });
 
+  @override
+  State<AnimatedHellBadge> createState() => _AnimatedHellBadgeState();
+}
+
+class _AnimatedHellBadgeState extends State<AnimatedHellBadge>
+    with TickerProviderStateMixin {
   static const Color hellRed = Color(0xFFEF4444);
+
+  late AnimationController _glowController;
+  late AnimationController _fireController;
+  late Animation<double> _glowAnimation;
+  late Animation<double> _fireScaleAnimation;
+  late Animation<double> _fireRotationAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Glow pulsing
+    _glowController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+
+    // Fire flickering
+    _fireController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _glowAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.2, end: 0.5), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.5, end: 0.2), weight: 1),
+    ]).animate(CurvedAnimation(
+      parent: _glowController,
+      curve: Curves.easeInOut,
+    ));
+
+    _fireScaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.2), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 1.2, end: 0.9), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.9, end: 1.15), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 1.15, end: 1.0), weight: 1),
+    ]).animate(CurvedAnimation(
+      parent: _fireController,
+      curve: Curves.easeInOut,
+    ));
+
+    _fireRotationAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 0.08), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.08, end: -0.06), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: -0.06, end: 0.04), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.04, end: 0.0), weight: 1),
+    ]).animate(CurvedAnimation(
+      parent: _fireController,
+      curve: Curves.easeInOut,
+    ));
+
+    _glowController.repeat();
+    _fireController.repeat();
+  }
+
+  @override
+  void dispose() {
+    _glowController.dispose();
+    _fireController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: hellRed.withOpacity(isDark ? 0.15 : 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: hellRed.withOpacity(0.5)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Animated fire icon for Hell
-          Icon(
-            Icons.local_fire_department,
-            size: 16,
-            color: hellRed,
-          )
-          .animate(onPlay: (c) => c.repeat())
-          .shimmer(duration: 800.ms, color: Colors.orange)
-          .scale(
-            begin: const Offset(1.0, 1.0),
-            end: const Offset(1.15, 1.15),
-            duration: 400.ms,
-          )
-          .then()
-          .scale(
-            begin: const Offset(1.15, 1.15),
-            end: const Offset(1.0, 1.0),
-            duration: 400.ms,
-          ),
-          const SizedBox(width: 6),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: hellRed.withOpacity(0.8),
-                ),
-              ),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: hellRed,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    )
-    .animate(onPlay: (c) => c.repeat(reverse: true))
-    .custom(
-      duration: 1500.ms,
-      curve: Curves.easeInOut,
-      builder: (context, value, child) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_glowController, _fireController]),
+      builder: (context, child) {
         return Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
-                color: hellRed.withOpacity(0.2 + (value * 0.3)),
-                blurRadius: 8 + (value * 8),
-                spreadRadius: value * 4,
+                color: hellRed.withValues(alpha: _glowAnimation.value),
+                blurRadius: 8 + (_glowAnimation.value * 12),
+                spreadRadius: _glowAnimation.value * 4,
               ),
             ],
           ),
-          child: child,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: hellRed.withValues(alpha: isDark ? 0.15 : 0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: hellRed.withValues(alpha: 0.5)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Flickering fire icon
+                Transform.rotate(
+                  angle: _fireRotationAnimation.value,
+                  child: Transform.scale(
+                    scale: _fireScaleAnimation.value,
+                    child: ShaderMask(
+                      shaderCallback: (bounds) {
+                        return const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.yellow,
+                            Color(0xFFF97316), // Orange
+                            hellRed,
+                          ],
+                          stops: [0.0, 0.4, 1.0],
+                        ).createShader(bounds);
+                      },
+                      blendMode: BlendMode.srcATop,
+                      child: const Icon(
+                        Icons.local_fire_department,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.label,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: hellRed.withValues(alpha: 0.8),
+                      ),
+                    ),
+                    const Text(
+                      'Hell',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: hellRed,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         );
       },
     );

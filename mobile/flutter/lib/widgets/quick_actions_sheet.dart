@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +21,7 @@ void showQuickActionsSheet(BuildContext context, WidgetRef ref) {
   showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withValues(alpha: 0.2), // Light scrim so content shows through
     isScrollControlled: true,
     builder: (context) => _QuickActionsSheet(ref: ref),
   ).then((_) {
@@ -117,14 +119,14 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? const Color(0xFF1C1C1E) : Colors.white;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    // Define all actions with monochrome colors
+    // Define all actions with semantic colors
     final trackActions = [
       _ActionData(
         icon: Icons.camera_alt_outlined,
         label: 'Photo',
+        iconColor: const Color(0xFFA855F7), // Purple for photos
         onTap: () {
           Navigator.pop(context);
           context.push('/progress');
@@ -133,6 +135,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
       _ActionData(
         icon: Icons.restaurant_outlined,
         label: 'Food',
+        iconColor: const Color(0xFF22C55E), // Green for food/nutrition
         onTap: () {
           Navigator.pop(context);
           showLogMealSheet(context, widget.ref);
@@ -141,12 +144,14 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
       _ActionData(
         icon: Icons.water_drop_outlined,
         label: 'Water',
+        iconColor: const Color(0xFF3B82F6), // Blue for water
         onTap: _quickAddWater,
         isLoading: _isLoggingWater,
       ),
       _ActionData(
         icon: Icons.monitor_weight_outlined,
         label: 'Weight',
+        iconColor: const Color(0xFFF59E0B), // Amber for weight
         onTap: () {
           Navigator.pop(context);
           context.push('/measurements');
@@ -158,6 +163,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
       _ActionData(
         icon: Icons.insights_outlined,
         label: 'Stats',
+        iconColor: const Color(0xFFA855F7), // Purple for analytics
         onTap: () {
           Navigator.pop(context);
           context.push('/stats');
@@ -166,6 +172,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
       _ActionData(
         icon: Icons.history_outlined,
         label: 'History',
+        iconColor: const Color(0xFF6B7280), // Gray for history
         onTap: () {
           Navigator.pop(context);
           context.push('/progress');
@@ -174,6 +181,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
       _ActionData(
         icon: Icons.fitness_center_outlined,
         label: 'Workout',
+        iconColor: const Color(0xFFEF4444), // Red for workout intensity
         onTap: () {
           Navigator.pop(context);
           context.push('/workouts');
@@ -182,6 +190,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
       _ActionData(
         icon: Icons.timer_outlined,
         label: 'Fast',
+        iconColor: const Color(0xFFF97316), // Orange for fasting
         onTap: () {
           Navigator.pop(context);
           context.push('/fasting');
@@ -189,103 +198,113 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
       ),
     ];
 
-    return Container(
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.4)
+                : Colors.white.withValues(alpha: 0.6),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border(
+              top: BorderSide(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : Colors.black.withValues(alpha: 0.1),
+                width: 0.5,
+              ),
+            ),
           ),
-        ],
-      ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 12),
-            // Drag handle
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Hero Card (contextual)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _HeroActionCard(
-                onClose: () => Navigator.pop(context),
-              ).animateHeroEntrance(),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Row 1: Track Actions
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: trackActions.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final action = entry.value;
-                  return Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        left: index > 0 ? 6 : 0,
-                        right: index < 3 ? 6 : 0,
-                      ),
-                      child: _CompactActionItem(
-                        icon: action.icon,
-                        label: action.label,
-                        onTap: action.onTap,
-                        isDark: isDark,
-                        isLoading: action.isLoading,
-                      ).animateListItem(index: index + 1),
+          child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 12),
+                  // Drag handle
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: textMuted.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                  );
-                }).toList(),
-              ),
-            ),
+                  ),
+                  const SizedBox(height: 16),
 
-            const SizedBox(height: 12),
+                  // Hero Card (contextual)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _HeroActionCard(
+                      onClose: () => Navigator.pop(context),
+                    ).animateHeroEntrance(),
+                  ),
 
-            // Row 2: View/Act Actions
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: viewActions.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final action = entry.value;
-                  return Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        left: index > 0 ? 6 : 0,
-                        right: index < 3 ? 6 : 0,
-                      ),
-                      child: _CompactActionItem(
-                        icon: action.icon,
-                        label: action.label,
-                        onTap: action.onTap,
-                        isDark: isDark,
-                      ).animateListItem(index: index + 5),
+                  const SizedBox(height: 16),
+
+                  // Row 1: Track Actions
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: trackActions.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final action = entry.value;
+                        return Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              left: index > 0 ? 6 : 0,
+                              right: index < 3 ? 6 : 0,
+                            ),
+                            child: _CompactActionItem(
+                              icon: action.icon,
+                              label: action.label,
+                              onTap: action.onTap,
+                              isDark: isDark,
+                              isLoading: action.isLoading,
+                              iconColor: action.iconColor,
+                            ).animateListItem(index: index + 1),
+                          ),
+                        );
+                      }).toList(),
                     ),
-                  );
-                }).toList(),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Row 2: View/Act Actions
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: viewActions.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final action = entry.value;
+                        return Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              left: index > 0 ? 6 : 0,
+                              right: index < 3 ? 6 : 0,
+                            ),
+                            child: _CompactActionItem(
+                              icon: action.icon,
+                              label: action.label,
+                              onTap: action.onTap,
+                              isDark: isDark,
+                              iconColor: action.iconColor,
+                            ).animateListItem(index: index + 5),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                ],
               ),
             ),
-
-            const SizedBox(height: 20),
-          ],
+          ),
         ),
-      ),
-    );
+      );
   }
 }
 
@@ -295,12 +314,14 @@ class _ActionData {
   final String label;
   final VoidCallback onTap;
   final bool isLoading;
+  final Color? iconColor; // Optional color for icon
 
   _ActionData({
     required this.icon,
     required this.label,
     required this.onTap,
     this.isLoading = false,
+    this.iconColor,
   });
 }
 
@@ -349,10 +370,16 @@ class _FastingHeroCard extends ConsumerWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final activeFast = fastingState.activeFast;
 
-    // Monochrome colors
-    final cardBg = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5);
-    final borderColor = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE0E0E0);
-    final iconBg = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE8E8E8);
+    // Semi-transparent colors for glassmorphic effect
+    final cardBg = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.05);
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.black.withValues(alpha: 0.08);
+    final iconBg = isDark
+        ? Colors.white.withValues(alpha: 0.1)
+        : Colors.black.withValues(alpha: 0.06);
 
     // Calculate progress
     final elapsedMinutes = activeFast?.elapsedMinutes ?? 0;
@@ -582,10 +609,16 @@ class _PhotoHeroCard extends StatelessWidget {
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    // Monochrome colors
-    final cardBg = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5);
-    final borderColor = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE0E0E0);
-    final iconBg = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE8E8E8);
+    // Semi-transparent colors for glassmorphic effect
+    final cardBg = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.05);
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.black.withValues(alpha: 0.08);
+    final iconBg = isDark
+        ? Colors.white.withValues(alpha: 0.1)
+        : Colors.black.withValues(alpha: 0.06);
 
     return Material(
       color: Colors.transparent,
@@ -670,6 +703,7 @@ class _CompactActionItem extends StatelessWidget {
   final VoidCallback onTap;
   final bool isDark;
   final bool isLoading;
+  final Color? iconColor;
 
   const _CompactActionItem({
     required this.icon,
@@ -677,20 +711,21 @@ class _CompactActionItem extends StatelessWidget {
     required this.onTap,
     required this.isDark,
     this.isLoading = false,
+    this.iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final effectiveIconColor = iconColor ?? textColor;
 
-    // Monochrome colors
+    // Semi-transparent colors for glassmorphic effect
     final cardColor = isDark
-        ? const Color(0xFF2A2A2A)
-        : const Color(0xFFF5F5F5);
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.05);
     final borderColor = isDark
-        ? const Color(0xFF3A3A3A)
-        : const Color(0xFFE0E0E0);
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.black.withValues(alpha: 0.08);
 
     return Material(
       color: Colors.transparent,
@@ -719,14 +754,14 @@ class _CompactActionItem extends StatelessWidget {
                   height: 24,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: textColor,
+                    color: effectiveIconColor,
                   ),
                 )
               else
                 Icon(
                   icon,
                   size: 24,
-                  color: textColor,
+                  color: effectiveIconColor,
                 ),
               const SizedBox(height: 8),
               Text(

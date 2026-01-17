@@ -207,26 +207,32 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
     for (int index = 0; index < widget.sets.length; index++) {
       final set = widget.sets[index];
 
-      // Only allow deletion for completed sets or extra sets (not current active)
+      // Only allow deletion for pending sets (not completed, not active)
+      // Users can swipe to remove future sets they don't want to do
       final canDelete = widget.onSetDeleted != null &&
-          (set.isCompleted || index >= widget.activeSetIndex);
+          !set.isCompleted &&
+          !set.isActive &&
+          index > widget.activeSetIndex;
 
-      Widget row;
+      Widget row = _buildSetRow(context, theme, index, set);
+
+      // Wrap in Dismissible only if deletion is allowed
       if (canDelete) {
         row = Dismissible(
-          key: ValueKey('set_${index}_${set.setNumber}'),
+          key: ValueKey('set_dismissible_${set.setNumber}_$index'),
           direction: DismissDirection.endToStart,
           confirmDismiss: (direction) async {
             HapticFeedback.mediumImpact();
             return true;
           },
           onDismissed: (direction) {
-            widget.onSetDeleted?.call(index);
+            // Pass -1 to signal "remove a pending set" rather than a completed set
+            widget.onSetDeleted?.call(-1);
           },
           background: Container(
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 20),
-            color: AppColors.error,
+            color: WorkoutDesign.accentBlue,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -247,10 +253,8 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
               ],
             ),
           ),
-          child: _buildSetRow(context, theme, index, set),
+          child: row,
         );
-      } else {
-        row = _buildSetRow(context, theme, index, set);
       }
 
       setRows.add(row);
@@ -312,24 +316,14 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
             ),
           ),
 
-          // Auto column (target)
+          // Target column
           Expanded(
             flex: 2,
-            child: Row(
-              children: [
-                Text(
-                  'Auto',
-                  style: WorkoutDesign.tableHeaderStyle.copyWith(
-                    color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Icon(
-                  Icons.swap_horiz,
-                  size: 12,
-                  color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade500,
-                ),
-              ],
+            child: Text(
+              'Target',
+              style: WorkoutDesign.tableHeaderStyle.copyWith(
+                color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
+              ),
             ),
           ),
 
@@ -388,6 +382,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
     final isActive = set.isActive && !set.isCompleted;
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: set.isCompleted && widget.onSetUpdated != null
           ? () => _startEditing(index)
           : null,
