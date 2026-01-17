@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -49,6 +50,7 @@ class GuestUpgradeSheet extends ConsumerWidget {
     return showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.2),
       isScrollControlled: true,
       builder: (context) => GuestUpgradeSheet(
         feature: feature,
@@ -180,12 +182,26 @@ class GuestUpgradeSheet extends ConsumerWidget {
     final usage = ref.watch(guestUsageLimitsProvider);
     final accentColor = _getColor();
 
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SafeArea(
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.4)
+                : Colors.white.withValues(alpha: 0.6),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border(
+              top: BorderSide(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : Colors.black.withValues(alpha: 0.1),
+                width: 0.5,
+              ),
+            ),
+          ),
+          child: SafeArea(
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
@@ -355,6 +371,8 @@ class GuestUpgradeSheet extends ConsumerWidget {
               ),
             ],
           ),
+        ),
+      ),
         ),
       ),
     );

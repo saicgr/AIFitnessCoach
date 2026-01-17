@@ -3193,6 +3193,13 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
           debugPrint('💧 Logged drink intake: ${_totalDrinkIntakeMl}ml');
         }
 
+        // 4b. Log user-created supersets (for analytics)
+        await workoutRepo.logUserSupersets(
+          workoutId: widget.workout.id!,
+          userId: userId,
+          exercises: _exercises,
+        );
+
         // 5. Log workout exit as "completed"
         totalCompletedSets = _completedSets.values.fold<int>(
           0, (sum, list) => sum + list.length,

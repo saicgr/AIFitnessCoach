@@ -5,6 +5,8 @@
 /// Exercise History, Notes, and destructive actions.
 library;
 
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -110,6 +112,7 @@ Future<void> showExerciseOptionsSheet({
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withValues(alpha: 0.2),
     builder: (ctx) => ExerciseOptionsSheet(
       exercise: exercise,
       currentProgression: currentProgression,
@@ -166,45 +169,61 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: screenHeight * 0.85,
-      ),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.nearBlack : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle bar
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: screenHeight * 0.85,
+          ),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.4)
+                : Colors.white.withValues(alpha: 0.6),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border(
+              top: BorderSide(
                 color: isDark
-                    ? Colors.white.withOpacity(0.2)
-                    : Colors.black.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(2),
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : Colors.black.withValues(alpha: 0.1),
+                width: 0.5,
               ),
             ),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : Colors.black.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
 
-            // Exercise header
-            _buildExerciseHeader(isDark, textPrimary, textMuted),
+                // Exercise header
+                _buildExerciseHeader(isDark, textPrimary, textMuted),
 
-            const SizedBox(height: 8),
+                const SizedBox(height: 8),
 
-            // Options list
-            if (_showProgressionPicker)
-              _buildProgressionPicker(isDark, textPrimary, textMuted)
-            else
-              _buildOptionsList(isDark, textPrimary, textMuted),
+                // Options list
+                if (_showProgressionPicker)
+                  _buildProgressionPicker(isDark, textPrimary, textMuted)
+                else
+                  _buildOptionsList(isDark, textPrimary, textMuted),
 
-            // Bottom padding for safe area
-            SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
-          ],
+                // Bottom padding for safe area
+                SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+              ],
+            ),
+          ),
         ),
       ),
     );

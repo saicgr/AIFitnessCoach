@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -30,17 +32,33 @@ class WorkoutDayDetailSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final apiClient = ref.watch(apiClientProvider);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
       minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (context, scrollController) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.elevated,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: FutureBuilder<String?>(
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.4)
+                    : Colors.white.withValues(alpha: 0.6),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                border: Border(
+                  top: BorderSide(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : Colors.black.withValues(alpha: 0.1),
+                    width: 0.5,
+                  ),
+                ),
+              ),
+              child: FutureBuilder<String?>(
             future: apiClient.getUserId(),
             builder: (context, userSnapshot) {
               if (!userSnapshot.hasData || userSnapshot.data == null) {
@@ -62,7 +80,9 @@ class WorkoutDayDetailSheet extends ConsumerWidget {
               );
             },
           ),
-        );
+        ),
+      ),
+    );
       },
     );
   }

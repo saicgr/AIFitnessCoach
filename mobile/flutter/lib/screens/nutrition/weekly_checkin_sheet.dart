@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
@@ -21,6 +22,7 @@ Future<void> showWeeklyCheckinSheet(BuildContext context, WidgetRef ref) async {
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withValues(alpha: 0.2),
     builder: (context) => WeeklyCheckinSheet(userId: userId, isDark: isDark),
   );
 
@@ -233,13 +235,27 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.9,
-      decoration: BoxDecoration(
-        color: nearBlack,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.9,
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.4)
+                : Colors.white.withValues(alpha: 0.6),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border(
+              top: BorderSide(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : Colors.black.withValues(alpha: 0.1),
+                width: 0.5,
+              ),
+            ),
+          ),
+          child: Column(
         children: [
           // Handle bar
           Padding(
@@ -392,6 +408,8 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet> {
                       ),
           ),
         ],
+      ),
+        ),
       ),
     );
   }

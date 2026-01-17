@@ -19,7 +19,13 @@ class ExpandedExerciseCard extends ConsumerStatefulWidget {
   final String workoutId;
   final VoidCallback? onTap;
   final VoidCallback? onSwap;
+  final VoidCallback? onLinkSuperset;
   final bool initiallyExpanded;
+  /// Index for ReorderableListView - if provided, drag handle enables reordering
+  final int? reorderIndex;
+  /// Whether to show the internal drag handle (default: true)
+  /// Set to false when using external drag handle to avoid gesture conflicts
+  final bool showDragHandle;
 
   const ExpandedExerciseCard({
     super.key,
@@ -28,7 +34,10 @@ class ExpandedExerciseCard extends ConsumerStatefulWidget {
     required this.workoutId,
     this.onTap,
     this.onSwap,
+    this.onLinkSuperset,
     this.initiallyExpanded = false,
+    this.reorderIndex,
+    this.showDragHandle = true,
   });
 
   @override
@@ -466,6 +475,33 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
+            // Drag handle for reordering
+            // When reorderIndex is provided, wrap with Listener to absorb pointer events
+            // This prevents LongPressDraggable from capturing the drag gesture
+            if (widget.showDragHandle) ...[
+              if (widget.reorderIndex != null)
+                Listener(
+                  behavior: HitTestBehavior.opaque,
+                  child: ReorderableDragStartListener(
+                    index: widget.reorderIndex!,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4), // Larger touch target
+                      child: Icon(
+                        Icons.drag_handle,
+                        size: 20,
+                        color: textMuted.withOpacity(0.5),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Icon(
+                  Icons.drag_handle,
+                  size: 20,
+                  color: textMuted.withOpacity(0.5),
+                ),
+              const SizedBox(width: 4),
+            ],
             // Exercise Image
             Container(
               width: 60,
@@ -572,9 +608,9 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
               ),
             ),
 
-            // Swap button (separate - has its own onPressed)
-            if (widget.onSwap != null)
-              IconButton(
+            // 3-dot menu for exercise actions
+            if (widget.onSwap != null || widget.onLinkSuperset != null)
+              PopupMenuButton<String>(
                 icon: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
@@ -582,13 +618,39 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    Icons.swap_horiz,
+                    Icons.more_vert,
                     size: 18,
                     color: accentColor,
                   ),
                 ),
-                onPressed: widget.onSwap,
-                tooltip: 'Swap exercise',
+                onSelected: (value) {
+                  if (value == 'swap') widget.onSwap?.call();
+                  if (value == 'superset') widget.onLinkSuperset?.call();
+                },
+                itemBuilder: (ctx) => [
+                  if (widget.onSwap != null)
+                    const PopupMenuItem(
+                      value: 'swap',
+                      child: Row(
+                        children: [
+                          Icon(Icons.swap_horiz, size: 20),
+                          SizedBox(width: 12),
+                          Text('Swap Exercise'),
+                        ],
+                      ),
+                    ),
+                  if (widget.onLinkSuperset != null)
+                    const PopupMenuItem(
+                      value: 'superset',
+                      child: Row(
+                        children: [
+                          Icon(Icons.link, size: 20),
+                          SizedBox(width: 12),
+                          Text('Link as Superset'),
+                        ],
+                      ),
+                    ),
+                ],
               ),
           ],
         ),

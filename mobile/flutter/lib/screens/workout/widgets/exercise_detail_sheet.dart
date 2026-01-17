@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,6 +23,7 @@ Future<void> showExerciseDetailSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withValues(alpha: 0.2),
     builder: (context) => ExerciseDetailSheet(
       exercise: exercise,
       warmupSets: warmupSets ?? 0,
@@ -274,17 +277,31 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.9,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.9,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.4)
+                    : Colors.white.withValues(alpha: 0.6),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                border: Border(
+                  top: BorderSide(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : Colors.black.withValues(alpha: 0.1),
+                    width: 0.5,
+                  ),
+                ),
+              ),
+              child: Column(
             children: [
               // Drag handle
               Container(
@@ -396,8 +413,10 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
               ),
             ],
           ),
-        );
-      },
+            );
+          },
+        ),
+      ),
     );
   }
 

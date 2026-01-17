@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -61,6 +62,7 @@ Future<void> showLogMealSheet(BuildContext context, WidgetRef ref, {String? init
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withValues(alpha: 0.2),
     builder: (context) => LogMealSheet(
       userId: userId!,
       isDark: isDark,
@@ -1217,15 +1219,29 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
         ? screenHeight - keyboardHeight - MediaQuery.of(context).padding.top - 20
         : screenHeight * 0.85;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
-      height: sheetHeight,
-      decoration: BoxDecoration(
-        color: nearBlack,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          height: sheetHeight,
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.4)
+                : Colors.white.withValues(alpha: 0.6),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border(
+              top: BorderSide(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : Colors.black.withValues(alpha: 0.1),
+                width: 0.5,
+              ),
+            ),
+          ),
+          child: Column(
         children: [
           // Handle bar
           Padding(
@@ -1508,6 +1524,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
               ),
             ),
         ],
+      ),
+        ),
       ),
     );
   }

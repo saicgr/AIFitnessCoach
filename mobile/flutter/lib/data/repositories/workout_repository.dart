@@ -3159,6 +3159,60 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
 
     return streak;
   }
+
+  /// Log user-created supersets when workout completes (for analytics)
+  ///
+  /// [workoutId] The workout ID
+  /// [userId] The user ID
+  /// [exercises] List of workout exercises
+  Future<void> logUserSupersets({
+    required String workoutId,
+    required String userId,
+    required List<WorkoutExercise> exercises,
+  }) async {
+    try {
+      // Find all superset pairs
+      final supersetGroups = <int, List<WorkoutExercise>>{};
+      for (final ex in exercises) {
+        if (ex.isInSuperset) {
+          supersetGroups.putIfAbsent(ex.supersetGroup!, () => []).add(ex);
+        }
+      }
+
+      if (supersetGroups.isEmpty) {
+        debugPrint('🔗 [Superset] No supersets to log for workout $workoutId');
+        return;
+      }
+
+      debugPrint('🔗 [Superset] Logging ${supersetGroups.length} superset pairs');
+
+      // Insert each pair to the analytics table
+      for (final entry in supersetGroups.entries) {
+        final pair = entry.value;
+        if (pair.length == 2) {
+          final first = pair.firstWhere((e) => e.isSupersetFirst, orElse: () => pair.first);
+          final second = pair.firstWhere((e) => e.isSupersetSecond, orElse: () => pair.last);
+
+          await _apiClient.post(
+            '/supersets/logs',
+            data: {
+              'user_id': userId,
+              'workout_id': workoutId,
+              'exercise_1_name': first.name,
+              'exercise_2_name': second.name,
+              'exercise_1_muscle': first.primaryMuscle,
+              'exercise_2_muscle': second.primaryMuscle,
+              'superset_group': entry.key,
+            },
+          );
+          debugPrint('✅ [Superset] Logged: ${first.name} + ${second.name}');
+        }
+      }
+    } catch (e) {
+      // Don't fail workout completion if logging fails
+      debugPrint('⚠️ [Superset] Failed to log supersets: $e');
+    }
+  }
 }
 
 /// Program preferences model for customization

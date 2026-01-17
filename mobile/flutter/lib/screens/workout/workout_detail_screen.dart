@@ -23,6 +23,7 @@ import 'widgets/workout_actions_sheet.dart';
 import 'widgets/exercise_swap_sheet.dart';
 import 'widgets/exercise_add_sheet.dart';
 import 'widgets/expanded_exercise_card.dart';
+import 'widgets/superset_indicator.dart';
 import 'package:flutter/services.dart';
 import '../../widgets/fasting_training_warning.dart';
 import '../../widgets/coach_avatar.dart';
@@ -50,6 +51,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   bool _isLoadingParams = false;  // Loading state for generation params
   bool _isAIReasoningExpanded = false;  // For AI reasoning section
   bool? _useKgOverride;  // Local override for kg/lbs toggle
+  int? _pendingSupersetIndex;  // Index of exercise waiting to be paired via menu
 
   /// Toggle between kg and lbs units locally
   void _toggleUnit() {
@@ -205,6 +207,227 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       return null;
     }
     return program.name;
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // SUPERSET HANDLERS
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Create superset from two exercise indices (via drag-drop or menu)
+  void _createSuperset(int firstIndex, int secondIndex) {
+    HapticService.medium();
+
+    // Find next available group number
+    final existingGroups = _workout!.exercises
+        .where((e) => e.supersetGroup != null)
+        .map((e) => e.supersetGroup!)
+        .toSet();
+    int newGroup = 1;
+    while (existingGroups.contains(newGroup)) {
+      newGroup++;
+    }
+
+    final updatedExercises = _workout!.exercises.asMap().map((i, e) {
+      if (i == firstIndex) {
+        return MapEntry(i, e.copyWith(supersetGroup: newGroup, supersetOrder: 1));
+      }
+      if (i == secondIndex) {
+        return MapEntry(i, e.copyWith(supersetGroup: newGroup, supersetOrder: 2));
+      }
+      return MapEntry(i, e);
+    }).values.toList();
+
+    // Convert exercises back to JSON for storage
+    final exercisesJson = updatedExercises.map((e) => e.toJson()).toList();
+
+    setState(() {
+      _workout = _workout!.copyWith(exercisesJson: exercisesJson);
+      _pendingSupersetIndex = null;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Superset created!'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  /// Start pairing from 3-dot menu - stores pending index
+  void _startSupersetPairing(int index) {
+    setState(() => _pendingSupersetIndex = index);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Tap another exercise to link as superset'),
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'Cancel',
+          onPressed: () {
+            setState(() => _pendingSupersetIndex = null);
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Break superset (long-press on header)
+  Future<void> _breakSuperset(int groupNumber) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.surface : AppColorsLight.surface,
+        title: const Text('Break Superset?'),
+        content: const Text('This will unlink these exercises so they are performed separately.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Break', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final updatedExercises = _workout!.exercises.map((e) {
+        if (e.supersetGroup == groupNumber) {
+          return e.copyWith(clearSuperset: true);
+        }
+        return e;
+      }).toList();
+
+      // Convert exercises back to JSON for storage
+      final exercisesJson = updatedExercises.map((e) => e.toJson()).toList();
+
+      setState(() => _workout = _workout!.copyWith(exercisesJson: exercisesJson));
+      HapticService.light();
+    }
+  }
+
+  /// Swap the order of exercises within a superset (1 becomes 2, 2 becomes 1)
+  void _swapSupersetOrder(int groupNumber) {
+    HapticService.light();
+
+    final updatedExercises = _workout!.exercises.map((e) {
+      if (e.supersetGroup == groupNumber) {
+        // Swap order: 1 becomes 2, 2 becomes 1
+        final newOrder = e.supersetOrder == 1 ? 2 : 1;
+        return e.copyWith(supersetOrder: newOrder);
+      }
+      return e;
+    }).toList();
+
+    // Convert exercises back to JSON for storage
+    final exercisesJson = updatedExercises.map((e) => e.toJson()).toList();
+
+    setState(() => _workout = _workout!.copyWith(exercisesJson: exercisesJson));
+  }
+
+  /// Reorder exercises (and supersets as single units) in the list
+  void _reorderExercises(int oldIndex, int newIndex) {
+    HapticService.medium();
+
+    // Adjust for Flutter's ReorderableListView behavior
+    if (newIndex > oldIndex) newIndex -= 1;
+
+    final displayItems = _groupExercisesForDisplay(_workout!.exercises);
+    final exercises = List<WorkoutExercise>.from(_workout!.exercises);
+
+    if (oldIndex >= displayItems.length || newIndex >= displayItems.length) return;
+
+    final movedItem = displayItems[oldIndex];
+
+    if (movedItem.isSuperset) {
+      // Move both exercises in the superset together
+      final firstIdx = movedItem.firstIndex!;
+      final secondIdx = movedItem.secondIndex!;
+      final firstEx = exercises[firstIdx];
+      final secondEx = exercises[secondIdx];
+
+      // Remove both (remove higher index first to preserve lower index)
+      final higherIdx = firstIdx > secondIdx ? firstIdx : secondIdx;
+      final lowerIdx = firstIdx < secondIdx ? firstIdx : secondIdx;
+      exercises.removeAt(higherIdx);
+      exercises.removeAt(lowerIdx);
+
+      // Calculate new insert position
+      int insertPos = _calculateInsertPosition(displayItems, newIndex, exercises);
+
+      // Insert both at new position (maintain their relative order)
+      exercises.insert(insertPos, firstEx);
+      exercises.insert(insertPos + 1, secondEx);
+    } else {
+      // Single exercise - simple move
+      final ex = exercises.removeAt(movedItem.singleIndex!);
+      int insertPos = _calculateInsertPosition(displayItems, newIndex, exercises);
+      exercises.insert(insertPos.clamp(0, exercises.length), ex);
+    }
+
+    // Convert exercises back to JSON for storage
+    final exercisesJson = exercises.map((e) => e.toJson()).toList();
+
+    setState(() => _workout = _workout!.copyWith(exercisesJson: exercisesJson));
+  }
+
+  /// Calculate the actual exercise list position for a display index
+  int _calculateInsertPosition(
+    List<_ExerciseDisplayItem> displayItems,
+    int targetDisplayIndex,
+    List<WorkoutExercise> currentExercises,
+  ) {
+    if (targetDisplayIndex >= displayItems.length) {
+      return currentExercises.length;
+    }
+    if (targetDisplayIndex <= 0) {
+      return 0;
+    }
+
+    // Find the actual exercise index for the target display position
+    int exerciseIndex = 0;
+    for (int i = 0; i < targetDisplayIndex && i < displayItems.length; i++) {
+      final item = displayItems[i];
+      if (item.isSuperset) {
+        exerciseIndex += 2; // Supersets contain 2 exercises
+      } else {
+        exerciseIndex += 1;
+      }
+    }
+    return exerciseIndex.clamp(0, currentExercises.length);
+  }
+
+  /// Build exercise card widget (used for both single and superset exercises)
+  /// [reorderIndex] is the index within the SliverReorderableList for drag handle reordering
+  Widget _buildExerciseCard(WorkoutExercise exercise, int index, Color accentColor, {int? reorderIndex}) {
+    return ExpandedExerciseCard(
+      key: ValueKey(exercise.id ?? index),
+      exercise: exercise,
+      index: index,
+      workoutId: widget.workoutId,
+      initiallyExpanded: false,
+      reorderIndex: reorderIndex,
+      onTap: () {
+        debugPrint('🎯 [WorkoutDetail] Exercise tapped: ${exercise.name}');
+        context.push('/exercise-detail', extra: exercise);
+      },
+      onSwap: () async {
+        final updatedWorkout = await showExerciseSwapSheet(
+          context,
+          ref,
+          workoutId: widget.workoutId,
+          exercise: exercise,
+        );
+        if (updatedWorkout != null) {
+          setState(() => _workout = updatedWorkout);
+        }
+      },
+      onLinkSuperset: exercise.isInSuperset
+          ? null  // Already in a superset
+          : () => _startSupersetPairing(index),
+    );
   }
 
   @override
@@ -582,12 +805,37 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
             ),
           ),
 
-          // Exercise List with inline set tables
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final exercise = exercises[index];
+          // Exercise List with superset grouping, drag-to-superset, and reordering
+          SliverReorderableList(
+            itemCount: _groupExercisesForDisplay(exercises).length,
+            onReorder: _reorderExercises,
+            proxyDecorator: (child, index, animation) {
+              return AnimatedBuilder(
+                animation: animation,
+                builder: (context, child) {
+                  final elevation = Tween<double>(begin: 0, end: 8).animate(
+                    CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                  ).value;
+                  return Material(
+                    elevation: elevation,
+                    borderRadius: BorderRadius.circular(14),
+                    color: Colors.transparent,
+                    shadowColor: accentColor.withOpacity(0.3),
+                    child: child,
+                  );
+                },
+                child: child,
+              );
+            },
+            itemBuilder: (context, index) {
+              final displayItems = _groupExercisesForDisplay(exercises);
+              if (index >= displayItems.length) return const SizedBox.shrink();
+              final item = displayItems[index];
+
+              // ─── SUPERSET GROUPED CARD ───
+              if (item.isSuperset) {
                 return AnimationConfiguration.staggeredList(
+                  key: ValueKey('superset-${item.groupNumber}'),
                   position: index,
                   duration: AppAnimations.listItem,
                   child: SlideAnimation(
@@ -595,34 +843,92 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                     curve: AppAnimations.fastOut,
                     child: FadeInAnimation(
                       curve: AppAnimations.fastOut,
-                      child: ExpandedExerciseCard(
-                        key: ValueKey(exercise.id ?? index),
-                        exercise: exercise,
-                        index: index,
-                        workoutId: widget.workoutId,
-                        initiallyExpanded: false,
-                        onTap: () {
-                          debugPrint('🎯 [WorkoutDetail] Exercise tapped: ${exercise.name}');
-                          context.push('/exercise-detail', extra: exercise);
-                        },
-                        onSwap: () async {
-                          final updatedWorkout = await showExerciseSwapSheet(
-                            context,
-                            ref,
-                            workoutId: widget.workoutId,
-                            exercise: exercise,
-                          );
-                          if (updatedWorkout != null) {
-                            setState(() => _workout = updatedWorkout);
-                          }
-                        },
+                      child: SupersetGroupCard(
+                        groupNumber: item.groupNumber!,
+                        isActive: false,
+                        reorderIndex: index,
+                        firstExercise: _buildExerciseCard(
+                          exercises[item.firstIndex!],
+                          item.firstIndex!,
+                          accentColor,
+                        ),
+                        secondExercise: _buildExerciseCard(
+                          exercises[item.secondIndex!],
+                          item.secondIndex!,
+                          accentColor,
+                        ),
+                        onBreakSuperset: () => _breakSuperset(item.groupNumber!),
+                        onSwapOrder: () => _swapSupersetOrder(item.groupNumber!),
                       ),
                     ),
                   ),
                 );
-              },
-              childCount: exercises.length,
-            ),
+              }
+
+              // ─── SINGLE EXERCISE WITH DRAG-TO-SUPERSET ───
+              final exerciseIndex = item.singleIndex!;
+              final exercise = exercises[exerciseIndex];
+              final isPendingPair = _pendingSupersetIndex == exerciseIndex;
+
+              return AnimationConfiguration.staggeredList(
+                key: ValueKey('exercise-$exerciseIndex-${exercise.id ?? exercise.name}'),
+                position: index,
+                duration: AppAnimations.listItem,
+                child: SlideAnimation(
+                  verticalOffset: 20,
+                  curve: AppAnimations.fastOut,
+                  child: FadeInAnimation(
+                    curve: AppAnimations.fastOut,
+                    child: DragTarget<int>(
+                      onWillAcceptWithDetails: (details) =>
+                          details.data != exerciseIndex && !exercise.isInSuperset,
+                      onAcceptWithDetails: (details) =>
+                          _createSuperset(details.data, exerciseIndex),
+                      builder: (context, candidateData, rejectedData) {
+                        final isDropTarget = candidateData.isNotEmpty;
+
+                        return LongPressDraggable<int>(
+                          data: exerciseIndex,
+                          delay: const Duration(milliseconds: 200),
+                          feedback: Material(
+                            elevation: 8,
+                            borderRadius: BorderRadius.circular(12),
+                            child: SizedBox(
+                              width: MediaQuery.of(context).size.width - 64,
+                              child: Opacity(
+                                opacity: 0.9,
+                                child: _buildExerciseCard(exercise, exerciseIndex, accentColor),
+                              ),
+                            ),
+                          ),
+                          childWhenDragging: Opacity(
+                            opacity: 0.3,
+                            child: _buildExerciseCard(exercise, exerciseIndex, accentColor, reorderIndex: index),
+                          ),
+                          onDragStarted: () => HapticService.light(),
+                          child: GestureDetector(
+                            onTap: _pendingSupersetIndex != null &&
+                                    _pendingSupersetIndex != exerciseIndex
+                                ? () => _createSuperset(_pendingSupersetIndex!, exerciseIndex)
+                                : null,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                border: (isDropTarget || isPendingPair)
+                                    ? Border.all(color: accentColor, width: 2)
+                                    : null,
+                              ),
+                              child: _buildExerciseCard(exercise, exerciseIndex, accentColor, reorderIndex: index),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
 
           // ─────────────────────────────────────────────────────────────────
@@ -2675,4 +2981,64 @@ class _AnimatedHellBadgeState extends State<AnimatedHellBadge>
       },
     );
   }
+}
+
+/// Display item for exercise list - either a single exercise or a superset pair
+class _ExerciseDisplayItem {
+  final bool isSuperset;
+  final int? singleIndex;
+  final int? firstIndex;
+  final int? secondIndex;
+  final int? groupNumber;
+
+  _ExerciseDisplayItem.single({required int index})
+      : isSuperset = false,
+        singleIndex = index,
+        firstIndex = null,
+        secondIndex = null,
+        groupNumber = null;
+
+  _ExerciseDisplayItem.superset({
+    required int first,
+    required int second,
+    required int group,
+  })  : isSuperset = true,
+        firstIndex = first,
+        secondIndex = second,
+        groupNumber = group,
+        singleIndex = null;
+}
+
+/// Groups exercises for display, pairing supersets together
+List<_ExerciseDisplayItem> _groupExercisesForDisplay(List<WorkoutExercise> exercises) {
+  final items = <_ExerciseDisplayItem>[];
+  final processed = <int>{};
+
+  for (int i = 0; i < exercises.length; i++) {
+    if (processed.contains(i)) continue;
+    final ex = exercises[i];
+
+    // Check if this is the first exercise in a superset pair
+    if (ex.isSupersetFirst) {
+      final partnerIdx = exercises.indexWhere(
+        (e) => e.supersetGroup == ex.supersetGroup && e.isSupersetSecond,
+      );
+      if (partnerIdx != -1) {
+        items.add(_ExerciseDisplayItem.superset(
+          first: i,
+          second: partnerIdx,
+          group: ex.supersetGroup!,
+        ));
+        processed.addAll([i, partnerIdx]);
+        continue;
+      }
+    }
+
+    // Single exercise (not a superset second that's already processed)
+    if (!ex.isSupersetSecond) {
+      items.add(_ExerciseDisplayItem.single(index: i));
+      processed.add(i);
+    }
+  }
+  return items;
 }

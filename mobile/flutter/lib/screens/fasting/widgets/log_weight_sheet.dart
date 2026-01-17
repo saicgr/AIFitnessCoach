@@ -19,6 +19,7 @@ Future<WeightLogResult?> showLogWeightSheet(
   return showModalBottomSheet<WeightLogResult>(
     context: context,
     backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withValues(alpha: 0.2),
     isScrollControlled: true,
     useRootNavigator: true,
     builder: (sheetContext) => Theme(
@@ -284,19 +285,25 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.85,
           ),
           decoration: BoxDecoration(
-            color: colors.elevated.withValues(alpha: 0.95),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border.all(
-              color: colors.cardBorder.withValues(alpha: 0.3),
-              width: 1,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withValues(alpha: 0.4)
+                : Colors.white.withValues(alpha: 0.6),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border(
+              top: BorderSide(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : Colors.black.withValues(alpha: 0.1),
+                width: 0.5,
+              ),
             ),
           ),
           child: SafeArea(

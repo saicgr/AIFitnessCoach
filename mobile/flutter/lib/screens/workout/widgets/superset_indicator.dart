@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// A reusable widget for displaying superset indicators and connectors.
 ///
@@ -156,33 +159,33 @@ class SupersetConnector extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(width: leftOffset),
-          // Vertical connector line
+          // Vertical connector line - THICKER and more visible
           Container(
-            width: 2,
+            width: 3, // Thicker line (was 2)
             height: height,
             decoration: BoxDecoration(
-              color: themeColor.withOpacity(isActive ? 0.7 : 0.5),
-              borderRadius: BorderRadius.circular(1),
+              color: themeColor, // Full opacity (was 0.5-0.7)
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
           if (showNoRestLabel) ...[
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             // "No rest" label with arrow
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  Icons.arrow_forward,
-                  size: 10,
-                  color: themeColor.withOpacity(0.7),
+                  Icons.arrow_forward_rounded,
+                  size: 12,
+                  color: themeColor,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 6),
                 Text(
                   'No rest between',
                   style: TextStyle(
-                    fontSize: 10,
-                    fontStyle: FontStyle.italic,
-                    color: themeColor.withOpacity(0.8),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: themeColor,
                   ),
                 ),
               ],
@@ -195,7 +198,8 @@ class SupersetConnector extends StatelessWidget {
 }
 
 /// A grouped card wrapper for displaying superset exercises together
-class SupersetGroupCard extends StatelessWidget {
+/// Uses the user's accent color for prominent visibility
+class SupersetGroupCard extends ConsumerWidget {
   /// The two exercises in this superset
   final Widget firstExercise;
   final Widget secondExercise;
@@ -212,6 +216,12 @@ class SupersetGroupCard extends StatelessWidget {
   /// Callback when "Break Superset" is triggered
   final VoidCallback? onBreakSuperset;
 
+  /// Callback when "Swap Order" is triggered (swap first/second exercise)
+  final VoidCallback? onSwapOrder;
+
+  /// Index for ReorderableListView - if provided, drag handle enables reordering
+  final int? reorderIndex;
+
   const SupersetGroupCard({
     super.key,
     required this.firstExercise,
@@ -220,82 +230,191 @@ class SupersetGroupCard extends StatelessWidget {
     this.isActive = false,
     this.onHeaderTap,
     this.onBreakSuperset,
+    this.onSwapOrder,
+    this.reorderIndex,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final themeColor = AppColors.purple;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = ref.watch(accentColorProvider).getColor(isDark);
+
+    // Determine text color based on accent brightness
+    final isLightAccent = ref.watch(accentColorProvider).isLightColor;
+    final headerTextColor = isLightAccent ? Colors.black87 : Colors.white;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12), // Reduced from 16
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14), // Slightly smaller radius
         border: Border.all(
-          color: themeColor.withOpacity(isActive ? 0.5 : 0.3),
-          width: isActive ? 2 : 1,
+          color: accentColor, // SOLID accent color border
+          width: 2.5, // Slightly thinner but still visible
         ),
-        color: themeColor.withOpacity(0.03),
+        color: accentColor.withOpacity(0.06), // Subtle tinted background
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Superset header with break option
-          GestureDetector(
-            onTap: onHeaderTap,
-            onLongPress: onBreakSuperset,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: themeColor.withOpacity(isActive ? 0.15 : 0.08),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(15),
-                ),
+          // Superset header with SOLID accent background - MORE COMPACT
+          Material(
+            color: accentColor,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(11.5), // Account for border width
+            ),
+            child: InkWell(
+              onTap: onHeaderTap,
+              onLongPress: () {
+                // Haptic feedback for long press
+                HapticFeedback.mediumImpact();
+                onBreakSuperset?.call();
+              },
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(11.5),
               ),
-              child: Row(
-                children: [
-                  SupersetIndicator(
-                    groupNumber: groupNumber,
-                    isHeader: true,
-                    isActive: isActive,
-                  ),
-                  const Spacer(),
-                  // Break superset hint
-                  Text(
-                    'Long-press to break',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: themeColor.withOpacity(0.5),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), // More compact
+                child: Row(
+                  children: [
+                    // Drag handle icon for reordering - wrapped with ReorderableDragStartListener if reorderIndex provided
+                    if (reorderIndex != null)
+                      ReorderableDragStartListener(
+                        index: reorderIndex!,
+                        child: Icon(
+                          Icons.drag_handle,
+                          size: 16,
+                          color: headerTextColor.withOpacity(0.7),
+                        ),
+                      )
+                    else
+                      Icon(
+                        Icons.drag_handle,
+                        size: 16,
+                        color: headerTextColor.withOpacity(0.7),
+                      ),
+                    const SizedBox(width: 6),
+                    // Link icon - smaller
+                    Icon(
+                      Icons.link_rounded,
+                      size: 14,
+                      color: headerTextColor,
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.link_off,
-                    size: 14,
-                    color: themeColor.withOpacity(0.5),
-                  ),
-                ],
+                    const SizedBox(width: 6),
+                    Text(
+                      'SUPERSET $groupNumber',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: headerTextColor,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    if (isActive) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: headerTextColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                    const Spacer(),
+                    // Swap order button - swap first/second exercise in superset
+                    if (onSwapOrder != null)
+                      GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          onSwapOrder?.call();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: headerTextColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.swap_vert,
+                                size: 12,
+                                color: headerTextColor.withOpacity(0.9),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Swap',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: headerTextColor.withOpacity(0.9),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    if (onSwapOrder != null)
+                      const SizedBox(width: 6),
+                    // Break superset button - tap icon for break
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.mediumImpact();
+                        onBreakSuperset?.call();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: headerTextColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.link_off,
+                              size: 12,
+                              color: headerTextColor.withOpacity(0.9),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Break',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: headerTextColor.withOpacity(0.9),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
 
-          // First exercise
+          // First exercise - no extra padding needed
           firstExercise,
 
-          // Connector
+          // Connector with accent color - more compact
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             child: SupersetConnector(
+              color: accentColor,
               isActive: isActive,
-              leftOffset: 32,
-              height: 20,
+              leftOffset: 28,
+              height: 18, // Shorter connector
             ),
           ),
 
           // Second exercise
           secondExercise,
 
-          // Bottom padding
-          const SizedBox(height: 8),
+          // Minimal bottom padding
+          const SizedBox(height: 4),
         ],
       ),
     );

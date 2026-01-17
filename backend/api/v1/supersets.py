@@ -1122,3 +1122,63 @@ def is_valid_superset_pair(muscle_1: str, muscle_2: str, allow_same: bool = Fals
 
     # Check if they're antagonists
     return m2 in ANTAGONIST_PAIRS.get(m1, []) or m1 in ANTAGONIST_PAIRS.get(m2, [])
+
+
+# =============================================================================
+# Superset Analytics Logging (for user-created pairs)
+# =============================================================================
+
+class SupersetLogRequest(BaseModel):
+    """Request to log a user-created superset pair."""
+    user_id: str = Field(..., description="User ID")
+    workout_id: str = Field(..., description="Workout ID")
+    exercise_1_name: str = Field(..., description="First exercise name")
+    exercise_2_name: str = Field(..., description="Second exercise name")
+    exercise_1_muscle: Optional[str] = Field(default=None, description="First exercise muscle group")
+    exercise_2_muscle: Optional[str] = Field(default=None, description="Second exercise muscle group")
+    superset_group: int = Field(..., ge=1, description="Superset group number")
+
+
+@router.post("/logs", status_code=201)
+async def log_superset_usage(request: SupersetLogRequest):
+    """
+    Log a user-created superset pair for analytics.
+
+    Called when a workout with user-created supersets is completed.
+    This helps track which exercise pairings users prefer.
+    """
+    logger.info(f"Logging superset: {request.exercise_1_name} + {request.exercise_2_name} for user {request.user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Insert into user_superset_logs table
+        insert_data = {
+            "user_id": request.user_id,
+            "workout_id": request.workout_id,
+            "exercise_1_name": request.exercise_1_name,
+            "exercise_2_name": request.exercise_2_name,
+            "exercise_1_muscle": request.exercise_1_muscle,
+            "exercise_2_muscle": request.exercise_2_muscle,
+            "superset_group": request.superset_group,
+        }
+
+        result = db.client.table("user_superset_logs").insert(insert_data).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to log superset")
+
+        logger.info(f"Logged superset pair for user {request.user_id}")
+
+        return {
+            "success": True,
+            "message": f"Logged superset: {request.exercise_1_name} + {request.exercise_2_name}",
+            "id": result.data[0].get("id") if result.data else None,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error logging superset: {e}")
+        # Don't fail the request - logging is non-critical
+        return {"success": False, "message": str(e)}

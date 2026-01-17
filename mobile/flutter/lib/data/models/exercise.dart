@@ -354,6 +354,7 @@ class WorkoutExercise extends Equatable {
     int? dropSetPercentage,
     bool? isFailureSet,
     List<SetTarget>? setTargets,
+    bool clearSuperset = false,
   }) {
     return WorkoutExercise(
       id: id ?? this.id,
@@ -383,8 +384,8 @@ class WorkoutExercise extends Equatable {
       fromQueue: fromQueue ?? this.fromQueue,
       holdSeconds: holdSeconds ?? this.holdSeconds,
       isUnilateral: isUnilateral ?? this.isUnilateral,
-      supersetGroup: supersetGroup ?? this.supersetGroup,
-      supersetOrder: supersetOrder ?? this.supersetOrder,
+      supersetGroup: clearSuperset ? null : (supersetGroup ?? this.supersetGroup),
+      supersetOrder: clearSuperset ? null : (supersetOrder ?? this.supersetOrder),
       isDropSet: isDropSet ?? this.isDropSet,
       dropSetCount: dropSetCount ?? this.dropSetCount,
       dropSetPercentage: dropSetPercentage ?? this.dropSetPercentage,
