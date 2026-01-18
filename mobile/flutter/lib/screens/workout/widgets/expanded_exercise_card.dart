@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
@@ -26,6 +27,12 @@ class ExpandedExerciseCard extends ConsumerStatefulWidget {
   /// Whether to show the internal drag handle (default: true)
   /// Set to false when using external drag handle to avoid gesture conflicts
   final bool showDragHandle;
+  /// Whether this card is a drop target for superset creation (shows highlight)
+  final bool isDropTarget;
+  /// Whether this card is pending superset pairing (shows highlight)
+  final bool isPendingPair;
+  /// Callback when a dragged exercise is dropped on this card to create superset
+  final void Function(int draggedIndex)? onSupersetDrop;
 
   const ExpandedExerciseCard({
     super.key,
@@ -38,6 +45,9 @@ class ExpandedExerciseCard extends ConsumerStatefulWidget {
     this.initiallyExpanded = false,
     this.reorderIndex,
     this.showDragHandle = true,
+    this.isDropTarget = false,
+    this.isPendingPair = false,
+    this.onSupersetDrop,
   });
 
   @override
@@ -256,20 +266,19 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     // Use dynamic accent color from provider
     final accentColor = ref.colors(context).accent;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: cardBorder.withOpacity(0.3),
-          ),
+    // Build the main card content
+    final cardContent = DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: cardBorder.withOpacity(0.3),
         ),
-        child: Material(
-          color: elevatedColor,
-          borderRadius: BorderRadius.circular(16),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
+      ),
+      child: Material(
+        color: elevatedColor,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header: Image + Exercise Name + Actions (TAPPABLE)
@@ -324,8 +333,249 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
             ),
           ],
         ),
+      ),
+    );
+
+    // If reorderIndex is provided, add a drag strip on the left side
+    if (widget.reorderIndex != null && widget.showDragHandle) {
+      // Determine if we should show highlight border
+      final showHighlight = widget.isDropTarget || widget.isPendingPair;
+
+      // Use Stack to overlay the drag strip on the left side of the card
+      // This avoids IntrinsicHeight issues with AnimatedCrossFade
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: DragTarget<int>(
+          onWillAcceptWithDetails: (details) =>
+              details.data != widget.index && !widget.exercise.isInSuperset,
+          onAcceptWithDetails: (details) {
+            widget.onSupersetDrop?.call(details.data);
+          },
+          builder: (context, candidateData, rejectedData) {
+            final isCurrentDropTarget = candidateData.isNotEmpty;
+            final shouldHighlight = showHighlight || isCurrentDropTarget;
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: shouldHighlight
+                    ? Border.all(color: accentColor, width: 2.5)
+                    : null,
+              ),
+              child: Stack(
+                children: [
+                  // Main card content - shifted right to make room for drag strip
+                  // Long-press on card body to drag for superset creation (only if not already in superset)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 28),
+                    child: _buildCardBodyWithOptionalDrag(
+                      canDragForSuperset: !widget.exercise.isInSuperset,
+                      shouldHighlight: shouldHighlight,
+                      exercise: exercise,
+                      totalSets: totalSets,
+                      repRange: repRange,
+                      restSeconds: restSeconds,
+                      useKg: useKg,
+                      elevatedColor: elevatedColor,
+                      cardBorder: cardBorder,
+                      glassSurface: glassSurface,
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                      textSecondary: textSecondary,
+                      accentColor: accentColor,
+                    ),
+                  ),
+                  // Drag strip - positioned on the left, stretches to full height
+                  // Both short drag and long-press drag trigger reordering
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 28,
+                    child: ReorderableDelayedDragStartListener(
+                      index: widget.reorderIndex!,
+                      child: ReorderableDragStartListener(
+                        index: widget.reorderIndex!,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: glassSurface.withOpacity(0.5),
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(16),
+                              bottomLeft: Radius.circular(16),
+                            ),
+                            border: shouldHighlight
+                                ? null  // No inner border when highlighted
+                                : Border.all(color: cardBorder.withOpacity(0.3)),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.drag_indicator,
+                              size: 18,
+                              color: textMuted.withOpacity(0.6),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    // No drag strip - just the card with padding
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: cardContent,
+    );
+  }
+
+  /// Build the card body, optionally wrapped with LongPressDraggable for superset creation
+  Widget _buildCardBodyWithOptionalDrag({
+    required bool canDragForSuperset,
+    required bool shouldHighlight,
+    required WorkoutExercise exercise,
+    required int totalSets,
+    required String repRange,
+    required int restSeconds,
+    required bool useKg,
+    required Color elevatedColor,
+    required Color cardBorder,
+    required Color glassSurface,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color textSecondary,
+    required Color accentColor,
+  }) {
+    // The card content that's always shown
+    Widget cardBody = DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.only(
+          topRight: Radius.circular(16),
+          bottomRight: Radius.circular(16),
+        ),
+        border: shouldHighlight
+            ? null  // No inner border when highlighted
+            : Border.all(color: cardBorder.withOpacity(0.3)),
+      ),
+      child: Material(
+        color: elevatedColor,
+        borderRadius: const BorderRadius.only(
+          topRight: Radius.circular(16),
+          bottomRight: Radius.circular(16),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHeader(context, exercise, glassSurface, textMuted, accentColor),
+            if (!_isExpanded)
+              _buildCollapsedSummary(totalSets, repRange, restSeconds, glassSurface, cardBorder, accentColor),
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 200),
+              crossFadeState: _isExpanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+              firstChild: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Divider(color: cardBorder.withOpacity(0.3), height: 1),
+                  _buildRestTimerRow(restSeconds, textSecondary, textMuted, accentColor),
+                  Divider(color: cardBorder.withOpacity(0.3), height: 1),
+                  _buildTableHeader(glassSurface, textMuted, accentColor),
+                  ..._buildSetRows(
+                    exercise: exercise,
+                    useKg: useKg,
+                    cardBorder: cardBorder,
+                    glassSurface: glassSurface,
+                    textPrimary: textPrimary,
+                    textMuted: textMuted,
+                    textSecondary: textSecondary,
+                    accentColor: accentColor,
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+              secondChild: const SizedBox.shrink(),
+            ),
+          ],
         ),
       ),
+    );
+
+    // If already in superset, don't allow dragging for superset creation
+    if (!canDragForSuperset) {
+      return cardBody;
+    }
+
+    // Wrap with LongPressDraggable for superset creation
+    return LongPressDraggable<int>(
+      data: widget.index,
+      delay: const Duration(milliseconds: 300),
+      feedback: Material(
+        elevation: 12,
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.transparent,
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width - 64,
+          child: Opacity(
+            opacity: 0.9,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: accentColor, width: 2),
+              ),
+              child: Material(
+                color: elevatedColor,
+                borderRadius: BorderRadius.circular(16),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildHeader(context, exercise, glassSurface, textMuted, accentColor),
+                    _buildCollapsedSummary(totalSets, repRange, restSeconds, glassSurface, cardBorder, accentColor),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      childWhenDragging: Opacity(
+        opacity: 0.3,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.only(
+              topRight: Radius.circular(16),
+              bottomRight: Radius.circular(16),
+            ),
+            border: Border.all(color: cardBorder.withOpacity(0.3)),
+          ),
+          child: Material(
+            color: elevatedColor,
+            borderRadius: const BorderRadius.only(
+              topRight: Radius.circular(16),
+              bottomRight: Radius.circular(16),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildHeader(context, exercise, glassSurface, textMuted, accentColor),
+                if (!_isExpanded)
+                  _buildCollapsedSummary(totalSets, repRange, restSeconds, glassSurface, cardBorder, accentColor),
+              ],
+            ),
+          ),
+        ),
+      ),
+      onDragStarted: () => HapticFeedback.mediumImpact(),
+      child: cardBody,
     );
   }
 
@@ -475,33 +725,8 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            // Drag handle for reordering
-            // When reorderIndex is provided, wrap with Listener to absorb pointer events
-            // This prevents LongPressDraggable from capturing the drag gesture
-            if (widget.showDragHandle) ...[
-              if (widget.reorderIndex != null)
-                Listener(
-                  behavior: HitTestBehavior.opaque,
-                  child: ReorderableDragStartListener(
-                    index: widget.reorderIndex!,
-                    child: Padding(
-                      padding: const EdgeInsets.all(4), // Larger touch target
-                      child: Icon(
-                        Icons.drag_handle,
-                        size: 20,
-                        color: textMuted.withOpacity(0.5),
-                      ),
-                    ),
-                  ),
-                )
-              else
-                Icon(
-                  Icons.drag_handle,
-                  size: 20,
-                  color: textMuted.withOpacity(0.5),
-                ),
-              const SizedBox(width: 4),
-            ],
+            // Note: Drag handle is now a separate strip on the left side of the card
+            // when reorderIndex is provided (see build method)
             // Exercise Image
             Container(
               width: 60,
@@ -699,40 +924,48 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
 
   Widget _buildRestTimerRow(int seconds, Color textSecondary, Color textMuted, Color accentColor) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
-          Icon(
-            Icons.timer_outlined,
-            size: 18,
-            color: accentColor,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            'Rest Timer:',
-            style: TextStyle(
-              fontSize: 13,
-              color: textSecondary,
+          // Rest timer info - wrapped in Flexible to prevent overflow
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.timer_outlined,
+                  size: 16,
+                  color: accentColor,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Rest Timer:',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textSecondary,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  _formatRestTime(seconds),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: accentColor,
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            _formatRestTime(seconds),
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: accentColor,
-            ),
-          ),
-          const SizedBox(width: 12),
           // kg/lb toggle button
           _buildUnitToggle(accentColor),
-          const Spacer(),
+          const SizedBox(width: 8),
           // Collapse button
           GestureDetector(
             onTap: () => setState(() => _isExpanded = false),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: textMuted.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
@@ -743,15 +976,15 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                   Text(
                     'Collapse',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w500,
                       color: textMuted,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 2),
                   Icon(
                     Icons.keyboard_arrow_up,
-                    size: 16,
+                    size: 14,
                     color: textMuted,
                   ),
                 ],

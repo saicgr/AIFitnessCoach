@@ -12,6 +12,7 @@ import '../../data/services/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/providers/fasting_provider.dart';
+import '../settings/sections/nutrition_fasting_section.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/coach_profile_card.dart';
@@ -304,6 +305,10 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
             // Refresh fasting provider to load the new settings
             await ref.read(fastingProvider.notifier).initialize(userId, forceRefresh: true);
             debugPrint('✅ [CoachSelection] Fasting provider refreshed');
+
+            // Also refresh the fasting settings provider used by the profile screen
+            await ref.read(fastingSettingsProvider.notifier).refresh();
+            debugPrint('✅ [CoachSelection] Fasting settings provider refreshed');
           } catch (fastingError) {
             debugPrint('⚠️ [CoachSelection] Failed to sync fasting preferences: $fastingError');
             // Non-critical - user can still use the app

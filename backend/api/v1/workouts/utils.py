@@ -2064,6 +2064,14 @@ FITNESS_LEVEL_CAPS = {
     "advanced": {"max_sets": 5, "max_reps": 20, "min_rest": 30},
 }
 
+# Hell mode caps - higher limits for maximum intensity workouts
+# Users must accept risk warning before Hell mode is enabled
+HELL_MODE_CAPS = {
+    "max_sets": 6,      # Allow up to 6 sets per exercise
+    "max_reps": 20,     # Allow up to 20 reps (AMRAP sets can go higher)
+    "min_rest": 30,     # Minimum rest stays low for intensity
+}
+
 # Age-based additional caps - comprehensive age brackets
 # These align with the AGE_ADJUSTMENTS in adaptive_workout_service.py
 AGE_CAPS = {
@@ -2144,7 +2152,8 @@ def validate_and_cap_exercise_parameters(
     fitness_level: str = "intermediate",
     age: int = None,
     is_comeback: bool = False,
-    rep_preferences: dict = None
+    rep_preferences: dict = None,
+    difficulty: str = None
 ) -> List[dict]:
     """
     Validate and cap exercise parameters to prevent extreme workouts.
@@ -2163,6 +2172,8 @@ def validate_and_cap_exercise_parameters(
             - min_sets_per_exercise: User's min sets preference
             - enforce_rep_ceiling: Whether to strictly enforce max_reps
             - max_reps: User's max reps ceiling (only used if enforce_rep_ceiling is True)
+        difficulty: Workout difficulty level ('easy', 'medium', 'hard', 'hell').
+            Hell mode skips age-based weight reduction since users accept the risk.
 
     Returns:
         Exercises with capped reps, sets, and adjusted rest times
@@ -2175,9 +2186,17 @@ def validate_and_cap_exercise_parameters(
     if not exercises:
         return exercises
 
+    # Check if this is Hell mode - use higher caps for maximum intensity
+    is_hell_mode = difficulty and difficulty.lower() == "hell"
+
     # Get fitness level caps (default to intermediate if unknown)
-    caps = FITNESS_LEVEL_CAPS.get(fitness_level.lower() if fitness_level else "intermediate",
-                                   FITNESS_LEVEL_CAPS["intermediate"])
+    # For Hell mode, use HELL_MODE_CAPS instead of fitness level caps
+    if is_hell_mode:
+        caps = HELL_MODE_CAPS
+        logger.debug("[Hell Mode] Using elevated caps for maximum intensity workout")
+    else:
+        caps = FITNESS_LEVEL_CAPS.get(fitness_level.lower() if fitness_level else "intermediate",
+                                       FITNESS_LEVEL_CAPS["intermediate"])
 
     # Get user's sets preferences (with defaults)
     user_max_sets = ABSOLUTE_MAX_SETS  # Default to absolute max
@@ -2258,7 +2277,8 @@ def validate_and_cap_exercise_parameters(
         capped_rest = max(original_rest, caps["min_rest"], ABSOLUTE_MIN_REST)
 
         # Step 2: Apply age-based caps for all age brackets
-        if age and age >= 18:
+        # SKIP for Hell mode - users explicitly chose maximum intensity and accepted the risk
+        if age and age >= 18 and not is_hell_mode:
             age_bracket = get_age_bracket_from_age(age)
             age_limits = AGE_CAPS[age_bracket]
 
@@ -2281,6 +2301,12 @@ def validate_and_cap_exercise_parameters(
                         f"{original_weight}kg -> {validated_ex['weight_kg']}kg "
                         f"(age={age}, intensity_ceiling={age_limits['intensity_ceiling']})"
                     )
+        elif age and age >= 18 and is_hell_mode:
+            logger.debug(
+                f"[Hell Mode] Skipping ALL age-based caps for {ex.get('name', 'Unknown')}: "
+                f"sets={original_sets}, reps={original_reps}, weight={validated_ex.get('weight_kg')}kg "
+                f"(difficulty=hell, age={age})"
+            )
 
         # Step 3: Apply comeback reduction (returning from break)
         if is_comeback:

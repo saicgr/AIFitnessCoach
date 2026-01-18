@@ -276,6 +276,7 @@ async def generate_quick_workout(request: QuickWorkoutRequest):
             exercises = validate_and_cap_exercise_parameters(
                 exercises=exercises,
                 fitness_level=fitness_level,
+                difficulty=difficulty,
             )
 
             if not exercises:

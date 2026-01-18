@@ -363,9 +363,10 @@ async def generate_workout(request: GenerateWorkoutRequest):
                     exercises=exercises,
                     fitness_level=fitness_level or "intermediate",
                     age=user_age,
-                    is_comeback=is_comeback
+                    is_comeback=is_comeback,
+                    difficulty=intensity_preference
                 )
-                logger.info(f"🛡️ [Safety] Validated exercise parameters (fitness={fitness_level}, age={user_age}, comeback={is_comeback})")
+                logger.info(f"🛡️ [Safety] Validated exercise parameters (fitness={fitness_level}, age={user_age}, comeback={is_comeback}, difficulty={intensity_preference})")
 
                 # CRITICAL: Enforce user's set/rep limits as final validation
                 # This ensures AI-generated workouts NEVER exceed user preferences
@@ -666,9 +667,10 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                         exercises=exercises,
                         fitness_level=fitness_level or "intermediate",
                         age=user_age,
-                        is_comeback=is_comeback
+                        is_comeback=is_comeback,
+                        difficulty=intensity_preference
                     )
-                    logger.info(f"🛡️ [Streaming Safety] Validated exercise parameters (fitness={fitness_level}, age={user_age}, comeback={is_comeback})")
+                    logger.info(f"🛡️ [Streaming Safety] Validated exercise parameters (fitness={fitness_level}, age={user_age}, comeback={is_comeback}, difficulty={intensity_preference})")
 
                 # FOCUS AREA VALIDATION: Ensure exercises match the workout focus
                 # This catches AI hallucinations where exercise names don't match the workout type
@@ -967,9 +969,10 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
                         exercises=exercises,
                         fitness_level=fitness_level or "intermediate",
                         age=user_age,
-                        is_comeback=is_comeback
+                        is_comeback=is_comeback,
+                        difficulty=params["intensity_preference"]
                     )
-                    logger.info(f"🛡️ [Mood Safety] Validated exercise parameters (fitness={fitness_level}, age={user_age}, comeback={is_comeback})")
+                    logger.info(f"🛡️ [Mood Safety] Validated exercise parameters (fitness={fitness_level}, age={user_age}, comeback={is_comeback}, difficulty={params['intensity_preference']})")
 
                     # CRITICAL: Validate set_targets - FAIL if missing (no fallback)
                     user_context = {
@@ -2117,7 +2120,8 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                     exercises=exercises,
                     fitness_level=fitness_level or "intermediate",
                     age=user_age,
-                    is_comeback=is_comeback
+                    is_comeback=is_comeback,
+                    difficulty=intensity_preference
                 )
 
                 # CRITICAL: Enforce user's set/rep limits as final validation
@@ -2644,7 +2648,8 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                         exercises=exercises,
                         fitness_level=fitness_level or "intermediate",
                         age=user_age,
-                        is_comeback=is_comeback
+                        is_comeback=is_comeback,
+                        difficulty=intensity_preference
                     )
 
                     # CRITICAL: Validate set_targets - FAIL if missing (no fallback)
@@ -3034,7 +3039,8 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                             exercises=exercises,
                             fitness_level=fitness_level or "intermediate",
                             age=user_age,
-                            is_comeback=is_comeback
+                            is_comeback=is_comeback,
+                            difficulty=intensity_preference
                         )
 
                         # CRITICAL: Validate set_targets - FAIL if missing (no fallback)
@@ -3472,7 +3478,8 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                         exercises=exercises,
                         fitness_level=fitness_level or "intermediate",
                         age=user_age,
-                        is_comeback=is_comeback
+                        is_comeback=is_comeback,
+                        difficulty=intensity_preference
                     )
 
                     # Enforce user's set/rep limits
@@ -3554,7 +3561,8 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                         exercises=exercises,
                         fitness_level=fitness_level or "intermediate",
                         age=user_age,
-                        is_comeback=is_comeback
+                        is_comeback=is_comeback,
+                        difficulty=intensity_preference
                     )
 
                     # CRITICAL: Validate set_targets - FAIL if missing (no fallback)

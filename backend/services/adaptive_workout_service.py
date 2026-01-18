@@ -1090,6 +1090,16 @@ class AdaptiveWorkoutService:
             "muscle_group": "Full Body",
             "equipment": "Bodyweight",
             "notes": "AMRAP - As Many Reps As Possible in 60 seconds. Push yourself!",
+            "set_targets": [
+                {
+                    "set_number": 1,
+                    "set_type": "amrap",
+                    "target_reps": 0,  # AMRAP - no fixed reps
+                    "target_weight_kg": 0,  # Bodyweight
+                    "target_rpe": 10,  # Max effort
+                    "target_rir": 0,  # Go to failure
+                }
+            ],
         }
 
     def should_use_drop_sets(

@@ -156,6 +156,12 @@ class FastingSettingsNotifier extends StateNotifier<FastingSettingsState> {
       debugPrint('❌ Error saving fasting settings: $e');
     }
   }
+
+  /// Refresh settings from backend (call after onboarding or user data update)
+  Future<void> refresh() async {
+    state = state.copyWith(isLoading: true);
+    await _loadSettings();
+  }
 }
 
 /// The nutrition and fasting settings section.

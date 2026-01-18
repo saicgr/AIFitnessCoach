@@ -429,6 +429,88 @@ class TestIntegrationScenarios:
         assert result[0]["reps"] == 20
         assert result[0]["weight_kg"] == 100  # No intensity reduction
 
+    def test_hell_mode_skips_all_age_based_caps(self):
+        """Hell mode should skip ALL age-based caps (sets, reps, weight) since user accepted the risk."""
+        exercises = [
+            {"name": "Barbell Squat", "sets": 5, "reps": 15, "rest_seconds": 45, "weight_kg": 100},
+            {"name": "Deadlift", "sets": 6, "reps": 12, "rest_seconds": 45, "weight_kg": 120},
+        ]
+
+        # Test with a 50-year-old (middle-aged)
+        # Normal caps for middle-aged: max_reps=16, max_sets=4, intensity_ceiling=0.85
+        result = validate_and_cap_exercise_parameters(
+            exercises=exercises,
+            fitness_level="advanced",
+            age=50,
+            is_comeback=False,
+            difficulty="hell"
+        )
+
+        # Hell mode should preserve ALL original values - no age-based reductions
+        assert result[0]["sets"] == 5, "Hell mode should skip age-based sets cap"
+        assert result[0]["reps"] == 15, "Hell mode should skip age-based reps cap"
+        assert result[0]["weight_kg"] == 100, "Hell mode should skip age-based weight reduction"
+
+        assert result[1]["sets"] == 6, "Hell mode should allow 6 sets (HELL_MODE_CAPS)"
+        assert result[1]["reps"] == 12, "Hell mode should skip age-based reps cap"
+        assert result[1]["weight_kg"] == 120, "Hell mode should skip age-based weight reduction"
+
+    def test_hell_mode_vs_normal_mode_full_comparison(self):
+        """Compare Hell mode vs normal mode to verify all parameters are preserved."""
+        # Exercise with high sets/reps that would normally be capped
+        exercises = [
+            {"name": "Bench Press", "sets": 5, "reps": 15, "rest_seconds": 45, "weight_kg": 80},
+        ]
+
+        # Normal mode for 45-year-old (middle-aged)
+        # Age caps: max_sets=4, max_reps=16, intensity_ceiling=0.85
+        normal_result = validate_and_cap_exercise_parameters(
+            exercises=[{"name": "Bench Press", "sets": 5, "reps": 15, "rest_seconds": 45, "weight_kg": 80}],
+            fitness_level="intermediate",
+            age=45,
+            is_comeback=False,
+            difficulty="medium"
+        )
+
+        # Hell mode for same 45-year-old
+        hell_result = validate_and_cap_exercise_parameters(
+            exercises=[{"name": "Bench Press", "sets": 5, "reps": 15, "rest_seconds": 45, "weight_kg": 80}],
+            fitness_level="intermediate",
+            age=45,
+            is_comeback=False,
+            difficulty="hell"
+        )
+
+        # Normal mode should have reduced sets (5 -> 4 from age cap) and weight (80 * 0.85 = 68)
+        assert normal_result[0]["sets"] == 4, "Normal mode should apply age-based sets cap"
+        assert normal_result[0]["weight_kg"] == 68.0, "Normal mode should apply age-based weight reduction"
+
+        # Hell mode should preserve ALL original values
+        assert hell_result[0]["sets"] == 5, "Hell mode should NOT apply age-based sets cap"
+        assert hell_result[0]["reps"] == 15, "Hell mode should NOT apply age-based reps cap"
+        assert hell_result[0]["weight_kg"] == 80, "Hell mode should NOT apply age-based weight reduction"
+
+    def test_hell_mode_uses_elevated_caps(self):
+        """Hell mode should use HELL_MODE_CAPS instead of fitness level caps."""
+        # Exercise with very high sets that would exceed even advanced caps
+        exercises = [
+            {"name": "Squat", "sets": 6, "reps": 18, "rest_seconds": 30, "weight_kg": 100},
+        ]
+
+        # Beginner in Hell mode - normally beginner is capped at 3 sets, 12 reps
+        result = validate_and_cap_exercise_parameters(
+            exercises=exercises,
+            fitness_level="beginner",
+            age=25,  # Young adult, no age caps
+            is_comeback=False,
+            difficulty="hell"
+        )
+
+        # Hell mode caps: max_sets=6, max_reps=20
+        # Should use Hell mode caps, not beginner caps
+        assert result[0]["sets"] == 6, "Hell mode should allow 6 sets (not beginner's 3)"
+        assert result[0]["reps"] == 18, "Hell mode should allow 18 reps (not beginner's 12)"
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

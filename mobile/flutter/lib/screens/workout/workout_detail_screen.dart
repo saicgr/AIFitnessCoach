@@ -215,6 +215,73 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
 
   /// Create superset from two exercise indices (via drag-drop or menu)
   void _createSuperset(int firstIndex, int secondIndex) {
+    final exercise1 = _workout!.exercises[firstIndex];
+    final exercise2 = _workout!.exercises[secondIndex];
+
+    // Check if either exercise is already in a superset
+    if (exercise1.isInSuperset || exercise2.isInSuperset) {
+      HapticService.error();
+      _showSupersetWarningDialog(exercise1, exercise2);
+      return;
+    }
+
+    _performCreateSuperset(firstIndex, secondIndex);
+  }
+
+  /// Show warning dialog when trying to superset exercises that are already grouped
+  Future<void> _showSupersetWarningDialog(
+    WorkoutExercise exercise1,
+    WorkoutExercise exercise2,
+  ) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
+    String warningMessage;
+    if (exercise1.isInSuperset && exercise2.isInSuperset) {
+      warningMessage = 'Both "${exercise1.name}" and "${exercise2.name}" are already in supersets.\n\nBreak the existing supersets first to create a new pairing.';
+    } else if (exercise1.isInSuperset) {
+      warningMessage = '"${exercise1.name}" is already in a superset.\n\nBreak the existing superset first or choose a different exercise.';
+    } else {
+      warningMessage = '"${exercise2.name}" is already in a superset.\n\nBreak the existing superset first or choose a different exercise.';
+    }
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 24),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Already in Superset',
+                style: TextStyle(color: textPrimary, fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          warningMessage,
+          style: TextStyle(color: textPrimary.withOpacity(0.8)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+
+    // Clear pending state
+    setState(() => _pendingSupersetIndex = null);
+  }
+
+  /// Actually create the superset (called after validation passes)
+  void _performCreateSuperset(int firstIndex, int secondIndex) {
     HapticService.medium();
 
     // Find next available group number
@@ -401,7 +468,14 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
 
   /// Build exercise card widget (used for both single and superset exercises)
   /// [reorderIndex] is the index within the SliverReorderableList for drag handle reordering
-  Widget _buildExerciseCard(WorkoutExercise exercise, int index, Color accentColor, {int? reorderIndex}) {
+  Widget _buildExerciseCard(
+    WorkoutExercise exercise,
+    int index,
+    Color accentColor, {
+    int? reorderIndex,
+    bool isPendingPair = false,
+    void Function(int draggedIndex)? onSupersetDrop,
+  }) {
     return ExpandedExerciseCard(
       key: ValueKey(exercise.id ?? index),
       exercise: exercise,
@@ -409,6 +483,8 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       workoutId: widget.workoutId,
       initiallyExpanded: false,
       reorderIndex: reorderIndex,
+      isPendingPair: isPendingPair,
+      onSupersetDrop: exercise.isInSuperset ? null : onSupersetDrop,
       onTap: () {
         debugPrint('🎯 [WorkoutDetail] Exercise tapped: ${exercise.name}');
         context.push('/exercise-detail', extra: exercise);
@@ -865,7 +941,8 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 );
               }
 
-              // ─── SINGLE EXERCISE WITH DRAG-TO-SUPERSET ───
+              // ─── SINGLE EXERCISE ───
+              // Drag strip handles both reordering (short drag) and superset creation (long-press drag)
               final exerciseIndex = item.singleIndex!;
               final exercise = exercises[exerciseIndex];
               final isPendingPair = _pendingSupersetIndex == exerciseIndex;
@@ -879,51 +956,19 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                   curve: AppAnimations.fastOut,
                   child: FadeInAnimation(
                     curve: AppAnimations.fastOut,
-                    child: DragTarget<int>(
-                      onWillAcceptWithDetails: (details) =>
-                          details.data != exerciseIndex && !exercise.isInSuperset,
-                      onAcceptWithDetails: (details) =>
-                          _createSuperset(details.data, exerciseIndex),
-                      builder: (context, candidateData, rejectedData) {
-                        final isDropTarget = candidateData.isNotEmpty;
-
-                        return LongPressDraggable<int>(
-                          data: exerciseIndex,
-                          delay: const Duration(milliseconds: 200),
-                          feedback: Material(
-                            elevation: 8,
-                            borderRadius: BorderRadius.circular(12),
-                            child: SizedBox(
-                              width: MediaQuery.of(context).size.width - 64,
-                              child: Opacity(
-                                opacity: 0.9,
-                                child: _buildExerciseCard(exercise, exerciseIndex, accentColor),
-                              ),
-                            ),
-                          ),
-                          childWhenDragging: Opacity(
-                            opacity: 0.3,
-                            child: _buildExerciseCard(exercise, exerciseIndex, accentColor, reorderIndex: index),
-                          ),
-                          onDragStarted: () => HapticService.light(),
-                          child: GestureDetector(
-                            onTap: _pendingSupersetIndex != null &&
-                                    _pendingSupersetIndex != exerciseIndex
-                                ? () => _createSuperset(_pendingSupersetIndex!, exerciseIndex)
-                                : null,
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                border: (isDropTarget || isPendingPair)
-                                    ? Border.all(color: accentColor, width: 2)
-                                    : null,
-                              ),
-                              child: _buildExerciseCard(exercise, exerciseIndex, accentColor, reorderIndex: index),
-                            ),
-                          ),
-                        );
-                      },
+                    child: GestureDetector(
+                      onTap: _pendingSupersetIndex != null &&
+                              _pendingSupersetIndex != exerciseIndex
+                          ? () => _createSuperset(_pendingSupersetIndex!, exerciseIndex)
+                          : null,
+                      child: _buildExerciseCard(
+                        exercise,
+                        exerciseIndex,
+                        accentColor,
+                        reorderIndex: index,
+                        isPendingPair: isPendingPair,
+                        onSupersetDrop: (draggedIndex) => _createSuperset(draggedIndex, exerciseIndex),
+                      ),
                     ),
                   ),
                 ),

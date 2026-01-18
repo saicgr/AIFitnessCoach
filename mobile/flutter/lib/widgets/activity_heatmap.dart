@@ -104,7 +104,7 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
           GestureDetector(
             onTap: widget.onSearchTapped,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               decoration: BoxDecoration(
                 color: widget.isSearchActive
                     ? AppColors.cyan.withOpacity(0.2)
@@ -117,56 +117,44 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
                   width: 1,
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.search,
-                    size: 14,
-                    color: widget.isSearchActive
-                        ? AppColors.cyan
-                        : AppColors.textMuted,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Search',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: widget.isSearchActive
-                              ? AppColors.cyan
-                              : AppColors.textSecondary,
-                          fontWeight: widget.isSearchActive
-                              ? FontWeight.w600
-                              : FontWeight.normal,
-                          fontSize: 11,
-                        ),
-                  ),
-                ],
+              child: Icon(
+                Icons.search,
+                size: 14,
+                color: widget.isSearchActive
+                    ? AppColors.cyan
+                    : AppColors.textMuted,
               ),
             ),
           ),
         const Spacer(),
-        // Time range selector chips
-        Row(
-          children: HeatmapTimeRange.values.map((range) {
-            final isSelected = range == timeRange;
-            return Padding(
-              padding: const EdgeInsets.only(left: 4),
-              child: _TimeRangeChip(
-                label: range.label,
-                isSelected: isSelected,
-                onTap: () {
-                  ref.read(heatmapTimeRangeProvider.notifier).state = range;
-                  // Scroll to end when range changes
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (_scrollController.hasClients) {
-                      _scrollController
-                          .jumpTo(_scrollController.position.maxScrollExtent);
-                    }
-                  });
-                },
-              ),
-            );
-          }).toList(),
+        // Time range selector chips - wrapped in Flexible to prevent overflow
+        Flexible(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: HeatmapTimeRange.values.map((range) {
+                final isSelected = range == timeRange;
+                return Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: _TimeRangeChip(
+                    label: range.label,
+                    isSelected: isSelected,
+                    onTap: () {
+                      ref.read(heatmapTimeRangeProvider.notifier).state = range;
+                      // Scroll to end when range changes
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (_scrollController.hasClients) {
+                          _scrollController
+                              .jumpTo(_scrollController.position.maxScrollExtent);
+                        }
+                      });
+                    },
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
         ),
       ],
     );
