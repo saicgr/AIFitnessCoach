@@ -98,6 +98,17 @@ from models.cardio_session import (
     CardioSessionStatsResponse,
 )
 
+from models.gym_profile import (
+    GymProfileBase,
+    GymProfileCreate,
+    GymProfileUpdate,
+    GymProfile,
+    GymProfileWithStats,
+    ReorderProfilesRequest,
+    ActivateProfileResponse,
+    GymProfileListResponse,
+)
+
 # Workout models - kept here as they are the most complex and heavily used
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
@@ -163,6 +174,7 @@ class Workout(BaseModel):
 
 class GenerateWorkoutRequest(BaseModel):
     user_id: str = Field(..., max_length=100)
+    gym_profile_id: Optional[str] = Field(default=None, max_length=100, description="Gym profile ID to use for equipment/environment. If not provided, uses active profile or user defaults.")
     workout_type: Optional[str] = Field(default=None, max_length=50)
     duration_minutes: Optional[int] = Field(default=45, ge=1, le=480)
     duration_minutes_min: Optional[int] = Field(default=None, ge=1, le=480)

@@ -66,6 +66,7 @@ class XPGoalsSheet extends ConsumerWidget {
       initialChildSize: 0.85,
       minChildSize: 0.5,
       maxChildSize: 0.95,
+      expand: false,
       builder: (context, scrollController) => ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         child: BackdropFilter(
@@ -85,88 +86,95 @@ class XPGoalsSheet extends ConsumerWidget {
                 ),
               ),
             ),
-            child: Column(
-              children: [
-                const SizedBox(height: 12),
-                // Drag handle
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: textMuted.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-
-                // Header with close button
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
-                  child: Row(
+            child: CustomScrollView(
+              controller: scrollController,
+              slivers: [
+                // Drag handle and header as a pinned sliver
+                SliverToBoxAdapter(
+                  child: Column(
                     children: [
+                      const SizedBox(height: 12),
+                      // Drag handle
                       Container(
                         width: 40,
-                        height: 40,
+                        height: 4,
                         decoration: BoxDecoration(
-                          color: accentColor.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.bolt,
-                          color: accentColor,
-                          size: 22,
+                          color: textMuted.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+
+                      // Header with close button
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+                        child: Row(
                           children: [
-                            Text(
-                              'XP Goals',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: textColorStrong,
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: accentColor.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Icons.bolt,
+                                color: accentColor,
+                                size: 22,
                               ),
                             ),
-                            if (hasDoubleXP)
-                              Row(
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Icon(
-                                    Icons.bolt,
-                                    color: Colors.amber,
-                                    size: 12,
-                                  ),
-                                  const SizedBox(width: 3),
                                   Text(
-                                    '${multiplier.toInt()}x XP Active!',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.amber,
+                                    'XP Goals',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: textColorStrong,
                                     ),
                                   ),
+                                  if (hasDoubleXP)
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.bolt,
+                                          color: Colors.amber,
+                                          size: 12,
+                                        ),
+                                        const SizedBox(width: 3),
+                                        Text(
+                                          '${multiplier.toInt()}x XP Active!',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.amber,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                 ],
                               ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: Icon(Icons.close, color: textMutedStrong, size: 22),
+                            ),
                           ],
                         ),
                       ),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: Icon(Icons.close, color: textMutedStrong, size: 22),
-                      ),
+
+                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 8),
-
-                // Content - Scrollable with drag controller
-                Expanded(
-                  child: ListView(
-                    controller: scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: [
+                // Content
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
                       // Level Progress Section
                       _buildLevelProgressSection(
                         context,
@@ -250,7 +258,7 @@ class XPGoalsSheet extends ConsumerWidget {
 
                       // Bottom safe area padding
                       SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
-                    ],
+                    ]),
                   ),
                 ),
               ],
@@ -1432,32 +1440,71 @@ class _AllLevelsSheet extends StatelessWidget {
   ) {
     final titleColor = _getTitleColor(level.title);
 
+    // Get reward color based on type
+    Color getRewardColor() {
+      if (level.reward == null) return Colors.grey;
+      if (level.reward!.contains('Crate') || level.reward!.contains('crate')) {
+        if (level.reward!.contains('Diamond')) return const Color(0xFF00BCD4);
+        if (level.reward!.contains('Legendary')) return const Color(0xFFFF9800);
+        if (level.reward!.contains('Fitness')) return const Color(0xFF4CAF50);
+        return const Color(0xFF9C27B0);
+      }
+      if (level.reward!.contains('Frame')) return const Color(0xFFFFD700);
+      if (level.reward!.contains('Badge')) return titleColor;
+      if (level.reward!.contains('Theme')) return const Color(0xFF9C27B0);
+      if (level.reward!.contains('T-Shirt') || level.reward!.contains('Hoodie') || level.reward!.contains('Shaker')) {
+        return const Color(0xFFE91E63);
+      }
+      if (level.reward!.contains('XP')) return const Color(0xFFFFC107);
+      if (level.reward!.contains('Shield')) return const Color(0xFF2196F3);
+      if (level.reward!.contains('Token')) return const Color(0xFF9C27B0);
+      return accentColor;
+    }
+
+    final rewardColor = getRewardColor();
+
+    // Milestone levels get special treatment
+    final isBigMilestone = level.level == 10 || level.level == 25 || level.level == 50 ||
+                           level.level == 75 || level.level == 100;
+
     // Stronger colors for light mode visibility
     final cardBackground = isCurrentLevel
         ? accentColor.withValues(alpha: isDark ? 0.15 : 0.12)
         : isCompleted
             ? AppColors.green.withValues(alpha: isDark ? 0.08 : 0.1)
-            : isDark ? cardBg : Colors.grey.shade100;
+            : isBigMilestone
+                ? rewardColor.withValues(alpha: isDark ? 0.08 : 0.06)
+                : isDark ? cardBg : Colors.grey.shade100;
     final strongBorder = isCurrentLevel
         ? accentColor.withValues(alpha: isDark ? 0.5 : 0.6)
         : isCompleted
             ? AppColors.green.withValues(alpha: isDark ? 0.3 : 0.4)
-            : isDark ? borderColor : Colors.grey.shade300;
+            : isBigMilestone
+                ? rewardColor.withValues(alpha: isDark ? 0.4 : 0.5)
+                : isDark ? borderColor : Colors.grey.shade300;
     final badgeColor = isCompleted || isCurrentLevel
         ? null
-        : (isDark ? textMuted.withValues(alpha: 0.2) : Colors.grey.shade300);
+        : isBigMilestone
+            ? null
+            : (isDark ? textMuted.withValues(alpha: 0.2) : Colors.grey.shade300);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.all(isBigMilestone ? 14 : 12),
       decoration: BoxDecoration(
         color: cardBackground,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: strongBorder,
-          width: isCurrentLevel ? 2 : 1.5,
+          width: isCurrentLevel ? 2.5 : isBigMilestone ? 2 : 1.5,
         ),
-        boxShadow: isDark ? null : [
+        boxShadow: isBigMilestone ? [
+          BoxShadow(
+            color: rewardColor.withValues(alpha: isDark ? 0.2 : 0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ] : isDark ? null : [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 4,
@@ -1465,115 +1512,228 @@ class _AllLevelsSheet extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Level number badge
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: isCompleted || isCurrentLevel
-                  ? LinearGradient(
-                      colors: [
-                        isCurrentLevel ? accentColor : titleColor,
-                        (isCurrentLevel ? accentColor : titleColor).withValues(alpha: 0.7),
-                      ],
-                    )
-                  : null,
-              color: badgeColor,
-            ),
-            child: Center(
-              child: isCompleted && !isCurrentLevel
-                  ? const Icon(Icons.check, color: Colors.white, size: 20)
-                  : Text(
-                      level.level.toString(),
-                      style: TextStyle(
-                        fontSize: level.level >= 100 ? 12 : 14,
-                        fontWeight: FontWeight.bold,
-                        color: isCurrentLevel || isCompleted
-                            ? Colors.white
-                            : (isDark ? textMuted : Colors.grey.shade600),
-                      ),
+          Row(
+            children: [
+              // Level number badge
+              Container(
+                width: isBigMilestone ? 50 : 44,
+                height: isBigMilestone ? 50 : 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: isCompleted || isCurrentLevel || isBigMilestone
+                      ? LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: isCurrentLevel
+                              ? [accentColor, accentColor.withValues(alpha: 0.7)]
+                              : isCompleted
+                                  ? [titleColor, titleColor.withValues(alpha: 0.7)]
+                                  : [rewardColor, rewardColor.withValues(alpha: 0.7)],
+                        )
+                      : null,
+                  color: badgeColor,
+                  boxShadow: isBigMilestone ? [
+                    BoxShadow(
+                      color: rewardColor.withValues(alpha: 0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // Level info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      level.title,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: titleColor,
-                      ),
-                    ),
-                    if (isCurrentLevel) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: accentColor,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          'YOU',
+                  ] : null,
+                ),
+                child: Center(
+                  child: isCompleted && !isCurrentLevel
+                      ? const Icon(Icons.check, color: Colors.white, size: 22)
+                      : Text(
+                          level.level.toString(),
                           style: TextStyle(
-                            fontSize: 8,
+                            fontSize: level.level >= 100 ? 14 : isBigMilestone ? 18 : 15,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: isCurrentLevel || isCompleted || isBigMilestone
+                                ? Colors.white
+                                : (isDark ? textMuted : Colors.grey.shade600),
                           ),
                         ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Level info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          level.title,
+                          style: TextStyle(
+                            fontSize: isBigMilestone ? 15 : 13,
+                            fontWeight: FontWeight.w600,
+                            color: titleColor,
+                          ),
+                        ),
+                        if (isCurrentLevel) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: accentColor,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'YOU',
+                              style: TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (isBigMilestone && !isCurrentLevel) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Colors.amber.shade400, Colors.orange.shade400],
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.star, size: 10, color: Colors.white),
+                                const SizedBox(width: 2),
+                                Text(
+                                  level.level == 100 ? 'LEGENDARY' : 'MILESTONE',
+                                  style: const TextStyle(
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${_formatNumber(level.xpRequired)} XP to next level',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark ? textMuted : Colors.black54,
                       ),
-                    ],
+                    ),
                   ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  '${_formatNumber(level.xpRequired)} XP to next level',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isDark ? textMuted : Colors.black54,
+              ),
+
+              // Reward icon for non-milestone
+              if (level.reward != null && !isBigMilestone)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: rewardColor.withValues(alpha: isDark ? 0.15 : 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: rewardColor.withValues(alpha: isDark ? 0.3 : 0.25),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (level.rewardIcon != null)
+                        Text(level.rewardIcon!, style: const TextStyle(fontSize: 14)),
+                    ],
                   ),
                 ),
-              ],
-            ),
+            ],
           ),
 
-          // Reward
-          if (level.reward != null)
+          // Full reward details for milestone levels
+          if (level.reward != null && isBigMilestone) ...[
+            const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: level.isMilestone
-                    ? Colors.amber.withValues(alpha: isDark ? 0.15 : 0.2)
-                    : (isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade200),
-                borderRadius: BorderRadius.circular(8),
-                border: isDark ? null : Border.all(
-                  color: level.isMilestone
-                      ? Colors.amber.withValues(alpha: 0.3)
-                      : Colors.grey.shade300,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    rewardColor.withValues(alpha: isDark ? 0.2 : 0.15),
+                    rewardColor.withValues(alpha: isDark ? 0.1 : 0.08),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: rewardColor.withValues(alpha: isDark ? 0.3 : 0.25),
                 ),
               ),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (level.rewardIcon != null) ...[
-                    Text(level.rewardIcon!, style: const TextStyle(fontSize: 12)),
-                    const SizedBox(width: 4),
-                  ],
-                  if (level.isMilestone)
-                    const Icon(Icons.star, size: 10, color: Colors.amber),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: rewardColor.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Text(
+                        level.rewardIcon ?? '🎁',
+                        style: const TextStyle(fontSize: 22),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'REWARD',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            color: rewardColor,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          level.reward!,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? textColor : Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!isCompleted)
+                    Icon(
+                      Icons.lock_outline,
+                      size: 18,
+                      color: textMuted.withValues(alpha: 0.5),
+                    ),
+                  if (isCompleted)
+                    const Icon(
+                      Icons.check_circle,
+                      size: 18,
+                      color: AppColors.green,
+                    ),
                 ],
               ),
             ),
+          ],
         ],
       ),
     );

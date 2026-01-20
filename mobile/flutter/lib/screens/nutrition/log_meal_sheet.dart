@@ -108,10 +108,6 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
   final _descriptionController = TextEditingController();
   bool _hasScanned = false;
 
-  // Restaurant mode state - shows confidence ranges instead of exact values
-  bool _restaurantMode = false;
-  LogFoodResponse? _pendingFoodLog; // Holds analyzed food when restaurant mode needs portion selection
-
   @override
   void initState() {
     super.initState();
@@ -262,15 +258,6 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
           return;
         }
 
-        if (_restaurantMode) {
-          debugPrint('🍽️ [LogMeal] Restaurant mode - showing portion selector');
-          // Show portion selector instead of confirmation dialog
-          setState(() {
-            _pendingFoodLog = response;
-          });
-          return;
-        }
-
         // Show rainbow confirmation dialog for user to review with portion editing
         // Extract food names from the response for display
         final detectedFoodNames = response.foodItems.isNotEmpty
@@ -345,7 +332,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
       return;
     }
 
-    debugPrint('📝 [LogMeal] _logFromText started | description="$description" | mealType=${_selectedMealType.value} | restaurantMode=$_restaurantMode');
+    debugPrint('📝 [LogMeal] _logFromText started | description="$description" | mealType=${_selectedMealType.value}');
 
     // Check guest limits for text describe
     final isGuest = ref.read(isGuestModeProvider);
@@ -431,15 +418,6 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
           debugPrint('⚠️ [LogMeal] Empty text response - no food detected');
           setState(() {
             _error = 'Could not analyze "$description". Please try a more specific food description.';
-          });
-          return;
-        }
-
-        if (_restaurantMode) {
-          debugPrint('🍽️ [LogMeal] Restaurant mode - showing portion selector');
-          // Show portion selector instead of confirmation dialog
-          setState(() {
-            _pendingFoodLog = response;
           });
           return;
         }
@@ -534,102 +512,6 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
     Navigator.pop(context);
     _showSuccessSnackbar(response.totalCalories);
     ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
-  }
-
-  /// Log food with portion size multiplier (for restaurant mode)
-  Future<void> _logWithPortion(double portionMultiplier) async {
-    if (_pendingFoodLog == null) {
-      debugPrint('🍽️ [LogMeal] _logWithPortion called but _pendingFoodLog is null');
-      return;
-    }
-
-    debugPrint('🍽️ [LogMeal] _logWithPortion started | portionMultiplier=$portionMultiplier | originalCalories=${_pendingFoodLog!.totalCalories}');
-
-    setState(() {
-      _isLoading = true;
-      _progressMessage = 'Logging meal...';
-    });
-
-    try {
-      final repository = ref.read(nutritionRepositoryProvider);
-
-      // Create adjusted food items with multiplied nutrition
-      final adjustedItems = _pendingFoodLog!.foodItems.map((item) {
-        final adjustedCalories = ((item['calories'] ?? 0) * portionMultiplier).round();
-        final adjustedProtein = ((item['protein_g'] ?? 0) * portionMultiplier).round();
-        final adjustedCarbs = ((item['carbs_g'] ?? 0) * portionMultiplier).round();
-        final adjustedFat = ((item['fat_g'] ?? 0) * portionMultiplier).round();
-
-        return {
-          ...item,
-          'calories': adjustedCalories,
-          'protein_g': adjustedProtein,
-          'carbs_g': adjustedCarbs,
-          'fat_g': adjustedFat,
-          'portion_adjusted': true,
-          'portion_multiplier': portionMultiplier,
-        };
-      }).toList();
-
-      // Calculate new totals
-      final adjustedCalories = (_pendingFoodLog!.totalCalories * portionMultiplier).round();
-      final adjustedProtein = (_pendingFoodLog!.proteinG * portionMultiplier).round();
-      final adjustedCarbs = (_pendingFoodLog!.carbsG * portionMultiplier).round();
-      final adjustedFat = (_pendingFoodLog!.fatG * portionMultiplier).round();
-
-      // Calculate adjusted micronutrients (apply portion multiplier)
-      double? adjustMicro(double? value) =>
-          value != null ? value * portionMultiplier : null;
-
-      // Log the adjusted food with micronutrients
-      await repository.logAdjustedFood(
-        userId: widget.userId,
-        mealType: _selectedMealType.value,
-        foodItems: adjustedItems,
-        totalCalories: adjustedCalories,
-        totalProtein: adjustedProtein,
-        totalCarbs: adjustedCarbs,
-        totalFat: adjustedFat,
-        sourceType: 'restaurant',
-        notes: 'Portion: ${_getPortionLabel(portionMultiplier)}',
-        // Pass micronutrients from the analysis (with portion adjustment)
-        sodiumMg: adjustMicro(_pendingFoodLog!.sodiumMg),
-        sugarG: adjustMicro(_pendingFoodLog!.sugarG),
-        saturatedFatG: adjustMicro(_pendingFoodLog!.saturatedFatG),
-        cholesterolMg: adjustMicro(_pendingFoodLog!.cholesterolMg),
-        potassiumMg: adjustMicro(_pendingFoodLog!.potassiumMg),
-        vitaminAUg: adjustMicro(_pendingFoodLog!.vitaminAIu != null
-            ? _pendingFoodLog!.vitaminAIu! * 0.3
-            : null), // Convert IU to ug
-        vitaminCMg: adjustMicro(_pendingFoodLog!.vitaminCMg),
-        vitaminDIu: adjustMicro(_pendingFoodLog!.vitaminDIu),
-        calciumMg: adjustMicro(_pendingFoodLog!.calciumMg),
-        ironMg: adjustMicro(_pendingFoodLog!.ironMg),
-      );
-
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _pendingFoodLog = null;
-        });
-        Navigator.pop(context);
-        _showSuccessSnackbar(adjustedCalories);
-        ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _error = e.toString();
-        });
-      }
-    }
-  }
-
-  String _getPortionLabel(double multiplier) {
-    if (multiplier <= 0.75) return 'Light portion';
-    if (multiplier >= 1.25) return 'Large portion';
-    return 'Typical portion';
   }
 
   /// Show dialog to ask user if they want to end their fast
@@ -1123,80 +1005,6 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
     });
   }
 
-  void _showRestaurantModeInfo(BuildContext context, bool isDark) {
-    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: nearBlack,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.restaurant, color: orange, size: 24),
-            const SizedBox(width: 12),
-            Text(
-              'Restaurant Mode',
-              style: TextStyle(
-                color: textPrimary,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Restaurant portions can vary significantly from typical serving sizes.',
-              style: TextStyle(color: textPrimary, fontSize: 14, height: 1.4),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'When enabled:',
-              style: TextStyle(color: textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
-            ),
-            const SizedBox(height: 8),
-            _buildInfoBullet('Choose portion size after analysis', textMuted),
-            _buildInfoBullet('Pick from lighter, typical, or generous portions', textMuted),
-            _buildInfoBullet('Nutrition values adjust based on your selection', textMuted),
-            const SizedBox(height: 16),
-            Text(
-              'Use this when eating out to get more accurate logging.',
-              style: TextStyle(color: textMuted, fontSize: 13, fontStyle: FontStyle.italic),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Got it', style: TextStyle(color: orange, fontWeight: FontWeight.w600)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoBullet(String text, Color textColor) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('  •  ', style: TextStyle(color: textColor, fontSize: 14)),
-          Expanded(
-            child: Text(text, style: TextStyle(color: textColor, fontSize: 13)),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
@@ -1211,18 +1019,24 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
 
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     final screenHeight = MediaQuery.of(context).size.height;
+    final keyboardVisible = keyboardHeight > 0;
 
-    // Sheet takes 85% of screen height, keyboard padding handled separately
-    final sheetHeight = screenHeight * 0.85;
+    // When keyboard is visible, reduce sheet height to fit above keyboard
+    // Otherwise, sheet takes 85% of screen height
+    final sheetHeight = keyboardVisible
+        ? screenHeight - keyboardHeight - MediaQuery.of(context).padding.top - 20
+        : screenHeight * 0.85;
 
     return Padding(
-      // Push the entire sheet up when keyboard is visible
+      // Add bottom padding equal to keyboard height so sheet sits above keyboard
       padding: EdgeInsets.only(bottom: keyboardHeight),
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Container(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
             height: sheetHeight,
           decoration: BoxDecoration(
             color: isDark
@@ -1323,88 +1137,6 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
 
           const SizedBox(height: 12),
 
-          // Restaurant mode toggle
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: GestureDetector(
-              onTap: () {
-                debugPrint('🍽️ [LogMeal] Restaurant mode toggled | enabled=${!_restaurantMode}');
-                setState(() => _restaurantMode = !_restaurantMode);
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: _restaurantMode ? orange.withValues(alpha: 0.15) : elevated,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _restaurantMode ? orange : cardBorder,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.restaurant,
-                      size: 18,
-                      color: _restaurantMode ? orange : textMuted,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Restaurant Mode',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: _restaurantMode ? orange : textMuted,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    GestureDetector(
-                      onTap: () => _showRestaurantModeInfo(context, isDark),
-                      child: Icon(
-                        Icons.info_outline,
-                        size: 16,
-                        color: _restaurantMode ? orange : textMuted,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      width: 40,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        color: _restaurantMode ? orange : cardBorder,
-                        borderRadius: BorderRadius.circular(11),
-                      ),
-                      child: AnimatedAlign(
-                        duration: const Duration(milliseconds: 200),
-                        alignment: _restaurantMode ? Alignment.centerRight : Alignment.centerLeft,
-                        child: Container(
-                          width: 18,
-                          height: 18,
-                          margin: const EdgeInsets.symmetric(horizontal: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          if (_restaurantMode)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-              child: Text(
-                'Portions are estimated - pick the size that matches your meal',
-                style: TextStyle(fontSize: 11, color: textMuted),
-              ),
-            ),
-
-          const SizedBox(height: 12),
-
           // Tab bar
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -1466,18 +1198,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
               ),
             ),
 
-          // Restaurant portion selector
-          if (_pendingFoodLog != null && _restaurantMode)
-            Expanded(
-              child: _RestaurantPortionSelector(
-                foodLog: _pendingFoodLog!,
-                isDark: isDark,
-                onSelectPortion: _logWithPortion,
-                onCancel: () => setState(() => _pendingFoodLog = null),
-              ),
-            )
           // Loading indicator with streaming progress
-          else if (_isLoading)
+          if (_isLoading)
             Expanded(
               child: _FoodAnalysisLoadingIndicator(
                 currentStep: _currentStep,
@@ -5395,301 +5117,6 @@ class _MoodChip extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Restaurant Portion Selector - Shows min/typical/max portion options
-// ─────────────────────────────────────────────────────────────────
-
-class _RestaurantPortionSelector extends StatelessWidget {
-  final LogFoodResponse foodLog;
-  final bool isDark;
-  final void Function(double multiplier) onSelectPortion;
-  final VoidCallback onCancel;
-
-  const _RestaurantPortionSelector({
-    required this.foodLog,
-    required this.isDark,
-    required this.onSelectPortion,
-    required this.onCancel,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-
-    final baseCals = foodLog.totalCalories;
-    final baseProtein = foodLog.proteinG.round();
-    final baseCarbs = foodLog.carbsG.round();
-    final baseFat = foodLog.fatG.round();
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: orange.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(Icons.restaurant, color: orange, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Select Portion Size',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Restaurant portions vary - pick what matches yours',
-                      style: TextStyle(fontSize: 13, color: textMuted),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 8),
-
-          // Food name summary
-          if (foodLog.foodItems.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                foodLog.foodItems.map((f) => f['name'] ?? 'Food').join(', '),
-                style: TextStyle(
-                  fontSize: 14,
-                  color: textMuted,
-                  fontStyle: FontStyle.italic,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-
-          const SizedBox(height: 16),
-
-          // Portion options
-          _PortionOption(
-            title: 'Light Portion',
-            subtitle: 'Smaller than typical, lighter prep',
-            multiplier: 0.75,
-            calories: (baseCals * 0.75).round(),
-            protein: (baseProtein * 0.75).round(),
-            carbs: (baseCarbs * 0.75).round(),
-            fat: (baseFat * 0.75).round(),
-            icon: Icons.expand_less,
-            color: teal,
-            isDark: isDark,
-            onTap: () => onSelectPortion(0.75),
-          ),
-
-          const SizedBox(height: 12),
-
-          _PortionOption(
-            title: 'Typical Portion',
-            subtitle: 'Standard restaurant serving',
-            multiplier: 1.0,
-            calories: baseCals,
-            protein: baseProtein,
-            carbs: baseCarbs,
-            fat: baseFat,
-            icon: Icons.horizontal_rule,
-            color: orange,
-            isDark: isDark,
-            onTap: () => onSelectPortion(1.0),
-            isRecommended: true,
-          ),
-
-          const SizedBox(height: 12),
-
-          _PortionOption(
-            title: 'Large Portion',
-            subtitle: 'Generous serving, rich preparation',
-            multiplier: 1.25,
-            calories: (baseCals * 1.25).round(),
-            protein: (baseProtein * 1.25).round(),
-            carbs: (baseCarbs * 1.25).round(),
-            fat: (baseFat * 1.25).round(),
-            icon: Icons.expand_more,
-            color: isDark ? AppColors.purple : AppColorsLight.purple,
-            isDark: isDark,
-            onTap: () => onSelectPortion(1.25),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Cancel button
-          SizedBox(
-            width: double.infinity,
-            child: TextButton(
-              onPressed: onCancel,
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: textMuted),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PortionOption extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final double multiplier;
-  final int calories;
-  final int protein;
-  final int carbs;
-  final int fat;
-  final IconData icon;
-  final Color color;
-  final bool isDark;
-  final VoidCallback onTap;
-  final bool isRecommended;
-
-  const _PortionOption({
-    required this.title,
-    required this.subtitle,
-    required this.multiplier,
-    required this.calories,
-    required this.protein,
-    required this.carbs,
-    required this.fat,
-    required this.icon,
-    required this.color,
-    required this.isDark,
-    required this.onTap,
-    this.isRecommended = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: isRecommended ? color.withValues(alpha: 0.1) : elevated,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isRecommended ? color : cardBorder,
-              width: isRecommended ? 2 : 1,
-            ),
-          ),
-          child: Row(
-            children: [
-              // Icon
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(width: 16),
-
-              // Title and subtitle
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: textPrimary,
-                          ),
-                        ),
-                        if (isRecommended) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              'TYPICAL',
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                color: color,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: TextStyle(fontSize: 12, color: textMuted),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Calories
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '$calories',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                    ),
-                  ),
-                  Text(
-                    'cal',
-                    style: TextStyle(fontSize: 11, color: textMuted),
-                  ),
-                ],
-              ),
-            ],
-          ),
         ),
       ),
     );

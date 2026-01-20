@@ -112,10 +112,12 @@ async def generate_workout(request: GenerateWorkoutRequest):
     try:
         db = get_supabase_db()
         equipment_details = []  # Initialize to empty, may be populated from user data
+        gym_profile_id = None  # Track which profile this workout is generated for
 
         # Initialize new training customization fields
         primary_goal = None
         muscle_focus_points = None
+        training_split = None
 
         if request.fitness_level and request.goals and request.equipment:
             fitness_level = request.fitness_level
@@ -130,14 +132,51 @@ async def generate_workout(request: GenerateWorkoutRequest):
                 raise HTTPException(status_code=404, detail="User not found")
 
             fitness_level = request.fitness_level or user.get("fitness_level")
-            goals = request.goals or user.get("goals", [])
-            equipment = request.equipment or user.get("equipment", [])
-            equipment_details = user.get("equipment_details", [])  # Detailed equipment with quantities/weights
             preferences = parse_json_field(user.get("preferences"), {})
+
+            # Check for gym profile - load equipment/environment from profile if available
+            gym_profile = None
+            if request.gym_profile_id:
+                # Specific profile requested
+                profile_result = db.client.table("gym_profiles").select("*").eq("id", request.gym_profile_id).single().execute()
+                gym_profile = profile_result.data if profile_result.data else None
+                logger.info(f"🏋️ [GymProfile] Using requested profile: {request.gym_profile_id}")
+            else:
+                # Try to get active profile
+                try:
+                    active_result = db.client.table("gym_profiles").select("*").eq("user_id", request.user_id).eq("is_active", True).single().execute()
+                    gym_profile = active_result.data if active_result.data else None
+                    if gym_profile:
+                        logger.info(f"🏋️ [GymProfile] Using active profile: {gym_profile.get('name')} ({gym_profile.get('id')})")
+                except Exception:
+                    # No active profile found - will use user defaults
+                    pass
+
+            if gym_profile:
+                # Load settings from gym profile
+                gym_profile_id = gym_profile.get("id")
+                equipment = request.equipment or gym_profile.get("equipment") or []
+                equipment_details = gym_profile.get("equipment_details") or []
+                workout_environment = gym_profile.get("workout_environment") or preferences.get("workout_environment")
+                training_split = gym_profile.get("training_split")
+                profile_goals = gym_profile.get("goals") or []
+                goals = request.goals or profile_goals if profile_goals else user.get("goals", [])
+                focus_areas = gym_profile.get("focus_areas") or []
+
+                logger.info(f"🏋️ [GymProfile] Profile equipment: {len(equipment)} items")
+                logger.info(f"📍 [GymProfile] Environment: {workout_environment}")
+                if training_split:
+                    logger.info(f"📅 [GymProfile] Training split: {training_split}")
+            else:
+                # Fall back to user settings
+                goals = request.goals or user.get("goals", [])
+                equipment = request.equipment or user.get("equipment", [])
+                equipment_details = user.get("equipment_details", [])  # Detailed equipment with quantities/weights
+                workout_environment = preferences.get("workout_environment")
+
             # Use explicit intensity_preference if set, otherwise derive from fitness level
             # This ensures beginners get 'easy' difficulty, not 'medium'
             intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
-            workout_environment = preferences.get("workout_environment")
 
             # Get primary training goal and muscle focus points for workout customization
             primary_goal = user.get("primary_goal")
@@ -602,6 +641,7 @@ async def generate_workout(request: GenerateWorkoutRequest):
 
         workout_db_data = {
             "user_id": request.user_id,
+            "gym_profile_id": gym_profile_id,  # Link workout to gym profile
             "name": workout_name,
             "type": workout_type,
             "difficulty": difficulty,
@@ -613,7 +653,7 @@ async def generate_workout(request: GenerateWorkoutRequest):
         }
 
         created = db.create_workout(workout_db_data)
-        logger.info(f"Workout generated: id={created['id']}")
+        logger.info(f"Workout generated: id={created['id']}, gym_profile_id={gym_profile_id}")
 
         log_workout_change(
             workout_id=created['id'],
@@ -652,6 +692,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
 
     async def generate_sse() -> AsyncGenerator[str, None]:
         start_time = datetime.now()
+        gym_profile_id = None  # Track which profile this workout is generated for
 
         try:
             db = get_supabase_db()
@@ -670,9 +711,40 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     return
 
                 fitness_level = body.fitness_level or user.get("fitness_level")
-                goals = body.goals or user.get("goals", [])
-                equipment = body.equipment or user.get("equipment", [])
                 preferences = parse_json_field(user.get("preferences"), {})
+
+                # Check for gym profile - load equipment/environment from profile if available
+                gym_profile = None
+                if hasattr(body, 'gym_profile_id') and body.gym_profile_id:
+                    # Specific profile requested
+                    try:
+                        profile_result = db.client.table("gym_profiles").select("*").eq("id", body.gym_profile_id).single().execute()
+                        gym_profile = profile_result.data if profile_result.data else None
+                        logger.info(f"🏋️ [GymProfile] Using requested profile: {body.gym_profile_id}")
+                    except Exception:
+                        pass
+                else:
+                    # Try to get active profile
+                    try:
+                        active_result = db.client.table("gym_profiles").select("*").eq("user_id", body.user_id).eq("is_active", True).single().execute()
+                        gym_profile = active_result.data if active_result.data else None
+                        if gym_profile:
+                            logger.info(f"🏋️ [GymProfile] Using active profile: {gym_profile.get('name')} ({gym_profile.get('id')})")
+                    except Exception:
+                        pass
+
+                if gym_profile:
+                    # Load settings from gym profile
+                    gym_profile_id = gym_profile.get("id")
+                    equipment = body.equipment or gym_profile.get("equipment") or []
+                    profile_goals = gym_profile.get("goals") or []
+                    goals = body.goals or profile_goals if profile_goals else user.get("goals", [])
+                    logger.info(f"🏋️ [GymProfile] Profile equipment: {len(equipment)} items")
+                else:
+                    # Fall back to user settings
+                    goals = body.goals or user.get("goals", [])
+                    equipment = body.equipment or user.get("equipment", [])
+
                 # Use explicit intensity_preference if set, otherwise derive from fitness level
                 intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
 
@@ -907,6 +979,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             # Save to database
             workout_db_data = {
                 "user_id": body.user_id,
+                "gym_profile_id": gym_profile_id,  # Link workout to gym profile
                 "name": workout_name,
                 "type": workout_type,
                 "difficulty": difficulty,
@@ -920,7 +993,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             created = db.create_workout(workout_db_data)
             total_time_ms = (datetime.now() - start_time).total_seconds() * 1000
 
-            logger.info(f"✅ Streaming workout complete: {len(exercises)} exercises in {total_time_ms:.0f}ms")
+            logger.info(f"✅ Streaming workout complete: {len(exercises)} exercises in {total_time_ms:.0f}ms, gym_profile_id={gym_profile_id}")
 
             # Log the change
             log_workout_change(

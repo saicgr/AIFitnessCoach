@@ -45,6 +45,7 @@ class WorkoutDB(BaseDB):
         limit: int = 50,
         offset: int = 0,
         order_asc: bool = False,
+        gym_profile_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         List workouts for a user with filters.
@@ -58,11 +59,16 @@ class WorkoutDB(BaseDB):
             to_date: Filter workouts to this date (inclusive)
             limit: Maximum workouts to return
             offset: Number of workouts to skip
+            gym_profile_id: Filter by gym profile (optional)
 
         Returns:
             List of workout records
         """
         query = self.client.table("workouts").select("*").eq("user_id", user_id)
+
+        # Filter by gym profile if specified
+        if gym_profile_id:
+            query = query.eq("gym_profile_id", gym_profile_id)
 
         # Only show current workouts (filter out superseded versions from SCD2)
         query = query.eq("is_current", True)
@@ -182,6 +188,7 @@ class WorkoutDB(BaseDB):
         to_date: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
+        gym_profile_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         List only current (active) workouts for a user.
@@ -195,6 +202,7 @@ class WorkoutDB(BaseDB):
             to_date: Filter to date
             limit: Maximum results
             offset: Results to skip
+            gym_profile_id: Filter by gym profile (optional)
 
         Returns:
             List of current workout records
@@ -205,6 +213,10 @@ class WorkoutDB(BaseDB):
             .eq("user_id", user_id)
             .eq("is_current", True)
         )
+
+        # Filter by gym profile if specified
+        if gym_profile_id:
+            query = query.eq("gym_profile_id", gym_profile_id)
 
         if is_completed is not None:
             query = query.eq("is_completed", is_completed)

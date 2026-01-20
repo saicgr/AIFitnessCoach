@@ -60,17 +60,43 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
   TrophyCategory? _selectedCategory;
   late TabController _tabController;
 
-  final List<TrophyCategory> _categories = TrophyCategory.values;
+  // Simplified tabs: All, Fitness, Lifestyle, Special
+  static const List<String> _tabNames = ['All', 'Fitness', 'Lifestyle', 'Special'];
+
+  // Category groupings for tabs
+  static const Map<String, List<TrophyCategory>> _categoryGroups = {
+    'Fitness': [
+      TrophyCategory.exerciseMastery,
+      TrophyCategory.volume,
+      TrophyCategory.time,
+      TrophyCategory.personalRecords,
+      TrophyCategory.consistency,
+    ],
+    'Lifestyle': [
+      TrophyCategory.nutrition,
+      TrophyCategory.fasting,
+      TrophyCategory.bodyComposition,
+      TrophyCategory.social,
+    ],
+    'Special': [
+      TrophyCategory.aiCoach,
+      TrophyCategory.special,
+      TrophyCategory.worldRecord,
+    ],
+  };
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: _categories.length + 1, // +1 for "All" tab
+      length: _tabNames.length,
       vsync: this,
     );
     _tabController.addListener(_onTabChanged);
-    _loadData();
+    // Defer provider modification until after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
   }
 
   @override
@@ -82,15 +108,14 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
 
   void _onTabChanged() {
     if (_tabController.indexIsChanging) return;
-
-    setState(() {
-      if (_tabController.index == 0) {
-        _selectedCategory = null;
-      } else {
-        _selectedCategory = _categories[_tabController.index - 1];
-      }
-    });
+    setState(() {});
     HapticService.light();
+  }
+
+  List<TrophyCategory>? _getSelectedCategories() {
+    if (_tabController.index == 0) return null; // All
+    final tabName = _tabNames[_tabController.index];
+    return _categoryGroups[tabName];
   }
 
   Future<void> _loadData() async {
@@ -103,9 +128,10 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
   }
 
   List<TrophyProgress> _filterTrophies(List<TrophyProgress> trophies) {
-    // Filter by category
-    var filtered = _selectedCategory != null
-        ? trophies.where((t) => t.trophy.trophyCategory == _selectedCategory).toList()
+    // Filter by category group
+    final selectedCategories = _getSelectedCategories();
+    var filtered = selectedCategories != null
+        ? trophies.where((t) => selectedCategories.contains(t.trophy.trophyCategory)).toList()
         : trophies;
 
     // Filter by status
@@ -196,17 +222,9 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
             ),
           ),
 
-          // Category tabs
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _CategoryTabsDelegate(
-              tabController: _tabController,
-              categories: _categories,
-              isDark: isDark,
-              accentColor: accentColor,
-              bgColor: bgColor,
-              textMuted: textMuted,
-            ),
+          // Category tabs - styled container
+          SliverToBoxAdapter(
+            child: _buildCategoryTabs(isDark, elevatedColor, accentColor, textMuted, cardBorder),
           ),
 
           // Filter chips
@@ -285,7 +303,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
     final titleColor = Color(xpTitle.colorValue);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 100, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 70, 16, 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -454,6 +472,44 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryTabs(
+    bool isDark,
+    Color elevatedColor,
+    Color accentColor,
+    Color textMuted,
+    Color cardBorder,
+  ) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      decoration: BoxDecoration(
+        color: elevatedColor,
+        borderRadius: BorderRadius.circular(12),
+        border: isDark ? null : Border.all(color: cardBorder),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicator: BoxDecoration(
+          color: accentColor.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        labelColor: accentColor,
+        unselectedLabelColor: textMuted,
+        labelStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.normal,
+          fontSize: 14,
+        ),
+        dividerColor: Colors.transparent,
+        padding: const EdgeInsets.all(4),
+        tabs: _tabNames.map((name) => Tab(text: name)).toList(),
       ),
     );
   }
@@ -656,8 +712,8 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
     Color cardBorder,
     Color accentColor,
   ) {
-    // Group by category if showing all
-    if (_selectedCategory == null) {
+    // Group by category if showing "All" tab
+    if (_tabController.index == 0) {
       return _buildGroupedTrophyList(
         trophies,
         isDark,
@@ -669,7 +725,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
       );
     }
 
-    // Show flat list for specific category
+    // Show flat list for specific tab
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
@@ -702,35 +758,76 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
     Color cardBorder,
     Color accentColor,
   ) {
-    // Group trophies by category
-    final grouped = <TrophyCategory, List<TrophyProgress>>{};
-    for (final trophy in trophies) {
-      final category = trophy.trophy.trophyCategory;
-      grouped.putIfAbsent(category, () => []);
-      grouped[category]!.add(trophy);
+    // Group trophies by tab groups (Fitness, Lifestyle, Special)
+    final groupedByTab = <String, List<TrophyProgress>>{};
+
+    for (final entry in _categoryGroups.entries) {
+      final tabName = entry.key;
+      final categories = entry.value;
+      final tabTrophies = trophies.where(
+        (t) => categories.contains(t.trophy.trophyCategory)
+      ).toList();
+      if (tabTrophies.isNotEmpty) {
+        groupedByTab[tabName] = tabTrophies;
+      }
     }
 
-    final categoryOrder = _categories.where((c) => grouped.containsKey(c)).toList();
+    final tabOrder = ['Fitness', 'Lifestyle', 'Special'].where((t) => groupedByTab.containsKey(t)).toList();
 
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
-          final category = categoryOrder[index];
-          final categoryTrophies = grouped[category]!;
-          final earnedCount = categoryTrophies.where((t) => t.isEarned).length;
+          final tabName = tabOrder[index];
+          final tabTrophies = groupedByTab[tabName]!;
+          final earnedCount = tabTrophies.where((t) => t.isEarned).length;
+          final tabIndex = _tabNames.indexOf(tabName);
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _TrophyCategoryHeader(
-                category: category,
-                earnedCount: earnedCount,
-                totalCount: categoryTrophies.length,
-                textColor: textColor,
-                textMuted: textMuted,
-                accentColor: accentColor,
+              // Tab group header
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(
+                      _getTabIcon(tabName),
+                      size: 20,
+                      color: textMuted,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        tabName,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: earnedCount > 0
+                            ? AppColors.green.withValues(alpha: 0.15)
+                            : textMuted.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '$earnedCount / ${tabTrophies.length}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: earnedCount > 0 ? AppColors.green : textMuted,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              ...categoryTrophies.take(4).map((trophy) {
+              ...tabTrophies.take(4).map((trophy) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: _TrophyCard(
@@ -746,16 +843,14 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
                   ),
                 );
               }),
-              if (categoryTrophies.length > 4)
+              if (tabTrophies.length > 4)
                 TextButton(
                   onPressed: () {
                     HapticService.light();
-                    _tabController.animateTo(
-                      _categories.indexOf(category) + 1,
-                    );
+                    _tabController.animateTo(tabIndex);
                   },
                   child: Text(
-                    'View all ${categoryTrophies.length} trophies →',
+                    'View all ${tabTrophies.length} trophies →',
                     style: TextStyle(
                       fontSize: 13,
                       color: accentColor,
@@ -766,9 +861,22 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
             ],
           );
         },
-        childCount: categoryOrder.length,
+        childCount: tabOrder.length,
       ),
     );
+  }
+
+  IconData _getTabIcon(String tabName) {
+    switch (tabName) {
+      case 'Fitness':
+        return Icons.fitness_center;
+      case 'Lifestyle':
+        return Icons.self_improvement;
+      case 'Special':
+        return Icons.auto_awesome;
+      default:
+        return Icons.emoji_events;
+    }
   }
 
   void _showTrophyDetail(
@@ -794,64 +902,6 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
       ),
     );
   }
-}
-
-/// Category tabs delegate for pinned header
-class _CategoryTabsDelegate extends SliverPersistentHeaderDelegate {
-  final TabController tabController;
-  final List<TrophyCategory> categories;
-  final bool isDark;
-  final Color accentColor;
-  final Color bgColor;
-  final Color textMuted;
-
-  _CategoryTabsDelegate({
-    required this.tabController,
-    required this.categories,
-    required this.isDark,
-    required this.accentColor,
-    required this.bgColor,
-    required this.textMuted,
-  });
-
-  @override
-  double get minExtent => 48;
-
-  @override
-  double get maxExtent => 48;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return Container(
-      color: bgColor,
-      child: TabBar(
-        controller: tabController,
-        isScrollable: true,
-        tabAlignment: TabAlignment.start,
-        labelColor: accentColor,
-        unselectedLabelColor: textMuted,
-        indicatorColor: accentColor,
-        indicatorSize: TabBarIndicatorSize.label,
-        labelStyle: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-        ),
-        tabs: [
-          const Tab(text: 'All'),
-          ...categories.map((c) => Tab(text: c.displayName)),
-        ],
-      ),
-    );
-  }
-
-  @override
-  bool shouldRebuild(_CategoryTabsDelegate oldDelegate) =>
-      isDark != oldDelegate.isDark ||
-      accentColor != oldDelegate.accentColor;
 }
 
 /// Trophy card with tier-based visual styling

@@ -192,11 +192,34 @@ async def list_workouts(
     to_date: Optional[datetime] = None,
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
+    gym_profile_id: Optional[str] = Query(default=None, description="Filter by gym profile ID"),
 ):
-    """List workouts for a user with optional filters."""
-    logger.info(f"Listing workouts for user {user_id}")
+    """List workouts for a user with optional filters.
+
+    If gym_profile_id is provided, only returns workouts for that profile.
+    If not provided and the user has an active gym profile, filters by that profile.
+    """
+    logger.info(f"Listing workouts for user {user_id}, gym_profile_id={gym_profile_id}")
     try:
         db = get_supabase_db()
+
+        # If no profile specified, try to get the active profile
+        profile_filter = gym_profile_id
+        if not profile_filter:
+            try:
+                active_result = db.client.table("gym_profiles") \
+                    .select("id") \
+                    .eq("user_id", user_id) \
+                    .eq("is_active", True) \
+                    .single() \
+                    .execute()
+                if active_result.data:
+                    profile_filter = active_result.data.get("id")
+                    logger.info(f"[GYM PROFILE] Using active profile {profile_filter} for workout list")
+            except Exception:
+                # No active profile found
+                pass
+
         rows = db.list_workouts(
             user_id=user_id,
             is_completed=is_completed,
@@ -204,8 +227,9 @@ async def list_workouts(
             to_date=str(to_date) if to_date else None,
             limit=limit,
             offset=offset,
+            gym_profile_id=profile_filter,
         )
-        logger.info(f"Found {len(rows)} workouts for user {user_id}")
+        logger.info(f"Found {len(rows)} workouts for user {user_id} (profile: {profile_filter})")
         return [row_to_workout(row) for row in rows]
 
     except Exception as e:

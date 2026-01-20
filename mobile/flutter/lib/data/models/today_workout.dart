@@ -125,6 +125,8 @@ class TodayWorkoutResponse {
   // Auto-generation trigger fields
   final bool needsGeneration;
   final String? nextWorkoutDate;  // YYYY-MM-DD format for frontend to generate
+  // Gym profile context
+  final String? gymProfileId;  // Active gym profile ID used for filtering
 
   const TodayWorkoutResponse({
     required this.hasWorkoutToday,
@@ -138,6 +140,7 @@ class TodayWorkoutResponse {
     this.generationMessage,
     this.needsGeneration = false,
     this.nextWorkoutDate,
+    this.gymProfileId,
   });
 
   factory TodayWorkoutResponse.fromJson(Map<String, dynamic> json) {
@@ -162,6 +165,7 @@ class TodayWorkoutResponse {
       generationMessage: json['generation_message'] as String?,
       needsGeneration: json['needs_generation'] as bool? ?? false,
       nextWorkoutDate: json['next_workout_date'] as String?,
+      gymProfileId: json['gym_profile_id'] as String?,
     );
   }
 
@@ -177,5 +181,6 @@ class TodayWorkoutResponse {
         'generation_message': generationMessage,
         'needs_generation': needsGeneration,
         'next_workout_date': nextWorkoutDate,
+        'gym_profile_id': gymProfileId,
       };
 }

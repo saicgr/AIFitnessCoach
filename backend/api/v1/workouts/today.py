@@ -7,6 +7,9 @@ or the next upcoming workout.
 IMPORTANT: The hero card should ALWAYS show a workout. If no workouts exist,
 this endpoint will auto-generate them. There is never a scenario where
 the hero card is empty.
+
+NOTE: Workouts are filtered by active gym profile. Users only see workouts
+belonging to the currently active gym profile.
 """
 from datetime import datetime, date, timedelta
 from typing import Optional, List
@@ -20,6 +23,29 @@ from core.logger import get_logger
 from services.user_context_service import user_context_service
 
 from .utils import parse_json_field
+
+
+def _get_active_gym_profile_id(db, user_id: str) -> Optional[str]:
+    """Get the active gym profile ID for a user.
+
+    Returns None if no gym profiles exist (user hasn't set up profiles yet).
+    """
+    try:
+        result = db.client.table("gym_profiles") \
+            .select("id, name") \
+            .eq("user_id", user_id) \
+            .eq("is_active", True) \
+            .single() \
+            .execute()
+        if result.data:
+            from core.logger import get_logger
+            logger = get_logger(__name__)
+            logger.info(f"[GYM PROFILE] Active profile for user {user_id}: {result.data.get('name')} ({result.data.get('id')})")
+            return result.data.get("id")
+    except Exception:
+        # No active profile found (single() raises if no match)
+        pass
+    return None
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -55,6 +81,8 @@ class TodayWorkoutResponse(BaseModel):
     # Auto-generation trigger fields
     needs_generation: bool = False
     next_workout_date: Optional[str] = None  # YYYY-MM-DD format for frontend to generate
+    # Gym profile context
+    gym_profile_id: Optional[str] = None  # Active gym profile ID used for filtering
 
 
 def _extract_primary_muscles(exercises: list) -> List[str]:
@@ -189,6 +217,13 @@ async def get_today_workout(
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
+        # Get active gym profile for filtering
+        active_profile_id = _get_active_gym_profile_id(db, user_id)
+        if active_profile_id:
+            logger.info(f"[GYM PROFILE] Filtering workouts by active profile: {active_profile_id}")
+        else:
+            logger.info(f"[GYM PROFILE] No active profile - showing all workouts for user {user_id}")
+
         selected_days = _get_user_workout_days(user)
 
         day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -209,21 +244,22 @@ async def get_today_workout(
         logger.info(f"[TODAY DEBUG] server_date={today_str}, server_weekday={date.today().weekday()} ({today_day_name})")
         logger.info(f"[TODAY DEBUG] selected_days={selected_days} ({[day_names[d] for d in selected_days if 0 <= d < 7]}), is_workout_day={is_today_workout_day}")
 
-        # Get today's workout (not completed)
+        # Get today's workout (not completed) - filtered by active gym profile
         today_rows = db.list_workouts(
             user_id=user_id,
             from_date=today_str,
             to_date=today_str,
             is_completed=False,
             limit=1,
+            gym_profile_id=active_profile_id,
         )
 
         # Debug: log query result and all user workouts if none found today
         logger.info(f"[TODAY DEBUG] Query result: {len(today_rows)} workout(s) for today ({today_str})")
         if not today_rows:
-            all_user_workouts = db.list_workouts(user_id=user_id, from_date=None, to_date=None, limit=5)
+            all_user_workouts = db.list_workouts(user_id=user_id, from_date=None, to_date=None, limit=5, gym_profile_id=active_profile_id)
             dates = [w.get('scheduled_date', 'N/A')[:10] if w.get('scheduled_date') else 'N/A' for w in all_user_workouts]
-            logger.info(f"[TODAY DEBUG] No workout for today. User's first 5 workout dates: {dates}")
+            logger.info(f"[TODAY DEBUG] No workout for today (profile: {active_profile_id}). User's first 5 workout dates: {dates}")
 
         today_workout: Optional[TodayWorkoutSummary] = None
         next_workout: Optional[TodayWorkoutSummary] = None
@@ -238,6 +274,7 @@ async def get_today_workout(
             logger.info(f"[TODAY DEBUG] Found today's workout: {today_workout.name}, scheduled_date={today_workout.scheduled_date}")
 
         # Always look for next upcoming workout (for "Your Next Workout" label)
+        # Filtered by active gym profile
         tomorrow_str = (date.today() + timedelta(days=1)).isoformat()
         future_end = (date.today() + timedelta(days=30)).isoformat()
 
@@ -248,6 +285,7 @@ async def get_today_workout(
             is_completed=False,
             limit=1,
             order_asc=True,  # Get earliest upcoming workout first
+            gym_profile_id=active_profile_id,
         )
 
         if future_rows:
@@ -261,13 +299,14 @@ async def get_today_workout(
         # This ensures a workout ALWAYS exists for the user
         # BUT: Don't generate if today's workout was already completed (user already did their workout!)
 
-        # Check if a completed workout exists for today
+        # Check if a completed workout exists for today - filtered by active profile
         completed_today_rows = db.list_workouts(
             user_id=user_id,
             from_date=today_str,
             to_date=today_str,
             is_completed=True,
             limit=1,
+            gym_profile_id=active_profile_id,
         )
         has_completed_workout_today = len(completed_today_rows) > 0
 
@@ -320,6 +359,7 @@ async def get_today_workout(
             generation_message=generation_message,
             needs_generation=needs_generation,
             next_workout_date=next_workout_date,
+            gym_profile_id=active_profile_id,
         )
 
     except Exception as e:

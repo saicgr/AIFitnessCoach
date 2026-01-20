@@ -709,13 +709,17 @@ async def get_day_detail(
             }
 
         # Get scheduled workout for this date
+        # Use date range to properly match timestamp column
+        # Prioritize completed workouts, then most recent
         workout_response = db.client.table("workouts").select(
             "id, name, type, difficulty, duration_minutes, exercises_json, is_completed, target_muscles"
-        ).eq("user_id", user_id).eq(
-            "scheduled_date", date_str
-        ).maybe_single().execute()
+        ).eq("user_id", user_id).gte(
+            "scheduled_date", f"{date_str}T00:00:00"
+        ).lt(
+            "scheduled_date", f"{date_str}T23:59:59"
+        ).order("is_completed", desc=True).order("created_at", desc=True).limit(1).execute()
 
-        if not workout_response.data:
+        if not workout_response.data or len(workout_response.data) == 0:
             return {
                 "date": date_str,
                 "status": "rest",
@@ -725,7 +729,7 @@ async def get_day_detail(
                 "muscles_worked": [],
             }
 
-        workout = workout_response.data
+        workout = workout_response.data[0]
         workout_id = workout["id"]
         is_completed = workout.get("is_completed", False)
 
@@ -744,16 +748,10 @@ async def get_day_detail(
             }
 
         # Get workout log for completed workout
-        try:
-            log_response = db.client.table("workout_logs").select(
-                "id, completed_at, total_time_seconds, sets_json, calories_burned"
-            ).eq("workout_id", workout_id).maybe_single().execute()
-            log_data = log_response.data or {}
-        except Exception as log_error:
-            # Handle case where workout_log doesn't exist for a completed workout
-            # This is a data inconsistency but shouldn't crash the API
-            logger.warning(f"No workout log found for completed workout {workout_id}: {log_error}")
-            log_data = {}
+        log_response = db.client.table("workout_logs").select(
+            "id, completed_at, total_time_seconds, sets_json, calories_burned"
+        ).eq("workout_id", workout_id).maybe_single().execute()
+        log_data = log_response.data or {}
 
         workout_log_id = log_data.get("id")
 
@@ -856,11 +854,12 @@ async def get_day_detail(
         avg_rpe = round(sum(all_rpes) / len(all_rpes), 1) if all_rpes else None
 
         # Get shared images if any
-        share_response = db.client.table("workout_shares").select(
-            "image_url"
-        ).eq("workout_log_id", workout_log_id).execute()
-
-        shared_images = [s["image_url"] for s in (share_response.data or []) if s.get("image_url")]
+        shared_images = []
+        if workout_log_id:
+            share_response = db.client.table("workout_shares").select(
+                "image_url"
+            ).eq("workout_log_id", workout_log_id).execute()
+            shared_images = [s["image_url"] for s in (share_response.data or []) if s.get("image_url")]
 
         return {
             "date": date_str,
