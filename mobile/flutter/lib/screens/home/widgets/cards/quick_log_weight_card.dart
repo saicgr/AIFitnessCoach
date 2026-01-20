@@ -151,42 +151,47 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
       );
     }
 
-    return Container(
-      margin: widget.size == TileSize.full
-          ? const EdgeInsets.symmetric(horizontal: 16, vertical: 4)
-          : null,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withValues(alpha: 0.15),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-            spreadRadius: 1,
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: widget.isDark ? 0.2 : 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: elevatedColor,
-            border: Border(
-              left: BorderSide(color: accentColor, width: 4),
-              top: BorderSide(color: cardBorder),
-              right: BorderSide(color: cardBorder),
-              bottom: BorderSide(color: cardBorder),
+    // Minimum height to ensure consistent sizing with other half-width cards
+    const minCardHeight = 140.0;
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: minCardHeight),
+      child: Container(
+        margin: widget.size == TileSize.full
+            ? const EdgeInsets.symmetric(horizontal: 16, vertical: 4)
+            : null,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: accentColor.withValues(alpha: 0.15),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+              spreadRadius: 1,
             ),
-          ),
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: widget.isDark ? 0.2 : 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: elevatedColor,
+              border: Border(
+                left: BorderSide(color: accentColor, width: 4),
+                top: BorderSide(color: cardBorder),
+                right: BorderSide(color: cardBorder),
+                bottom: BorderSide(color: cardBorder),
+              ),
+            ),
+            child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Header row
           Row(
             children: [
@@ -382,6 +387,7 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
             _buildTrendInfo(textMuted, ref),
           ],
         ],
+            ),
           ),
         ),
       ),

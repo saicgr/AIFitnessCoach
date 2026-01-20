@@ -305,6 +305,8 @@ class LayoutPreviewWidget extends StatelessWidget {
         return Icons.straighten;
       case TileType.habits:
         return Icons.check_circle_outline;
+      case TileType.xpProgress:
+        return Icons.bolt;
     }
   }
 

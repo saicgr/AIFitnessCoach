@@ -11,6 +11,8 @@ class TodayWorkoutSummary {
   final String type;
   final String difficulty;
   final int durationMinutes;
+  final int? durationMinutesMin;
+  final int? durationMinutesMax;
   final int exerciseCount;
   final List<String> primaryMuscles;
   final String scheduledDate;
@@ -24,6 +26,8 @@ class TodayWorkoutSummary {
     required this.type,
     required this.difficulty,
     required this.durationMinutes,
+    this.durationMinutesMin,
+    this.durationMinutesMax,
     required this.exerciseCount,
     required this.primaryMuscles,
     required this.scheduledDate,
@@ -31,6 +35,15 @@ class TodayWorkoutSummary {
     required this.isCompleted,
     this.exercises = const [],
   });
+
+  /// Get formatted duration display (e.g., "45-60m" or "45m")
+  String get formattedDurationShort {
+    if (durationMinutesMin != null && durationMinutesMax != null &&
+        durationMinutesMin != durationMinutesMax) {
+      return '$durationMinutesMin-${durationMinutesMax}m';
+    }
+    return '${durationMinutes}m';
+  }
 
   factory TodayWorkoutSummary.fromJson(Map<String, dynamic> json) {
     // Parse exercises from JSON array
@@ -49,6 +62,8 @@ class TodayWorkoutSummary {
       type: json['type'] as String? ?? 'strength',
       difficulty: json['difficulty'] as String? ?? 'medium',
       durationMinutes: json['duration_minutes'] as int? ?? 45,
+      durationMinutesMin: json['duration_minutes_min'] as int?,
+      durationMinutesMax: json['duration_minutes_max'] as int?,
       exerciseCount: json['exercise_count'] as int? ?? 0,
       primaryMuscles: (json['primary_muscles'] as List<dynamic>?)
               ?.map((e) => e.toString())
@@ -67,6 +82,8 @@ class TodayWorkoutSummary {
         'type': type,
         'difficulty': difficulty,
         'duration_minutes': durationMinutes,
+        'duration_minutes_min': durationMinutesMin,
+        'duration_minutes_max': durationMinutesMax,
         'exercise_count': exerciseCount,
         'primary_muscles': primaryMuscles,
         'scheduled_date': scheduledDate,
@@ -82,6 +99,8 @@ class TodayWorkoutSummary {
         type: type,
         difficulty: difficulty,
         durationMinutes: durationMinutes,
+        durationMinutesMin: durationMinutesMin,
+        durationMinutesMax: durationMinutesMax,
         scheduledDate: scheduledDate,
         isCompleted: isCompleted,
         exercisesJson: exercises.map((e) => e.toJson()).toList(),
@@ -103,6 +122,9 @@ class TodayWorkoutResponse {
   // Generation status fields - used when auto-generating workout
   final bool isGenerating;
   final String? generationMessage;
+  // Auto-generation trigger fields
+  final bool needsGeneration;
+  final String? nextWorkoutDate;  // YYYY-MM-DD format for frontend to generate
 
   const TodayWorkoutResponse({
     required this.hasWorkoutToday,
@@ -114,6 +136,8 @@ class TodayWorkoutResponse {
     this.completedWorkout,
     this.isGenerating = false,
     this.generationMessage,
+    this.needsGeneration = false,
+    this.nextWorkoutDate,
   });
 
   factory TodayWorkoutResponse.fromJson(Map<String, dynamic> json) {
@@ -136,6 +160,8 @@ class TodayWorkoutResponse {
           : null,
       isGenerating: json['is_generating'] as bool? ?? false,
       generationMessage: json['generation_message'] as String?,
+      needsGeneration: json['needs_generation'] as bool? ?? false,
+      nextWorkoutDate: json['next_workout_date'] as String?,
     );
   }
 
@@ -149,5 +175,7 @@ class TodayWorkoutResponse {
         'completed_workout': completedWorkout?.toJson(),
         'is_generating': isGenerating,
         'generation_message': generationMessage,
+        'needs_generation': needsGeneration,
+        'next_workout_date': nextWorkoutDate,
       };
 }

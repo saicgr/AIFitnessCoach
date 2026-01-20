@@ -20,6 +20,7 @@ from core.logger import get_logger
 from .models import LibraryExercise, ExercisesByBodyPart
 from .utils import (
     fetch_all_rows,
+    fetch_fuzzy_search_results,
     normalize_body_part,
     row_to_library_exercise,
     derive_exercise_type,
@@ -315,8 +316,14 @@ async def list_exercises(
         exercises = [row_to_library_exercise(row, from_cleaned_view=True) for row in all_rows]
 
         # Apply relevance sorting when searching (before other filters)
-        # This ensures exact matches appear first, e.g., "Push Up" before "Incline Push Up"
-        if search:
+        # NOTE: If using fuzzy search (default), results are already sorted by similarity
+        # from the database RPC function. Only apply Python sorting for non-fuzzy fallback.
+        # The fuzzy search handles: exact match > prefix match > substring > similarity score
+        if search and not needs_post_filter:
+            # When fuzzy search was used, results are already well-sorted
+            # Only apply Python sort if we fetched without fuzzy search
+            pass
+        elif search:
             exercises = sort_by_relevance(exercises, search)
 
         # Apply post-filters

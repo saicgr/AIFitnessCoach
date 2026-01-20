@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/accessibility/accessibility_provider.dart';
 import '../../data/providers/social_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -210,18 +211,19 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
   }) {
     final isSelected = _tabController.index == index;
     final animationValue = _tabController.animation?.value ?? 0.0;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    // Monochrome accent - white in dark mode, black in light mode
-    final accentColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final colors = ref.colors(context);
+    final textMuted = colors.textMuted;
+    // Use user's accent color
+    final accentColor = colors.accent;
 
     // Calculate selection progress for smooth animation
     final selectionProgress = (1.0 - (animationValue - index).abs()).clamp(0.0, 1.0);
 
-    // Colors - monochrome style
+    // Colors - accent-based style
     final selectedBg = accentColor;
     final unselectedBg = Colors.transparent;
-    // Contrast text: black on white button, white on black button
-    final selectedFg = isDark ? Colors.black : Colors.white;
+    // Contrast text based on accent color
+    final selectedFg = colors.accentContrast;
     final unselectedFg = textMuted;
 
     // Interpolate colors based on selection progress
@@ -293,10 +295,11 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
       });
     }
 
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    // Monochrome accent
-    final accentColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final colors = ref.colors(context);
+    final cardBg = colors.elevated;
+    final cardBorder = colors.cardBorder;
+    // Use accent color for stats
+    final accentColor = colors.accent;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

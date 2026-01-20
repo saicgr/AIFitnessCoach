@@ -224,6 +224,8 @@ class _SeniorOnboardingScreenState
             'intensity_preference': 'light', // Gentle intensity
             'onboarding_completed': true,
             'accessibility_mode': 'senior',
+            // Weight unit preference from existing data
+            'weight_unit': (existingData['useMetricUnits'] ?? true) ? 'kg' : 'lbs',
           },
         );
 

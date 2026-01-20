@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/health_service.dart';
 import '../widgets/section_header.dart';
@@ -116,11 +117,297 @@ class HealthSyncSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        SectionHeader(title: 'HEALTH SYNC'),
-        SizedBox(height: 12),
-        _HealthConnectSettingsCard(),
+      children: [
+        const SectionHeader(title: 'HEALTH SYNC'),
+        const SizedBox(height: 12),
+        const _HealthConnectSettingsCard(),
+        // Samsung Health help for Android users
+        if (Platform.isAndroid) ...[
+          const SizedBox(height: 8),
+          const _SamsungHealthHelpRow(),
+        ],
       ],
+    );
+  }
+}
+
+/// Helper row for Samsung Health users
+class _SamsungHealthHelpRow extends ConsumerWidget {
+  const _SamsungHealthHelpRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Icon(
+            Icons.help_outline,
+            size: 14,
+            color: textMuted,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'Using Samsung Health?',
+            style: TextStyle(
+              fontSize: 12,
+              color: textMuted,
+            ),
+          ),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: () => _showSamsungHealthSetup(context, isDark),
+            child: Text(
+              'Setup guide',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.cyan,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSamsungHealthSetup(BuildContext context, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.5,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) {
+            return SingleChildScrollView(
+              controller: scrollController,
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1428A0).withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.watch,
+                          color: Color(0xFF1428A0),
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Connect Samsung Health',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Samsung Health data syncs to FitWiz through Health Connect. Follow these steps:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSetupStep(
+                    isDark: isDark,
+                    number: '1',
+                    title: 'Open Samsung Health',
+                    subtitle: 'Go to Settings (gear icon)',
+                  ),
+                  _buildSetupStep(
+                    isDark: isDark,
+                    number: '2',
+                    title: 'Find Health Connect',
+                    subtitle: 'Scroll down and tap "Health Connect"',
+                  ),
+                  _buildSetupStep(
+                    isDark: isDark,
+                    number: '3',
+                    title: 'Enable Sync',
+                    subtitle: 'Turn on "Sync with Health Connect"',
+                  ),
+                  _buildSetupStep(
+                    isDark: isDark,
+                    number: '4',
+                    title: 'Select Data Types',
+                    subtitle: 'Enable all data you want to sync (steps, heart rate, sleep, etc.)',
+                  ),
+                  _buildSetupStep(
+                    isDark: isDark,
+                    number: '5',
+                    title: 'Connect FitWiz',
+                    subtitle: 'Return here and toggle Health Connect on',
+                    isLast: true,
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.cyan.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, color: AppColors.cyan, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Your Samsung Health data will automatically appear in FitWiz after setup.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            Navigator.pop(context);
+                            // Try to open Samsung Health
+                            final uri = Uri.parse('samsunghealth://');
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri);
+                            }
+                          },
+                          icon: const Icon(Icons.open_in_new, size: 18),
+                          label: const Text('Open Samsung Health'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF1428A0),
+                            side: const BorderSide(color: Color(0xFF1428A0)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.cyan,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: const Text('Got it'),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildSetupStep({
+    required bool isDark,
+    required String number,
+    required String title,
+    required String subtitle,
+    bool isLast = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: const BoxDecoration(
+                  color: AppColors.cyan,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    number,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+              if (!isLast)
+                Container(
+                  width: 2,
+                  height: 40,
+                  color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

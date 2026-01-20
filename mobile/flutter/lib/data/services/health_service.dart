@@ -19,6 +19,7 @@ class DailyActivity {
   final int? restingHeartRate;
   final DateTime date;
   final bool isFromHealthConnect;
+  final bool isFromWatch;
 
   const DailyActivity({
     this.steps = 0,
@@ -27,6 +28,7 @@ class DailyActivity {
     this.restingHeartRate,
     required this.date,
     this.isFromHealthConnect = false,
+    this.isFromWatch = false,
   });
 
   /// Distance in kilometers
@@ -183,6 +185,35 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
   /// Refresh activity data
   Future<void> refresh() async {
     await loadTodayActivity();
+  }
+
+  /// Update activity data from watch.
+  /// Watch data takes priority when available since it's more accurate.
+  void updateFromWatch({
+    int? steps,
+    int? heartRate,
+    int? caloriesBurned,
+    int? activeMinutes,
+  }) {
+    final current = state.today;
+
+    // Merge watch data with current state
+    // Watch data takes priority (it's usually more accurate when worn)
+    final updated = DailyActivity(
+      steps: steps ?? current?.steps ?? 0,
+      caloriesBurned: caloriesBurned?.toDouble() ?? current?.caloriesBurned ?? 0,
+      distanceMeters: current?.distanceMeters ?? 0, // Keep existing, watch doesn't send this
+      restingHeartRate: heartRate ?? current?.restingHeartRate,
+      date: DateTime.now(),
+      isFromHealthConnect: current?.isFromHealthConnect ?? false,
+      isFromWatch: true, // Mark that we have watch data
+    );
+
+    state = state.copyWith(today: updated);
+    debugPrint('⌚ [Activity] Updated from watch: $steps steps, ${heartRate}bpm, ${caloriesBurned}cal');
+
+    // Sync to Supabase in the background
+    _syncToSupabase(updated);
   }
 }
 

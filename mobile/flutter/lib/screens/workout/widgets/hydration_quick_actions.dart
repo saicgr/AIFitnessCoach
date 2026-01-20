@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
 
-/// Quick action buttons for the active workout screen (hydration + note)
+/// Quick action buttons for the active workout screen (video + hydration + note)
 class HydrationQuickActions extends StatelessWidget {
   /// Callback when the hydration button is tapped
   final VoidCallback onTap;
@@ -16,10 +16,14 @@ class HydrationQuickActions extends StatelessWidget {
   /// Callback when the note button is tapped (optional)
   final VoidCallback? onNoteTap;
 
+  /// Callback when the video button is tapped (optional)
+  final VoidCallback? onVideoTap;
+
   const HydrationQuickActions({
     super.key,
     required this.onTap,
     this.onNoteTap,
+    this.onVideoTap,
   });
 
   @override
@@ -38,6 +42,17 @@ class HydrationQuickActions extends StatelessWidget {
       ),
       child: Row(
         children: [
+          // Video button (if callback provided) - vibrant purple/accent
+          if (onVideoTap != null) ...[
+            _buildActionButton(
+              icon: Icons.play_circle_outline,
+              label: 'Video',
+              color: const Color(0xFF8B5CF6), // Vibrant purple
+              onTap: onVideoTap!,
+            ),
+            const SizedBox(width: 10),
+          ],
+
           // Hydration button - vibrant blue
           _buildActionButton(
             icon: Icons.water_drop,

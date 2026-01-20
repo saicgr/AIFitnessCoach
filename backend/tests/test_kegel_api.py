@@ -19,7 +19,7 @@ class TestKegelPreferencesEndpoints:
         """Test getting preferences when none exist."""
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
 
-        response = client.get(f"/v1/kegel/preferences/{TEST_USER_ID}")
+        response = client.get(f"/api/v1/kegel/preferences/{TEST_USER_ID}")
         assert response.status_code == 200
         assert response.json() is None
 
@@ -39,7 +39,7 @@ class TestKegelPreferencesEndpoints:
         }
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [mock_data]
 
-        response = client.get(f"/v1/kegel/preferences/{TEST_USER_ID}")
+        response = client.get(f"/api/v1/kegel/preferences/{TEST_USER_ID}")
         assert response.status_code == 200
         data = response.json()
         assert data["kegels_enabled"] is True
@@ -64,7 +64,7 @@ class TestKegelPreferencesEndpoints:
             "include_in_warmup": True,
         }
 
-        response = client.put(f"/v1/kegel/preferences/{TEST_USER_ID}", json=prefs_data)
+        response = client.put(f"/api/v1/kegel/preferences/{TEST_USER_ID}", json=prefs_data)
         assert response.status_code == 200
 
     def test_upsert_preferences_update(self, client, mock_supabase):
@@ -86,7 +86,7 @@ class TestKegelPreferencesEndpoints:
             "target_sessions_per_day": 5,
         }
 
-        response = client.put(f"/v1/kegel/preferences/{TEST_USER_ID}", json=prefs_data)
+        response = client.put(f"/api/v1/kegel/preferences/{TEST_USER_ID}", json=prefs_data)
         assert response.status_code == 200
 
 
@@ -112,7 +112,7 @@ class TestKegelSessionEndpoints:
             "session_type": "standard",
         }
 
-        response = client.post(f"/v1/kegel/sessions/{TEST_USER_ID}", json=session_data)
+        response = client.post(f"/api/v1/kegel/sessions/{TEST_USER_ID}", json=session_data)
         assert response.status_code == 200
         data = response.json()
         assert data["duration_seconds"] == 120
@@ -137,7 +137,7 @@ class TestKegelSessionEndpoints:
         ]
         mock_supabase.table.return_value.select.return_value.eq.return_value.order.return_value.order.return_value.limit.return_value.execute.return_value.data = mock_data
 
-        response = client.get(f"/v1/kegel/sessions/{TEST_USER_ID}")
+        response = client.get(f"/api/v1/kegel/sessions/{TEST_USER_ID}")
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 2
@@ -155,7 +155,7 @@ class TestKegelSessionEndpoints:
         ]
         mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.execute.return_value.data = mock_data
 
-        response = client.get(f"/v1/kegel/sessions/{TEST_USER_ID}/today")
+        response = client.get(f"/api/v1/kegel/sessions/{TEST_USER_ID}/today")
         assert response.status_code == 200
 
 
@@ -203,7 +203,7 @@ class TestKegelStatsEndpoints:
             )
         )
 
-        response = client.get(f"/v1/kegel/stats/{TEST_USER_ID}")
+        response = client.get(f"/api/v1/kegel/stats/{TEST_USER_ID}")
         assert response.status_code == 200
 
     def test_check_daily_goal_met(self, client, mock_supabase):
@@ -227,7 +227,7 @@ class TestKegelStatsEndpoints:
 
         mock_supabase.table.side_effect = mock_table
 
-        response = client.get(f"/v1/kegel/daily-goal/{TEST_USER_ID}")
+        response = client.get(f"/api/v1/kegel/daily-goal/{TEST_USER_ID}")
         assert response.status_code == 200
         data = response.json()
         assert data["goal_met"] is True
@@ -251,7 +251,7 @@ class TestKegelStatsEndpoints:
 
         mock_supabase.table.side_effect = mock_table
 
-        response = client.get(f"/v1/kegel/daily-goal/{TEST_USER_ID}")
+        response = client.get(f"/api/v1/kegel/daily-goal/{TEST_USER_ID}")
         assert response.status_code == 200
         data = response.json()
         assert data["goal_met"] is False
@@ -291,7 +291,7 @@ class TestKegelExercisesEndpoints:
         ]
         mock_supabase.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value.data = mock_data
 
-        response = client.get("/v1/kegel/exercises")
+        response = client.get("/api/v1/kegel/exercises")
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 2
@@ -309,7 +309,7 @@ class TestKegelExercisesEndpoints:
         ]
         mock_supabase.table.return_value.select.return_value.eq.return_value.in_.return_value.order.return_value.execute.return_value.data = mock_data
 
-        response = client.get("/v1/kegel/exercises", params={"target_audience": "male"})
+        response = client.get("/api/v1/kegel/exercises", params={"target_audience": "male"})
         assert response.status_code == 200
 
     def test_get_exercise_by_id(self, client, mock_supabase):
@@ -326,7 +326,7 @@ class TestKegelExercisesEndpoints:
         }
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [mock_data]
 
-        response = client.get(f"/v1/kegel/exercises/{exercise_id}")
+        response = client.get(f"/api/v1/kegel/exercises/{exercise_id}")
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "basic_kegel_hold"
@@ -365,7 +365,7 @@ class TestKegelWorkoutIntegration:
 
         mock_supabase.table.side_effect = mock_table
 
-        response = client.get(f"/v1/kegel/for-workout/{TEST_USER_ID}", params={"placement": "warmup"})
+        response = client.get(f"/api/v1/kegel/for-workout/{TEST_USER_ID}", params={"placement": "warmup"})
         assert response.status_code == 200
         data = response.json()
         assert data["include_kegels"] is True
@@ -377,7 +377,7 @@ class TestKegelWorkoutIntegration:
         }
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [mock_prefs]
 
-        response = client.get(f"/v1/kegel/for-workout/{TEST_USER_ID}", params={"placement": "warmup"})
+        response = client.get(f"/api/v1/kegel/for-workout/{TEST_USER_ID}", params={"placement": "warmup"})
         assert response.status_code == 200
         data = response.json()
         assert data["include_kegels"] is False
@@ -397,7 +397,7 @@ class TestKegelWorkoutIntegration:
         mock_supabase.table.return_value.insert.return_value.execute.return_value.data = [mock_result]
 
         response = client.post(
-            f"/v1/kegel/log-from-workout/{TEST_USER_ID}",
+            f"/api/v1/kegel/log-from-workout/{TEST_USER_ID}",
             params={
                 "workout_id": workout_id,
                 "placement": "warmup",

@@ -38,6 +38,10 @@ class Workout extends Equatable {
   final dynamic exercisesJson; // Can be String or List
   @JsonKey(name: 'duration_minutes')
   final int? durationMinutes;
+  @JsonKey(name: 'duration_minutes_min')
+  final int? durationMinutesMin;
+  @JsonKey(name: 'duration_minutes_max')
+  final int? durationMinutesMax;
   @JsonKey(name: 'generation_method')
   final String? generationMethod;
   @JsonKey(name: 'generation_metadata', fromJson: _parseGenerationMetadata)
@@ -62,6 +66,8 @@ class Workout extends Equatable {
     this.isCompleted,
     this.exercisesJson,
     this.durationMinutes,
+    this.durationMinutesMin,
+    this.durationMinutesMax,
     this.generationMethod,
     this.generationMetadata,
     this.createdAt,
@@ -139,6 +145,24 @@ class Workout extends Equatable {
 
   /// Calculate estimated calories (6 cal/min)
   int get estimatedCalories => (durationMinutes ?? 0) * 6;
+
+  /// Get formatted duration display (e.g., "45-60m" or "45m")
+  String get formattedDurationShort {
+    if (durationMinutesMin != null && durationMinutesMax != null &&
+        durationMinutesMin != durationMinutesMax) {
+      return '$durationMinutesMin-${durationMinutesMax}m';
+    }
+    return '${durationMinutes ?? 45}m';
+  }
+
+  /// Get formatted duration display full (e.g., "45-60 min" or "45 min")
+  String get formattedDuration {
+    if (durationMinutesMin != null && durationMinutesMax != null &&
+        durationMinutesMin != durationMinutesMax) {
+      return '$durationMinutesMin-$durationMinutesMax min';
+    }
+    return '${durationMinutes ?? 45} min';
+  }
 
   /// Get formatted date
   String get formattedDate {

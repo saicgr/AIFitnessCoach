@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../widgets/segmented_tab_bar.dart';
@@ -178,7 +179,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
             children: [
               Icon(
                 Icons.person_add_alt_1_rounded,
-                color: isDark ? AppColors.accent : AppColorsLight.accent,
+                color: ref.colors(context).accent,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -193,7 +194,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: (isDark ? AppColors.accent : AppColorsLight.accent).withValues(alpha: 0.15),
+                  color: ref.colors(context).accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -201,7 +202,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.accent : AppColorsLight.accent,
+                    color: ref.colors(context).accent,
                   ),
                 ),
               ),

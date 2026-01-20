@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Empty State Widget - Shows when there's no content in a social section
 class SocialEmptyState extends StatelessWidget {
@@ -20,10 +20,10 @@ class SocialEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Monochrome accent
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final colors = context.colors;
+    // Use user's accent color
+    final accentColor = colors.accent;
+    final textMuted = colors.textMuted;
 
     return Center(
       child: Padding(
@@ -82,7 +82,7 @@ class SocialEmptyState extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     backgroundColor: accentColor,
-                    foregroundColor: isDark ? AppColors.accentContrast : AppColorsLight.accentContrast,
+                    foregroundColor: colors.accentContrast,
                   ),
                 ),
               ),

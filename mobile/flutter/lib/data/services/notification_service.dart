@@ -411,13 +411,34 @@ class NotificationService {
   /// Request permission and get FCM token after Activity is ready
   /// Call this from a widget's initState or after runApp() completes
   Future<void> requestPermissionWhenReady() async {
+    // Request LOCAL notification permission on Android 13+ (API 33+)
+    // This is separate from Firebase Messaging permission and required for
+    // flutter_local_notifications to show notifications
+    if (Platform.isAndroid) {
+      final androidPlugin = _localNotifications
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        // Check if permission is already granted
+        final granted = await androidPlugin.areNotificationsEnabled() ?? false;
+        debugPrint('🔔 [Local] Android notifications enabled: $granted');
+
+        if (!granted) {
+          // Request permission - this shows the system dialog on Android 13+
+          final result = await androidPlugin.requestNotificationsPermission();
+          debugPrint('🔔 [Local] Android notification permission result: $result');
+        }
+      }
+    }
+
     if (!_firebaseAvailable) {
-      debugPrint('⚠️ [FCM] Firebase not available, skipping permission request');
+      debugPrint('⚠️ [FCM] Firebase not available, skipping FCM permission request');
+      // Even without Firebase, local notifications should still work
       return;
     }
 
     try {
-      // Request permission (required for iOS and Android 13+)
+      // Request FCM permission (required for iOS and Android 13+)
       await _requestPermission();
 
       // Get FCM token after permission is granted

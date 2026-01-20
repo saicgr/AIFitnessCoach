@@ -19,7 +19,7 @@ class TestHormonalProfileEndpoints:
         """Test getting profile when none exists."""
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
 
-        response = client.get(f"/v1/hormonal-health/profile/{TEST_USER_ID}")
+        response = client.get(f"/api/v1/hormonal-health/profile/{TEST_USER_ID}")
         assert response.status_code == 200
         assert response.json() is None
 
@@ -38,7 +38,7 @@ class TestHormonalProfileEndpoints:
         }
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [mock_data]
 
-        response = client.get(f"/v1/hormonal-health/profile/{TEST_USER_ID}")
+        response = client.get(f"/api/v1/hormonal-health/profile/{TEST_USER_ID}")
         assert response.status_code == 200
         data = response.json()
         assert data["user_id"] == TEST_USER_ID
@@ -67,7 +67,7 @@ class TestHormonalProfileEndpoints:
             "testosterone_optimization_enabled": True,
         }
 
-        response = client.put(f"/v1/hormonal-health/profile/{TEST_USER_ID}", json=profile_data)
+        response = client.put(f"/api/v1/hormonal-health/profile/{TEST_USER_ID}", json=profile_data)
         assert response.status_code == 200
 
     def test_upsert_profile_update(self, client, mock_supabase):
@@ -90,7 +90,7 @@ class TestHormonalProfileEndpoints:
             "hormone_goals": ["balance_estrogen", "menopause_support"],
         }
 
-        response = client.put(f"/v1/hormonal-health/profile/{TEST_USER_ID}", json=profile_data)
+        response = client.put(f"/api/v1/hormonal-health/profile/{TEST_USER_ID}", json=profile_data)
         assert response.status_code == 200
 
 
@@ -119,7 +119,7 @@ class TestHormoneLogEndpoints:
             "symptoms": ["fatigue"],
         }
 
-        response = client.post(f"/v1/hormonal-health/logs/{TEST_USER_ID}", json=log_data)
+        response = client.post(f"/api/v1/hormonal-health/logs/{TEST_USER_ID}", json=log_data)
         assert response.status_code == 200
         data = response.json()
         assert data["energy_level"] == 7
@@ -144,7 +144,7 @@ class TestHormoneLogEndpoints:
         ]
         mock_supabase.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value.data = mock_data
 
-        response = client.get(f"/v1/hormonal-health/logs/{TEST_USER_ID}")
+        response = client.get(f"/api/v1/hormonal-health/logs/{TEST_USER_ID}")
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 2
@@ -163,7 +163,7 @@ class TestHormoneLogEndpoints:
         mock_supabase.table.return_value.select.return_value.eq.return_value.gte.return_value.lte.return_value.order.return_value.limit.return_value.execute.return_value.data = mock_data
 
         response = client.get(
-            f"/v1/hormonal-health/logs/{TEST_USER_ID}",
+            f"/api/v1/hormonal-health/logs/{TEST_USER_ID}",
             params={"start_date": "2025-01-01", "end_date": "2025-01-07"},
         )
         assert response.status_code == 200
@@ -178,7 +178,7 @@ class TestCyclePhaseEndpoints:
             {"menstrual_tracking_enabled": False}
         ]
 
-        response = client.get(f"/v1/hormonal-health/cycle-phase/{TEST_USER_ID}")
+        response = client.get(f"/api/v1/hormonal-health/cycle-phase/{TEST_USER_ID}")
         assert response.status_code == 200
         data = response.json()
         assert data["menstrual_tracking_enabled"] is False
@@ -196,7 +196,7 @@ class TestCyclePhaseEndpoints:
             }
         ]
 
-        response = client.get(f"/v1/hormonal-health/cycle-phase/{TEST_USER_ID}")
+        response = client.get(f"/api/v1/hormonal-health/cycle-phase/{TEST_USER_ID}")
         assert response.status_code == 200
         data = response.json()
         assert data["current_phase"] == "menstrual"
@@ -215,7 +215,7 @@ class TestCyclePhaseEndpoints:
             }
         ]
 
-        response = client.get(f"/v1/hormonal-health/cycle-phase/{TEST_USER_ID}")
+        response = client.get(f"/api/v1/hormonal-health/cycle-phase/{TEST_USER_ID}")
         assert response.status_code == 200
         data = response.json()
         assert data["current_phase"] == "follicular"
@@ -233,7 +233,7 @@ class TestCyclePhaseEndpoints:
             }
         ]
 
-        response = client.get(f"/v1/hormonal-health/cycle-phase/{TEST_USER_ID}")
+        response = client.get(f"/api/v1/hormonal-health/cycle-phase/{TEST_USER_ID}")
         assert response.status_code == 200
         data = response.json()
         assert data["current_phase"] == "ovulation"
@@ -251,7 +251,7 @@ class TestCyclePhaseEndpoints:
             }
         ]
 
-        response = client.get(f"/v1/hormonal-health/cycle-phase/{TEST_USER_ID}")
+        response = client.get(f"/api/v1/hormonal-health/cycle-phase/{TEST_USER_ID}")
         assert response.status_code == 200
         data = response.json()
         assert data["current_phase"] == "luteal"
@@ -263,7 +263,7 @@ class TestCyclePhaseEndpoints:
         ]
         mock_supabase.table.return_value.upsert.return_value.execute.return_value.data = [{}]
 
-        response = client.post(f"/v1/hormonal-health/cycle-phase/{TEST_USER_ID}/log-period")
+        response = client.post(f"/api/v1/hormonal-health/cycle-phase/{TEST_USER_ID}/log-period")
         assert response.status_code == 200
 
 
@@ -290,7 +290,7 @@ class TestHormoneSupportiveFoodsEndpoints:
         ]
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = mock_data
 
-        response = client.get("/v1/hormonal-health/foods")
+        response = client.get("/api/v1/hormonal-health/foods")
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 2
@@ -309,7 +309,7 @@ class TestHormoneSupportiveFoodsEndpoints:
         mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value.data = mock_data
 
         response = client.get(
-            "/v1/hormonal-health/foods",
+            "/api/v1/hormonal-health/foods",
             params={"goal": "optimize_testosterone"},
         )
         assert response.status_code == 200
@@ -334,7 +334,7 @@ class TestHormonalInsightsEndpoint:
         # Mock foods
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
 
-        response = client.get(f"/v1/hormonal-health/insights/{TEST_USER_ID}")
+        response = client.get(f"/api/v1/hormonal-health/insights/{TEST_USER_ID}")
         assert response.status_code == 200
 
 

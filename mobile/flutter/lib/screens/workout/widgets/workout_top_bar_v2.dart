@@ -30,6 +30,9 @@ class WorkoutTopBarV2 extends StatelessWidget {
   /// Whether to show back button instead of hamburger menu (for warmup flow)
   final bool showBackButton;
 
+  /// Label to show next to back button (e.g., "Warmup")
+  final String? backButtonLabel;
+
   /// Callback to open workout plan drawer (hamburger menu)
   final VoidCallback onMenuTap;
 
@@ -42,6 +45,15 @@ class WorkoutTopBarV2 extends StatelessWidget {
   /// Callback to toggle pause
   final VoidCallback? onTimerTap;
 
+  /// Callback to minimize workout to mini player
+  final VoidCallback? onMinimize;
+
+  /// Callback to toggle favorite for current exercise
+  final VoidCallback? onFavoriteTap;
+
+  /// Whether current exercise is favorited
+  final bool isFavorite;
+
   const WorkoutTopBarV2({
     super.key,
     required this.workoutSeconds,
@@ -49,10 +61,14 @@ class WorkoutTopBarV2 extends StatelessWidget {
     this.totalRestSeconds,
     required this.isPaused,
     this.showBackButton = false,
+    this.backButtonLabel,
     required this.onMenuTap,
     this.onBackTap,
     required this.onCloseTap,
     this.onTimerTap,
+    this.onMinimize,
+    this.onFavoriteTap,
+    this.isFavorite = false,
   });
 
   @override
@@ -70,44 +86,82 @@ class WorkoutTopBarV2 extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Back button or hamburger menu button
-              _TopBarButton(
-                icon: showBackButton ? Icons.arrow_back_rounded : Icons.menu,
-                onTap: showBackButton ? (onBackTap ?? onMenuTap) : onMenuTap,
-                isDark: isDark,
-              ),
-
-              const Spacer(),
-
-              // Workout timer (centered)
-              GestureDetector(
-                onTap: onTimerTap,
-                child: Text(
-                  WorkoutTimerController.formatTime(workoutSeconds),
-                  style: WorkoutDesign.timerStyle.copyWith(
-                    color: isPaused
-                        ? WorkoutDesign.warning
-                        : (isDark ? WorkoutDesign.textPrimary : Colors.grey.shade800),
+              // Back/close button on left with optional label
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _TopBarButton(
+                    icon: showBackButton ? Icons.arrow_back_rounded : Icons.arrow_back_rounded,
+                    onTap: showBackButton ? (onBackTap ?? onCloseTap) : onCloseTap,
+                    isDark: isDark,
                   ),
-                ),
+                  // Label next to back button (e.g., "Warmup")
+                  if (backButtonLabel != null) ...[
+                    const SizedBox(width: 4),
+                    Text(
+                      backButtonLabel!,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ],
               ),
 
               const Spacer(),
 
-              // Rest timer or close button
-              if (restSecondsRemaining != null && restSecondsRemaining! > 0)
-                _RestTimerChip(
-                  seconds: restSecondsRemaining!,
-                  totalSeconds: totalRestSeconds ?? restSecondsRemaining!,
-                  isDark: isDark,
-                )
-              else
-                _TopBarButton(
-                  icon: Icons.close,
-                  onTap: onCloseTap,
-                  isSubdued: true,
-                  isDark: isDark,
-                ),
+              // Favorite + Minimize button + Timer on right
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Favorite button (leftmost in this group)
+                  if (onFavoriteTap != null)
+                    _TopBarButton(
+                      icon: isFavorite ? Icons.favorite : Icons.favorite_border,
+                      onTap: onFavoriteTap!,
+                      isDark: isDark,
+                      iconColor: isFavorite ? Colors.red : null,
+                    ),
+
+                  // Minimize button (PiP style)
+                  if (onMinimize != null)
+                    _TopBarButton(
+                      icon: Icons.picture_in_picture_alt,
+                      onTap: onMinimize!,
+                      isSubdued: true,
+                      isDark: isDark,
+                    ),
+
+                  // Total time elapsed with timer icon
+                  GestureDetector(
+                    onTap: onTimerTap,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.timer_outlined,
+                          size: 18,
+                          color: isPaused
+                              ? WorkoutDesign.warning
+                              : (isDark ? WorkoutDesign.textSecondary : Colors.grey.shade600),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          WorkoutTimerController.formatTime(workoutSeconds),
+                          style: WorkoutDesign.timerStyle.copyWith(
+                            fontSize: 16,
+                            color: isPaused
+                                ? WorkoutDesign.warning
+                                : (isDark ? WorkoutDesign.textSecondary : Colors.grey.shade600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -122,12 +176,14 @@ class _TopBarButton extends StatelessWidget {
   final VoidCallback onTap;
   final bool isSubdued;
   final bool isDark;
+  final Color? iconColor;
 
   const _TopBarButton({
     required this.icon,
     required this.onTap,
     this.isSubdued = false,
     this.isDark = true,
+    this.iconColor,
   });
 
   @override
@@ -147,9 +203,10 @@ class _TopBarButton extends StatelessWidget {
         child: Icon(
           icon,
           size: 24,
-          color: isSubdued
-              ? (isDark ? WorkoutDesign.textMuted : Colors.grey.shade500)
-              : (isDark ? WorkoutDesign.textPrimary : Colors.grey.shade800),
+          color: iconColor ??
+              (isSubdued
+                  ? (isDark ? WorkoutDesign.textMuted : Colors.grey.shade500)
+                  : (isDark ? WorkoutDesign.textPrimary : Colors.grey.shade800)),
         ),
       ),
     );

@@ -610,17 +610,15 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
       }
       final durationMinutes = prefs?.durationMinutes ?? 45;
 
-      // Step 3: Generate ONLY 1 workout (JIT generation - rest are generated on completion)
+      // Step 3: Generate 1 workout using single workout generation
       int generatedCount = 0;
-      await for (final progress in repo.generateMonthlyWorkoutsStreaming(
+      await for (final progress in repo.generateWorkoutStreaming(
         userId: userId,
-        selectedDays: selectedDays,
         durationMinutes: durationMinutes,
-        maxWorkouts: 1, // JIT: Only generate 1 workout at a time
       )) {
         if (!mounted) return;
 
-        if (progress.hasError) {
+        if (progress.status == WorkoutGenerationStatus.error) {
           setState(() => _isRegenerating = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -632,8 +630,8 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
           return;
         }
 
-        if (progress.isCompleted) {
-          generatedCount = progress.workouts.length;
+        if (progress.status == WorkoutGenerationStatus.completed) {
+          generatedCount = 1;
           break;
         }
       }

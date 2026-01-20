@@ -329,7 +329,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                       children: [
                         StatPill(
                           icon: Icons.timer_outlined,
-                          value: '${workout.durationMinutes ?? 45}m',
+                          value: workout.formattedDurationShort,
                         ),
                         const SizedBox(width: 12),
                         StatPill(

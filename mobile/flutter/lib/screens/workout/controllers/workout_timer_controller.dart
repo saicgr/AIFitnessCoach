@@ -47,8 +47,10 @@ class WorkoutTimerController {
   OnTimerComplete? onRestComplete;
 
   /// Start the main workout timer
-  void startWorkoutTimer() {
+  /// [initialSeconds] - Optional starting time (for restoring from mini player)
+  void startWorkoutTimer({int initialSeconds = 0}) {
     _workoutTimer?.cancel();
+    _workoutSeconds = initialSeconds;
     _workoutTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!_isPaused) {
         _workoutSeconds++;

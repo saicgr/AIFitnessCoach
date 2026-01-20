@@ -33,16 +33,17 @@ class AppColors {
   static const Color flexibility = Color(0xFFC0C0C0);
   static const Color hiit = Color(0xFFB0B0B0);
 
-  // Accent Colors - Monochrome (white/gray tones)
-  static const Color orange = Color(0xFFE0E0E0);
-  static const Color purple = Color(0xFFD0D0D0);
-  static const Color coral = Color(0xFFC0C0C0);
-  static const Color magenta = Color(0xFFB0B0B0);
-  static const Color limeGreen = Color(0xFFFAFAFA);
-  static const Color green = Color(0xFFE0E0E0);
-  static const Color yellow = Color(0xFFE8E8E8);
-  static const Color red = Color(0xFFD0D0D0);
-  static const Color pink = Color(0xFFC0C0C0);
+  // Accent Colors - With orange as primary app accent
+  static const Color orange = Color(0xFFF97316); // Primary app accent - orange
+  static const Color orangeLight = Color(0xFFFFB366); // Lighter orange for hover/subtle states
+  static const Color purple = Color(0xFFA855F7);
+  static const Color coral = Color(0xFFF87171);
+  static const Color magenta = Color(0xFFEC4899);
+  static const Color limeGreen = Color(0xFF84CC16);
+  static const Color green = Color(0xFF22C55E);
+  static const Color yellow = Color(0xFFEAB308);
+  static const Color red = Color(0xFFEF4444);
+  static const Color pink = Color(0xFFF472B6);
 
   // Surface colors
   static const Color surface = Color(0xFF121212);
@@ -224,12 +225,13 @@ class AppColorsLight {
   static const Color flexibility = Color(0xFF606060);
   static const Color hiit = Color(0xFF707070);
 
-  // Accent Colors - Monochrome (black/dark gray tones)
-  static const Color orange = Color(0xFF424242);
-  static const Color purple = Color(0xFF505050);
-  static const Color coral = Color(0xFF606060);
-  static const Color magenta = Color(0xFF707070);
-  static const Color green = Color(0xFF303030);
+  // Accent Colors - With orange as primary app accent
+  static const Color orange = Color(0xFFEA580C); // Primary app accent - darker orange for light theme
+  static const Color orangeLight = Color(0xFFF97316); // Standard orange
+  static const Color purple = Color(0xFF9333EA);
+  static const Color coral = Color(0xFFDC2626);
+  static const Color magenta = Color(0xFFDB2777);
+  static const Color green = Color(0xFF16A34A);
 
   // Semantic Colors - Keep subtle distinction
   static const Color success = Color(0xFF303030);

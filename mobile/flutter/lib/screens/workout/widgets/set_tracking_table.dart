@@ -13,6 +13,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/workout_design.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../models/workout_state.dart';
 
@@ -94,6 +95,9 @@ class SetTrackingTable extends StatefulWidget {
   /// Callback when a set is deleted via swipe
   final void Function(int setIndex)? onSetDeleted;
 
+  /// Callback when unit toggle is tapped (kg/lbs)
+  final VoidCallback? onToggleUnit;
+
   // ========== Inline Rest Row Props ==========
 
   /// Whether to show inline rest row (between last completed and active set)
@@ -117,6 +121,7 @@ class SetTrackingTable extends StatefulWidget {
     this.allSetsCompleted = false,
     this.onSelectAllTapped,
     this.onSetDeleted,
+    this.onToggleUnit,
     this.showInlineRest = false,
     this.inlineRestRowWidget,
   });
@@ -305,9 +310,9 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
             ),
           ),
 
-          // Previous column (last session data)
+          // Previous column (last session data) - expanded since Target removed
           Expanded(
-            flex: 2,
+            flex: 4,
             child: Text(
               'Previous',
               style: WorkoutDesign.tableHeaderStyle.copyWith(
@@ -316,26 +321,31 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
             ),
           ),
 
-          // Target column
-          Expanded(
-            flex: 2,
-            child: Text(
-              'Target',
-              style: WorkoutDesign.tableHeaderStyle.copyWith(
-                color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
-              ),
-            ),
-          ),
-
-          // Weight column
+          // Weight column with toggle
           SizedBox(
             width: widget.isLeftRightMode ? 60 : 72,
-            child: Text(
-              widget.isLeftRightMode ? _unit : _unit,
-              style: WorkoutDesign.tableHeaderStyle.copyWith(
-                color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
+            child: GestureDetector(
+              onTap: widget.onToggleUnit,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (widget.onToggleUnit != null)
+                    Icon(
+                      Icons.swap_horiz,
+                      size: 14,
+                      color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
+                    ),
+                  if (widget.onToggleUnit != null)
+                    const SizedBox(width: 2),
+                  Text(
+                    _unit,
+                    style: WorkoutDesign.tableHeaderStyle.copyWith(
+                      color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
+                    ),
+                  ),
+                ],
               ),
-              textAlign: TextAlign.center,
             ),
           ),
 
@@ -408,27 +418,15 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
               ),
             ),
 
-            // Previous session column
+            // Previous session column - expanded since Target removed
+            // Now shows previous weight x reps with RIR badge
             Expanded(
-              flex: 2,
-              child: _PreviousCell(
+              flex: 4,
+              child: _PreviousCellWithRir(
                 previousWeight: set.previousWeight,
                 previousReps: set.previousReps,
                 previousRir: set.previousRir,
-                useKg: widget.useKg,
-                isDark: isDark,
-              ),
-            ),
-
-            // Auto target column
-            Expanded(
-              flex: 2,
-              child: _AutoTargetCell(
-                targetWeight: set.targetWeight,
-                targetReps: set.targetReps,
                 targetRir: set.targetRir,
-                previousWeight: set.previousWeight,
-                previousReps: set.previousReps,
                 useKg: widget.useKg,
                 isWarmup: set.isWarmup,
                 isDark: isDark,
@@ -514,30 +512,42 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
 
   Widget _buildAddSetButton(BuildContext context, WorkoutDesignTheme theme) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Get dynamic accent color from app settings
+    final accentEnum = AccentColorScope.of(context);
+    final accentColor = accentEnum.getColor(isDark);
 
     return GestureDetector(
       onTap: () {
-        HapticFeedback.lightImpact();
+        HapticFeedback.mediumImpact();
         widget.onAddSet();
       },
       child: Container(
-        height: 44,
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        height: 48,
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: isDark ? WorkoutDesign.surface : Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(WorkoutDesign.radiusSmall),
+          color: accentColor.withValues(alpha: isDark ? 0.15 : 0.1),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isDark ? WorkoutDesign.border : Colors.grey.shade300,
-            width: 1,
+            color: accentColor.withValues(alpha: 0.4),
+            width: 1.5,
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.add,
-              size: 18,
-              color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade500,
+              Icons.add_rounded,
+              size: 22,
+              color: accentColor,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Add Set',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: accentColor,
+              ),
             ),
           ],
         ),
@@ -839,14 +849,15 @@ class _AutoTargetCell extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Target weight x reps
+          // Target weight x reps (no truncation - important to see full target)
           Text(
             targetString,
             style: WorkoutDesign.autoTargetStyle.copyWith(
               color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade700,
+              fontSize: 12, // Slightly smaller to fit
             ),
             maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            overflow: TextOverflow.visible,
           ),
           // RIR pill with info icon
           if (targetRir != null)
@@ -970,6 +981,186 @@ class _PreviousCell extends StatelessWidget {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Previous cell with RIR badge - combines previous data with target RIR
+/// Used when Target column is removed
+class _PreviousCellWithRir extends StatelessWidget {
+  final double? previousWeight;
+  final int? previousReps;
+  final int? previousRir;
+  final int? targetRir;
+  final bool useKg;
+  final bool isWarmup;
+  final bool isDark;
+
+  const _PreviousCellWithRir({
+    this.previousWeight,
+    this.previousReps,
+    this.previousRir,
+    this.targetRir,
+    required this.useKg,
+    this.isWarmup = false,
+    this.isDark = true,
+  });
+
+  void _showRirExplanation(BuildContext context) {
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: isDarkTheme ? const Color(0xFF1C1C1E) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: isDarkTheme ? Colors.grey.shade700 : Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Icon(
+                        Icons.close,
+                        size: 24,
+                        color: isDarkTheme ? Colors.white : Colors.black,
+                      ),
+                    ),
+                    const Expanded(
+                      child: Center(
+                        child: Text(
+                          'What is RIR?',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'RIR stands for Reps in Reserve—a simple way to describe how challenging a set felt.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                    color: isDarkTheme ? Colors.grey.shade300 : Colors.grey.shade700,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'A lower RIR (0–1) means you pushed close to your limit. A higher RIR (like 3–4) means you had more reps in the tank.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                    color: isDarkTheme ? Colors.grey.shade300 : Colors.grey.shade700,
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Build previous string
+    String previousString = '—';
+    if (previousWeight != null && previousReps != null) {
+      final displayWeight = useKg ? previousWeight! : previousWeight! * 2.20462;
+      previousString = '${displayWeight.toStringAsFixed(0)} ${useKg ? 'kg' : 'lb'} x $previousReps';
+    } else if (previousReps != null) {
+      previousString = '$previousReps reps';
+    } else if (previousWeight != null) {
+      final displayWeight = useKg ? previousWeight! : previousWeight! * 2.20462;
+      previousString = '${displayWeight.toStringAsFixed(0)} ${useKg ? 'kg' : 'lb'}';
+    }
+
+    // Determine which RIR to show (target takes priority for current set guidance)
+    final displayRir = targetRir ?? previousRir;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Previous weight x reps
+          Flexible(
+            child: Text(
+              previousString,
+              style: WorkoutDesign.autoTargetStyle.copyWith(
+                color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade600,
+                fontSize: 13,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+
+          // RIR pill with ? icon (if available and not warmup)
+          if (displayRir != null && !isWarmup) ...[
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: WorkoutDesign.getRirColor(displayRir).withOpacity(isDark ? 0.25 : 0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'RIR $displayRir',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? WorkoutDesign.getRirColor(displayRir)
+                          : WorkoutDesign.getRirColor(displayRir).withOpacity(0.9),
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                  GestureDetector(
+                    onTap: () => _showRirExplanation(context),
+                    child: Icon(
+                      Icons.help_outline,
+                      size: 12,
+                      color: isDark
+                          ? WorkoutDesign.getRirColor(displayRir).withOpacity(0.7)
+                          : WorkoutDesign.getRirColor(displayRir).withOpacity(0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

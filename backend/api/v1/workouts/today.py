@@ -12,7 +12,7 @@ from datetime import datetime, date, timedelta
 from typing import Optional, List
 import json
 
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
@@ -20,7 +20,6 @@ from core.logger import get_logger
 from services.user_context_service import user_context_service
 
 from .utils import parse_json_field
-from .background import generate_next_workout
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -53,6 +52,9 @@ class TodayWorkoutResponse(BaseModel):
     # Generation status fields
     is_generating: bool = False
     generation_message: Optional[str] = None
+    # Auto-generation trigger fields
+    needs_generation: bool = False
+    next_workout_date: Optional[str] = None  # YYYY-MM-DD format for frontend to generate
 
 
 def _extract_primary_muscles(exercises: list) -> List[str]:
@@ -132,10 +134,33 @@ def _get_user_workout_days(user: dict) -> List[int]:
     return selected_days
 
 
+def _calculate_next_workout_date(selected_days: List[int]) -> str:
+    """Calculate the next workout date based on user's selected days.
+
+    Returns the date in YYYY-MM-DD format.
+    If today is a workout day, returns today.
+    Otherwise returns the next upcoming workout day.
+    """
+    today = date.today()
+    today_weekday = today.weekday()
+
+    # If today is a workout day, return today
+    if today_weekday in selected_days:
+        return today.isoformat()
+
+    # Find the next workout day
+    for days_ahead in range(1, 8):  # Check next 7 days
+        future_date = today + timedelta(days=days_ahead)
+        if future_date.weekday() in selected_days:
+            return future_date.isoformat()
+
+    # Fallback to today (shouldn't happen if selected_days is valid)
+    return today.isoformat()
+
+
 @router.get("/today", response_model=TodayWorkoutResponse)
 async def get_today_workout(
     user_id: str = Query(..., description="User ID"),
-    background_tasks: BackgroundTasks = None,
 ) -> TodayWorkoutResponse:
     """
     Get today's scheduled workout or the next upcoming workout.
@@ -252,68 +277,15 @@ async def get_today_workout(
         # Check if today is a scheduled workout day
         is_today_workout_day = _is_today_a_workout_day(selected_days)
 
-        # Trigger generation if:
-        # 1. No workouts exist at all (original condition), OR
-        # 2. Today IS a scheduled workout day but no workout exists for today
-        # AND user hasn't already completed today's workout
-        should_generate = (
-            not has_completed_workout_today and
-            (
-                (not has_workout_today and next_workout is None) or  # No workouts at all
-                (is_today_workout_day and not has_workout_today)      # Today is workout day but missing
-            )
-        )
+        # Determine if generation is needed
+        # If no today_workout AND no next_workout, frontend should auto-generate
+        needs_generation = False
+        next_workout_date: Optional[str] = None
 
-        if should_generate:
-            logger.info(f"[JIT Safety Net] Triggering generation for user {user_id}. "
-                       f"is_today_workout_day={is_today_workout_day}, has_workout_today={has_workout_today}, "
-                       f"next_workout_exists={next_workout is not None}")
-
-            # Check if we have background_tasks available for async generation
-            if background_tasks is not None:
-                # COOLDOWN CHECK: Prevent excessive retries by checking for recent jobs
-                from services.job_queue_service import get_job_queue_service
-                job_queue = get_job_queue_service()
-
-                recent_job = job_queue.get_recent_job(user_id, within_seconds=60)
-                if recent_job:
-                    # A job was created recently - don't trigger another one
-                    job_status = recent_job.get("status", "unknown")
-                    job_error = recent_job.get("error_message", "")
-
-                    if job_status == "in_progress":
-                        is_generating = True
-                        generation_message = "Creating your next workout..."
-                        logger.info(f"[JIT Safety Net] Generation already in progress for user {user_id}")
-                    elif job_status == "failed":
-                        is_generating = False
-                        generation_message = f"Generation failed. Please try again in a minute."
-                        logger.warning(f"[JIT Safety Net] Recent generation failed for user {user_id}: {job_error}")
-                    else:
-                        # pending, completed, or other status
-                        is_generating = job_status == "pending"
-                        generation_message = "Workout generation queued..." if job_status == "pending" else None
-                        logger.info(f"[JIT Safety Net] Recent job status={job_status} for user {user_id}")
-                else:
-                    # No recent job - safe to trigger new generation
-                    try:
-                        # Call generate_next_workout which schedules the actual generation
-                        result = await generate_next_workout(user_id, background_tasks)
-
-                        if result.get("needs_generation") or result.get("already_generating"):
-                            is_generating = True
-                            generation_message = "Creating your next workout..."
-                            logger.info(f"[JIT Safety Net] Generation triggered for user {user_id}: {result}")
-                        elif result.get("success") and not result.get("needs_generation"):
-                            # Workout already exists - this shouldn't happen but handle it
-                            logger.info(f"[JIT Safety Net] Workout already exists: {result}")
-                    except Exception as gen_error:
-                        logger.error(f"[JIT Safety Net] Failed to trigger generation: {gen_error}")
-                        # Don't fail the request - just log and continue
-                        is_generating = False
-                        generation_message = None
-            else:
-                logger.warning(f"[JIT Safety Net] No background_tasks available for user {user_id}")
+        if not today_workout and not next_workout and not has_completed_workout_today:
+            needs_generation = True
+            next_workout_date = _calculate_next_workout_date(selected_days)
+            logger.info(f"[AUTO-GEN] No workouts found for user {user_id}. Signaling generation needed for {next_workout_date}")
 
         # Log analytics event for quick start view
         try:
@@ -346,6 +318,8 @@ async def get_today_workout(
             completed_workout=completed_workout_summary,
             is_generating=is_generating,
             generation_message=generation_message,
+            needs_generation=needs_generation,
+            next_workout_date=next_workout_date,
         )
 
     except Exception as e:

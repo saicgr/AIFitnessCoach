@@ -38,6 +38,13 @@ import 'widgets/habits_section.dart';
 import 'widgets/body_metrics_section.dart';
 import 'widgets/achievements_section.dart';
 import '../../data/providers/consistency_provider.dart';
+import '../../data/providers/xp_provider.dart';
+import '../../data/models/user_xp.dart';
+import '../../widgets/double_xp_banner.dart';
+import '../../widgets/xp_level_bar.dart';
+import '../../widgets/level_up_dialog.dart';
+import '../../widgets/streak_milestone_dialog.dart';
+import '../../data/models/level_reward.dart';
 
 /// Preset layout templates for quick customization
 class LayoutPreset {
@@ -788,6 +795,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         return Icons.straighten;
       case TileType.habits:
         return Icons.check_circle_outline;
+      case TileType.xpProgress:
+        return Icons.bolt;
     }
   }
 
@@ -1275,6 +1284,140 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (mounted) {
       setState(() => _isInitializing = false);
     }
+
+    // Process daily login for XP rewards (runs in background)
+    _processDailyLogin();
+  }
+
+  /// Process daily login to award XP bonuses
+  Future<void> _processDailyLogin() async {
+    try {
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+      if (userId == null) return;
+
+      final xpNotifier = ref.read(xpProvider.notifier);
+
+      // First load user XP data so we have it available
+      await xpNotifier.loadAll(userId: userId);
+
+      // Then process daily login to award XP
+      final result = await xpNotifier.processDailyLogin();
+
+      if (result != null && mounted) {
+        // Load active XP events (Double XP, etc.)
+        await xpNotifier.loadActiveEvents();
+
+        // Initialize streak tracking for milestone detection
+        xpNotifier.initializeStreakTracking();
+
+        // Show celebration if significant XP was awarded
+        if (result.isSignificant && !result.alreadyClaimed) {
+          _showDailyLoginCelebration(result);
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ [Home] Error processing daily login: $e');
+    }
+  }
+
+  /// Show a celebration for daily login rewards
+  void _showDailyLoginCelebration(dynamic result) {
+    if (!mounted) return;
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    // Build message based on what was earned
+    String title = '🎉 Welcome Back!';
+    String message = '+${result.totalXpAwarded} XP';
+
+    if (result.isFirstLogin) {
+      title = '🎉 Welcome to FitWiz!';
+      message = 'You earned +${result.firstLoginXp} XP bonus!';
+    } else if (result.streakMilestoneXp > 0) {
+      title = '🔥 Streak Milestone!';
+      message = '${result.currentStreak} days! +${result.totalXpAwarded} XP';
+    } else if (result.hasDoubleXP) {
+      title = '⚡ Double XP Active!';
+      message = '+${result.totalXpAwarded} XP (2x bonus!)';
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.local_fire_department,
+                color: Colors.amber,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
+                  ),
+                  Text(
+                    message,
+                    style: TextStyle(
+                      color: textPrimary.withValues(alpha: 0.8),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (result.currentStreak > 1)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.local_fire_department,
+                      color: Colors.orange,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${result.currentStreak}',
+                      style: const TextStyle(
+                        color: Colors.orange,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+        backgroundColor: elevatedColor,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
 
   String _getGreeting() {
@@ -1552,10 +1695,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final horizontalPadding = responsiveHorizontalPadding;
     final verticalPadding = responsiveVerticalPadding;
 
+    // Listen for level-up events and show celebration dialog
+    ref.listen<LevelUpEvent?>(levelUpEventProvider, (previous, next) {
+      if (next != null && previous == null) {
+        // Level up occurred - show celebration dialog
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            showLevelUpDialog(
+              context,
+              next,
+              () {
+                // Clear the level-up event after dialog is dismissed
+                ref.read(xpProvider.notifier).clearLevelUp();
+              },
+            );
+          }
+        });
+      }
+    });
+
+    // Listen for streak milestone events and show celebration dialog
+    ref.listen<StreakMilestone?>(streakMilestoneProvider, (previous, next) {
+      if (next != null && previous == null) {
+        // Streak milestone reached - show celebration dialog
+        final currentStreak = ref.read(xpCurrentStreakProvider);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            showStreakMilestoneDialog(
+              context,
+              next,
+              currentStreak,
+              () {
+                // Clear the streak milestone after dialog is dismissed
+                ref.read(xpProvider.notifier).clearStreakMilestone();
+              },
+            );
+          }
+        });
+      }
+    });
+
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: wrapWithSwipeDetector(
-        child: RefreshIndicator(
+      body: RefreshIndicator(
           onRefresh: () async {
             debugPrint('🔄 [Home] Pull-to-refresh triggered');
             _lastRefreshTime = DateTime.now();
@@ -1587,9 +1769,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 child: WorkoutCategoryPills(isDark: isDark),
               ),
 
+              // Daily XP Strip - Shows daily goals progress
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 8, bottom: 4),
+                  child: DailyXPStrip(),
+                ),
+              ),
+
               // Contextual Banner - Personalized, dismissible tips
               SliverToBoxAdapter(
                 child: ContextualBanner(isDark: isDark),
+              ),
+
+              // Double XP Banner - Shows when Double XP event is active
+              const SliverToBoxAdapter(
+                child: DoubleXPBanner(),
               ),
 
               // Watch Install Banner - One-time prompt for WearOS (Android only)
@@ -1611,7 +1806,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ),
             ],
           ),
-        ),
         ),
       ),
     );
@@ -3086,6 +3280,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       padding: EdgeInsets.all(padding),
       child: Row(
         children: [
+          // Greeting and name - takes remaining space
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -3112,9 +3307,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ],
             ),
           ),
-          const Spacer(),
-          // Customize Home Screen Button
-          CustomizeButton(isDark: isDark),
+          SizedBox(width: spacing),
+          // XP Level Progress - Compact version in header
+          if (!isCompact) const XPLevelBarCompact(),
           // Notification Bell
           NotificationBellButton(isDark: isDark),
           // Streak Badge - Consolidated metric
@@ -3502,18 +3697,47 @@ class WorkoutCategoryPills extends ConsumerWidget {
     // Get dynamic accent color from provider
     final colors = ref.colors(context);
 
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
     return AnimationLimiter(
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
-          children: AnimationConfiguration.toStaggeredList(
-            duration: const Duration(milliseconds: 400),
-            childAnimationBuilder: (widget) => SlideAnimation(
-              horizontalOffset: 50.0,
-              child: FadeInAnimation(child: widget),
+          children: [
+            // Edit/Pencil icon button before pills
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: () {
+                  HapticService.selection();
+                  context.push('/settings/homescreen');
+                },
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.glassSurface
+                        : AppColorsLight.glassSurface,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Icon(
+                    Icons.edit_outlined,
+                    size: 18,
+                    color: textSecondary,
+                  ),
+                ),
+              ),
             ),
-            children: _focusOptions.asMap().entries.map((entry) {
+            // Category pills
+            ...AnimationConfiguration.toStaggeredList(
+              duration: const Duration(milliseconds: 400),
+              childAnimationBuilder: (widget) => SlideAnimation(
+                horizontalOffset: 50.0,
+                child: FadeInAnimation(child: widget),
+              ),
+              children: _focusOptions.asMap().entries.map((entry) {
               final index = entry.key;
               final option = entry.value;
               final isActive = index == activeIndex;
@@ -3539,7 +3763,8 @@ class WorkoutCategoryPills extends ConsumerWidget {
                 ),
               );
             }).toList(),
-          ),
+            ),
+          ],
         ),
       ),
     );

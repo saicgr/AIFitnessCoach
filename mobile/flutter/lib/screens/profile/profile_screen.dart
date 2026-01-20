@@ -58,6 +58,7 @@ class ProfileScreen extends ConsumerWidget {
             username: user?.username,
             email: user?.email ?? '',
             photoUrl: user?.photoUrl,
+            onEditTap: () => _showEditPersonalInfoSheet(context),
           ).animate().fadeIn().slideY(begin: 0.1),
           const SizedBox(height: 32),
           _buildFitnessProfileSection(user),
@@ -122,6 +123,8 @@ class ProfileScreen extends ConsumerWidget {
         const SectionHeader(title: 'EXERCISE PREFERENCES'),
         const SizedBox(height: 12),
         const _WarmupStretchPreferencesCard(),
+        const SizedBox(height: 12),
+        const _TrainingFocusCard(),
       ],
     ).animate().fadeIn(delay: 190.ms);
   }
@@ -792,6 +795,79 @@ class _WarmupStretchPreferencesCard extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Card for training focus settings (primary goal & muscle focus points)
+class _TrainingFocusCard extends ConsumerWidget {
+  const _TrainingFocusCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accent = ref.colors(context).accent;
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        context.push('/settings/training-focus');
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.fitness_center,
+                  color: accent,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Training Focus',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'Primary goal & muscle priorities',
+                      style: TextStyle(fontSize: 12, color: textMuted),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: textMuted,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

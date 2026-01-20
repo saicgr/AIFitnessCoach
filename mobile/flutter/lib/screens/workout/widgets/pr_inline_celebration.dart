@@ -1,7 +1,7 @@
 /// PR Inline Celebration Widget
 ///
 /// Non-blocking celebratory banner shown during workout when a PR is detected.
-/// Auto-dismisses after 3 seconds.
+/// Auto-dismisses after 3 seconds. Tap to view details.
 library;
 
 import 'dart:async';
@@ -11,6 +11,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/pr_detection_service.dart';
+import 'pr_details_sheet.dart';
 
 /// Shows inline PR celebration banner
 ///
@@ -67,6 +68,11 @@ class _PRInlineCelebrationBannerState extends State<PRInlineCelebrationBanner> {
     Future.delayed(const Duration(milliseconds: 200), widget.onDismiss);
   }
 
+  void _showDetails() {
+    _dismiss();
+    showPRDetailsSheet(context: context, prs: [widget.pr]);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isEpic = widget.pr.celebrationLevel == CelebrationLevel.epic;
@@ -76,7 +82,7 @@ class _PRInlineCelebrationBannerState extends State<PRInlineCelebrationBanner> {
       left: 16,
       right: 16,
       child: GestureDetector(
-        onTap: _dismiss,
+        onTap: _showDetails,
         onVerticalDragEnd: (details) {
           if (details.primaryVelocity != null && details.primaryVelocity! < 0) {
             _dismiss();
@@ -205,11 +211,18 @@ class _PRInlineCelebrationBannerState extends State<PRInlineCelebrationBanner> {
                     ),
                   ),
 
-                  // Close indicator
-                  Icon(
-                    Icons.close,
-                    color: Colors.white.withOpacity(0.5),
-                    size: 20,
+                  // Close button - tap to dismiss without showing details
+                  GestureDetector(
+                    onTap: _dismiss,
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.close,
+                        color: Colors.white.withOpacity(0.5),
+                        size: 20,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -230,7 +243,7 @@ class _PRInlineCelebrationBannerState extends State<PRInlineCelebrationBanner> {
 }
 
 /// Multiple PR celebration (when 2+ PRs in one set)
-class MultiPRInlineCelebration extends StatelessWidget {
+class MultiPRInlineCelebration extends StatefulWidget {
   final List<DetectedPR> prs;
   final VoidCallback onDismiss;
 
@@ -241,14 +254,36 @@ class MultiPRInlineCelebration extends StatelessWidget {
   });
 
   @override
+  State<MultiPRInlineCelebration> createState() =>
+      _MultiPRInlineCelebrationState();
+}
+
+class _MultiPRInlineCelebrationState extends State<MultiPRInlineCelebration> {
+  bool _isDismissing = false;
+
+  void _dismiss() {
+    if (_isDismissing) return;
+    setState(() => _isDismissing = true);
+    Future.delayed(const Duration(milliseconds: 200), widget.onDismiss);
+  }
+
+  void _showDetails() {
+    _dismiss();
+    showPRDetailsSheet(context: context, prs: widget.prs);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Positioned(
       top: MediaQuery.of(context).padding.top + 60,
       left: 16,
       right: 16,
       child: GestureDetector(
-        onTap: onDismiss,
-        child: Material(
+        onTap: _showDetails,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: _isDismissing ? 0 : 1,
+          child: Material(
           color: Colors.transparent,
           child: Container(
             padding: const EdgeInsets.all(16),
@@ -313,7 +348,7 @@ class MultiPRInlineCelebration extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${prs.length} Personal Records!',
+                        '${widget.prs.length} Personal Records!',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.white.withOpacity(0.9),
@@ -322,7 +357,7 @@ class MultiPRInlineCelebration extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Row(
-                        children: prs.take(3).map((pr) {
+                        children: widget.prs.take(3).map((pr) {
                           return Container(
                             margin: const EdgeInsets.only(right: 6),
                             padding: const EdgeInsets.symmetric(
@@ -348,11 +383,19 @@ class MultiPRInlineCelebration extends StatelessWidget {
                   ),
                 ),
 
-                Icon(
-                  Icons.close,
-                  color: Colors.white.withOpacity(0.5),
-                  size: 20,
-                ),
+                // Close button - tap to dismiss without showing details
+                  GestureDetector(
+                    onTap: _dismiss,
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.close,
+                        color: Colors.white.withOpacity(0.5),
+                        size: 20,
+                      ),
+                    ),
+                  ),
               ],
             ),
           )
@@ -369,6 +412,7 @@ class MultiPRInlineCelebration extends StatelessWidget {
                 duration: 1000.ms,
                 color: Colors.white.withOpacity(0.3),
               ),
+          ),
         ),
       ),
     );

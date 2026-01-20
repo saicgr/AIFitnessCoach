@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/social_service.dart' show PostVisibility, SocialActivityType;
@@ -241,8 +242,8 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                 FilledButton(
                   onPressed: _isPosting ? null : _createPost,
                   style: FilledButton.styleFrom(
-                    backgroundColor: isDark ? AppColors.accent : AppColorsLight.accent,
-                    foregroundColor: isDark ? AppColors.accentContrast : AppColorsLight.accentContrast,
+                    backgroundColor: ref.colors(context).accent,
+                    foregroundColor: ref.colors(context).accentContrast,
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   ),
                   child: _isPosting
@@ -301,7 +302,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   }
 
   Widget _buildPostTypeSelector(bool isDark, Color cardBorder) {
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentColor = ref.colors(context).accent;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
@@ -373,7 +374,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   }
 
   Widget _buildCaptionInput(bool isDark, Color cardBorder) {
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentColor = ref.colors(context).accent;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
@@ -549,7 +550,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   }
 
   Widget _buildVisibilitySelector(bool isDark, Color cardBorder) {
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentColor = ref.colors(context).accent;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 

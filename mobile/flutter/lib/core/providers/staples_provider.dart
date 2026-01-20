@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/exercise_preferences_repository.dart';
 import '../../data/repositories/workout_repository.dart';
-import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 
 /// State for staple exercises
@@ -109,10 +108,10 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
         staples: [...state.staples, staple],
       );
 
-      debugPrint('⭐ Staple added: $exerciseName - triggering workout regeneration');
+      debugPrint('⭐ Staple added: $exerciseName - regenerating today\'s workout');
 
-      // Auto-regenerate workouts with the new staple
-      await _regenerateUpcomingWorkouts(userId);
+      // Regenerate today's workout to include the new staple
+      await _regenerateTodayWorkout(userId);
 
       // Invalidate providers to refresh UI with new workouts
       _ref.invalidate(todayWorkoutProvider);
@@ -126,43 +125,49 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
     }
   }
 
-  /// Regenerate upcoming workouts to include the new staple exercise
-  Future<void> _regenerateUpcomingWorkouts(String userId) async {
+  /// Regenerate today's workout to include the new staple exercise
+  Future<void> _regenerateTodayWorkout(String userId) async {
     try {
       state = state.copyWith(
         isRegenerating: true,
-        regenerationMessage: 'Regenerating workouts with staple...',
+        regenerationMessage: 'Updating today\'s workout...',
       );
 
-      // Get user's selected workout days from preferences
-      final authState = _ref.read(authStateProvider);
-      final user = authState.user;
-      final selectedDays = user?.workoutDays ?? [0, 1, 2, 3, 4]; // Default Mon-Fri
+      // Get today's/next workout
+      final todayWorkoutAsync = _ref.read(todayWorkoutProvider);
+      final response = todayWorkoutAsync.valueOrNull;
 
-      // API expects 0-indexed days (0=Mon, 6=Sun) - no conversion needed
-      final apiDays = selectedDays;
+      // Get the workout to regenerate (today's or next upcoming)
+      final workoutToRegenerate = response?.todayWorkout ?? response?.nextWorkout;
+
+      if (workoutToRegenerate == null) {
+        debugPrint('⭐ No workout today - staple will apply to next generation');
+        state = state.copyWith(isRegenerating: false, regenerationMessage: null);
+        return;
+      }
 
       final workoutRepo = _ref.read(workoutRepositoryProvider);
 
-      // Generate workouts for upcoming days (max 7)
-      await for (final progress in workoutRepo.generateMonthlyWorkoutsStreaming(
+      // Regenerate single workout using streaming API
+      await for (final progress in workoutRepo.regenerateWorkoutStreaming(
+        workoutId: workoutToRegenerate.id,
         userId: userId,
-        selectedDays: apiDays,
-        maxWorkouts: 7,
       )) {
-        debugPrint('🏋️ Regeneration: ${progress.message}');
-        state = state.copyWith(
-          regenerationMessage: progress.message,
-        );
+        debugPrint('🏋️ Staple regeneration: ${progress.message}');
+        state = state.copyWith(regenerationMessage: progress.message);
+
+        if (progress.isCompleted || progress.hasError) {
+          break;
+        }
       }
 
-      debugPrint('✅ Workouts regenerated with new staple');
+      debugPrint('✅ Workout regenerated with new staple');
       state = state.copyWith(
         isRegenerating: false,
         regenerationMessage: null,
       );
     } catch (e) {
-      debugPrint('❌ Failed to regenerate workouts: $e');
+      debugPrint('❌ Failed to regenerate workout: $e');
       state = state.copyWith(
         isRegenerating: false,
         regenerationMessage: null,

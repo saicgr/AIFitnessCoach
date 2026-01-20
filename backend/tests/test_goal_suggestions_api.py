@@ -91,7 +91,7 @@ class TestGetGoalSuggestions:
             mock_table.execute.return_value = MagicMock(data=cached_data)
 
             response = client.get(
-                "/v1/personal-goals/goals/suggestions",
+                "/api/v1/personal-goals/goals/suggestions",
                 params={"user_id": "user123"}
             )
 
@@ -124,7 +124,7 @@ class TestGetGoalSuggestions:
             mock_table.execute.return_value = MagicMock(data=[])
 
             response = client.get(
-                "/v1/personal-goals/goals/suggestions",
+                "/api/v1/personal-goals/goals/suggestions",
                 params={"user_id": "newuser123"}
             )
 
@@ -152,7 +152,7 @@ class TestGetGoalSuggestions:
             mock_table.execute.return_value = MagicMock(data=[])
 
             response = client.get(
-                "/v1/personal-goals/goals/suggestions",
+                "/api/v1/personal-goals/goals/suggestions",
                 params={"user_id": "user123", "force_refresh": True}
             )
 
@@ -179,7 +179,7 @@ class TestDismissSuggestion:
             mock_table.execute.return_value = MagicMock(data=[{"id": "sug1"}])
 
             response = client.post(
-                "/v1/personal-goals/goals/suggestions/sug1/dismiss",
+                "/api/v1/personal-goals/goals/suggestions/sug1/dismiss",
                 params={"user_id": "user123"}
             )
 
@@ -202,7 +202,7 @@ class TestDismissSuggestion:
             mock_table.execute.return_value = MagicMock(data=[])
 
             response = client.post(
-                "/v1/personal-goals/goals/suggestions/nonexistent/dismiss",
+                "/api/v1/personal-goals/goals/suggestions/nonexistent/dismiss",
                 params={"user_id": "user123"}
             )
 
@@ -265,7 +265,7 @@ class TestAcceptSuggestion:
             ]
 
             response = client.post(
-                "/v1/personal-goals/goals/suggestions/sug1/accept",
+                "/api/v1/personal-goals/goals/suggestions/sug1/accept",
                 params={"user_id": "user123"}
             )
 
@@ -322,7 +322,7 @@ class TestAcceptSuggestion:
             ]
 
             response = client.post(
-                "/v1/personal-goals/goals/suggestions/sug1/accept",
+                "/api/v1/personal-goals/goals/suggestions/sug1/accept",
                 params={"user_id": "user123"},
                 json={"target_override": 50, "visibility": "public"}
             )
@@ -361,7 +361,7 @@ class TestAcceptSuggestion:
             ]
 
             response = client.post(
-                "/v1/personal-goals/goals/suggestions/sug1/accept",
+                "/api/v1/personal-goals/goals/suggestions/sug1/accept",
                 params={"user_id": "user123"}
             )
 
@@ -393,7 +393,7 @@ class TestSuggestionsSummary:
             mock_table.execute.return_value = MagicMock(data=suggestions)
 
             response = client.get(
-                "/v1/personal-goals/goals/suggestions/summary",
+                "/api/v1/personal-goals/goals/suggestions/summary",
                 params={"user_id": "user123"}
             )
 
@@ -418,7 +418,7 @@ class TestSuggestionsSummary:
             mock_table.execute.return_value = MagicMock(data=[])
 
             response = client.get(
-                "/v1/personal-goals/goals/suggestions/summary",
+                "/api/v1/personal-goals/goals/suggestions/summary",
                 params={"user_id": "user123"}
             )
 
@@ -464,7 +464,7 @@ class TestWorkoutSync:
 
             with patch("api.v1.personal_goals.log_user_activity"):
                 response = client.post(
-                    "/v1/personal-goals/workout-sync",
+                    "/api/v1/personal-goals/workout-sync",
                     params={"user_id": "user123"},
                     json={
                         "workout_log_id": "workout123",
@@ -517,7 +517,7 @@ class TestWorkoutSync:
 
             with patch("api.v1.personal_goals.log_user_activity"):
                 response = client.post(
-                    "/v1/personal-goals/workout-sync",
+                    "/api/v1/personal-goals/workout-sync",
                     params={"user_id": "user123"},
                     json={
                         "exercises": [
@@ -546,7 +546,7 @@ class TestWorkoutSync:
             mock_table.execute.return_value = MagicMock(data=[])
 
             response = client.post(
-                "/v1/personal-goals/workout-sync",
+                "/api/v1/personal-goals/workout-sync",
                 params={"user_id": "user123"},
                 json={
                     "exercises": [
@@ -593,7 +593,7 @@ class TestWorkoutSync:
 
             with patch("api.v1.personal_goals.log_user_activity"):
                 response = client.post(
-                    "/v1/personal-goals/workout-sync",
+                    "/api/v1/personal-goals/workout-sync",
                     params={"user_id": "user123"},
                     json={
                         "exercises": [
@@ -625,7 +625,7 @@ class TestWorkoutSync:
             mock_table.execute.return_value = MagicMock(data=[])  # No weekly_volume goals
 
             response = client.post(
-                "/v1/personal-goals/workout-sync",
+                "/api/v1/personal-goals/workout-sync",
                 params={"user_id": "user123"},
                 json={
                     "exercises": [

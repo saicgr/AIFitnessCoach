@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/providers/consistency_provider.dart';
 import '../../data/repositories/workout_repository.dart';
@@ -731,7 +732,7 @@ class _BadgeIcon extends StatelessWidget {
   }
 }
 
-class _QuickActionButton extends StatelessWidget {
+class _QuickActionButton extends ConsumerWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
@@ -743,9 +744,13 @@ class _QuickActionButton extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final accent = ref.watch(accentColorProvider);
+    final accentColor = accent.getColor(isDark);
 
     return Material(
       color: elevatedColor,
@@ -760,19 +765,20 @@ class _QuickActionButton extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Icon(icon, color: AppColors.cyan),
+              Icon(icon, color: accentColor),
               const SizedBox(width: 12),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
+                  color: textPrimary,
                 ),
               ),
               const Spacer(),
               Icon(
                 Icons.chevron_right,
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                color: textMuted,
               ),
             ],
           ),

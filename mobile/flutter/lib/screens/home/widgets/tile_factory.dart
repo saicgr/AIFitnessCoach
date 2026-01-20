@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/models/home_layout.dart';
 import '../../../data/repositories/workout_repository.dart';
+import '../../../widgets/xp_progress_card.dart';
 import 'cards/cards.dart';
 import 'cards/roi_summary_card.dart';
 import 'cards/weekly_plan_card.dart';
@@ -107,6 +108,8 @@ class TileFactory {
         return QuickLogMeasurementsCard(size: tile.size, isDark: isDark);
       case TileType.habits:
         return const HabitsSection();
+      case TileType.xpProgress:
+        return XPProgressCard(size: tile.size, isDark: isDark);
     }
   }
 

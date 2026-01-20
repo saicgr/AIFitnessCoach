@@ -53,6 +53,11 @@ class WorkoutRepository {
 
   WorkoutRepository(this._apiClient);
 
+  /// Get the current user's ID from the API client
+  Future<String?> getCurrentUserId() async {
+    return await _apiClient.getUserId();
+  }
+
   /// Get all workouts for a user
   ///
   /// [userId] The user ID to fetch workouts for
@@ -167,179 +172,6 @@ class WorkoutRepository {
     }
   }
 
-  /// Generate monthly workouts with streaming progress updates
-  ///
-  /// Returns a Stream that emits progress as each workout is generated.
-  /// By default generates 2 weeks of workouts, but can be limited with maxWorkouts.
-  ///
-  /// Each progress event contains:
-  /// - currentWorkout/totalWorkouts: Progress through the batch
-  /// - message: "Generating next workout..."
-  /// - detail: "Day X of Y"
-  /// - workout: The just-generated workout (when available)
-  ///
-  /// Use maxWorkouts: 1 for on-demand single workout generation.
-  Stream<ProgramGenerationProgress> generateMonthlyWorkoutsStreaming({
-    required String userId,
-    required List<int> selectedDays,
-    int durationMinutes = 45,
-    String? monthStartDate,
-    int? maxWorkouts,
-  }) async* {
-    debugPrint('🚀 [Workout] Starting streaming program generation for $userId');
-    final startTime = DateTime.now();
-    final List<Workout> generatedWorkouts = [];
-
-    try {
-      // Emit initial status
-      yield ProgramGenerationProgress(
-        currentWorkout: 0,
-        totalWorkouts: 0,
-        message: 'Starting workout generation...',
-        elapsedMs: 0,
-      );
-
-      // Get the base URL from API client
-      final baseUrl = _apiClient.baseUrl;
-
-      // Create a new Dio instance for streaming
-      final streamingDio = Dio(BaseOptions(
-        baseUrl: baseUrl,
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(minutes: 5),
-        headers: {
-          'Accept': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-        },
-      ));
-
-      // Add auth headers from existing client
-      final authHeaders = await _apiClient.getAuthHeaders();
-      streamingDio.options.headers.addAll(authHeaders);
-
-      final startDate = monthStartDate ?? DateTime.now().toIso8601String().split('T')[0];
-
-      final requestData = {
-        'user_id': userId,
-        'month_start_date': startDate,
-        'selected_days': selectedDays,
-        'duration_minutes': durationMinutes,
-      };
-
-      // Add max_workouts if specified (for on-demand single workout generation)
-      if (maxWorkouts != null) {
-        requestData['max_workouts'] = maxWorkouts;
-        debugPrint('🎯 [Workout] On-demand mode: generating max $maxWorkouts workout(s)');
-      }
-
-      debugPrint('🔍 [Workout] Request data: $requestData');
-
-      final response = await streamingDio.post(
-        '${ApiConstants.workouts}/generate-monthly-stream',
-        data: requestData,
-        options: Options(
-          responseType: ResponseType.stream,
-        ),
-      );
-
-      // Handle the response stream properly - cast to ResponseBody first
-      final responseBody = response.data as ResponseBody;
-
-      String eventType = '';
-      String eventData = '';
-      String buffer = '';
-
-      await for (final bytes in responseBody.stream) {
-        // Decode bytes to string and add to buffer
-        buffer += utf8.decode(bytes);
-
-        // Process complete lines from buffer
-        while (buffer.contains('\n')) {
-          final newlineIndex = buffer.indexOf('\n');
-          final line = buffer.substring(0, newlineIndex).trim();
-          buffer = buffer.substring(newlineIndex + 1);
-
-          if (line.isEmpty) {
-            // End of event - process accumulated data
-            if (eventType.isNotEmpty && eventData.isNotEmpty) {
-              try {
-                final data = jsonDecode(eventData) as Map<String, dynamic>;
-                final elapsedMs = DateTime.now().difference(startTime).inMilliseconds;
-
-                if (eventType == 'progress') {
-                  // Progress update - generating next workout
-                  yield ProgramGenerationProgress(
-                    currentWorkout: data['current'] as int? ?? 0,
-                    totalWorkouts: data['total'] as int? ?? 0,
-                    message: data['message'] as String? ?? 'Generating next workout...',
-                    detail: data['detail'] as String?,
-                    elapsedMs: elapsedMs,
-                    workouts: List.unmodifiable(generatedWorkouts),
-                  );
-                } else if (eventType == 'workout') {
-                  // A workout was generated
-                  final workoutData = data['workout'] as Map<String, dynamic>?;
-                  if (workoutData != null) {
-                    final workout = Workout.fromJson(workoutData);
-                    generatedWorkouts.add(workout);
-                    yield ProgramGenerationProgress(
-                      currentWorkout: data['current'] as int? ?? generatedWorkouts.length,
-                      totalWorkouts: data['total'] as int? ?? 0,
-                      message: 'Workout generated!',
-                      detail: workout.name,
-                      elapsedMs: elapsedMs,
-                      workout: workout,
-                      workouts: List.unmodifiable(generatedWorkouts),
-                    );
-                  }
-                } else if (eventType == 'done') {
-                  // All workouts generated
-                  yield ProgramGenerationProgress(
-                    currentWorkout: data['total_generated'] as int? ?? generatedWorkouts.length,
-                    totalWorkouts: data['total_generated'] as int? ?? generatedWorkouts.length,
-                    message: 'All workouts ready!',
-                    elapsedMs: elapsedMs,
-                    workouts: List.unmodifiable(generatedWorkouts),
-                    isCompleted: true,
-                  );
-                } else if (eventType == 'error') {
-                  yield ProgramGenerationProgress(
-                    currentWorkout: 0,
-                    totalWorkouts: 0,
-                    message: data['error'] as String? ?? 'Unknown error',
-                    elapsedMs: elapsedMs,
-                    workouts: List.unmodifiable(generatedWorkouts),
-                    hasError: true,
-                  );
-                }
-              } catch (e) {
-                debugPrint('⚠️ [Workout] Error parsing SSE data: $e');
-              }
-              eventType = '';
-              eventData = '';
-            }
-            continue;
-          }
-
-          if (line.startsWith('event:')) {
-            eventType = line.substring(6).trim();
-          } else if (line.startsWith('data:')) {
-            eventData = line.substring(5).trim();
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('❌ [Workout] Streaming program generation error: $e');
-      yield ProgramGenerationProgress(
-        currentWorkout: 0,
-        totalWorkouts: 0,
-        message: 'Failed to generate workouts: $e',
-        elapsedMs: DateTime.now().difference(startTime).inMilliseconds,
-        workouts: List.unmodifiable(generatedWorkouts),
-        hasError: true,
-      );
-    }
-  }
 
   /// Regenerate a workout with streaming progress updates
   ///
@@ -359,6 +191,8 @@ class WorkoutRepository {
     required String userId,
     String? difficulty,
     int? durationMinutes,
+    int? durationMinutesMin,
+    int? durationMinutesMax,
     List<String>? focusAreas,
     List<String>? injuries,
     List<String>? equipment,
@@ -405,6 +239,8 @@ class WorkoutRepository {
           'user_id': userId,
           if (difficulty != null) 'difficulty': difficulty,
           if (durationMinutes != null) 'duration_minutes': durationMinutes,
+          if (durationMinutesMin != null) 'duration_minutes_min': durationMinutesMin,
+          if (durationMinutesMax != null) 'duration_minutes_max': durationMinutesMax,
           if (focusAreas != null && focusAreas.isNotEmpty) 'focus_areas': focusAreas,
           if (injuries != null && injuries.isNotEmpty) 'injuries': injuries,
           if (equipment != null && equipment.isNotEmpty) 'equipment': equipment,
@@ -515,6 +351,7 @@ class WorkoutRepository {
     List<String>? equipment,
     int durationMinutes = 45,
     List<String>? focusAreas,
+    String? scheduledDate,  // YYYY-MM-DD format for specific date generation
   }) async* {
     debugPrint('🚀 [Workout] Starting streaming workout generation for $userId');
     final startTime = DateTime.now();
@@ -554,6 +391,7 @@ class WorkoutRepository {
           if (equipment != null && equipment.isNotEmpty) 'equipment': equipment,
           'duration_minutes': durationMinutes,
           if (focusAreas != null && focusAreas.isNotEmpty) 'focus_areas': focusAreas,
+          if (scheduledDate != null) 'scheduled_date': scheduledDate,
         },
         options: Options(
           responseType: ResponseType.stream,
@@ -839,6 +677,8 @@ class WorkoutRepository {
     required String userId,
     String? difficulty,
     int? durationMinutes,
+    int? durationMinutesMin,
+    int? durationMinutesMax,
     List<String>? focusAreas,
     List<String>? injuries,
     List<String>? equipment,
@@ -851,7 +691,8 @@ class WorkoutRepository {
     try {
       debugPrint('🔍 [Workout] Updating program and regenerating all workouts');
       debugPrint('  - difficulty: $difficulty');
-      debugPrint('  - durationMinutes: $durationMinutes');
+      debugPrint('  - durationMinutesMin: $durationMinutesMin');
+      debugPrint('  - durationMinutesMax: $durationMinutesMax');
       debugPrint('  - focusAreas: $focusAreas');
       debugPrint('  - injuries: $injuries');
       debugPrint('  - equipment: $equipment');
@@ -867,6 +708,8 @@ class WorkoutRepository {
           'user_id': userId,
           if (difficulty != null) 'difficulty': difficulty,
           if (durationMinutes != null) 'duration_minutes': durationMinutes,
+          if (durationMinutesMin != null) 'duration_minutes_min': durationMinutesMin,
+          if (durationMinutesMax != null) 'duration_minutes_max': durationMinutesMax,
           if (focusAreas != null && focusAreas.isNotEmpty) 'focus_areas': focusAreas,
           if (injuries != null) 'injuries': injuries,  // Send even if empty to clear injuries
           if (equipment != null) 'equipment': equipment,  // Send even if empty to clear equipment
@@ -1476,6 +1319,8 @@ class WorkoutRepository {
     required String workoutId,
     required String oldExerciseName,
     required String newExerciseName,
+    String? reason,
+    String swapSource = 'ai_suggestion',
   }) async {
     try {
       final response = await _apiClient.post(
@@ -1484,6 +1329,8 @@ class WorkoutRepository {
           'workout_id': workoutId,
           'old_exercise_name': oldExerciseName,
           'new_exercise_name': newExerciseName,
+          if (reason != null) 'reason': reason,
+          'swap_source': swapSource,
         },
       );
       if (response.statusCode == 200) {
@@ -1524,6 +1371,63 @@ class WorkoutRepository {
     } catch (e) {
       debugPrint('❌ [Workout] Error adding exercise: $e');
       return null;
+    }
+  }
+
+  /// Get user's recent exercise swaps for quick re-selection
+  Future<List<Map<String, dynamic>>> getRecentSwapHistory({
+    required String userId,
+    int limit = 10,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Getting recent swaps for user $userId');
+      final response = await _apiClient.get(
+        '/exercise-preferences/recent-swaps',
+        queryParameters: {
+          'user_id': userId,
+          'limit': limit,
+        },
+      );
+      if (response.statusCode == 200 && response.data != null) {
+        final swaps = List<Map<String, dynamic>>.from(response.data as List);
+        debugPrint('✅ [Workout] Found ${swaps.length} recent swaps');
+        return swaps;
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Workout] Error getting recent swaps: $e');
+      return [];
+    }
+  }
+
+  /// Get fast exercise suggestions using database queries (no AI).
+  /// Returns 8 similar exercises based on muscle group and equipment.
+  /// ~20x faster than AI suggestions (~500ms vs ~10s).
+  Future<List<Map<String, dynamic>>> getExerciseSuggestionsFast({
+    required String exerciseName,
+    required String userId,
+    List<String>? avoidedExercises,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Getting fast suggestions for: $exerciseName');
+      final response = await _apiClient.post(
+        '/exercise-suggestions/suggest-fast',
+        data: {
+          'exercise_name': exerciseName,
+          'user_id': userId,
+          'avoided_exercises': avoidedExercises ?? [],
+        },
+      );
+      if (response.statusCode == 200 && response.data != null) {
+        final suggestions =
+            List<Map<String, dynamic>>.from(response.data as List);
+        debugPrint('✅ [Workout] Got ${suggestions.length} fast suggestions');
+        return suggestions;
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Workout] Error getting fast suggestions: $e');
+      return [];
     }
   }
 
@@ -1882,6 +1786,11 @@ class WorkoutRepository {
     // Enhanced context for skip detection and timing
     List<Map<String, dynamic>>? plannedExercises,
     Map<int, int>? exerciseTimeSeconds,
+    // Trophy/achievement context for personalized feedback
+    List<Map<String, dynamic>>? earnedPRs,
+    List<Map<String, dynamic>>? earnedAchievements,
+    int? totalWorkoutsCompleted,
+    Map<String, dynamic>? nextMilestone,
   }) async {
     try {
       debugPrint('🤖 [Workout] Requesting AI Coach feedback for: $workoutName');
@@ -1932,6 +1841,20 @@ class WorkoutRepository {
       if (coachingStyle != null) requestData['coaching_style'] = coachingStyle;
       if (communicationTone != null) requestData['communication_tone'] = communicationTone;
       if (encouragementLevel != null) requestData['encouragement_level'] = encouragementLevel;
+
+      // Add trophy/achievement context for personalized feedback
+      if (earnedPRs != null && earnedPRs.isNotEmpty) {
+        requestData['earned_prs'] = earnedPRs;
+      }
+      if (earnedAchievements != null && earnedAchievements.isNotEmpty) {
+        requestData['earned_achievements'] = earnedAchievements;
+      }
+      if (totalWorkoutsCompleted != null) {
+        requestData['total_workouts_completed'] = totalWorkoutsCompleted;
+      }
+      if (nextMilestone != null) {
+        requestData['next_milestone'] = nextMilestone;
+      }
 
       final response = await _apiClient.post(
         '/feedback/ai-coach',
@@ -2443,6 +2366,35 @@ class WorkoutRepository {
     }
   }
 
+  /// Update workout exercises (replace all exercises with new list)
+  ///
+  /// Used for reverting to original exercises after equipment changes.
+  Future<Workout?> updateWorkoutExercises({
+    required String workoutId,
+    required List<Map<String, dynamic>> exercises,
+  }) async {
+    try {
+      debugPrint('🔄 [Workout] Updating exercises for workout: $workoutId (${exercises.length} exercises)');
+      final response = await _apiClient.put(
+        '${ApiConstants.workouts}/$workoutId/exercises',
+        data: {
+          'exercises': exercises,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Exercises updated successfully');
+        return Workout.fromJson(response.data as Map<String, dynamic>);
+      }
+
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error updating exercises: $e');
+      rethrow;
+    }
+  }
+
   // ==================== Set Management Methods ====================
 
   /// Log a set adjustment (skipping sets, reducing sets, etc.)
@@ -2719,6 +2671,60 @@ class WorkoutRepository {
     } catch (e) {
       debugPrint('❌ [Workout] Error responding to progression: $e');
       return false;
+    }
+  }
+
+  /// Log user-created supersets when workout completes (for analytics)
+  ///
+  /// [workoutId] The workout ID
+  /// [userId] The user ID
+  /// [exercises] List of workout exercises
+  Future<void> logUserSupersets({
+    required String workoutId,
+    required String userId,
+    required List<WorkoutExercise> exercises,
+  }) async {
+    try {
+      // Find all superset pairs
+      final supersetGroups = <int, List<WorkoutExercise>>{};
+      for (final ex in exercises) {
+        if (ex.isInSuperset) {
+          supersetGroups.putIfAbsent(ex.supersetGroup!, () => []).add(ex);
+        }
+      }
+
+      if (supersetGroups.isEmpty) {
+        debugPrint('🔗 [Superset] No supersets to log for workout $workoutId');
+        return;
+      }
+
+      debugPrint('🔗 [Superset] Logging ${supersetGroups.length} superset pairs');
+
+      // Insert each pair to the analytics table
+      for (final entry in supersetGroups.entries) {
+        final pair = entry.value;
+        if (pair.length == 2) {
+          final first = pair.firstWhere((e) => e.isSupersetFirst, orElse: () => pair.first);
+          final second = pair.firstWhere((e) => e.isSupersetSecond, orElse: () => pair.last);
+
+          await _apiClient.post(
+            '/supersets/logs',
+            data: {
+              'user_id': userId,
+              'workout_id': workoutId,
+              'exercise_1_name': first.name,
+              'exercise_2_name': second.name,
+              'exercise_1_muscle': first.primaryMuscle,
+              'exercise_2_muscle': second.primaryMuscle,
+              'superset_group': entry.key,
+            },
+          );
+          debugPrint('✅ [Superset] Logged: ${first.name} + ${second.name}');
+        }
+      }
+    } catch (e) {
+      // Don't fail workout completion if logging fails
+      debugPrint('⚠️ [Superset] Failed to log supersets: $e');
     }
   }
 }
@@ -3331,56 +3337,6 @@ class WorkoutGenerationProgress {
   String toString() => 'WorkoutGenerationProgress(status: $status, message: $message, elapsedMs: $elapsedMs)';
 }
 
-/// Progress event for streaming program generation (multiple workouts)
-class ProgramGenerationProgress {
-  /// Current workout number being generated
-  final int currentWorkout;
-
-  /// Total number of workouts to generate
-  final int totalWorkouts;
-
-  /// Human-readable status message
-  final String message;
-
-  /// Additional detail about the current step
-  final String? detail;
-
-  /// Time elapsed since start in milliseconds
-  final int elapsedMs;
-
-  /// A workout that was just generated (streamed one at a time)
-  final Workout? workout;
-
-  /// All workouts generated so far
-  final List<Workout> workouts;
-
-  /// Whether generation completed successfully
-  final bool isCompleted;
-
-  /// Whether an error occurred
-  final bool hasError;
-
-  ProgramGenerationProgress({
-    required this.currentWorkout,
-    required this.totalWorkouts,
-    required this.message,
-    this.detail,
-    required this.elapsedMs,
-    this.workout,
-    this.workouts = const [],
-    this.isCompleted = false,
-    this.hasError = false,
-  });
-
-  /// Progress as a percentage (0.0 to 1.0)
-  double get progress => totalWorkouts > 0 ? currentWorkout / totalWorkouts : 0;
-
-  /// Whether generation is still in progress
-  bool get isLoading => !isCompleted && !hasError;
-
-  @override
-  String toString() => 'ProgramGenerationProgress(workout: $currentWorkout/$totalWorkouts, message: $message, elapsedMs: $elapsedMs)';
-}
 
 /// Progress event for streaming workout regeneration
 class RegenerateProgress {

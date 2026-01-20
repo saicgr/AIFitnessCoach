@@ -52,7 +52,8 @@ class _RegenerateWorkoutSheetState
   late TabController _tabController;
   bool _isRegenerating = false;
   String _selectedDifficulty = 'medium';
-  double _selectedDuration = 45;
+  double _selectedDurationMin = 45;
+  double _selectedDurationMax = 60;
   String? _selectedWorkoutType;
   final Set<String> _selectedFocusAreas = {};
   final Set<String> _selectedInjuries = {};
@@ -106,7 +107,9 @@ class _RegenerateWorkoutSheetState
 
   void _initializeFromWorkout() {
     _selectedDifficulty = widget.workout.difficulty?.toLowerCase() ?? 'medium';
-    _selectedDuration = (widget.workout.durationMinutes ?? 45).toDouble();
+    final workoutDuration = (widget.workout.durationMinutes ?? 45).toDouble();
+    _selectedDurationMin = workoutDuration;
+    _selectedDurationMax = (workoutDuration + 15).clamp(15, 90);
     _selectedWorkoutType = widget.workout.type;
 
     final type = widget.workout.type?.toLowerCase() ?? '';
@@ -217,7 +220,8 @@ class _RegenerateWorkoutSheetState
         workoutId: widget.workout.id!,
         userId: userId,
         difficulty: _selectedDifficulty,
-        durationMinutes: _selectedDuration.round(),
+        durationMinutesMin: _selectedDurationMin.round(),
+        durationMinutesMax: _selectedDurationMax.round(),
         focusAreas: allFocusAreas,
         injuries: allInjuries,
         equipment: allEquipment.isNotEmpty ? allEquipment : null,
@@ -315,8 +319,10 @@ class _RegenerateWorkoutSheetState
         workoutId: widget.workout.id!,
         userId: userId,
         difficulty: suggestion['difficulty'] ?? _selectedDifficulty,
-        durationMinutes:
-            suggestion['duration_minutes'] ?? _selectedDuration.round(),
+        durationMinutesMin:
+            suggestion['duration_minutes'] ?? _selectedDurationMin.round(),
+        durationMinutesMax:
+            suggestion['duration_minutes'] ?? _selectedDurationMax.round(),
         focusAreas:
             (suggestion['focus_areas'] as List?)?.cast<String>() ?? [],
         workoutType: suggestion['type'],
@@ -565,9 +571,13 @@ class _RegenerateWorkoutSheetState
             disabled: _isRegenerating,
             showIcons: false,
           ),
-          DurationSlider(
-            duration: _selectedDuration,
-            onChanged: (d) => setState(() => _selectedDuration = d),
+          DurationRangeSlider(
+            durationMin: _selectedDurationMin,
+            durationMax: _selectedDurationMax,
+            onChanged: (range) => setState(() {
+              _selectedDurationMin = range.start;
+              _selectedDurationMax = range.end;
+            }),
             disabled: _isRegenerating,
           ),
           const SizedBox(height: 20),

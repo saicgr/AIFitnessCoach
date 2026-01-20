@@ -420,47 +420,53 @@ class _InlineRestRowState extends State<InlineRestRow>
           ),
           const SizedBox(height: 10),
 
-          // Star rating row with emoji anchors
+          // Star rating row with emoji anchors - use Expanded to prevent overflow
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Easy emoji
-              const Text('😌', style: TextStyle(fontSize: 20)),
-              const SizedBox(width: 8),
+              const Text('😌', style: TextStyle(fontSize: 18)),
+              const SizedBox(width: 4),
 
-              // 10 stars - always golden/yellow
-              ...List.generate(10, (index) {
-                final rpeValue = index + 1;
-                final isSelected =
-                    widget.currentRpe != null && rpeValue <= widget.currentRpe!;
-                final isExactSelection = widget.currentRpe == rpeValue;
-                return GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    // If tapping the same star, deselect (set to 0)
-                    // Otherwise, select this rating
-                    if (isExactSelection) {
-                      widget.onRateSet(0); // Deselect
-                    } else {
-                      widget.onRateSet(rpeValue);
-                    }
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
-                    child: Icon(
-                      isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
-                      size: 24,
-                      color: isSelected
-                          ? Colors.amber.shade600 // Golden yellow for selected
-                          : textMuted.withValues(alpha: 0.5),
-                    ),
-                  ),
-                );
-              }),
+              // 10 stars - wrapped in Flexible to prevent overflow
+              Flexible(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(10, (index) {
+                    final rpeValue = index + 1;
+                    final isSelected =
+                        widget.currentRpe != null && rpeValue <= widget.currentRpe!;
+                    final isExactSelection = widget.currentRpe == rpeValue;
+                    return GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        // If tapping the same star, deselect (set to 0)
+                        // Otherwise, select this rating
+                        if (isExactSelection) {
+                          widget.onRateSet(0); // Deselect
+                        } else {
+                          widget.onRateSet(rpeValue);
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 1),
+                        child: Icon(
+                          isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
+                          size: 22,
+                          color: isSelected
+                              ? Colors.amber.shade600 // Golden yellow for selected
+                              : textMuted.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
 
-              const SizedBox(width: 8),
+              const SizedBox(width: 4),
               // Hard emoji
-              const Text('😤', style: TextStyle(fontSize: 20)),
+              const Text('😤', style: TextStyle(fontSize: 18)),
             ],
           ),
         ],

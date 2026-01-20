@@ -115,8 +115,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
   @override
   void initState() {
     super.initState();
-    // Describe tab is now at index 0 (default)
-    _tabController = TabController(length: 5, vsync: this, initialIndex: 0);
+    // 4 tabs: Describe (with voice), Photo, Scan, Quick
+    _tabController = TabController(length: 4, vsync: this, initialIndex: 0);
     // Use initial meal type if provided, otherwise default based on time
     _selectedMealType = widget.initialMealType ?? _getDefaultMealType();
 
@@ -128,7 +128,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
 
   void _onTabChanged() {
     if (!_tabController.indexIsChanging) {
-      final tabNames = ['Describe', 'Photo', 'Voice', 'Scan', 'Quick'];
+      final tabNames = ['Describe', 'Photo', 'Scan', 'Quick'];
       debugPrint('🔄 [LogMeal] Tab changed | tab=${tabNames[_tabController.index]} | index=${_tabController.index}');
     }
   }
@@ -1205,28 +1205,25 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    // Use orange as the primary accent color throughout the sheet
+    const orange = Color(0xFFF97316); // Primary app accent - consistent orange
 
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     final screenHeight = MediaQuery.of(context).size.height;
-    final isKeyboardVisible = keyboardHeight > 0;
 
-    // Dynamically adjust sheet height when keyboard is visible
-    // This ensures the text field remains visible above the keyboard
-    final sheetHeight = isKeyboardVisible
-        ? screenHeight - keyboardHeight - MediaQuery.of(context).padding.top - 20
-        : screenHeight * 0.85;
+    // Sheet takes 85% of screen height, keyboard padding handled separately
+    final sheetHeight = screenHeight * 0.85;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-          height: sheetHeight,
+    return Padding(
+      // Push the entire sheet up when keyboard is visible
+      padding: EdgeInsets.only(bottom: keyboardHeight),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            height: sheetHeight,
           decoration: BoxDecoration(
             color: isDark
                 ? Colors.black.withValues(alpha: 0.4)
@@ -1295,10 +1292,11 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: isSelected ? teal.withValues(alpha: 0.2) : elevated,
+                          color: isSelected ? orange.withValues(alpha: 0.15) : elevated,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isSelected ? teal : cardBorder,
+                            color: isSelected ? orange : cardBorder,
+                            width: isSelected ? 1.5 : 1,
                           ),
                         ),
                         child: Column(
@@ -1309,7 +1307,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
                               type.label,
                               style: TextStyle(
                                 fontSize: 10,
-                                color: isSelected ? teal : textSecondary,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                color: isSelected ? orange : textSecondary,
                               ),
                             ),
                           ],
@@ -1416,7 +1415,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
             child: TabBar(
               controller: _tabController,
               indicator: BoxDecoration(
-                color: teal,
+                color: orange,
                 borderRadius: BorderRadius.circular(10),
               ),
               indicatorSize: TabBarIndicatorSize.tab,
@@ -1428,7 +1427,6 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
               tabs: const [
                 Tab(icon: Icon(Icons.edit, size: 18), text: 'Describe'),
                 Tab(icon: Icon(Icons.camera_alt, size: 18), text: 'Photo'),
-                Tab(icon: Icon(Icons.mic, size: 18), text: 'Voice'),
                 Tab(icon: Icon(Icons.qr_code_scanner, size: 18), text: 'Scan'),
                 Tab(icon: Icon(Icons.flash_on, size: 18), text: 'Quick'),
               ],
@@ -1503,13 +1501,6 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
                     sourceType: 'text',
                   ),
                   _PhotoTab(onPickImage: _pickImage, isDark: isDark),
-                  _VoiceTab(
-                    onSubmit: (text) {
-                      _descriptionController.text = text;
-                      _logFromText();
-                    },
-                    isDark: isDark,
-                  ),
                   _ScanTab(onBarcodeDetected: _handleBarcodeScan, isDark: isDark),
                   _QuickTab(
                     userId: widget.userId,
@@ -1525,6 +1516,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
             ),
         ],
       ),
+          ),
         ),
       ),
     );
@@ -1934,6 +1926,12 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
   // Scroll controller for keyboard handling
   final ScrollController _scrollController = ScrollController();
   final FocusNode _textFieldFocusNode = FocusNode();
+  final GlobalKey _textFieldKey = GlobalKey();
+
+  // Voice input state
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  bool _isListening = false;
+  bool _speechAvailable = false;
 
   // Mood tracking state
   FoodMood? _moodBefore;
@@ -1959,6 +1957,8 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
     super.initState();
     // Listen for focus changes to scroll when keyboard appears
     _textFieldFocusNode.addListener(_onFocusChange);
+    // Initialize speech recognition
+    _initSpeech();
   }
 
   @override
@@ -1966,19 +1966,71 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
     _textFieldFocusNode.removeListener(_onFocusChange);
     _textFieldFocusNode.dispose();
     _scrollController.dispose();
+    _speech.stop();
     super.dispose();
+  }
+
+  Future<void> _initSpeech() async {
+    try {
+      _speechAvailable = await _speech.initialize(
+        onStatus: (status) {
+          debugPrint('🎤 Speech status: $status');
+          if (status == 'done' || status == 'notListening') {
+            if (mounted) {
+              setState(() => _isListening = false);
+            }
+          }
+        },
+        onError: (error) {
+          debugPrint('🎤 Speech error: $error');
+          if (mounted) {
+            setState(() => _isListening = false);
+          }
+        },
+      );
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint('🎤 Speech init error: $e');
+    }
+  }
+
+  Future<void> _toggleVoiceInput() async {
+    if (_isListening) {
+      await _speech.stop();
+      setState(() => _isListening = false);
+    } else {
+      if (!_speechAvailable) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Speech recognition not available')),
+        );
+        return;
+      }
+      setState(() => _isListening = true);
+      await _speech.listen(
+        onResult: (result) {
+          if (mounted) {
+            widget.controller.text = result.recognizedWords;
+            setState(() {});
+          }
+        },
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 3),
+        localeId: 'en_US',
+      );
+    }
   }
 
   void _onFocusChange() {
     if (_textFieldFocusNode.hasFocus) {
       // Delay to allow keyboard animation to complete
       Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted && _scrollController.hasClients) {
-          // Scroll to top to ensure text field is visible
-          _scrollController.animateTo(
-            0,
+        if (mounted && _textFieldKey.currentContext != null) {
+          // Scroll the text field into view
+          Scrollable.ensureVisible(
+            _textFieldKey.currentContext!,
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOut,
+            alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
           );
         }
       });
@@ -2274,11 +2326,12 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    // Use orange as the primary accent color
+    const orange = Color(0xFFF97316);
 
     // If we have analyzed nutrition, show the preview
     if (_analyzedResponse != null) {
-      return _buildNutritionPreview(isDark, textPrimary, textMuted, textSecondary, elevated, teal);
+      return _buildNutritionPreview(isDark, textPrimary, textMuted, textSecondary, elevated, orange);
     }
 
     // Show streaming progress when analyzing
@@ -2300,30 +2353,94 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Text input field
+          // Text input field with voice button
           Container(
+            key: _textFieldKey,
             decoration: BoxDecoration(
               color: elevated,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: widget.controller.text.trim().isNotEmpty ? teal : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                color: _isListening
+                    ? orange
+                    : widget.controller.text.trim().isNotEmpty
+                        ? orange
+                        : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                width: (_isListening || widget.controller.text.trim().isNotEmpty) ? 1.5 : 1,
               ),
             ),
-            child: TextField(
-              controller: widget.controller,
-              focusNode: _textFieldFocusNode,
-              maxLines: 3,
-              minLines: 2,
-              style: TextStyle(color: textPrimary, fontSize: 15),
-              decoration: InputDecoration(
-                hintText: 'Describe what you ate...\ne.g., "rotisserie chicken from costco with rice"',
-                hintStyle: TextStyle(color: textMuted, fontSize: 14),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.all(16),
-              ),
-              onChanged: (_) => setState(() {}),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: widget.controller,
+                    focusNode: _textFieldFocusNode,
+                    maxLines: 3,
+                    minLines: 2,
+                    style: TextStyle(color: textPrimary, fontSize: 15),
+                    decoration: InputDecoration(
+                      hintText: _isListening
+                          ? 'Listening...'
+                          : 'Describe what you ate...\ne.g., "chicken with rice"',
+                      hintStyle: TextStyle(
+                        color: _isListening ? orange : textMuted,
+                        fontSize: 14,
+                        fontStyle: _isListening ? FontStyle.italic : FontStyle.normal,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.all(16),
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                // Voice input button
+                Padding(
+                  padding: const EdgeInsets.only(top: 8, right: 8),
+                  child: GestureDetector(
+                    onTap: _toggleVoiceInput,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: _isListening
+                            ? orange
+                            : orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        _isListening ? Icons.stop : Icons.mic,
+                        size: 22,
+                        color: _isListening ? Colors.white : orange,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
+
+          // Listening indicator
+          if (_isListening)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(orange),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Speak now... tap mic to stop',
+                    style: TextStyle(fontSize: 12, color: orange, fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            ),
 
           const SizedBox(height: 16),
 
@@ -2338,9 +2455,9 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: teal,
+                backgroundColor: orange,
                 foregroundColor: Colors.white,
-                disabledBackgroundColor: teal.withValues(alpha: 0.3),
+                disabledBackgroundColor: orange.withValues(alpha: 0.3),
                 disabledForegroundColor: Colors.white54,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -2615,8 +2732,9 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
                 style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.textMuted,
+                backgroundColor: const Color(0xFFF97316), // Orange accent
                 foregroundColor: Colors.white,
+                disabledBackgroundColor: const Color(0xFFF97316).withValues(alpha: 0.5),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),

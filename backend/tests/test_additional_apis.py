@@ -94,15 +94,15 @@ def sample_achievement_types():
 def sample_exercise():
     """Sample exercise data."""
     return {
-        "id": 1,
+        "id": "ex_001",  # Must be string per Exercise model
         "external_id": "ex_001",
         "name": "Bench Press",
         "category": "strength",
         "subcategory": "chest",
         "difficulty_level": 2,
         "primary_muscle": "chest",
-        "secondary_muscles": ["triceps", "shoulders"],
-        "equipment_required": ["barbell", "bench"],
+        "secondary_muscles": '["triceps", "shoulders"]',  # JSON string per model
+        "equipment_required": '["barbell", "bench"]',  # JSON string per model
         "body_part": "upper body",
         "equipment": "barbell",
         "target": "pectorals",
@@ -112,14 +112,14 @@ def sample_exercise():
         "default_rest_seconds": 90,
         "min_weight_kg": 20,
         "calories_per_minute": 8,
-        "instructions": ["Lie on bench", "Lower bar to chest", "Press up"],
-        "tips": ["Keep elbows at 45 degrees"],
-        "contraindicated_injuries": ["shoulder"],
+        "instructions": "Lie on bench. Lower bar to chest. Press up.",  # String per model
+        "tips": '["Keep elbows at 45 degrees"]',  # JSON string per model
+        "contraindicated_injuries": '["shoulder"]',  # JSON string per model
         "gif_url": "https://example.com/bench.gif",
         "video_url": None,
         "is_compound": True,
         "is_unilateral": False,
-        "tags": ["push", "compound"],
+        "tags": '["push", "compound"]',  # JSON string per model
         "is_custom": False,
         "created_by_user_id": None,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -495,14 +495,14 @@ class TestExercises:
         assert response.status_code == 200
 
     def test_get_exercise_by_id(self, mock_exercises_db, sample_exercise):
-        """Test getting exercise by ID."""
+        """Test getting exercise by ID (integer)."""
         mock_exercises_db.get_exercise.return_value = sample_exercise
 
         response = client.get("/api/v1/exercises/1")
 
         assert response.status_code == 200
         data = response.json()
-        assert data["id"] == 1
+        assert data["id"] == "ex_001"  # ID from fixture
         assert data["name"] == "Bench Press"
 
     def test_get_exercise_not_found(self, mock_exercises_db):

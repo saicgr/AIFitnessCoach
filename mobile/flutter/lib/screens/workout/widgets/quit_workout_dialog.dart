@@ -64,239 +64,242 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
           );
         }
 
+        final bottomPadding = MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).padding.bottom;
+
         return Container(
           decoration: BoxDecoration(
             color: isDark ? AppColors.surface : AppColorsLight.surface,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted).withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-
-              // Title with progress
-              Row(
-                children: [
-                  Icon(
-                    Icons.exit_to_app,
-                    color: isDark ? AppColors.orange : AppColorsLight.orange,
-                    size: 28,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'End Workout Early?',
-                          style: TextStyle(
-                            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          '$progressPercent% complete • $totalCompletedSets sets done',
-                          style: TextStyle(
-                            color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // Progress bar
-              Container(
-                height: 6,
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: progressPercent / 100,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottomPadding),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle bar
+                Center(
                   child: Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    width: 40,
+                    height: 4,
                     decoration: BoxDecoration(
-                      color: progressPercent >= 50
-                          ? (isDark ? AppColors.cyan : AppColorsLight.cyan)
-                          : (isDark ? AppColors.orange : AppColorsLight.orange),
-                      borderRadius: BorderRadius.circular(3),
+                      color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted).withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 24),
-
-              // Question
-              Text(
-                'Why are you ending early?',
-                style: TextStyle(
-                  color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                // Title with progress
+                Row(
+                  children: [
+                    Icon(
+                      Icons.exit_to_app,
+                      color: isDark ? AppColors.orange : AppColorsLight.orange,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'End Workout Early?',
+                            style: TextStyle(
+                              color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            '$progressPercent% complete • $totalCompletedSets sets done',
+                            style: TextStyle(
+                              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 20),
 
-              // Quick reply reasons
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _ReasonChip(
-                    reason: 'too_tired',
-                    label: 'Too tired',
-                    icon: Icons.battery_1_bar,
-                    isSelected: selectedReason == 'too_tired',
-                    isDark: isDark,
-                    onTap: () => setModalState(() => selectedReason = 'too_tired'),
+                // Progress bar
+                Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+                    borderRadius: BorderRadius.circular(3),
                   ),
-                  _ReasonChip(
-                    reason: 'out_of_time',
-                    label: 'Out of time',
-                    icon: Icons.timer_off,
-                    isSelected: selectedReason == 'out_of_time',
-                    isDark: isDark,
-                    onTap: () => setModalState(() => selectedReason = 'out_of_time'),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: progressPercent / 100,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: progressPercent >= 50
+                            ? (isDark ? AppColors.cyan : AppColorsLight.cyan)
+                            : (isDark ? AppColors.orange : AppColorsLight.orange),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
                   ),
-                  _ReasonChip(
-                    reason: 'not_feeling_well',
-                    label: 'Not feeling well',
-                    icon: Icons.sick,
-                    isSelected: selectedReason == 'not_feeling_well',
-                    isDark: isDark,
-                    onTap: () => setModalState(() => selectedReason = 'not_feeling_well'),
-                  ),
-                  _ReasonChip(
-                    reason: 'equipment_unavailable',
-                    label: 'Equipment busy',
-                    icon: Icons.fitness_center,
-                    isSelected: selectedReason == 'equipment_unavailable',
-                    isDark: isDark,
-                    onTap: () => setModalState(() => selectedReason = 'equipment_unavailable'),
-                  ),
-                  _ReasonChip(
-                    reason: 'injury',
-                    label: 'Pain/Injury',
-                    icon: Icons.healing,
-                    isSelected: selectedReason == 'injury',
-                    isDark: isDark,
-                    onTap: () => setModalState(() => selectedReason = 'injury'),
-                  ),
-                  _ReasonChip(
-                    reason: 'other',
-                    label: 'Other reason',
-                    icon: Icons.more_horiz,
-                    isSelected: selectedReason == 'other',
-                    isDark: isDark,
-                    onTap: () => setModalState(() => selectedReason = 'other'),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // Optional notes
-              TextField(
-                controller: notesController,
-                style: TextStyle(
-                  color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                  fontSize: 14,
                 ),
-                maxLines: 2,
-                decoration: InputDecoration(
-                  hintText: 'Add a note (optional)...',
-                  hintStyle: TextStyle(
-                    color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted).withOpacity(0.6),
+
+                const SizedBox(height: 24),
+
+                // Question
+                Text(
+                  'Why are you ending early?',
+                  style: TextStyle(
+                    color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
-                  filled: true,
-                  fillColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.all(14),
                 ),
-              ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 12),
 
-              // Action buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF22C55E), // Green - always
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                // Quick reply reasons
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _ReasonChip(
+                      reason: 'too_tired',
+                      label: 'Too tired',
+                      icon: Icons.battery_1_bar,
+                      isSelected: selectedReason == 'too_tired',
+                      isDark: isDark,
+                      onTap: () => setModalState(() => selectedReason = 'too_tired'),
+                    ),
+                    _ReasonChip(
+                      reason: 'out_of_time',
+                      label: 'Out of time',
+                      icon: Icons.timer_off,
+                      isSelected: selectedReason == 'out_of_time',
+                      isDark: isDark,
+                      onTap: () => setModalState(() => selectedReason = 'out_of_time'),
+                    ),
+                    _ReasonChip(
+                      reason: 'not_feeling_well',
+                      label: 'Not feeling well',
+                      icon: Icons.sick,
+                      isSelected: selectedReason == 'not_feeling_well',
+                      isDark: isDark,
+                      onTap: () => setModalState(() => selectedReason = 'not_feeling_well'),
+                    ),
+                    _ReasonChip(
+                      reason: 'equipment_unavailable',
+                      label: 'Equipment busy',
+                      icon: Icons.fitness_center,
+                      isSelected: selectedReason == 'equipment_unavailable',
+                      isDark: isDark,
+                      onTap: () => setModalState(() => selectedReason = 'equipment_unavailable'),
+                    ),
+                    _ReasonChip(
+                      reason: 'injury',
+                      label: 'Pain/Injury',
+                      icon: Icons.healing,
+                      isSelected: selectedReason == 'injury',
+                      isDark: isDark,
+                      onTap: () => setModalState(() => selectedReason = 'injury'),
+                    ),
+                    _ReasonChip(
+                      reason: 'other',
+                      label: 'Other reason',
+                      icon: Icons.more_horiz,
+                      isSelected: selectedReason == 'other',
+                      isDark: isDark,
+                      onTap: () => setModalState(() => selectedReason = 'other'),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Optional notes
+                TextField(
+                  controller: notesController,
+                  style: TextStyle(
+                    color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                    fontSize: 14,
+                  ),
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    hintText: 'Add a note (optional)...',
+                    hintStyle: TextStyle(
+                      color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted).withOpacity(0.6),
+                    ),
+                    filled: true,
+                    fillColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.all(14),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Action buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF22C55E), // Green - always
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Keep Going',
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
-                      child: const Text(
-                        'Keep Going',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Generate coach feedback based on reason and progress
-                        coachFeedback = _generateCoachFeedback(
-                          coach: coach,
-                          reason: selectedReason ?? 'quick_exit',
-                          progressPercent: progressPercent,
-                          totalCompletedSets: totalCompletedSets,
-                          timeSpentSeconds: timeSpentSeconds,
-                        );
-                        // Show coach feedback view
-                        setModalState(() {
-                          showCoachFeedback = true;
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFEF4444), // Red - always
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // Generate coach feedback based on reason and progress
+                          coachFeedback = _generateCoachFeedback(
+                            coach: coach,
+                            reason: selectedReason ?? 'quick_exit',
+                            progressPercent: progressPercent,
+                            totalCompletedSets: totalCompletedSets,
+                            timeSpentSeconds: timeSpentSeconds,
+                          );
+                          // Show coach feedback view
+                          setModalState(() {
+                            showCoachFeedback = true;
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFEF4444), // Red - always
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'End Workout',
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
-                      child: const Text(
-                        'End Workout',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
                     ),
-                  ),
-                ],
-              ),
-
-              SizedBox(height: MediaQuery.of(context).padding.bottom),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },

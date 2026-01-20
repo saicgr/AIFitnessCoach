@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/leaderboard_service.dart';
 import '../../../data/services/challenges_service.dart';
 import '../../../data/services/api_client.dart';
@@ -216,7 +217,7 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
 
   Widget _buildFilterChip(String label, LeaderboardFilter filter, bool isDark, {bool enabled = true}) {
     final isSelected = _selectedFilter == filter;
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentColor = ref.colors(context).accent;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return FilterChip(
@@ -342,7 +343,7 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
       context: context,
       builder: (sheetContext) {
         final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
-        final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+        final accentColor = sheetContext.colors.accent;
 
         return Container(
           padding: const EdgeInsets.all(24),

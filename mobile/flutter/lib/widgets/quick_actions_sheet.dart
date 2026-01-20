@@ -161,12 +161,12 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
 
     final viewActions = [
       _ActionData(
-        icon: Icons.insights_outlined,
-        label: 'Stats',
-        iconColor: const Color(0xFFA855F7), // Purple for analytics
+        icon: Icons.straighten_outlined,
+        label: 'Measure',
+        iconColor: const Color(0xFFA855F7), // Purple for measurements
         onTap: () {
           Navigator.pop(context);
-          context.push('/stats');
+          context.push('/measurements');
         },
       ),
       _ActionData(

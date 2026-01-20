@@ -49,6 +49,10 @@ class User extends Equatable {
   final bool? supportFriendAdded; // True when FitWiz Support was auto-added as friend
   @JsonKey(name: 'weight_unit')
   final String? weightUnit; // 'kg' or 'lbs' - user's preferred weight unit
+  @JsonKey(name: 'primary_goal')
+  final String? primaryGoal; // 'muscle_hypertrophy', 'muscle_strength', or 'strength_hypertrophy'
+  @JsonKey(name: 'muscle_focus_points')
+  final Map<String, int>? muscleFocusPoints; // e.g., {"triceps": 2, "lats": 1}
 
   const User({
     required this.id,
@@ -78,6 +82,8 @@ class User extends Equatable {
     this.isNewUser,
     this.supportFriendAdded,
     this.weightUnit,
+    this.primaryGoal,
+    this.muscleFocusPoints,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
@@ -581,6 +587,8 @@ class User extends Equatable {
         isNewUser,
         supportFriendAdded,
         weightUnit,
+        primaryGoal,
+        muscleFocusPoints,
       ];
 
   User copyWith({
@@ -611,6 +619,8 @@ class User extends Equatable {
     bool? isNewUser,
     bool? supportFriendAdded,
     String? weightUnit,
+    String? primaryGoal,
+    Map<String, int>? muscleFocusPoints,
   }) {
     return User(
       id: id ?? this.id,
@@ -640,6 +650,8 @@ class User extends Equatable {
       isNewUser: isNewUser ?? this.isNewUser,
       supportFriendAdded: supportFriendAdded ?? this.supportFriendAdded,
       weightUnit: weightUnit ?? this.weightUnit,
+      primaryGoal: primaryGoal ?? this.primaryGoal,
+      muscleFocusPoints: muscleFocusPoints ?? this.muscleFocusPoints,
     );
   }
 }

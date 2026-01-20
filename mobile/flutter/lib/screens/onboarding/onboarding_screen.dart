@@ -189,7 +189,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: LinearProgressIndicator(
                 value: (_currentStep + 1) / 6,
                 backgroundColor: AppColors.glassSurface,
-                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
+                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFF97316)), // Orange accent
                 minHeight: 4,
               ),
             ),
@@ -290,16 +290,16 @@ class _StepIndicator extends StatelessWidget {
                     height: 36,
                     decoration: BoxDecoration(
                       color: isActive
-                          ? AppColors.accent
+                          ? const Color(0xFFF97316) // Orange accent
                           : isCompleted
-                              ? AppColors.success.withOpacity(0.2)
+                              ? const Color(0xFFF97316).withValues(alpha: 0.2)
                               : AppColors.glassSurface,
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: isActive
-                            ? AppColors.accent
+                            ? const Color(0xFFF97316) // Orange accent
                             : isCompleted
-                                ? AppColors.success
+                                ? const Color(0xFFF97316) // Orange accent
                                 : AppColors.cardBorder,
                         width: 2,
                       ),
@@ -309,7 +309,7 @@ class _StepIndicator extends StatelessWidget {
                           ? const Icon(
                               Icons.check,
                               size: 18,
-                              color: AppColors.success,
+                              color: Color(0xFFF97316), // Orange accent
                             )
                           : Icon(
                               icons[index],
@@ -327,9 +327,9 @@ class _StepIndicator extends StatelessWidget {
                       fontSize: 10,
                       fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                       color: isActive
-                          ? AppColors.accent
+                          ? const Color(0xFFF97316) // Orange accent
                           : isCompleted
-                              ? AppColors.success
+                              ? const Color(0xFFF97316) // Orange accent
                               : AppColors.textMuted,
                     ),
                   ),
@@ -377,10 +377,10 @@ class _BottomButton extends StatelessWidget {
         child: ElevatedButton(
           onPressed: isEnabled ? onPressed : null,
           style: ElevatedButton.styleFrom(
-            backgroundColor: isLastStep ? AppColors.success : AppColors.accent,
+            backgroundColor: const Color(0xFFF97316), // Orange accent for all steps
             foregroundColor: Colors.white,
-            disabledBackgroundColor: AppColors.glassSurface,
-            disabledForegroundColor: AppColors.textMuted,
+            disabledBackgroundColor: const Color(0xFFF97316).withValues(alpha: 0.3),
+            disabledForegroundColor: Colors.white60,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),

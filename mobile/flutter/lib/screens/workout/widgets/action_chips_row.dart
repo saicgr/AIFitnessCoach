@@ -313,6 +313,19 @@ class WorkoutActionChips {
     icon: Icons.tune,
   );
 
+  static const reorder = ActionChipData(
+    id: 'reorder',
+    label: 'Reorder',
+    icon: Icons.swap_vert,
+  );
+
+  /// 3-dot "More" menu for History, Increments, etc.
+  static const more = ActionChipData(
+    id: 'more',
+    label: '',
+    icon: Icons.more_horiz,
+  );
+
   static ActionChipData leftRight({bool isActive = false}) => ActionChipData(
         id: 'lr',
         label: 'L/R',
@@ -322,11 +335,11 @@ class WorkoutActionChips {
       );
 
   /// Get default chips list
-  /// Order: Video first, Superset, Info, then others
+  /// Order: Superset, Reorder, Info, then others
   /// Note is now in the bottom quick actions row
   static List<ActionChipData> defaultChips({bool showLR = false}) => [
-        video,
         superset,
+        reorder,
         info,
         warmUp,
         targets,

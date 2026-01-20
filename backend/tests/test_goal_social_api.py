@@ -91,7 +91,7 @@ class TestGetGoalFriends:
             ]
 
             response = client.get(
-                "/v1/goal-social/goals/goal1/friends",
+                "/api/v1/goal-social/goals/goal1/friends",
                 params={"user_id": "user123"}
             )
 
@@ -137,7 +137,7 @@ class TestGetGoalFriends:
             ]
 
             response = client.get(
-                "/v1/goal-social/goals/goal1/friends",
+                "/api/v1/goal-social/goals/goal1/friends",
                 params={"user_id": "user123"}
             )
 
@@ -160,7 +160,7 @@ class TestGetGoalFriends:
             mock_table.execute.return_value = MagicMock(data=[])
 
             response = client.get(
-                "/v1/goal-social/goals/nonexistent/friends",
+                "/api/v1/goal-social/goals/nonexistent/friends",
                 params={"user_id": "user123"}
             )
 
@@ -223,7 +223,7 @@ class TestJoinGoal:
             ]
 
             response = client.post(
-                "/v1/goal-social/goals/goal1/join",
+                "/api/v1/goal-social/goals/goal1/join",
                 params={"user_id": "user123"}
             )
 
@@ -255,7 +255,7 @@ class TestJoinGoal:
             mock_table.execute.return_value = MagicMock(data=[own_goal])
 
             response = client.post(
-                "/v1/goal-social/goals/goal1/join",
+                "/api/v1/goal-social/goals/goal1/join",
                 params={"user_id": "user123"}
             )
 
@@ -285,7 +285,7 @@ class TestJoinGoal:
             mock_table.execute.return_value = MagicMock(data=[private_goal])
 
             response = client.post(
-                "/v1/goal-social/goals/goal1/join",
+                "/api/v1/goal-social/goals/goal1/join",
                 params={"user_id": "user123"}
             )
 
@@ -338,7 +338,7 @@ class TestInviteToGoal:
             ]
 
             response = client.post(
-                "/v1/goal-social/goals/goal1/invite",
+                "/api/v1/goal-social/goals/goal1/invite",
                 params={"user_id": "user123"},
                 json={"goal_id": "goal1", "invitee_id": "friend1", "message": "Join me!"}
             )
@@ -376,7 +376,7 @@ class TestInviteToGoal:
             ]
 
             response = client.post(
-                "/v1/goal-social/goals/goal1/invite",
+                "/api/v1/goal-social/goals/goal1/invite",
                 params={"user_id": "user123"},
                 json={"goal_id": "goal1", "invitee_id": "stranger1"}
             )
@@ -418,7 +418,7 @@ class TestInviteToGoal:
             ]
 
             response = client.post(
-                "/v1/goal-social/goals/goal1/invite",
+                "/api/v1/goal-social/goals/goal1/invite",
                 params={"user_id": "user123"},
                 json={"goal_id": "goal1", "invitee_id": "friend1"}
             )
@@ -469,7 +469,7 @@ class TestGetGoalInvites:
             mock_table.execute.return_value = MagicMock(data=invites)
 
             response = client.get(
-                "/v1/goal-social/goals/invites",
+                "/api/v1/goal-social/goals/invites",
                 params={"user_id": "user123"}
             )
 
@@ -547,7 +547,7 @@ class TestRespondToInvite:
             ]
 
             response = client.post(
-                "/v1/goal-social/goals/invites/invite1/respond",
+                "/api/v1/goal-social/goals/invites/invite1/respond",
                 params={"user_id": "user123"},
                 json={"accept": True}
             )
@@ -590,7 +590,7 @@ class TestRespondToInvite:
             ]
 
             response = client.post(
-                "/v1/goal-social/goals/invites/invite1/respond",
+                "/api/v1/goal-social/goals/invites/invite1/respond",
                 params={"user_id": "user123"},
                 json={"accept": False}
             )
@@ -622,7 +622,7 @@ class TestRespondToInvite:
             mock_table.execute.return_value = MagicMock(data=[invite_data])
 
             response = client.post(
-                "/v1/goal-social/goals/invites/invite1/respond",
+                "/api/v1/goal-social/goals/invites/invite1/respond",
                 params={"user_id": "user123"},
                 json={"accept": True}
             )
@@ -653,7 +653,7 @@ class TestPendingInvitesCount:
             ], count=3)
 
             response = client.get(
-                "/v1/goal-social/goals/invites/pending-count",
+                "/api/v1/goal-social/goals/invites/pending-count",
                 params={"user_id": "user123"}
             )
 

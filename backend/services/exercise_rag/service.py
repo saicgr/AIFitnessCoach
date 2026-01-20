@@ -1613,11 +1613,11 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
         strength_history: Optional[Dict[str, Dict]] = None,
     ) -> Optional[Dict]:
         """
-        Select exactly 1 challenge exercise for beginners.
+        Select exactly 1 challenge exercise for beginners and intermediate users.
 
         This provides a "Want a Challenge?" section with a harder exercise
-        that beginners can optionally try. The challenge exercise:
-        - Has difficulty 7-8 (harder than main workout ceiling of 6)
+        that users can optionally try. The challenge exercise:
+        - Has difficulty higher than main workout ceiling
         - Is NOT in the main_exercises (no duplicates)
         - Should be a progression of an exercise in main workout if possible
         - Uses RAG to find the best match
@@ -1626,7 +1626,7 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
             main_exercises: Main workout exercises (to avoid duplicates)
             focus_area: Target muscle group/body part
             equipment: Available equipment list
-            fitness_level: User's fitness level (only returns for beginners)
+            fitness_level: User's fitness level (beginner or intermediate)
             injuries: List of injuries to avoid
             avoided_muscles: Muscles to avoid/reduce
             workout_params: Workout parameters (sets/reps/rest)
@@ -1635,14 +1635,15 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
         Returns:
             A single challenge exercise dict, or None if not applicable/found
         """
-        # Only provide challenge exercises for beginners
-        if fitness_level != "beginner":
-            logger.debug("Challenge exercise only for beginners, skipping")
+        # Only provide challenge exercises for beginners and intermediate
+        # Advanced/hard/hell users already have challenging exercises
+        if fitness_level not in ("beginner", "intermediate"):
+            logger.debug(f"Challenge exercise only for beginner/intermediate, skipping for {fitness_level}")
             return None
 
         # Get names of main exercises to exclude (no duplicates)
         main_exercise_names = {ex.get("name", "").lower() for ex in main_exercises}
-        logger.info(f"🔥 Selecting challenge exercise for beginner, excluding: {main_exercise_names}")
+        logger.info(f"🔥 Selecting challenge exercise for {fitness_level}, excluding: {main_exercise_names}")
 
         try:
             # Build search query for challenge exercises

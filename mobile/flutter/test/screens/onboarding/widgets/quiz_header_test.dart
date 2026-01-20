@@ -13,7 +13,6 @@ void main() {
               totalQuestions: 5,
               canGoBack: true,
               onBack: () {},
-              onSkip: () {},
             ),
           ),
         ),
@@ -32,7 +31,6 @@ void main() {
               totalQuestions: 5,
               canGoBack: true,
               onBack: () {},
-              onSkip: () {},
             ),
           ),
         ),
@@ -51,7 +49,6 @@ void main() {
               totalQuestions: 5,
               canGoBack: false,
               onBack: () {},
-              onSkip: () {},
             ),
           ),
         ),
@@ -74,7 +71,6 @@ void main() {
               onBack: () {
                 backCalled = true;
               },
-              onSkip: () {},
             ),
           ),
         ),
@@ -87,49 +83,6 @@ void main() {
       expect(backCalled, isTrue);
     });
 
-    testWidgets('shows skip button', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: QuizHeader(
-              currentQuestion: 0,
-              totalQuestions: 5,
-              canGoBack: false,
-              onBack: () {},
-              onSkip: () {},
-            ),
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-      expect(find.text('Skip'), findsOneWidget);
-    });
-
-    testWidgets('calls onSkip when skip button is tapped', (tester) async {
-      bool skipCalled = false;
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: QuizHeader(
-              currentQuestion: 0,
-              totalQuestions: 5,
-              canGoBack: false,
-              onBack: () {},
-              onSkip: () {
-                skipCalled = true;
-              },
-            ),
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Skip'));
-      await tester.pump();
-
-      expect(skipCalled, isTrue);
-    });
+    // Note: Skip functionality tests removed - QuizHeader no longer has onSkip parameter
   });
 }

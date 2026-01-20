@@ -370,7 +370,7 @@ After reviewing FEATURES.md, **FitWiz is significantly more feature-complete tha
 
 ### What You Need to Do
 
-1. **Ship supersets** - Last major workout feature gap
+1. **Ship supersets** - Last major workout feature gap - DONE
 2. **Fix premium subscription** - Revenue critical
 3. **Build Apple Watch app** - Only remaining integration gap
 4. **Market your advantages** - You have MORE videos than MacroFactor!

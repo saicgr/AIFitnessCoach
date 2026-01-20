@@ -418,6 +418,36 @@ class FastingNotifier extends StateNotifier<FastingState> {
     _refreshTimer = null;
   }
 
+  /// Sync fasting state from watch event data.
+  /// Called when fasting is started/ended on the watch.
+  void syncFromWatch(Map<String, dynamic> data) {
+    final eventType = data['eventType'] as String? ?? '';
+    final protocol = data['protocol'] as String? ?? '16:8';
+    final elapsedMinutes = data['elapsedMinutes'] as int? ?? 0;
+    final sessionId = data['sessionId'] as String?;
+
+    debugPrint('🔄 [FastingProvider] Syncing from watch: $eventType');
+
+    if (eventType == 'started') {
+      // Watch started a fast - create a local representation
+      // Note: The actual fast should have been created on the backend by the watch
+      // This just ensures local state is in sync
+      final startTime = DateTime.now().subtract(Duration(minutes: elapsedMinutes));
+
+      // We don't have all the data needed to create a full FastingRecord here,
+      // so just refresh from the server to get the actual data
+      if (_initializedUserId != null) {
+        initialize(_initializedUserId!, forceRefresh: true);
+      }
+    } else if (eventType == 'ended' || eventType == 'completed') {
+      // Watch ended the fast - refresh to get updated state
+      _stopRefreshTimer();
+      if (_initializedUserId != null) {
+        initialize(_initializedUserId!, forceRefresh: true);
+      }
+    }
+  }
+
   @override
   void dispose() {
     _stopRefreshTimer();

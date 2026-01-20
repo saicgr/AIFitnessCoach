@@ -778,6 +778,11 @@ async def generate_workout_feedback(
     coaching_style: Optional[str] = None,
     communication_tone: Optional[str] = None,
     encouragement_level: Optional[float] = None,
+    # Trophy/achievement context for personalized feedback
+    earned_prs: Optional[List[Dict[str, Any]]] = None,
+    earned_achievements: Optional[List[Dict[str, Any]]] = None,
+    total_workouts_completed: Optional[int] = None,
+    next_milestone: Optional[Dict[str, Any]] = None,
 ) -> str:
     """
     Generate AI Coach feedback for a completed workout.
@@ -791,6 +796,10 @@ async def generate_workout_feedback(
         coaching_style: Style of coaching (e.g., "motivational", "drill_sergeant", "buddy")
         communication_tone: Tone of communication (e.g., "encouraging", "direct", "friendly")
         encouragement_level: Level of encouragement (0.0-1.0)
+        earned_prs: List of PRs earned this session
+        earned_achievements: List of achievements unlocked this session
+        total_workouts_completed: Total number of workouts completed
+        next_milestone: Next workout milestone to reach
 
     Returns:
         Short, personalized AI Coach feedback
@@ -866,13 +875,40 @@ DO NOT:
 - Say "Great job!" when they skipped half the exercises
 - Be generic with no specifics
 - Write long paragraphs
-- Ignore skipped exercises in the data"""
+- Ignore skipped exercises in the data
+
+TROPHY/ACHIEVEMENT RULES (PRIORITY OVER OTHER FEEDBACK):
+- If PRs were earned: Congratulate SPECIFICALLY on the PR(s) by exercise name! This is a BIG DEAL!
+- If achievements unlocked: Celebrate them! Make the user feel accomplished.
+- If close to a milestone: Mention it to motivate them ("Just X more workouts to hit Y!")
+- Trophies > generic feedback. Prioritize celebrating achievements over workout critique.
+- If no trophies, focus on the workout performance itself."""
+
+    # Build trophy context if any trophies were earned
+    trophy_context = ""
+    if earned_prs:
+        pr_names = [pr.get('exercise_name', 'exercise') for pr in earned_prs[:3]]
+        trophy_context += f"\n🏆 PRs EARNED THIS SESSION: {', '.join(pr_names)}"
+    if earned_achievements:
+        ach_names = [a.get('name', 'achievement') for a in earned_achievements[:3]]
+        trophy_context += f"\n🎖️ ACHIEVEMENTS UNLOCKED: {', '.join(ach_names)}"
+    if next_milestone:
+        remaining = next_milestone.get('remaining', 0)
+        target = next_milestone.get('value', 0)
+        if remaining <= 5:  # Only mention if close
+            trophy_context += f"\n📊 NEXT MILESTONE: {target} workouts (only {remaining} more to go!)"
+    if total_workouts_completed:
+        # Check if this is a milestone workout
+        milestones = [5, 10, 25, 50, 100, 150, 200, 250, 500, 1000]
+        if total_workouts_completed in milestones:
+            trophy_context += f"\n🎯 MILESTONE REACHED: {total_workouts_completed} total workouts!"
 
     user_prompt = f"""Based on this workout data, provide SHORT personalized feedback (2-3 sentences max):
 
 {context}
+{trophy_context}
 
-Remember: Be specific, encouraging, and brief!"""
+Remember: Be specific, encouraging, and brief! If they earned trophies, CELEBRATE THEM!"""
 
     # Call Gemini using the chat method
     feedback = await gemini_service.chat(

@@ -285,37 +285,78 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
     );
   }
 
+  /// Check if exercise uses a barbell (for weight note display)
+  bool _isBarbellExercise() {
+    final equipment = widget.exercise.equipment?.toLowerCase() ?? '';
+    final name = widget.exercise.name.toLowerCase();
+    return equipment.contains('barbell') ||
+           name.contains('barbell') ||
+           name.contains(' bb ') ||
+           name.startsWith('bb ');
+  }
+
   Widget _buildTableHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.elevated.withAlpha(100),
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: 36, child: Text('SET', style: _headerStyle)),
-          const Expanded(flex: 3, child: Text('TARGET', style: _headerStyle)),
-          Expanded(
-            flex: 2,
-            child: GestureDetector(
-              onTap: widget.onToggleUnit,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.swap_horiz, size: 14, color: AppColors.textMuted),
-                  const SizedBox(width: 2),
-                  Text(
-                    widget.useKg ? 'KG' : 'LBS',
-                    style: _headerStyle,
+    final isBarbell = _isBarbellExercise();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.elevated.withAlpha(100),
+          ),
+          child: Row(
+            children: [
+              const SizedBox(width: 36, child: Text('Set', style: _headerStyle)),
+              // Target column - increased flex for "30 kg x 10" + RIR chip
+              const Expanded(flex: 5, child: Text('Target', style: _headerStyle)),
+              Expanded(
+                flex: 2,
+                child: GestureDetector(
+                  onTap: widget.onToggleUnit,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.swap_horiz, size: 14, color: AppColors.textMuted),
+                      const SizedBox(width: 2),
+                      Text(
+                        widget.useKg ? 'kg' : 'lbs',
+                        style: _headerStyle,
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
+              const Expanded(flex: 2, child: Text('Reps', style: _headerStyle)),
+              const SizedBox(width: 44), // Checkmark column
+            ],
+          ),
+        ),
+        // Barbell weight note - shown only for barbell exercises
+        if (isBarbell)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 12,
+                  color: AppColors.textMuted.withOpacity(0.7),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Weight includes ${widget.useKg ? '20kg' : '45lb'} barbell',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: AppColors.textMuted.withOpacity(0.7),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
             ),
           ),
-          const Expanded(flex: 2, child: Text('REPS', style: _headerStyle)),
-          const SizedBox(width: 44), // Checkmark column
-        ],
-      ),
+      ],
     );
   }
 
@@ -366,6 +407,38 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
     return AppColors.textPrimary;
   }
 
+  /// Get RIR chip color based on intensity
+  Color _getRirColor(int rir) {
+    if (rir >= 3) return AppColors.success; // Easy - green
+    if (rir == 2) return AppColors.yellow; // Moderate - yellow/gold
+    if (rir == 1) return AppColors.orange; // Hard - orange
+    return Colors.red; // RIR 0 = failure - red
+  }
+
+  /// Build compact RIR chip
+  Widget _buildRirChip(SetData set) {
+    final rir = set.target?.targetRir;
+    if (rir == null) return const SizedBox.shrink();
+
+    final color = _getRirColor(rir);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+      decoration: BoxDecoration(
+        color: color.withAlpha(40),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withAlpha(100), width: 0.5),
+      ),
+      child: Text(
+        '$rir',
+        style: TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+      ),
+    );
+  }
+
   Widget _buildSetRow(int index, SetData set) {
     // Get set type label (W, F, D, or set number)
     final setLabel = set.setTypeLabel.isNotEmpty ? set.setTypeLabel : '${set.setNumber}';
@@ -405,28 +478,28 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
 
           // Target with RIR (like Gravl's "Auto" column)
           Expanded(
-            flex: 3,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+            flex: 5,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  _formatTarget(set),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textSecondary,
+                // Target text (e.g., "30 kg x 10")
+                Flexible(
+                  child: Text(
+                    _formatTarget(set),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.visible,
                   ),
                 ),
-                if (rirText.isNotEmpty)
-                  Text(
-                    rirText,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: set.isFailureSet ? Colors.red.withAlpha(200) : AppColors.textMuted,
-                      fontWeight: set.isFailureSet ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  ),
+                // RIR chip (e.g., "RIR 2")
+                if (rirText.isNotEmpty) ...[
+                  const SizedBox(width: 6),
+                  _buildRirChip(set),
+                ],
               ],
             ),
           ),

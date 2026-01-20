@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/providers/window_mode_provider.dart';
+import 'core/providers/workout_mini_player_provider.dart';
 import 'core/theme/accent_color_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
@@ -10,6 +11,7 @@ import 'data/services/api_client.dart';
 import 'data/services/notification_service.dart';
 import 'navigation/app_router.dart';
 import 'screens/notifications/notifications_screen.dart';
+import 'screens/workout/widgets/workout_mini_player.dart';
 import 'widgets/floating_chat/floating_chat_overlay.dart';
 
 class FitWizApp extends ConsumerStatefulWidget {
@@ -109,7 +111,9 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
             child: WindowModeObserver(
               child: FloatingChatOverlay(
                 key: const ValueKey('floating_chat_overlay'),
-                child: child ?? const SizedBox.shrink(),
+                child: _WorkoutMiniPlayerOverlay(
+                  child: child ?? const SizedBox.shrink(),
+                ),
               ),
             ),
           ),
@@ -248,5 +252,43 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
         router.push('/notifications');
         break;
     }
+  }
+}
+
+/// Global overlay that shows the workout mini player on all screens
+class _WorkoutMiniPlayerOverlay extends ConsumerWidget {
+  final Widget child;
+
+  const _WorkoutMiniPlayerOverlay({required this.child});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final miniPlayerState = ref.watch(workoutMiniPlayerProvider);
+
+    return Stack(
+      children: [
+        // Main content
+        child,
+
+        // Workout mini player (when minimized)
+        if (miniPlayerState.isMinimized)
+          WorkoutMiniPlayer(
+            onTap: () {
+              // Restore workout - go to active workout screen, not detail screen
+              final state = ref.read(workoutMiniPlayerProvider);
+              if (state.workout != null) {
+                ref.read(workoutMiniPlayerProvider.notifier).restore();
+                // Use router from provider since context doesn't have GoRouter
+                // (we're inside MaterialApp.router's builder, not a descendant)
+                final router = ref.read(routerProvider);
+                router.push('/active-workout', extra: state.workout);
+              }
+            },
+            onClose: () {
+              ref.read(workoutMiniPlayerProvider.notifier).close();
+            },
+          ),
+      ],
+    );
   }
 }

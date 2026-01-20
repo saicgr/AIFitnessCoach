@@ -470,6 +470,31 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
       }
 
       ref.invalidate(avoidedMusclesProvider(userId));
+
+      // Regenerate today's workout to apply muscle avoidance
+      final response = ref.read(todayWorkoutProvider).valueOrNull;
+      final workoutToRegenerate = response?.todayWorkout ?? response?.nextWorkout;
+      if (workoutToRegenerate != null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Updating workout to ${severity == 'avoid' ? 'avoid' : 'reduce'} selected muscles...'),
+              backgroundColor: AppColors.cyan,
+              duration: const Duration(seconds: 1),
+            ),
+          );
+        }
+
+        final workoutRepo = ref.read(workoutRepositoryProvider);
+        await for (final progress in workoutRepo.regenerateWorkoutStreaming(
+          workoutId: workoutToRegenerate.id,
+          userId: userId,
+        )) {
+          debugPrint('🏋️ Muscle avoid regeneration: ${progress.message}');
+          if (progress.isCompleted || progress.hasError) break;
+        }
+      }
+
       ref.invalidate(todayWorkoutProvider);
       ref.invalidate(workoutsProvider);
 
@@ -481,8 +506,8 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
           SnackBar(
             content: Text(
               count == 1
-                  ? 'Added muscle to ${severity == 'avoid' ? 'avoid' : 'reduce'} list'
-                  : 'Added $count muscles to ${severity == 'avoid' ? 'avoid' : 'reduce'} list',
+                  ? 'Workout updated - muscle will be ${severity == 'avoid' ? 'avoided' : 'reduced'}'
+                  : 'Workout updated - $count muscles will be ${severity == 'avoid' ? 'avoided' : 'reduced'}',
             ),
             backgroundColor: AppColors.success,
           ),

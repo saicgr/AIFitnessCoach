@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/providers/admin_provider.dart';
@@ -262,9 +261,9 @@ class _FeedTabState extends ConsumerState<FeedTab> {
         await socialService.pinPost(userId: userId, activityId: activityId);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Post pinned to top of feed'),
-              backgroundColor: AppColors.orange,
+            SnackBar(
+              content: const Text('Post pinned to top of feed'),
+              backgroundColor: ref.colors(context).accent,
               behavior: SnackBarBehavior.floating,
             ),
           );

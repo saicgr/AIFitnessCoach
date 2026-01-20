@@ -86,7 +86,7 @@ class TestExerciseHistoryEndpoint:
             mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.eq.return_value.execute.return_value = mock_pr_result
 
             response = client.get(
-                f"/v1/exercise-history/{TEST_EXERCISE_NAME}",
+                f"/api/v1/exercise-history/{TEST_EXERCISE_NAME}",
                 params={"user_id": TEST_USER_ID, "time_range": "12_weeks"}
             )
 
@@ -110,7 +110,7 @@ class TestExerciseHistoryEndpoint:
             mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.gte.return_value.order.return_value.range.return_value.execute.return_value = mock_result
 
             response = client.get(
-                f"/v1/exercise-history/unknown_exercise",
+                f"/api/v1/exercise-history/unknown_exercise",
                 params={"user_id": TEST_USER_ID}
             )
 
@@ -121,7 +121,7 @@ class TestExerciseHistoryEndpoint:
 
     def test_get_exercise_history_missing_user_id(self):
         """Test exercise history without user_id parameter."""
-        response = client.get(f"/v1/exercise-history/{TEST_EXERCISE_NAME}")
+        response = client.get(f"/api/v1/exercise-history/{TEST_EXERCISE_NAME}")
         assert response.status_code == 422  # Validation error
 
     def test_get_exercise_history_pagination(self):
@@ -143,7 +143,7 @@ class TestExerciseHistoryEndpoint:
             mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.eq.return_value.execute.return_value = mock_pr_result
 
             response = client.get(
-                f"/v1/exercise-history/{TEST_EXERCISE_NAME}",
+                f"/api/v1/exercise-history/{TEST_EXERCISE_NAME}",
                 params={"user_id": TEST_USER_ID, "page": 1, "limit": 20}
             )
 
@@ -192,7 +192,7 @@ class TestExerciseChartDataEndpoint:
             mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.gte.return_value.order.return_value.execute.return_value = mock_result
 
             response = client.get(
-                f"/v1/exercise-history/{TEST_EXERCISE_NAME}/chart",
+                f"/api/v1/exercise-history/{TEST_EXERCISE_NAME}/chart",
                 params={"user_id": TEST_USER_ID}
             )
 
@@ -217,7 +217,7 @@ class TestExerciseChartDataEndpoint:
             mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.gte.return_value.order.return_value.execute.return_value = mock_result
 
             response = client.get(
-                f"/v1/exercise-history/{TEST_EXERCISE_NAME}/chart",
+                f"/api/v1/exercise-history/{TEST_EXERCISE_NAME}/chart",
                 params={"user_id": TEST_USER_ID}
             )
 
@@ -236,7 +236,7 @@ class TestExerciseChartDataEndpoint:
             mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.gte.return_value.order.return_value.execute.return_value = mock_result
 
             response = client.get(
-                f"/v1/exercise-history/{TEST_EXERCISE_NAME}/chart",
+                f"/api/v1/exercise-history/{TEST_EXERCISE_NAME}/chart",
                 params={"user_id": TEST_USER_ID}
             )
 
@@ -283,7 +283,7 @@ class TestExercisePersonalRecordsEndpoint:
             mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.eq.return_value.order.return_value.execute.return_value = mock_result
 
             response = client.get(
-                f"/v1/exercise-history/{TEST_EXERCISE_NAME}/prs",
+                f"/api/v1/exercise-history/{TEST_EXERCISE_NAME}/prs",
                 params={"user_id": TEST_USER_ID}
             )
 
@@ -305,7 +305,7 @@ class TestExercisePersonalRecordsEndpoint:
             mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.eq.return_value.order.return_value.execute.return_value = mock_result
 
             response = client.get(
-                f"/v1/exercise-history/unknown_exercise/prs",
+                f"/api/v1/exercise-history/unknown_exercise/prs",
                 params={"user_id": TEST_USER_ID}
             )
 
@@ -349,7 +349,7 @@ class TestMostPerformedExercisesEndpoint:
             mock_client.rpc.return_value.execute.return_value = mock_result
 
             response = client.get(
-                "/v1/exercise-history/most-performed",
+                "/api/v1/exercise-history/most-performed",
                 params={"user_id": TEST_USER_ID, "limit": 10}
             )
 
@@ -374,7 +374,7 @@ class TestLogViewEndpoint:
             mock_client.from_.return_value.insert.return_value.execute.return_value = mock_result
 
             response = client.post(
-                "/v1/exercise-history/log-view",
+                "/api/v1/exercise-history/log-view",
                 json={
                     "user_id": TEST_USER_ID,
                     "exercise_name": TEST_EXERCISE_NAME,
@@ -394,7 +394,7 @@ class TestLogViewEndpoint:
             mock_client.from_.return_value.insert.return_value.execute.side_effect = Exception("DB Error")
 
             response = client.post(
-                "/v1/exercise-history/log-view",
+                "/api/v1/exercise-history/log-view",
                 json={
                     "user_id": TEST_USER_ID,
                     "exercise_name": TEST_EXERCISE_NAME,

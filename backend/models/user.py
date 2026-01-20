@@ -144,6 +144,11 @@ class UserUpdate(BaseModel):
     coach_id: Optional[str] = Field(default=None, max_length=50)  # Selected coach ID
     # Weight unit preference - 'kg' or 'lbs'
     weight_unit: Optional[str] = Field(default=None, max_length=5)
+    # Primary training goal: muscle_hypertrophy, muscle_strength, or strength_hypertrophy
+    primary_goal: Optional[str] = Field(default=None, max_length=50)
+    # Muscle focus points allocation (max 5 total)
+    # Format: {"triceps": 2, "lats": 1, "obliques": 2}
+    muscle_focus_points: Optional[dict] = None
 
 
 class User(BaseModel):
@@ -183,3 +188,8 @@ class User(BaseModel):
     # Detailed equipment with quantities and weights
     # Array of objects: [{"name": "dumbbells", "quantity": 2, "weights": [15, 25], "weight_unit": "lbs", "notes": ""}]
     equipment_details: Optional[list] = None
+    # Primary training goal: muscle_hypertrophy, muscle_strength, or strength_hypertrophy
+    primary_goal: Optional[str] = Field(default=None, max_length=50)
+    # Muscle focus points allocation (max 5 total)
+    # Format: {"triceps": 2, "lats": 1, "obliques": 2}
+    muscle_focus_points: Optional[dict] = None

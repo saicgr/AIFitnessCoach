@@ -33,10 +33,12 @@ client = TestClient(app)
 @pytest.fixture
 def mock_supabase():
     """Mock Supabase client for testing."""
-    with patch('api.v1.workout_gallery.get_supabase_client') as mock:
-        supabase_mock = MagicMock()
-        mock.return_value = supabase_mock
-        yield supabase_mock
+    with patch('api.v1.workout_gallery.get_supabase_db') as mock:
+        db_mock = MagicMock()
+        client_mock = MagicMock()
+        db_mock.client = client_mock
+        mock.return_value = db_mock
+        yield client_mock  # Return the client mock so tests can configure it
 
 
 @pytest.fixture

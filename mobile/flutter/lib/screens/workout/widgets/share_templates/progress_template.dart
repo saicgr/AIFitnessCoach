@@ -88,47 +88,61 @@ class ProgressTemplate extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(24),
       ),
-      child: Stack(
-        children: [
-          // Background pattern
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _ProgressPatternPainter(),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            // Background pattern
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _ProgressPatternPainter(),
+              ),
             ),
-          ),
 
-          // Main content
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                // Milestone badge at top
-                _buildMilestoneBadge(),
+            // Main content - wrapped in FittedBox to prevent overflow
+            Positioned.fill(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.topCenter,
+                child: SizedBox(
+                  width: 320,
+                  height: 440,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Milestone badge at top
+                        _buildMilestoneBadge(),
 
-                const SizedBox(height: 14),
+                        const SizedBox(height: 10),
 
-                // Big number - total workouts
-                _buildTotalWorkoutsDisplay(),
+                        // Big number - total workouts
+                        _buildTotalWorkoutsDisplay(),
 
-                const SizedBox(height: 14),
+                        const SizedBox(height: 10),
 
-                // Progress stats grid
-                Expanded(
-                  child: _buildProgressGrid(),
+                        // Progress stats grid - fixed height
+                        _buildProgressGrid(),
+
+                        const SizedBox(height: 8),
+
+                        // Today's workout
+                        _buildTodaysWorkout(),
+
+                        if (showWatermark) ...[
+                          const SizedBox(height: 10),
+                          const AppWatermark(),
+                        ] else
+                          const SizedBox(height: 6),
+                      ],
+                    ),
+                  ),
                 ),
-
-                // Today's workout
-                _buildTodaysWorkout(),
-
-                if (showWatermark) ...[
-                  const SizedBox(height: 10),
-                  const AppWatermark(),
-                ] else
-                  const SizedBox(height: 6),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -192,48 +206,51 @@ class ProgressTemplate extends StatelessWidget {
   }
 
   Widget _buildProgressGrid() {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            children: [
-              Expanded(child: _buildStatCard(
-                icon: Icons.local_fire_department_rounded,
-                value: '${currentStreak ?? 0}',
-                label: 'Day Streak',
-                color: AppColors.orange,
-              )),
-              const SizedBox(height: 6),
-              Expanded(child: _buildStatCard(
-                icon: Icons.calendar_month_rounded,
-                value: '${weeklyWorkouts ?? 0}',
-                label: 'This Week',
-                color: AppColors.cyan,
-              )),
-            ],
+    return SizedBox(
+      height: 120,
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(child: _buildStatCard(
+                  icon: Icons.local_fire_department_rounded,
+                  value: '${currentStreak ?? 0}',
+                  label: 'Day Streak',
+                  color: AppColors.orange,
+                )),
+                const SizedBox(height: 6),
+                Expanded(child: _buildStatCard(
+                  icon: Icons.calendar_month_rounded,
+                  value: '${weeklyWorkouts ?? 0}',
+                  label: 'This Week',
+                  color: AppColors.cyan,
+                )),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Column(
-            children: [
-              Expanded(child: _buildStatCard(
-                icon: Icons.trending_up_rounded,
-                value: '${prsThisMonth ?? 0}',
-                label: 'PRs This Month',
-                color: AppColors.success,
-              )),
-              const SizedBox(height: 6),
-              Expanded(child: _buildStatCard(
-                icon: Icons.scale_rounded,
-                value: _formattedTotalVolume,
-                label: 'Total Lifted',
-                color: AppColors.purple,
-              )),
-            ],
+          const SizedBox(width: 6),
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(child: _buildStatCard(
+                  icon: Icons.trending_up_rounded,
+                  value: '${prsThisMonth ?? 0}',
+                  label: 'PRs This Month',
+                  color: AppColors.success,
+                )),
+                const SizedBox(height: 6),
+                Expanded(child: _buildStatCard(
+                  icon: Icons.scale_rounded,
+                  value: _formattedTotalVolume,
+                  label: 'Total Lifted',
+                  color: AppColors.purple,
+                )),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

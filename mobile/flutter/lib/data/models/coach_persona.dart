@@ -32,7 +32,7 @@ class CoachPersona {
     this.imagePath,
   });
 
-  /// Pre-defined coach personas
+  /// Pre-defined coach personas with distinct colors
   static const List<CoachPersona> predefinedCoaches = [
     CoachPersona(
       id: 'coach_mike',
@@ -43,8 +43,8 @@ class CoachPersona {
       communicationTone: 'encouraging',
       encouragementLevel: 0.9,
       icon: Icons.fitness_center,
-      primaryColor: AppColors.orange,
-      accentColor: AppColors.coral,
+      primaryColor: Color(0xFFF97316), // Orange - energetic, motivational
+      accentColor: Color(0xFFFFB366), // Light orange
       imagePath: 'assets/images/coaches/coach_mike.png',
     ),
     CoachPersona(
@@ -56,8 +56,8 @@ class CoachPersona {
       communicationTone: 'formal',
       encouragementLevel: 0.6,
       icon: Icons.science,
-      primaryColor: AppColors.electricBlue,
-      accentColor: AppColors.cyan,
+      primaryColor: Color(0xFF3B82F6), // Blue - scientific, trustworthy
+      accentColor: Color(0xFF60A5FA), // Light blue
       imagePath: 'assets/images/coaches/coach_dr_sarah.png',
     ),
     CoachPersona(
@@ -69,8 +69,8 @@ class CoachPersona {
       communicationTone: 'tough-love',
       encouragementLevel: 0.4,
       icon: Icons.military_tech,
-      primaryColor: AppColors.coral,
-      accentColor: AppColors.error,
+      primaryColor: Color(0xFFEF4444), // Red - intense, powerful
+      accentColor: Color(0xFFF87171), // Light red/coral
       imagePath: 'assets/images/coaches/coach_max_sergeant.png',
     ),
     CoachPersona(
@@ -82,8 +82,8 @@ class CoachPersona {
       communicationTone: 'casual',
       encouragementLevel: 0.7,
       icon: Icons.spa,
-      primaryColor: AppColors.teal,
-      accentColor: AppColors.success,
+      primaryColor: Color(0xFF22C55E), // Green - calm, balanced
+      accentColor: Color(0xFF4ADE80), // Light green
       imagePath: 'assets/images/coaches/coach_maya.png',
     ),
     CoachPersona(
@@ -95,8 +95,8 @@ class CoachPersona {
       communicationTone: 'gen-z',
       encouragementLevel: 1.0,
       icon: Icons.celebration,
-      primaryColor: AppColors.magenta,
-      accentColor: AppColors.purple,
+      primaryColor: Color(0xFFA855F7), // Purple - fun, energetic
+      accentColor: Color(0xFFC084FC), // Light purple
       imagePath: 'assets/images/coaches/coach_danny.png',
     ),
   ];
@@ -117,8 +117,8 @@ class CoachPersona {
       communicationTone: communicationTone,
       encouragementLevel: encouragementLevel,
       icon: Icons.auto_awesome,
-      primaryColor: AppColors.cyan,
-      accentColor: AppColors.purple,
+      primaryColor: const Color(0xFFF97316), // Orange - app accent
+      accentColor: const Color(0xFFFFB366), // Light orange
       isCustom: true,
     );
   }

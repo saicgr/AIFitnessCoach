@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -24,9 +25,13 @@ import 'widgets/exercise_swap_sheet.dart';
 import 'widgets/exercise_add_sheet.dart';
 import 'widgets/expanded_exercise_card.dart';
 import 'widgets/superset_indicator.dart';
+import 'widgets/superset_reorder_sheet.dart';
 import 'package:flutter/services.dart';
 import '../../widgets/fasting_training_warning.dart';
 import '../../widgets/coach_avatar.dart';
+import '../../models/equipment_item.dart';
+import '../../core/providers/environment_equipment_provider.dart';
+import 'widgets/edit_workout_equipment_sheet.dart';
 
 class WorkoutDetailScreen extends ConsumerStatefulWidget {
   final String workoutId;
@@ -46,12 +51,22 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   bool _isWarmupExpanded = false;  // For warmup section
   bool _isStretchesExpanded = false;  // For stretches section
   bool _isChallengeExpanded = false;  // For challenge exercise section
+  bool _isEquipmentExpanded = false;  // For equipment section
   String? _trainingSplit;  // Training program type from user preferences
   WorkoutGenerationParams? _generationParams;  // AI reasoning and parameters
   bool _isLoadingParams = false;  // Loading state for generation params
   bool _isAIReasoningExpanded = false;  // For AI reasoning section
+  bool _isMoreInfoExpanded = false;  // For More Info section (AI insights)
   bool? _useKgOverride;  // Local override for kg/lbs toggle
   int? _pendingSupersetIndex;  // Index of exercise waiting to be paired via menu
+
+  // Equipment edit revert state
+  List<WorkoutExercise>? _originalExercises;  // Snapshot before equipment changes
+  bool _hasEquipmentModifications = false;  // Track if equipment was modified
+
+  // Auto-save state for exercise modifications
+  Timer? _autoSaveTimer;
+  bool _isSaving = false;
 
   /// Toggle between kg and lbs units locally
   void _toggleUnit() {
@@ -65,6 +80,40 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   void initState() {
     super.initState();
     _loadWorkout();
+  }
+
+  @override
+  void dispose() {
+    _autoSaveTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Schedule auto-save with debounce (2 seconds)
+  void _scheduleAutoSave() {
+    _autoSaveTimer?.cancel();
+    _autoSaveTimer = Timer(const Duration(seconds: 2), _autoSaveExercises);
+  }
+
+  /// Auto-save exercise modifications to backend
+  Future<void> _autoSaveExercises() async {
+    if (_workout?.id == null || _isSaving) return;
+
+    setState(() => _isSaving = true);
+    try {
+      final exercises = _workout!.exercises.map((e) => e.toJson()).toList();
+      final result = await ref.read(workoutRepositoryProvider).updateWorkoutExercises(
+        workoutId: _workout!.id!,
+        exercises: exercises,
+      );
+      if (result != null && mounted) {
+        debugPrint('✅ [WorkoutDetail] Auto-saved exercise modifications');
+      }
+    } catch (e) {
+      debugPrint('❌ [WorkoutDetail] Auto-save failed: $e');
+      // Silently fail - changes are still in local state
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   Future<void> _loadWorkout() async {
@@ -190,6 +239,374 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     }
   }
 
+  // ─────────────────────────────────────────────────────────────────
+  // EQUIPMENT EDITING
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Show sheet to edit equipment for this workout session
+  void _showEditEquipmentSheet(Workout workout) {
+    // Convert equipment strings to EquipmentItem objects
+    final currentEquipmentDetails = workout.equipmentNeeded.map((name) {
+      return EquipmentItem.fromName(name.toLowerCase().replaceAll(' ', '_'));
+    }).toList();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => EditWorkoutEquipmentSheet(
+        currentEquipment: workout.equipmentNeeded,
+        equipmentDetails: currentEquipmentDetails,
+        onApply: (selectedEquipment) => _applyEquipmentChanges(workout, selectedEquipment),
+      ),
+    );
+  }
+
+  /// Apply equipment changes and update workout
+  Future<void> _applyEquipmentChanges(
+    Workout workout,
+    List<EquipmentItem> selectedEquipment,
+  ) async {
+    final analysis = _analyzeEquipmentChanges(workout, selectedEquipment);
+    debugPrint('🔧 [Equipment] Analysis: ${analysis.weightAdjustments.length} weight adjustments, ${analysis.exercisesToReplace.length} to replace');
+
+    if (analysis.exercisesToReplace.isEmpty && analysis.weightAdjustments.isEmpty) {
+      // No changes needed
+      _showSnackBar('No changes needed');
+      return;
+    }
+
+    // Store snapshot BEFORE first modification (for revert functionality)
+    if (_originalExercises == null) {
+      _originalExercises = List<WorkoutExercise>.from(workout.exercises);
+      debugPrint('🔧 [Equipment] Stored original exercises snapshot (${_originalExercises!.length} exercises)');
+    }
+
+    if (analysis.exercisesToReplace.isNotEmpty) {
+      // Quick replace exercises one by one (faster than full regeneration)
+      await _quickReplaceExercises(workout, analysis.exercisesToReplace, selectedEquipment);
+    } else {
+      // Only weight adjustments - apply locally
+      _applyWeightAdjustments(workout, analysis.weightAdjustments);
+    }
+
+    // Mark as modified (enables revert button)
+    setState(() => _hasEquipmentModifications = true);
+
+    // Ask if user wants to save to profile
+    if (mounted) {
+      _showSaveToProfileDialog(selectedEquipment);
+    }
+  }
+
+  /// Analyze what changes are needed based on equipment selection
+  _EquipmentChangeAnalysis _analyzeEquipmentChanges(
+    Workout workout,
+    List<EquipmentItem> selectedEquipment,
+  ) {
+    final selectedNames = selectedEquipment.map((e) => e.name.toLowerCase()).toSet();
+    final equipmentWeights = {
+      for (final e in selectedEquipment) e.name.toLowerCase(): e.weights,
+    };
+
+    final weightAdjustments = <_ExerciseWeightAdjustment>[];
+    final exercisesToReplace = <WorkoutExercise>[];
+
+    for (final exercise in workout.exercises) {
+      final eqNeeded = (exercise.equipment ?? 'bodyweight').toLowerCase().replaceAll(' ', '_');
+
+      // Bodyweight exercises are always fine
+      if (eqNeeded == 'bodyweight' || eqNeeded == 'body_weight' || eqNeeded.isEmpty) {
+        continue;
+      }
+
+      // Check if equipment is still selected
+      if (!selectedNames.contains(eqNeeded)) {
+        exercisesToReplace.add(exercise);
+        continue;
+      }
+
+      // Equipment available - check if weight adjustment needed
+      final availableWeights = equipmentWeights[eqNeeded];
+      if (availableWeights != null && availableWeights.isNotEmpty) {
+        final currentWeight = exercise.weight ?? 0;
+        if (currentWeight > 0) {
+          final nearestWeight = _findNearestWeight(currentWeight, availableWeights);
+          if ((nearestWeight - currentWeight).abs() > 0.1) {
+            weightAdjustments.add(_ExerciseWeightAdjustment(
+              exercise: exercise,
+              oldWeight: currentWeight,
+              newWeight: nearestWeight,
+            ));
+          }
+        }
+      }
+    }
+
+    return _EquipmentChangeAnalysis(
+      weightAdjustments: weightAdjustments,
+      exercisesToReplace: exercisesToReplace,
+    );
+  }
+
+  /// Find nearest available weight
+  double _findNearestWeight(double target, List<double> available) {
+    if (available.isEmpty) return target;
+    return available.reduce((a, b) =>
+      (a - target).abs() < (b - target).abs() ? a : b
+    );
+  }
+
+  /// Apply weight adjustments locally
+  void _applyWeightAdjustments(
+    Workout workout,
+    List<_ExerciseWeightAdjustment> adjustments,
+  ) {
+    final updatedExercises = List<WorkoutExercise>.from(workout.exercises);
+
+    for (final adj in adjustments) {
+      final index = updatedExercises.indexWhere((e) => e.id == adj.exercise.id);
+      if (index != -1) {
+        final exercise = updatedExercises[index];
+        // Update weight and set targets
+        List<SetTarget>? updatedTargets;
+        if (exercise.setTargets != null && exercise.setTargets!.isNotEmpty) {
+          updatedTargets = exercise.setTargets!.map((target) {
+            return SetTarget(
+              setNumber: target.setNumber,
+              setType: target.setType,
+              targetReps: target.targetReps,
+              targetWeightKg: adj.newWeight,
+              targetRpe: target.targetRpe,
+              targetRir: target.targetRir,
+            );
+          }).toList();
+        }
+
+        updatedExercises[index] = exercise.copyWith(
+          weight: adj.newWeight,
+          setTargets: updatedTargets,
+        );
+      }
+    }
+
+    // Convert to JSON and update workout locally
+    final exercisesJson = updatedExercises.map((e) => e.toJson()).toList();
+    setState(() {
+      _workout = workout.copyWith(exercisesJson: exercisesJson);
+    });
+
+    _showSnackBar('Weights updated to match available equipment');
+  }
+
+  /// Quick replace exercises that need different equipment (faster than full regeneration)
+  Future<void> _quickReplaceExercises(
+    Workout workout,
+    List<WorkoutExercise> exercisesToReplace,
+    List<EquipmentItem> selectedEquipment,
+  ) async {
+    if (workout.id == null) {
+      _showSnackBar('Cannot update - workout ID missing', isError: true);
+      return;
+    }
+
+    // Show loading dialog
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => _QuickReplaceProgressDialog(
+          total: exercisesToReplace.length,
+        ),
+      );
+    }
+
+    final workoutRepo = ref.read(workoutRepositoryProvider);
+    int replaced = 0;
+    int failed = 0;
+
+    for (final exercise in exercisesToReplace) {
+      try {
+        debugPrint('🔄 [Equipment] Replacing: ${exercise.name}');
+        final result = await workoutRepo.replaceExerciseSafe(
+          workoutId: workout.id!,
+          exerciseName: exercise.name ?? '',
+          exerciseId: exercise.id,
+          reason: 'equipment_unavailable',
+        );
+
+        if (result?.replaced == true) {
+          replaced++;
+          debugPrint('✅ [Equipment] Replaced ${exercise.name} with ${result!.replacement}');
+        } else {
+          failed++;
+          debugPrint('⚠️ [Equipment] Could not replace ${exercise.name}');
+        }
+      } catch (e) {
+        failed++;
+        debugPrint('❌ [Equipment] Error replacing ${exercise.name}: $e');
+      }
+    }
+
+    if (mounted) Navigator.of(context).pop(); // Close progress dialog
+
+    // Reload the workout with new data
+    await _loadWorkout();
+
+    if (mounted) {
+      if (failed == 0) {
+        _showSnackBar('Replaced $replaced exercise${replaced > 1 ? 's' : ''} for available equipment');
+      } else {
+        _showSnackBar('Replaced $replaced, $failed could not be replaced');
+      }
+    }
+  }
+
+  /// Show dialog asking if user wants to save equipment to profile
+  void _showSaveToProfileDialog(List<EquipmentItem> equipment) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final accentColor = ref.colors(context).accent;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Save to Profile?',
+          style: TextStyle(color: textPrimary, fontSize: 18),
+        ),
+        content: Text(
+          'Would you like to save this equipment configuration to your profile for future workouts?',
+          style: TextStyle(color: textMuted, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'No Thanks',
+              style: TextStyle(color: textMuted),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _saveEquipmentToProfile(equipment);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: accentColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('Yes, Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Save equipment configuration to user profile (Supabase)
+  Future<void> _saveEquipmentToProfile(List<EquipmentItem> equipment) async {
+    debugPrint('💾 [Equipment] Saving ${equipment.length} items to profile');
+
+    try {
+      // Convert EquipmentItem list to the format expected by the provider
+      final equipmentDetails = equipment.map((item) => item.toJson()).toList();
+
+      // Save to Supabase via the environment equipment provider
+      await ref.read(environmentEquipmentProvider.notifier).setEquipmentDetails(equipmentDetails);
+
+      if (mounted) {
+        _showSnackBar('Equipment saved to profile');
+      }
+      debugPrint('✅ [Equipment] Successfully saved ${equipment.length} items to Supabase');
+    } catch (e) {
+      debugPrint('❌ [Equipment] Failed to save to profile: $e');
+      if (mounted) {
+        _showSnackBar('Failed to save equipment to profile', isError: true);
+      }
+    }
+  }
+
+  /// Revert workout to original exercises (before equipment changes)
+  Future<void> _revertToOriginalExercises() async {
+    if (_originalExercises == null || _workout == null) return;
+
+    final accentColor = ref.colors(context).accent;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Revert to Original?'),
+        content: const Text(
+          'This will restore all exercises to their original state before equipment changes were applied.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: accentColor),
+            child: const Text('Revert'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+
+      debugPrint('🔄 [Equipment] Reverting to original ${_originalExercises!.length} exercises');
+
+      // Restore original exercises via API
+      await workoutRepo.updateWorkoutExercises(
+        workoutId: _workout!.id!,
+        exercises: _originalExercises!.map((e) => e.toJson()).toList(),
+      );
+
+      // Reload workout and clear snapshot
+      await _loadWorkout();
+      _originalExercises = null;
+      _hasEquipmentModifications = false;
+
+      if (mounted) {
+        _showSnackBar('Workout restored to original');
+      }
+      debugPrint('✅ [Equipment] Successfully reverted to original exercises');
+    } catch (e) {
+      debugPrint('❌ [Equipment] Failed to revert: $e');
+      if (mounted) {
+        _showSnackBar('Failed to revert: $e', isError: true);
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  /// Show snackbar message
+  void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red[700] : null,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   /// Convert training split ID to display name
   /// Returns the program name if found, or null for special cases like 'nothing_structured'
   String? _getTrainingProgramName(String splitId) {
@@ -218,33 +635,46 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     final exercise1 = _workout!.exercises[firstIndex];
     final exercise2 = _workout!.exercises[secondIndex];
 
-    // Check if either exercise is already in a superset
-    if (exercise1.isInSuperset || exercise2.isInSuperset) {
-      HapticService.error();
-      _showSupersetWarningDialog(exercise1, exercise2);
+    debugPrint('🔗 [Superset] _createSuperset called: firstIndex=$firstIndex, secondIndex=$secondIndex');
+    debugPrint('🔗 [Superset] exercise1: ${exercise1.name}, isInSuperset=${exercise1.isInSuperset}, group=${exercise1.supersetGroup}');
+    debugPrint('🔗 [Superset] exercise2: ${exercise2.name}, isInSuperset=${exercise2.isInSuperset}, group=${exercise2.supersetGroup}');
+
+    // Case 1: Both exercises are already in different supersets - cannot merge
+    if (exercise1.isInSuperset && exercise2.isInSuperset) {
+      if (exercise1.supersetGroup != exercise2.supersetGroup) {
+        debugPrint('🔗 [Superset] Case 1: Cannot merge different supersets');
+        HapticService.error();
+        _showCannotMergeSupersetDialog(exercise1, exercise2);
+        return;
+      }
+      // Same superset - do nothing
+      debugPrint('🔗 [Superset] Case 1b: Same superset, doing nothing');
       return;
     }
 
+    // Case 2: One exercise is in a superset - offer to add the other to it
+    if (exercise1.isInSuperset || exercise2.isInSuperset) {
+      debugPrint('🔗 [Superset] Case 2: One in superset, showing add dialog');
+      final existingSuperset = exercise1.isInSuperset ? exercise1 : exercise2;
+      final newExercise = exercise1.isInSuperset ? exercise2 : exercise1;
+      final newExerciseIndex = exercise1.isInSuperset ? secondIndex : firstIndex;
+      _showAddToSupersetDialog(existingSuperset, newExercise, newExerciseIndex);
+      return;
+    }
+
+    // Case 3: Neither is in a superset - create new superset
+    debugPrint('🔗 [Superset] Case 3: Neither in superset, creating new');
     _performCreateSuperset(firstIndex, secondIndex);
   }
 
-  /// Show warning dialog when trying to superset exercises that are already grouped
-  Future<void> _showSupersetWarningDialog(
+  /// Show dialog when both exercises are already in different supersets (cannot merge)
+  Future<void> _showCannotMergeSupersetDialog(
     WorkoutExercise exercise1,
     WorkoutExercise exercise2,
   ) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surface = isDark ? AppColors.surface : AppColorsLight.surface;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-
-    String warningMessage;
-    if (exercise1.isInSuperset && exercise2.isInSuperset) {
-      warningMessage = 'Both "${exercise1.name}" and "${exercise2.name}" are already in supersets.\n\nBreak the existing supersets first to create a new pairing.';
-    } else if (exercise1.isInSuperset) {
-      warningMessage = '"${exercise1.name}" is already in a superset.\n\nBreak the existing superset first or choose a different exercise.';
-    } else {
-      warningMessage = '"${exercise2.name}" is already in a superset.\n\nBreak the existing superset first or choose a different exercise.';
-    }
 
     await showDialog(
       context: context,
@@ -257,14 +687,14 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Already in Superset',
+                'Cannot Merge Supersets',
                 style: TextStyle(color: textPrimary, fontWeight: FontWeight.bold, fontSize: 18),
               ),
             ),
           ],
         ),
         content: Text(
-          warningMessage,
+          '"${exercise1.name}" and "${exercise2.name}" are already in different supersets.\n\nBreak the existing supersets first to create a new pairing.',
           style: TextStyle(color: textPrimary.withOpacity(0.8)),
         ),
         actions: [
@@ -278,6 +708,125 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
 
     // Clear pending state
     setState(() => _pendingSupersetIndex = null);
+  }
+
+  /// Show dialog offering to add an exercise to an existing superset
+  Future<void> _showAddToSupersetDialog(
+    WorkoutExercise existingSuperset,
+    WorkoutExercise newExercise,
+    int newExerciseIndex,
+  ) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final accentColor = isDark ? AppColors.purple : AppColorsLight.purple;
+
+    // Count exercises in the existing superset
+    final existingCount = _workout!.exercises
+        .where((e) => e.supersetGroup == existingSuperset.supersetGroup)
+        .length;
+
+    final setType = switch (existingCount) {
+      2 => 'superset',
+      3 => 'tri-set',
+      _ => 'giant set',
+    };
+
+    final newSetType = switch (existingCount + 1) {
+      3 => 'tri-set',
+      _ => 'giant set',
+    };
+
+    // Capitalize first letter helper
+    String capitalize(String s) => '${s[0].toUpperCase()}${s.substring(1)}';
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.add_link, color: accentColor, size: 24),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Create ${capitalize(newSetType)}?',
+                style: TextStyle(color: textPrimary, fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Add "${newExercise.name}" to create a $newSetType?',
+          style: TextStyle(color: textPrimary.withOpacity(0.8)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel', style: TextStyle(color: textPrimary.withOpacity(0.6))),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: accentColor,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('Create ${capitalize(newSetType)}'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      _addToExistingSuperset(newExerciseIndex, existingSuperset.supersetGroup!);
+    }
+
+    // Clear pending state
+    setState(() => _pendingSupersetIndex = null);
+  }
+
+  /// Add an exercise to an existing superset
+  void _addToExistingSuperset(int exerciseIndex, int targetGroup) {
+    HapticService.medium();
+
+    // Find the maximum order in the target group
+    final maxOrder = _workout!.exercises
+        .where((e) => e.supersetGroup == targetGroup)
+        .map((e) => e.supersetOrder ?? 0)
+        .fold(0, (a, b) => a > b ? a : b);
+
+    final updatedExercises = _workout!.exercises.asMap().map((i, e) {
+      if (i == exerciseIndex) {
+        return MapEntry(i, e.copyWith(
+          supersetGroup: targetGroup,
+          supersetOrder: maxOrder + 1,
+        ));
+      }
+      return MapEntry(i, e);
+    }).values.toList();
+
+    // Convert exercises back to JSON for storage
+    final exercisesJson = updatedExercises.map((e) => e.toJson()).toList();
+
+    setState(() => _workout = _workout!.copyWith(exercisesJson: exercisesJson));
+    _scheduleAutoSave();
+
+    // Get count for snackbar message
+    final newCount = _workout!.exercises
+        .where((e) => e.supersetGroup == targetGroup)
+        .length + 1;
+    final setType = switch (newCount) {
+      3 => 'Tri-set',
+      _ => 'Giant set',
+    };
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$setType created!'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   /// Actually create the superset (called after validation passes)
@@ -311,6 +860,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       _workout = _workout!.copyWith(exercisesJson: exercisesJson);
       _pendingSupersetIndex = null;
     });
+    _scheduleAutoSave();
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -371,6 +921,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       final exercisesJson = updatedExercises.map((e) => e.toJson()).toList();
 
       setState(() => _workout = _workout!.copyWith(exercisesJson: exercisesJson));
+      _scheduleAutoSave();
       HapticService.light();
     }
   }
@@ -392,6 +943,82 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     final exercisesJson = updatedExercises.map((e) => e.toJson()).toList();
 
     setState(() => _workout = _workout!.copyWith(exercisesJson: exercisesJson));
+    _scheduleAutoSave();
+  }
+
+  /// Show edit sheet for tri-sets and giant sets (3+ exercises) - reorder & remove
+  Future<void> _showReorderSheet(int groupNumber, List<int> exerciseIndices) async {
+    // Get the exercises in this superset, sorted by current order
+    final supersetExercises = exerciseIndices
+        .map((idx) => _workout!.exercises[idx])
+        .toList()
+      ..sort((a, b) => (a.supersetOrder ?? 0).compareTo(b.supersetOrder ?? 0));
+
+    final result = await showSupersetEditSheet(
+      context,
+      exercises: supersetExercises,
+      groupNumber: groupNumber,
+    );
+
+    if (result != null) {
+      // Apply both removals and reorder in one atomic update
+      _applyEditSheetResult(groupNumber, result);
+    }
+  }
+
+  /// Apply the edit sheet result - handles both removals and reordering atomically
+  void _applyEditSheetResult(int groupNumber, SupersetEditResult result) {
+    HapticService.medium();
+
+    // Create set of keys for removed exercises
+    final removeKeys = result.removedExercises.map((e) => e.id ?? e.name).toSet();
+
+    // Create a map of exercise ID/name to new order for remaining exercises
+    final orderMap = <String, int>{};
+    for (int i = 0; i < result.exercises.length; i++) {
+      final key = result.exercises[i].id ?? result.exercises[i].name;
+      orderMap[key] = i + 1; // supersetOrder is 1-indexed
+    }
+
+    // Apply both changes in one pass
+    final updatedExercises = _workout!.exercises.map((e) {
+      final key = e.id ?? e.name;
+
+      // Check if this exercise was removed from the superset
+      if (removeKeys.contains(key)) {
+        return e.copyWith(
+          supersetGroup: null,
+          supersetOrder: null,
+        );
+      }
+
+      // Check if this exercise is in the superset and needs reordering
+      if (e.supersetGroup == groupNumber) {
+        final newOrderValue = orderMap[key];
+        if (newOrderValue != null) {
+          return e.copyWith(supersetOrder: newOrderValue);
+        }
+      }
+
+      return e;
+    }).toList();
+
+    // Convert exercises back to JSON for storage
+    final exercisesJson = updatedExercises.map((e) => e.toJson()).toList();
+
+    setState(() => _workout = _workout!.copyWith(exercisesJson: exercisesJson));
+    _scheduleAutoSave();
+
+    // Show appropriate feedback
+    final hasRemovals = result.removedExercises.isNotEmpty;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(hasRemovals
+            ? '${result.removedExercises.length} exercise${result.removedExercises.length > 1 ? 's' : ''} removed from superset'
+            : 'Exercise order updated!'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   /// Reorder exercises (and supersets as single units) in the list
@@ -409,24 +1036,28 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     final movedItem = displayItems[oldIndex];
 
     if (movedItem.isSuperset) {
-      // Move both exercises in the superset together
-      final firstIdx = movedItem.firstIndex!;
-      final secondIdx = movedItem.secondIndex!;
-      final firstEx = exercises[firstIdx];
-      final secondEx = exercises[secondIdx];
+      // Move all exercises in the superset together (supports 2+ exercises)
+      final supersetIndices = movedItem.supersetIndices!;
 
-      // Remove both (remove higher index first to preserve lower index)
-      final higherIdx = firstIdx > secondIdx ? firstIdx : secondIdx;
-      final lowerIdx = firstIdx < secondIdx ? firstIdx : secondIdx;
-      exercises.removeAt(higherIdx);
-      exercises.removeAt(lowerIdx);
+      // Get exercises sorted by their superset order
+      final supersetExercises = supersetIndices
+          .map((idx) => exercises[idx])
+          .toList()
+        ..sort((a, b) => (a.supersetOrder ?? 0).compareTo(b.supersetOrder ?? 0));
+
+      // Remove all exercises in the superset (remove from highest index to lowest to preserve indices)
+      final sortedIndices = List<int>.from(supersetIndices)..sort((a, b) => b.compareTo(a));
+      for (final idx in sortedIndices) {
+        exercises.removeAt(idx);
+      }
 
       // Calculate new insert position
       int insertPos = _calculateInsertPosition(displayItems, newIndex, exercises);
 
-      // Insert both at new position (maintain their relative order)
-      exercises.insert(insertPos, firstEx);
-      exercises.insert(insertPos + 1, secondEx);
+      // Insert all exercises at new position (maintain their relative order)
+      for (int i = 0; i < supersetExercises.length; i++) {
+        exercises.insert(insertPos + i, supersetExercises[i]);
+      }
     } else {
       // Single exercise - simple move
       final ex = exercises.removeAt(movedItem.singleIndex!);
@@ -438,6 +1069,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     final exercisesJson = exercises.map((e) => e.toJson()).toList();
 
     setState(() => _workout = _workout!.copyWith(exercisesJson: exercisesJson));
+    _scheduleAutoSave();
   }
 
   /// Calculate the actual exercise list position for a display index
@@ -458,7 +1090,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     for (int i = 0; i < targetDisplayIndex && i < displayItems.length; i++) {
       final item = displayItems[i];
       if (item.isSuperset) {
-        exerciseIndex += 2; // Supersets contain 2 exercises
+        exerciseIndex += item.exerciseCount; // Supersets can contain 2+ exercises
       } else {
         exerciseIndex += 1;
       }
@@ -484,7 +1116,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       initiallyExpanded: false,
       reorderIndex: reorderIndex,
       isPendingPair: isPendingPair,
-      onSupersetDrop: exercise.isInSuperset ? null : onSupersetDrop,
+      onSupersetDrop: onSupersetDrop,  // Allow drop even if in superset (to add to tri-set/giant set)
       onTap: () {
         debugPrint('🎯 [WorkoutDetail] Exercise tapped: ${exercise.name}');
         context.push('/exercise-detail', extra: exercise);
@@ -574,40 +1206,44 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 child: SizedBox(height: MediaQuery.of(context).padding.top + 60),
               ),
 
-              // Type badges row - with explicit labels for clarity
+              // Type badges row - single line horizontal scroll
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      // Workout Type Badge - now with semantic color
-                      _buildLabeledBadge(
-                        label: 'Type',
-                        value: (workout.type ?? 'strength').capitalize(),
-                        color: AppColors.getWorkoutTypeColor(workout.type ?? 'strength'),
-                        backgroundColor: AppColors.getWorkoutTypeColor(workout.type ?? 'strength').withOpacity(0.15),
-                      ),
-                      // Difficulty Badge - special animated version for Hell
-                      if ((workout.difficulty ?? 'medium').toLowerCase() == 'hell')
-                        const AnimatedHellBadge()
-                      else
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        // Workout Type Badge - now with semantic color
                         _buildLabeledBadge(
-                          label: 'Difficulty',
-                          value: DifficultyUtils.getDisplayName(workout.difficulty ?? 'medium'),
-                          color: DifficultyUtils.getColor(workout.difficulty ?? 'medium'),
-                          backgroundColor: DifficultyUtils.getColor(workout.difficulty ?? 'medium').withOpacity(0.15),
+                          label: 'Type',
+                          value: (workout.type ?? 'strength').capitalize(),
+                          color: AppColors.getWorkoutTypeColor(workout.type ?? 'strength'),
+                          backgroundColor: AppColors.getWorkoutTypeColor(workout.type ?? 'strength').withOpacity(0.15),
                         ),
-                      // Training Program Badge (only show if we have a valid program name)
-                      if (_trainingSplit != null && _getTrainingProgramName(_trainingSplit!) != null)
-                        _buildLabeledBadge(
-                          label: 'Program',
-                          value: _getTrainingProgramName(_trainingSplit!)!,
-                          color: accentColor,
-                          backgroundColor: accentColor.withOpacity(0.15),
-                        ),
-                    ],
+                        const SizedBox(width: 8),
+                        // Difficulty Badge - special animated version for Hell
+                        if ((workout.difficulty ?? 'medium').toLowerCase() == 'hell')
+                          const AnimatedHellBadge()
+                        else
+                          _buildLabeledBadge(
+                            label: 'Difficulty',
+                            value: DifficultyUtils.getDisplayName(workout.difficulty ?? 'medium'),
+                            color: DifficultyUtils.getColor(workout.difficulty ?? 'medium'),
+                            backgroundColor: DifficultyUtils.getColor(workout.difficulty ?? 'medium').withOpacity(0.15),
+                          ),
+                        // Training Program Badge (only show if we have a valid program name)
+                        if (_trainingSplit != null && _getTrainingProgramName(_trainingSplit!) != null) ...[
+                          const SizedBox(width: 8),
+                          _buildLabeledBadge(
+                            label: 'Program',
+                            value: _getTrainingProgramName(_trainingSplit!)!,
+                            color: accentColor,
+                            backgroundColor: accentColor.withOpacity(0.15),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -620,23 +1256,6 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                   durationMinutes: workout.durationMinutes,
                 ),
               ),
-
-              // Workout Summary Section (AI-generated)
-              if (_workoutSummary != null || _isLoadingSummary)
-                SliverToBoxAdapter(
-                  child: _buildWorkoutSummarySection(),
-                ),
-
-              // Targeted Muscles Section
-              SliverToBoxAdapter(
-                child: _buildTargetedMusclesSection(workout.primaryMuscles),
-              ),
-
-              // AI Reasoning Section (expandable)
-              if (_generationParams != null || _isLoadingParams)
-                SliverToBoxAdapter(
-                  child: _buildAIReasoningSection(),
-                ),
 
               // Stats Row
           SliverToBoxAdapter(
@@ -672,64 +1291,101 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
               .slideY(begin: 0.05, end: 0, duration: AppAnimations.quick, curve: AppAnimations.decelerate),
           ),
 
-          // Equipment Section
+          // ─────────────────────────────────────────────────────────────────
+          // EQUIPMENT SECTION (Collapsible)
+          // ─────────────────────────────────────────────────────────────────
           if (workout.equipmentNeeded.isNotEmpty) ...[
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'EQUIPMENT NEEDED',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: textMuted,
-                        letterSpacing: 1.5,
+                padding: const EdgeInsets.only(top: 8),
+                child: _buildCollapsibleSectionHeader(
+                  title: 'EQUIPMENT',
+                  icon: Icons.fitness_center,
+                  color: Colors.blueGrey,
+                  isExpanded: _isEquipmentExpanded,
+                  onTap: () => setState(() => _isEquipmentExpanded = !_isEquipmentExpanded),
+                  itemCount: workout.equipmentNeeded.length,
+                  subtitle: workout.equipmentNeeded.take(3).join(', ') + (workout.equipmentNeeded.length > 3 ? '...' : ''),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Revert button (only shown when modifications exist)
+                      if (_hasEquipmentModifications)
+                        GestureDetector(
+                          onTap: _revertToOriginalExercises,
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 12),
+                            child: Text(
+                              'Revert',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.orange,
+                              ),
+                            ),
+                          ),
+                        ),
+                      // Edit button
+                      GestureDetector(
+                        onTap: () => _showEditEquipmentSheet(workout),
+                        child: Text(
+                          'Edit',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: accentColor,
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: workout.equipmentNeeded.map((equipment) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: elevatedColor,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.check_circle,
-                                size: 14,
-                                color: AppColors.success,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                equipment,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ).animate()
-              .fadeIn(duration: AppAnimations.fast, curve: AppAnimations.fastOut)
-              .slideY(begin: 0.05, end: 0, duration: AppAnimations.quick, curve: AppAnimations.decelerate),
+              ),
             ),
+
+            // Equipment items (shown when expanded)
+            if (_isEquipmentExpanded)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: workout.equipmentNeeded.map((equipment) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: elevatedColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.check_circle,
+                              size: 14,
+                              color: AppColors.success,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              equipment,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ).animate()
+                .fadeIn(duration: AppAnimations.fast, curve: AppAnimations.fastOut)
+                .slideY(begin: 0.05, end: 0, duration: AppAnimations.quick, curve: AppAnimations.decelerate),
+              ),
           ],
 
           // ─────────────────────────────────────────────────────────────────
@@ -908,8 +1564,20 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
               if (index >= displayItems.length) return const SizedBox.shrink();
               final item = displayItems[index];
 
-              // ─── SUPERSET GROUPED CARD ───
+              // ─── SUPERSET GROUPED CARD (supports 2+ exercises) ───
               if (item.isSuperset) {
+                // Build list of exercise widgets for the superset
+                // Pass onSupersetDrop AND reorderIndex to enable DragTarget for adding more exercises
+                final supersetExercises = item.supersetIndices!
+                    .map((idx) => _buildExerciseCard(
+                          exercises[idx],
+                          idx,
+                          accentColor,
+                          reorderIndex: idx,  // Required for DragTarget to be created
+                          onSupersetDrop: (draggedIndex) => _createSuperset(draggedIndex, idx),
+                        ))
+                    .toList();
+
                 return AnimationConfiguration.staggeredList(
                   key: ValueKey('superset-${item.groupNumber}'),
                   position: index,
@@ -923,18 +1591,14 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                         groupNumber: item.groupNumber!,
                         isActive: false,
                         reorderIndex: index,
-                        firstExercise: _buildExerciseCard(
-                          exercises[item.firstIndex!],
-                          item.firstIndex!,
-                          accentColor,
-                        ),
-                        secondExercise: _buildExerciseCard(
-                          exercises[item.secondIndex!],
-                          item.secondIndex!,
-                          accentColor,
-                        ),
+                        exercises: supersetExercises,
                         onBreakSuperset: () => _breakSuperset(item.groupNumber!),
-                        onSwapOrder: () => _swapSupersetOrder(item.groupNumber!),
+                        onSwapOrder: item.exerciseCount == 2
+                            ? () => _swapSupersetOrder(item.groupNumber!)
+                            : null,
+                        onReorderExercises: item.exerciseCount >= 3
+                            ? () => _showReorderSheet(item.groupNumber!, item.supersetIndices!)
+                            : null,
                       ),
                     ),
                   ),
@@ -977,7 +1641,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
           ),
 
           // ─────────────────────────────────────────────────────────────────
-          // CHALLENGE SECTION (Collapsible) - Only for beginners
+          // CHALLENGE SECTION (Collapsible) - For beginners and intermediate
           // ─────────────────────────────────────────────────────────────────
           if (workout.hasChallenge)
             SliverToBoxAdapter(
@@ -1036,6 +1700,44 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
               ),
             ),
 
+          // ─────────────────────────────────────────────────────────────────
+          // MORE INFO SECTION (Collapsible) - AI Insights moved here
+          // ─────────────────────────────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: _buildCollapsibleSectionHeader(
+                title: 'MORE INFO',
+                icon: Icons.lightbulb_outline,
+                color: accentColor,
+                isExpanded: _isMoreInfoExpanded,
+                onTap: () => setState(() => _isMoreInfoExpanded = !_isMoreInfoExpanded),
+                itemCount: 3,  // Summary, Muscles, AI Reasoning
+                subtitle: 'AI insights & exercise details',
+              ),
+            ),
+          ),
+
+          // More Info content (shown when expanded)
+          if (_isMoreInfoExpanded) ...[
+            // Workout Summary Section (AI-generated)
+            if (_workoutSummary != null || _isLoadingSummary)
+              SliverToBoxAdapter(
+                child: _buildWorkoutSummarySection(),
+              ),
+
+            // Targeted Muscles Section
+            SliverToBoxAdapter(
+              child: _buildTargetedMusclesSection(workout.primaryMuscles),
+            ),
+
+            // AI Reasoning Section (expandable)
+            if (_generationParams != null || _isLoadingParams)
+              SliverToBoxAdapter(
+                child: _buildAIReasoningSection(),
+              ),
+          ],
+
           // Bottom padding for FAB and floating nav bar
           const SliverToBoxAdapter(
             child: SizedBox(height: 140),
@@ -1093,15 +1795,33 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                   ],
                 ),
                 child: Center(
-                  child: Text(
-                    workout.name ?? 'Workout',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : AppColorsLight.textPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          workout.name ?? 'Workout',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (_isSaving) ...[
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: isDark ? Colors.white54 : AppColorsLight.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),
@@ -2312,6 +3032,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     String? subtitle,
     bool? toggleValue,
     ValueChanged<bool>? onToggleChanged,
+    Widget? trailing,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -2346,13 +3067,16 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: textMuted,
-                          letterSpacing: 1.5,
+                      Flexible(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: textMuted,
+                            letterSpacing: 1.5,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -2400,6 +3124,14 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 ),
               ),
               const SizedBox(width: 4),
+            ],
+            // Custom trailing widget (if provided)
+            if (trailing != null) ...[
+              GestureDetector(
+                onTap: () {}, // Absorb tap to prevent collapse/expand
+                child: trailing,
+              ),
+              const SizedBox(width: 8),
             ],
             Icon(
               isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
@@ -3028,62 +3760,159 @@ class _AnimatedHellBadgeState extends State<AnimatedHellBadge>
   }
 }
 
-/// Display item for exercise list - either a single exercise or a superset pair
+/// Display item for exercise list - either a single exercise or a superset group (2+ exercises)
 class _ExerciseDisplayItem {
   final bool isSuperset;
   final int? singleIndex;
-  final int? firstIndex;
-  final int? secondIndex;
+  final List<int>? supersetIndices;  // All exercise indices in the superset, sorted by order
   final int? groupNumber;
 
   _ExerciseDisplayItem.single({required int index})
       : isSuperset = false,
         singleIndex = index,
-        firstIndex = null,
-        secondIndex = null,
+        supersetIndices = null,
         groupNumber = null;
 
   _ExerciseDisplayItem.superset({
-    required int first,
-    required int second,
+    required List<int> indices,
     required int group,
   })  : isSuperset = true,
-        firstIndex = first,
-        secondIndex = second,
+        supersetIndices = indices,
         groupNumber = group,
         singleIndex = null;
+
+  /// For backward compatibility - first exercise index
+  int? get firstIndex => supersetIndices?.isNotEmpty == true ? supersetIndices!.first : null;
+
+  /// For backward compatibility - second exercise index
+  int? get secondIndex => supersetIndices != null && supersetIndices!.length > 1 ? supersetIndices![1] : null;
+
+  /// Number of exercises in this superset
+  int get exerciseCount => supersetIndices?.length ?? 0;
 }
 
-/// Groups exercises for display, pairing supersets together
+/// Groups exercises for display, grouping all superset exercises together (supports 2+ exercises)
 List<_ExerciseDisplayItem> _groupExercisesForDisplay(List<WorkoutExercise> exercises) {
   final items = <_ExerciseDisplayItem>[];
   final processed = <int>{};
+
+  // First, group all exercises by their supersetGroup
+  final supersetGroups = <int, List<int>>{};
+  for (int i = 0; i < exercises.length; i++) {
+    final ex = exercises[i];
+    if (ex.isInSuperset) {
+      supersetGroups.putIfAbsent(ex.supersetGroup!, () => []).add(i);
+    }
+  }
+
+  // Sort each group by supersetOrder
+  for (final group in supersetGroups.values) {
+    group.sort((a, b) =>
+        (exercises[a].supersetOrder ?? 0).compareTo(exercises[b].supersetOrder ?? 0));
+  }
 
   for (int i = 0; i < exercises.length; i++) {
     if (processed.contains(i)) continue;
     final ex = exercises[i];
 
-    // Check if this is the first exercise in a superset pair
-    if (ex.isSupersetFirst) {
-      final partnerIdx = exercises.indexWhere(
-        (e) => e.supersetGroup == ex.supersetGroup && e.isSupersetSecond,
-      );
-      if (partnerIdx != -1) {
+    // Check if this exercise is part of a superset
+    if (ex.isInSuperset && supersetGroups.containsKey(ex.supersetGroup)) {
+      final groupIndices = supersetGroups[ex.supersetGroup]!;
+      // Only add the superset item once (when we encounter any exercise in it)
+      if (groupIndices.isNotEmpty) {
         items.add(_ExerciseDisplayItem.superset(
-          first: i,
-          second: partnerIdx,
+          indices: List.from(groupIndices),
           group: ex.supersetGroup!,
         ));
-        processed.addAll([i, partnerIdx]);
+        processed.addAll(groupIndices);
         continue;
       }
     }
 
-    // Single exercise (not a superset second that's already processed)
-    if (!ex.isSupersetSecond) {
+    // Single exercise (not in a superset)
+    if (!ex.isInSuperset) {
       items.add(_ExerciseDisplayItem.single(index: i));
       processed.add(i);
     }
   }
   return items;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// EQUIPMENT CHANGE ANALYSIS HELPERS
+// ─────────────────────────────────────────────────────────────────
+
+/// Analysis result for equipment changes
+class _EquipmentChangeAnalysis {
+  final List<_ExerciseWeightAdjustment> weightAdjustments;
+  final List<WorkoutExercise> exercisesToReplace;
+
+  _EquipmentChangeAnalysis({
+    required this.weightAdjustments,
+    required this.exercisesToReplace,
+  });
+}
+
+/// Weight adjustment for a single exercise
+class _ExerciseWeightAdjustment {
+  final WorkoutExercise exercise;
+  final double oldWeight;
+  final double newWeight;
+
+  _ExerciseWeightAdjustment({
+    required this.exercise,
+    required this.oldWeight,
+    required this.newWeight,
+  });
+}
+
+/// Progress dialog for quick exercise replacement
+class _QuickReplaceProgressDialog extends StatelessWidget {
+  final int total;
+
+  const _QuickReplaceProgressDialog({required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Dialog(
+      backgroundColor: surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 40,
+              height: 40,
+              child: CircularProgressIndicator(strokeWidth: 3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Updating Exercises',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Replacing $total exercise${total > 1 ? 's' : ''} for available equipment...',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: textMuted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

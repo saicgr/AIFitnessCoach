@@ -33,12 +33,12 @@ class SelectionChip extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.accent.withOpacity(0.15)
+              ? const Color(0xFFF97316).withOpacity(0.15)
               : AppColors.glassSurface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? AppColors.accent
+                ? const Color(0xFFF97316)
                 : AppColors.cardBorder,
             width: isSelected ? 2 : 1,
           ),
@@ -59,7 +59,7 @@ class SelectionChip extends StatelessWidget {
           Icon(
             icon,
             size: 18,
-            color: isSelected ? AppColors.accent : AppColors.textSecondary,
+            color: isSelected ? const Color(0xFFF97316) : AppColors.textSecondary,
           ),
           const SizedBox(width: 8),
         ],
@@ -68,7 +68,7 @@ class SelectionChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected ? AppColors.accent : AppColors.textPrimary,
+            color: isSelected ? const Color(0xFFF97316) : AppColors.textPrimary,
           ),
         ),
       ],
@@ -84,14 +84,14 @@ class SelectionChip extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.accent.withOpacity(0.2)
+                  ? const Color(0xFFF97316).withOpacity(0.2)
                   : AppColors.elevated,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               icon,
               size: 20,
-              color: isSelected ? AppColors.accent : AppColors.textSecondary,
+              color: isSelected ? const Color(0xFFF97316) : AppColors.textSecondary,
             ),
           ),
           const SizedBox(width: 12),
@@ -105,7 +105,7 @@ class SelectionChip extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: isSelected ? AppColors.accent : AppColors.textPrimary,
+                  color: isSelected ? const Color(0xFFF97316) : AppColors.textPrimary,
                 ),
               ),
               if (description != null) ...[
@@ -126,9 +126,9 @@ class SelectionChip extends StatelessWidget {
           height: 24,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isSelected ? AppColors.accent : Colors.transparent,
+            color: isSelected ? const Color(0xFFF97316) : Colors.transparent,
             border: Border.all(
-              color: isSelected ? AppColors.accent : AppColors.textMuted,
+              color: isSelected ? const Color(0xFFF97316) : AppColors.textMuted,
               width: 2,
             ),
           ),
@@ -313,12 +313,12 @@ class DaySelector extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.accent
+                  ? const Color(0xFFF97316)
                   : AppColors.glassSurface,
               shape: BoxShape.circle,
               border: Border.all(
                 color: isSelected
-                    ? AppColors.accent
+                    ? const Color(0xFFF97316)
                     : AppColors.cardBorder,
                 width: isSelected ? 2 : 1,
               ),

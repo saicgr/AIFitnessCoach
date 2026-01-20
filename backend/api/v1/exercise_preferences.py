@@ -1512,3 +1512,88 @@ async def is_muscle_avoided(user_id: str, muscle_group: str) -> tuple[bool, str]
         if item["muscle_group"].lower() == muscle_group.lower():
             return (True, item["severity"])
     return (False, "")
+
+
+# =============================================================================
+# Recent Swaps Endpoint
+# =============================================================================
+
+class RecentSwapResponse(BaseModel):
+    """Response for a recent exercise swap."""
+    name: str
+    target_muscle: Optional[str] = None
+    equipment: Optional[str] = None
+    body_part: Optional[str] = None
+    last_used: Optional[datetime] = None
+    swap_count: int = 1
+
+
+@router.get("/recent-swaps", response_model=List[RecentSwapResponse])
+async def get_recent_swaps(
+    user_id: str = Query(..., description="User ID"),
+    limit: int = Query(default=10, le=50, description="Max number of swaps to return"),
+):
+    """
+    Get user's recent exercise swaps for quick re-selection.
+
+    Returns exercises the user has recently swapped TO, deduplicated
+    and sorted by most recent first. Useful for showing a "Recent" tab
+    in the exercise swap sheet.
+    """
+    logger.info(f"Getting recent swaps for user {user_id}, limit {limit}")
+
+    try:
+        db = get_supabase_db()
+
+        # Get distinct recent exercises the user has swapped TO
+        result = db.client.table("exercise_swaps").select(
+            "new_exercise, swapped_at"
+        ).eq("user_id", user_id).order(
+            "swapped_at", desc=True
+        ).limit(limit * 3).execute()  # Get extra to account for deduplication
+
+        # Deduplicate and count occurrences
+        seen = {}
+        for row in result.data or []:
+            name = row["new_exercise"]
+            name_lower = name.lower()
+            if name_lower not in seen:
+                seen[name_lower] = {
+                    "name": name,
+                    "last_used": row["swapped_at"],
+                    "count": 1
+                }
+            else:
+                seen[name_lower]["count"] += 1
+
+        # Get exercise details from library for each unique exercise
+        recent_exercises = []
+        for name_lower, data in list(seen.items())[:limit]:
+            exercise_info = db.client.table("exercise_library_cleaned").select(
+                "name, target_muscle, equipment, body_part"
+            ).ilike("name", data["name"]).limit(1).execute()
+
+            if exercise_info.data:
+                ex = exercise_info.data[0]
+                recent_exercises.append(RecentSwapResponse(
+                    name=ex.get("name") or data["name"],
+                    target_muscle=ex.get("target_muscle"),
+                    equipment=ex.get("equipment"),
+                    body_part=ex.get("body_part"),
+                    last_used=data["last_used"],
+                    swap_count=data["count"],
+                ))
+            else:
+                # Exercise not in library, still include it
+                recent_exercises.append(RecentSwapResponse(
+                    name=data["name"],
+                    last_used=data["last_used"],
+                    swap_count=data["count"],
+                ))
+
+        logger.info(f"Found {len(recent_exercises)} recent swaps for user {user_id}")
+        return recent_exercises
+
+    except Exception as e:
+        logger.error(f"Error getting recent swaps: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

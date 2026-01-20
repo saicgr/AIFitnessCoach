@@ -254,7 +254,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
 
   Widget _buildStatsRow() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
@@ -262,35 +262,30 @@ class PhotoOverlayTemplate extends StatelessWidget {
           color: Colors.white.withValues(alpha: 0.15),
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildStatItem(
-            icon: Icons.timer_outlined,
-            value: _formattedDuration,
-            label: 'Time',
-          ),
-          _buildDivider(),
-          _buildStatItem(
-            icon: Icons.fitness_center,
-            value: '$exercisesCount',
-            label: 'Exercises',
-          ),
-          _buildDivider(),
-          _buildStatItem(
-            icon: Icons.scale_outlined,
-            value: _formattedVolume,
-            label: 'Volume',
-          ),
-          if (calories != null) ...[
-            _buildDivider(),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             _buildStatItem(
-              icon: Icons.local_fire_department_outlined,
-              value: '$calories',
-              label: 'Cal',
+              icon: Icons.timer_outlined,
+              value: _formattedDuration,
+              label: 'Time',
+            ),
+            const SizedBox(width: 16),
+            _buildStatItem(
+              icon: Icons.fitness_center,
+              value: '$exercisesCount',
+              label: 'Exercises',
+            ),
+            const SizedBox(width: 16),
+            _buildStatItem(
+              icon: Icons.scale_outlined,
+              value: _formattedVolume,
+              label: 'Volume',
             ),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -325,14 +320,6 @@ class PhotoOverlayTemplate extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildDivider() {
-    return Container(
-      height: 40,
-      width: 1,
-      color: Colors.white.withValues(alpha: 0.2),
     );
   }
 

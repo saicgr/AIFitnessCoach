@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/providers/social_provider.dart';
 import '../widgets/empty_state.dart';
@@ -214,15 +215,15 @@ class _ConversationCard extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: AppColors.cyan,
+                                color: context.colors.accent,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text(
                                 unreadCount > 99 ? '99+' : '$unreadCount',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: context.colors.accentContrast,
                                 ),
                               ),
                             ),

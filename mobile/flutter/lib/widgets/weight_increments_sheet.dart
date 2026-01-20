@@ -12,13 +12,24 @@ Future<void> showWeightIncrementsSheet(BuildContext context) async {
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (context) => const WeightIncrementsSheet(),
+    enableDrag: true,
+    builder: (context) => DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.4,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollController) => WeightIncrementsSheet(
+        scrollController: scrollController,
+      ),
+    ),
   );
 }
 
 /// Bottom sheet for customizing equipment-specific weight increments.
 class WeightIncrementsSheet extends ConsumerWidget {
-  const WeightIncrementsSheet({super.key});
+  final ScrollController? scrollController;
+
+  const WeightIncrementsSheet({super.key, this.scrollController});
 
   /// Increment options for kg.
   static const incrementOptionsKg = [0.5, 1.0, 1.25, 2.0, 2.5, 4.0, 5.0, 10.0];
@@ -64,6 +75,7 @@ class WeightIncrementsSheet extends ConsumerWidget {
           ),
           child: SafeArea(
         child: SingleChildScrollView(
+          controller: scrollController,
           padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,

@@ -5,14 +5,18 @@
 /// Opens when user taps the Instructions button in the workout bottom bar.
 library;
 
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/exercise_image.dart';
 
 /// Show the exercise instructions as a full screen page
 Future<void> showExerciseInfoSheet({
@@ -158,13 +162,16 @@ class _ExerciseInstructionsScreenState
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
+    // Get dynamic accent color
+    final accentColor = ref.watch(accentColorProvider).getColor(isDark);
+
     return Scaffold(
-      backgroundColor: isDark ? AppColors.pureBlack : Colors.black,
+      backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
       body: Stack(
         children: [
-          // Full screen video
+          // Full screen video/image area
           Positioned.fill(
-            child: _buildFullScreenVideo(isDark, textMuted),
+            child: _buildFullScreenVideo(isDark, textMuted, accentColor),
           ),
 
           // Top bar with back button and exercise name
@@ -172,7 +179,7 @@ class _ExerciseInstructionsScreenState
             top: 0,
             left: 0,
             right: 0,
-            child: _buildTopBar(isDark, textPrimary, textMuted),
+            child: _buildTopBar(isDark, textPrimary, textMuted, accentColor),
           ),
 
           // Bottom section with tabs
@@ -180,30 +187,23 @@ class _ExerciseInstructionsScreenState
             bottom: 0,
             left: 0,
             right: 0,
-            child: _buildBottomSection(isDark, textPrimary, textMuted),
+            child: _buildBottomSection(isDark, textPrimary, textMuted, accentColor),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTopBar(bool isDark, Color textPrimary, Color textMuted) {
+  Widget _buildTopBar(bool isDark, Color textPrimary, Color textMuted, Color accentColor) {
     return Container(
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 8,
         left: 8,
         right: 8,
-        bottom: 8,
+        bottom: 16,
       ),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.black.withOpacity(0.7),
-            Colors.transparent,
-          ],
-        ),
+        color: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
       ),
       child: Row(
         children: [
@@ -213,9 +213,9 @@ class _ExerciseInstructionsScreenState
               HapticFeedback.selectionClick();
               Navigator.pop(context);
             },
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_ios_new_rounded,
-              color: Colors.white,
+              color: textPrimary,
               size: 20,
             ),
           ),
@@ -225,10 +225,10 @@ class _ExerciseInstructionsScreenState
               children: [
                 Text(
                   widget.exercise.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -239,7 +239,7 @@ class _ExerciseInstructionsScreenState
                   _getTargetMuscles(),
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.white.withOpacity(0.7),
+                    color: textMuted,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -253,22 +253,22 @@ class _ExerciseInstructionsScreenState
     );
   }
 
-  Widget _buildFullScreenVideo(bool isDark, Color textMuted) {
+  Widget _buildFullScreenVideo(bool isDark, Color textMuted, Color accentColor) {
     if (_isLoadingVideo) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircularProgressIndicator(
-              color: AppColors.electricBlue,
+              color: accentColor,
               strokeWidth: 2,
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Loading video...',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.white70,
+                color: textMuted,
               ),
             ),
           ],
@@ -304,7 +304,7 @@ class _ExerciseInstructionsScreenState
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
+                  color: Colors.black.withValues(alpha: 0.5),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -318,149 +318,45 @@ class _ExerciseInstructionsScreenState
       );
     }
 
-    // Placeholder when no video
+    // Placeholder when no video - show the exercise image
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: AppColors.electricBlue.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              _videoError
-                  ? Icons.videocam_off_rounded
-                  : Icons.fitness_center_rounded,
-              size: 50,
-              color: AppColors.electricBlue,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _videoError ? 'Video unavailable' : 'Form Demo',
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.white70,
-            ),
-          ),
-        ],
+      child: ExerciseImage(
+        exerciseName: widget.exercise.name,
+        width: MediaQuery.of(context).size.width,
+        height: MediaQuery.of(context).size.height * 0.5,
+        borderRadius: 0,
+        fit: BoxFit.contain,
+        backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+        iconColor: textMuted,
       ),
     );
   }
 
   Widget _buildBottomSection(
-      bool isDark, Color textPrimary, Color textMuted) {
+      bool isDark, Color textPrimary, Color textMuted, Color accentColor) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
+    return Container(
+      padding: EdgeInsets.only(bottom: bottomPadding + 16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surface : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
+        color: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle bar
-          GestureDetector(
-            onTap: _toggleExpanded,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withOpacity(0.3)
-                        : Colors.black.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // Tab buttons
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildTabButton(
-                    index: 0,
-                    icon: Icons.checklist_rounded,
-                    label: 'Setup',
-                    isDark: isDark,
-                    textPrimary: textPrimary,
-                    textMuted: textMuted,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildTabButton(
-                    index: 1,
-                    icon: Icons.lightbulb_outline_rounded,
-                    label: 'Tips',
-                    isDark: isDark,
-                    textPrimary: textPrimary,
-                    textMuted: textMuted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Expandable content
-          AnimatedCrossFade(
-            duration: const Duration(milliseconds: 300),
-            crossFadeState: _isExpanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            firstChild: SizedBox(height: bottomPadding + 16),
-            secondChild: Container(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.4,
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: _selectedTab == 0
-                        ? _buildSetupContent(isDark, textPrimary, textMuted)
-                        : _buildTipsContent(isDark, textPrimary, textMuted),
-                  ),
-                  SizedBox(height: bottomPadding + 8),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+      child: const SizedBox.shrink(),
     );
   }
 
-  Widget _buildTabButton({
+  // Removed tab button - Setup/Tips moved to Info sheet
+  Widget _buildTabButtonLegacy({
     required int index,
     required IconData icon,
     required String label,
     required bool isDark,
     required Color textPrimary,
     required Color textMuted,
+    required Color accentColor,
   }) {
     final isSelected = _selectedTab == index;
-    final color = isSelected ? AppColors.electricBlue : textMuted;
+    final color = isSelected ? accentColor : textMuted;
 
     return GestureDetector(
       onTap: () => _selectTab(index),
@@ -469,14 +365,14 @@ class _ExerciseInstructionsScreenState
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.electricBlue.withOpacity(0.12)
+              ? accentColor.withValues(alpha: 0.12)
               : (isDark
-                  ? Colors.white.withOpacity(0.05)
-                  : Colors.black.withOpacity(0.03)),
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.black.withValues(alpha: 0.03)),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected
-                ? AppColors.electricBlue.withOpacity(0.3)
+                ? accentColor.withValues(alpha: 0.3)
                 : Colors.transparent,
           ),
         ),
@@ -507,7 +403,7 @@ class _ExerciseInstructionsScreenState
     );
   }
 
-  Widget _buildSetupContent(bool isDark, Color textPrimary, Color textMuted) {
+  Widget _buildSetupContent(bool isDark, Color textPrimary, Color textMuted, Color accentColor) {
     final instructions = _getSetupInstructions();
 
     return ListView.builder(
@@ -523,7 +419,7 @@ class _ExerciseInstructionsScreenState
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withOpacity(0.15),
+                  color: accentColor.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -532,7 +428,7 @@ class _ExerciseInstructionsScreenState
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.cyan,
+                      color: accentColor,
                     ),
                   ),
                 ),
@@ -558,7 +454,7 @@ class _ExerciseInstructionsScreenState
     );
   }
 
-  Widget _buildTipsContent(bool isDark, Color textPrimary, Color textMuted) {
+  Widget _buildTipsContent(bool isDark, Color textPrimary, Color textMuted, Color accentColor) {
     final tips = _getFormTips();
 
     return ListView.builder(
@@ -574,13 +470,13 @@ class _ExerciseInstructionsScreenState
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.15),
+                  color: accentColor.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.check_rounded,
                   size: 16,
-                  color: AppColors.success,
+                  color: accentColor,
                 ),
               ),
               const SizedBox(width: 12),

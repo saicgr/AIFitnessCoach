@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/language_provider.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/providers/guest_mode_provider.dart';
 
@@ -222,6 +223,8 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Use ref.colors(context) to get dynamic accent color from provider
+    final colors = ref.colors(context);
 
     return Scaffold(
       body: Container(
@@ -259,12 +262,12 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                           const SizedBox(height: 12),
 
                           // Progress dots (individual fillable)
-                          _buildProgressDots(isDark),
+                          _buildProgressDots(isDark, colors),
 
                           const SizedBox(height: 12),
 
                           // App branding (smaller)
-                          _buildBranding(isDark),
+                          _buildBranding(isDark, colors),
 
                           const SizedBox(height: 12),
 
@@ -272,7 +275,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                           Expanded(
                             child: Column(
                               children: [
-                                Expanded(child: _buildStatsCarousel(isDark)),
+                                Expanded(child: _buildStatsCarousel(isDark, colors)),
                                 const SizedBox(height: 8),
                                 // Long description below carousel
                                 _buildStatDescription(isDark),
@@ -284,13 +287,13 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
 
                           // Pricing transparency section - shows before signup
                           if (!_showSignInButtons)
-                            _buildPricingTransparencySection(isDark),
+                            _buildPricingTransparencySection(isDark, colors),
 
                           if (!_showSignInButtons)
                             const SizedBox(height: 8),
 
                           // Bottom section: Language + buttons (fixed at bottom)
-                          _buildBottomSection(isDark),
+                          _buildBottomSection(isDark, colors),
 
                           const SizedBox(height: 8),
                         ],
@@ -306,8 +309,8 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
     );
   }
 
-  Widget _buildProgressDots(bool isDark) {
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+  Widget _buildProgressDots(bool isDark, ThemeColors colors) {
+    final accentColor = colors.accent;
     return AnimatedBuilder(
       animation: _progressController,
       builder: (context, child) {
@@ -349,9 +352,9 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
     ).animate().fadeIn(duration: 400.ms);
   }
 
-  Widget _buildBranding(bool isDark) {
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
-    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+  Widget _buildBranding(bool isDark, ThemeColors colors) {
+    final accentColor = colors.accent;
+    final accentContrast = colors.accentContrast;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -398,9 +401,9 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
     );
   }
 
-  Widget _buildStatsCarousel(bool isDark) {
+  Widget _buildStatsCarousel(bool isDark, ThemeColors colors) {
     final cardColor = isDark ? AppColors.elevated : Colors.white;
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentColor = colors.accent;
     final borderColor = isDark
         ? AppColors.cardBorder.withOpacity(0.3)
         : accentColor.withOpacity(0.2);
@@ -533,10 +536,10 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
   }
 
   /// Build a compact pricing transparency section showing all 4 tiers before signup
-  Widget _buildPricingTransparencySection(bool isDark) {
+  Widget _buildPricingTransparencySection(bool isDark, ThemeColors colors) {
     final cardColor = isDark ? AppColors.elevated : Colors.white;
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
-    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+    final accentColor = colors.accent;
+    final accentContrast = colors.accentContrast;
     final borderColor = isDark
         ? AppColors.cardBorder.withOpacity(0.3)
         : accentColor.withOpacity(0.15);
@@ -1132,31 +1135,29 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
     );
   }
 
-  Widget _buildBottomSection(bool isDark) {
+  Widget _buildBottomSection(bool isDark, ThemeColors colors) {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final elevated = isDark ? AppColors.elevated : Colors.white;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final accentColor = colors.accent;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // Language selector (compact dropdown button that opens upward)
-        _buildCompactLanguageSelector(isDark, cardBorder, elevated, textSecondary),
+        _buildCompactLanguageSelector(isDark, cardBorder, elevated, textSecondary, colors),
 
         const SizedBox(height: 12),
 
         // Get Started button (goes to pre-auth quiz) - hide when sign-in buttons shown
         if (!_showSignInButtons) ...[
-          _buildGetStartedButton(isDark),
+          _buildGetStartedButton(isDark, colors),
           const SizedBox(height: 8),
         ],
 
         // Secondary CTAs in a horizontal row
         if (!_showSignInButtons)
-          Builder(
-            builder: (context) {
-              final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
-              return Wrap(
+          Wrap(
                 alignment: WrapAlignment.center,
                 spacing: 4,
                 runSpacing: 0,
@@ -1224,9 +1225,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                     ),
                   ),
                 ],
-              );
-            },
-          ).animate().fadeIn(delay: 600.ms),
+              ).animate().fadeIn(delay: 600.ms),
 
         // Already have account - sign in section
         if (!_showSignInButtons)
@@ -1251,14 +1250,15 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
 
         // Sign-in buttons (shown when user clicks "Sign in")
         if (_showSignInButtons) ...[
-          _buildSignInButtons(isDark, textSecondary),
+          _buildSignInButtons(isDark, textSecondary, colors),
         ],
       ],
     );
   }
 
-  Widget _buildSignInButtons(bool isDark, Color textSecondary) {
+  Widget _buildSignInButtons(bool isDark, Color textSecondary, ThemeColors colors) {
     final authState = ref.watch(authStateProvider);
+    final accentColor = colors.accent;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -1397,21 +1397,16 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
         const SizedBox(height: 8),
 
         // Email Sign In link
-        Builder(
-          builder: (context) {
-            final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
-            return TextButton(
-              onPressed: _isSigningIn ? null : () => context.push('/email-sign-in'),
-              child: Text(
-                'Sign in with Email',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: accentColor,
-                ),
-              ),
-            );
-          },
+        TextButton(
+          onPressed: _isSigningIn ? null : () => context.push('/email-sign-in'),
+          child: Text(
+            'Sign in with Email',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: accentColor,
+            ),
+          ),
         ).animate().fadeIn(delay: 150.ms),
 
         // Cancel/back to get started
@@ -1432,9 +1427,9 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
     );
   }
 
-  Widget _buildGetStartedButton(bool isDark) {
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
-    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+  Widget _buildGetStartedButton(bool isDark, ThemeColors colors) {
+    final accentColor = colors.accent;
+    final accentContrast = colors.accentContrast;
     return SizedBox(
       width: double.infinity,
       height: 48,
@@ -1479,8 +1474,9 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
     Color cardBorder,
     Color elevated,
     Color textSecondary,
+    ThemeColors colors,
   ) {
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentColor = colors.accent;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [

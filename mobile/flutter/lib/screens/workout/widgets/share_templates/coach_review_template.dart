@@ -129,60 +129,72 @@ class CoachReviewTemplate extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(24),
       ),
-      child: Stack(
-        children: [
-          // Background pattern
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _CoachPatternPainter(color: _coachColor),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            // Background pattern
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _CoachPatternPainter(color: _coachColor),
+              ),
             ),
-          ),
 
-          // Main content
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Coach header
-                _buildCoachHeader(),
+            // Main content - wrapped in FittedBox to prevent overflow
+            Positioned.fill(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.topCenter,
+                child: SizedBox(
+                  width: 320,
+                  height: 440,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Coach header
+                        _buildCoachHeader(),
 
-                const SizedBox(height: 14),
+                        const SizedBox(height: 10),
 
-                // Workout info
-                Text(
-                  workoutName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    height: 1.1,
+                        // Workout info
+                        Text(
+                          workoutName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            height: 1.1,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+
+                        const SizedBox(height: 4),
+
+                        // Quick stats
+                        _buildQuickStats(),
+
+                        const SizedBox(height: 10),
+
+                        // Coach review - no Expanded wrapper
+                        _buildReviewSection(),
+
+                        if (showWatermark) ...[
+                          const SizedBox(height: 10),
+                          const AppWatermark(),
+                        ] else
+                          const SizedBox(height: 6),
+                      ],
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-
-                const SizedBox(height: 4),
-
-                // Quick stats
-                _buildQuickStats(),
-
-                const SizedBox(height: 12),
-
-                // Coach review
-                Expanded(
-                  child: _buildReviewSection(),
-                ),
-
-                if (showWatermark) ...[
-                  const SizedBox(height: 10),
-                  const AppWatermark(),
-                ] else
-                  const SizedBox(height: 6),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -331,7 +343,7 @@ class CoachReviewTemplate extends StatelessWidget {
 
   Widget _buildReviewSection() {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(14),
@@ -340,13 +352,14 @@ class CoachReviewTemplate extends StatelessWidget {
         ),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Icon(
                 Icons.format_quote_rounded,
-                size: 18,
+                size: 16,
                 color: _coachColor.withValues(alpha: 0.7),
               ),
               const SizedBox(width: 6),
@@ -361,19 +374,17 @@ class CoachReviewTemplate extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: Text(
-              _generatedReview,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.9),
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                height: 1.4,
-              ),
-              maxLines: 5,
-              overflow: TextOverflow.ellipsis,
+          const SizedBox(height: 6),
+          Text(
+            _generatedReview,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              height: 1.3,
             ),
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

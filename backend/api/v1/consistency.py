@@ -744,11 +744,17 @@ async def get_day_detail(
             }
 
         # Get workout log for completed workout
-        log_response = db.client.table("workout_logs").select(
-            "id, completed_at, total_time_seconds, sets_json, calories_burned"
-        ).eq("workout_id", workout_id).maybe_single().execute()
+        try:
+            log_response = db.client.table("workout_logs").select(
+                "id, completed_at, total_time_seconds, sets_json, calories_burned"
+            ).eq("workout_id", workout_id).maybe_single().execute()
+            log_data = log_response.data or {}
+        except Exception as log_error:
+            # Handle case where workout_log doesn't exist for a completed workout
+            # This is a data inconsistency but shouldn't crash the API
+            logger.warning(f"No workout log found for completed workout {workout_id}: {log_error}")
+            log_data = {}
 
-        log_data = log_response.data or {}
         workout_log_id = log_data.get("id")
 
         # Get performance logs for detailed set data

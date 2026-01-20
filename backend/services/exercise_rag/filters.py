@@ -91,6 +91,63 @@ INJURY_CONTRAINDICATIONS = {
 }
 
 
+# Movement patterns for detecting similar exercises within the same movement category
+# This prevents workouts like "6 push-up variations" by grouping similar movements
+# NOTE: Order matters! More specific patterns should come first to avoid false matches.
+# Each keyword list is ordered from most specific to least specific.
+MOVEMENT_PATTERNS = {
+    # Pull vertical - check first to catch chin-ups and pulldowns before "row" pattern
+    "pull_vertical": ["pull up", "pull-up", "pullup", "chin up", "chin-up", "chinup", "pulldown", "lat pulldown"],
+    # Pull horizontal - rows
+    "pull_horizontal": ["barbell row", "dumbbell row", "cable row", "seated row", "bent over row", "t-bar row", "pendlay row"],
+    # Push horizontal
+    "push_horizontal": ["push up", "push-up", "pushup", "bench press", "chest press", "dip", "fly", "flye", "pec deck"],
+    # Push vertical
+    "push_vertical": ["overhead press", "shoulder press", "military press", "arnold press", "lateral raise", "front raise"],
+    # Squat
+    "squat": ["squat", "goblet squat", "front squat", "back squat", "hack squat", "sissy squat", "split squat"],
+    # Hinge
+    "hinge": ["deadlift", "rdl", "romanian deadlift", "hip hinge", "good morning", "stiff leg"],
+    # Lunge
+    "lunge": ["lunge", "reverse lunge", "walking lunge", "step up", "step-up", "bulgarian"],
+    # Curl - bicep isolation
+    "curl": ["bicep curl", "hammer curl", "preacher curl", "concentration curl", "ez bar curl", "incline curl"],
+    # Tricep - tricep isolation
+    "tricep": ["tricep extension", "tricep pushdown", "skull crusher", "overhead extension", "kickback", "close grip"],
+    # Core flexion
+    "core_flexion": ["crunch", "sit up", "sit-up", "situp", "leg raise", "knee raise", "v-up"],
+    # Core stability
+    "core_stability": ["plank", "dead bug", "hollow hold", "bird dog", "pallof"],
+}
+
+
+def get_movement_pattern(exercise_name: str) -> Optional[str]:
+    """
+    Extract the movement pattern category from an exercise name.
+
+    This helps detect similar exercises that belong to the same movement pattern,
+    even if their names don't directly overlap.
+
+    Examples:
+        "Push Up" -> "push_horizontal"
+        "Diamond Push-Up" -> "push_horizontal"
+        "Barbell Row" -> "pull_horizontal"
+        "Bicep Curl" -> "curl"
+
+    Args:
+        exercise_name: The exercise name
+
+    Returns:
+        The movement pattern category, or None if not recognized
+    """
+    name_lower = exercise_name.lower()
+    for pattern, keywords in MOVEMENT_PATTERNS.items():
+        for keyword in keywords:
+            if keyword in name_lower:
+                return pattern
+    return None
+
+
 def get_base_exercise_name(name: str) -> str:
     """
     Extract the normalized base exercise name for deduplication.
@@ -141,17 +198,19 @@ def get_base_exercise_name(name: str) -> str:
     return name.strip()
 
 
-def is_similar_exercise(name1: str, name2: str) -> bool:
+def is_similar_exercise(name1: str, name2: str, check_movement_pattern: bool = True) -> bool:
     """
     Check if two exercise names are similar enough to be considered duplicates.
 
-    Uses word overlap to detect similar exercises like:
-    - "Squat" and "Bodyweight Squat"
-    - "Bicep Curl" and "Dumbbell Bicep Curl"
+    Uses multiple strategies to detect similar exercises:
+    1. Exact match after normalization
+    2. Word overlap analysis
+    3. Movement pattern matching (e.g., "Push Up" and "Diamond Push-Up" are both push_horizontal)
 
     Args:
         name1: First exercise name
         name2: Second exercise name
+        check_movement_pattern: If True, also checks if exercises share the same movement pattern
 
     Returns:
         True if exercises are similar
@@ -178,7 +237,38 @@ def is_similar_exercise(name1: str, name2: str) -> bool:
     if len(smaller) > 0 and overlap / len(smaller) >= 0.8:
         return True
 
+    # Check movement pattern similarity
+    # This catches cases like "Push Up" vs "Decline Diamond Pike Push-Up"
+    # Both are in the "push_horizontal" pattern
+    if check_movement_pattern:
+        pattern1 = get_movement_pattern(name1)
+        pattern2 = get_movement_pattern(name2)
+        if pattern1 and pattern2 and pattern1 == pattern2:
+            return True
+
     return False
+
+
+def count_movement_patterns(exercises: List[Dict]) -> Dict[str, int]:
+    """
+    Count exercises per movement pattern.
+
+    This helps identify workouts with too many exercises of the same pattern
+    (e.g., 6 push-up variations).
+
+    Args:
+        exercises: List of exercise dictionaries with 'name' or 'exercise_name' key
+
+    Returns:
+        Dictionary mapping pattern names to exercise counts
+    """
+    pattern_counts = {}
+    for ex in exercises:
+        name = ex.get("name", "") or ex.get("exercise_name", "")
+        pattern = get_movement_pattern(name)
+        if pattern:
+            pattern_counts[pattern] = pattern_counts.get(pattern, 0) + 1
+    return pattern_counts
 
 
 def filter_by_equipment(

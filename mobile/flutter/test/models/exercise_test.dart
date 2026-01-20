@@ -249,7 +249,7 @@ void main() {
         expect(exercise.id, 'ex-id');
         expect(exercise.name, 'Unknown Exercise');
         expect(exercise.bodyPart, isNull);
-        expect(exercise.difficultyLevel, isNull);
+        expect(exercise.difficulty, isNull);
       });
     });
 

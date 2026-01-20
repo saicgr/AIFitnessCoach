@@ -83,6 +83,8 @@ enum TileType {
   quickLogMeasurements,
   @JsonValue('habits')
   habits,
+  @JsonValue('xpProgress')
+  xpProgress,
 }
 
 /// Extension to provide metadata for tile types
@@ -164,6 +166,8 @@ extension TileTypeExtension on TileType {
         return 'Quick Measurements';
       case TileType.habits:
         return 'Today\'s Habits';
+      case TileType.xpProgress:
+        return 'Level & XP';
     }
   }
 
@@ -244,6 +248,8 @@ extension TileTypeExtension on TileType {
         return 'Track body measurements';
       case TileType.habits:
         return 'Daily habits and goals tracker';
+      case TileType.xpProgress:
+        return 'Your level and XP progress bar';
     }
   }
 
@@ -324,6 +330,8 @@ extension TileTypeExtension on TileType {
         return 'straighten';
       case TileType.habits:
         return 'checklist';
+      case TileType.xpProgress:
+        return 'stars';
     }
   }
 
@@ -380,6 +388,8 @@ extension TileTypeExtension on TileType {
         return TileCategory.progress;
       case TileType.habits:
         return TileCategory.wellness;
+      case TileType.xpProgress:
+        return TileCategory.progress;
     }
   }
 
@@ -433,6 +443,7 @@ extension TileTypeExtension on TileType {
       case TileType.quickLogWeight:
       case TileType.quickLogMeasurements:
       case TileType.habits:
+      case TileType.xpProgress:
         return [TileSize.full, TileSize.half, TileSize.compact];
       // Hero section is full only
       case TileType.heroSection:
@@ -457,6 +468,7 @@ extension TileTypeExtension on TileType {
       case TileType.habits:
       case TileType.bodyWeight:
       case TileType.achievements:
+      case TileType.xpProgress:
         return TileSize.full;
       default:
         return TileSize.full;

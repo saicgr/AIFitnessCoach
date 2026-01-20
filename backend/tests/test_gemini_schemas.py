@@ -16,6 +16,7 @@ from models.gemini_schemas import (
     ExerciseListResponse,
     ExerciseIndicesResponse,
     # Workout generation
+    SetTargetSchema,
     WorkoutExerciseSchema,
     GeneratedWorkoutResponse,
     WorkoutNameItem,
@@ -118,6 +119,11 @@ class TestWorkoutGenerationSchemas:
 
     def test_workout_exercise_schema(self):
         """Test WorkoutExerciseSchema with valid data."""
+        set_targets = [
+            SetTargetSchema(set_number=1, target_reps=10, target_weight_kg=60.0),
+            SetTargetSchema(set_number=2, target_reps=10, target_weight_kg=60.0),
+            SetTargetSchema(set_number=3, target_reps=10, target_weight_kg=60.0),
+        ]
         exercise = WorkoutExerciseSchema(
             name="Bench Press",
             sets=3,
@@ -126,14 +132,21 @@ class TestWorkoutGenerationSchemas:
             weight_kg=60.0,
             equipment="barbell",
             muscle_group="chest",
+            set_targets=set_targets,
         )
         assert exercise.name == "Bench Press"
         assert exercise.sets == 3
         assert exercise.weight_kg == 60.0
+        assert len(exercise.set_targets) == 3
 
     def test_workout_exercise_schema_defaults(self):
         """Test WorkoutExerciseSchema with defaults."""
-        exercise = WorkoutExerciseSchema(name="Push-ups")
+        set_targets = [
+            SetTargetSchema(set_number=1, target_reps=12),
+            SetTargetSchema(set_number=2, target_reps=12),
+            SetTargetSchema(set_number=3, target_reps=12),
+        ]
+        exercise = WorkoutExerciseSchema(name="Push-ups", set_targets=set_targets)
         assert exercise.sets == 3
         assert exercise.reps == 12
         assert exercise.rest_seconds == 60
@@ -141,6 +154,16 @@ class TestWorkoutGenerationSchemas:
 
     def test_generated_workout_response(self):
         """Test GeneratedWorkoutResponse with valid data."""
+        bench_targets = [
+            SetTargetSchema(set_number=1, target_reps=10),
+            SetTargetSchema(set_number=2, target_reps=10),
+            SetTargetSchema(set_number=3, target_reps=10),
+        ]
+        incline_targets = [
+            SetTargetSchema(set_number=1, target_reps=10),
+            SetTargetSchema(set_number=2, target_reps=10),
+            SetTargetSchema(set_number=3, target_reps=10),
+        ]
         workout = GeneratedWorkoutResponse(
             name="Power Chest Day",
             type="strength",
@@ -148,8 +171,8 @@ class TestWorkoutGenerationSchemas:
             duration_minutes=45,
             target_muscles=["chest", "triceps"],
             exercises=[
-                WorkoutExerciseSchema(name="Bench Press"),
-                WorkoutExerciseSchema(name="Incline Press"),
+                WorkoutExerciseSchema(name="Bench Press", set_targets=bench_targets),
+                WorkoutExerciseSchema(name="Incline Press", set_targets=incline_targets),
             ],
         )
         assert workout.name == "Power Chest Day"
@@ -445,11 +468,16 @@ class TestSchemaValidation:
     def test_generated_workout_requires_exercises(self):
         """Test that GeneratedWorkoutResponse requires exercises."""
         # This should work - exercises is required
+        test_targets = [
+            SetTargetSchema(set_number=1, target_reps=12),
+            SetTargetSchema(set_number=2, target_reps=12),
+            SetTargetSchema(set_number=3, target_reps=12),
+        ]
         workout = GeneratedWorkoutResponse(
             name="Test",
             type="strength",
             difficulty="easy",
             duration_minutes=30,
-            exercises=[WorkoutExerciseSchema(name="Test Exercise")],
+            exercises=[WorkoutExerciseSchema(name="Test Exercise", set_targets=test_targets)],
         )
         assert len(workout.exercises) == 1

@@ -3570,7 +3570,7 @@ Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10
 - `conversation_participants` - Links users to conversations
 - `direct_messages` - Stores individual messages
 
-### 13. Achievements & Gamification (12 Features)
+### 13. Achievements & Gamification (32 Features)
 
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus | Navigation |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|-------|
@@ -3586,6 +3586,79 @@ Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10
 | 10 | PRs Tab | View all personal records | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
 | 11 | Summary Tab | Overview with totals | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | Not Implemented | User | — |
 | 12 | Rarity Indicators | How rare each badge is | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | Not Implemented | User | — |
+| 13 | **XP Level System** | Earn XP from workouts, achievements, streaks | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Home → XP Progress |
+| 14 | **Trophy Room** | View all trophies with progress | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Profile → Trophy Room |
+| 15 | **Trophy Tiers** | Bronze → Silver → Gold → Platinum progression | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
+| 16 | **World Records** | Competitive moveable trophies | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Trophy Room → World Records |
+| 17 | **Daily Login XP** | 25 × streak day (max 175 XP/day) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Home (auto) |
+| 18 | **First Login Bonus** | 500 XP for first-time users | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
+| 19 | **Login Streak Tracking** | Track consecutive daily logins | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Home |
+| 20 | **Streak Milestones** | Bonus XP at 7, 30, 100, 365 days | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
+| 21 | **Double XP Events** | Admin-enabled 2x XP multiplier | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Admin | Home → Double XP Banner |
+| 22 | **Double XP Banner** | Shows active Double XP with countdown | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Home |
+| 23 | **Weekly Checkpoints** | 8 weekly goals for XP (up to 1,375 XP/week) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Rewards |
+| 24 | **Monthly Checkpoints** | 8 monthly goals for XP (up to 4,350 XP/month) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Rewards |
+| 25 | **XP Transactions** | History of all XP earned | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Trophy Room |
+| 26 | **XP Leaderboard** | Compare XP with other users | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Trophy Room |
+| 27 | **Former Champion Badges** | Badge for users who held world records | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Profile |
+| 28 | **Rewards System** | Claim rewards at milestones | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Rewards |
+| 29 | **XP Progress Card** | Home tile showing XP progress | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Home |
+| 30 | **Level Titles** | Novice → Master progression | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
+| 31 | **Prestige Levels** | Post-100 prestige system | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
+| 32 | **XP Event Notifications** | Celebrate daily login rewards | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Home |
+
+#### XP Events System Details
+
+**Daily Login System (Battlefield-Inspired):**
+- First-time login: +500 XP welcome bonus
+- Daily check-in: 25 × current streak day (capped at 175 XP/day with 7-day streak)
+- Streak milestones: +100 XP at 7 days, +500 XP at 30 days, +2,000 XP at 100 days, +10,000 XP at 365 days
+
+**Weekly Checkpoints (up to 1,375 XP/week):**
+| Checkpoint | Requirement | XP |
+|------------|-------------|-----|
+| 3 Workouts | Complete 3 workouts | 100 |
+| 5 Workouts | Complete 5 workouts | 150 |
+| Protein Goal | Hit protein 5 days | 75 |
+| Calorie Goal | Hit calories 5 days | 75 |
+| Hydration | Hit water goal 5 days | 50 |
+| Weight Log | Log weight 3+ times | 50 |
+| Habits | Complete habit 5 days | 75 |
+| Perfect Week | Complete all checkpoints | 800 |
+
+**Monthly Checkpoints (up to 4,350 XP/month):**
+| Checkpoint | Requirement | XP |
+|------------|-------------|-----|
+| Dedication | 15+ workouts | 500 |
+| Goal Met | Hit monthly goal | 750 |
+| Nutrition Streak | 20+ days tracked | 400 |
+| Consistency | No 3+ day gaps | 350 |
+| Hydration | 25+ days tracked | 200 |
+| Weight Tracking | 10+ logs | 150 |
+| Habit Master | Complete habit 25 days | 250 |
+| Monthly PRs | Set 3+ PRs | 500 |
+| Perfect Month | Complete all checkpoints | 1,250 |
+
+**Double XP Events:**
+- Admin-enabled via backend API
+- Standard 2x multiplier on all XP earned
+- Configurable duration (e.g., weekends, holidays)
+- Visual banner on home screen with countdown timer
+
+**Database Tables:**
+- `user_login_streaks` - Tracks daily login streaks per user
+- `xp_events` - Active/scheduled XP multiplier events
+- `user_event_participation` - User participation in events
+- `xp_bonus_templates` - 24 bonus type definitions
+- `user_checkpoint_progress` - Weekly/monthly checkpoint tracking
+
+**Backend API:** `/api/v1/xp/`
+- `POST /daily-login` - Process daily login, award XP
+- `GET /login-streak` - Get user's streak info
+- `GET /active-events` - Get active XP events (Double XP)
+- `POST /events/enable-double-xp` - Admin: Enable Double XP
+- `GET /bonus-templates` - Get all bonus types
+- `GET /checkpoint-progress` - Get weekly/monthly progress
 
 ### 14. Profile & Stats (15 Features)
 

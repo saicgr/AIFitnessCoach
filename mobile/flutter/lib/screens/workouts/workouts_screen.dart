@@ -12,9 +12,10 @@ import '../../widgets/main_shell.dart';
 import '../../widgets/pill_swipe_navigation.dart';
 import '../home/widgets/cards/next_workout_card.dart';
 import '../home/widgets/cards/weekly_progress_card.dart';
-import '../home/widgets/generate_upcoming_sheet.dart';
 import '../home/widgets/hero_workout_card.dart';
 import 'widgets/exercise_preferences_card.dart';
+import 'widgets/upcoming_workouts_sheet.dart';
+import 'widgets/previous_workouts_sheet.dart';
 
 /// Workouts screen - central hub for all workout-related content
 /// Accessible from the floating nav bar (replaces Profile)
@@ -237,7 +238,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         const SizedBox(height: 8),
 
         // Quick Actions Row
-        _buildQuickActions(context, isDark, textSecondary, accentColor),
+        _buildQuickActions(context, isDark, textSecondary, accentColor, workouts),
 
         const SizedBox(height: 16),
 
@@ -299,54 +300,88 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     );
   }
 
-  Widget _buildQuickActions(BuildContext context, bool isDark, Color textSecondary, Color accentColor) {
+  Widget _buildQuickActions(
+    BuildContext context,
+    bool isDark,
+    Color textSecondary,
+    Color accentColor,
+    List<Workout> workouts,
+  ) {
+    // Separate completed and upcoming workouts for the sheets
+    final completedWorkouts = workouts.where((w) => w.isCompleted == true).toList();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
+      child: Column(
         children: [
-          // Custom Workout
-          Expanded(
-            child: _buildQuickActionButton(
-              context,
-              icon: Icons.add_circle_outline,
-              label: 'Custom',
-              color: accentColor,
-              isDark: isDark,
-              onTap: () {
-                HapticService.light();
-                context.push('/workout/build');
-              },
-            ),
+          // First row: Custom and Browse
+          Row(
+            children: [
+              // Custom Workout
+              Expanded(
+                child: _buildQuickActionButton(
+                  context,
+                  icon: Icons.add_circle_outline,
+                  label: 'Custom',
+                  color: accentColor,
+                  isDark: isDark,
+                  onTap: () {
+                    HapticService.light();
+                    context.push('/workout/build');
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Browse Library
+              Expanded(
+                child: _buildQuickActionButton(
+                  context,
+                  icon: Icons.search,
+                  label: 'Browse',
+                  color: accentColor,
+                  isDark: isDark,
+                  onTap: () {
+                    HapticService.light();
+                    context.push('/library');
+                  },
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          // Browse Library
-          Expanded(
-            child: _buildQuickActionButton(
-              context,
-              icon: Icons.search,
-              label: 'Browse',
-              color: accentColor,
-              isDark: isDark,
-              onTap: () {
-                HapticService.light();
-                context.push('/library');
-              },
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Generate Upcoming Workouts
-          Expanded(
-            child: _buildQuickActionButton(
-              context,
-              icon: Icons.auto_awesome,
-              label: 'Upcoming',
-              color: accentColor,
-              isDark: isDark,
-              onTap: () {
-                HapticService.light();
-                showGenerateUpcomingSheet(context, ref);
-              },
-            ),
+          const SizedBox(height: 12),
+          // Second row: Upcoming and Previous
+          Row(
+            children: [
+              // Upcoming Workouts
+              Expanded(
+                child: _buildQuickActionButton(
+                  context,
+                  icon: Icons.calendar_month_rounded,
+                  label: 'Upcoming',
+                  color: accentColor,
+                  isDark: isDark,
+                  onTap: () {
+                    HapticService.light();
+                    showUpcomingWorkoutsSheet(context, ref, workouts);
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Previous Workouts
+              Expanded(
+                child: _buildQuickActionButton(
+                  context,
+                  icon: Icons.history_rounded,
+                  label: 'Previous',
+                  color: accentColor,
+                  isDark: isDark,
+                  onTap: () {
+                    HapticService.light();
+                    showPreviousWorkoutsSheet(context, ref, completedWorkouts);
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -751,7 +786,7 @@ class _PreviousSessionCard extends StatelessWidget {
                       Icon(Icons.timer_outlined, size: 12, color: textSecondary),
                       const SizedBox(width: 2),
                       Text(
-                        '${workout.durationMinutes ?? 45}m',
+                        workout.formattedDurationShort,
                         style: TextStyle(fontSize: 12, color: textSecondary),
                       ),
                       if (dateText.isNotEmpty) ...[

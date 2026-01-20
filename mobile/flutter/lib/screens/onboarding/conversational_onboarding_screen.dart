@@ -805,6 +805,8 @@ class _ConversationalOnboardingScreenState
         'height_cm': finalData['heightCm'],
         'weight_kg': finalData['weightKg'],
         'target_weight_kg': finalData['targetWeightKg'],
+        // Weight unit preference from onboarding (kg or lbs)
+        'weight_unit': (finalData['useMetricUnits'] ?? true) ? 'kg' : 'lbs',
       };
 
       // DEBUG: Log the data being sent to API
@@ -864,33 +866,29 @@ class _ConversationalOnboardingScreenState
 
         final monthStart = DateTime.now().toIso8601String().split('T')[0];
 
-        // Only generate 1 workout during onboarding for fast completion
-        // Rest are generated on-demand when user views "View All"
-        await for (final progress in workoutRepo.generateMonthlyWorkoutsStreaming(
+        // Generate 1 workout during onboarding for fast completion
+        await for (final progress in workoutRepo.generateWorkoutStreaming(
           userId: authState.user!.id,
-          monthStartDate: monthStart,
           durationMinutes: (finalData['workoutDuration'] as int?) ?? 45,
-          selectedDays: dayIndices,
-          maxWorkouts: 1,
         )) {
           if (!mounted) break;
 
-          if (progress.hasError) {
+          if (progress.status == WorkoutGenerationStatus.error) {
             debugPrint('❌ [Onboarding] Streaming error: ${progress.message}');
             break;
           }
 
           // Update progress based on streaming events
-          final progressPercent = progress.totalWorkouts > 0
-              ? ((progress.currentWorkout / progress.totalWorkouts) * 80).toInt() + 10 // 10-90%
-              : _workoutLoadingProgress.toInt();
-
           setState(() {
-            _workoutLoadingProgress = progressPercent.clamp(10, 90).toDouble();
-            _workoutLoadingMessage = progress.message ?? 'Generating your workouts...';
+            if (progress.status == WorkoutGenerationStatus.progress) {
+              _workoutLoadingProgress = 50;
+            } else if (progress.status == WorkoutGenerationStatus.completed) {
+              _workoutLoadingProgress = 90;
+            }
+            _workoutLoadingMessage = progress.message ?? 'Generating your workout...';
           });
 
-          if (progress.isCompleted) break;
+          if (progress.status == WorkoutGenerationStatus.completed) break;
         }
 
         setState(() {

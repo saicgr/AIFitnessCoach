@@ -98,6 +98,82 @@ def resolve_training_split(split: Optional[str], num_days: int) -> str:
         return "full_body"  # 7 days - full body rotation
 
 
+def infer_workout_type_from_focus(focus_area: str, exercises: List[Dict] = None) -> str:
+    """
+    Infer workout type from focus area for PPL tracking.
+
+    This maps focus areas to workout types so the PPL rotation system
+    can track which workout types have been completed.
+
+    Maps:
+        - push/chest/shoulders/triceps -> "push"
+        - pull/back/biceps -> "pull"
+        - legs/lower/glutes/quads/hamstrings -> "legs"
+        - full_body* -> "full_body"
+        - upper* -> "upper"
+        - core/abs -> "core"
+
+    Args:
+        focus_area: The focus area string (e.g., "push", "chest", "legs")
+        exercises: Optional list of exercises (for future muscle-based inference)
+
+    Returns:
+        Workout type string for PPL tracking
+    """
+    if not focus_area:
+        return "strength"
+
+    focus_lower = focus_area.lower().replace(" ", "_").replace("-", "_")
+
+    # Check for full_body variants first (most specific match)
+    if "full" in focus_lower and "body" in focus_lower:
+        return "full_body"
+
+    # Mapping from focus area keywords to workout types
+    type_mapping = {
+        # Push muscles
+        "push": "push",
+        "chest": "push",
+        "shoulders": "push",
+        "shoulder": "push",
+        "triceps": "push",
+        "tricep": "push",
+        # Pull muscles
+        "pull": "pull",
+        "back": "pull",
+        "biceps": "pull",
+        "bicep": "pull",
+        "lats": "pull",
+        # Leg muscles
+        "legs": "legs",
+        "leg": "legs",
+        "lower": "legs",
+        "glutes": "legs",
+        "glute": "legs",
+        "quads": "legs",
+        "quad": "legs",
+        "hamstrings": "legs",
+        "hamstring": "legs",
+        "calves": "legs",
+        "calf": "legs",
+        # Other types
+        "core": "core",
+        "abs": "core",
+        "abdominals": "core",
+        "upper": "upper",
+        "arms": "arms",
+        "cardio": "cardio",
+        "hiit": "cardio",
+    }
+
+    for key, workout_type in type_mapping.items():
+        if key in focus_lower:
+            return workout_type
+
+    # Default to strength if no match found
+    return "strength"
+
+
 def get_all_equipment(user: dict) -> List[str]:
     """
     Get combined list of standard and custom equipment for a user.
@@ -516,29 +592,6 @@ def get_workout_focus(split: str, selected_days: List[int], focus_areas: List[st
 
     # Default to full body if unknown split
     return {day: "full_body" for day in selected_days}
-
-
-def calculate_workout_date(week_start_date: str, day_index: int) -> datetime:
-    """Calculate the actual date for a workout based on week start and day index."""
-    base_date = datetime.fromisoformat(week_start_date)
-    return base_date + timedelta(days=day_index)
-
-
-def calculate_monthly_dates(month_start_date: str, selected_days: List[int], weeks: int = 12) -> List[datetime]:
-    """Calculate workout dates for specified number of weeks from the start date."""
-    base_date = datetime.fromisoformat(month_start_date)
-    end_date = base_date + timedelta(days=weeks * 7)
-
-    workout_dates = []
-    current_date = base_date
-
-    while current_date < end_date:
-        weekday = current_date.weekday()
-        if weekday in selected_days:
-            workout_dates.append(current_date)
-        current_date += timedelta(days=1)
-
-    return workout_dates
 
 
 def extract_name_words(workout_name: str) -> List[str]:
@@ -1576,8 +1629,17 @@ async def get_substitute_exercise(
 
             if equipment:
                 equipment_lower = [e.lower() for e in equipment]
-                if ex_equipment in equipment_lower or ex_equipment == "body weight":
-                    score += 10
+                has_gym_equipment = any(eq in equipment_lower for eq in ["full_gym", "dumbbells", "barbell", "cable_machine", "machines"])
+
+                if ex_equipment in equipment_lower:
+                    # Direct equipment match gets highest score
+                    score += 20
+                elif has_gym_equipment and ex_equipment in ["dumbbell", "dumbbells", "barbell", "cable", "machine"]:
+                    # Gym equipment gets high score when user has gym access
+                    score += 15
+                elif ex_equipment == "body weight":
+                    # Bodyweight gets lower score when gym equipment is available
+                    score += 5 if has_gym_equipment else 10
             else:
                 # If no equipment specified, prefer bodyweight
                 if ex_equipment == "body weight":

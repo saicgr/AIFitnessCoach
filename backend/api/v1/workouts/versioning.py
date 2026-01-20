@@ -444,6 +444,28 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
             )
 
             exercises = workout_data.get("exercises", [])
+
+            # Filter similar exercises to ensure movement pattern diversity
+            # This prevents workouts like "6 push-up variations"
+            from services.exercise_rag.filters import is_similar_exercise
+
+            original_count = len(exercises)
+            deduplicated = []
+            seen_names = []
+
+            for ex in exercises:
+                ex_name = ex.get("name", "") or ex.get("exercise_name", "")
+                is_dup = any(is_similar_exercise(ex_name, seen) for seen in seen_names)
+                if not is_dup:
+                    seen_names.append(ex_name)
+                    deduplicated.append(ex)
+                else:
+                    logger.info(f"🔄 [Variety] Filtered similar exercise: {ex_name}")
+
+            if len(deduplicated) < original_count:
+                logger.warning(f"⚠️ [Validation] Removed {original_count - len(deduplicated)} similar exercises to ensure variety")
+                exercises = deduplicated
+
             workout_name = body.workout_name or workout_data.get("name", "Regenerated Workout")
             workout_type = workout_type_override or workout_data.get("type", existing.get("type", "strength"))
             difficulty = user_difficulty or workout_data.get("difficulty", "medium")

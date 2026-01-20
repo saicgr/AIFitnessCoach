@@ -346,9 +346,13 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: DragTarget<int>(
-          onWillAcceptWithDetails: (details) =>
-              details.data != widget.index && !widget.exercise.isInSuperset,
+          onWillAcceptWithDetails: (details) {
+            final willAccept = details.data != widget.index;
+            debugPrint('🎯 [DragTarget] onWillAccept: dragged=${details.data}, target=${widget.index}, willAccept=$willAccept, hasCallback=${widget.onSupersetDrop != null}');
+            return willAccept;
+          },
           onAcceptWithDetails: (details) {
+            debugPrint('🎯 [DragTarget] onAccept: dragged=${details.data}, target=${widget.index}, exercise=${widget.exercise.name}');
             widget.onSupersetDrop?.call(details.data);
           },
           builder: (context, candidateData, rejectedData) {
@@ -997,54 +1001,85 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
   }
 
   Widget _buildTableHeader(Color glassSurface, Color textMuted, Color accentColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: glassSurface.withOpacity(0.5),
-      ),
-      child: Row(
-        children: [
-          // SET column
-          SizedBox(
-            width: 50,
-            child: Text(
-              'SET',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: textMuted,
-                letterSpacing: 0.3,
+    final isBarbell = _isBarbellExercise();
+    final bool useKg = _useKgOverride ?? ref.read(useKgProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: glassSurface.withOpacity(0.5),
+          ),
+          child: Row(
+            children: [
+              // SET column
+              SizedBox(
+                width: 50,
+                child: Text(
+                  'SET',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: textMuted,
+                    letterSpacing: 0.3,
+                  ),
+                ),
               ),
+              // LAST column - previous session data
+              Expanded(
+                flex: 3,
+                child: Text(
+                  'LAST',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: textMuted,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+              // TARGET column - AI recommended weight × reps
+              Expanded(
+                flex: 3,
+                child: Text(
+                  'TARGET',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: accentColor.withOpacity(0.9),
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Barbell weight note - shown only for barbell exercises
+        if (isBarbell)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 12,
+                  color: textMuted.withOpacity(0.7),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Weight includes ${useKg ? '20kg' : '45lb'} barbell',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: textMuted.withOpacity(0.7),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
             ),
           ),
-          // LAST column - previous session data
-          Expanded(
-            flex: 3,
-            child: Text(
-              'LAST',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: textMuted,
-                letterSpacing: 0.3,
-              ),
-            ),
-          ),
-          // TARGET column - AI recommended weight × reps
-          Expanded(
-            flex: 3,
-            child: Text(
-              'TARGET',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: accentColor.withOpacity(0.9),
-                letterSpacing: 0.3,
-              ),
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -1115,6 +1150,16 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     if (lower.contains('stability')) return 'Stability Ball';
     // Limit length
     return equipment.length > 12 ? '${equipment.substring(0, 12)}...' : equipment;
+  }
+
+  /// Check if exercise uses a barbell (for weight note display)
+  bool _isBarbellExercise() {
+    final equipment = widget.exercise.equipment?.toLowerCase() ?? '';
+    final name = widget.exercise.name.toLowerCase();
+    return equipment.contains('barbell') ||
+           name.contains('barbell') ||
+           name.contains(' bb ') ||
+           name.startsWith('bb ');
   }
 
   Widget _buildBreathingChip(BuildContext context) {

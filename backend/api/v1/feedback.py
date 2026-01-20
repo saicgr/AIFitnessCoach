@@ -493,6 +493,11 @@ class AICoachFeedbackRequest(BaseModel):
     coaching_style: Optional[str] = None  # "motivational", "drill_sergeant", "buddy", "zen_master"
     communication_tone: Optional[str] = None  # "encouraging", "direct", "friendly"
     encouragement_level: Optional[float] = None  # 0.0-1.0
+    # Trophy/achievement context for personalized feedback
+    earned_prs: Optional[List[dict]] = None
+    earned_achievements: Optional[List[dict]] = None
+    total_workouts_completed: Optional[int] = None
+    next_milestone: Optional[dict] = None
 
 
 class AICoachFeedbackResponse(BaseModel):
@@ -589,7 +594,7 @@ async def generate_ai_coach_feedback(request: AICoachFeedbackRequest):
             "completed_at": datetime.utcnow().isoformat(),
         }
 
-        # Generate AI feedback with coach personality
+        # Generate AI feedback with coach personality and trophy context
         feedback = await generate_workout_feedback(
             gemini_service=gemini_service,
             rag_service=rag_service,
@@ -599,6 +604,11 @@ async def generate_ai_coach_feedback(request: AICoachFeedbackRequest):
             coaching_style=request.coaching_style,
             communication_tone=request.communication_tone,
             encouragement_level=request.encouragement_level,
+            # Trophy/achievement context
+            earned_prs=request.earned_prs,
+            earned_achievements=request.earned_achievements,
+            total_workouts_completed=request.total_workouts_completed,
+            next_milestone=request.next_milestone,
         )
 
         # Index the workout session for future RAG retrieval

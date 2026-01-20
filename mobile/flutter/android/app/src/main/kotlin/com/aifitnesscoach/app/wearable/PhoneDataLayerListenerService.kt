@@ -1,10 +1,16 @@
 package com.aifitnesscoach.app.wearable
 
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.util.Log
 import com.google.android.gms.wearable.*
 import com.google.gson.Gson
 import kotlinx.coroutines.*
+import kotlinx.coroutines.tasks.await
+import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.*
 
 /**
  * Service that listens for data and messages from the Wear OS watch.
@@ -14,6 +20,7 @@ class PhoneDataLayerListenerService : WearableListenerService() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val gson = Gson()
+    private val dataClient: DataClient by lazy { Wearable.getDataClient(this) }
 
     companion object {
         private const val TAG = "PhoneDataLayerListener"
@@ -200,19 +207,197 @@ class PhoneDataLayerListenerService : WearableListenerService() {
 
     // ==================== Send Data to Watch ====================
 
+    /**
+     * Send today's workout to watch.
+     * Reads from Flutter's SharedPreferences cache (FlutterSharedPreferences).
+     */
     private suspend fun sendTodaysWorkoutToWatch() {
-        // TODO: Get today's workout from Flutter/local storage and send to watch
-        Log.d(TAG, "Sending today's workout to watch (to be implemented)")
+        try {
+            val prefs = getFlutterSharedPreferences()
+
+            // Flutter stores today's workout cache with this key
+            val workoutJson = prefs.getString("flutter.today_workout_cache", null)
+
+            if (workoutJson != null) {
+                // Parse and reformat for watch
+                val watchWorkout = formatWorkoutForWatch(workoutJson)
+                if (watchWorkout != null) {
+                    val success = putDataToWatch(PATH_WORKOUT_TODAY, watchWorkout)
+                    Log.d(TAG, "✅ Today's workout sent to watch: $success")
+                } else {
+                    Log.d(TAG, "⚠️ No valid workout data to send")
+                }
+            } else {
+                // No cached workout, send empty/rest day signal
+                val emptyWorkout = JSONObject().apply {
+                    put("isRestDay", true)
+                    put("date", getTodayDateString())
+                }.toString()
+                putDataToWatch(PATH_WORKOUT_TODAY, emptyWorkout)
+                Log.d(TAG, "📅 Sent rest day signal to watch")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error sending workout to watch", e)
+        }
     }
 
+    /**
+     * Send nutrition summary to watch.
+     * Reads from Flutter's SharedPreferences cache.
+     */
     private suspend fun sendNutritionSummaryToWatch() {
-        // TODO: Get nutrition summary from Flutter/local storage and send to watch
-        Log.d(TAG, "Sending nutrition summary to watch (to be implemented)")
+        try {
+            val prefs = getFlutterSharedPreferences()
+
+            // Flutter stores nutrition cache with these keys
+            val caloriesConsumed = prefs.getInt("flutter.nutrition_calories_today", 0)
+            val calorieGoal = prefs.getInt("flutter.nutrition_calorie_goal", 2000)
+            val proteinG = prefs.getFloat("flutter.nutrition_protein_today", 0f)
+            val proteinGoal = prefs.getFloat("flutter.nutrition_protein_goal", 150f)
+            val carbsG = prefs.getFloat("flutter.nutrition_carbs_today", 0f)
+            val carbsGoal = prefs.getFloat("flutter.nutrition_carbs_goal", 250f)
+            val fatG = prefs.getFloat("flutter.nutrition_fat_today", 0f)
+            val fatGoal = prefs.getFloat("flutter.nutrition_fat_goal", 65f)
+            val waterMl = prefs.getInt("flutter.nutrition_water_today", 0)
+            val waterGoal = prefs.getInt("flutter.nutrition_water_goal", 2500)
+
+            val summaryJson = JSONObject().apply {
+                put("date", getTodayDateString())
+                put("totalCalories", caloriesConsumed)
+                put("calorieGoal", calorieGoal)
+                put("proteinG", proteinG)
+                put("proteinGoalG", proteinGoal)
+                put("carbsG", carbsG)
+                put("carbsGoalG", carbsGoal)
+                put("fatG", fatG)
+                put("fatGoalG", fatGoal)
+                put("waterMl", waterMl)
+                put("waterGoalMl", waterGoal)
+            }.toString()
+
+            val success = putDataToWatch(PATH_NUTRITION_SUMMARY, summaryJson)
+            Log.d(TAG, "✅ Nutrition summary sent to watch: $success (${caloriesConsumed}/${calorieGoal} cal)")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error sending nutrition to watch", e)
+        }
     }
 
+    /**
+     * Send health goals to watch.
+     * Reads from Flutter's SharedPreferences.
+     */
     private suspend fun sendHealthGoalsToWatch() {
-        // TODO: Get health goals from Flutter/local storage and send to watch
-        Log.d(TAG, "Sending health goals to watch (to be implemented)")
+        try {
+            val prefs = getFlutterSharedPreferences()
+
+            // Read health goals from Flutter preferences
+            val stepsGoal = prefs.getInt("flutter.health_steps_goal", 10000)
+            val activeMinutesGoal = prefs.getInt("flutter.health_active_minutes_goal", 30)
+            val caloriesBurnedGoal = prefs.getInt("flutter.health_calories_burned_goal", 500)
+            val sleepHoursGoal = prefs.getFloat("flutter.health_sleep_hours_goal", 8f)
+            val waterMlGoal = prefs.getInt("flutter.nutrition_water_goal", 2500)
+
+            val goalsJson = JSONObject().apply {
+                put("stepsGoal", stepsGoal)
+                put("activeMinutesGoal", activeMinutesGoal)
+                put("caloriesBurnedGoal", caloriesBurnedGoal)
+                put("sleepHoursGoal", sleepHoursGoal)
+                put("waterMlGoal", waterMlGoal)
+            }.toString()
+
+            val success = putDataToWatch(PATH_HEALTH_GOALS, goalsJson)
+            Log.d(TAG, "✅ Health goals sent to watch: $success (${stepsGoal} steps goal)")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error sending health goals to watch", e)
+        }
+    }
+
+    // ==================== Helper Methods ====================
+
+    /**
+     * Get Flutter's SharedPreferences (uses "FlutterSharedPreferences" name).
+     */
+    private fun getFlutterSharedPreferences(): SharedPreferences {
+        return getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+    }
+
+    /**
+     * Get today's date as ISO string (YYYY-MM-DD).
+     */
+    private fun getTodayDateString(): String {
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        return sdf.format(Date())
+    }
+
+    /**
+     * Format Flutter's workout data for the watch.
+     * Converts from Flutter's TodayWorkoutResponse format to watch format.
+     */
+    private fun formatWorkoutForWatch(workoutJson: String): String? {
+        return try {
+            val source = JSONObject(workoutJson)
+
+            // Check if it's a rest day or has no workout
+            if (!source.has("workout") || source.isNull("workout")) {
+                return JSONObject().apply {
+                    put("isRestDay", true)
+                    put("date", getTodayDateString())
+                }.toString()
+            }
+
+            val workout = source.getJSONObject("workout")
+            val exercises = workout.optJSONArray("exercises") ?: return null
+
+            // Build watch-compatible format
+            val watchExercises = org.json.JSONArray()
+            for (i in 0 until exercises.length()) {
+                val ex = exercises.getJSONObject(i)
+                watchExercises.put(JSONObject().apply {
+                    put("id", ex.optString("id", ""))
+                    put("name", ex.optString("name", ""))
+                    put("targetSets", ex.optInt("sets", 3))
+                    put("targetReps", ex.optString("reps", "10"))
+                    put("targetWeightKg", ex.optDouble("weight_kg", 0.0))
+                    put("restSeconds", ex.optInt("rest_seconds", 60))
+                    put("videoUrl", ex.optString("video_url", null))
+                    put("thumbnailUrl", ex.optString("thumbnail_url", null))
+                })
+            }
+
+            JSONObject().apply {
+                put("id", workout.optString("id", ""))
+                put("name", workout.optString("name", "Today's Workout"))
+                put("type", workout.optString("type", "strength"))
+                put("exercises", watchExercises)
+                put("estimatedDuration", workout.optInt("estimated_duration", 45))
+                put("targetMuscleGroups", workout.optJSONArray("target_muscles") ?: org.json.JSONArray())
+                put("scheduledDate", source.optString("date", getTodayDateString()))
+                put("isRestDay", false)
+            }.toString()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error formatting workout for watch", e)
+            null
+        }
+    }
+
+    /**
+     * Put data to watch via Data Layer API.
+     */
+    private suspend fun putDataToWatch(path: String, jsonData: String): Boolean {
+        return try {
+            val putDataRequest = PutDataMapRequest.create(path).apply {
+                dataMap.putString("data", jsonData)
+                dataMap.putLong("timestamp", System.currentTimeMillis())
+            }
+                .asPutDataRequest()
+                .setUrgent()
+
+            dataClient.putDataItem(putDataRequest).await()
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send data to $path", e)
+            false
+        }
     }
 
     // ==================== Flutter Communication ====================

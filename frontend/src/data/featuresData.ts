@@ -343,12 +343,12 @@ export const features: Feature[] = [
     isNew: true,
   },
   {
-    id: 'mention-agents',
-    title: '@Mention Agent Routing',
-    description: 'Direct messages to specific agents using @coach, @nutrition, @workout, @injury.',
+    id: 'specialized-knowledge',
+    title: 'Specialized Fitness Knowledge',
+    description: 'Your coach has deep expertise across nutrition, workouts, injury prevention, and hydration - all in one conversation.',
     category: 'ai-coach',
     tier: 'premium',
-    tags: ['mention', 'agents', 'direct'],
+    tags: ['expertise', 'knowledge', 'comprehensive'],
   },
   {
     id: 'streaming-responses',

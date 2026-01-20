@@ -197,12 +197,11 @@ class SupersetConnector extends StatelessWidget {
   }
 }
 
-/// A grouped card wrapper for displaying superset exercises together
+/// A grouped card wrapper for displaying superset exercises together (supports 2+ exercises)
 /// Uses the user's accent color for prominent visibility
 class SupersetGroupCard extends ConsumerWidget {
-  /// The two exercises in this superset
-  final Widget firstExercise;
-  final Widget secondExercise;
+  /// All exercises in this superset (ordered by supersetOrder)
+  final List<Widget> exercises;
 
   /// The superset group number
   final int groupNumber;
@@ -216,23 +215,35 @@ class SupersetGroupCard extends ConsumerWidget {
   /// Callback when "Break Superset" is triggered
   final VoidCallback? onBreakSuperset;
 
-  /// Callback when "Swap Order" is triggered (swap first/second exercise)
+  /// Callback when "Swap Order" is triggered (only for 2 exercises)
   final VoidCallback? onSwapOrder;
+
+  /// Callback when "Reorder" is triggered (for 3+ exercises)
+  final VoidCallback? onReorderExercises;
 
   /// Index for ReorderableListView - if provided, drag handle enables reordering
   final int? reorderIndex;
 
   const SupersetGroupCard({
     super.key,
-    required this.firstExercise,
-    required this.secondExercise,
+    required this.exercises,
     required this.groupNumber,
     this.isActive = false,
     this.onHeaderTap,
     this.onBreakSuperset,
     this.onSwapOrder,
+    this.onReorderExercises,
     this.reorderIndex,
   });
+
+  /// Get the display label based on exercise count
+  String get _typeLabel {
+    return switch (exercises.length) {
+      2 => 'SUPERSET',
+      3 => 'TRI-SET',
+      _ => 'GIANT SET',
+    };
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -301,7 +312,7 @@ class SupersetGroupCard extends ConsumerWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'SUPERSET $groupNumber',
+                      '$_typeLabel $groupNumber',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -321,8 +332,8 @@ class SupersetGroupCard extends ConsumerWidget {
                       ),
                     ],
                     const Spacer(),
-                    // Swap order button - swap first/second exercise in superset
-                    if (onSwapOrder != null)
+                    // Swap order button - only for 2 exercises
+                    if (exercises.length == 2 && onSwapOrder != null)
                       GestureDetector(
                         onTap: () {
                           HapticFeedback.lightImpact();
@@ -355,7 +366,42 @@ class SupersetGroupCard extends ConsumerWidget {
                           ),
                         ),
                       ),
-                    if (onSwapOrder != null)
+                    // Edit button - for 3+ exercises (reorder & remove)
+                    if (exercises.length >= 3 && onReorderExercises != null)
+                      GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          onReorderExercises?.call();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: headerTextColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.edit,
+                                size: 12,
+                                color: headerTextColor.withOpacity(0.9),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Edit',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: headerTextColor.withOpacity(0.9),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    if ((exercises.length == 2 && onSwapOrder != null) ||
+                        (exercises.length >= 3 && onReorderExercises != null))
                       const SizedBox(width: 6),
                     // Break superset button - tap icon for break
                     GestureDetector(
@@ -396,22 +442,21 @@ class SupersetGroupCard extends ConsumerWidget {
             ),
           ),
 
-          // First exercise - no extra padding needed
-          firstExercise,
-
-          // Connector with accent color - more compact
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: SupersetConnector(
-              color: accentColor,
-              isActive: isActive,
-              leftOffset: 28,
-              height: 18, // Shorter connector
-            ),
-          ),
-
-          // Second exercise
-          secondExercise,
+          // Render all exercises with connectors between them
+          for (int i = 0; i < exercises.length; i++) ...[
+            exercises[i],
+            // Add connector between exercises (not after the last one)
+            if (i < exercises.length - 1)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: SupersetConnector(
+                  color: accentColor,
+                  isActive: isActive,
+                  leftOffset: 28,
+                  height: 18, // Shorter connector
+                ),
+              ),
+          ],
 
           // Minimal bottom padding
           const SizedBox(height: 4),

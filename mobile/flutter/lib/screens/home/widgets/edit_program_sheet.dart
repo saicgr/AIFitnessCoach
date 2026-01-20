@@ -60,7 +60,8 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   // Step 1: Schedule
   final Set<int> _selectedDays = {0, 2, 4}; // Default: Mon, Wed, Fri
   String _selectedDifficulty = 'medium';
-  double _selectedDuration = 45;
+  double _selectedDurationMin = 45;
+  double _selectedDurationMax = 60;
   // Program weeks removed - using automatic 2-week generation with auto-regeneration
 
   // Step 2: Training Program & Equipment
@@ -122,8 +123,9 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
               _selectedDifficulty = prefs.difficulty!.toLowerCase();
             }
             if (prefs.durationMinutes != null) {
-              _selectedDuration =
-                  prefs.durationMinutes!.toDouble().clamp(15, 90);
+              final duration = prefs.durationMinutes!.toDouble().clamp(15.0, 90.0);
+              _selectedDurationMin = duration;
+              _selectedDurationMax = (duration + 15).clamp(15.0, 90.0);
             }
 
             // Load training split as program ID
@@ -239,7 +241,8 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
       await repo.updateProgramAndRegenerate(
         userId: userId,
         difficulty: _selectedDifficulty,
-        durationMinutes: _selectedDuration.round(),
+        durationMinutesMin: _selectedDurationMin.round(),
+        durationMinutesMax: _selectedDurationMax.round(),
         focusAreas: _selectedFocusAreas.toList(),
         injuries: _selectedInjuries.toList(),
         equipment:
@@ -617,9 +620,13 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                     fitnessLevel: ref.read(authStateProvider).user?.fitnessLevel,
                   ),
                   const SizedBox(height: 16),
-                  DurationSlider(
-                    duration: _selectedDuration,
-                    onChanged: (d) => setState(() => _selectedDuration = d),
+                  DurationRangeSlider(
+                    durationMin: _selectedDurationMin,
+                    durationMax: _selectedDurationMax,
+                    onChanged: (range) => setState(() {
+                      _selectedDurationMin = range.start;
+                      _selectedDurationMax = range.end;
+                    }),
                     disabled: _isUpdating,
                     accentColor: colors.success,
                   ),
@@ -934,7 +941,9 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                 _buildSummaryRow(
                   colors,
                   'Duration',
-                  '${_selectedDuration.round()} minutes',
+                  _selectedDurationMin.round() == _selectedDurationMax.round()
+                      ? '${_selectedDurationMin.round()} minutes'
+                      : '${_selectedDurationMin.round()}-${_selectedDurationMax.round()} minutes',
                 ),
                 // Program duration removed from summary - using automatic regeneration
                 if (_selectedProgramId != null)

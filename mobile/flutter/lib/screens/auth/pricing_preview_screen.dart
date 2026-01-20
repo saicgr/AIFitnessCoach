@@ -104,7 +104,8 @@ class _PricingPreviewScreenState extends ConsumerState<PricingPreviewScreen>
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
+    // Use ref.colors(context) to get dynamic accent color from provider
+    final colors = ref.colors(context);
     final isDark = context.isDarkMode;
 
     return Scaffold(
@@ -186,19 +187,19 @@ class _PricingPreviewScreenState extends ConsumerState<PricingPreviewScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: colors.cyan.withOpacity(0.1),
+              color: colors.accent.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: colors.cyan.withOpacity(0.3)),
+              border: Border.all(color: colors.accent.withOpacity(0.3)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.visibility, size: 14, color: colors.cyan),
+                Icon(Icons.visibility, size: 14, color: colors.accent),
                 const SizedBox(width: 6),
                 Text(
                   'Preview',
                   style: TextStyle(
-                    color: colors.cyan,
+                    color: colors.accent,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -503,15 +504,15 @@ class _PricingPreviewScreenState extends ConsumerState<PricingPreviewScreen>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: colors.cyan.withOpacity(0.08),
+        color: colors.accent.withOpacity(0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.cyan.withOpacity(0.2)),
+        border: Border.all(color: colors.accent.withOpacity(0.2)),
       ),
       child: Row(
         children: [
           Icon(
             Icons.info_outline,
-            color: colors.cyan,
+            color: colors.accent,
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -557,10 +558,10 @@ class _PricingPreviewScreenState extends ConsumerState<PricingPreviewScreen>
                 context.go('/pre-auth-quiz');
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: colors.cyan,
-                foregroundColor: Colors.white,
+                backgroundColor: colors.accent,
+                foregroundColor: colors.accentContrast,
                 elevation: 4,
-                shadowColor: colors.cyan.withOpacity(0.4),
+                shadowColor: colors.accent.withOpacity(0.4),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(27),
                 ),
@@ -634,7 +635,7 @@ class _BillingTab extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? colors.cyan : Colors.transparent,
+            color: isSelected ? colors.accent : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Column(
@@ -644,7 +645,7 @@ class _BillingTab extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: isSelected ? Colors.white : colors.textSecondary,
+                  color: isSelected ? colors.accentContrast : colors.textSecondary,
                 ),
               ),
               Text(
@@ -652,7 +653,7 @@ class _BillingTab extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 10,
                   color: isSelected
-                      ? Colors.white.withOpacity(0.8)
+                      ? colors.accentContrast.withOpacity(0.8)
                       : colors.textSecondary.withOpacity(0.7),
                 ),
               ),

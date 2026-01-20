@@ -1,8 +1,14 @@
 """
-Reindex ChromaDB with Gemini embeddings.
+Reindex ChromaDB with Gemini embeddings and CLEANED exercise names.
 
 IMPORTANT: This script deletes existing collections and recreates them
 with Gemini embeddings (768 dimensions) instead of OpenAI (1536 dimensions).
+
+Uses exercise_library_cleaned view which:
+- Removes "_Male" and "_Female" suffixes from names
+- Removes "360 degrees" metadata noise
+- Deduplicates exercises (keeps female version when both exist)
+- Ensures clean, searchable names like "Bench Press" instead of "Bench Press_Male"
 
 Usage:
     cd backend
@@ -76,10 +82,14 @@ async def main():
 
     # Reindex exercises - this will create new collection with 768 dims
     print("\n🏋️ Reindexing exercise library with Gemini embeddings...")
+    print("   📂 Using exercise_library_cleaned view (cleaned names, no duplicates)")
     exercise_rag = ExerciseRAGService(gemini_service)
     indexed_count = await exercise_rag.index_all_exercises()
 
     print(f"\n✅ Indexed {indexed_count} exercises with Gemini embeddings!")
+    print("   ✅ Names are cleaned (no '_Male'/'_Female' suffixes)")
+    print("   ✅ No '360 degrees' metadata noise")
+    print("   ✅ Exercises deduplicated")
 
     # Show new state
     print("\n📊 Final state:")

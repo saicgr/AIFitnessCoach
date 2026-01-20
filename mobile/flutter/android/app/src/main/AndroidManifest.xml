@@ -108,15 +108,6 @@
             android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
             android:screenOrientation="portrait" />
 
-        <!-- Health Connect permissions rationale activity -->
-        <activity
-            android:name="androidx.health.connect.client.HealthConnectClient$PermissionRationaleActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>
-            </intent-filter>
-        </activity>
-
         <!-- Handles permission request from Health Connect -->
         <activity-alias
             android:name="ViewPermissionUsageActivity"
@@ -301,6 +292,13 @@
         <intent>
             <action android:name="android.speech.RecognitionService"/>
         </intent>
+        <!-- Health Connect package visibility (required for Android 11+) -->
+        <intent>
+            <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+        </intent>
+        <package android:name="com.google.android.apps.healthdata" />
+        <!-- Samsung Health package visibility (for launching Samsung Health app) -->
+        <package android:name="com.sec.android.app.shealth" />
         <!-- Required for Instagram sharing -->
         <intent>
             <action android:name="android.intent.action.VIEW" />

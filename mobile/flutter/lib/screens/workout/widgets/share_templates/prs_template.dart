@@ -41,70 +41,82 @@ class PrsTemplate extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(24),
       ),
-      child: Stack(
-        children: [
-          // Gold shimmer effect
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _GoldShimmerPainter(),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            // Gold shimmer effect
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _GoldShimmerPainter(),
+              ),
             ),
-          ),
 
-          // Main content
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                // Trophy icon
-                _buildTrophyHeader(),
+            // Main content - wrapped in FittedBox to prevent overflow
+            Positioned.fill(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.topCenter,
+                child: SizedBox(
+                  width: 320,
+                  height: 440,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Trophy icon
+                        _buildTrophyHeader(),
 
-                const SizedBox(height: 12),
+                        const SizedBox(height: 10),
 
-                // Title
-                const Text(
-                  'NEW PERSONAL RECORDS',
-                  style: TextStyle(
-                    color: Color(0xFFFFD700),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 2,
+                        // Title
+                        const Text(
+                          'NEW PERSONAL RECORDS',
+                          style: TextStyle(
+                            color: Color(0xFFFFD700),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 2,
+                          ),
+                        ),
+
+                        const SizedBox(height: 4),
+
+                        Text(
+                          workoutName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        // PRs list - no Expanded wrapper
+                        _buildPrsList(),
+
+                        // Achievements row (if any)
+                        if (achievementsData != null && achievementsData!.isNotEmpty)
+                          _buildAchievementsRow(),
+
+                        if (showWatermark) ...[
+                          const SizedBox(height: 10),
+                          const AppWatermark(),
+                        ] else
+                          const SizedBox(height: 6),
+                      ],
+                    ),
                   ),
                 ),
-
-                const SizedBox(height: 4),
-
-                Text(
-                  workoutName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-
-                const SizedBox(height: 12),
-
-                // PRs list
-                Expanded(
-                  child: _buildPrsList(),
-                ),
-
-                // Achievements row (if any)
-                if (achievementsData != null && achievementsData!.isNotEmpty)
-                  _buildAchievementsRow(),
-
-                if (showWatermark) ...[
-                  const SizedBox(height: 10),
-                  const AppWatermark(),
-                ] else
-                  const SizedBox(height: 6),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -142,45 +154,44 @@ class PrsTemplate extends StatelessWidget {
 
   Widget _buildPrsList() {
     if (prsData.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.star_outline_rounded,
-              size: 64,
-              color: Colors.white.withValues(alpha: 0.3),
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.star_outline_rounded,
+            size: 48,
+            color: Colors.white.withValues(alpha: 0.3),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Keep pushing!',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.6),
+              fontSize: 16,
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Keep pushing!',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.6),
-                fontSize: 18,
-              ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'New PRs are just around the corner',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.4),
+              fontSize: 12,
             ),
-            const SizedBox(height: 8),
-            Text(
-              'New PRs are just around the corner',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.4),
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       );
     }
 
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: prsData.length > 4 ? 4 : prsData.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final pr = prsData[index];
-        return _buildPrCard(pr);
-      },
+    // Limit to 2 PRs max to prevent overflow
+    final limitedPrs = prsData.take(2).toList();
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: limitedPrs.asMap().entries.map((entry) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: entry.key < limitedPrs.length - 1 ? 8 : 0),
+          child: _buildPrCard(entry.value),
+        );
+      }).toList(),
     );
   }
 

@@ -800,7 +800,7 @@ class _WorkoutCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${workout.durationMinutes ?? 45}m',
+            workout.formattedDurationShort,
             style: TextStyle(
               fontSize: 9,
               color: colors.textMuted,

@@ -1563,6 +1563,8 @@ IMPORTANT RULES:
         goals: List[str],
         equipment: List[str],
         duration_minutes: int = 45,
+        duration_minutes_min: Optional[int] = None,
+        duration_minutes_max: Optional[int] = None,
         focus_areas: Optional[List[str]] = None,
         avoid_name_words: Optional[List[str]] = None,
         workout_date: Optional[str] = None,
@@ -1582,6 +1584,8 @@ IMPORTANT RULES:
         workout_patterns_context: Optional[str] = None,
         neat_context: Optional[str] = None,
         set_type_context: Optional[str] = None,
+        primary_goal: Optional[str] = None,
+        muscle_focus_points: Optional[Dict[str, int]] = None,
     ) -> Dict:
         """
         Generate a personalized workout plan using AI.
@@ -1617,6 +1621,11 @@ IMPORTANT RULES:
                          user_context_service.get_neat_context_for_ai().
             set_type_context: Optional context string with user's historical set type preferences (drop sets,
                             failure sets, AMRAP) and acceptance rates. Built by build_set_type_context().
+            primary_goal: Optional primary training goal ('muscle_hypertrophy', 'muscle_strength', or
+                         'strength_hypertrophy'). Affects rep ranges and exercise selection.
+            muscle_focus_points: Optional dict mapping muscle groups to focus points (1-5).
+                                Example: {"triceps": 2, "lats": 1, "obliques": 2}
+                                Muscles with more points get emphasized more in workouts.
 
         Returns:
             Dict with workout structure including name, type, difficulty, exercises
@@ -2086,6 +2095,63 @@ This is a RETURN-TO-TRAINING workout - safety and gradual progression are CRITIC
             logger.info(f"[Gemini Service] Including set type context for personalized drop/failure set recommendations")
             set_type_context_str = set_type_context
 
+        # Build primary training goal instruction (hypertrophy vs strength vs both)
+        primary_goal_instruction = ""
+        if primary_goal:
+            logger.info(f"🎯 [Gemini Service] User has primary training goal: {primary_goal}")
+            goal_mappings = {
+                'muscle_hypertrophy': """
+🎯 PRIMARY TRAINING FOCUS: MUSCLE HYPERTROPHY (Muscle Size)
+The user's primary goal is to BUILD MUSCLE SIZE. You MUST:
+- Use moderate weights with higher rep ranges (8-12 reps for compounds, 12-15 for isolation)
+- Focus on time under tension - slower eccentric (3-4 seconds)
+- Include more isolation exercises to target individual muscles
+- Moderate rest periods (60-90 seconds)
+- Include techniques like drop sets for advanced users
+- RPE typically 7-9 (leave 1-3 reps in reserve)""",
+                'muscle_strength': """
+🎯 PRIMARY TRAINING FOCUS: MUSCLE STRENGTH (Maximal Strength)
+The user's primary goal is to GET STRONGER. You MUST:
+- Use heavier weights with lower rep ranges (3-6 reps for compounds, 6-8 for accessory)
+- Prioritize compound movements (squat, deadlift, bench, overhead press)
+- Longer rest periods (2-4 minutes) for full recovery between heavy sets
+- Focus on progressive overload with weight increases
+- Fewer total exercises but more sets (4-5 sets per movement)
+- RPE typically 8-10 (close to or at failure on heavy sets)""",
+                'strength_hypertrophy': """
+🎯 PRIMARY TRAINING FOCUS: STRENGTH & HYPERTROPHY (Balanced)
+The user wants BOTH strength AND muscle size. You MUST:
+- Vary rep ranges within the workout (6-10 reps most common)
+- Start with heavy compound movements (5-6 reps, strength focus)
+- Finish with moderate isolation work (10-12 reps, hypertrophy focus)
+- Moderate rest periods (90-120 seconds)
+- Mix of compound and isolation exercises
+- Include both strength techniques (heavy singles/doubles) and hypertrophy techniques (drop sets)
+- RPE varies: 8-9 for compounds, 7-8 for isolation""",
+            }
+            primary_goal_instruction = goal_mappings.get(primary_goal, "")
+
+        # Build muscle focus points instruction (priority muscles)
+        muscle_focus_instruction = ""
+        if muscle_focus_points and len(muscle_focus_points) > 0:
+            total_points = sum(muscle_focus_points.values())
+            logger.info(f"🏋️ [Gemini Service] User has {total_points} muscle focus points allocated: {muscle_focus_points}")
+            # Sort by points descending
+            sorted_muscles = sorted(muscle_focus_points.items(), key=lambda x: x[1], reverse=True)
+            muscle_list = "\n".join([f"  - {muscle.replace('_', ' ').title()}: {points} point{'s' if points > 1 else ''}" for muscle, points in sorted_muscles])
+            muscle_focus_instruction = f"""
+
+🏋️ MUSCLE PRIORITY - USER HAS ALLOCATED FOCUS POINTS:
+The user wants EXTRA emphasis on these specific muscle groups:
+{muscle_list}
+
+REQUIREMENTS:
+- Include at least ONE exercise specifically targeting each high-priority muscle (2+ points)
+- For muscles with 3+ points, include TWO exercises targeting that muscle
+- Place priority muscle exercises earlier in the workout (when energy is highest)
+- Use slightly higher volume (extra set) for priority muscles
+- These preferences should COMPLEMENT the workout focus, not replace it"""
+
         # Build focus area instruction based on the training split/focus
         focus_instruction = ""
         if focus_areas and len(focus_areas) > 0:
@@ -2119,12 +2185,18 @@ This is a RETURN-TO-TRAINING workout - safety and gradual progression are CRITIC
             }
             focus_instruction = focus_mapping.get(focus, f'🎯 FOCUS: {focus.upper()} - Select exercises primarily targeting this area.')
 
-        prompt = f"""Generate a {duration_minutes}-minute workout plan for a user with:
+        # Build duration text - use range if both min and max provided
+        if duration_minutes_min and duration_minutes_max and duration_minutes_min != duration_minutes_max:
+            duration_text = f"{duration_minutes_min}-{duration_minutes_max}"
+        else:
+            duration_text = str(duration_minutes)
+
+        prompt = f"""Generate a {duration_text}-minute workout plan for a user with:
 - Fitness Level: {fitness_level}
 - Goals: {', '.join(goals) if goals else 'General fitness'}
 - Available Equipment: {', '.join(equipment) if equipment else 'Bodyweight only'}
 - Focus Areas: {', '.join(focus_areas) if focus_areas else 'Full body'}
-- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}{preference_constraints_instruction}{comeback_instruction}{progression_philosophy_instruction}{workout_patterns_instruction}
+- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}{preference_constraints_instruction}{comeback_instruction}{progression_philosophy_instruction}{workout_patterns_instruction}{primary_goal_instruction}{muscle_focus_instruction}
 
 ⚠️ CRITICAL - MUSCLE GROUP TARGETING:
 {focus_instruction if focus_instruction else 'Select a balanced mix of exercises.'}
@@ -2139,6 +2211,8 @@ Return a valid JSON object with this exact structure:
   "type": "{workout_type}",
   "difficulty": "{difficulty}",
   "duration_minutes": {duration_minutes},
+  "duration_minutes_min": {duration_minutes_min or 'null'},
+  "duration_minutes_max": {duration_minutes_max or 'null'},
   "target_muscles": ["Primary muscle 1", "Primary muscle 2"],
   "exercises": [
     {{
@@ -2201,40 +2275,36 @@ For strength exercises, set duration_seconds to null and use reps normally.
 For mobility/stretching exercises, use hold_seconds (e.g., 30-60) for static holds instead of reps.
 For unilateral exercises (single-arm, single-leg), set is_unilateral: true.
 {set_type_context_str}
-🎯 ADVANCED SET TYPE RECOMMENDATIONS:
-For intermediate and advanced users, strategically include advanced set techniques:
+🚨🚨🚨 MANDATORY ADVANCED TECHNIQUES (NON-NEGOTIABLE FOR NON-BEGINNERS) 🚨🚨🚨
 
-1. **Failure Sets (is_failure_set: true)**:
-   - Mark the FINAL set of compound exercises where going to failure would be beneficial
-   - Best for: Last set of isolation exercises, finisher exercises
-   - Guidelines by level:
-     * Beginner: NO failure sets (risk of injury, poor form)
-     * Intermediate: 1-2 failure sets per workout on isolation exercises only
-     * Advanced: 2-3 failure sets per workout, can include compound movements
-   - When is_failure_set is true, add "AMRAP" in notes
+FOR INTERMEDIATE FITNESS LEVEL - YOU MUST INCLUDE:
+- At least 1 exercise with is_failure_set: true (final isolation exercise)
+- The failure set exercise MUST have notes containing "AMRAP" or "to failure"
 
-2. **Drop Sets (is_drop_set: true)**:
-   - Great for isolation exercises at the end of a muscle group's training
-   - Use for: Bicep curls, tricep extensions, lateral raises, leg extensions
-   - When is_drop_set is true, also set:
-     * drop_set_count: 2-3 (number of weight drops)
-     * drop_set_percentage: 20-25 (percentage to reduce weight each drop)
-   - Guidelines by level:
-     * Beginner: NO drop sets
-     * Intermediate: 0-1 drop set exercise per workout
-     * Advanced: 1-2 drop set exercises per workout
+FOR ADVANCED FITNESS LEVEL - YOU MUST INCLUDE:
+- At least 2 exercises with is_failure_set: true
+- At least 1 exercise with is_drop_set: true (on an isolation exercise)
+- When is_drop_set: true, ALSO set drop_set_count: 2 and drop_set_percentage: 20
 
-EXAMPLE: For an advanced leg workout, the last exercise (e.g., Leg Extension) might have:
-{{
-  "name": "Leg Extension",
-  "sets": 3,
-  "reps": 12,
-  "is_drop_set": true,
-  "is_failure_set": true,
-  "drop_set_count": 2,
-  "drop_set_percentage": 20,
-  "notes": "Final set: AMRAP then drop weight 20% twice"
-}}
+FOR BEGINNER FITNESS LEVEL:
+- NO failure sets (is_failure_set: false for all)
+- NO drop sets (is_drop_set: false for all)
+
+FAILURE SET RULES (is_failure_set: true):
+- Apply to the LAST isolation exercise in the workout
+- Set notes to include "AMRAP" or "Final set to failure"
+- Example exercises: Bicep Curl, Lateral Raise, Tricep Extension, Leg Curl
+
+DROP SET RULES (is_drop_set: true):
+- Apply to isolation exercises ONLY (never compounds)
+- MUST also set: drop_set_count: 2, drop_set_percentage: 20
+- Set notes to include "Drop set: reduce weight 20% twice"
+
+EXAMPLE INTERMEDIATE WORKOUT (notice failure set on last exercise):
+Exercise 5: {{"name": "Bicep Curl", "sets": 3, "reps": 12, "is_failure_set": true, "is_drop_set": false, "notes": "Final set: AMRAP"}}
+
+EXAMPLE ADVANCED WORKOUT (notice both failure AND drop set):
+Exercise 6: {{"name": "Lateral Raise", "sets": 3, "reps": 15, "is_failure_set": true, "is_drop_set": true, "drop_set_count": 2, "drop_set_percentage": 20, "notes": "AMRAP then drop 20% twice"}}
 
 ⚠️ CRITICAL - REALISTIC WEIGHT RECOMMENDATIONS:
 For each exercise, include a starting weight_kg that follows industry-standard equipment increments:
@@ -2250,6 +2320,51 @@ Starting weight guidelines by fitness level:
 - Advanced: Compound exercises 30-50kg, Isolation exercises 15-20kg
 
 NEVER recommend unrealistic increments like 2.5 lbs for dumbbells - the minimum is 5 lbs (2.5 kg)!
+
+🏋️ PERIODIZATION - VARY SETS/REPS BY EXERCISE TYPE (MANDATORY):
+
+❌ DO NOT use 3x10 for every exercise! This is lazy and ineffective programming.
+
+COMPOUND EXERCISES (Squat, Deadlift, Bench Press, Row, Overhead Press, Pull-Up):
+- Sets: 4-5
+- Reps: 5-8 (heavier weight, lower reps for strength)
+- Example: Barbell Squat 4x6, Bench Press 5x5, Deadlift 4x5
+
+ISOLATION EXERCISES (Curls, Extensions, Raises, Flyes, Kickbacks):
+- Sets: 3
+- Reps: 12-15 (lighter weight, higher reps for hypertrophy)
+- Example: Bicep Curl 3x12, Lateral Raise 3x15, Tricep Extension 3x15
+
+MACHINE/CABLE EXERCISES:
+- Sets: 3-4
+- Reps: 10-12
+- Example: Leg Press 3x12, Cable Fly 3x12, Lat Pulldown 4x10
+
+BODYWEIGHT EXERCISES:
+- Beginner: 3x8-10 (or to near failure)
+- Intermediate: 3x12-15
+- Advanced: 4x15+ or add weight
+
+SMALL MUSCLE GROUPS (Calves, Forearms, Rear Delts):
+- Sets: 3-4
+- Reps: 15-20 (higher reps for endurance muscles)
+- Example: Calf Raise 4x20, Wrist Curl 3x15
+
+⚠️ REST TIME VARIATION (VARY BY EXERCISE):
+- Compound Heavy (Squat, Deadlift, Bench): rest_seconds: 120-180
+- Compound Moderate (Row, Lunge, Press): rest_seconds: 90-120
+- Isolation (Curls, Extensions, Raises): rest_seconds: 60-90
+- Bodyweight/Machine: rest_seconds: 60-75
+
+EXAMPLE GOOD LEG WORKOUT (VARIED SETS/REPS):
+1. Barbell Squat: 4x6, rest: 150s (compound - low reps, long rest)
+2. Romanian Deadlift: 4x8, rest: 120s (compound - moderate)
+3. Leg Press: 3x12, rest: 90s (machine - higher reps)
+4. Leg Curl: 3x15, rest: 60s (isolation - high reps, short rest)
+5. Calf Raise: 4x20, rest: 45s (small muscle - endurance)
+
+EXAMPLE BAD WORKOUT (REJECTED - DO NOT DO THIS):
+❌ Squat 3x10, RDL 3x10, Leg Press 3x10, Leg Curl 3x10, Calf Raise 3x10 (all same!)
 
 🎯 WORKOUT NAME - BE EXTREMELY CREATIVE:
 Create a name that makes users PUMPED to work out! Use diverse vocabulary:
@@ -2313,6 +2428,12 @@ MANDATORY EQUIPMENT-BASED EXERCISES (include these when equipment is available):
 - barbell: Barbell Squat, Deadlift, Bench Press, Barbell Row, Overhead Press
 - cable_machine: Cable Fly, Face Pull, Tricep Pushdown, Cable Row, Lat Pulldown
 - machines: Leg Press, Chest Press Machine, Lat Pulldown, Leg Curl, Shoulder Press Machine
+- kettlebell/kettlebells: Kettlebell Swings, Goblet Squats, KB Clean & Press, KB Turkish Get-up, KB Deadlift, KB Snatch
+
+🔔 KETTLEBELL RULE: If "kettlebell" or "kettlebells" is in the equipment list:
+- Include AT LEAST 1 kettlebell exercise in every workout!
+- Kettlebells are excellent for: full body power, core stability, conditioning
+- Don't ignore this equipment - users specifically added it!
 
 FOR BEGINNERS WITH GYM ACCESS - THIS IS CRITICAL:
 Beginners benefit MORE from weighted exercises than bodyweight! Use machines and dumbbells for:
@@ -2329,7 +2450,26 @@ NOT: Push-ups, Planks, Bodyweight Squats (these are for home/no-equipment only!)
 - For advanced: higher intensity, complex movements, advanced techniques, less rest
 - For HELL difficulty: MAXIMUM intensity! Supersets, drop sets, minimal rest (30-45s), heavy weights, near-failure reps. This should be the hardest workout possible. Include at least 7-8 exercises with 4-5 sets each.
 - Align exercise selection with goals: {', '.join(goals) if goals else 'general fitness'}
-- Include variety - don't repeat the same movement pattern
+
+🚨 CRITICAL EXERCISE VARIETY RULES - MUST FOLLOW:
+- Each exercise MUST be a DIFFERENT movement pattern
+- NEVER include multiple variations of the same exercise type:
+  * NO: 2+ push-up variations (push-ups, diamond push-ups, decline push-ups, explosive push-ups)
+  * NO: 2+ curl variations (bicep curls, hammer curls, preacher curls)
+  * NO: 2+ squat variations (goblet squats, front squats, back squats, jump squats)
+  * NO: 2+ row variations (bent-over rows, cable rows, dumbbell rows)
+- Instead, vary movement patterns across the workout:
+  * Horizontal push (bench press, push-ups, fly)
+  * Vertical push (overhead press, lateral raise)
+  * Horizontal pull (rows)
+  * Vertical pull (pull-ups, pulldowns)
+  * Squat pattern (squats)
+  * Hinge pattern (deadlifts, RDLs)
+  * Lunge pattern (lunges, step-ups)
+  * Core work
+- Example GOOD chest workout: Bench Press, Cable Fly, Dips, Incline Dumbbell Press, Push-ups (only 1 push-up), Face Pulls
+- Example BAD chest workout: Push-ups, Diamond Push-ups, Decline Push-ups, Wide Push-ups, Explosive Push-ups (REJECTED - all same pattern!)
+
 - Each exercise should have helpful form notes
 
 🚨 FINAL VALIDATION CHECKLIST (You MUST verify before responding):
@@ -2337,6 +2477,13 @@ NOT: Push-ups, Planks, Bodyweight Squats (these are for home/no-equipment only!)
 2. ✅ Equipment check: If gym equipment available, AT LEAST 4-5 exercises use weights/machines
 3. ✅ Beginner check: If beginner + gym, mostly machine/dumbbell exercises (NOT bodyweight)
 4. ✅ No advanced calisthenics for beginners
+5. ✅ VARIETY CHECK: No more than 2 exercises per movement pattern (no 3+ push-ups, no 3+ curls)
+6. ✅ PERIODIZATION CHECK: Sets/reps MUST vary by exercise type (NOT all 3x10!)
+7. ✅ REST TIME CHECK: Rest times MUST vary (compounds: 120-180s, isolation: 60-90s)
+8. ✅ ADVANCED TECHNIQUES (MANDATORY for intermediate/advanced):
+   - INTERMEDIATE: Last exercise MUST have is_failure_set: true, notes: "AMRAP"
+   - ADVANCED: 2 exercises with is_failure_set: true, 1 with is_drop_set: true
+   - BEGINNER: ALL exercises have is_failure_set: false, is_drop_set: false
 
 If focus is "legs" - every exercise should target quads, hamstrings, glutes, or calves.
 If focus is "push" - every exercise should target chest, shoulders, or triceps.
@@ -2362,13 +2509,21 @@ If user has gym equipment - most exercises MUST use that equipment!"""
                     response_mime_type="application/json",
                     response_schema=GeneratedWorkoutResponse,
                     temperature=0.7,  # Higher creativity for unique workout names
-                    max_output_tokens=4000  # Increased for detailed workout plans
+                    max_output_tokens=8000  # Increased for detailed workout plans with set_targets
                 ),
             )
 
             # Use response.parsed for structured output - SDK handles JSON parsing
             parsed = response.parsed
             if not parsed:
+                # Debug: log raw response details
+                logger.error(f"[DEBUG] response.parsed is None!")
+                logger.error(f"[DEBUG] response.text exists: {bool(response.text)}")
+                if response.text:
+                    logger.error(f"[DEBUG] response.text (first 500): {response.text[:500]}")
+                if hasattr(response, 'candidates') and response.candidates:
+                    for i, cand in enumerate(response.candidates):
+                        logger.error(f"[DEBUG] candidate {i} finish_reason: {cand.finish_reason}")
                 raise ValueError("Gemini returned empty workout response")
 
             workout_data = parsed.model_dump()
@@ -2399,6 +2554,8 @@ If user has gym equipment - most exercises MUST use that equipment!"""
         goals: List[str],
         equipment: List[str],
         duration_minutes: int = 45,
+        duration_minutes_min: Optional[int] = None,
+        duration_minutes_max: Optional[int] = None,
         focus_areas: Optional[List[str]] = None,
         avoid_name_words: Optional[List[str]] = None,
         workout_date: Optional[str] = None,
@@ -2500,7 +2657,13 @@ If user has gym equipment - most exercises MUST use that equipment!"""
                 logger.info(f"[Streaming] Including progression philosophy for leverage-based progressions")
                 progression_instruction = progression_philosophy
 
-            prompt = f"""Generate a {duration_minutes}-minute workout for:
+            # Build duration text - use range if both min and max provided
+            if duration_minutes_min and duration_minutes_max and duration_minutes_min != duration_minutes_max:
+                duration_text = f"{duration_minutes_min}-{duration_minutes_max}"
+            else:
+                duration_text = str(duration_minutes)
+
+            prompt = f"""Generate a {duration_text}-minute workout for:
 - Fitness Level: {fitness_level}
 - Goals: {', '.join(goals) if goals else 'General fitness'}
 - Equipment: {', '.join(equipment) if equipment else 'Bodyweight only'}
@@ -2512,6 +2675,8 @@ Return ONLY valid JSON (no markdown):
   "type": "strength",
   "difficulty": "{difficulty}",
   "duration_minutes": {duration_minutes},
+  "duration_minutes_min": {duration_minutes_min or 'null'},
+  "duration_minutes_max": {duration_minutes_max or 'null'},
   "target_muscles": ["muscle1", "muscle2"],
   "exercises": [
     {{"name": "Exercise", "sets": 3, "reps": 12, "rest_seconds": 60, "equipment": "equipment", "muscle_group": "muscle", "notes": "tips"}}

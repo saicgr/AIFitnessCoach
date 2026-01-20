@@ -143,6 +143,7 @@ class MainShell extends ConsumerWidget {
               ),
             ),
           ),
+          // Note: Workout mini player is now handled globally in app.dart
           // Floating draggable AI Coach button
           _DraggableAICoachButton(
             onTap: () {

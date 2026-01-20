@@ -52,7 +52,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
   ];
 
   late AnimationController _progressController;
-  StreamSubscription<ProgramGenerationProgress>? _generationSubscription;
+  StreamSubscription<WorkoutGenerationProgress>? _generationSubscription;
 
   @override
   void initState() {
@@ -92,19 +92,17 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
       final selectedDays = quizData.workoutDays ?? [1, 3, 5]; // Default Mon/Wed/Fri
       final workoutDuration = quizData.workoutDuration ?? 45;
 
-      // Only generate 1 workout (today's or next workout day)
+      // Generate 1 workout for today or next workout day
       _totalWorkouts = 1;
 
       // Simulate step progression while waiting for stream
       _animateSteps();
 
-      // Start streaming workout generation - only generate 1 workout
+      // Start streaming single workout generation
       final repository = ref.read(workoutRepositoryProvider);
-      final stream = repository.generateMonthlyWorkoutsStreaming(
+      final stream = repository.generateWorkoutStreaming(
         userId: userId,
-        selectedDays: selectedDays,
         durationMinutes: workoutDuration,
-        maxWorkouts: 1, // Only generate today's or next workout day
       );
 
       _generationSubscription = stream.listen(
@@ -112,19 +110,16 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
           if (!mounted) return;
 
           setState(() {
-            _generatedWorkouts = progress.currentWorkout;
-            if (progress.totalWorkouts > 0) {
-              _totalWorkouts = progress.totalWorkouts;
-            }
-
-            // Update progress based on workouts generated
-            if (_totalWorkouts > 0) {
-              _progress = _generatedWorkouts / _totalWorkouts;
-            }
-
-            // Move to generating step when workouts start appearing
-            if (progress.currentWorkout > 0 && _currentStep < 4) {
-              _currentStep = 4;
+            // Update progress based on status
+            if (progress.status == WorkoutGenerationStatus.completed) {
+              _generatedWorkouts = 1;
+              _progress = 1.0;
+              _currentStep = _steps.length;
+            } else if (progress.status == WorkoutGenerationStatus.progress) {
+              _progress = 0.5;
+              if (_currentStep < 4) {
+                _currentStep = 4;
+              }
             }
           });
         },
@@ -132,7 +127,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
           debugPrint('❌ [WorkoutGeneration] Error: $error');
           if (mounted) {
             setState(() {
-              _errorMessage = 'Failed to generate workouts. Please try again.';
+              _errorMessage = 'Failed to generate workout. Please try again.';
               _isGenerating = false;
             });
           }
@@ -147,11 +142,6 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
             });
 
             // Navigate to home after showing completion
-            // Use a 1.5 second delay to:
-            // 1. Show the completion UI to the user
-            // 2. Allow the database write to fully propagate
-            // This prevents a race condition where the home screen's /workouts/today
-            // query runs before the workout is visible in the database.
             Future.delayed(const Duration(milliseconds: 1500), () {
               if (mounted) {
                 context.go('/home');

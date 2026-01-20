@@ -170,6 +170,8 @@ def row_to_user(row: dict, is_new_user: bool = False, support_friend_added: bool
         activity_level=get_with_fallback("activity_level"),
         # Detailed equipment with quantities and weights
         equipment_details=row.get("equipment_details"),
+        # Weight unit preference (kg or lbs)
+        weight_unit=row.get("weight_unit") or "kg",
     )
 
 
@@ -1120,6 +1122,11 @@ async def update_user(user_id: str, user: UserUpdate):
         if user.activity_level is not None:
             update_data["activity_level"] = user.activity_level
 
+        # Handle weight unit preference (kg or lbs)
+        if user.weight_unit is not None:
+            update_data["weight_unit"] = user.weight_unit
+            logger.info(f"Updating weight_unit for user {user_id}: {user.weight_unit}")
+
         # Handle FCM token and device platform for push notifications
         if user.fcm_token is not None:
             update_data["fcm_token"] = user.fcm_token
@@ -1148,6 +1155,22 @@ async def update_user(user_id: str, user: UserUpdate):
         if user.equipment_details is not None:
             update_data["equipment_details"] = user.equipment_details
             logger.info(f"Updating equipment_details for user {user_id}: {len(user.equipment_details)} items")
+
+        # Handle primary training goal
+        if user.primary_goal is not None:
+            update_data["primary_goal"] = user.primary_goal
+            logger.info(f"Updating primary_goal for user {user_id}: {user.primary_goal}")
+
+        # Handle muscle focus points (validate max 5 points)
+        if user.muscle_focus_points is not None:
+            total_points = sum(user.muscle_focus_points.values()) if user.muscle_focus_points else 0
+            if total_points > 5:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Muscle focus points cannot exceed 5. Current total: {total_points}"
+                )
+            update_data["muscle_focus_points"] = user.muscle_focus_points
+            logger.info(f"Updating muscle_focus_points for user {user_id}: {user.muscle_focus_points}")
 
         logger.info(f"🔍 [DEBUG] Final update_data to save: {update_data}")
         if update_data:

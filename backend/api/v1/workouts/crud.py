@@ -600,17 +600,6 @@ async def complete_workout(
             supabase=supabase,
         )
 
-        # =====================================================================
-        # Generate Next Workout (one-at-a-time generation)
-        # =====================================================================
-        # Instead of batch-generating 2 weeks of workouts, we generate just
-        # the next workout after each completion. This provides immediate
-        # feedback and workouts appear one-by-one in the Upcoming section.
-        background_tasks.add_task(
-            _generate_next_workout_for_user,
-            user_id=user_id,
-        )
-
         await index_workout_to_rag(workout)
 
         # =====================================================================
@@ -1151,67 +1140,6 @@ async def recalculate_user_fitness_score(user_id: str, supabase):
 
     except Exception as e:
         logger.error(f"Background: Failed to recalculate fitness score: {e}")
-
-
-async def _generate_next_workout_for_user(user_id: str, retry_count: int = 0):
-    """
-    Background task to generate the next single workout for a user.
-
-    Called after workout completion to enable one-at-a-time (JIT) workout generation.
-    This ensures workouts appear one-by-one in the Upcoming section instead of
-    batch-generating 2 weeks of workouts all at once.
-
-    Key principle: A workout should ALWAYS exist for the user. After completing
-    today's workout, the next workout day's workout is immediately generated.
-
-    Args:
-        user_id: The user's ID
-        retry_count: Number of retry attempts (max 2)
-    """
-    import traceback
-
-    try:
-        logger.info(f"[JIT Generation] Starting next workout generation for user {user_id} (attempt {retry_count + 1})")
-
-        # Import here to avoid circular dependency
-        from .background import generate_next_workout
-        from fastapi import BackgroundTasks
-
-        # Create a BackgroundTasks instance for the endpoint
-        background_tasks = BackgroundTasks()
-
-        # Call the generate-next endpoint logic
-        result = await generate_next_workout(user_id, background_tasks)
-
-        # Log the result with context
-        if result.get("needs_generation"):
-            logger.info(f"[JIT Generation] Scheduled generation for user {user_id}: job_id={result.get('job_id')}, next_date={result.get('next_workout_date')}")
-        elif result.get("already_generating"):
-            logger.info(f"[JIT Generation] Already generating for user {user_id}: job_id={result.get('job_id')}")
-        elif not result.get("needs_generation") and result.get("success"):
-            logger.info(f"[JIT Generation] Workout already exists for user {user_id} on {result.get('next_workout_date')}")
-        else:
-            logger.warning(f"[JIT Generation] Unexpected result for user {user_id}: {result}")
-
-        # Execute any scheduled background tasks
-        for task in background_tasks.tasks:
-            await task()
-
-        logger.info(f"[JIT Generation] Completed for user {user_id}: {result}")
-
-    except Exception as e:
-        error_trace = traceback.format_exc()
-        logger.error(f"[JIT Generation] Failed for user {user_id}: {e}\n{error_trace}")
-
-        # Retry up to 2 times with exponential backoff
-        if retry_count < 2:
-            import asyncio
-            wait_time = (retry_count + 1) * 5  # 5s, 10s
-            logger.info(f"[JIT Generation] Retrying in {wait_time}s for user {user_id} (attempt {retry_count + 2})")
-            await asyncio.sleep(wait_time)
-            await _generate_next_workout_for_user(user_id, retry_count + 1)
-        else:
-            logger.error(f"[JIT Generation] All retries exhausted for user {user_id}. User may need to manually generate.")
 
 
 async def populate_performance_logs(

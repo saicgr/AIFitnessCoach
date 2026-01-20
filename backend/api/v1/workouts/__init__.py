@@ -8,7 +8,6 @@ from the following submodules:
 - versioning: SCD2 version management
 - suggestions: AI workout suggestions
 - warmup_stretch: Warmup and stretch operations
-- background: Background job management
 - exercises: Exercise modifications
 - exit_tracking: Workout exit/quit tracking
 - program: Program customization
@@ -26,7 +25,6 @@ from .generation import router as generation_router
 from .versioning import router as versioning_router
 from .suggestions import router as suggestions_router
 from .warmup_stretch import router as warmup_stretch_router
-from .background import router as background_router
 from .exercises import router as exercises_router
 from .exit_tracking import router as exit_tracking_router
 from .program import router as program_router
@@ -66,9 +64,6 @@ router.include_router(suggestions_router)
 # Warmup and stretch endpoints
 router.include_router(warmup_stretch_router)
 
-# Background job endpoints
-router.include_router(background_router)
-
 # Exercise modification endpoints
 router.include_router(exercises_router)
 
@@ -106,10 +101,6 @@ from .utils import (
     index_workout_to_rag,
     parse_json_field,
     get_recently_used_exercises,
-    get_workout_focus,
-    calculate_workout_date,
-    calculate_monthly_dates,
-    extract_name_words,
     get_workout_rag_service,
     enrich_exercises_with_video_urls,
 )
@@ -121,10 +112,6 @@ __all__ = [
     'index_workout_to_rag',
     'parse_json_field',
     'get_recently_used_exercises',
-    'get_workout_focus',
-    'calculate_workout_date',
-    'calculate_monthly_dates',
-    'extract_name_words',
     'get_workout_rag_service',
     'enrich_exercises_with_video_urls',
 ]

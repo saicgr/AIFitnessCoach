@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-/// Header for quiz screens with back button, question counter, and skip option.
+/// Header for quiz screens with back button and question counter.
 class QuizHeader extends StatelessWidget {
   final int currentQuestion;
   final int totalQuestions;
   final bool canGoBack;
   final VoidCallback onBack;
-  final VoidCallback onSkip;
   /// Optional callback for first question to go back to welcome screen
   final VoidCallback? onBackToWelcome;
 
@@ -17,7 +16,6 @@ class QuizHeader extends StatelessWidget {
     required this.totalQuestions,
     required this.canGoBack,
     required this.onBack,
-    required this.onSkip,
     this.onBackToWelcome,
   });
 
@@ -61,17 +59,8 @@ class QuizHeader extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          const Spacer(),
-          TextButton(
-            onPressed: onSkip,
-            child: Text(
-              'Skip',
-              style: TextStyle(
-                color: textSecondary,
-                fontSize: 14,
-              ),
-            ),
-          ),
+          // Placeholder for symmetry
+          const SizedBox(width: 48),
         ],
       ),
     ).animate().fadeIn(duration: 300.ms);

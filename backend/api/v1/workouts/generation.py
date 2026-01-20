@@ -5,11 +5,10 @@ This module handles AI-powered workout generation:
 - POST /generate - Generate a single workout
 - POST /generate-stream - Generate a single workout with streaming
 - POST /generate-from-mood-stream - Generate quick workout based on mood
-- POST /generate-weekly - Generate workouts for a week
-- POST /generate-monthly - Generate workouts for a month
-- POST /generate-remaining - Generate remaining workouts for a month
 - POST /swap - Swap workout date
 - POST /swap-exercise - Swap an exercise within a workout
+- POST /add-exercise - Add an exercise to a workout
+- POST /extend - Extend a workout with more exercises
 """
 import json
 import asyncio
@@ -24,8 +23,6 @@ from core.logger import get_logger
 from models.schemas import (
     Workout, GenerateWorkoutRequest, SwapWorkoutsRequest, SwapExerciseRequest,
     AddExerciseRequest, ExtendWorkoutRequest,
-    GenerateWeeklyRequest, GenerateWeeklyResponse,
-    GenerateMonthlyRequest, GenerateMonthlyResponse,
 )
 from services.gemini_service import GeminiService, validate_set_targets_strict
 from services.exercise_library_service import get_exercise_library_service
@@ -43,10 +40,6 @@ from .utils import (
     parse_json_field,
     get_all_equipment,
     get_recently_used_exercises,
-    get_workout_focus,
-    calculate_workout_date,
-    calculate_monthly_dates,
-    extract_name_words,
     get_user_strength_history,
     get_user_favorite_exercises,
     get_user_consistency_mode,
@@ -120,6 +113,10 @@ async def generate_workout(request: GenerateWorkoutRequest):
         db = get_supabase_db()
         equipment_details = []  # Initialize to empty, may be populated from user data
 
+        # Initialize new training customization fields
+        primary_goal = None
+        muscle_focus_points = None
+
         if request.fitness_level and request.goals and request.equipment:
             fitness_level = request.fitness_level
             goals = request.goals
@@ -141,6 +138,14 @@ async def generate_workout(request: GenerateWorkoutRequest):
             # This ensures beginners get 'easy' difficulty, not 'medium'
             intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
             workout_environment = preferences.get("workout_environment")
+
+            # Get primary training goal and muscle focus points for workout customization
+            primary_goal = user.get("primary_goal")
+            muscle_focus_points = user.get("muscle_focus_points")
+            if muscle_focus_points:
+                logger.info(f"🏋️ [Workout Generation] User has muscle focus points: {muscle_focus_points}")
+            if primary_goal:
+                logger.info(f"🎯 [Workout Generation] User has primary goal: {primary_goal}")
 
         # Fetch user's custom exercises
         logger.info(f"🏋️ [Workout Generation] Fetching custom exercises for user: {request.user_id}")
@@ -243,12 +248,24 @@ async def generate_workout(request: GenerateWorkoutRequest):
                 progression_philosophy=combined_context if combined_context else None,
                 workout_patterns_context=workout_patterns_context if workout_patterns_context else None,
                 set_type_context=set_type_context if set_type_context else None,
+                primary_goal=primary_goal,
+                muscle_focus_points=muscle_focus_points,
             )
 
             exercises = workout_data.get("exercises", [])
             workout_name = workout_data.get("name", "Generated Workout")
-            workout_type = workout_data.get("type", request.workout_type or "strength")
             difficulty = workout_data.get("difficulty", intensity_preference)
+
+            # Infer workout type from focus area for PPL tracking
+            # This ensures workout_type is set correctly even when Gemini doesn't specify it
+            from api.v1.workouts.utils import infer_workout_type_from_focus
+
+            raw_type = workout_data.get("type", request.workout_type)
+            if request.focus_areas and len(request.focus_areas) > 0:
+                workout_type = infer_workout_type_from_focus(request.focus_areas[0])
+                logger.info(f"🎯 [Type] Inferred workout type '{workout_type}' from focus '{request.focus_areas[0]}'")
+            else:
+                workout_type = raw_type or "strength"
 
             # POST-GENERATION VALIDATION: Filter out any exercises that violate user preferences
             # This is a safety net in case the AI still includes avoided exercises
@@ -317,6 +334,84 @@ async def generate_workout(request: GenerateWorkoutRequest):
                         logger.info(f"🎯 [Validation] Limited {removed_count} exercises targeting reduced muscles (max 1 per muscle)")
                         exercises = new_exercises
 
+            # Filter similar exercises to ensure movement pattern diversity
+            # This prevents workouts like "6 push-up variations" by limiting MAX 2 per pattern
+            from services.exercise_rag.filters import is_similar_exercise, get_movement_pattern
+
+            # Phase 2: Deduplicate by movement pattern - MAX 2 exercises per pattern
+            MAX_PER_PATTERN = 2
+            pattern_counts = {}
+            original_exercise_count = len(exercises)
+            deduplicated_exercises = []
+            seen_exercise_names = []
+
+            for ex in exercises:
+                ex_name = ex.get("name", "") or ex.get("exercise_name", "")
+                pattern = get_movement_pattern(ex_name)
+
+                # First check: Is this an exact duplicate of a seen exercise?
+                is_duplicate = False
+                for seen_name in seen_exercise_names:
+                    if is_similar_exercise(ex_name, seen_name, check_movement_pattern=False):
+                        is_duplicate = True
+                        filtered_exercises.append(ex)  # Mark for auto-substitution
+                        logger.debug(f"🔄 [Variety] Filtered duplicate: '{ex_name}' (same as '{seen_name}')")
+                        break
+
+                if is_duplicate:
+                    continue
+
+                # Second check: Movement pattern limit (MAX 2 per pattern)
+                if pattern:
+                    current_count = pattern_counts.get(pattern, 0)
+                    if current_count >= MAX_PER_PATTERN:
+                        filtered_exercises.append(ex)
+                        logger.debug(f"🔄 [Variety] Filtered '{ex_name}' - pattern '{pattern}' has {current_count} exercises (max {MAX_PER_PATTERN})")
+                        continue
+                    pattern_counts[pattern] = current_count + 1
+
+                seen_exercise_names.append(ex_name)
+                deduplicated_exercises.append(ex)
+
+            if len(deduplicated_exercises) < original_exercise_count:
+                removed_count = original_exercise_count - len(deduplicated_exercises)
+                logger.warning(f"⚠️ [Validation] Removed {removed_count} exercises due to pattern limits (MAX {MAX_PER_PATTERN} per pattern)")
+                logger.info(f"📊 [Patterns] Final pattern distribution: {pattern_counts}")
+                exercises = deduplicated_exercises
+
+            # Phase 3: Validate equipment utilization - warn if workouts don't match user's equipment
+            # This helps identify when Gemini is generating suboptimal equipment choices
+            equipment_lower = [eq.lower() for eq in equipment] if equipment else []
+            has_gym_equipment = any(eq in equipment_lower for eq in ["full_gym", "dumbbells", "barbell", "cable_machine", "machines"])
+
+            if has_gym_equipment and exercises:
+                bodyweight_count = sum(
+                    1 for ex in exercises
+                    if (ex.get("equipment", "") or "").lower() in ["bodyweight", "body weight", ""]
+                )
+                bodyweight_ratio = bodyweight_count / len(exercises)
+
+                if bodyweight_ratio > 0.4:  # Lowered threshold from 0.5 to 0.4
+                    logger.warning(
+                        f"⚠️ [Equipment] High bodyweight ratio ({bodyweight_ratio:.0%}) "
+                        f"despite gym equipment available: {equipment}"
+                    )
+                    # Log which equipment was available but not used
+                    used_equipment = set(ex.get("equipment", "").lower() for ex in exercises)
+                    unused_equipment = [eq for eq in equipment if eq.lower() not in used_equipment and eq != "bodyweight"]
+                    if unused_equipment:
+                        logger.info(f"📋 [Equipment] Unused equipment: {unused_equipment}")
+
+                # Check kettlebell usage specifically
+                if "kettlebell" in equipment_lower or "kettlebells" in equipment_lower:
+                    kb_count = sum(
+                        1 for ex in exercises
+                        if "kettlebell" in (ex.get("equipment", "") or "").lower()
+                        or "kb" in (ex.get("name", "") or "").lower()
+                    )
+                    if kb_count == 0:
+                        logger.warning(f"⚠️ [Equipment] Kettlebell available but NOT used in any exercise!")
+
             # Auto-substitute filtered exercises with safe alternatives
             if filtered_exercises and exercises:
                 exercises = await auto_substitute_filtered_exercises(
@@ -346,6 +441,71 @@ async def generate_workout(request: GenerateWorkoutRequest):
                     exercises, one_rm_data, training_intensity, intensity_overrides
                 )
                 logger.info(f"💪 [Weight Personalization] Applied 1RM-based weights to exercises")
+
+            # Phase 7: Infer weights for exercises still missing weight_kg
+            # This provides fallback weight recommendations based on exercise type and fitness level
+            from core.weight_utils import get_starting_weight, detect_equipment_type
+
+            weights_inferred = 0
+            for ex in exercises:
+                weight_kg = ex.get("weight_kg")
+                # Check if weight is missing or invalid
+                if weight_kg is None or weight_kg == 0 or str(weight_kg).lower() == "not set":
+                    ex_equipment = (ex.get("equipment") or "").lower()
+                    # Only infer for weighted exercises (not bodyweight)
+                    if ex_equipment not in ["bodyweight", "body weight", ""]:
+                        ex_name = ex.get("name", "") or ex.get("exercise_name", "")
+                        detected_equipment = detect_equipment_type(ex_name, equipment)
+                        inferred_weight = get_starting_weight(
+                            exercise_name=ex_name,
+                            equipment_type=detected_equipment,
+                            fitness_level=fitness_level or "intermediate",
+                        )
+                        if inferred_weight and inferred_weight > 0:
+                            ex["weight_kg"] = inferred_weight
+                            weights_inferred += 1
+                            logger.debug(f"💪 Inferred weight for {ex_name}: {inferred_weight}kg ({detected_equipment})")
+
+            if weights_inferred > 0:
+                logger.info(f"💪 [Weight Inference] Inferred weights for {weights_inferred} exercises missing weight_kg")
+
+            # Phase 8: Enforce advanced techniques for intermediate/advanced users
+            # This is a safety net in case Gemini doesn't set is_failure_set/is_drop_set
+            if exercises and fitness_level and fitness_level.lower() in ["intermediate", "advanced"]:
+                # Check if any exercises have advanced techniques
+                has_failure_set = any(ex.get("is_failure_set") for ex in exercises)
+                has_drop_set = any(ex.get("is_drop_set") for ex in exercises)
+
+                # If no failure sets for intermediate/advanced, add to last isolation exercise
+                if not has_failure_set:
+                    # Find last isolation exercise (curls, extensions, raises, flyes)
+                    isolation_keywords = ["curl", "extension", "raise", "fly", "flye", "kickback", "pulldown", "pushdown"]
+                    for ex in reversed(exercises):
+                        ex_name = (ex.get("name") or "").lower()
+                        if any(kw in ex_name for kw in isolation_keywords):
+                            ex["is_failure_set"] = True
+                            ex["notes"] = (ex.get("notes") or "") + " Final set: AMRAP (to failure)"
+                            logger.info(f"🔥 [Advanced Tech] Added failure set to '{ex.get('name')}'")
+                            break
+                    else:
+                        # If no isolation found, add to last exercise
+                        if exercises:
+                            exercises[-1]["is_failure_set"] = True
+                            exercises[-1]["notes"] = (exercises[-1].get("notes") or "") + " Final set: AMRAP"
+                            logger.info(f"🔥 [Advanced Tech] Added failure set to last exercise '{exercises[-1].get('name')}'")
+
+                # For advanced users, also add drop set if missing
+                if fitness_level.lower() == "advanced" and not has_drop_set:
+                    for ex in reversed(exercises):
+                        ex_name = (ex.get("name") or "").lower()
+                        if any(kw in ex_name for kw in isolation_keywords):
+                            if not ex.get("is_failure_set"):  # Don't double-up on same exercise
+                                ex["is_drop_set"] = True
+                                ex["drop_set_count"] = 2
+                                ex["drop_set_percentage"] = 20
+                                ex["notes"] = (ex.get("notes") or "") + " Drop set: reduce weight 20% twice"
+                                logger.info(f"🔥 [Advanced Tech] Added drop set to '{ex.get('name')}'")
+                                break
 
             # CRITICAL SAFETY NET: Validate and cap exercise parameters
             # This prevents extreme workouts like 90 squats from reaching users
@@ -731,13 +891,26 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 yield f"event: error\ndata: {json.dumps({'error': 'Failed to parse workout data'})}\n\n"
                 return
 
+            # Determine scheduled date - use provided date or default to today
+            if body.scheduled_date:
+                # Parse and validate the provided date
+                try:
+                    scheduled_dt = datetime.strptime(body.scheduled_date, "%Y-%m-%d")
+                    scheduled_date_str = scheduled_dt.isoformat()
+                    logger.info(f"📅 [Streaming] Using provided scheduled_date: {body.scheduled_date}")
+                except ValueError:
+                    logger.warning(f"⚠️ Invalid scheduled_date format: {body.scheduled_date}, using today")
+                    scheduled_date_str = datetime.now().isoformat()
+            else:
+                scheduled_date_str = datetime.now().isoformat()
+
             # Save to database
             workout_db_data = {
                 "user_id": body.user_id,
                 "name": workout_name,
                 "type": workout_type,
                 "difficulty": difficulty,
-                "scheduled_date": datetime.now().isoformat(),
+                "scheduled_date": scheduled_date_str,
                 "exercises_json": exercises,
                 "duration_minutes": body.duration_minutes or 45,
                 "generation_method": "ai",
@@ -1675,6 +1848,23 @@ async def swap_exercise_in_workout(request: SwapExerciseRequest):
             request.new_exercise_name
         )
 
+        # Log the swap to exercise_swaps table for analytics & AI learning
+        try:
+            db.client.table("exercise_swaps").insert({
+                "user_id": workout.get("user_id"),
+                "workout_id": request.workout_id,
+                "original_exercise": request.old_exercise_name,
+                "new_exercise": request.new_exercise_name,
+                "swap_reason": request.reason,
+                "swap_source": request.swap_source or "ai_suggestion",
+                "exercise_index": i,
+                "workout_phase": "main",
+            }).execute()
+            logger.info(f"Logged swap to exercise_swaps: {request.old_exercise_name} -> {request.new_exercise_name}")
+        except Exception as e:
+            logger.warning(f"Failed to log swap to exercise_swaps: {e}")
+            # Don't fail the swap if logging fails
+
         updated_workout = row_to_workout(updated)
 
         # Log detailed swap info
@@ -1779,1860 +1969,6 @@ async def add_exercise_to_workout(request: AddExerciseRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to add exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/generate-weekly", response_model=GenerateWeeklyResponse)
-async def generate_weekly_workouts(request: GenerateWeeklyRequest):
-    """Generate workouts for multiple days in a week."""
-    logger.info(f"Generating weekly workouts for user {request.user_id}")
-
-    try:
-        db = get_supabase_db()
-
-        user = db.get_user(request.user_id)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        fitness_level = user.get("fitness_level") or "intermediate"
-        goals = parse_json_field(user.get("goals"), [])
-        # Get all equipment including custom user-added equipment
-        equipment = get_all_equipment(user)
-        preferences = parse_json_field(user.get("preferences"), {})
-        training_split = preferences.get("training_split", "full_body")
-        # Use explicit intensity_preference if set, otherwise derive from fitness level
-        intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
-        # Get workout type preference (strength, cardio, mixed) - addresses competitor feedback
-        workout_type_preference = preferences.get("workout_type_preference", "strength")
-        # Get custom program description for custom training goals
-        custom_program_description = preferences.get("custom_program_description")
-        # Get workout environment for environment-aware workout generation
-        workout_environment = preferences.get("workout_environment")
-        # Get equipment counts for single dumbbell/kettlebell filtering
-        dumbbell_count = preferences.get("dumbbell_count", 2)
-        kettlebell_count = preferences.get("kettlebell_count", 1)
-        # Get age and activity level for personalized workouts
-        user_age = user.get("age")
-        user_activity_level = user.get("activity_level")
-        # Get focus areas for custom programs
-        focus_areas = parse_json_field(user.get("focus_areas"), [])
-
-        # Fetch user's custom exercises for weekly generation
-        logger.info(f"🏋️ [Weekly Generation] Fetching custom exercises for user: {request.user_id}")
-        custom_exercises = []
-        try:
-            custom_result = db.client.table("exercises").select(
-                "name", "primary_muscle", "equipment", "default_sets", "default_reps"
-            ).eq("is_custom", True).eq("created_by_user_id", request.user_id).execute()
-            if custom_result.data:
-                custom_exercises = custom_result.data
-                exercise_names = [ex.get("name") for ex in custom_exercises]
-                logger.info(f"✅ [Weekly Generation] Found {len(custom_exercises)} custom exercises: {exercise_names}")
-            else:
-                logger.info(f"🏋️ [Weekly Generation] No custom exercises found for user {request.user_id}")
-        except Exception as e:
-            logger.warning(f"⚠️ [Weekly Generation] Failed to fetch custom exercises: {e}")
-
-        workout_focus_map = get_workout_focus(training_split, request.selected_days, focus_areas)
-        generated_workouts = []
-        gemini_service = GeminiService()
-        exercise_rag = get_exercise_rag_service()
-
-        # Check user's consistency mode preference
-        consistency_mode = await get_user_consistency_mode(request.user_id)
-        logger.info(f"User consistency mode: {consistency_mode}")
-
-        # Get recently used exercises
-        used_exercises: List[str] = []
-        recently_used_for_boost: List[str] = []  # For consistency mode positive boost
-
-        if consistency_mode == "vary":
-            # Vary mode: avoid recently used exercises for variety
-            used_exercises = await get_recently_used_exercises(request.user_id, days=7)
-            logger.info(f"Starting weekly generation with {len(used_exercises)} exercises to avoid (vary mode)")
-        else:
-            # Consistent mode: prefer recently used exercises
-            # Get recent exercises for POSITIVE boost (not avoidance)
-            recently_used_for_boost = await get_recently_used_exercises(request.user_id, days=14)
-            logger.info(f"Starting weekly generation in consistent mode - will boost {len(recently_used_for_boost)} recent exercises")
-
-        # Get adaptive workout service for varied parameters
-        from services.adaptive_workout_service import get_adaptive_workout_service
-        adaptive_service = get_adaptive_workout_service(db.client)
-
-        # Fetch user's strength history from ChromaDB - addresses "weird weights" issue
-        strength_history = await get_user_strength_history(request.user_id)
-        if strength_history:
-            logger.info(f"Loaded strength history for {len(strength_history)} exercises")
-
-        # Fetch user's personal bests for personalized notes
-        personal_bests = await get_user_personal_bests(request.user_id)
-        if personal_bests:
-            logger.info(f"Loaded PRs for {len(personal_bests)} exercises")
-
-        # Fetch user's favorite exercises for prioritization
-        favorite_exercises = await get_user_favorite_exercises(request.user_id)
-        if favorite_exercises:
-            logger.info(f"User has {len(favorite_exercises)} favorite exercises")
-
-        # Fetch user's staple exercises (never rotated out)
-        staple_exercises = await get_user_staple_exercises(request.user_id)
-        if staple_exercises:
-            logger.info(f"User has {len(staple_exercises)} staple exercises: {staple_exercises}")
-
-        # Fetch user's variation percentage preference
-        variation_percentage = await get_user_variation_percentage(request.user_id)
-        logger.info(f"User variation percentage: {variation_percentage}%")
-
-        # Fetch user's 1RM data and training intensity for percentage-based training
-        one_rm_data = await get_user_1rm_data(request.user_id)
-        training_intensity = await get_user_training_intensity(request.user_id)
-        intensity_overrides = await get_user_intensity_overrides(request.user_id)
-        if one_rm_data:
-            logger.info(f"Loaded {len(one_rm_data)} 1RMs for percentage-based training at {training_intensity}%")
-
-        # Fetch user's avoided exercises and muscles
-        avoided_exercises = await get_user_avoided_exercises(request.user_id)
-        avoided_muscles = await get_user_avoided_muscles(request.user_id)
-        if avoided_exercises:
-            logger.info(f"User has {len(avoided_exercises)} avoided exercises")
-        if avoided_muscles.get("avoid") or avoided_muscles.get("reduce"):
-            logger.info(f"User avoided muscles - avoid: {avoided_muscles.get('avoid')}, reduce: {avoided_muscles.get('reduce')}")
-
-        # Fetch user's progression pace and workout type preference
-        progression_pace = await get_user_progression_pace(request.user_id)
-        workout_type_pref = await get_user_workout_type_preference(request.user_id)
-        logger.info(f"User progression_pace: {progression_pace}, workout_type_preference: {workout_type_pref}")
-
-        # Fetch feedback-based difficulty adjustment
-        # This analyzes recent exercise feedback to determine if workouts should be harder/easier
-        difficulty_adjustment, difficulty_recommendation = await get_user_difficulty_adjustment(request.user_id)
-        if difficulty_adjustment != 0:
-            logger.info(f"🎯 [Feedback Loop] Applying difficulty_adjustment={difficulty_adjustment:+d}: {difficulty_recommendation}")
-        else:
-            logger.info(f"🎯 [Feedback Loop] No difficulty adjustment needed: {difficulty_recommendation}")
-
-        # HELL MODE: Boost difficulty adjustment to prefer harder exercises from database
-        if intensity_preference == "hell":
-            hell_mode_boost = 3  # Strong preference for advanced exercises
-            difficulty_adjustment = min(5, difficulty_adjustment + hell_mode_boost)  # Cap at +5
-            logger.info(f"🔥 [HELL MODE] Boosted difficulty_adjustment to {difficulty_adjustment:+d} - selecting harder exercises")
-
-        # Fetch comeback context for break detection
-        comeback_context = await get_comeback_context(request.user_id)
-        if comeback_context.get("needs_comeback"):
-            break_status = comeback_context.get("break_status", {})
-            logger.info(
-                f"🔄 [Comeback] User returning after {break_status.get('days_off', 0)} days "
-                f"({break_status.get('break_type', 'unknown')}), applying comeback adjustments"
-            )
-            # Start comeback mode if not already started
-            await start_comeback_mode_if_needed(request.user_id)
-
-        # Fetch progression context and rep preferences for leverage-based progressions
-        rep_preferences = await get_user_rep_preferences(request.user_id)
-        progression_context = await get_user_progression_context(request.user_id)
-
-        # Build progression philosophy prompt
-        progression_philosophy = build_progression_philosophy_prompt(
-            rep_preferences=rep_preferences,
-            progression_context=progression_context,
-        )
-        if progression_context.get("mastered_exercises"):
-            logger.info(f"[Weekly Generation] User has {len(progression_context['mastered_exercises'])} mastered exercises for progression")
-
-        # Fetch user's historical workout patterns and set/rep limits
-        logger.info(f"[Weekly Generation] Fetching workout patterns and set/rep limits for user: {request.user_id}")
-        workout_patterns = await get_user_workout_patterns(request.user_id)
-        workout_patterns_context = workout_patterns.get("historical_context", "")
-        set_rep_limits = workout_patterns.get("set_rep_limits", {})
-        exercise_patterns = workout_patterns.get("exercise_patterns", {})
-
-        if set_rep_limits.get("max_sets_per_exercise", 5) < 5:
-            logger.info(f"[Weekly Generation] User has set max_sets_per_exercise: {set_rep_limits.get('max_sets_per_exercise')}")
-        if set_rep_limits.get("max_reps_per_set", 15) < 15:
-            logger.info(f"[Weekly Generation] User has set max_reps_per_set: {set_rep_limits.get('max_reps_per_set')}")
-
-        # Fetch set type preferences for personalized drop set / failure set recommendations
-        logger.info(f"[Weekly Generation] Fetching set type preferences for user: {request.user_id}")
-        set_type_prefs = await get_user_set_type_preferences(request.user_id, supabase_client=db.client)
-        set_type_context = build_set_type_context(set_type_prefs)
-        if set_type_prefs:
-            advanced_types = [k for k in set_type_prefs.keys() if k not in ["working", "warmup"]]
-            if advanced_types:
-                logger.info(f"[Weekly Generation] User has history with set types: {advanced_types}")
-
-        for day_index in request.selected_days:
-            workout_date = calculate_workout_date(request.week_start_date, day_index)
-            focus = workout_focus_map[day_index]
-
-            # Get adaptive parameters for this workout
-            try:
-                adaptive_params = await adaptive_service.get_adaptive_parameters(
-                    user_id=request.user_id,
-                    workout_type=focus,
-                    user_goals=goals if isinstance(goals, list) else [],
-                    fitness_level=fitness_level,  # Pass fitness level for beginner adjustments
-                )
-            except Exception as adapt_err:
-                logger.warning(f"Adaptive params failed for weekly: {adapt_err}, using defaults")
-                adaptive_params = None
-
-            # Get queued exercises for this focus area
-            queued_exercises = await get_user_exercise_queue(request.user_id, focus_area=focus)
-
-            try:
-                # Combine avoided exercises with used_exercises for complete filtering
-                all_avoided = list(set(used_exercises + avoided_exercises))
-
-                # Use RAG to intelligently select exercises with adaptive params
-                # (sequential loop - no batch offset needed)
-                rag_exercises = await exercise_rag.select_exercises_for_workout(
-                    focus_area=focus,
-                    equipment=equipment if isinstance(equipment, list) else [],
-                    fitness_level=fitness_level or "intermediate",
-                    goals=goals if isinstance(goals, list) else [],
-                    count=6,
-                    avoid_exercises=all_avoided,
-                    workout_params=adaptive_params,
-                    dumbbell_count=dumbbell_count,
-                    kettlebell_count=kettlebell_count,
-                    user_id=request.user_id,  # For custom goal keywords
-                    strength_history=strength_history,  # Use historical weights
-                    favorite_exercises=favorite_exercises,  # Prioritize favorites
-                    queued_exercises=queued_exercises,  # Include queued exercises
-                    consistency_mode=consistency_mode,  # Boost or avoid recent exercises
-                    recently_used_exercises=recently_used_for_boost,  # For consistency boost
-                    staple_exercises=staple_exercises,  # Core lifts that never rotate
-                    variation_percentage=variation_percentage,  # User's variety preference
-                    avoided_muscles=avoided_muscles,  # User's avoided muscle groups
-                    progression_pace=progression_pace,  # User's progression pace preference
-                    workout_type_preference=workout_type_pref,  # User's workout type preference
-                    difficulty_adjustment=difficulty_adjustment,  # Feedback-based difficulty shift
-                    batch_offset=0,  # Sequential generation - offset not needed
-                    workout_environment=workout_environment,  # User's workout location
-                )
-
-                if rag_exercises:
-                    used_exercises.extend([ex.get("name", "") for ex in rag_exercises])
-
-                    # Get the effective workout focus from adaptive params (maps focus->workout type)
-                    effective_focus = adaptive_params.get("workout_focus", "hypertrophy") if adaptive_params else "hypertrophy"
-
-                    # Apply supersets if appropriate (only for hypertrophy/endurance/hiit)
-                    if adaptive_params and adaptive_service.should_use_supersets(
-                        effective_focus, request.duration_minutes or 45, len(rag_exercises)
-                    ):
-                        rag_exercises = adaptive_service.create_superset_pairs(rag_exercises)
-                        logger.info(f"Applied supersets to weekly {focus} ({effective_focus}) workout")
-
-                    # Add AMRAP finisher if appropriate
-                    if adaptive_params and adaptive_service.should_include_amrap(
-                        effective_focus, fitness_level or "intermediate"
-                    ):
-                        amrap_exercise = adaptive_service.create_amrap_finisher(rag_exercises, effective_focus)
-                        rag_exercises.append(amrap_exercise)
-                        logger.info(f"Added AMRAP finisher: {amrap_exercise['name']}")
-
-                    workout_data = await gemini_service.generate_workout_from_library(
-                        exercises=rag_exercises,
-                        fitness_level=fitness_level or "intermediate",
-                        goals=goals if isinstance(goals, list) else [],
-                        duration_minutes=request.duration_minutes or 45,
-                        focus_areas=[focus],
-                        workout_date=workout_date.isoformat(),
-                        age=user_age,
-                        activity_level=user_activity_level,
-                        intensity_preference=intensity_preference,
-                        custom_program_description=custom_program_description,
-                        workout_type_preference=workout_type_preference,
-                        strength_history=strength_history,
-                        personal_bests=personal_bests,
-                    )
-                else:
-                    workout_data = await gemini_service.generate_workout_plan(
-                        fitness_level=fitness_level or "intermediate",
-                        goals=goals if isinstance(goals, list) else [],
-                        equipment=equipment if isinstance(equipment, list) else [],
-                        duration_minutes=request.duration_minutes or 45,
-                        focus_areas=[focus],
-                        workout_date=workout_date.isoformat(),
-                        age=user_age,
-                        activity_level=user_activity_level,
-                        intensity_preference=intensity_preference,
-                        custom_program_description=custom_program_description,
-                        workout_type_preference=workout_type_preference,
-                        custom_exercises=custom_exercises if custom_exercises else None,
-                        workout_environment=workout_environment,
-                        progression_philosophy=progression_philosophy if progression_philosophy else None,
-                        workout_patterns_context=workout_patterns_context if workout_patterns_context else None,
-                        set_type_context=set_type_context if set_type_context else None,
-                    )
-
-                exercises = workout_data.get("exercises", [])
-                workout_name = workout_data.get("name", f"{focus.title()} Workout")
-                workout_type = workout_data.get("type", "strength")
-                difficulty = workout_data.get("difficulty", intensity_preference)
-
-                # Select challenge exercise for beginners (optional "Want a Challenge?" section)
-                challenge_exercise = None
-                if fitness_level == "beginner" and exercises:
-                    try:
-                        challenge_exercise = await exercise_rag.select_challenge_exercise(
-                            main_exercises=exercises,
-                            focus_area=focus,
-                            equipment=equipment if isinstance(equipment, list) else [],
-                            fitness_level=fitness_level,
-                            injuries=active_injuries,
-                            avoided_muscles=avoided_muscles,
-                            workout_params=adaptive_params,
-                            strength_history=strength_history,
-                        )
-                        if challenge_exercise:
-                            logger.info(f"🔥 [Challenge] Selected challenge exercise for beginner: {challenge_exercise.get('name')}")
-                    except Exception as ce:
-                        logger.warning(f"⚠️ [Challenge] Failed to select challenge exercise: {ce}")
-                        challenge_exercise = None
-
-            except Exception as e:
-                logger.error(f"Error generating workout: {e}")
-                raise  # No fallback - let errors propagate per CLAUDE.md guidelines
-
-            # Apply 1RM-based weights for percentage-based training
-            if one_rm_data and exercises:
-                exercises = apply_1rm_weights_to_exercises(
-                    exercises, one_rm_data, training_intensity, intensity_overrides
-                )
-
-            # Apply comeback adjustments if user is returning from a break
-            if comeback_context.get("needs_comeback") and exercises:
-                exercises = await apply_comeback_adjustments_to_exercises(
-                    exercises, comeback_context
-                )
-                logger.info(f"🔄 [Comeback] Applied comeback adjustments to {len(exercises)} exercises")
-
-            # CRITICAL SAFETY NET: Validate and cap exercise parameters
-            # This prevents extreme workouts like 90 squats from reaching users
-            is_comeback = comeback_context.get("needs_comeback", False)
-
-            if exercises:
-                exercises = validate_and_cap_exercise_parameters(
-                    exercises=exercises,
-                    fitness_level=fitness_level or "intermediate",
-                    age=user_age,
-                    is_comeback=is_comeback,
-                    difficulty=intensity_preference
-                )
-
-                # CRITICAL: Enforce user's set/rep limits as final validation
-                # This ensures AI-generated workouts NEVER exceed user preferences
-                if set_rep_limits:
-                    exercises = enforce_set_rep_limits(
-                        exercises=exercises,
-                        set_rep_limits=set_rep_limits,
-                        exercise_patterns=exercise_patterns,
-                    )
-
-            # Add challenge exercise to workout if available (for beginners)
-            # Store as separate field in exercises_json for frontend to display in separate section
-            challenge_ex = challenge_exercise if 'challenge_exercise' in dir() else None
-
-            # CRITICAL: Validate set_targets - FAIL if missing (no fallback)
-            if exercises:
-                user_context = {
-                    "user_id": request.user_id,
-                    "fitness_level": fitness_level,
-                    "difficulty": difficulty,
-                    "goals": goals if isinstance(goals, list) else [],
-                    "equipment": equipment if isinstance(equipment, list) else [],
-                    "workout_date": workout_date.isoformat() if workout_date else None,
-                }
-                exercises = validate_set_targets_strict(exercises, user_context)
-
-            workout_db_data = {
-                "user_id": request.user_id,
-                "name": workout_name,
-                "type": workout_type,
-                "difficulty": difficulty,
-                "scheduled_date": workout_date.isoformat(),
-                "exercises_json": exercises,
-                "duration_minutes": request.duration_minutes or 45,
-                "generation_method": "ai",
-                "generation_source": "weekly_generation",
-            }
-
-            # Store challenge exercise in generation_metadata for frontend
-            if challenge_ex:
-                workout_db_data["generation_metadata"] = {
-                    "challenge_exercise": challenge_ex,
-                }
-                logger.info(f"🔥 [Challenge] Storing challenge exercise in workout metadata: {challenge_ex.get('name')}")
-
-            created = db.create_workout(workout_db_data)
-            workout = row_to_workout(created)
-            await index_workout_to_rag(workout)
-            generated_workouts.append(workout)
-
-            # Mark any queued exercises as used
-            if rag_exercises:
-                queued_used = [ex.get("name") for ex in rag_exercises if ex.get("from_queue")]
-                if queued_used:
-                    await mark_queued_exercises_used(request.user_id, queued_used)
-
-        return GenerateWeeklyResponse(workouts=generated_workouts)
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to generate weekly workouts: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/generate-monthly", response_model=GenerateMonthlyResponse)
-async def generate_monthly_workouts(request: GenerateMonthlyRequest):
-    """Generate workouts for a full month."""
-    logger.info(f"Generating monthly workouts for user {request.user_id}")
-
-    try:
-        db = get_supabase_db()
-
-        user = db.get_user(request.user_id)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        fitness_level = user.get("fitness_level") or "intermediate"
-        goals = parse_json_field(user.get("goals"), [])
-        equipment = get_all_equipment(user)  # Includes custom equipment
-        preferences = parse_json_field(user.get("preferences"), {})
-        training_split = preferences.get("training_split", "full_body")
-        # Use explicit intensity_preference if set, otherwise derive from fitness level
-        intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
-        # Get warmup and stretch duration preferences (default 5 minutes each, clamped 1-15)
-        warmup_duration = max(1, min(15, preferences.get("warmup_duration_minutes", 5)))
-        stretch_duration = max(1, min(15, preferences.get("stretch_duration_minutes", 5)))
-        # Get custom program description for custom training goals
-        custom_program_description = preferences.get("custom_program_description")
-        # Get workout environment for environment-aware workout generation
-        workout_environment = preferences.get("workout_environment")
-        # Get equipment counts for single dumbbell/kettlebell filtering
-        dumbbell_count = preferences.get("dumbbell_count", 2)
-        kettlebell_count = preferences.get("kettlebell_count", 1)
-
-        # Get injuries and health conditions for workout safety
-        active_injuries = parse_json_field(user.get("active_injuries"), [])
-        health_conditions = preferences.get("health_conditions", [])
-
-        # Get age and activity level for personalized workouts
-        user_age = user.get("age")
-        user_activity_level = user.get("activity_level")
-
-        # Get focus areas for custom programs
-        focus_areas = parse_json_field(user.get("focus_areas"), [])
-
-        # Fetch user's custom exercises for monthly generation
-        logger.info(f"🏋️ [Monthly Generation] Fetching custom exercises for user: {request.user_id}")
-        custom_exercises = []
-        try:
-            custom_result = db.client.table("exercises").select(
-                "name", "primary_muscle", "equipment", "default_sets", "default_reps"
-            ).eq("is_custom", True).eq("created_by_user_id", request.user_id).execute()
-            if custom_result.data:
-                custom_exercises = custom_result.data
-                exercise_names = [ex.get("name") for ex in custom_exercises]
-                logger.info(f"✅ [Monthly Generation] Found {len(custom_exercises)} custom exercises: {exercise_names}")
-            else:
-                logger.info(f"🏋️ [Monthly Generation] No custom exercises found for user {request.user_id}")
-        except Exception as e:
-            logger.warning(f"⚠️ [Monthly Generation] Failed to fetch custom exercises: {e}")
-
-        logger.info(f"User data - fitness_level: {fitness_level}, goals: {goals}, equipment: {equipment}, dumbbell_count: {dumbbell_count}, kettlebell_count: {kettlebell_count}")
-        if active_injuries or health_conditions:
-            logger.info(f"User health info - injuries: {active_injuries}, conditions: {health_conditions}")
-
-        # Cap weeks at 4 to prevent generating workouts too far in the future
-        MAX_GENERATION_WEEKS = 4
-        weeks = min(request.weeks or 4, MAX_GENERATION_WEEKS)
-
-        # Also cap the date range to prevent generating workouts beyond 4 weeks from today
-        today = datetime.now().date()
-        max_horizon = today + timedelta(days=28)  # 4 weeks from today
-
-        workout_dates = calculate_monthly_dates(request.month_start_date, request.selected_days, weeks)
-
-        # Filter out any dates beyond our horizon
-        workout_dates = [d for d in workout_dates if d.date() <= max_horizon]
-
-        # Log with day names for easier debugging
-        day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-        selected_day_names = [day_names[d] for d in request.selected_days if 0 <= d < 7]
-        logger.info(f"Calculated {len(workout_dates)} workout dates for {weeks} weeks on days {request.selected_days} = {selected_day_names} (0=Mon, 6=Sun)")
-        if workout_dates:
-            logger.info(f"First 5 scheduled dates: {[d.strftime('%Y-%m-%d %a') for d in workout_dates[:5]]}")
-
-        if not workout_dates:
-            logger.warning("No workout dates calculated - returning empty response")
-            return GenerateMonthlyResponse(workouts=[], total_generated=0)
-
-        workout_focus_map = get_workout_focus(training_split, request.selected_days, focus_areas)
-
-        used_name_words: List[str] = []
-        generated_workouts = []
-        gemini_service = GeminiService()
-
-        BATCH_SIZE = 4
-
-        # Get exercise RAG service for intelligent selection
-        exercise_rag = get_exercise_rag_service()
-
-        # Get adaptive workout service for varied parameters
-        from services.adaptive_workout_service import get_adaptive_workout_service
-        adaptive_service = get_adaptive_workout_service(db.client)
-
-        # Check user's consistency mode preference
-        consistency_mode = await get_user_consistency_mode(request.user_id)
-        logger.info(f"User consistency mode: {consistency_mode}")
-
-        # Track used exercises for variety - use a thread-safe approach
-        used_exercises: List[str] = []
-        recently_used_for_boost: List[str] = []  # For consistency mode positive boost
-
-        if consistency_mode == "vary":
-            used_exercises = await get_recently_used_exercises(request.user_id, days=7)
-            logger.info(f"Starting with {len(used_exercises)} recently used exercises to ensure variety")
-        else:
-            # Consistent mode: get recent exercises for POSITIVE boost
-            recently_used_for_boost = await get_recently_used_exercises(request.user_id, days=14)
-            logger.info(f"Starting in consistent mode - will boost {len(recently_used_for_boost)} recent exercises")
-
-        # Fetch user's strength history from ChromaDB - addresses "weird weights" issue
-        strength_history = await get_user_strength_history(request.user_id)
-        if strength_history:
-            logger.info(f"Loaded strength history for {len(strength_history)} exercises")
-
-        # Fetch user's personal bests for personalized notes
-        personal_bests = await get_user_personal_bests(request.user_id)
-        if personal_bests:
-            logger.info(f"Loaded PRs for {len(personal_bests)} exercises")
-
-        # Fetch user's favorite exercises for prioritization
-        favorite_exercises = await get_user_favorite_exercises(request.user_id)
-        if favorite_exercises:
-            logger.info(f"User has {len(favorite_exercises)} favorite exercises")
-
-        # Fetch user's staple exercises (never rotated out)
-        staple_exercises = await get_user_staple_exercises(request.user_id)
-        if staple_exercises:
-            logger.info(f"User has {len(staple_exercises)} staple exercises: {staple_exercises}")
-
-        # Fetch user's variation percentage preference
-        variation_percentage = await get_user_variation_percentage(request.user_id)
-        logger.info(f"User variation percentage: {variation_percentage}%")
-
-        # Fetch user's 1RM data and training intensity for percentage-based training
-        one_rm_data = await get_user_1rm_data(request.user_id)
-        training_intensity = await get_user_training_intensity(request.user_id)
-        intensity_overrides = await get_user_intensity_overrides(request.user_id)
-        if one_rm_data:
-            logger.info(f"Loaded {len(one_rm_data)} 1RMs for percentage-based training at {training_intensity}%")
-
-        # Fetch user's avoided exercises and muscles
-        avoided_exercises = await get_user_avoided_exercises(request.user_id)
-        avoided_muscles = await get_user_avoided_muscles(request.user_id)
-        if avoided_exercises:
-            logger.info(f"User has {len(avoided_exercises)} avoided exercises")
-        if avoided_muscles.get("avoid") or avoided_muscles.get("reduce"):
-            logger.info(f"User avoided muscles - avoid: {avoided_muscles.get('avoid')}, reduce: {avoided_muscles.get('reduce')}")
-
-        # Fetch user's progression pace and workout type preference
-        progression_pace = await get_user_progression_pace(request.user_id)
-        workout_type_pref = await get_user_workout_type_preference(request.user_id)
-        logger.info(f"User progression_pace: {progression_pace}, workout_type_preference: {workout_type_pref}")
-
-        # Fetch feedback-based difficulty adjustment
-        # This analyzes recent exercise feedback to determine if workouts should be harder/easier
-        difficulty_adjustment, difficulty_recommendation = await get_user_difficulty_adjustment(request.user_id)
-        if difficulty_adjustment != 0:
-            logger.info(f"🎯 [Feedback Loop] Applying difficulty_adjustment={difficulty_adjustment:+d}: {difficulty_recommendation}")
-        else:
-            logger.info(f"🎯 [Feedback Loop] No difficulty adjustment needed: {difficulty_recommendation}")
-
-        # HELL MODE: Boost difficulty adjustment to prefer harder exercises from database
-        if intensity_preference == "hell":
-            hell_mode_boost = 3  # Strong preference for advanced exercises
-            difficulty_adjustment = min(5, difficulty_adjustment + hell_mode_boost)  # Cap at +5
-            logger.info(f"🔥 [HELL MODE] Boosted difficulty_adjustment to {difficulty_adjustment:+d} - selecting harder exercises")
-
-        # =============================================================================
-        # AI CONSISTENCY: Fetch readiness score, mood, and injury-to-muscle mapping
-        # =============================================================================
-        readiness_score = await get_user_readiness_score(request.user_id)
-        user_mood_data = await get_user_latest_mood(request.user_id)
-        user_mood = user_mood_data.get("mood") if user_mood_data else None
-
-        # Fetch enhanced comeback context for break detection
-        comeback_context = await get_comeback_context(request.user_id)
-        is_comeback = comeback_context.get("needs_comeback", False)
-        if is_comeback:
-            break_status = comeback_context.get("break_status", {})
-            logger.info(
-                f"🔄 [Monthly] User returning after {break_status.get('days_off', 0)} days "
-                f"({break_status.get('break_type', 'unknown')}), applying comeback adjustments"
-            )
-            # Start comeback mode if not already started
-            await start_comeback_mode_if_needed(request.user_id)
-
-        # Get injury-to-muscle mapping and merge with avoided_muscles
-        injury_data = await get_active_injuries_with_muscles(request.user_id)
-        injury_avoided_muscles = injury_data.get("avoided_muscles", [])
-
-        # Merge injury-derived muscles with user-specified avoided muscles
-        if injury_avoided_muscles:
-            current_avoid_list = avoided_muscles.get("avoid", [])
-            merged_avoid_list = list(set(current_avoid_list + injury_avoided_muscles))
-            avoided_muscles = {
-                "avoid": merged_avoid_list,
-                "reduce": avoided_muscles.get("reduce", []),
-            }
-            logger.info(f"🎯 [AI Consistency] Injury-derived muscle avoidances added: {injury_avoided_muscles}")
-            logger.info(f"🎯 [AI Consistency] Total avoided muscles: {merged_avoid_list}")
-
-        # Also ensure active_injuries includes injury data from dedicated table
-        if injury_data.get("injuries"):
-            for inj in injury_data["injuries"]:
-                if inj not in active_injuries:
-                    active_injuries.append(inj)
-            logger.info(f"🎯 [AI Consistency] Active injuries from dedicated table: {injury_data['injuries']}")
-
-        # Fetch progression context and rep preferences for leverage-based progressions
-        rep_preferences = await get_user_rep_preferences(request.user_id)
-        progression_context = await get_user_progression_context(request.user_id)
-
-        # Build progression philosophy prompt
-        progression_philosophy = build_progression_philosophy_prompt(
-            rep_preferences=rep_preferences,
-            progression_context=progression_context,
-        )
-        if progression_context.get("mastered_exercises"):
-            logger.info(f"[Monthly Generation] User has {len(progression_context['mastered_exercises'])} mastered exercises for progression")
-
-        # Fetch user's historical workout patterns and set/rep limits
-        logger.info(f"[Monthly Generation] Fetching workout patterns and set/rep limits for user: {request.user_id}")
-        workout_patterns = await get_user_workout_patterns(request.user_id)
-        workout_patterns_context = workout_patterns.get("historical_context", "")
-        set_rep_limits = workout_patterns.get("set_rep_limits", {})
-        exercise_patterns = workout_patterns.get("exercise_patterns", {})
-
-        if set_rep_limits.get("max_sets_per_exercise", 5) < 5:
-            logger.info(f"[Monthly Generation] User has set max_sets_per_exercise: {set_rep_limits.get('max_sets_per_exercise')}")
-        if set_rep_limits.get("max_reps_per_set", 15) < 15:
-            logger.info(f"[Monthly Generation] User has set max_reps_per_set: {set_rep_limits.get('max_reps_per_set')}")
-
-        # Fetch set type preferences for personalized drop set / failure set recommendations
-        logger.info(f"[Monthly Generation] Fetching set type preferences for user: {request.user_id}")
-        set_type_prefs = await get_user_set_type_preferences(request.user_id, supabase_client=db.client)
-        set_type_context = build_set_type_context(set_type_prefs)
-        if set_type_prefs:
-            advanced_types = [k for k in set_type_prefs.keys() if k not in ["working", "warmup"]]
-            if advanced_types:
-                logger.info(f"[Monthly Generation] User has history with set types: {advanced_types}")
-
-        async def generate_single_workout(
-            workout_date: datetime,
-            index: int,
-            avoid_words: List[str],
-            exercises_to_avoid: List[str],
-            batch_offset: int = 0
-        ):
-            weekday = workout_date.weekday()
-            focus = workout_focus_map.get(weekday, "full_body")
-
-            # Get adaptive parameters for this workout based on focus and user history
-            try:
-                adaptive_params = await adaptive_service.get_adaptive_parameters(
-                    user_id=request.user_id,
-                    workout_type=focus,
-                    user_goals=goals if isinstance(goals, list) else [],
-                    fitness_level=fitness_level,  # Pass fitness level for beginner adjustments
-                )
-                logger.info(f"Adaptive params for {focus}: sets={adaptive_params.get('sets')}, reps={adaptive_params.get('reps')}, fitness_level={fitness_level}")
-            except Exception as adapt_err:
-                logger.warning(f"Adaptive params failed: {adapt_err}, using defaults")
-                adaptive_params = None
-
-            # Get queued exercises for this focus area
-            queued_exercises = await get_user_exercise_queue(request.user_id, focus_area=focus)
-
-            try:
-                # Combine avoided exercises with exercises_to_avoid for complete filtering
-                all_avoided_exercises = list(set(exercises_to_avoid + avoided_exercises))
-
-                # Use RAG to intelligently select exercises from ChromaDB/Supabase
-                # Pass batch_offset to ensure variety across parallel workouts
-                rag_exercises = await exercise_rag.select_exercises_for_workout(
-                    focus_area=focus,
-                    equipment=equipment if isinstance(equipment, list) else [],
-                    fitness_level=fitness_level or "intermediate",
-                    goals=goals if isinstance(goals, list) else [],
-                    count=6,
-                    avoid_exercises=all_avoided_exercises,
-                    injuries=active_injuries if active_injuries is not None else None,
-                    workout_params=adaptive_params,
-                    dumbbell_count=dumbbell_count,
-                    kettlebell_count=kettlebell_count,
-                    user_id=request.user_id,  # For custom goal keywords
-                    strength_history=strength_history,  # Use historical weights
-                    favorite_exercises=favorite_exercises,  # Prioritize favorites
-                    queued_exercises=queued_exercises,  # Include queued exercises
-                    staple_exercises=staple_exercises,  # Core lifts that never rotate
-                    variation_percentage=variation_percentage,  # User's variety preference
-                    consistency_mode=consistency_mode,  # Boost or avoid recent exercises
-                    recently_used_exercises=recently_used_for_boost,  # For consistency boost
-                    avoided_muscles=avoided_muscles,  # User's avoided muscle groups
-                    progression_pace=progression_pace,  # User's progression pace preference
-                    workout_type_preference=workout_type_pref,  # User's workout type preference
-                    # AI Consistency parameters
-                    readiness_score=readiness_score,  # User's readiness score (affects intensity)
-                    user_mood=user_mood,  # User's current mood (affects workout type)
-                    difficulty_adjustment=difficulty_adjustment,  # Feedback-based difficulty shift
-                    batch_offset=batch_offset,  # Ensures variety in parallel batch generation
-                    workout_environment=workout_environment,  # User's workout location
-                )
-
-                # Return the exercises used so they can be tracked after batch completes
-                exercises_used = []
-                queued_used = []
-                if rag_exercises:
-                    exercises_used = [ex.get("name", "") for ex in rag_exercises]
-                    queued_used = [ex.get("name") for ex in rag_exercises if ex.get("from_queue")]
-
-                    # Get the effective workout focus from adaptive params
-                    effective_focus = adaptive_params.get("workout_focus", "hypertrophy") if adaptive_params else "hypertrophy"
-
-                    # Apply supersets if appropriate
-                    if adaptive_params and adaptive_service.should_use_supersets(
-                        effective_focus, request.duration_minutes or 45, len(rag_exercises)
-                    ):
-                        rag_exercises = adaptive_service.create_superset_pairs(rag_exercises)
-                        logger.info(f"Applied supersets to {focus} ({effective_focus}) workout")
-
-                    # Add AMRAP finisher if appropriate
-                    if adaptive_params and adaptive_service.should_include_amrap(
-                        effective_focus, fitness_level or "intermediate"
-                    ):
-                        amrap_exercise = adaptive_service.create_amrap_finisher(rag_exercises, effective_focus)
-                        rag_exercises.append(amrap_exercise)
-                        logger.info(f"Added AMRAP finisher: {amrap_exercise['name']}")
-
-                    # Use AI to create a creative workout name
-                    workout_data = await gemini_service.generate_workout_from_library(
-                        exercises=rag_exercises,
-                        fitness_level=fitness_level or "intermediate",
-                        goals=goals if isinstance(goals, list) else [],
-                        duration_minutes=request.duration_minutes or 45,
-                        focus_areas=[focus],
-                        avoid_name_words=avoid_words[:20],
-                        workout_date=workout_date.isoformat(),
-                        age=user_age,
-                        activity_level=user_activity_level,
-                        intensity_preference=intensity_preference,
-                        custom_program_description=custom_program_description,
-                        strength_history=strength_history,
-                        personal_bests=personal_bests,
-                    )
-                else:
-                    # No fallback - RAG must return exercises
-                    logger.error(f"RAG returned no exercises for {focus}")
-                    raise ValueError(f"RAG returned no exercises for focus={focus}")
-
-                # Select challenge exercise for beginners
-                challenge_exercise = None
-                exercises_list = workout_data.get("exercises", [])
-                if fitness_level == "beginner" and exercises_list:
-                    try:
-                        challenge_exercise = await exercise_rag.select_challenge_exercise(
-                            main_exercises=exercises_list,
-                            focus_area=focus,
-                            equipment=equipment if isinstance(equipment, list) else [],
-                            fitness_level=fitness_level,
-                            injuries=active_injuries,
-                            avoided_muscles=avoided_muscles,
-                            workout_params=adaptive_params,
-                            strength_history=strength_history,
-                        )
-                        if challenge_exercise:
-                            logger.info(f"🔥 [Challenge] Selected challenge for {focus}: {challenge_exercise.get('name')}")
-                    except Exception as ce:
-                        logger.warning(f"⚠️ [Challenge] Failed to select challenge: {ce}")
-
-                return {
-                    "success": True,
-                    "workout_date": workout_date,
-                    "focus": focus,
-                    "name": workout_data.get("name", f"{focus.title()} Workout"),
-                    "type": workout_data.get("type", "strength"),
-                    "difficulty": workout_data.get("difficulty", intensity_preference),
-                    "exercises": exercises_list,
-                    "exercises_used": exercises_used,
-                    "queued_used": queued_used,  # Track queued exercises to mark as used
-                    "challenge_exercise": challenge_exercise,  # Optional challenge for beginners
-                }
-
-            except Exception as e:
-                logger.error(f"Error generating workout for {workout_date}: {e}")
-                raise  # No fallback - let errors propagate
-
-        for batch_start in range(0, len(workout_dates), BATCH_SIZE):
-            batch_end = min(batch_start + BATCH_SIZE, len(workout_dates))
-            batch_dates = workout_dates[batch_start:batch_end]
-
-            # Create STAGGERED avoid lists for each workout in the batch
-            # Each concurrent workout gets a different offset of exercises to avoid
-            # This ensures variety even when workouts are generated in parallel
-            tasks = []
-            for i, date in enumerate(batch_dates):
-                # Stagger by 8 exercises per workout in the batch
-                # Workout 0: last 30 exercises, Workout 1: last 38, Workout 2: last 46, etc.
-                offset = i * 8
-                if used_exercises:
-                    avoid_list = used_exercises[-(30 + offset):].copy()
-                else:
-                    avoid_list = []
-                # Pass batch_offset (i) to ensure variety in parallel workout selection
-                # This ensures each workout in the batch uses different exercises
-                tasks.append(generate_single_workout(
-                    date,
-                    batch_start + i,
-                    used_name_words.copy(),
-                    avoid_list,
-                    batch_offset=i  # Critical: ensures variety in parallel generation
-                ))
-            batch_results = await asyncio.gather(*tasks, return_exceptions=True)
-
-            for result in batch_results:
-                if isinstance(result, Exception):
-                    continue
-
-                name_words = extract_name_words(result["name"])
-                used_name_words.extend(name_words)
-
-                # Track used exercises for variety in next batches
-                exercises_used_in_workout = result.get("exercises_used", [])
-                if exercises_used_in_workout:
-                    used_exercises.extend(exercises_used_in_workout)
-                    logger.debug(f"Added {len(exercises_used_in_workout)} exercises to avoid list. Total: {len(used_exercises)}")
-
-                # Mark queued exercises as used
-                queued_used_in_workout = result.get("queued_used", [])
-                if queued_used_in_workout:
-                    await mark_queued_exercises_used(request.user_id, queued_used_in_workout)
-
-                # Apply 1RM-based weights for percentage-based training
-                exercises = result["exercises"]
-                if one_rm_data and exercises:
-                    exercises = apply_1rm_weights_to_exercises(
-                        exercises, one_rm_data, training_intensity, intensity_overrides
-                    )
-
-
-                # Apply comeback adjustments if user is returning from a break
-                if comeback_context.get("needs_comeback") and exercises:
-                    exercises = await apply_comeback_adjustments_to_exercises(
-                        exercises, comeback_context
-                    )
-                    logger.info(f"🔄 [Comeback] Applied comeback adjustments to {len(exercises)} exercises")
-
-                # CRITICAL SAFETY NET: Validate and cap exercise parameters
-                # This prevents extreme workouts like 90 squats from reaching users
-                if exercises:
-                    exercises = validate_and_cap_exercise_parameters(
-                        exercises=exercises,
-                        fitness_level=fitness_level or "intermediate",
-                        age=user_age,
-                        is_comeback=is_comeback,
-                        difficulty=intensity_preference
-                    )
-
-                    # CRITICAL: Validate set_targets - FAIL if missing (no fallback)
-                    user_context = {
-                        "user_id": request.user_id,
-                        "fitness_level": fitness_level,
-                        "difficulty": result["difficulty"],
-                        "goals": goals if isinstance(goals, list) else [],
-                        "equipment": equipment if isinstance(equipment, list) else [],
-                        "workout_date": result["workout_date"].isoformat(),
-                        "generation_source": "monthly_generation",
-                    }
-                    exercises = validate_set_targets_strict(exercises, user_context)
-
-                workout_db_data = {
-                    "user_id": request.user_id,
-                    "name": result["name"],
-                    "type": result["type"],
-                    "difficulty": result["difficulty"],
-                    "scheduled_date": result["workout_date"].isoformat(),
-                    "exercises_json": exercises,
-                    "duration_minutes": request.duration_minutes or 45,
-                    "generation_method": "ai",
-                    "generation_source": "monthly_generation",
-                }
-
-                # Store challenge exercise in generation_metadata for frontend
-                challenge_ex = result.get("challenge_exercise")
-                if challenge_ex:
-                    workout_db_data["generation_metadata"] = {
-                        "challenge_exercise": challenge_ex,
-                    }
-                    logger.info(f"🔥 [Challenge] Storing challenge in metadata: {challenge_ex.get('name')}")
-
-                created = db.create_workout(workout_db_data)
-                workout = row_to_workout(created)
-                await index_workout_to_rag(workout)
-                generated_workouts.append(workout)
-
-                # Generate warmup and stretches alongside workout (using user preferences)
-                try:
-                    warmup_stretch_service = get_warmup_stretch_service()
-                    exercises = result["exercises"]
-
-                    # Generate and save warmup (using user's preferred duration)
-                    await warmup_stretch_service.create_warmup_for_workout(
-                        workout_id=workout.id,
-                        exercises=exercises,
-                        duration_minutes=warmup_duration,
-                        injuries=active_injuries if active_injuries is not None else None,
-                        user_id=request.user_id
-                    )
-
-                    # Generate and save stretches (using user's preferred duration)
-                    await warmup_stretch_service.create_stretches_for_workout(
-                        workout_id=workout.id,
-                        exercises=exercises,
-                        duration_minutes=stretch_duration,
-                        injuries=active_injuries if active_injuries is not None else None,
-                        user_id=request.user_id
-                    )
-                    logger.info(f"Generated warmup ({warmup_duration}m) and stretches ({stretch_duration}m) for workout {workout.id}")
-                except Exception as ws_error:
-                    logger.warning(f"Failed to generate warmup/stretches for workout {workout.id}: {ws_error}")
-
-        return GenerateMonthlyResponse(workouts=generated_workouts, total_generated=len(generated_workouts))
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to generate monthly workouts: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/generate-monthly-stream")
-@limiter.limit("3/minute")
-async def generate_monthly_workouts_streaming(request: Request, body: GenerateMonthlyRequest):
-    """
-    Generate workouts for 2 weeks with streaming progress updates via SSE.
-
-    Sends real-time progress as each workout is generated:
-    - event: progress - "Generating next workout..." with step count
-    - event: workout - Individual workout created (can be used to update UI immediately)
-    - event: done - All workouts complete
-    - event: error - Error during generation
-    """
-    import time
-    logger.info(f"[STREAM] Generating monthly workouts for user {body.user_id}")
-
-    async def generate_sse() -> AsyncGenerator[str, None]:
-        start_time = time.time()
-
-        # Log request parameters for debugging
-        logger.info(f"[STREAM] Request params: user_id={body.user_id}, max_workouts={body.max_workouts}, "
-                   f"selected_days={body.selected_days}, duration={body.duration_minutes}")
-
-        def elapsed_ms() -> int:
-            return int((time.time() - start_time) * 1000)
-
-        def send_progress(current: int, total: int, message: str, detail: str = None):
-            data = {
-                "type": "progress",
-                "current": current,
-                "total": total,
-                "message": message,
-                "detail": detail,
-                "elapsed_ms": elapsed_ms()
-            }
-            return f"event: progress\ndata: {json.dumps(data)}\n\n"
-
-        def send_workout(workout_data: dict, current: int, total: int):
-            data = {
-                "type": "workout",
-                "workout": workout_data,
-                "current": current,
-                "total": total,
-                "elapsed_ms": elapsed_ms()
-            }
-            return f"event: workout\ndata: {json.dumps(data)}\n\n"
-
-        def send_error(error: str):
-            data = {"type": "error", "error": error, "elapsed_ms": elapsed_ms()}
-            return f"event: error\ndata: {json.dumps(data)}\n\n"
-
-        try:
-            yield send_progress(0, 1, "Loading your profile...", "Fetching preferences")
-
-            db = get_supabase_db()
-
-            user = db.get_user(body.user_id)
-            if not user:
-                yield send_error("User not found")
-                return
-
-            fitness_level = user.get("fitness_level") or "intermediate"
-            goals = parse_json_field(user.get("goals"), [])
-            equipment = get_all_equipment(user)  # Includes custom equipment
-            preferences = parse_json_field(user.get("preferences"), {})
-            training_split = preferences.get("training_split", "full_body")
-            # Use explicit intensity_preference if set, otherwise derive from fitness level
-            intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
-            # Get warmup and stretch duration preferences (default 5 minutes each, clamped 1-15)
-            warmup_duration = max(1, min(15, preferences.get("warmup_duration_minutes", 5)))
-            stretch_duration = max(1, min(15, preferences.get("stretch_duration_minutes", 5)))
-            custom_program_description = preferences.get("custom_program_description")
-            workout_environment = preferences.get("workout_environment")
-            dumbbell_count = preferences.get("dumbbell_count", 2)
-            kettlebell_count = preferences.get("kettlebell_count", 1)
-            active_injuries = parse_json_field(user.get("active_injuries"), [])
-            user_age = user.get("age")
-            user_activity_level = user.get("activity_level")
-            focus_areas = parse_json_field(user.get("focus_areas"), [])
-
-            # Generate 2 weeks by default, but allow limiting via max_workouts
-            weeks = 2
-            today = datetime.now().date()
-            max_horizon = today + timedelta(days=14)
-
-            # Enhanced user context logging for debugging
-            user_timezone = user.get("timezone") or preferences.get("timezone") or "Not set"
-            user_created_at = user.get("created_at", "Unknown")
-            onboarding_completed = user.get("onboarding_completed", False)
-            onboarding_completed_at = user.get("onboarding_completed_at", "Not recorded")
-            user_name = user.get("name") or user.get("username") or "Unknown"
-
-            day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-            selected_day_names = [day_names[d] for d in body.selected_days if 0 <= d < 7] if body.selected_days else []
-
-            logger.info(f"[USER CONTEXT] user_id={body.user_id}, name={user_name}")
-            logger.info(f"[USER CONTEXT] timezone={user_timezone}, created_at={user_created_at}")
-            logger.info(f"[USER CONTEXT] onboarding_completed={onboarding_completed}, onboarding_at={onboarding_completed_at}")
-            logger.info(f"[USER CONTEXT] fitness_level={fitness_level}, training_split={training_split}")
-            logger.info(f"[GEN DEBUG] month_start_date={body.month_start_date}, selected_days={body.selected_days} ({selected_day_names})")
-            logger.info(f"[GEN DEBUG] Server datetime.now()={datetime.now()}, Server date.today()={today}, weekday={today.weekday()} ({day_names[today.weekday()]})")
-
-            workout_dates = calculate_monthly_dates(body.month_start_date, body.selected_days, weeks)
-
-            # Debug: log first calculated date before filtering
-            if workout_dates:
-                first_date = workout_dates[0]
-                logger.info(f"[GEN DEBUG] First calculated date: {first_date.strftime('%Y-%m-%d %A')} (weekday={first_date.weekday()})")
-
-            workout_dates = [d for d in workout_dates if d.date() <= max_horizon]
-
-            if not workout_dates:
-                yield send_error("No workout dates calculated")
-                return
-
-            # Apply max_workouts limit if specified (for on-demand generation)
-            logger.info(f"[STREAM] Before limit: {len(workout_dates)} dates calculated, max_workouts={body.max_workouts} (type={type(body.max_workouts).__name__})")
-            if body.max_workouts is not None and body.max_workouts > 0:
-                workout_dates = workout_dates[:body.max_workouts]
-                logger.info(f"[STREAM] After limit: {len(workout_dates)} workout(s) (on-demand mode, limited to {body.max_workouts})")
-            else:
-                logger.info(f"[STREAM] No max_workouts limit - generating all {len(workout_dates)} workouts")
-
-            total_workouts = len(workout_dates)
-            logger.info(f"[STREAM] Will generate {total_workouts} workout(s)")
-
-            yield send_progress(0, total_workouts, "Planning your workouts...", f"{total_workouts} workouts to generate")
-
-            workout_focus_map = get_workout_focus(training_split, body.selected_days, focus_areas)
-            used_name_words: List[str] = []
-            generated_workouts = []
-            gemini_service = GeminiService()
-            exercise_rag = get_exercise_rag_service()
-
-            from services.adaptive_workout_service import get_adaptive_workout_service
-            adaptive_service = get_adaptive_workout_service(db.client)
-
-            # Check user's consistency mode preference
-            consistency_mode = await get_user_consistency_mode(body.user_id)
-            logger.info(f"[STREAM] User consistency mode: {consistency_mode}")
-
-            used_exercises: List[str] = []
-            recently_used_for_boost: List[str] = []  # For consistency mode positive boost
-
-            if consistency_mode == "vary":
-                used_exercises = await get_recently_used_exercises(body.user_id, days=7)
-                logger.info(f"[STREAM] Using {len(used_exercises)} exercises to avoid (vary mode)")
-            else:
-                recently_used_for_boost = await get_recently_used_exercises(body.user_id, days=14)
-                logger.info(f"[STREAM] Consistent mode - will boost {len(recently_used_for_boost)} recent exercises")
-
-            # Fetch user's strength history from ChromaDB - addresses "weird weights" issue
-            strength_history = await get_user_strength_history(body.user_id)
-            if strength_history:
-                logger.info(f"[STREAM] Loaded strength history for {len(strength_history)} exercises")
-
-            # Fetch user's personal bests for personalized notes
-            personal_bests = await get_user_personal_bests(body.user_id)
-            if personal_bests:
-                logger.info(f"[STREAM] Loaded PRs for {len(personal_bests)} exercises")
-
-            # Fetch user's favorite exercises for prioritization
-            favorite_exercises = await get_user_favorite_exercises(body.user_id)
-            if favorite_exercises:
-                logger.info(f"[STREAM] User has {len(favorite_exercises)} favorite exercises")
-
-            # Fetch user's staple exercises (never rotated out)
-            staple_exercises = await get_user_staple_exercises(body.user_id)
-            if staple_exercises:
-                logger.info(f"[STREAM] User has {len(staple_exercises)} staple exercises: {staple_exercises}")
-
-            # Fetch user's variation percentage preference
-            variation_percentage = await get_user_variation_percentage(body.user_id)
-            logger.info(f"[STREAM] User variation percentage: {variation_percentage}%")
-
-            # Fetch user's 1RM data and training intensity for percentage-based training
-            one_rm_data = await get_user_1rm_data(body.user_id)
-            training_intensity = await get_user_training_intensity(body.user_id)
-            intensity_overrides = await get_user_intensity_overrides(body.user_id)
-            if one_rm_data:
-                logger.info(f"[STREAM] Loaded {len(one_rm_data)} 1RMs for percentage-based training at {training_intensity}%")
-
-            # Fetch user's avoided exercises and muscles
-            avoided_exercises = await get_user_avoided_exercises(body.user_id)
-            avoided_muscles = await get_user_avoided_muscles(body.user_id)
-            if avoided_exercises:
-                logger.info(f"[STREAM] User has {len(avoided_exercises)} avoided exercises")
-            if avoided_muscles.get("avoid") or avoided_muscles.get("reduce"):
-                logger.info(f"[STREAM] User avoided muscles - avoid: {avoided_muscles.get('avoid')}, reduce: {avoided_muscles.get('reduce')}")
-
-            # Fetch user's progression pace and workout type preference
-            progression_pace = await get_user_progression_pace(body.user_id)
-            workout_type_pref = await get_user_workout_type_preference(body.user_id)
-            logger.info(f"[STREAM] User progression_pace: {progression_pace}, workout_type_preference: {workout_type_pref}")
-
-            # Fetch feedback-based difficulty adjustment
-            difficulty_adjustment, difficulty_recommendation = await get_user_difficulty_adjustment(body.user_id)
-            if difficulty_adjustment != 0:
-                logger.info(f"🎯 [STREAM Feedback Loop] Applying difficulty_adjustment={difficulty_adjustment:+d}: {difficulty_recommendation}")
-            else:
-                logger.info(f"🎯 [STREAM Feedback Loop] No difficulty adjustment needed")
-
-            # HELL MODE: Boost difficulty adjustment to prefer harder exercises from database
-            if intensity_preference == "hell":
-                hell_mode_boost = 3  # Strong preference for advanced exercises
-                difficulty_adjustment = min(5, difficulty_adjustment + hell_mode_boost)  # Cap at +5
-                logger.info(f"🔥 [STREAM HELL MODE] Boosted difficulty_adjustment to {difficulty_adjustment:+d} - selecting harder exercises")
-
-            # Fetch comeback status for exercise parameter validation
-            comeback_status = await get_user_comeback_status(body.user_id)
-            is_comeback = comeback_status.get("in_comeback_mode", False)
-            if is_comeback:
-                logger.info(f"🔄 [STREAM] User is in comeback mode: {comeback_status.get('reason')}")
-
-            # Generate workouts one at a time with progress updates
-            for idx, workout_date in enumerate(workout_dates):
-                current = idx + 1
-                weekday = workout_date.weekday()
-                focus = workout_focus_map.get(weekday, "full_body")
-
-                yield send_progress(current, total_workouts, "Generating next workout...", f"Day {current} of {total_workouts}")
-
-                try:
-                    # Get adaptive parameters
-                    adaptive_params = None
-                    try:
-                        adaptive_params = await adaptive_service.get_adaptive_parameters(
-                            user_id=body.user_id,
-                            workout_type=focus,
-                            user_goals=goals if isinstance(goals, list) else [],
-                            fitness_level=fitness_level,  # Pass fitness level for beginner adjustments
-                        )
-                    except Exception:
-                        pass
-
-                    # Get queued exercises for this focus area
-                    queued_exercises = await get_user_exercise_queue(body.user_id, focus_area=focus)
-
-                    # Combine avoid lists: recently used + user's avoided exercises
-                    avoid_list = used_exercises[-30:].copy() if used_exercises else []
-                    avoid_list = list(set(avoid_list + avoided_exercises))
-
-                    # Select exercises via RAG (sequential - no batch offset needed)
-                    rag_exercises = await exercise_rag.select_exercises_for_workout(
-                        focus_area=focus,
-                        equipment=equipment if isinstance(equipment, list) else [],
-                        fitness_level=fitness_level or "intermediate",
-                        goals=goals if isinstance(goals, list) else [],
-                        count=6,
-                        avoid_exercises=avoid_list,
-                        injuries=active_injuries if active_injuries is not None else None,
-                        workout_params=adaptive_params,
-                        dumbbell_count=dumbbell_count,
-                        kettlebell_count=kettlebell_count,
-                        user_id=body.user_id,
-                        strength_history=strength_history,  # Use historical weights
-                        favorite_exercises=favorite_exercises,  # Prioritize favorites
-                        queued_exercises=queued_exercises,  # Include queued exercises
-                        consistency_mode=consistency_mode,  # Boost or avoid recent exercises
-                        recently_used_exercises=recently_used_for_boost,  # For consistency boost
-                        staple_exercises=staple_exercises,  # Core lifts that never rotate
-                        variation_percentage=variation_percentage,  # User's variety preference
-                        avoided_muscles=avoided_muscles,  # User's avoided muscle groups
-                        progression_pace=progression_pace,  # User's progression pace preference
-                        workout_type_preference=workout_type_pref,  # User's workout type preference
-                        difficulty_adjustment=difficulty_adjustment,  # Feedback-based difficulty shift
-                        batch_offset=0,  # Sequential generation - offset not needed
-                        workout_environment=workout_environment,  # User's workout location
-                    )
-
-                    if not rag_exercises:
-                        logger.error(f"[STREAM] RAG returned no exercises for {focus}")
-                        continue
-
-                    exercises_used = [ex.get("name", "") for ex in rag_exercises]
-                    used_exercises.extend(exercises_used)
-
-                    # Mark queued exercises as used
-                    queued_used = [ex.get("name") for ex in rag_exercises if ex.get("from_queue")]
-                    if queued_used:
-                        await mark_queued_exercises_used(body.user_id, queued_used)
-
-                    # Generate workout name with AI
-                    workout_data = await gemini_service.generate_workout_from_library(
-                        exercises=rag_exercises,
-                        fitness_level=fitness_level or "intermediate",
-                        goals=goals if isinstance(goals, list) else [],
-                        duration_minutes=body.duration_minutes or 45,
-                        focus_areas=[focus],
-                        avoid_name_words=used_name_words[:20],
-                        workout_date=workout_date.isoformat(),
-                        age=user_age,
-                        activity_level=user_activity_level,
-                        intensity_preference=intensity_preference,
-                        custom_program_description=custom_program_description,
-                        strength_history=strength_history,
-                        personal_bests=personal_bests,
-                    )
-
-                    name_words = extract_name_words(workout_data.get("name", ""))
-                    used_name_words.extend(name_words)
-
-                    # Apply 1RM-based weights for percentage-based training
-                    exercises = workout_data.get("exercises", [])
-                    if one_rm_data and exercises:
-                        exercises = apply_1rm_weights_to_exercises(
-                            exercises, one_rm_data, training_intensity, intensity_overrides
-                        )
-
-                    # CRITICAL SAFETY NET: Validate and cap exercise parameters
-                    # This prevents extreme workouts like 90 squats from reaching users
-                    if exercises:
-                        exercises = validate_and_cap_exercise_parameters(
-                            exercises=exercises,
-                            fitness_level=fitness_level or "intermediate",
-                            age=user_age,
-                            is_comeback=is_comeback,
-                            difficulty=intensity_preference
-                        )
-
-                        # CRITICAL: Validate set_targets - FAIL if missing (no fallback)
-                        user_context = {
-                            "user_id": body.user_id,
-                            "fitness_level": fitness_level,
-                            "difficulty": workout_data.get("difficulty", intensity_preference),
-                            "goals": goals if isinstance(goals, list) else [],
-                            "equipment": equipment if isinstance(equipment, list) else [],
-                            "workout_date": workout_date.isoformat(),
-                            "generation_source": "streaming_monthly_generation",
-                            "focus": focus,
-                        }
-                        exercises = validate_set_targets_strict(exercises, user_context)
-
-                    # Save to database
-                    workout_db_data = {
-                        "user_id": body.user_id,
-                        "name": workout_data.get("name", f"{focus.title()} Workout"),
-                        "type": workout_data.get("type", "strength"),
-                        "difficulty": workout_data.get("difficulty", intensity_preference),
-                        "scheduled_date": workout_date.isoformat(),
-                        "exercises_json": exercises,
-                        "duration_minutes": body.duration_minutes or 45,
-                        "generation_method": "ai",
-                        "generation_source": "streaming_monthly_generation",
-                    }
-
-                    created = db.create_workout(workout_db_data)
-                    workout = row_to_workout(created)
-                    asyncio.create_task(index_workout_to_rag(workout))
-                    generated_workouts.append(workout)
-
-                    # Generate warmup/stretches (fire-and-forget, using user preferences)
-                    try:
-                        warmup_stretch_service = get_warmup_stretch_service()
-                        asyncio.create_task(warmup_stretch_service.create_warmup_for_workout(
-                            workout_id=workout.id,
-                            exercises=workout_data.get("exercises", []),
-                            duration_minutes=warmup_duration,
-                            injuries=active_injuries if active_injuries is not None else None,
-                            user_id=body.user_id
-                        ))
-                        asyncio.create_task(warmup_stretch_service.create_stretches_for_workout(
-                            workout_id=workout.id,
-                            exercises=workout_data.get("exercises", []),
-                            duration_minutes=stretch_duration,
-                            injuries=active_injuries if active_injuries is not None else None,
-                            user_id=body.user_id
-                        ))
-                    except Exception:
-                        pass
-
-                    # Send the workout that was just created (include exercises for UI)
-                    workout_response = {
-                        "id": workout.id,
-                        "name": workout.name,
-                        "type": workout.type,
-                        "difficulty": workout.difficulty,
-                        "scheduled_date": workout.scheduled_date.isoformat() if workout.scheduled_date else None,
-                        "duration_minutes": workout.duration_minutes,
-                        "exercises_json": exercises,  # Include exercises for immediate UI display
-                    }
-                    yield send_workout(workout_response, current, total_workouts)
-
-                except Exception as e:
-                    logger.error(f"[STREAM] Error generating workout {current}: {e}")
-                    # Continue with next workout instead of failing entirely
-                    continue
-
-            # Send completion
-            done_data = {
-                "type": "done",
-                "total_generated": len(generated_workouts),
-                "total_time_ms": elapsed_ms(),
-                "workouts": [
-                    {
-                        "id": w.id,
-                        "name": w.name,
-                        "scheduled_date": w.scheduled_date.isoformat() if w.scheduled_date else None,
-                    }
-                    for w in generated_workouts
-                ]
-            }
-            yield f"event: done\ndata: {json.dumps(done_data)}\n\n"
-
-        except Exception as e:
-            logger.error(f"[STREAM] Monthly generation error: {e}")
-            yield send_error(str(e))
-
-    return StreamingResponse(
-        generate_sse(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        }
-    )
-
-
-@router.post("/generate-remaining", response_model=GenerateMonthlyResponse)
-async def generate_remaining_workouts(request: GenerateMonthlyRequest):
-    """Generate remaining workouts for the month, skipping existing ones."""
-    logger.info(f"Generating remaining workouts for user {request.user_id}")
-
-    try:
-        db = get_supabase_db()
-
-        user = db.get_user(request.user_id)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        raw_fitness_level = user.get("fitness_level")
-        fitness_level = raw_fitness_level or "intermediate"
-        if not raw_fitness_level:
-            logger.warning(f"[Remaining Gen] User {request.user_id} has no fitness_level in DB, defaulting to intermediate")
-        else:
-            logger.info(f"[Remaining Gen] User {request.user_id} fitness_level: {fitness_level}")
-        goals = parse_json_field(user.get("goals"), [])
-        equipment = get_all_equipment(user)  # Includes custom equipment
-        preferences = parse_json_field(user.get("preferences"), {})
-        training_split = preferences.get("training_split", "full_body")
-        # Use explicit intensity_preference if set, otherwise derive from fitness level
-        intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
-        # Get warmup and stretch duration preferences (default 5 minutes each, clamped 1-15)
-        warmup_duration = max(1, min(15, preferences.get("warmup_duration_minutes", 5)))
-        stretch_duration = max(1, min(15, preferences.get("stretch_duration_minutes", 5)))
-        # Get custom program description for custom training goals
-        custom_program_description = preferences.get("custom_program_description")
-        # Get workout environment for environment-aware workout generation
-        workout_environment = preferences.get("workout_environment")
-        # Get equipment counts for single dumbbell/kettlebell filtering
-        dumbbell_count = preferences.get("dumbbell_count", 2)
-        kettlebell_count = preferences.get("kettlebell_count", 1)
-
-        # Get age and activity level for personalized workouts
-        user_age = user.get("age")
-        user_activity_level = user.get("activity_level")
-
-        # Get focus areas for custom programs
-        focus_areas = parse_json_field(user.get("focus_areas"), [])
-
-        # Extract active injuries for safety filtering
-        injuries_data = parse_json_field(user.get("injuries"), [])
-        active_injuries = [
-            inj.get("type", "") for inj in injuries_data
-            if inj.get("status") == "active" and inj.get("type")
-        ]
-        if active_injuries:
-            logger.info(f"User has active injuries for remaining workouts: {active_injuries}")
-
-        # Use the requested weeks parameter, cap at 4 weeks max to prevent generating workouts too far in the future
-        MAX_GENERATION_WEEKS = 4
-        requested_weeks = min(request.weeks or MAX_GENERATION_WEEKS, MAX_GENERATION_WEEKS)
-        today = datetime.now().date()
-        max_horizon = today + timedelta(days=requested_weeks * 7)  # Based on requested weeks
-
-        all_workout_dates = calculate_monthly_dates(request.month_start_date, request.selected_days, requested_weeks)
-
-        # Filter out any dates beyond our horizon
-        all_workout_dates = [d for d in all_workout_dates if d.date() <= max_horizon]
-
-        # Get existing workout dates
-        from calendar import monthrange
-        year = int(request.month_start_date[:4])
-        month = int(request.month_start_date[5:7])
-        last_day = monthrange(year, month)[1]
-
-        existing_workouts = db.get_workouts_by_date_range(
-            request.user_id,
-            request.month_start_date,
-            f"{request.month_start_date[:7]}-{last_day:02d}"
-        )
-        existing_dates = {str(w.get("scheduled_date", ""))[:10] for w in existing_workouts}
-
-        workout_dates = [d for d in all_workout_dates if str(d.date()) not in existing_dates]
-
-        # JIT Philosophy: Always generate only 1 workout at a time
-        workout_dates = workout_dates[:1]
-        logger.info(f"Generating 1 workout (JIT philosophy)")
-
-        if not workout_dates:
-            return GenerateMonthlyResponse(workouts=[], total_generated=0)
-
-        workout_focus_map = get_workout_focus(training_split, request.selected_days, focus_areas)
-
-        # Get existing workout names for variety
-        existing_names = [w.get("name", "") for w in existing_workouts]
-        used_name_words: List[str] = []
-        for name in existing_names:
-            used_name_words.extend(extract_name_words(name))
-
-        generated_workouts = []
-        gemini_service = GeminiService()
-        exercise_rag = get_exercise_rag_service()
-
-        # Check user's consistency mode preference
-        consistency_mode = await get_user_consistency_mode(request.user_id)
-        logger.info(f"User consistency mode: {consistency_mode}")
-
-        # Start with exercises from recent days to ensure cross-week variety
-        used_exercises: List[str] = []
-        recently_used_for_boost: List[str] = []  # For consistency mode positive boost
-
-        if consistency_mode == "vary":
-            used_exercises = await get_recently_used_exercises(request.user_id, days=7)
-            logger.info(f"Starting remaining generation with {len(used_exercises)} exercises to avoid (vary mode)")
-        else:
-            recently_used_for_boost = await get_recently_used_exercises(request.user_id, days=14)
-            logger.info(f"Starting remaining generation in consistent mode - will boost {len(recently_used_for_boost)} recent exercises")
-
-        # Get adaptive workout service for varied parameters
-        from services.adaptive_workout_service import get_adaptive_workout_service
-        adaptive_service = get_adaptive_workout_service(db.client)
-
-        # Fetch user's strength history from ChromaDB - addresses "weird weights" issue
-        strength_history = await get_user_strength_history(request.user_id)
-        if strength_history:
-            logger.info(f"Loaded strength history for {len(strength_history)} exercises")
-
-        # Fetch user's personal bests for personalized notes
-        personal_bests = await get_user_personal_bests(request.user_id)
-        if personal_bests:
-            logger.info(f"Loaded PRs for {len(personal_bests)} exercises")
-
-        # Fetch user's favorite exercises for prioritization
-        favorite_exercises = await get_user_favorite_exercises(request.user_id)
-        if favorite_exercises:
-            logger.info(f"User has {len(favorite_exercises)} favorite exercises")
-
-        # Fetch user's staple exercises (never rotated out)
-        staple_exercises = await get_user_staple_exercises(request.user_id)
-        if staple_exercises:
-            logger.info(f"User has {len(staple_exercises)} staple exercises: {staple_exercises}")
-
-        # Fetch user's variation percentage preference
-        variation_percentage = await get_user_variation_percentage(request.user_id)
-        logger.info(f"User variation percentage: {variation_percentage}%")
-
-        # Fetch user's 1RM data and training intensity for percentage-based training
-        one_rm_data = await get_user_1rm_data(request.user_id)
-        training_intensity = await get_user_training_intensity(request.user_id)
-        intensity_overrides = await get_user_intensity_overrides(request.user_id)
-        if one_rm_data:
-            logger.info(f"Loaded {len(one_rm_data)} 1RMs for percentage-based training at {training_intensity}%")
-
-        # Fetch user's avoided exercises and muscles
-        avoided_exercises = await get_user_avoided_exercises(request.user_id)
-        avoided_muscles = await get_user_avoided_muscles(request.user_id)
-        if avoided_exercises:
-            logger.info(f"User has {len(avoided_exercises)} avoided exercises")
-        if avoided_muscles.get("avoid") or avoided_muscles.get("reduce"):
-            logger.info(f"User avoided muscles - avoid: {avoided_muscles.get('avoid')}, reduce: {avoided_muscles.get('reduce')}")
-
-        # Fetch user's progression pace and workout type preference
-        progression_pace = await get_user_progression_pace(request.user_id)
-        workout_type_pref = await get_user_workout_type_preference(request.user_id)
-        logger.info(f"User progression_pace: {progression_pace}, workout_type_preference: {workout_type_pref}")
-
-        # Fetch feedback-based difficulty adjustment
-        difficulty_adjustment, difficulty_recommendation = await get_user_difficulty_adjustment(request.user_id)
-        if difficulty_adjustment != 0:
-            logger.info(f"🎯 [Remaining Feedback Loop] Applying difficulty_adjustment={difficulty_adjustment:+d}: {difficulty_recommendation}")
-        else:
-            logger.info(f"🎯 [Remaining Feedback Loop] No difficulty adjustment needed")
-
-        # HELL MODE: Boost difficulty adjustment to prefer harder exercises from database
-        if intensity_preference == "hell":
-            hell_mode_boost = 3  # Strong preference for advanced exercises
-            difficulty_adjustment = min(5, difficulty_adjustment + hell_mode_boost)  # Cap at +5
-            logger.info(f"🔥 [Remaining HELL MODE] Boosted difficulty_adjustment to {difficulty_adjustment:+d} - selecting harder exercises")
-
-        # Fetch comeback status for exercise parameter validation
-        comeback_status = await get_user_comeback_status(request.user_id)
-        is_comeback = comeback_status.get("in_comeback_mode", False)
-        if is_comeback:
-            logger.info(f"🔄 [Remaining] User is in comeback mode: {comeback_status.get('reason')}")
-
-        # Fetch progression context and rep preferences for leverage-based progressions
-        rep_preferences = await get_user_rep_preferences(request.user_id)
-        progression_context = await get_user_progression_context(request.user_id)
-
-        # Build progression philosophy prompt
-        progression_philosophy = build_progression_philosophy_prompt(
-            rep_preferences=rep_preferences,
-            progression_context=progression_context,
-        )
-
-        # Fetch user's historical workout patterns and set/rep limits
-        logger.info(f"[Remaining Generation] Fetching workout patterns and set/rep limits for user: {request.user_id}")
-        workout_patterns = await get_user_workout_patterns(request.user_id)
-        workout_patterns_context = workout_patterns.get("historical_context", "")
-        set_rep_limits = workout_patterns.get("set_rep_limits", {})
-        exercise_patterns = workout_patterns.get("exercise_patterns", {})
-
-        if set_rep_limits.get("max_sets_per_exercise", 5) < 5:
-            logger.info(f"[Remaining Generation] User has set max_sets_per_exercise: {set_rep_limits.get('max_sets_per_exercise')}")
-        if set_rep_limits.get("max_reps_per_set", 15) < 15:
-            logger.info(f"[Remaining Generation] User has set max_reps_per_set: {set_rep_limits.get('max_reps_per_set')}")
-
-        # Fetch set type preferences for personalized drop set / failure set recommendations
-        logger.info(f"[Remaining Generation] Fetching set type preferences for user: {request.user_id}")
-        set_type_prefs = await get_user_set_type_preferences(request.user_id, supabase_client=db.client)
-        set_type_context = build_set_type_context(set_type_prefs)
-        if set_type_prefs:
-            advanced_types = [k for k in set_type_prefs.keys() if k not in ["working", "warmup"]]
-            if advanced_types:
-                logger.info(f"[Remaining Generation] User has history with set types: {advanced_types}")
-
-        BATCH_SIZE = 4
-
-        async def generate_single_workout(
-            workout_date: datetime,
-            avoid_words: List[str],
-            exercises_to_avoid: List[str],
-            batch_offset: int = 0
-        ):
-            weekday = workout_date.weekday()
-            focus = workout_focus_map.get(weekday, "full_body")
-
-            # Get adaptive parameters for this workout based on focus and user history
-            try:
-                adaptive_params = await adaptive_service.get_adaptive_parameters(
-                    user_id=request.user_id,
-                    workout_type=focus,
-                    user_goals=goals if isinstance(goals, list) else [],
-                    fitness_level=fitness_level,  # Pass fitness level for beginner adjustments
-                )
-                logger.info(f"Adaptive params for regeneration ({focus}): sets={adaptive_params.get('sets')}, reps={adaptive_params.get('reps')}, fitness_level={fitness_level}")
-            except Exception as adapt_err:
-                logger.warning(f"Adaptive params failed for regeneration: {adapt_err}, using defaults")
-                adaptive_params = None
-
-            # Get queued exercises for this focus area
-            queued_exercises = await get_user_exercise_queue(request.user_id, focus_area=focus)
-
-            try:
-                # Combine avoided exercises with exercises_to_avoid for complete filtering
-                all_avoided = list(set(exercises_to_avoid + avoided_exercises))
-
-                # Use RAG to intelligently select exercises
-                # Pass batch_offset to ensure variety across parallel workouts
-                rag_exercises = await exercise_rag.select_exercises_for_workout(
-                    focus_area=focus,
-                    equipment=equipment if isinstance(equipment, list) else [],
-                    fitness_level=fitness_level or "intermediate",
-                    goals=goals if isinstance(goals, list) else [],
-                    count=6,
-                    avoid_exercises=all_avoided,
-                    injuries=active_injuries if active_injuries is not None else None,
-                    workout_params=adaptive_params,
-                    dumbbell_count=dumbbell_count,
-                    kettlebell_count=kettlebell_count,
-                    user_id=request.user_id,  # For custom goal keywords
-                    strength_history=strength_history,  # Use historical weights
-                    favorite_exercises=favorite_exercises,  # Prioritize favorites
-                    queued_exercises=queued_exercises,  # Include queued exercises
-                    consistency_mode=consistency_mode,  # Boost or avoid recent exercises
-                    recently_used_exercises=recently_used_for_boost,  # For consistency boost
-                    staple_exercises=staple_exercises,  # Core lifts that never rotate
-                    variation_percentage=variation_percentage,  # User's variety preference
-                    avoided_muscles=avoided_muscles,  # User's avoided muscle groups
-                    progression_pace=progression_pace,  # User's progression pace preference
-                    workout_type_preference=workout_type_pref,  # User's workout type preference
-                    difficulty_adjustment=difficulty_adjustment,  # Feedback-based difficulty shift
-                    batch_offset=batch_offset,  # Ensures variety in parallel batch generation
-                    workout_environment=workout_environment,  # User's workout location
-                )
-
-                exercises_used = []
-                queued_used = []
-                if rag_exercises:
-                    exercises_used = [ex.get("name", "") for ex in rag_exercises]
-                    queued_used = [ex.get("name") for ex in rag_exercises if ex.get("from_queue")]
-
-                    # Get the effective workout focus from adaptive params
-                    effective_focus = adaptive_params.get("workout_focus", "hypertrophy") if adaptive_params else "hypertrophy"
-
-                    # Apply supersets if appropriate
-                    if adaptive_params and adaptive_service.should_use_supersets(
-                        effective_focus, request.duration_minutes or 45, len(rag_exercises)
-                    ):
-                        rag_exercises = adaptive_service.create_superset_pairs(rag_exercises)
-                        logger.info(f"Applied supersets to regenerated {focus} ({effective_focus}) workout")
-
-                    # Add AMRAP finisher if appropriate
-                    if adaptive_params and adaptive_service.should_include_amrap(
-                        effective_focus, fitness_level or "intermediate"
-                    ):
-                        amrap_exercise = adaptive_service.create_amrap_finisher(rag_exercises, effective_focus)
-                        rag_exercises.append(amrap_exercise)
-                        logger.info(f"Added AMRAP finisher to regenerated workout: {amrap_exercise['name']}")
-
-                    workout_data = await gemini_service.generate_workout_from_library(
-                        exercises=rag_exercises,
-                        fitness_level=fitness_level or "intermediate",
-                        goals=goals if isinstance(goals, list) else [],
-                        duration_minutes=request.duration_minutes or 45,
-                        focus_areas=[focus],
-                        avoid_name_words=avoid_words[:20],
-                        workout_date=workout_date.isoformat(),
-                        age=user_age,
-                        activity_level=user_activity_level,
-                        intensity_preference=intensity_preference,
-                        custom_program_description=custom_program_description,
-                        strength_history=strength_history,
-                        personal_bests=personal_bests,
-                    )
-                else:
-                    workout_data = await gemini_service.generate_workout_plan(
-                        fitness_level=fitness_level or "intermediate",
-                        goals=goals if isinstance(goals, list) else [],
-                        equipment=equipment if isinstance(equipment, list) else [],
-                        duration_minutes=request.duration_minutes or 45,
-                        focus_areas=[focus],
-                        avoid_name_words=avoid_words[:20],
-                        workout_date=workout_date.isoformat(),
-                        age=user_age,
-                        activity_level=user_activity_level,
-                        intensity_preference=intensity_preference,
-                        custom_program_description=custom_program_description,
-                        workout_environment=workout_environment,
-                        progression_philosophy=progression_philosophy if progression_philosophy else None,
-                        workout_patterns_context=workout_patterns_context if workout_patterns_context else None,
-                        set_type_context=set_type_context if set_type_context else None,
-                    )
-
-                # Apply post-generation validation
-                exercises = workout_data.get("exercises", [])
-
-                # Validate and cap exercise parameters
-                if exercises:
-                    exercises = validate_and_cap_exercise_parameters(
-                        exercises=exercises,
-                        fitness_level=fitness_level or "intermediate",
-                        age=user_age,
-                        is_comeback=is_comeback,
-                        difficulty=intensity_preference
-                    )
-
-                    # Enforce user's set/rep limits
-                    if set_rep_limits:
-                        exercises = enforce_set_rep_limits(
-                            exercises=exercises,
-                            set_rep_limits=set_rep_limits,
-                            exercise_patterns=exercise_patterns,
-                        )
-
-                return {
-                    "workout_date": workout_date,
-                    "focus": focus,
-                    "name": workout_data.get("name", f"{focus.title()} Workout"),
-                    "type": workout_data.get("type", "strength"),
-                    "difficulty": workout_data.get("difficulty", intensity_preference),
-                    "exercises": exercises,
-                    "exercises_used": exercises_used,
-                    "queued_used": queued_used,  # Track queued exercises to mark as used
-                }
-
-            except Exception as e:
-                logger.error(f"Error generating remaining workout: {e}")
-                raise  # No fallback - let errors propagate per CLAUDE.md guidelines
-
-        for batch_start in range(0, len(workout_dates), BATCH_SIZE):
-            batch_end = min(batch_start + BATCH_SIZE, len(workout_dates))
-            batch_dates = workout_dates[batch_start:batch_end]
-
-            # Create STAGGERED avoid lists for each workout in the batch
-            # Each concurrent workout gets a different offset of exercises to avoid
-            # This ensures variety even when workouts are generated in parallel
-            tasks = []
-            for i, date in enumerate(batch_dates):
-                # Stagger by 8 exercises per workout in the batch
-                offset = i * 8
-                if used_exercises:
-                    avoid_list = used_exercises[-(30 + offset):].copy()
-                else:
-                    avoid_list = []
-                # Pass batch_offset (i) to ensure variety in parallel workout selection
-                # This ensures each workout in the batch uses different exercises
-                tasks.append(generate_single_workout(
-                    date,
-                    used_name_words.copy(),
-                    avoid_list,
-                    batch_offset=i  # Critical: ensures variety in parallel generation
-                ))
-            batch_results = await asyncio.gather(*tasks, return_exceptions=True)
-
-            for result in batch_results:
-                if isinstance(result, Exception):
-                    continue
-
-                name_words = extract_name_words(result["name"])
-                used_name_words.extend(name_words)
-
-                # Track used exercises for variety in next batches
-                exercises_used_in_workout = result.get("exercises_used", [])
-                if exercises_used_in_workout:
-                    used_exercises.extend(exercises_used_in_workout)
-
-                # Mark queued exercises as used
-                queued_used_in_workout = result.get("queued_used", [])
-                if queued_used_in_workout:
-                    await mark_queued_exercises_used(request.user_id, queued_used_in_workout)
-
-                # Apply 1RM-based weights for percentage-based training
-                exercises = result["exercises"]
-                if one_rm_data and exercises:
-                    exercises = apply_1rm_weights_to_exercises(
-                        exercises, one_rm_data, training_intensity, intensity_overrides
-                    )
-
-                # CRITICAL SAFETY NET: Validate and cap exercise parameters
-                # This prevents extreme workouts like 90 squats from reaching users
-                if exercises:
-                    exercises = validate_and_cap_exercise_parameters(
-                        exercises=exercises,
-                        fitness_level=fitness_level or "intermediate",
-                        age=user_age,
-                        is_comeback=is_comeback,
-                        difficulty=intensity_preference
-                    )
-
-                    # CRITICAL: Validate set_targets - FAIL if missing (no fallback)
-                    user_context = {
-                        "user_id": request.user_id,
-                        "fitness_level": fitness_level,
-                        "difficulty": result["difficulty"],
-                        "goals": goals if isinstance(goals, list) else [],
-                        "equipment": equipment if isinstance(equipment, list) else [],
-                        "workout_date": result["workout_date"].isoformat(),
-                        "generation_source": "background_generation",
-                    }
-                    exercises = validate_set_targets_strict(exercises, user_context)
-
-                # SAFETY NET: Do not save workout if exercises list is empty
-                if not exercises:
-                    logger.error(f"[Remaining Gen] ❌ Cannot save workout with empty exercises! "
-                                f"user={request.user_id}, date={result['workout_date']}, name={result['name']}")
-                    continue
-
-                workout_db_data = {
-                    "user_id": request.user_id,
-                    "name": result["name"],
-                    "type": result["type"],
-                    "difficulty": result["difficulty"],
-                    "scheduled_date": result["workout_date"].isoformat(),
-                    "exercises_json": exercises,
-                    "duration_minutes": request.duration_minutes or 45,
-                    "generation_method": "ai",
-                    "generation_source": "background_generation",
-                }
-
-                logger.info(f"[Remaining Gen] Saving workout '{result['name']}' with {len(exercises)} exercises")
-                created = db.create_workout(workout_db_data)
-                workout = row_to_workout(created)
-                await index_workout_to_rag(workout)
-
-                # Generate warmup and stretches alongside workout (using user preferences)
-                try:
-                    warmup_stretch_service = get_warmup_stretch_service()
-
-                    # Generate and save warmup (using user's preferred duration)
-                    await warmup_stretch_service.create_warmup_for_workout(
-                        workout_id=workout.id,
-                        exercises=exercises,
-                        duration_minutes=warmup_duration,
-                        injuries=active_injuries if active_injuries is not None else None,
-                        user_id=request.user_id
-                    )
-
-                    # Generate and save stretches (using user's preferred duration)
-                    await warmup_stretch_service.create_stretches_for_workout(
-                        workout_id=workout.id,
-                        exercises=exercises,
-                        duration_minutes=stretch_duration,
-                        injuries=active_injuries if active_injuries is not None else None,
-                        user_id=request.user_id
-                    )
-                    logger.info(f"Generated warmup ({warmup_duration}m) and stretches ({stretch_duration}m) for remaining workout {workout.id}")
-                except Exception as ws_error:
-                    logger.warning(f"Failed to generate warmup/stretches for remaining workout {workout.id}: {ws_error}")
-
-                generated_workouts.append(workout)
-
-        return GenerateMonthlyResponse(workouts=generated_workouts, total_generated=len(generated_workouts))
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to generate remaining workouts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

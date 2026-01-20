@@ -75,7 +75,7 @@ class TestMuscleHeatmapEndpoint:
             mock_client.rpc.return_value.execute.return_value = mock_result
 
             response = client.get(
-                "/v1/muscle-analytics/heatmap",
+                "/api/v1/muscle-analytics/heatmap",
                 params={"user_id": TEST_USER_ID, "time_range": "4_weeks"}
             )
 
@@ -109,7 +109,7 @@ class TestMuscleHeatmapEndpoint:
             mock_client.from_.return_value.select.return_value.eq.return_value.execute.return_value = mock_result
 
             response = client.get(
-                "/v1/muscle-analytics/heatmap",
+                "/api/v1/muscle-analytics/heatmap",
                 params={"user_id": TEST_USER_ID}
             )
 
@@ -128,7 +128,7 @@ class TestMuscleHeatmapEndpoint:
             mock_client.rpc.return_value.execute.return_value = mock_result
 
             response = client.get(
-                "/v1/muscle-analytics/heatmap",
+                "/api/v1/muscle-analytics/heatmap",
                 params={"user_id": TEST_USER_ID}
             )
 
@@ -172,7 +172,7 @@ class TestMuscleFrequencyEndpoint:
             mock_client.from_.return_value.select.return_value.eq.return_value.execute.return_value = mock_result
 
             response = client.get(
-                "/v1/muscle-analytics/frequency",
+                "/api/v1/muscle-analytics/frequency",
                 params={"user_id": TEST_USER_ID}
             )
 
@@ -194,7 +194,7 @@ class TestMuscleFrequencyEndpoint:
             mock_client.from_.return_value.select.return_value.eq.return_value.execute.return_value = mock_result
 
             response = client.get(
-                "/v1/muscle-analytics/frequency",
+                "/api/v1/muscle-analytics/frequency",
                 params={"user_id": TEST_USER_ID}
             )
 
@@ -233,7 +233,7 @@ class TestMuscleBalanceEndpoint:
             mock_client.from_.return_value.select.return_value.eq.return_value.limit.return_value.execute.return_value = mock_result
 
             response = client.get(
-                "/v1/muscle-analytics/balance",
+                "/api/v1/muscle-analytics/balance",
                 params={"user_id": TEST_USER_ID}
             )
 
@@ -269,7 +269,7 @@ class TestMuscleBalanceEndpoint:
             mock_client.from_.return_value.select.return_value.eq.return_value.limit.return_value.execute.return_value = mock_result
 
             response = client.get(
-                "/v1/muscle-analytics/balance",
+                "/api/v1/muscle-analytics/balance",
                 params={"user_id": TEST_USER_ID}
             )
 
@@ -290,7 +290,7 @@ class TestMuscleBalanceEndpoint:
             mock_client.from_.return_value.select.return_value.eq.return_value.limit.return_value.execute.return_value = mock_result
 
             response = client.get(
-                "/v1/muscle-analytics/balance",
+                "/api/v1/muscle-analytics/balance",
                 params={"user_id": TEST_USER_ID}
             )
 
@@ -330,7 +330,7 @@ class TestMuscleExercisesEndpoint:
             mock_client.rpc.return_value.execute.return_value = mock_result
 
             response = client.get(
-                "/v1/muscle-analytics/muscle/chest/exercises",
+                "/api/v1/muscle-analytics/muscle/chest/exercises",
                 params={"user_id": TEST_USER_ID}
             )
 
@@ -352,7 +352,7 @@ class TestMuscleExercisesEndpoint:
             mock_client.rpc.return_value.execute.return_value = mock_result
 
             response = client.get(
-                "/v1/muscle-analytics/muscle/forearms/exercises",
+                "/api/v1/muscle-analytics/muscle/forearms/exercises",
                 params={"user_id": TEST_USER_ID}
             )
 
@@ -395,7 +395,7 @@ class TestMuscleHistoryEndpoint:
             mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.gte.return_value.order.return_value.execute.return_value = mock_result
 
             response = client.get(
-                "/v1/muscle-analytics/muscle/chest/history",
+                "/api/v1/muscle-analytics/muscle/chest/history",
                 params={"user_id": TEST_USER_ID}
             )
 
@@ -431,7 +431,7 @@ class TestMuscleHistoryEndpoint:
             mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.gte.return_value.order.return_value.execute.return_value = mock_result
 
             response = client.get(
-                "/v1/muscle-analytics/muscle/chest/history",
+                "/api/v1/muscle-analytics/muscle/chest/history",
                 params={"user_id": TEST_USER_ID}
             )
 
@@ -452,7 +452,7 @@ class TestMuscleHistoryEndpoint:
             mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.gte.return_value.order.return_value.execute.return_value = mock_result
 
             response = client.get(
-                "/v1/muscle-analytics/muscle/chest/history",
+                "/api/v1/muscle-analytics/muscle/chest/history",
                 params={"user_id": TEST_USER_ID}
             )
 
@@ -475,7 +475,7 @@ class TestLogViewEndpoint:
             mock_client.from_.return_value.insert.return_value.execute.return_value = mock_result
 
             response = client.post(
-                "/v1/muscle-analytics/log-view",
+                "/api/v1/muscle-analytics/log-view",
                 json={
                     "user_id": TEST_USER_ID,
                     "view_type": "heatmap",
@@ -498,7 +498,7 @@ class TestLogViewEndpoint:
             mock_client.from_.return_value.insert.return_value.execute.return_value = mock_result
 
             response = client.post(
-                "/v1/muscle-analytics/log-view",
+                "/api/v1/muscle-analytics/log-view",
                 json={
                     "user_id": TEST_USER_ID,
                     "view_type": "muscle_detail",
@@ -518,7 +518,7 @@ class TestLogViewEndpoint:
             mock_client.from_.return_value.insert.return_value.execute.side_effect = Exception("DB Error")
 
             response = client.post(
-                "/v1/muscle-analytics/log-view",
+                "/api/v1/muscle-analytics/log-view",
                 json={
                     "user_id": TEST_USER_ID,
                     "view_type": "heatmap",

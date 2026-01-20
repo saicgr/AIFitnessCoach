@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../widgets/segmented_tab_bar.dart';
@@ -225,7 +226,8 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
   }
 
   Widget _buildCreateChallengeButton(BuildContext context, bool isDark) {
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final colors = ref.colors(context);
+    final accentColor = colors.accent;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Material(
@@ -253,7 +255,7 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
                 ),
                 child: Icon(
                   Icons.add_rounded,
-                  color: isDark ? AppColors.accentContrast : AppColorsLight.accentContrast,
+                  color: colors.accentContrast,
                   size: 32,
                 ),
               ),

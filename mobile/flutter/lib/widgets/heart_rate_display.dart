@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/providers/heart_rate_provider.dart';
 
 /// Compact heart rate display for workout screens.
 /// Shows live BPM from watch with color-coded heart rate zone indicator.
+/// Tap the zone badge to learn what the zone means (beginner-friendly).
 class HeartRateDisplay extends ConsumerWidget {
   final double iconSize;
   final double fontSize;
   final bool showZoneLabel;
+  final int? maxHR; // For accurate zone calculation
 
   const HeartRateDisplay({
     super.key,
     this.iconSize = 16,
     this.fontSize = 14,
     this.showZoneLabel = false,
+    this.maxHR,
   });
 
   @override
@@ -28,7 +32,7 @@ class HeartRateDisplay extends ConsumerWidget {
   }
 
   Widget _buildDisplay(BuildContext context, int? bpm, {bool isLoading = false}) {
-    final zone = bpm != null ? getHeartRateZone(bpm) : null;
+    final zone = bpm != null ? getHeartRateZone(bpm, maxHr: maxHR ?? 190) : null;
     final color = zone != null ? Color(zone.colorValue) : Colors.grey;
 
     return Row(
@@ -71,25 +75,166 @@ class HeartRateDisplay extends ConsumerWidget {
             ),
           ),
 
-        // Optional zone label
+        // Optional zone label - tappable for beginners
         if (showZoneLabel && zone != null) ...[
           const SizedBox(width: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              zone.name,
+          _TappableZoneBadge(zone: zone, color: color),
+        ],
+      ],
+    );
+  }
+}
+
+/// Tappable zone badge that shows zone info dialog when tapped.
+class _TappableZoneBadge extends StatelessWidget {
+  final HeartRateZone zone;
+  final Color color;
+
+  const _TappableZoneBadge({
+    required this.zone,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        _showZoneInfo(context);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              zone.shortLabel,
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 color: color,
               ),
             ),
+            const SizedBox(width: 2),
+            Icon(
+              Icons.info_outline,
+              size: 10,
+              color: color.withValues(alpha: 0.7),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showZoneInfo(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Icon(
+                Icons.favorite,
+                size: 14,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                '${zone.name} Zone',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              zone.description,
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? Colors.grey[300] : Colors.grey[700],
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildInfoRow(
+              Icons.speed,
+              'Heart Rate',
+              '${zone.percentageRange} of max',
+              isDark,
+            ),
+            const SizedBox(height: 8),
+            _buildInfoRow(
+              Icons.local_fire_department,
+              'Fat Burned',
+              '${(zone.fatCaloriePercent * 100).round()}% of calories',
+              isDark,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Got it',
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value, bool isDark) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 16,
+          color: isDark ? Colors.grey[400] : Colors.grey[600],
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: TextStyle(
+            fontSize: 13,
+            color: isDark ? Colors.grey[400] : Colors.grey[600],
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: isDark ? Colors.grey[300] : Colors.grey[700],
+          ),
+        ),
       ],
     );
   }

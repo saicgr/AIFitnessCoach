@@ -28,6 +28,7 @@ import 'widgets/exercise_swap_sheet.dart';
 import 'widgets/superset_pair_sheet.dart';
 import '../../data/repositories/superset_repository.dart';
 import '../../core/providers/user_provider.dart';
+import '../../data/repositories/auth_repository.dart';
 import 'widgets/exercise_thumbnail_strip.dart';
 import 'widgets/video_pip.dart';
 import 'widgets/rest_timer_overlay.dart';
@@ -916,7 +917,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
-                    value: _challengeCurrentSet / challengeExercise.sets,
+                    value: _challengeCurrentSet / (challengeExercise.sets ?? 1),
                     backgroundColor: elevatedColor,
                     valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
                     minHeight: 4,
@@ -1064,7 +1065,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
                       flex: 2,
                       child: FilledButton.icon(
                         onPressed: () => _completeChallengeSet(
-                          challengeExercise.reps,
+                          challengeExercise.reps ?? 10,
                           0, // Bodyweight
                         ),
                         icon: const Icon(Icons.check),
@@ -1567,6 +1568,22 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
   void _toggleUnit() {
     setState(() => _useKg = !_useKg);
     HapticFeedback.selectionClick();
+
+    // Persist the weight unit preference to backend
+    _saveWeightUnitPreference(_useKg ? 'kg' : 'lbs');
+  }
+
+  /// Save weight unit preference to backend (non-blocking)
+  Future<void> _saveWeightUnitPreference(String unit) async {
+    try {
+      await ref.read(authStateProvider.notifier).updateUserProfile({
+        'weight_unit': unit,
+      });
+      debugPrint('✅ [WeightUnit] Saved preference: $unit');
+    } catch (e) {
+      debugPrint('⚠️ [WeightUnit] Failed to save preference: $e');
+      // Don't show error to user - local toggle still works
+    }
   }
 
   /// Add an additional set to the current exercise
@@ -3071,13 +3088,13 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
       _challengeSets.add(SetLog(
         reps: reps,
         weight: weight,
-        targetReps: challengeExercise.reps,
+        targetReps: challengeExercise.reps ?? 10,
       ));
     });
 
     HapticFeedback.mediumImpact();
 
-    if (_challengeCurrentSet < challengeExercise.sets) {
+    if (_challengeCurrentSet < (challengeExercise.sets ?? 1)) {
       // More sets to go
       setState(() => _challengeCurrentSet++);
     } else {

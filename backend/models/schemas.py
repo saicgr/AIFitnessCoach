@@ -116,6 +116,8 @@ class WorkoutCreate(BaseModel):
     scheduled_date: datetime
     exercises_json: str = Field(..., max_length=100000)
     duration_minutes: int = Field(default=45, ge=1, le=480)
+    duration_minutes_min: Optional[int] = Field(default=None, ge=1, le=480)
+    duration_minutes_max: Optional[int] = Field(default=None, ge=1, le=480)
     generation_method: str = Field(default="algorithm", max_length=50)
     generation_source: str = Field(default="onboarding", max_length=50)
     generation_metadata: str = Field(default="{}", max_length=50000)
@@ -141,6 +143,8 @@ class Workout(BaseModel):
     is_completed: bool
     exercises_json: str = Field(..., max_length=100000)
     duration_minutes: int = Field(default=45, ge=1, le=480)
+    duration_minutes_min: Optional[int] = Field(default=None, ge=1, le=480)
+    duration_minutes_max: Optional[int] = Field(default=None, ge=1, le=480)
     created_at: Optional[datetime] = None
     generation_method: Optional[str] = Field(default=None, max_length=50)
     generation_source: Optional[str] = Field(default=None, max_length=50)
@@ -161,11 +165,14 @@ class GenerateWorkoutRequest(BaseModel):
     user_id: str = Field(..., max_length=100)
     workout_type: Optional[str] = Field(default=None, max_length=50)
     duration_minutes: Optional[int] = Field(default=45, ge=1, le=480)
+    duration_minutes_min: Optional[int] = Field(default=None, ge=1, le=480)
+    duration_minutes_max: Optional[int] = Field(default=None, ge=1, le=480)
     focus_areas: Optional[List[str]] = Field(default=None, max_length=20)
     exclude_exercises: Optional[List[str]] = Field(default=None, max_length=50)
     fitness_level: Optional[str] = Field(default=None, max_length=50)
     goals: Optional[List[str]] = Field(default=None, max_length=20)
     equipment: Optional[List[str]] = Field(default=None, max_length=50)
+    scheduled_date: Optional[str] = Field(default=None, description="Target date for workout (YYYY-MM-DD). If not provided, uses today's date.")
 
 
 class GenerateWeeklyRequest(BaseModel):
@@ -221,6 +228,7 @@ class SwapExerciseRequest(BaseModel):
     old_exercise_name: str = Field(..., max_length=200)
     new_exercise_name: str = Field(..., max_length=200)
     reason: Optional[str] = Field(default=None, max_length=500)
+    swap_source: Optional[str] = Field(default="ai_suggestion", max_length=50)  # 'ai_suggestion', 'library_search', 'recent_exercise'
 
 
 class AddExerciseRequest(BaseModel):
@@ -250,6 +258,8 @@ class RegenerateWorkoutRequest(BaseModel):
     workout_id: str = Field(..., max_length=100)
     user_id: str = Field(..., max_length=100)
     duration_minutes: Optional[int] = Field(default=45, ge=1, le=480)
+    duration_minutes_min: Optional[int] = Field(default=None, ge=1, le=480)
+    duration_minutes_max: Optional[int] = Field(default=None, ge=1, le=480)
     fitness_level: Optional[str] = Field(default=None, max_length=50)
     difficulty: Optional[str] = Field(default=None, max_length=50)
     equipment: Optional[List[str]] = Field(default=None, max_length=50)
@@ -267,6 +277,8 @@ class UpdateProgramRequest(BaseModel):
     user_id: str = Field(..., max_length=100)
     difficulty: Optional[str] = Field(default=None, max_length=50)
     duration_minutes: Optional[int] = Field(default=45, ge=1, le=480)
+    duration_minutes_min: Optional[int] = Field(default=None, ge=1, le=480)
+    duration_minutes_max: Optional[int] = Field(default=None, ge=1, le=480)
     workout_type: Optional[str] = Field(default=None, max_length=50)
     workout_days: Optional[List[str]] = Field(default=None, max_length=7)  # ["Mon", "Wed", "Fri"]
     equipment: Optional[List[str]] = Field(default=None, max_length=50)

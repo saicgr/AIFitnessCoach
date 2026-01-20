@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -19,8 +21,13 @@ import '../../data/models/subjective_feedback.dart';
 import '../challenges/widgets/challenge_complete_dialog.dart';
 import '../challenges/widgets/challenge_friends_dialog.dart';
 import 'widgets/share_workout_sheet.dart';
+import 'widgets/trophies_earned_sheet.dart';
+import 'widgets/trophy_celebration_overlay.dart';
 import '../../widgets/heart_rate_chart.dart';
 import '../../core/providers/heart_rate_provider.dart';
+import '../../data/repositories/auth_repository.dart';
+import '../../data/services/health_service.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 class WorkoutCompleteScreen extends ConsumerStatefulWidget {
   final Workout workout;
@@ -87,6 +94,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   bool _isSubmitting = false;
   String? _aiSummary;
   bool _isLoadingSummary = true;
+  bool _isAiReviewExpanded = false;
 
   // Per-exercise ratings (exercise index -> rating 1-5)
   final Map<int, int> _exerciseRatings = {};
@@ -124,6 +132,12 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   WorkoutSyncResult? _goalSyncResult;
   bool _isLoadingGoalSync = false;
 
+  // Total workout count for milestone detection
+  int _totalWorkoutCount = 0;
+
+  // Milestone thresholds
+  static const List<int> _milestoneThresholds = [5, 10, 25, 50, 100, 150, 200, 250, 500, 1000];
+
   @override
   void initState() {
     super.initState();
@@ -136,6 +150,9 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     });
 
     _loadAICoachFeedback();
+
+    // Load total workout count for milestone detection
+    _loadTotalWorkoutCount();
 
     // Use API-provided PRs if available (preferred as they're more accurate)
     if (widget.personalRecords != null && widget.personalRecords!.isNotEmpty) {
@@ -151,12 +168,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
         'is_all_time_pr': pr.isAllTimePr,
       }).toList();
       _isLoadingAchievements = false;
-      // Play confetti and show PR dialog as popup overlay
+      // Show full-screen trophy celebration overlay
       Future.microtask(() {
-        _confettiController.play();
-        _showPRCelebrationDialog();
+        _showTrophyCelebration();
       });
-      debugPrint('🏆 [Complete] Using ${_newPRs.length} PRs from API - showing popup');
+      debugPrint('🏆 [Complete] Using ${_newPRs.length} PRs from API - showing celebration');
     } else {
       // Fall back to client-side detection
       _loadAchievements();
@@ -173,107 +189,83 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     }
   }
 
-  /// Show PR celebration as a popup dialog overlay
-  void _showPRCelebrationDialog() {
-    if (_newPRs.isEmpty || !mounted) return;
+  /// Load total workout count for milestone detection
+  Future<void> _loadTotalWorkoutCount() async {
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) return;
 
-    debugPrint('🏆 [Complete] Showing PR celebration popup: ${_newPRs.length} PRs');
+      // Fetch user stats to get total workout count
+      final response = await apiClient.get('/users/$userId/stats');
+      if (response.statusCode == 200 && response.data != null) {
+        final stats = response.data as Map<String, dynamic>;
+        setState(() {
+          _totalWorkoutCount = (stats['total_workouts'] as int?) ?? 0;
+        });
+        debugPrint('📊 [Complete] Total workouts: $_totalWorkoutCount');
+      }
+    } catch (e) {
+      debugPrint('❌ [Complete] Error loading workout count: $e');
+    }
+  }
 
-    showDialog(
+  /// Check if current workout count is a milestone
+  int? _getWorkoutMilestone() {
+    if (_totalWorkoutCount <= 0) return null;
+    if (_milestoneThresholds.contains(_totalWorkoutCount)) {
+      return _totalWorkoutCount;
+    }
+    return null;
+  }
+
+  /// Get the next milestone for AI feedback
+  Map<String, dynamic>? _getNextMilestone() {
+    if (_totalWorkoutCount <= 0) return null;
+    for (final m in _milestoneThresholds) {
+      if (_totalWorkoutCount < m) {
+        return {
+          'type': 'workout_count',
+          'value': m,
+          'remaining': m - _totalWorkoutCount,
+        };
+      }
+    }
+    return null;
+  }
+
+  /// Show full-screen trophy celebration overlay
+  void _showTrophyCelebration() {
+    // Get new achievements from achievements map
+    final newAchievements = (_achievements?['new_achievements'] as List?)
+        ?.map((a) => Map<String, dynamic>.from(a as Map))
+        .toList();
+
+    // Check for milestone
+    final milestone = _getWorkoutMilestone();
+
+    // Get current streak
+    final currentStreak = _achievements?['current_streak'] as int?;
+
+    // Only show celebration if there are trophies to celebrate
+    final hasTrophies = _newPRs.isNotEmpty ||
+        (newAchievements != null && newAchievements.isNotEmpty) ||
+        milestone != null;
+
+    if (!hasTrophies || !mounted) return;
+
+    debugPrint('🏆 [Complete] Showing trophy celebration: ${_newPRs.length} PRs, ${newAchievements?.length ?? 0} achievements, milestone: $milestone');
+
+    // Play confetti on the underlying screen
+    _confettiController.play();
+
+    // Show full-screen celebration overlay
+    showTrophyCelebration(
       context: context,
-      barrierDismissible: true,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.success.withOpacity(0.95),
-                AppColors.cyan.withOpacity(0.9),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.emoji_events,
-                size: 60,
-                color: Colors.white,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'NEW PERSONAL RECORDS!',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 1.2,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              ..._newPRs.take(3).map((pr) {
-                final reps = pr['reps'] as int?;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '${pr['exercise_name']}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        '${(pr['weight_kg'] as num).toStringAsFixed(1)}kg${reps != null ? ' x $reps' : ''}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-              if (_newPRs.length > 3)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    '+${_newPRs.length - 3} more PRs!',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: AppColors.success,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                ),
-                child: const Text(
-                  'Awesome!',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      newPRs: _newPRs,
+      newAchievements: newAchievements,
+      workoutMilestone: milestone,
+      currentStreak: currentStreak,
     );
   }
 
@@ -509,6 +501,13 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
           // Pass enhanced context for skip detection and timing
           plannedExercises: plannedExercisesList,
           exerciseTimeSeconds: widget.exerciseTimeSeconds,
+          // Pass trophy/achievement context for personalized feedback
+          earnedPRs: _newPRs.isNotEmpty ? _newPRs : null,
+          earnedAchievements: (_achievements?['new_achievements'] as List?)
+              ?.map((a) => Map<String, dynamic>.from(a as Map))
+              .toList(),
+          totalWorkoutsCompleted: _totalWorkoutCount > 0 ? _totalWorkoutCount : null,
+          nextMilestone: _getNextMilestone(),
         );
 
         debugPrint('🤖 [AI Coach] API call completed, feedback: ${feedback != null ? "received (${feedback.length} chars)" : "null"}');
@@ -657,10 +656,10 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
             _isLoadingAchievements = false;
           });
 
-          // Play confetti if there are new PRs
-          if (newPRs.isNotEmpty) {
-            _confettiController.play();
-          }
+          // Show full-screen trophy celebration if there are trophies
+          Future.microtask(() {
+            _showTrophyCelebration();
+          });
           return;
         }
       }
@@ -1250,12 +1249,23 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: AppColors.success.withOpacity(0.2),
+                          gradient: LinearGradient(
+                            colors: [AppColors.orange, AppColors.purple],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                           shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.orange.withOpacity(0.3),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            ),
+                          ],
                         ),
                         child: const Icon(
-                          Icons.check_circle,
-                          color: AppColors.success,
+                          Icons.check_rounded,
+                          color: Colors.white,
                           size: 24,
                         ),
                       ),
@@ -1296,42 +1306,69 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
                   const SizedBox(height: 12),
 
-                  // AI Feedback (compact, max 3 lines)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: elevated,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.auto_awesome,
-                          size: 18,
-                          color: AppColors.cyan,
+                  // AI Feedback (tappable to expand)
+                  GestureDetector(
+                    onTap: _isLoadingSummary ? null : () {
+                      setState(() => _isAiReviewExpanded = !_isAiReviewExpanded);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.orange.withOpacity(0.08),
+                            AppColors.purple.withOpacity(0.05),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _isLoadingSummary
-                              ? const SizedBox(
-                                  height: 40,
-                                  child: Center(
-                                    child: LottieLoading(size: 24, color: AppColors.cyan),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.orange.withOpacity(0.3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.auto_awesome,
+                                size: 18,
+                                color: AppColors.orange,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _isLoadingSummary
+                                    ? const SizedBox(
+                                        height: 40,
+                                        child: Center(
+                                          child: LottieLoading(size: 24, color: AppColors.orange),
+                                        ),
+                                      )
+                                    : Text(
+                                        _aiSummary ?? 'Great workout! Keep up the momentum.',
+                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          height: 1.4,
+                                        ),
+                                        maxLines: _isAiReviewExpanded ? null : 3,
+                                        overflow: _isAiReviewExpanded ? null : TextOverflow.ellipsis,
+                                      ),
+                              ),
+                              if (!_isLoadingSummary && (_aiSummary?.length ?? 0) > 100)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 4),
+                                  child: Icon(
+                                    _isAiReviewExpanded ? Icons.expand_less : Icons.expand_more,
+                                    size: 18,
+                                    color: AppColors.textMuted,
                                   ),
-                                )
-                              : Text(
-                                  _aiSummary ?? 'Great workout! Keep up the momentum.',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    height: 1.4,
-                                  ),
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ).animate().fadeIn(delay: 300.ms),
 
@@ -1410,6 +1447,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     ],
                   ).animate().fadeIn(delay: 500.ms),
 
+                  const SizedBox(height: 16),
+
+                  // Trophies Section - Shows PRs and achievements earned (animation handled in method)
+                  _buildTrophiesSection(elevated),
+
                   const Spacer(),
 
                   // Primary Actions
@@ -1421,8 +1463,8 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           icon: const Icon(Icons.share_rounded, size: 18),
                           label: const Text('Share'),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.cyan,
-                            side: BorderSide(color: AppColors.cyan.withOpacity(0.5)),
+                            foregroundColor: AppColors.orange,
+                            side: BorderSide(color: AppColors.orange.withOpacity(0.5)),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                         ),
@@ -1430,24 +1472,44 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         flex: 2,
-                        child: ElevatedButton(
-                          onPressed: _isSubmitting ? null : _submitFeedback,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [AppColors.orange, AppColors.purple],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.orange.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          child: _isSubmitting
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: LottieLoading(size: 20, useDots: true),
-                                )
-                              : const Text(
-                                  'Done',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                          child: ElevatedButton(
+                            onPressed: _isSubmitting ? null : _submitFeedback,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: _isSubmitting
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: LottieLoading(size: 20, useDots: true, color: Colors.white),
+                                  )
+                                : const Text(
+                                    'Done',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
                                   ),
-                                ),
+                          ),
                         ),
                       ),
                     ],
@@ -1473,7 +1535,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           style: const TextStyle(fontSize: 13),
                         ),
                         style: TextButton.styleFrom(
-                          foregroundColor: AppColors.cyan,
+                          foregroundColor: AppColors.purple,
                         ),
                       ),
                       Container(
@@ -1545,11 +1607,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
               gravity: 0.2,
               shouldLoop: false,
               colors: const [
-                AppColors.success,
-                AppColors.cyan,
-                AppColors.purple,
                 AppColors.orange,
-                Colors.yellow,
+                AppColors.purple,
+                Color(0xFFFFD700), // Gold
+                AppColors.green,
+                AppColors.pink,
               ],
             ),
           ),
@@ -1569,7 +1631,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                 icon: Icons.timer,
                 value: _formatDuration(widget.duration),
                 label: 'Time',
-                color: AppColors.cyan,
+                color: AppColors.orange,
               ),
             ),
             const SizedBox(width: 8),
@@ -1600,7 +1662,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                 icon: Icons.scale,
                 value: '${(widget.totalVolumeKg ?? 0).toStringAsFixed(0)}kg',
                 label: 'Volume',
-                color: AppColors.success,
+                color: AppColors.green,
               ),
             ),
             const SizedBox(width: 8),
@@ -1609,7 +1671,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                 icon: Icons.repeat,
                 value: '${widget.totalSets ?? 0}',
                 label: 'Sets',
-                color: AppColors.cyan,
+                color: AppColors.purple,
               ),
             ),
             const SizedBox(width: 8),
@@ -1618,7 +1680,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                 icon: Icons.tag,
                 value: '${widget.totalReps ?? 0}',
                 label: 'Reps',
-                color: AppColors.purple,
+                color: AppColors.orange,
               ),
             ),
           ],
@@ -1627,11 +1689,26 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     );
   }
 
-  /// Heart rate section with chart and stats from watch data
+  /// Heart rate section with enhanced chart, zone breakdown, and fitness metrics
   Widget _buildHeartRateSection(Color elevated) {
     final readings = widget.heartRateReadings!
         .map((r) => r.toReading())
         .toList();
+
+    // Get user age for accurate max HR calculation
+    final authState = ref.watch(authStateProvider);
+    final userAge = authState.user?.age ?? 30; // Default to 30 if not available
+    final maxHR = calculateMaxHR(userAge);
+
+    // Get resting heart rate from daily activity if available
+    final activityState = ref.watch(dailyActivityProvider);
+    final restingHR = activityState.today?.restingHeartRate;
+
+    // Calculate workout duration in minutes
+    final durationMinutes = (widget.duration / 60).round();
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = ref.watch(accentColorProvider).getColor(isDark);
 
     return Container(
       width: double.infinity,
@@ -1640,7 +1717,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
         color: elevated,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFF44336).withOpacity(0.2),
+          color: accentColor.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -1653,54 +1730,200 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF44336).withOpacity(0.15),
+                  color: accentColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.favorite,
                   size: 18,
-                  color: Color(0xFFF44336),
+                  color: accentColor,
                 ),
               ),
               const SizedBox(width: 10),
-              const Text(
-                'Heart Rate',
+              Text(
+                'Heart Rate Analysis',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : Colors.black,
                 ),
               ),
-              const Spacer(),
-              // Quick stats
-              if (widget.avgHeartRate != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF44336).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'Avg: ${widget.avgHeartRate} bpm',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFFF44336),
-                    ),
-                  ),
-                ),
             ],
           ),
           const SizedBox(height: 16),
 
-          // Heart rate chart
-          HeartRateChart(
+          // Compact heart rate chart (graph + stats + zone breakdown)
+          HeartRateWorkoutChart(
             readings: readings,
             avgBpm: widget.avgHeartRate,
             maxBpm: widget.maxHeartRate,
             minBpm: widget.minHeartRate,
-            height: 150,
+            maxHR: maxHR,
+            restingHR: restingHR,
+            durationMinutes: durationMinutes,
+            totalCalories: widget.calories,
+            showZoneBreakdown: true, // Show zones in compact view
+            showTrainingEffect: false,
+            showVO2Max: false,
+            showFatBurnMetrics: false,
+          ),
+          const SizedBox(height: 12),
+
+          // View All Metrics button
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _showHeartRateMetricsSheet(
+                readings: readings,
+                maxHR: maxHR,
+                restingHR: restingHR,
+                durationMinutes: durationMinutes,
+              ),
+              icon: Icon(Icons.analytics_outlined, size: 18, color: accentColor),
+              label: Text(
+                'View All Metrics',
+                style: TextStyle(color: accentColor),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: accentColor,
+                side: BorderSide(
+                  color: accentColor.withValues(alpha: 0.4),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Show detailed heart rate metrics in a bottom sheet
+  void _showHeartRateMetricsSheet({
+    required List<HeartRateReading> readings,
+    required int maxHR,
+    required int? restingHR,
+    required int durationMinutes,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = ref.read(accentColorProvider).getColor(isDark);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.5)
+                    : Colors.white.withValues(alpha: 0.7),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                border: Border(
+                  top: BorderSide(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.15)
+                        : Colors.black.withValues(alpha: 0.08),
+                    width: 0.5,
+                  ),
+                ),
+              ),
+              child: Column(
+                children: [
+                  // Handle bar
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.3)
+                          : Colors.black.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: accentColor.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.favorite,
+                            size: 20,
+                            color: accentColor,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Heart Rate Metrics',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : Colors.black,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(
+                            Icons.close,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.6)
+                                : Colors.black.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Divider(
+                    height: 1,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.08),
+                  ),
+                  // Scrollable content with all metrics
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.all(16),
+                      child: HeartRateWorkoutChart(
+                        readings: readings,
+                        avgBpm: widget.avgHeartRate,
+                        maxBpm: widget.maxHeartRate,
+                        minBpm: widget.minHeartRate,
+                        maxHR: maxHR,
+                        restingHR: restingHR,
+                        durationMinutes: durationMinutes,
+                        totalCalories: widget.calories,
+                        showZoneBreakdown: true,
+                        showTrainingEffect: true,
+                        showVO2Max: restingHR != null,
+                        showFatBurnMetrics: true,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1743,6 +1966,220 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
         );
       },
     );
+  }
+
+  /// Build the trophies section showing PRs and achievements earned
+  Widget _buildTrophiesSection(Color elevated) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    // Calculate trophy count
+    final newAchievements = (_achievements?['new_achievements'] as List<dynamic>?)?.length ?? 0;
+    final totalTrophies = _newPRs.length + newAchievements;
+    final streak = _achievements?['streak_days'] as int? ?? 0;
+    final totalWorkouts = _achievements?['total_workouts'] as int? ?? 1;
+    final hasAchievements = totalTrophies > 0;
+
+    Widget trophiesCard = GestureDetector(
+      onTap: () => showTrophiesEarnedSheet(
+        context,
+        newPRs: _newPRs,
+        achievements: _achievements,
+        totalWorkouts: totalWorkouts,
+        currentStreak: streak > 0 ? streak : null,
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: hasAchievements
+                ? [
+                    AppColors.orange.withOpacity(0.2),
+                    AppColors.purple.withOpacity(0.15),
+                  ]
+                : [
+                    AppColors.orange.withOpacity(0.1),
+                    AppColors.purple.withOpacity(0.05),
+                  ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: hasAchievements
+                ? AppColors.orange.withOpacity(0.5)
+                : AppColors.orange.withOpacity(0.2),
+            width: hasAchievements ? 1.5 : 1,
+          ),
+          boxShadow: hasAchievements
+              ? [
+                  BoxShadow(
+                    color: AppColors.orange.withOpacity(0.15),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          children: [
+            // Trophy icon with badge - animated when achievements
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppColors.orange, AppColors.purple],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: hasAchievements
+                        ? [
+                            BoxShadow(
+                              color: AppColors.orange.withOpacity(0.4),
+                              blurRadius: 12,
+                              spreadRadius: 2,
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Icon(
+                    Icons.emoji_events_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                )
+                    .animate(onPlay: (controller) => hasAchievements ? controller.repeat(reverse: true) : null)
+                    .scale(
+                      begin: const Offset(1.0, 1.0),
+                      end: hasAchievements ? const Offset(1.08, 1.08) : const Offset(1.0, 1.0),
+                      duration: 800.ms,
+                      curve: Curves.easeInOut,
+                    ),
+                if (hasAchievements)
+                  Positioned(
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: elevated, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFFD700).withOpacity(0.5),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        '$totalTrophies',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    )
+                        .animate(onPlay: (controller) => controller.repeat(reverse: true))
+                        .scale(
+                          begin: const Offset(1.0, 1.0),
+                          end: const Offset(1.15, 1.15),
+                          duration: 600.ms,
+                          curve: Curves.easeInOut,
+                        ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 14),
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      if (hasAchievements)
+                        ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            colors: [Color(0xFFFFD700), AppColors.orange],
+                          ).createShader(bounds),
+                          child: const Text(
+                            'Trophies Earned!',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        )
+                            .animate(onPlay: (controller) => controller.repeat(reverse: true))
+                            .shimmer(
+                              duration: 1500.ms,
+                              color: Colors.white.withOpacity(0.3),
+                            )
+                      else
+                        Text(
+                          'Trophies & Milestones',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      const Spacer(),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: hasAchievements ? AppColors.orange : textSecondary,
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    hasAchievements
+                        ? '${_newPRs.length} PRs${newAchievements > 0 ? ', $newAchievements badges' : ''} - Tap to view'
+                        : streak > 0
+                            ? '$streak day streak, $totalWorkouts total workouts'
+                            : 'Track your progress',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: hasAchievements ? AppColors.orange.withOpacity(0.8) : textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    // Add entrance animation and subtle glow pulse for achievements
+    if (hasAchievements) {
+      return trophiesCard
+          .animate()
+          .fadeIn(delay: 550.ms, duration: 400.ms)
+          .slideY(begin: 0.1, duration: 400.ms, curve: Curves.easeOut)
+          .then()
+          .shimmer(
+            delay: 200.ms,
+            duration: 1800.ms,
+            color: AppColors.orange.withOpacity(0.15),
+          );
+    }
+
+    return trophiesCard;
   }
 
   /// Build the post-workout subjective feedback section

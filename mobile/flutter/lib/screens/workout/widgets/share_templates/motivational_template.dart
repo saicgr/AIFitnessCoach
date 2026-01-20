@@ -95,78 +95,92 @@ class MotivationalTemplate extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(24),
       ),
-      child: Stack(
-        children: [
-          // Background pattern
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _DynamicPatternPainter(colors: _gradientColors),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            // Background pattern
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _DynamicPatternPainter(colors: _gradientColors),
+              ),
             ),
-          ),
 
-          // Main content
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                // Top section with date
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildDateBadge(),
-                    if (currentStreak != null && currentStreak! > 0)
-                      Flexible(child: _buildStreakBadge()),
-                  ],
-                ),
+            // Main content - wrapped in FittedBox to prevent overflow
+            Positioned.fill(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: 320,
+                  height: 440,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Top section with date
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildDateBadge(),
+                            if (currentStreak != null && currentStreak! > 0)
+                              _buildStreakBadge(),
+                          ],
+                        ),
 
-                const Spacer(flex: 2),
+                        const SizedBox(height: 40),
 
-                // Main motivational text
-                ShaderMask(
-                  shaderCallback: (bounds) => LinearGradient(
-                    colors: _gradientColors,
-                  ).createShader(bounds),
-                  child: Text(
-                    _motivationalQuote,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 34,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2,
-                      height: 1.0,
+                        // Main motivational text
+                        ShaderMask(
+                          shaderCallback: (bounds) => LinearGradient(
+                            colors: _gradientColors,
+                          ).createShader(bounds),
+                          child: Text(
+                            _motivationalQuote,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 2,
+                              height: 1.0,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        // Workout name
+                        Text(
+                          workoutName,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Stats row
+                        _buildQuickStats(),
+
+                        const SizedBox(height: 40),
+
+                        // Watermark
+                        if (showWatermark) const AppWatermark(),
+                      ],
                     ),
-                    textAlign: TextAlign.center,
                   ),
                 ),
-
-                const SizedBox(height: 10),
-
-                // Workout name
-                Text(
-                  workoutName,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-
-                const SizedBox(height: 12),
-
-                // Stats row
-                _buildQuickStats(),
-
-                const Spacer(flex: 2),
-
-                // Watermark
-                if (showWatermark) const AppWatermark(),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -207,38 +221,44 @@ class MotivationalTemplate extends StatelessWidget {
   }
 
   Widget _buildStreakBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            _gradientColors.first.withValues(alpha: 0.3),
-            _gradientColors.last.withValues(alpha: 0.3),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 130),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              _gradientColors.first.withValues(alpha: 0.3),
+              _gradientColors.last.withValues(alpha: 0.3),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: _gradientColors.first.withValues(alpha: 0.5),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.local_fire_department_rounded,
+              color: _gradientColors.first,
+              size: 14,
+            ),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                '$currentStreak Day',
+                style: TextStyle(
+                  color: _gradientColors.first,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: _gradientColors.first.withValues(alpha: 0.5),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.local_fire_department_rounded,
-            color: _gradientColors.first,
-            size: 18,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            '$currentStreak Day Streak',
-            style: TextStyle(
-              color: _gradientColors.first,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
       ),
     );
   }

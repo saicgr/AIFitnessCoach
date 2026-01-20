@@ -22,6 +22,8 @@ import 'widgets/quiz_fasting.dart';
 import 'widgets/quiz_weight_rate.dart';
 import 'widgets/quiz_body_metrics.dart';
 import 'widgets/equipment_search_sheet.dart';
+import 'widgets/quiz_primary_goal.dart';
+import 'widgets/quiz_muscle_focus.dart';
 
 /// Pre-auth quiz data stored in SharedPreferences
 class PreAuthQuizData {
@@ -70,6 +72,11 @@ class PreAuthQuizData {
   // Sleep schedule for fasting optimization (stored as "HH:MM" strings)
   final String? wakeTime;  // e.g., "07:00"
   final String? sleepTime;  // e.g., "23:00"
+  // Primary training goal (muscle_hypertrophy, muscle_strength, strength_hypertrophy)
+  final String? primaryGoal;
+  // Muscle focus points allocation (max 5 total)
+  // Keys: triceps, upper_traps, obliques, neck, lats, chest, shoulders, biceps, etc.
+  final Map<String, int>? muscleFocusPoints;
 
   /// Computed age from dateOfBirth
   int? get age {
@@ -119,6 +126,8 @@ class PreAuthQuizData {
     this.fastingProtocol,
     this.wakeTime,
     this.sleepTime,
+    this.primaryGoal,
+    this.muscleFocusPoints,
   });
 
   String? get goal => goals?.isNotEmpty == true ? goals!.first : null;
@@ -176,6 +185,8 @@ class PreAuthQuizData {
         'fastingProtocol': fastingProtocol,
         'wakeTime': wakeTime,
         'sleepTime': sleepTime,
+        'primaryGoal': primaryGoal,
+        'muscleFocusPoints': muscleFocusPoints,
       };
 
   factory PreAuthQuizData.fromJson(Map<String, dynamic> json) => PreAuthQuizData(
@@ -218,6 +229,10 @@ class PreAuthQuizData {
         fastingProtocol: json['fastingProtocol'] as String?,
         wakeTime: json['wakeTime'] as String?,
         sleepTime: json['sleepTime'] as String?,
+        primaryGoal: json['primaryGoal'] as String?,
+        muscleFocusPoints: (json['muscleFocusPoints'] as Map<String, dynamic>?)?.map(
+          (k, v) => MapEntry(k, v as int),
+        ),
       );
 }
 
@@ -275,6 +290,21 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final fastingProtocol = prefs.getString('preAuth_fastingProtocol');
     final wakeTime = prefs.getString('preAuth_wakeTime');
     final sleepTime = prefs.getString('preAuth_sleepTime');
+    final primaryGoal = prefs.getString('preAuth_primaryGoal');
+    final muscleFocusPointsStr = prefs.getString('preAuth_muscleFocusPoints');
+    Map<String, int>? muscleFocusPoints;
+    if (muscleFocusPointsStr != null) {
+      try {
+        final decoded = Map<String, dynamic>.from(
+          Map.castFrom(Uri.splitQueryString(muscleFocusPointsStr).map(
+            (k, v) => MapEntry(k, int.tryParse(v) ?? 0),
+          )),
+        );
+        muscleFocusPoints = decoded.map((k, v) => MapEntry(k, v as int));
+      } catch (_) {
+        muscleFocusPoints = null;
+      }
+    }
 
     state = PreAuthQuizData(
       goals: goals,
@@ -312,6 +342,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: fastingProtocol,
       wakeTime: wakeTime,
       sleepTime: sleepTime,
+      primaryGoal: primaryGoal,
+      muscleFocusPoints: muscleFocusPoints,
     );
     _isLoaded = true;
   }
@@ -362,6 +394,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
     );
   }
 
@@ -404,6 +438,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
     );
   }
 
@@ -446,6 +482,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
     );
   }
 
@@ -488,6 +526,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
     );
   }
 
@@ -562,6 +602,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
     );
   }
 
@@ -604,6 +646,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
     );
   }
 
@@ -646,6 +690,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
     );
   }
 
@@ -688,6 +734,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
     );
   }
 
@@ -752,6 +800,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
     );
   }
 
@@ -794,6 +844,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
     );
   }
 
@@ -836,6 +888,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
     );
   }
 
@@ -878,6 +932,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
     );
   }
 
@@ -920,6 +976,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
     );
   }
 
@@ -962,6 +1020,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
     );
   }
 
@@ -1062,6 +1122,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
     );
   }
 
@@ -1104,6 +1166,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
     );
   }
 
@@ -1146,6 +1210,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
     );
   }
 
@@ -1188,6 +1254,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       fastingProtocol: state.fastingProtocol,
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
     );
   }
 
@@ -1227,7 +1295,99 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     await prefs.remove('preAuth_fastingProtocol');
     await prefs.remove('preAuth_wakeTime');
     await prefs.remove('preAuth_sleepTime');
+    await prefs.remove('preAuth_primaryGoal');
+    await prefs.remove('preAuth_muscleFocusPoints');
     state = PreAuthQuizData();
+  }
+
+  Future<void> setPrimaryGoal(String goal) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('preAuth_primaryGoal', goal);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
+      weightChangeRate: state.weightChangeRate,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
+      wakeTime: state.wakeTime,
+      sleepTime: state.sleepTime,
+      primaryGoal: goal,
+      muscleFocusPoints: state.muscleFocusPoints,
+    );
+  }
+
+  Future<void> setMuscleFocusPoints(Map<String, int> points) async {
+    final prefs = await SharedPreferences.getInstance();
+    // Store as query string format: "triceps=2&lats=1&obliques=2"
+    final encoded = points.entries.map((e) => '${e.key}=${e.value}').join('&');
+    await prefs.setString('preAuth_muscleFocusPoints', encoded);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
+      weightChangeRate: state.weightChangeRate,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
+      wakeTime: state.wakeTime,
+      sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: points,
+    );
   }
 }
 
@@ -1242,11 +1402,11 @@ class PreAuthQuizScreen extends ConsumerStatefulWidget {
 class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     with TickerProviderStateMixin {
   int _currentQuestion = 0;
-  // Dynamic total - 10 questions if user wants to lose/gain, 9 if maintaining
+  // Dynamic total - 12 questions if user wants to lose/gain, 11 if maintaining
   int get _totalQuestions {
     // If maintaining weight, skip the rate question
-    if (_weightDirection == 'maintain') return 9;
-    return 10;
+    if (_weightDirection == 'maintain') return 11;
+    return 12;
   }
 
   // Question 1: Goals (multi-select)
@@ -1298,6 +1458,10 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   TimeOfDay _sleepTime = const TimeOfDay(hour: 23, minute: 0);
   // Question 9: Motivations
   final Set<String> _selectedMotivations = {};
+  // Question 10: Primary Goal (muscle_hypertrophy, muscle_strength, strength_hypertrophy)
+  String? _selectedPrimaryGoal;
+  // Question 11: Muscle Focus Points (max 5 total)
+  Map<String, int> _muscleFocusPoints = {};
 
   late AnimationController _progressController;
   late AnimationController _questionController;
@@ -1359,19 +1523,6 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   }
 
   double get _progress => (_currentQuestion + 1) / _totalQuestions;
-
-  /// Returns true if the current question is skippable (Training Preferences or Nutrition Goals)
-  /// New order: Goals(0) -> Fitness(1) -> Days(2) -> Equipment(3) -> BodyMetrics(4) -> Rate(5)/Training(5) -> Training(6)/Nutrition(6) -> Nutrition(7)/Fasting(7) -> Fasting(8)/Motivation(8) -> Motivation(9)
-  bool get _isSkippableQuestion {
-    final showRateQuestion = _weightDirection != null && _weightDirection != 'maintain';
-    if (showRateQuestion) {
-      // With rate question: Training=6, Nutrition=7
-      return _currentQuestion == 6 || _currentQuestion == 7;
-    } else {
-      // Without rate question: Training=5, Nutrition=6
-      return _currentQuestion == 5 || _currentQuestion == 6;
-    }
-  }
 
   void _nextQuestion() async {
     HapticFeedback.mediumImpact();
@@ -1488,8 +1639,22 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         }
         break;
       case 9:
-        // Only reached if showing rate question (10 questions total)
-        await _saveMotivationData();
+        if (showRateQuestion) {
+          await _saveMotivationData();
+        } else {
+          await _savePrimaryGoalData();
+        }
+        break;
+      case 10:
+        if (showRateQuestion) {
+          await _savePrimaryGoalData();
+        } else {
+          await _saveMuscleFocusData();
+        }
+        break;
+      case 11:
+        // Only reached if showing rate question (12 questions total) - Muscle Focus
+        await _saveMuscleFocusData();
         break;
     }
   }
@@ -1569,6 +1734,17 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     }
   }
 
+  Future<void> _savePrimaryGoalData() async {
+    if (_selectedPrimaryGoal != null) {
+      await ref.read(preAuthQuizProvider.notifier).setPrimaryGoal(_selectedPrimaryGoal!);
+    }
+  }
+
+  Future<void> _saveMuscleFocusData() async {
+    // Save even if empty - clearing all focus points is valid
+    await ref.read(preAuthQuizProvider.notifier).setMuscleFocusPoints(_muscleFocusPoints);
+  }
+
   void _previousQuestion() {
     if (_currentQuestion > 0) {
       HapticFeedback.lightImpact();
@@ -1580,9 +1756,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   }
 
   bool get _canProceed {
-    // New order: Goals -> Fitness -> Days -> Equipment -> BodyMetrics -> Rate(conditional) -> Training -> Nutrition -> Fasting -> Motivation
-    // With rate: 0-Goals, 1-Fitness, 2-Days, 3-Equipment, 4-BodyMetrics, 5-Rate, 6-Training, 7-Nutrition, 8-Fasting, 9-Motivation
-    // Without rate: 0-Goals, 1-Fitness, 2-Days, 3-Equipment, 4-BodyMetrics, 5-Training, 6-Nutrition, 7-Fasting, 8-Motivation
+    // New order: Goals -> Fitness -> Days -> Equipment -> BodyMetrics -> Rate(conditional) -> Training -> Nutrition -> Fasting -> Motivation -> PrimaryGoal -> MuscleFocus
+    // With rate (12 total): 0-Goals, 1-Fitness, 2-Days, 3-Equipment, 4-BodyMetrics, 5-Rate, 6-Training, 7-Nutrition, 8-Fasting, 9-Motivation, 10-PrimaryGoal, 11-MuscleFocus
+    // Without rate (11 total): 0-Goals, 1-Fitness, 2-Days, 3-Equipment, 4-BodyMetrics, 5-Training, 6-Nutrition, 7-Fasting, 8-Motivation, 9-PrimaryGoal, 10-MuscleFocus
     final showRateQuestion = _weightDirection != null && _weightDirection != 'maintain';
 
     switch (_currentQuestion) {
@@ -1630,206 +1806,25 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         // Motivation
         return _selectedMotivations.isNotEmpty;
       case 9:
-        // Only reached if showing rate question - Motivation
-        return _selectedMotivations.isNotEmpty;
+        if (showRateQuestion) {
+          // Motivation
+          return _selectedMotivations.isNotEmpty;
+        }
+        // Primary Goal - must select one
+        return _selectedPrimaryGoal != null;
+      case 10:
+        if (showRateQuestion) {
+          // Primary Goal - must select one
+          return _selectedPrimaryGoal != null;
+        }
+        // Muscle Focus - optional (can have 0 focus points)
+        return true;
+      case 11:
+        // Only reached if showing rate question (12 questions) - Muscle Focus
+        return true;
       default:
         return false;
     }
-  }
-
-  void _showSkipConfirmationDialog() {
-    HapticFeedback.mediumImpact();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: elevatedColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.warning.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.info_outline, color: AppColors.warning, size: 24),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Skip Questionnaire?',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
-                ),
-              ),
-            ),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'We\'ll use these default settings for your workout plan:',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: textSecondary,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildDefaultValueRow(Icons.flag_outlined, 'Goal', 'Build Muscle', textPrimary, textSecondary, cardBorder),
-              _buildDefaultValueRow(Icons.trending_up, 'Fitness Level', 'Intermediate', textPrimary, textSecondary, cardBorder),
-              _buildDefaultValueRow(Icons.calendar_today, 'Days/Week', '4 days', textPrimary, textSecondary, cardBorder),
-              _buildDefaultValueRow(Icons.fitness_center, 'Equipment', 'Full Gym Access', textPrimary, textSecondary, cardBorder),
-              _buildDefaultValueRow(Icons.route, 'Training Split', 'Push/Pull/Legs', textPrimary, textSecondary, cardBorder),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.accent.withOpacity(0.3)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.lightbulb_outline, color: AppColors.accent, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'You can always change these later in Settings',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.accent,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Go Back',
-              style: TextStyle(color: textSecondary, fontWeight: FontWeight.w500),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              // Apply default values before navigating
-              _applyDefaultValues();
-              // Navigate based on auth state
-              final authState = ref.read(authStateProvider);
-              if (authState.user != null) {
-                context.go('/coach-selection');
-              } else {
-                context.go('/sign-in');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.accent,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text(
-              'Continue with Defaults',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDefaultValueRow(
-    IconData icon,
-    String label,
-    String value,
-    Color textPrimary,
-    Color textSecondary,
-    Color borderColor,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: AppColors.accent, size: 16),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(fontSize: 13, color: textSecondary),
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _applyDefaultValues() async {
-    // Apply sensible defaults for skipped quiz
-    final notifier = ref.read(preAuthQuizProvider.notifier);
-
-    // Default goals
-    await notifier.setGoals(['build_muscle']);
-
-    // Default fitness level and experience
-    await notifier.setFitnessLevel('intermediate');
-    await notifier.setTrainingExperience('1_3_years');
-
-    // Default days per week (4 days: Mon, Tue, Thu, Fri)
-    await notifier.setDaysPerWeek(4);
-    await notifier.setWorkoutDays([1, 2, 4, 5]); // Monday, Tuesday, Thursday, Friday
-
-    // Default equipment (full gym)
-    await notifier.setEquipment([
-      'bodyweight',
-      'dumbbells',
-      'barbell',
-      'resistance_bands',
-      'pull_up_bar',
-      'kettlebell',
-      'cable_machine',
-      'full_gym',
-    ]);
-
-    // Default training split
-    await notifier.setTrainingSplit('push_pull_legs');
-
-    // Default motivations
-    await notifier.setMotivations(['look_better', 'feel_stronger']);
   }
 
   @override
@@ -1863,7 +1858,6 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
                   HapticFeedback.lightImpact();
                   context.go('/stats-welcome');
                 },
-                onSkip: _showSkipConfirmationDialog,
               ),
               QuizProgressBar(progress: _progress),
               const SizedBox(height: 32),
@@ -1893,11 +1887,6 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
                 canProceed: _canProceed,
                 isLastQuestion: _currentQuestion == _totalQuestions - 1,
                 onPressed: _nextQuestion,
-                // Show skip option for Training Preferences and Nutrition Goals
-                // With rate question: Training=6, Nutrition=7
-                // Without rate question: Training=5, Nutrition=6
-                onSkip: _isSkippableQuestion ? _nextQuestion : null,
-                skipText: 'Skip for now',
               ),
               const SizedBox(height: 16),
             ],
@@ -1908,9 +1897,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   }
 
   Widget _buildCurrentQuestion() {
-    // New order: Goals -> Fitness -> Days -> Equipment -> BodyMetrics -> Rate(conditional) -> Training -> Nutrition -> Fasting -> Motivation
-    // With rate question: 0-Goals, 1-Fitness, 2-Days, 3-Equipment, 4-BodyMetrics, 5-Rate, 6-Training, 7-Nutrition, 8-Fasting, 9-Motivation
-    // Without rate (maintain): 0-Goals, 1-Fitness, 2-Days, 3-Equipment, 4-BodyMetrics, 5-Training, 6-Nutrition, 7-Fasting, 8-Motivation
+    // New order: Goals -> Fitness -> Days -> Equipment -> BodyMetrics -> Rate(conditional) -> Training -> Nutrition -> Fasting -> Motivation -> PrimaryGoal -> MuscleFocus
+    // With rate question (12 total): 0-Goals, 1-Fitness, 2-Days, 3-Equipment, 4-BodyMetrics, 5-Rate, 6-Training, 7-Nutrition, 8-Fasting, 9-Motivation, 10-PrimaryGoal, 11-MuscleFocus
+    // Without rate (11 total): 0-Goals, 1-Fitness, 2-Days, 3-Equipment, 4-BodyMetrics, 5-Training, 6-Nutrition, 7-Fasting, 8-Motivation, 9-PrimaryGoal, 10-MuscleFocus
     final showRateQuestion = _weightDirection != null && _weightDirection != 'maintain';
 
     switch (_currentQuestion) {
@@ -1981,8 +1970,18 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         }
         return _buildMotivation();
       case 9:
-        // Only reached if showing rate question (10 questions)
-        return _buildMotivation();
+        if (showRateQuestion) {
+          return _buildMotivation();
+        }
+        return _buildPrimaryGoal();
+      case 10:
+        if (showRateQuestion) {
+          return _buildPrimaryGoal();
+        }
+        return _buildMuscleFocus();
+      case 11:
+        // Only reached if showing rate question (12 questions)
+        return _buildMuscleFocus();
       default:
         return const SizedBox.shrink();
     }
@@ -2145,6 +2144,55 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             _selectedMotivations.add(id);
           }
         });
+      },
+    );
+  }
+
+  Widget _buildPrimaryGoal() {
+    final options = [
+      {
+        'id': 'muscle_hypertrophy',
+        'label': 'Muscle Hypertrophy',
+        'description': 'Workouts will focus on increasing muscle size using moderate weights and higher reps (8-12 reps).',
+        'icon': Icons.fitness_center,
+        'color': AppColors.accent,
+      },
+      {
+        'id': 'muscle_strength',
+        'label': 'Muscle Strength',
+        'description': 'Workouts will focus on increasing maximal strength using heavier weights for fewer reps (3-6 reps).',
+        'icon': Icons.bolt,
+        'color': AppColors.electricBlue,
+      },
+      {
+        'id': 'strength_hypertrophy',
+        'label': 'Both Strength & Hypertrophy',
+        'description': 'Workouts will balance strength and size with a variety of weight and rep schemes (6-10 reps).',
+        'icon': Icons.all_inclusive,
+        'color': AppColors.teal,
+      },
+    ];
+
+    return QuizPrimaryGoal(
+      key: const ValueKey('primary_goal'),
+      question: 'What is your primary training focus?',
+      subtitle: 'This helps us customize your workout intensity and rep ranges',
+      options: options,
+      selectedValue: _selectedPrimaryGoal,
+      onSelect: (value) {
+        setState(() => _selectedPrimaryGoal = value);
+      },
+    );
+  }
+
+  Widget _buildMuscleFocus() {
+    return QuizMuscleFocus(
+      key: const ValueKey('muscle_focus'),
+      question: 'Would you like to give extra focus to any muscles?',
+      subtitle: 'Allocate up to 5 focus points to prioritize specific muscle groups in your workouts',
+      focusPoints: _muscleFocusPoints,
+      onPointsChanged: (points) {
+        setState(() => _muscleFocusPoints = points);
       },
     );
   }

@@ -684,6 +684,8 @@ class _TogglesTabState extends ConsumerState<_TogglesTab> {
         return Icons.straighten;
       case TileType.habits:
         return Icons.checklist;
+      case TileType.xpProgress:
+        return Icons.bolt;
     }
   }
 }

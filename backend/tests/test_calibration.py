@@ -261,7 +261,7 @@ class TestCalibrationStatus:
         # Mock calibration lookup (no calibration exists)
         mock_supabase.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value.data = []
 
-        response = client.get(f"/v1/calibration/status/{user_id}")
+        response = client.get(f"/api/v1/calibration/status/{user_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -293,7 +293,7 @@ class TestCalibrationStatus:
         # Mock calibration lookup
         mock_supabase.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value.data = [mock_calibration]
 
-        response = client.get(f"/v1/calibration/status/{user_id}")
+        response = client.get(f"/api/v1/calibration/status/{user_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -313,7 +313,7 @@ class TestCalibrationStatus:
         # Mock user lookup
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [mock_user]
 
-        response = client.get(f"/v1/calibration/status/{user_id}")
+        response = client.get(f"/api/v1/calibration/status/{user_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -327,7 +327,7 @@ class TestCalibrationStatus:
         # Mock user lookup - no user found
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
 
-        response = client.get(f"/v1/calibration/status/{user_id}")
+        response = client.get(f"/api/v1/calibration/status/{user_id}")
 
         assert response.status_code == 404
 
@@ -348,7 +348,7 @@ class TestGenerateCalibration:
         # Mock insert
         mock_supabase.table.return_value.insert.return_value.execute.return_value.data = [{"id": str(uuid.uuid4())}]
 
-        response = client.post(f"/v1/calibration/generate/{user_id}")
+        response = client.post(f"/api/v1/calibration/generate/{user_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -366,7 +366,7 @@ class TestGenerateCalibration:
         mock_supabase.table.return_value.insert.return_value.execute.return_value.data = [{"id": str(uuid.uuid4())}]
 
         response = client.post(
-            f"/v1/calibration/generate/{user_id}",
+            f"/api/v1/calibration/generate/{user_id}",
             json={"duration_preference": 30}
         )
 
@@ -382,7 +382,7 @@ class TestGenerateCalibration:
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [mock_user]
         mock_supabase.table.return_value.insert.return_value.execute.return_value.data = [{"id": str(uuid.uuid4())}]
 
-        response = client.post(f"/v1/calibration/generate/{user_id}")
+        response = client.post(f"/api/v1/calibration/generate/{user_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -398,7 +398,7 @@ class TestGenerateCalibration:
 
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
 
-        response = client.post(f"/v1/calibration/generate/{user_id}")
+        response = client.post(f"/api/v1/calibration/generate/{user_id}")
 
         assert response.status_code == 404
 
@@ -425,7 +425,7 @@ class TestStartCalibration:
         # Mock update
         mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [{"id": calibration_id}]
 
-        response = client.post(f"/v1/calibration/start/{calibration_id}")
+        response = client.post(f"/api/v1/calibration/start/{calibration_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -444,7 +444,7 @@ class TestStartCalibration:
 
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [mock_calibration]
 
-        response = client.post(f"/v1/calibration/start/{calibration_id}")
+        response = client.post(f"/api/v1/calibration/start/{calibration_id}")
 
         assert response.status_code == 400
 
@@ -454,7 +454,7 @@ class TestStartCalibration:
 
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
 
-        response = client.post(f"/v1/calibration/start/{calibration_id}")
+        response = client.post(f"/api/v1/calibration/start/{calibration_id}")
 
         assert response.status_code == 404
 
@@ -490,7 +490,7 @@ class TestCompleteCalibration:
         results = generate_mock_calibration_result()
 
         response = client.post(
-            f"/v1/calibration/complete/{calibration_id}",
+            f"/api/v1/calibration/complete/{calibration_id}",
             json=results,
         )
 
@@ -515,7 +515,7 @@ class TestCompleteCalibration:
         results = generate_mock_calibration_result()
 
         response = client.post(
-            f"/v1/calibration/complete/{calibration_id}",
+            f"/api/v1/calibration/complete/{calibration_id}",
             json=results,
         )
 
@@ -549,7 +549,7 @@ class TestAdjustments:
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [mock_calibration]
         mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [{}]
 
-        response = client.post(f"/v1/calibration/accept-adjustments/{calibration_id}")
+        response = client.post(f"/api/v1/calibration/accept-adjustments/{calibration_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -570,7 +570,7 @@ class TestAdjustments:
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [mock_calibration]
         mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [{}]
 
-        response = client.post(f"/v1/calibration/decline-adjustments/{calibration_id}")
+        response = client.post(f"/api/v1/calibration/decline-adjustments/{calibration_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -587,7 +587,7 @@ class TestAdjustments:
 
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [mock_calibration]
 
-        response = client.post(f"/v1/calibration/accept-adjustments/{calibration_id}")
+        response = client.post(f"/api/v1/calibration/accept-adjustments/{calibration_id}")
 
         assert response.status_code == 400
 
@@ -604,7 +604,7 @@ class TestSkipCalibration:
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [{"id": user_id}]
         mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [{}]
 
-        response = client.post(f"/v1/calibration/skip/{user_id}")
+        response = client.post(f"/api/v1/calibration/skip/{user_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -617,7 +617,7 @@ class TestSkipCalibration:
 
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
 
-        response = client.post(f"/v1/calibration/skip/{user_id}")
+        response = client.post(f"/api/v1/calibration/skip/{user_id}")
 
         assert response.status_code == 404
 
@@ -649,7 +649,7 @@ class TestGetResults:
             MagicMock(data=[]),  # baselines count
         ]
 
-        response = client.get(f"/v1/calibration/results/{calibration_id}")
+        response = client.get(f"/api/v1/calibration/results/{calibration_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -663,7 +663,7 @@ class TestGetResults:
 
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
 
-        response = client.get(f"/v1/calibration/results/{calibration_id}")
+        response = client.get(f"/api/v1/calibration/results/{calibration_id}")
 
         assert response.status_code == 404
 
@@ -684,7 +684,7 @@ class TestGetBaselines:
 
         mock_supabase.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value.data = baselines
 
-        response = client.get(f"/v1/calibration/baselines/{user_id}")
+        response = client.get(f"/api/v1/calibration/baselines/{user_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -697,7 +697,7 @@ class TestGetBaselines:
 
         mock_supabase.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value.data = []
 
-        response = client.get(f"/v1/calibration/baselines/{user_id}")
+        response = client.get(f"/api/v1/calibration/baselines/{user_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -714,7 +714,7 @@ class TestGetBaselines:
         mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.execute.return_value.data = baselines
 
         response = client.get(
-            f"/v1/calibration/baselines/{user_id}",
+            f"/api/v1/calibration/baselines/{user_id}",
             params={"exercise_name": "Bench Press"}
         )
 
@@ -795,19 +795,19 @@ class TestCalibrationFlow:
         mock_supabase.table.side_effect = mock_table
 
         # Step 1: Check initial status
-        response = client.get(f"/v1/calibration/status/{user_id}")
+        response = client.get(f"/api/v1/calibration/status/{user_id}")
         assert response.status_code == 200
         assert response.json()["status"] == "pending"
 
         # Step 2: Generate calibration workout
         mock_supabase.table.side_effect = mock_table
-        response = client.post(f"/v1/calibration/generate/{user_id}")
+        response = client.post(f"/api/v1/calibration/generate/{user_id}")
         assert response.status_code == 200
 
         # Step 3: Start calibration
         mock_calibration["status"] = "generated"
         mock_supabase.table.side_effect = mock_table
-        response = client.post(f"/v1/calibration/start/{calibration_id}")
+        response = client.post(f"/api/v1/calibration/start/{calibration_id}")
         assert response.status_code == 200
 
         # Step 4: Complete calibration would require more complex mocking

@@ -393,7 +393,7 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
                 children: [
                   _buildStatPill(
                     Icons.timer_outlined,
-                    '${workout.durationMinutes}m',
+                    workout.formattedDurationShort,
                     textMuted,
                   ),
                   const SizedBox(width: 12),

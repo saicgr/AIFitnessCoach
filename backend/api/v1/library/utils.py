@@ -21,13 +21,26 @@ async def fetch_all_rows(
     order_by: str = None,
     equipment_filter: str = None,
     difficulty_filter: int = None,
-    search_filter: str = None
+    search_filter: str = None,
+    use_fuzzy_search: bool = True
 ) -> List[Dict[str, Any]]:
     """
     Fetch all rows from a Supabase table, handling the 1000 row limit.
     Uses pagination to get all results.
     Optionally applies DB-level filters before fetching.
+
+    Args:
+        use_fuzzy_search: If True and search_filter is provided, uses fuzzy search
+                         via pg_trgm for typo tolerance (e.g., "benchpress" -> "Bench Press")
     """
+    # If fuzzy search is enabled and we have a search filter, use RPC function
+    if search_filter and use_fuzzy_search:
+        return await fetch_fuzzy_search_results(
+            db, search_filter,
+            equipment_filter=equipment_filter,
+            limit=2000  # Return up to 2000 fuzzy results
+        )
+
     all_rows = []
     page_size = 1000
     offset = 0
@@ -41,6 +54,7 @@ async def fetch_all_rows(
         if difficulty_filter:
             query = query.eq("difficulty_level", difficulty_filter)
         if search_filter:
+            # Fallback to ILIKE if fuzzy search disabled
             query = query.or_(f"name.ilike.%{search_filter}%,original_name.ilike.%{search_filter}%")
 
         if order_by:
@@ -58,6 +72,55 @@ async def fetch_all_rows(
         offset += page_size
 
     return all_rows
+
+
+async def fetch_fuzzy_search_results(
+    db,
+    search_term: str,
+    equipment_filter: str = None,
+    body_part_filter: str = None,
+    limit: int = 50
+) -> List[Dict[str, Any]]:
+    """
+    Fetch exercises using fuzzy/trigram search for typo tolerance.
+    Uses the fuzzy_search_exercises_api RPC function.
+
+    Examples:
+    - "benchpress" -> finds "Bench Press"
+    - "bicep curl" -> finds "Barbell Curl", "Dumbbell Curl", etc.
+    - "pusup" -> finds "Push Up", "Push-Up Variations"
+    """
+    from core.logger import get_logger
+    logger = get_logger(__name__)
+
+    try:
+        # Call the RPC function for fuzzy search
+        result = db.client.rpc(
+            'fuzzy_search_exercises_api',
+            {
+                'search_term': search_term,
+                'equipment_filter': equipment_filter,
+                'body_part_filter': body_part_filter,
+                'limit_count': limit
+            }
+        ).execute()
+
+        if result.data:
+            logger.info(f"Fuzzy search for '{search_term}' returned {len(result.data)} results")
+            return result.data
+        else:
+            logger.info(f"Fuzzy search for '{search_term}' returned no results")
+            return []
+
+    except Exception as e:
+        logger.warning(f"Fuzzy search RPC failed, falling back to ILIKE: {e}")
+        # Fallback to regular ILIKE search if fuzzy function not available
+        query = db.client.table("exercise_library_cleaned").select("*")
+        query = query.or_(f"name.ilike.%{search_term}%,original_name.ilike.%{search_term}%")
+        if equipment_filter:
+            query = query.ilike("equipment", f"%{equipment_filter}%")
+        result = query.limit(limit).execute()
+        return result.data if result.data else []
 
 
 def sort_by_relevance(exercises: List['LibraryExercise'], search_query: str) -> List['LibraryExercise']:

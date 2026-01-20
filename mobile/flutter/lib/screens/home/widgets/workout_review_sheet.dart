@@ -284,7 +284,7 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
                         size: 12, color: colors.textSecondary),
                     const SizedBox(width: 4),
                     Text(
-                      '${_currentWorkout.durationMinutes ?? 45}m',
+                      _currentWorkout.formattedDurationShort,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,

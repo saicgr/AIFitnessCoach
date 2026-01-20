@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -176,7 +177,6 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
 
     // Theme-aware colors
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final nearBackgroundColor = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -196,18 +196,39 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
       child: Container(
         height: screenHeight * 0.7,
         margin: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: backgroundColor,
+        child: ClipRRect(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.5 : 0.15),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: Column(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+            child: Container(
+              decoration: BoxDecoration(
+                // Semi-transparent background for glassmorphic effect
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.5)
+                    : Colors.white.withValues(alpha: 0.7),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border(
+                  top: BorderSide(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.15)
+                        : Colors.black.withValues(alpha: 0.08),
+                    width: 0.5,
+                  ),
+                  left: BorderSide(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.05),
+                    width: 0.5,
+                  ),
+                  right: BorderSide(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.05),
+                    width: 0.5,
+                  ),
+                ),
+              ),
+              child: Column(
           children: [
             // Handle bar
             Container(
@@ -424,6 +445,9 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
               ),
             ),
           ],
+              ),
+            ),
+          ),
         ),
       ),
     );

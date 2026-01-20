@@ -13,6 +13,7 @@ import '../screens/chat/chat_screen.dart';
 import '../screens/features/feature_voting_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/home/senior_home_screen.dart';
+import '../screens/habits/habits_screen.dart';
 import '../screens/hydration/hydration_screen.dart';
 import '../screens/library/library_screen.dart';
 import '../screens/nutrition/nutrition_screen.dart';
@@ -98,6 +99,8 @@ import '../screens/admin_support/admin_support_list_screen.dart';
 import '../screens/admin_support/admin_chat_screen.dart';
 import '../screens/calibration/calibration_intro_screen.dart';
 import '../screens/calibration/calibration_workout_screen.dart';
+import '../screens/trophies/trophy_room_screen.dart';
+import '../screens/rewards/rewards_screen.dart';
 import '../screens/calibration/calibration_results_screen.dart';
 import '../data/providers/guest_mode_provider.dart';
 import '../screens/injuries/injuries_list_screen.dart';
@@ -108,6 +111,7 @@ import '../screens/strain_prevention/volume_history_screen.dart';
 import '../screens/strain_prevention/report_strain_screen.dart';
 import '../screens/settings/senior_fitness_screen.dart';
 import '../screens/settings/progression_pace_screen.dart';
+import '../screens/settings/training_focus_screen.dart';
 import '../screens/weekly_plan/weekly_plan_screen.dart';
 import '../screens/hormonal_health/hormonal_health_screen.dart';
 import '../screens/hormonal_health/hormonal_health_settings_screen.dart';
@@ -952,7 +956,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/active-workout',
         builder: (context, state) {
-          final workout = state.extra as Workout?;
+          // Handle both Workout object and Map<String, dynamic> (from serialization)
+          Workout? workout;
+          if (state.extra is Workout) {
+            workout = state.extra as Workout;
+          } else if (state.extra is Map<String, dynamic>) {
+            try {
+              workout = Workout.fromJson(state.extra as Map<String, dynamic>);
+            } catch (e) {
+              debugPrint('❌ [Router] Failed to parse workout from Map: $e');
+            }
+          }
           if (workout == null) {
             // Fallback if no workout data
             return Scaffold(
@@ -1109,6 +1123,24 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
+      // Trophy Room - View all trophies with XP/Level progress
+      GoRoute(
+        path: '/trophy-room',
+        builder: (context, state) => const TrophyRoomScreen(),
+      ),
+
+      // XP Leaderboard
+      GoRoute(
+        path: '/xp-leaderboard',
+        builder: (context, state) => const TrophyRoomScreen(), // TODO: Create dedicated leaderboard screen
+      ),
+
+      // Rewards - Claim gifts and rewards
+      GoRoute(
+        path: '/rewards',
+        builder: (context, state) => const RewardsScreen(),
+      ),
+
       // Feature Voting (Robinhood-style)
       GoRoute(
         path: '/features',
@@ -1131,6 +1163,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/hydration',
         builder: (context, state) => const HydrationScreen(),
+      ),
+
+      // Habits - View all tracked habits
+      GoRoute(
+        path: '/habits',
+        builder: (context, state) => const HabitsScreen(),
       ),
 
       // NEAT Dashboard - Daily Activity & Step Goals
@@ -1559,6 +1597,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings/progression-pace',
         builder: (context, state) => const ProgressionPaceScreen(),
+      ),
+
+      // Training Focus Settings - Primary goal and muscle focus points
+      GoRoute(
+        path: '/settings/training-focus',
+        builder: (context, state) => const TrainingFocusScreen(),
       ),
 
       // Weekly Plan - Holistic planning with workouts, nutrition, and fasting

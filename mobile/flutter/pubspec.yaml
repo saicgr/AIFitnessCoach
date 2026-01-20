@@ -20,6 +20,7 @@ dependencies:
   fl_chart: ^0.69.0
   confetti: ^0.7.0
   glassmorphism: ^3.0.0
+  simple_circular_progress_bar: ^1.0.2
   lottie: ^3.1.0
 
   # State Management
