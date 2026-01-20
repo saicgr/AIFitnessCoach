@@ -36,14 +36,6 @@ class GymProfileSwitcher extends ConsumerStatefulWidget {
 }
 
 class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
-  final ScrollController _scrollController = ScrollController();
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
   void _onProfileTap(GymProfile profile) async {
     if (profile.isActive) return; // Already active
 
@@ -118,288 +110,245 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
     List<GymProfile> profiles,
     bool isDark,
   ) {
-    final cardHeight = widget.collapsed ? 44.0 : 72.0;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final secondaryColor = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    return Container(
-      height: cardHeight + 16, // Add padding
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          // Profile cards - scrollable
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: profiles.length + 1, // +1 for Add button
-              itemBuilder: (context, index) {
-                if (index == profiles.length) {
-                  // Add new gym button
-                  return _buildAddButton(
-                    cardHeight,
-                    isDark,
-                    backgroundColor,
-                    textColor,
-                  );
-                }
+    // Find active profile
+    final activeProfile = profiles.firstWhere(
+      (p) => p.isActive,
+      orElse: () => profiles.first,
+    );
 
-                final profile = profiles[index];
-                return _buildProfileCard(
-                  profile,
-                  cardHeight,
-                  isDark,
-                  backgroundColor,
-                  textColor,
-                  secondaryColor,
-                );
-              },
-            ),
-          ),
-
-          // Manage profiles button (⋮)
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: InkWell(
-              onTap: _showManageProfilesSheet,
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: backgroundColor,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withOpacity(0.1)
-                        : Colors.black.withOpacity(0.1),
-                  ),
-                ),
-                child: Icon(
-                  Icons.more_vert_rounded,
-                  color: secondaryColor,
-                  size: 18,
-                ),
+    // Robinhood style: Just text with dropdown arrow
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: GestureDetector(
+        onTap: () => _showProfilePicker(context, profiles, isDark),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              activeProfile.name,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: textColor,
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 4),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 20,
+              color: secondaryColor,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildProfileCard(
-    GymProfile profile,
-    double height,
+  /// Show profile picker bottom sheet (Robinhood style)
+  void _showProfilePicker(
+    BuildContext context,
+    List<GymProfile> profiles,
     bool isDark,
-    Color backgroundColor,
+  ) {
+    HapticService.light();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _ProfilePickerSheet(
+        profiles: profiles,
+        isDark: isDark,
+        onProfileSelected: (profile) {
+          Navigator.pop(context);
+          _onProfileTap(profile);
+        },
+        onAddProfile: () {
+          Navigator.pop(context);
+          _showAddProfileSheet();
+        },
+        onManageProfiles: () {
+          Navigator.pop(context);
+          _showManageProfilesSheet();
+        },
+      ),
+    );
+  }
+
+  IconData _getIconData(String iconName) {
+    switch (iconName) {
+      case 'fitness_center':
+        return Icons.fitness_center_rounded;
+      case 'home':
+        return Icons.home_rounded;
+      case 'business':
+        return Icons.business_rounded;
+      case 'hotel':
+        return Icons.hotel_rounded;
+      case 'park':
+        return Icons.park_rounded;
+      case 'sports_gymnastics':
+        return Icons.sports_gymnastics_rounded;
+      case 'self_improvement':
+        return Icons.self_improvement_rounded;
+      case 'directions_run':
+        return Icons.directions_run_rounded;
+      default:
+        return Icons.fitness_center_rounded;
+    }
+  }
+}
+
+/// Robinhood-style profile picker bottom sheet
+class _ProfilePickerSheet extends StatelessWidget {
+  final List<GymProfile> profiles;
+  final bool isDark;
+  final void Function(GymProfile) onProfileSelected;
+  final VoidCallback onAddProfile;
+  final VoidCallback onManageProfiles;
+
+  const _ProfilePickerSheet({
+    required this.profiles,
+    required this.isDark,
+    required this.onProfileSelected,
+    required this.onAddProfile,
+    required this.onManageProfiles,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final secondaryColor = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: secondaryColor.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+
+            // Title
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Switch Gym',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+              ),
+            ),
+
+            // Profile list
+            ...profiles.map((profile) => _buildProfileTile(
+                  profile,
+                  textColor,
+                  secondaryColor,
+                )),
+
+            const Divider(height: 1),
+
+            // Add gym option
+            ListTile(
+              leading: Icon(
+                Icons.add_rounded,
+                color: AppColors.cyan,
+              ),
+              title: Text(
+                'Add New Gym',
+                style: TextStyle(
+                  color: AppColors.cyan,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              onTap: onAddProfile,
+            ),
+
+            // Manage profiles option
+            ListTile(
+              leading: Icon(
+                Icons.settings_rounded,
+                color: secondaryColor,
+              ),
+              title: Text(
+                'Manage Gyms',
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              onTap: onManageProfiles,
+            ),
+
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileTile(
+    GymProfile profile,
     Color textColor,
     Color secondaryColor,
   ) {
     final profileColor = profile.profileColor;
     final isActive = profile.isActive;
 
-    return GestureDetector(
-      onTap: () => _onProfileTap(profile),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(right: 12),
-        padding: widget.collapsed
-            ? const EdgeInsets.symmetric(horizontal: 16, vertical: 10)
-            : const EdgeInsets.all(12),
-        height: height,
+    return ListTile(
+      leading: Container(
+        width: 40,
+        height: 40,
         decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(widget.collapsed ? 22 : 16),
-          border: Border.all(
-            color: isActive ? profileColor : Colors.transparent,
-            width: isActive ? 2 : 1,
-          ),
-          boxShadow: isActive
-              ? [
-                  BoxShadow(
-                    color: profileColor.withOpacity(0.3),
-                    blurRadius: 12,
-                    spreadRadius: 0,
-                  ),
-                ]
-              : null,
+          color: profileColor.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(10),
         ),
-        child: widget.collapsed
-            ? _buildCollapsedContent(profile, profileColor, textColor, isActive)
-            : _buildExpandedContent(
-                profile, profileColor, textColor, secondaryColor, isActive),
-      ),
-    );
-  }
-
-  Widget _buildCollapsedContent(
-    GymProfile profile,
-    Color profileColor,
-    Color textColor,
-    bool isActive,
-  ) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Color dot indicator
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
+        child: Center(
+          child: Icon(
+            _getIconData(profile.icon),
             color: profileColor,
-            shape: BoxShape.circle,
+            size: 22,
           ),
-        ),
-        const SizedBox(width: 8),
-        // Profile name
-        Text(
-          profile.name,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-            color: isActive ? profileColor : textColor,
-          ),
-        ),
-        if (isActive) ...[
-          const SizedBox(width: 4),
-          Icon(
-            Icons.check_circle_rounded,
-            size: 14,
-            color: profileColor,
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildExpandedContent(
-    GymProfile profile,
-    Color profileColor,
-    Color textColor,
-    Color secondaryColor,
-    bool isActive,
-  ) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Icon with color background
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: profileColor.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Center(
-            child: _getIconWidget(profile, profileColor),
-          ),
-        ),
-        const SizedBox(width: 12),
-        // Profile info
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              children: [
-                Text(
-                  profile.name,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isActive ? profileColor : textColor,
-                  ),
-                ),
-                if (isActive) ...[
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.check_circle_rounded,
-                    size: 14,
-                    color: profileColor,
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 2),
-            Text(
-              '${profile.equipmentCount} equipment • ${profile.environmentDisplayName}',
-              style: TextStyle(
-                fontSize: 11,
-                color: secondaryColor,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAddButton(
-    double height,
-    bool isDark,
-    Color backgroundColor,
-    Color textColor,
-  ) {
-    return GestureDetector(
-      onTap: _showAddProfileSheet,
-      child: Container(
-        margin: const EdgeInsets.only(right: 12),
-        padding: widget.collapsed
-            ? const EdgeInsets.symmetric(horizontal: 14, vertical: 10)
-            : const EdgeInsets.all(12),
-        height: height,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(widget.collapsed ? 22 : 16),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withOpacity(0.15)
-                : Colors.black.withOpacity(0.1),
-            width: 1,
-            style: BorderStyle.solid,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.add_rounded,
-              size: widget.collapsed ? 18 : 22,
-              color: AppColors.cyan,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              widget.collapsed ? 'Add' : 'Add Gym',
-              style: TextStyle(
-                fontSize: widget.collapsed ? 13 : 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.cyan,
-              ),
-            ),
-          ],
         ),
       ),
-    );
-  }
-
-  Widget _getIconWidget(GymProfile profile, Color color) {
-    // Check if icon is an emoji
-    if (profile.icon.contains(RegExp(r'[\u{1F300}-\u{1F9FF}]', unicode: true))) {
-      return Text(
-        profile.icon,
-        style: const TextStyle(fontSize: 20),
-      );
-    }
-
-    // Map icon name to IconData
-    final iconData = _getIconData(profile.icon);
-    return Icon(
-      iconData,
-      color: color,
-      size: 22,
+      title: Text(
+        profile.name,
+        style: TextStyle(
+          fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+          color: textColor,
+        ),
+      ),
+      subtitle: Text(
+        '${profile.equipmentCount} equipment • ${profile.environmentDisplayName}',
+        style: TextStyle(
+          fontSize: 12,
+          color: secondaryColor,
+        ),
+      ),
+      trailing: isActive
+          ? Icon(
+              Icons.check_rounded,
+              color: profileColor,
+              size: 22,
+            )
+          : null,
+      onTap: () => onProfileSelected(profile),
     );
   }
 

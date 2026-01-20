@@ -180,15 +180,17 @@ class SupabaseDB:
         limit: int = 50,
         offset: int = 0,
         order_asc: bool = False,
+        gym_profile_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """List workouts for a user with filters.
 
         Args:
             order_asc: If True, sort by earliest date first (for getting next workout).
                        If False (default), sort by latest date first.
+            gym_profile_id: Filter by gym profile (optional).
         """
         return self._workout_db.list_workouts(
-            user_id, is_completed, from_date, to_date, limit, offset, order_asc
+            user_id, is_completed, from_date, to_date, limit, offset, order_asc, gym_profile_id
         )
 
     def create_workout(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
