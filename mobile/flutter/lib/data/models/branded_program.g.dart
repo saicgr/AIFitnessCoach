@@ -30,6 +30,12 @@ BrandedProgram _$BrandedProgramFromJson(
   iconName: json['icon_name'] as String?,
   colorHex: json['color_hex'] as String?,
   createdAt: json['created_at'] as String?,
+  programType: json['program_type'] as String?,
+  programMetadata: json['program_metadata'] as Map<String, dynamic>?,
+  tagline: json['tagline'] as String?,
+  minimumEquipment: (json['minimum_equipment'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
 );
 
 Map<String, dynamic> _$BrandedProgramToJson(BrandedProgram instance) =>
@@ -55,6 +61,10 @@ Map<String, dynamic> _$BrandedProgramToJson(BrandedProgram instance) =>
       'icon_name': instance.iconName,
       'color_hex': instance.colorHex,
       'created_at': instance.createdAt,
+      'program_type': instance.programType,
+      'program_metadata': instance.programMetadata,
+      'tagline': instance.tagline,
+      'minimum_equipment': instance.minimumEquipment,
     };
 
 UserProgram _$UserProgramFromJson(Map<String, dynamic> json) => UserProgram(
@@ -67,6 +77,9 @@ UserProgram _$UserProgramFromJson(Map<String, dynamic> json) => UserProgram(
   program: json['program'] == null
       ? null
       : BrandedProgram.fromJson(json['program'] as Map<String, dynamic>),
+  targetRaceDate: json['target_race_date'] as String?,
+  division: json['division'] as String?,
+  currentPhase: json['current_phase'] as String?,
 );
 
 Map<String, dynamic> _$UserProgramToJson(UserProgram instance) =>
@@ -78,4 +91,7 @@ Map<String, dynamic> _$UserProgramToJson(UserProgram instance) =>
       'current_week': instance.currentWeek,
       'is_active': instance.isActive,
       'program': instance.program,
+      'target_race_date': instance.targetRaceDate,
+      'division': instance.division,
+      'current_phase': instance.currentPhase,
     };

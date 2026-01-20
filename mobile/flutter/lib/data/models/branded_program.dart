@@ -45,6 +45,16 @@ class BrandedProgram {
   @JsonKey(name: 'created_at')
   final String? createdAt;
 
+  // HYROX-specific fields
+  @JsonKey(name: 'program_type')
+  final String? programType;
+  @JsonKey(name: 'program_metadata')
+  final Map<String, dynamic>? programMetadata;
+  @JsonKey(name: 'tagline')
+  final String? tagline;
+  @JsonKey(name: 'minimum_equipment')
+  final List<String>? minimumEquipment;
+
   const BrandedProgram({
     required this.id,
     required this.name,
@@ -67,6 +77,10 @@ class BrandedProgram {
     this.iconName,
     this.colorHex,
     this.createdAt,
+    this.programType,
+    this.programMetadata,
+    this.tagline,
+    this.minimumEquipment,
   });
 
   factory BrandedProgram.fromJson(Map<String, dynamic> json) =>
@@ -88,6 +102,25 @@ class BrandedProgram {
   /// Get session duration display string
   String get sessionDurationDisplay =>
       sessionDurationMinutes != null ? '$sessionDurationMinutes min' : 'Varies';
+
+  /// Check if this is a HYROX program
+  bool get isHyroxProgram => programType == 'hyrox' || programType == 'hyrox_home';
+
+  /// Check if this HYROX program supports race date targeting
+  bool get supportsRaceDate =>
+      programMetadata?['supports_race_date'] == true;
+
+  /// Get available divisions for HYROX programs
+  List<String> get availableDivisions {
+    final divisions = programMetadata?['divisions'] as Map<String, dynamic>?;
+    return divisions?.keys.toList() ?? [];
+  }
+
+  /// Get HYROX stations
+  List<Map<String, dynamic>> get hyroxStations {
+    final stations = programMetadata?['stations'] as List<dynamic>?;
+    return stations?.cast<Map<String, dynamic>>() ?? [];
+  }
 
   /// Create a copy with new values
   BrandedProgram copyWith({
@@ -147,6 +180,14 @@ class UserProgram {
   final bool? isActive;
   final BrandedProgram? program;
 
+  // HYROX-specific fields
+  @JsonKey(name: 'target_race_date')
+  final String? targetRaceDate;
+  @JsonKey(name: 'division')
+  final String? division;
+  @JsonKey(name: 'current_phase')
+  final String? currentPhase;
+
   const UserProgram({
     required this.userId,
     required this.programId,
@@ -155,6 +196,9 @@ class UserProgram {
     this.currentWeek,
     this.isActive,
     this.program,
+    this.targetRaceDate,
+    this.division,
+    this.currentPhase,
   });
 
   factory UserProgram.fromJson(Map<String, dynamic> json) =>
@@ -175,5 +219,59 @@ class UserProgram {
   double get progressPercent {
     if (totalWeeks <= 0) return 0.0;
     return (weeksCompleted / totalWeeks).clamp(0.0, 1.0);
+  }
+
+  /// Check if this is a HYROX program
+  bool get isHyroxProgram => program?.isHyroxProgram ?? false;
+
+  /// Get days until race (null if no race date set)
+  int? get daysUntilRace {
+    if (targetRaceDate == null) return null;
+    try {
+      final raceDate = DateTime.parse(targetRaceDate!);
+      return raceDate.difference(DateTime.now()).inDays;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Get weeks until race (null if no race date set)
+  int? get weeksUntilRace {
+    final days = daysUntilRace;
+    return days != null ? (days / 7).ceil() : null;
+  }
+
+  /// Get division display name
+  String? get divisionDisplay {
+    if (division == null) return null;
+    switch (division) {
+      case 'open_women':
+        return 'Open Women';
+      case 'open_men':
+        return 'Open Men';
+      case 'pro_women':
+        return 'Pro Women';
+      case 'pro_men':
+        return 'Pro Men';
+      default:
+        return division;
+    }
+  }
+
+  /// Get current phase display name
+  String? get phaseDisplay {
+    if (currentPhase == null) return null;
+    switch (currentPhase) {
+      case 'blueprint':
+        return 'Blueprint Phase';
+      case 'build':
+        return 'Build Phase';
+      case 'race':
+        return 'Race Phase';
+      case 'restore':
+        return 'Restore Phase';
+      default:
+        return currentPhase;
+    }
   }
 }

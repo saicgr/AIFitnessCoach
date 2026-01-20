@@ -12,6 +12,7 @@ from fastapi import APIRouter
 from .exercises import router as exercises_router
 from .programs import router as programs_router
 from .logging import router as logging_router
+from .branded_programs import router as branded_programs_router
 
 # Create the combined router
 router = APIRouter()
@@ -20,6 +21,7 @@ router = APIRouter()
 router.include_router(exercises_router)
 router.include_router(programs_router)
 router.include_router(logging_router)
+router.include_router(branded_programs_router)
 
 # Re-export models and utilities
 from .models import (

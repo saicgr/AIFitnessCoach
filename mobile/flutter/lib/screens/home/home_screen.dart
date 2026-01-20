@@ -45,6 +45,7 @@ import '../../widgets/xp_level_bar.dart';
 import '../../widgets/level_up_dialog.dart';
 import '../../widgets/streak_milestone_dialog.dart';
 import '../../data/models/level_reward.dart';
+import 'widgets/gym_profile_switcher.dart';
 
 /// Preset layout templates for quick customization
 class LayoutPreset {
@@ -1752,6 +1753,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           child: SafeArea(
             child: CustomScrollView(
             slivers: [
+              // Gym Profile Switcher - collapsed by default, above greeting
+              const SliverToBoxAdapter(
+                child: GymProfileSwitcher(collapsed: true),
+              ),
+
               // Header - compact in split screen
               SliverToBoxAdapter(
                 child: _buildHeader(
@@ -2290,82 +2296,140 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     debugPrint('🏠 [HeroSection] todayWorkoutState.hasError: ${todayWorkoutState.hasError}');
     debugPrint('🏠 [HeroSection] todayWorkoutState.hasValue: ${todayWorkoutState.hasValue}');
 
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+
+    // Build the workout card content
+    Widget workoutCard;
+
     // Show loading during initial app load
     if (_isInitializing) {
       debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (initializing)');
-      return const GeneratingHeroCard(
+      workoutCard = const GeneratingHeroCard(
         message: 'Loading your workout...',
       );
     }
-
     // Handle initial loading state (no previous data)
-    if (todayWorkoutState.isLoading && !todayWorkoutState.hasValue) {
+    else if (todayWorkoutState.isLoading && !todayWorkoutState.hasValue) {
       debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (initial loading)');
-      return const GeneratingHeroCard(
+      workoutCard = const GeneratingHeroCard(
         message: 'Loading workout...',
       );
     }
-
     // Handle error state - show loading card (more optimistic than error)
-    if (todayWorkoutState.hasError) {
+    else if (todayWorkoutState.hasError) {
       debugPrint('⚠️ [HeroSection] Error: ${todayWorkoutState.error}');
       // Show loading state instead of error - workouts may still be generating
-      return const GeneratingHeroCard(
+      workoutCard = const GeneratingHeroCard(
         message: 'Setting up your workouts...',
         subtitle: 'This may take a moment',
       );
     }
+    else {
+      final response = todayWorkoutState.valueOrNull;
+      debugPrint('🏠 [HeroSection] response: $response');
+      debugPrint('🏠 [HeroSection] response?.isGenerating: ${response?.isGenerating}');
+      debugPrint('🏠 [HeroSection] response?.todayWorkout: ${response?.todayWorkout}');
+      debugPrint('🏠 [HeroSection] response?.nextWorkout: ${response?.nextWorkout}');
+      debugPrint('🏠 [HeroSection] response?.completedToday: ${response?.completedToday}');
 
-    final response = todayWorkoutState.valueOrNull;
-    debugPrint('🏠 [HeroSection] response: $response');
-    debugPrint('🏠 [HeroSection] response?.isGenerating: ${response?.isGenerating}');
-    debugPrint('🏠 [HeroSection] response?.todayWorkout: ${response?.todayWorkout}');
-    debugPrint('🏠 [HeroSection] response?.nextWorkout: ${response?.nextWorkout}');
-    debugPrint('🏠 [HeroSection] response?.completedToday: ${response?.completedToday}');
+      // Check if generating
+      if (response?.isGenerating == true || isAIGenerating) {
+        debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (generating)');
+        workoutCard = GeneratingHeroCard(
+          message: response?.generationMessage ?? 'Generating your workout...',
+        );
+      }
+      // No response - show loading state (likely post-onboarding)
+      else if (response == null) {
+        debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (null response)');
+        workoutCard = const GeneratingHeroCard(
+          message: 'Preparing your workout...',
+          subtitle: 'This may take a moment',
+        );
+      }
+      else {
+        // Get today's workout or next upcoming workout (same logic as Workouts tab)
+        final workoutSummary = response.todayWorkout ?? response.nextWorkout;
 
-    // Check if generating
-    if (response?.isGenerating == true || isAIGenerating) {
-      debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (generating)');
-      return GeneratingHeroCard(
-        message: response?.generationMessage ?? 'Generating your workout...',
-      );
+        if (workoutSummary != null) {
+          debugPrint('🏠 [HeroSection] Showing: HeroWorkoutCard for ${workoutSummary.name}');
+          final workout = workoutSummary.toWorkout();
+          // Always show the HeroWorkoutCard - whether it's today or upcoming
+          workoutCard = HeroWorkoutCard(workout: workout);
+        }
+        // No workouts available - check if workout was completed today
+        else if (response.completedToday && response.completedWorkout != null) {
+          debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (completed today, awaiting next)');
+          // User completed their workout today - show encouraging message
+          workoutCard = const GeneratingHeroCard(
+            message: 'Great job today!',
+            subtitle: 'Rest up for your next workout',
+          );
+        }
+        else {
+          // No workouts available AND not completed today - show loading
+          // This handles the post-onboarding gap where generation hasn't started
+          debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (no workouts, not completed)');
+          workoutCard = const GeneratingHeroCard(
+            message: 'Preparing your workout...',
+            subtitle: 'This may take a moment',
+          );
+        }
+      }
     }
 
-    // No response - show loading state (likely post-onboarding)
-    if (response == null) {
-      debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (null response)');
-      return const GeneratingHeroCard(
-        message: 'Preparing your workout...',
-        subtitle: 'This may take a moment',
-      );
-    }
-
-    // Get today's workout or next upcoming workout (same logic as Workouts tab)
-    final workoutSummary = response.todayWorkout ?? response.nextWorkout;
-
-    if (workoutSummary != null) {
-      debugPrint('🏠 [HeroSection] Showing: HeroWorkoutCard for ${workoutSummary.name}');
-      final workout = workoutSummary.toWorkout();
-      // Always show the HeroWorkoutCard - whether it's today or upcoming
-      return HeroWorkoutCard(workout: workout);
-    }
-
-    // No workouts available - check if workout was completed today
-    if (response.completedToday && response.completedWorkout != null) {
-      debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (completed today, awaiting next)');
-      // User completed their workout today - show encouraging message
-      return const GeneratingHeroCard(
-        message: 'Great job today! 🎉',
-        subtitle: 'Rest up for your next workout',
-      );
-    }
-
-    // No workouts available AND not completed today - show loading
-    // This handles the post-onboarding gap where generation hasn't started
-    debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (no workouts, not completed)');
-    return const GeneratingHeroCard(
-      message: 'Preparing your workout...',
-      subtitle: 'This may take a moment',
+    // Return the section with header and workout card
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section header with "WORKOUT" and "View Programs" button
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'WORKOUT',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: textSecondary,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  HapticService.light();
+                  context.push('/programs');
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'View Programs',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: cyan,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 12,
+                      color: cyan,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Workout card
+        workoutCard,
+      ],
     );
   }
 
@@ -3669,10 +3733,18 @@ class _DummyAnimationController extends ChangeNotifier {
 }
 
 /// Focus pills for navigating between For You (Home), Workouts, Nutrition, and Fasting
-class WorkoutCategoryPills extends ConsumerWidget {
+class WorkoutCategoryPills extends ConsumerStatefulWidget {
   final bool isDark;
 
   const WorkoutCategoryPills({super.key, required this.isDark});
+
+  @override
+  ConsumerState<WorkoutCategoryPills> createState() => _WorkoutCategoryPillsState();
+}
+
+class _WorkoutCategoryPillsState extends ConsumerState<WorkoutCategoryPills> {
+  late ScrollController _scrollController;
+  bool _hasAnimated = false;
 
   static final List<Map<String, dynamic>> _focusOptions = [
     {'label': 'For You', 'icon': Icons.star_rounded, 'route': null, 'color': AppColors.textPrimary},
@@ -3682,7 +3754,52 @@ class WorkoutCategoryPills extends ConsumerWidget {
   ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    // Trigger scroll hint animation after widget builds
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _animateScrollHint();
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _animateScrollHint() async {
+    if (_hasAnimated || !mounted) return;
+    _hasAnimated = true;
+
+    // Wait for initial stagger animations to complete
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (!mounted || !_scrollController.hasClients) return;
+
+    // Scroll right to show hidden pills (Fasting)
+    await _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutCubic,
+    );
+
+    // Brief pause at the end
+    await Future.delayed(const Duration(milliseconds: 200));
+    if (!mounted || !_scrollController.hasClients) return;
+
+    // Scroll back to start
+    await _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+
     // Determine which pill is active based on current route
     final location = GoRouterState.of(context).matchedLocation;
     int activeIndex = 0; // Default to "For You"
@@ -3701,6 +3818,7 @@ class WorkoutCategoryPills extends ConsumerWidget {
 
     return AnimationLimiter(
       child: SingleChildScrollView(
+        controller: _scrollController,
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
