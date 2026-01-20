@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/exceptions/app_exceptions.dart';
 import '../../../data/models/exercise.dart';
-import '../../../data/models/program.dart';
+import '../../../data/models/branded_program.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../models/filter_option.dart';
@@ -209,19 +209,19 @@ final filterOptionsProvider =
 // PROGRAM PROVIDERS
 // ============================================================================
 
-/// Programs list provider
+/// Programs list provider - now uses branded-programs API
 final programsProvider =
-    FutureProvider.autoDispose<List<LibraryProgram>>((ref) async {
+    FutureProvider.autoDispose<List<BrandedProgram>>((ref) async {
   final apiClient = ref.read(apiClientProvider);
 
   try {
-    final response = await apiClient.get('${ApiConstants.library}/programs');
+    final response = await apiClient.get('${ApiConstants.library}/branded-programs');
 
     if (response.statusCode == 200) {
       try {
         final data = response.data as List;
         return data
-            .map((e) => LibraryProgram.fromJson(e as Map<String, dynamic>))
+            .map((e) => BrandedProgram.fromJson(e as Map<String, dynamic>))
             .toList();
       } catch (e) {
         debugPrint('❌ [Programs] Parse error: $e');
@@ -241,14 +241,14 @@ final programsProvider =
   }
 });
 
-/// Program categories provider
+/// Program categories provider - now uses branded-programs API
 final programCategoriesProvider =
     FutureProvider.autoDispose<List<String>>((ref) async {
   final apiClient = ref.read(apiClientProvider);
 
   try {
     final response =
-        await apiClient.get('${ApiConstants.library}/programs/categories');
+        await apiClient.get('${ApiConstants.library}/branded-programs/categories');
 
     if (response.statusCode == 200) {
       try {

@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/difficulty_utils.dart';
-import '../../../data/models/program.dart';
+import '../../../data/models/branded_program.dart';
 import '../../../data/services/context_logging_service.dart';
 import '../widgets/info_badge.dart';
 
 /// Bottom sheet showing program details
 class ProgramDetailSheet extends ConsumerStatefulWidget {
-  final LibraryProgram program;
+  final BrandedProgram program;
 
   const ProgramDetailSheet({
     super.key,
@@ -42,8 +42,8 @@ class _ProgramDetailSheetState extends ConsumerState<ProgramDetailSheet> {
     );
   }
 
-  Color _getCategoryColor(String category, bool isDark) {
-    switch (category.toLowerCase()) {
+  Color _getCategoryColor(String? category, bool isDark) {
+    switch (category?.toLowerCase()) {
       case 'celebrity workout':
         return isDark ? AppColors.purple : AppColorsLight.purple;
       case 'goal-based':
@@ -55,8 +55,8 @@ class _ProgramDetailSheetState extends ConsumerState<ProgramDetailSheet> {
     }
   }
 
-  IconData _getCategoryIcon(String category) {
-    switch (category.toLowerCase()) {
+  IconData _getCategoryIcon(String? category) {
+    switch (category?.toLowerCase()) {
       case 'celebrity workout':
         return Icons.star;
       case 'goal-based':
@@ -193,7 +193,7 @@ class _ProgramDetailSheetState extends ConsumerState<ProgramDetailSheet> {
                     DetailBadge(
                       icon: _getCategoryIcon(program.category),
                       label: 'Category',
-                      value: program.category,
+                      value: program.category ?? 'Program',
                       color: categoryColor,
                     ),
                     if (program.difficultyLevel != null)

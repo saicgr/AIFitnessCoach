@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitwiz/screens/library/widgets/program_card.dart';
-import 'package:fitwiz/data/models/program.dart';
+import 'package:fitwiz/data/models/branded_program.dart';
 
 void main() {
   group('ProgramCard', () {
-    LibraryProgram createProgram({
+    BrandedProgram createProgram({
       String name = 'Strength Training',
-      String category = 'Goal-Based',
+      String? category = 'Goal-Based',
       String? difficultyLevel,
       int? durationWeeks,
       int? sessionsPerWeek,
       String? celebrityName,
     }) {
-      return LibraryProgram(
+      return BrandedProgram(
         id: 'test-id',
         name: name,
         category: category,

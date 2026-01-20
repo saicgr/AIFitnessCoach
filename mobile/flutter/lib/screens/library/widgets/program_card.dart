@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/difficulty_utils.dart';
-import '../../../data/models/program.dart';
+import '../../../data/models/branded_program.dart';
 import 'info_badge.dart';
 import '../components/program_detail_sheet.dart';
 
 /// Card widget displaying program info in a list format
 class ProgramCard extends StatelessWidget {
-  final LibraryProgram program;
+  final BrandedProgram program;
 
   const ProgramCard({
     super.key,
     required this.program,
   });
 
-  Color _getCategoryColor(String category, bool isDark) {
-    switch (category.toLowerCase()) {
+  Color _getCategoryColor(String? category, bool isDark) {
+    switch (category?.toLowerCase()) {
       case 'celebrity workout':
         return isDark ? AppColors.purple : AppColorsLight.purple;
       case 'goal-based':
@@ -27,8 +27,8 @@ class ProgramCard extends StatelessWidget {
     }
   }
 
-  IconData _getCategoryIcon(String category) {
-    switch (category.toLowerCase()) {
+  IconData _getCategoryIcon(String? category) {
+    switch (category?.toLowerCase()) {
       case 'celebrity workout':
         return Icons.star;
       case 'goal-based':
@@ -113,7 +113,7 @@ class ProgramCard extends StatelessWidget {
                       children: [
                         InfoBadge(
                           icon: _getCategoryIcon(program.category),
-                          text: program.category,
+                          text: program.category ?? 'Program',
                           color: categoryColor,
                         ),
                         if (program.difficultyLevel != null) ...[

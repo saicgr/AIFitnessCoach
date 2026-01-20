@@ -135,9 +135,10 @@ class ProgramsTab extends ConsumerWidget {
                         p.name
                             .toLowerCase()
                             .contains(searchQuery.toLowerCase()) ||
-                        p.category
-                            .toLowerCase()
-                            .contains(searchQuery.toLowerCase()) ||
+                        (p.category
+                                ?.toLowerCase()
+                                .contains(searchQuery.toLowerCase()) ??
+                            false) ||
                         (p.celebrityName
                                 ?.toLowerCase()
                                 .contains(searchQuery.toLowerCase()) ??
