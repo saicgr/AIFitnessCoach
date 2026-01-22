@@ -882,6 +882,7 @@ def ingest_week_to_supabase(supabase, variant_id: str, week_num: int,
     # Add checklist metadata if provided
     if program_metadata:
         week_record["program_name"] = program_metadata.get('name')
+        week_record["variant_name"] = program_metadata.get('variant_name')
         week_record["priority"] = program_metadata.get('priority')
         week_record["has_supersets"] = program_metadata.get('has_supersets', False)
         week_record["description"] = program_metadata.get('description')
@@ -902,6 +903,7 @@ def ingest_week_to_supabase(supabase, variant_id: str, week_num: int,
                 }
                 if program_metadata:
                     update_data["program_name"] = program_metadata.get('name')
+                    update_data["variant_name"] = program_metadata.get('variant_name')
                     update_data["priority"] = program_metadata.get('priority')
                     update_data["has_supersets"] = program_metadata.get('has_supersets', False)
                     update_data["description"] = program_metadata.get('description')
@@ -1102,6 +1104,7 @@ def generate_variant_weekly(program: dict, duration: int, sessions: int,
             # Pass checklist metadata for storage
             program_metadata = {
                 'name': program.get('name'),
+                'variant_name': get_variant_key(program.get('name'), duration, sessions),
                 'priority': program.get('priority'),
                 'has_supersets': program.get('has_supersets', False),
                 'description': program.get('description'),
@@ -1194,6 +1197,7 @@ def generate_variant_single(program: dict, duration: int, sessions: int,
                     # Prepare checklist metadata
                     program_metadata = {
                         'name': program.get('name'),
+                        'variant_name': get_variant_key(program.get('name'), duration, sessions),
                         'priority': program.get('priority'),
                         'has_supersets': program.get('has_supersets', False),
                         'description': program.get('description'),
