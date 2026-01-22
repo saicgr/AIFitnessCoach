@@ -547,64 +547,75 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
           ),
           const SizedBox(height: 32),
 
-          // Circular weight input
-          AnimatedBuilder(
-            animation: _pulseController,
-            builder: (context, child) {
-              final pulseValue = _pulseController.value * 0.02 + 1.0;
-              return Transform.scale(
-                scale: pulseValue,
-                child: child,
-              );
-            },
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    colors.cyan.withValues(alpha: 0.2),
-                    colors.cyan.withValues(alpha: 0.05),
-                  ],
-                ),
-                border: Border.all(
-                  color: colors.cyan.withValues(alpha: 0.5),
-                  width: 3,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: colors.cyan.withValues(alpha: 0.2),
-                    blurRadius: 30,
-                    spreadRadius: 5,
+          // Circular weight input - tap to edit directly
+          GestureDetector(
+            onTap: () => _showDirectInput(colors),
+            child: AnimatedBuilder(
+              animation: _pulseController,
+              builder: (context, child) {
+                final pulseValue = _pulseController.value * 0.02 + 1.0;
+                return Transform.scale(
+                  scale: pulseValue,
+                  child: child,
+                );
+              },
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      colors.cyan.withValues(alpha: 0.2),
+                      colors.cyan.withValues(alpha: 0.05),
+                    ],
                   ),
-                ],
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      displayWeight.toStringAsFixed(1),
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                        height: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _selectedUnit.label,
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: colors.textMuted,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  border: Border.all(
+                    color: colors.cyan.withValues(alpha: 0.5),
+                    width: 3,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.cyan.withValues(alpha: 0.2),
+                      blurRadius: 30,
+                      spreadRadius: 5,
                     ),
                   ],
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        displayWeight.toStringAsFixed(1),
+                        style: TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                          height: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _selectedUnit.label,
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: colors.textMuted,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Tap to edit',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: colors.textMuted.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -690,6 +701,10 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
       text: _selectedUnit.fromKg(_weightKg).toStringAsFixed(1),
     );
 
+    // Validation range based on unit
+    final minValue = _selectedUnit == WeightUnit.kg ? 20.0 : 44.0;
+    final maxValue = _selectedUnit == WeightUnit.kg ? 500.0 : 1100.0;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -699,29 +714,54 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
           'Enter Weight',
           style: TextStyle(color: colors.textPrimary),
         ),
-        content: TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          autofocus: true,
-          style: TextStyle(
-            color: colors.textPrimary,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-          decoration: InputDecoration(
-            suffix: Text(
-              _selectedUnit.label,
-              style: TextStyle(color: colors.textMuted, fontSize: 18),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: controller,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              autofocus: true,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+              ),
+              decoration: InputDecoration(
+                suffixText: _selectedUnit.label,
+                suffixStyle: TextStyle(color: colors.textMuted, fontSize: 20),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: colors.cardBorder),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: colors.cyan, width: 2),
+                ),
+              ),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d{0,4}\.?\d{0,1}')),
+              ],
+              onSubmitted: (value) {
+                final parsedValue = double.tryParse(value);
+                if (parsedValue != null && parsedValue >= minValue && parsedValue <= maxValue) {
+                  setState(() {
+                    _weightKg = _selectedUnit.toKg(parsedValue);
+                  });
+                  HapticService.success();
+                  Navigator.pop(ctx);
+                }
+              },
             ),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: colors.cardBorder),
+            const SizedBox(height: 8),
+            Text(
+              'Valid range: ${minValue.toInt()}-${maxValue.toInt()} ${_selectedUnit.label}',
+              style: TextStyle(
+                color: colors.textMuted,
+                fontSize: 12,
+              ),
             ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: colors.cyan, width: 2),
-            ),
-          ),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,1}')),
           ],
         ),
         actions: [
@@ -732,7 +772,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
           TextButton(
             onPressed: () {
               final value = double.tryParse(controller.text);
-              if (value != null && value >= 20 && value <= 500) {
+              if (value != null && value >= minValue && value <= maxValue) {
                 setState(() {
                   _weightKg = _selectedUnit.toKg(value);
                 });
@@ -740,7 +780,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
               }
               Navigator.pop(ctx);
             },
-            child: Text('Save', style: TextStyle(color: colors.cyan)),
+            child: Text('Save', style: TextStyle(color: colors.cyan, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -1058,66 +1098,6 @@ class _WeightAdjustButton extends StatelessWidget {
           size: 28,
         ),
       ),
-    );
-  }
-}
-
-/// Extension to add logWeight method to FastingRepository
-/// This should be added to the actual repository file
-extension FastingRepositoryWeightExtension on FastingRepository {
-  /// Log user's weight
-  Future<WeightLogResponse> logWeight({
-    required String userId,
-    required double weightKg,
-    required String date,
-    String? notes,
-  }) async {
-    // This is a placeholder implementation
-    // The actual implementation should be added to the FastingRepository
-    // For now, simulate the API call
-
-    // In production, this would call:
-    // final response = await _client.post('/fasting/weight', data: {...});
-
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Simulate checking if it's a fasting day
-    final parsedDate = DateTime.parse(date);
-    final wasFasting = parsedDate.weekday == DateTime.monday ||
-                        parsedDate.weekday == DateTime.wednesday ||
-                        parsedDate.weekday == DateTime.friday;
-
-    return WeightLogResponse(
-      weightKg: weightKg,
-      date: parsedDate,
-      wasFastingDay: wasFasting,
-      message: wasFasting
-          ? 'Weight logged during your fasting window!'
-          : 'Weight logged successfully.',
-    );
-  }
-}
-
-/// Response from logging weight
-class WeightLogResponse {
-  final double weightKg;
-  final DateTime date;
-  final bool wasFastingDay;
-  final String message;
-
-  const WeightLogResponse({
-    required this.weightKg,
-    required this.date,
-    required this.wasFastingDay,
-    required this.message,
-  });
-
-  factory WeightLogResponse.fromJson(Map<String, dynamic> json) {
-    return WeightLogResponse(
-      weightKg: (json['weight_kg'] as num).toDouble(),
-      date: DateTime.parse(json['date'] as String),
-      wasFastingDay: json['was_fasting_day'] as bool? ?? false,
-      message: json['message'] as String? ?? '',
     );
   }
 }

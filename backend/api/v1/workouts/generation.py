@@ -160,7 +160,9 @@ async def generate_workout(request: GenerateWorkoutRequest):
                 workout_environment = gym_profile.get("workout_environment") or preferences.get("workout_environment")
                 training_split = gym_profile.get("training_split")
                 profile_goals = gym_profile.get("goals") or []
-                goals = request.goals or profile_goals if profile_goals else user.get("goals", [])
+                # Parse user goals if it's a JSON string
+                user_goals = parse_json_field(user.get("goals"), [])
+                goals = request.goals or profile_goals if profile_goals else user_goals
                 focus_areas = gym_profile.get("focus_areas") or []
 
                 logger.info(f"🏋️ [GymProfile] Profile equipment: {len(equipment)} items")
@@ -168,10 +170,10 @@ async def generate_workout(request: GenerateWorkoutRequest):
                 if training_split:
                     logger.info(f"📅 [GymProfile] Training split: {training_split}")
             else:
-                # Fall back to user settings
-                goals = request.goals or user.get("goals", [])
-                equipment = request.equipment or user.get("equipment", [])
-                equipment_details = user.get("equipment_details", [])  # Detailed equipment with quantities/weights
+                # Fall back to user settings (parse JSON strings)
+                goals = request.goals or parse_json_field(user.get("goals"), [])
+                equipment = request.equipment or parse_json_field(user.get("equipment"), [])
+                equipment_details = parse_json_field(user.get("equipment_details"), [])
                 workout_environment = preferences.get("workout_environment")
 
             # Use explicit intensity_preference if set, otherwise derive from fitness level
@@ -738,12 +740,14 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     gym_profile_id = gym_profile.get("id")
                     equipment = body.equipment or gym_profile.get("equipment") or []
                     profile_goals = gym_profile.get("goals") or []
-                    goals = body.goals or profile_goals if profile_goals else user.get("goals", [])
+                    # Parse user goals if it's a JSON string
+                    user_goals = parse_json_field(user.get("goals"), [])
+                    goals = body.goals or profile_goals if profile_goals else user_goals
                     logger.info(f"🏋️ [GymProfile] Profile equipment: {len(equipment)} items")
                 else:
-                    # Fall back to user settings
-                    goals = body.goals or user.get("goals", [])
-                    equipment = body.equipment or user.get("equipment", [])
+                    # Fall back to user settings (parse JSON strings)
+                    goals = body.goals or parse_json_field(user.get("goals"), [])
+                    equipment = body.equipment or parse_json_field(user.get("equipment"), [])
 
                 # Use explicit intensity_preference if set, otherwise derive from fitness level
                 intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)

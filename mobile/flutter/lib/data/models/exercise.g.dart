@@ -66,6 +66,11 @@ WorkoutExercise _$WorkoutExerciseFromJson(Map<String, dynamic> json) =>
       setTargets: (json['set_targets'] as List<dynamic>?)
           ?.map((e) => SetTarget.fromJson(e as Map<String, dynamic>))
           .toList(),
+      tempo: json['tempo'] as String?,
+      formCue: json['form_cue'] as String?,
+      breathingCue: json['breathing_cue'] as String?,
+      setup: json['setup'] as String?,
+      substitution: json['substitution'] as String?,
     );
 
 Map<String, dynamic> _$WorkoutExerciseToJson(WorkoutExercise instance) =>
@@ -108,6 +113,11 @@ Map<String, dynamic> _$WorkoutExerciseToJson(WorkoutExercise instance) =>
       'difficulty_num': instance.difficultyNum,
       'is_failure_set': instance.isFailureSet,
       'set_targets': instance.setTargets,
+      'tempo': instance.tempo,
+      'form_cue': instance.formCue,
+      'breathing_cue': instance.breathingCue,
+      'setup': instance.setup,
+      'substitution': instance.substitution,
     };
 
 LibraryExercise _$LibraryExerciseFromJson(Map<String, dynamic> json) =>

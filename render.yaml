@@ -28,3 +28,29 @@ services:
         sync: false
       - key: SUPABASE_KEY
         sync: false
+
+  # Background worker for program generation
+  # Create this manually on Render Dashboard as a one-off job
+  # Or use: render jobs create --name program-generator
+  - type: worker
+    name: fitwiz-program-generator
+    env: python
+    region: oregon
+    plan: starter
+    branch: main
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python worker.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: GENERATION_PRIORITY
+        value: "high"
+      - key: GENERATION_LIMIT
+        value: ""

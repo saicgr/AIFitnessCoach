@@ -136,6 +136,15 @@ class WorkoutExercise extends Equatable {
   @JsonKey(name: 'set_targets')
   final List<SetTarget>? setTargets; // Per-set AI targets (Gravl/Hevy style)
 
+  // Coaching cues (from generated programs)
+  final String? tempo; // e.g., "3-1-2-0" (eccentric-pause-concentric-top)
+  @JsonKey(name: 'form_cue')
+  final String? formCue; // Key form tip
+  @JsonKey(name: 'breathing_cue')
+  final String? breathingCue; // Breathing pattern
+  final String? setup; // Setup instruction
+  final String? substitution; // Alternative exercise
+
   const WorkoutExercise({
     this.id,
     this.exerciseId,
@@ -175,6 +184,11 @@ class WorkoutExercise extends Equatable {
     this.difficultyNum,
     this.isFailureSet,
     this.setTargets,
+    this.tempo,
+    this.formCue,
+    this.breathingCue,
+    this.setup,
+    this.substitution,
   });
 
   /// Whether the weight is based on user's past workout history
@@ -354,6 +368,11 @@ class WorkoutExercise extends Equatable {
     int? dropSetPercentage,
     bool? isFailureSet,
     List<SetTarget>? setTargets,
+    String? tempo,
+    String? formCue,
+    String? breathingCue,
+    String? setup,
+    String? substitution,
     bool clearSuperset = false,
   }) {
     return WorkoutExercise(
@@ -391,6 +410,11 @@ class WorkoutExercise extends Equatable {
       dropSetPercentage: dropSetPercentage ?? this.dropSetPercentage,
       isFailureSet: isFailureSet ?? this.isFailureSet,
       setTargets: setTargets ?? this.setTargets,
+      tempo: tempo ?? this.tempo,
+      formCue: formCue ?? this.formCue,
+      breathingCue: breathingCue ?? this.breathingCue,
+      setup: setup ?? this.setup,
+      substitution: substitution ?? this.substitution,
     );
   }
 

@@ -40,6 +40,12 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
     super.dispose();
   }
 
+  /// Get user's preferred weight unit from onboarding
+  String _getPreferredUnit() {
+    final authState = ref.read(authStateProvider);
+    return authState.user?.preferredWeightUnit ?? 'kg';
+  }
+
   Future<void> _logWeight() async {
     final weightText = _weightController.text.trim();
     if (weightText.isEmpty) {
@@ -47,14 +53,20 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
       return;
     }
 
-    final weightLbs = double.tryParse(weightText);
-    if (weightLbs == null || weightLbs < 50 || weightLbs > 700) {
-      setState(() => _errorMessage = 'Enter a valid weight (50-700 lbs)');
+    final weightValue = double.tryParse(weightText);
+    final unit = _getPreferredUnit();
+
+    // Validation ranges based on unit
+    final minValue = unit == 'kg' ? 20.0 : 44.0;
+    final maxValue = unit == 'kg' ? 300.0 : 660.0;
+
+    if (weightValue == null || weightValue < minValue || weightValue > maxValue) {
+      setState(() => _errorMessage = 'Enter a valid weight (${minValue.toInt()}-${maxValue.toInt()} $unit)');
       return;
     }
 
-    // Convert lbs to kg
-    final weightKg = weightLbs / 2.20462;
+    // Convert to kg if user entered lbs
+    final weightKg = unit == 'lbs' ? weightValue / 2.20462 : weightValue;
 
     final authState = ref.read(authStateProvider);
     final userId = authState.user?.id;
@@ -127,6 +139,10 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
     final weightHistory = nutritionState.weightHistory;
     final lastWeight = weightHistory.isNotEmpty ? weightHistory.first : null;
 
+    // Get user's preferred unit
+    final unit = _getPreferredUnit();
+    final unitLabel = unit;
+
     // Format last logged date
     String lastLoggedText = 'No logs yet';
     if (lastWeight != null) {
@@ -147,7 +163,8 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
         textColor: textColor,
         textMuted: textMuted,
         cardBorder: cardBorder,
-        lastWeight: lastWeight?.weightLbs,
+        lastWeight: lastWeight,
+        unit: unit,
       );
     }
 
@@ -228,7 +245,9 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      '${lastWeight.weightLbs.toStringAsFixed(1)} lbs',
+                      unit == 'lbs'
+                          ? '${lastWeight.weightLbs.toStringAsFixed(1)} lbs'
+                          : '${lastWeight.weightKg.toStringAsFixed(1)} kg',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -302,6 +321,7 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
                       focusNode: _focusNode,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       textAlign: TextAlign.center,
+                      textAlignVertical: TextAlignVertical.center,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -309,22 +329,25 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
                       ),
                       decoration: InputDecoration(
                         hintText: lastWeight != null
-                            ? lastWeight.weightLbs.toStringAsFixed(0)
-                            : '185',
+                            ? (unit == 'lbs'
+                                ? lastWeight.weightLbs.toStringAsFixed(0)
+                                : lastWeight.weightKg.toStringAsFixed(0))
+                            : (unit == 'lbs' ? '185' : '84'),
                         hintStyle: TextStyle(
                           color: textMuted.withValues(alpha: 0.5),
                           fontWeight: FontWeight.normal,
                         ),
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                        suffixText: 'lbs',
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        suffixText: unitLabel,
                         suffixStyle: TextStyle(
                           color: textMuted,
                           fontSize: 14,
                         ),
+                        isDense: true,
                       ),
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}\.?\d{0,1}')),
+                        FilteringTextInputFormatter.allow(RegExp(r'^\d{0,4}\.?\d{0,1}')),
                       ],
                       onSubmitted: (_) => _logWeight(),
                     ),
@@ -399,11 +422,19 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
     required Color textColor,
     required Color textMuted,
     required Color cardBorder,
-    required double? lastWeight,
+    required dynamic lastWeight,
+    required String unit,
   }) {
     // Get accent color from provider
     final accentColorEnum = ref.watch(accentColorProvider);
     final accentColor = accentColorEnum.getColor(widget.isDark);
+
+    // Format weight display based on unit preference
+    String weightDisplay = 'Log';
+    if (lastWeight != null) {
+      final value = unit == 'lbs' ? lastWeight.weightLbs : lastWeight.weightKg;
+      weightDisplay = '${value.toStringAsFixed(1)} $unit';
+    }
 
     return GestureDetector(
       onTap: _openFullSheet,
@@ -434,7 +465,7 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  lastWeight != null ? '${lastWeight.toStringAsFixed(1)} lbs' : 'Log',
+                  weightDisplay,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -452,6 +483,7 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
   Widget _buildTrendInfo(Color textMuted, WidgetRef ref) {
     final nutritionState = ref.watch(nutritionPreferencesProvider);
     final weightTrend = nutritionState.weightTrend;
+    final unit = _getPreferredUnit();
 
     if (weightTrend == null) {
       return Row(
@@ -470,7 +502,8 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
     }
 
     final changeKg = weightTrend.changeKg ?? 0.0;
-    final changeLbs = changeKg * 2.20462;
+    // Display change in user's preferred unit
+    final changeValue = unit == 'lbs' ? changeKg * 2.20462 : changeKg;
     final direction = weightTrend.direction;
     final isLosing = direction == 'losing';
     final isGaining = direction == 'gaining';
@@ -493,8 +526,8 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
         const SizedBox(width: 6),
         Expanded(
           child: Text(
-            changeLbs.abs() >= 0.1
-                ? '${isLosing ? "Down" : isGaining ? "Up" : ""} ${changeLbs.abs().toStringAsFixed(1)} lbs this week'
+            changeValue.abs() >= 0.1
+                ? '${isLosing ? "Down" : isGaining ? "Up" : ""} ${changeValue.abs().toStringAsFixed(1)} $unit this week'
                 : 'Weight stable this week',
             style: TextStyle(
               fontSize: 12,
