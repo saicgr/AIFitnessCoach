@@ -5123,19 +5123,19 @@ async def get_weekly_recommendation(user_id: str):
     try:
         db = get_supabase_db()
 
+        # Use limit(1) and check the list instead of maybe_single() to avoid 406 errors
         result = db.client.table("weekly_nutrition_recommendations")\
             .select("*")\
             .eq("user_id", user_id)\
             .eq("user_accepted", False)\
             .order("created_at", desc=True)\
             .limit(1)\
-            .maybe_single()\
             .execute()
 
-        if not result.data:
+        if not result or not result.data or len(result.data) == 0:
             return None
 
-        data = result.data
+        data = result.data[0]
         return WeeklyRecommendationResponse(
             id=data["id"],
             user_id=data["user_id"],
@@ -5185,7 +5185,7 @@ async def get_weekly_summary(user_id: str):
 
         # Get food logs for the past week
         food_result = db.client.table("food_logs")\
-            .select("logged_at, total_macros")\
+            .select("logged_at, total_calories, protein_g")\
             .eq("user_id", user_id)\
             .gte("logged_at", f"{from_date_str}T00:00:00")\
             .execute()
@@ -5213,9 +5213,8 @@ async def get_weekly_summary(user_id: str):
         total_calories = 0
         total_protein = 0
         for log in food_logs:
-            macros = log.get("total_macros") or {}
-            total_calories += macros.get("calories", 0)
-            total_protein += macros.get("protein", 0)
+            total_calories += log.get("total_calories") or 0
+            total_protein += float(log.get("protein_g") or 0)
 
         avg_calories = int(total_calories / days_logged) if days_logged > 0 else 0
         avg_protein = int(total_protein / days_logged) if days_logged > 0 else 0

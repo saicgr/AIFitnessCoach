@@ -373,6 +373,47 @@ class GeminiService:
         # Default fallback
         return (100.0, "estimated")
 
+    def _is_good_usda_match(self, query: str, usda_description: str) -> bool:
+        """
+        Check if the USDA result is a good match for the query.
+        Avoids using wrong products (e.g., "Cinnabon Pudding" for "Cinnabon Delights").
+        """
+        query_lower = query.lower().strip()
+        desc_lower = usda_description.lower().strip()
+
+        # List of restaurant/fast food brands - USDA doesn't have their menu items
+        restaurant_brands = [
+            'taco bell', 'mcdonalds', "mcdonald's", 'burger king', 'wendys', "wendy's",
+            'chick-fil-a', 'chickfila', 'subway', 'chipotle', 'five guys', 'in-n-out',
+            'popeyes', 'kfc', 'pizza hut', 'dominos', "domino's", 'papa johns',
+            'starbucks', 'dunkin', 'panda express', 'chilis', "chili's", 'applebees',
+            "applebee's", 'olive garden', 'red lobster', 'outback', 'ihop', "denny's",
+            'sonic', 'arby', "arby's", 'jack in the box', 'carl', "carl's jr",
+            'hardee', "hardee's", 'del taco', 'qdoba', 'panera', 'noodles',
+            'wingstop', 'buffalo wild wings', 'hooters', 'zaxbys', "zaxby's",
+        ]
+
+        # If query mentions a restaurant brand, USDA probably doesn't have the right item
+        for brand in restaurant_brands:
+            if brand in query_lower:
+                logger.info(f"[USDA] Skipping match - '{query}' is a restaurant item (USDA doesn't have restaurant menus)")
+                return False
+
+        # Check if key words from query appear in USDA description
+        # Split query into significant words (3+ chars)
+        query_words = [w for w in query_lower.split() if len(w) >= 3]
+
+        # Count how many query words appear in the description
+        matches = sum(1 for word in query_words if word in desc_lower)
+        match_ratio = matches / len(query_words) if query_words else 0
+
+        # Require at least 50% of words to match for a good match
+        if match_ratio < 0.5:
+            logger.info(f"[USDA] Poor match - query='{query}' vs result='{usda_description}' (match_ratio={match_ratio:.0%})")
+            return False
+
+        return True
+
     async def _lookup_single_usda(self, usda_service, food_name: str) -> Optional[Dict]:
         """Look up a single food in USDA database. Returns usda_data dict or None."""
         if not usda_service or not food_name:
@@ -384,6 +425,12 @@ class GeminiService:
             )
             if search_result.foods:
                 top_food = search_result.foods[0]
+
+                # Check if this is actually a good match
+                if not self._is_good_usda_match(food_name, top_food.description):
+                    print(f"⚠️ [USDA] Skipping poor match for '{food_name}' - keeping AI estimate")
+                    return None
+
                 nutrients = top_food.nutrients
                 print(f"✅ [USDA] Found '{top_food.description}' for '{food_name}' ({nutrients.calories_per_100g} cal/100g)")
                 return {
@@ -1114,7 +1161,13 @@ MEASUREMENT UNITS - Use "unit" field to specify the most natural unit:
 - For liquids, weight_g should be the ml equivalent (1ml ≈ 1g for water-based drinks)
 - Examples: protein shake → unit: "ml", 2 cups milkshake → unit: "cups", 1 tbsp peanut butter → unit: "tbsp"
 
-Rules: Use USDA data. Sum totals from items. Account for prep methods (fried adds fat).'''
+Rules: Use USDA data. Sum totals from items. Account for prep methods (fried adds fat).
+
+IMPORTANT - ALWAYS identify foods:
+- For ANY food description, ALWAYS return valid food items with estimated nutrition
+- If you don't recognize the exact item (e.g., "Cinnamon Delights from Taco Bell"), estimate based on similar foods (e.g., fried dough with cinnamon sugar)
+- Fast food items without exact data: estimate based on ingredients and similar menu items
+- NEVER return empty food_items - always make your best estimate'''
 
         # Retry logic for intermittent Gemini failures
         max_retries = 3
@@ -1137,7 +1190,7 @@ Rules: Use USDA data. Sum totals from items. Account for prep methods (fried add
                             config=types.GenerateContentConfig(
                                 response_mime_type="application/json",
                                 response_schema=FoodAnalysisResponse,
-                                max_output_tokens=4096,  # Increased to handle multiple food items with full nutrition and coaching fields
+                                max_output_tokens=8192,  # High limit to prevent truncation (MAX_TOKENS causes parsed=None)
                                 temperature=0.2,  # Lower = faster, more deterministic
                             ),
                         ),
@@ -1150,12 +1203,37 @@ Rules: Use USDA data. Sum totals from items. Account for prep methods (fried add
 
                 # Use response.parsed for structured output - SDK handles JSON parsing
                 parsed = response.parsed
-                if not parsed:
-                    print(f"⚠️ [Gemini] Empty parsed response from API (attempt {attempt + 1})")
-                    last_error = "Empty response"
-                    continue
+                result = None
 
-                result = parsed.model_dump()
+                if parsed:
+                    result = parsed.model_dump()
+                else:
+                    # Log details about why structured parsing failed
+                    print(f"⚠️ [Gemini] Structured parsing returned None (attempt {attempt + 1})")
+                    raw_text = response.text if response.text else ""
+                    print(f"🔍 [Gemini] Raw response text: {raw_text[:500] if raw_text else 'None'}")
+
+                    # Check for safety/blocking issues
+                    if hasattr(response, 'candidates') and response.candidates:
+                        for i, candidate in enumerate(response.candidates):
+                            if hasattr(candidate, 'finish_reason'):
+                                print(f"🔍 [Gemini] Candidate {i} finish_reason: {candidate.finish_reason}")
+                            if hasattr(candidate, 'safety_ratings'):
+                                print(f"🔍 [Gemini] Candidate {i} safety_ratings: {candidate.safety_ratings}")
+
+                    # Try to parse raw text as JSON fallback
+                    if raw_text:
+                        print(f"🔍 [Gemini] Attempting fallback JSON parsing from raw text...")
+                        result = self._extract_json_robust(raw_text)
+                        if result:
+                            print(f"✅ [Gemini] Fallback JSON parsing succeeded")
+                        else:
+                            print(f"⚠️ [Gemini] Fallback JSON parsing also failed")
+
+                    if not result:
+                        last_error = "Empty response - structured and fallback parsing failed"
+                        continue
+
                 print(f"🔍 [Gemini] Parsed response with {len(result.get('food_items', []))} items")
 
                 if result and result.get('food_items'):
@@ -1195,8 +1273,46 @@ Rules: Use USDA data. Sum totals from items. Account for prep methods (fried add
                 last_error = str(e)
                 continue
 
-        # All retries exhausted
-        print(f"❌ [Gemini] All {max_retries} attempts failed. Last error: {last_error}")
+        # All retries exhausted with structured output - try one more time without schema
+        print(f"⚠️ [Gemini] Structured output failed after {max_retries} attempts. Trying unstructured fallback...")
+
+        try:
+            # Try without response_schema - just ask for JSON
+            fallback_response = await asyncio.wait_for(
+                client.aio.models.generate_content(
+                    model=self.model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        max_output_tokens=4096,
+                        temperature=0.2,
+                    ),
+                ),
+                timeout=FOOD_ANALYSIS_TIMEOUT
+            )
+
+            if fallback_response.text:
+                print(f"🔍 [Gemini] Unstructured fallback response: {fallback_response.text[:500]}")
+                result = self._extract_json_robust(fallback_response.text)
+                if result and result.get('food_items'):
+                    print(f"✅ [Gemini] Unstructured fallback succeeded with {len(result['food_items'])} items")
+
+                    # Enhance with USDA data
+                    try:
+                        enhanced_items = await self._enhance_food_items_with_usda(result['food_items'])
+                        result['food_items'] = enhanced_items
+                        result['total_calories'] = sum(item.get('calories', 0) or 0 for item in enhanced_items)
+                        result['protein_g'] = round(sum(item.get('protein_g', 0) or 0 for item in enhanced_items), 1)
+                        result['carbs_g'] = round(sum(item.get('carbs_g', 0) or 0 for item in enhanced_items), 1)
+                        result['fat_g'] = round(sum(item.get('fat_g', 0) or 0 for item in enhanced_items), 1)
+                        result['fiber_g'] = round(sum(item.get('fiber_g', 0) or 0 for item in enhanced_items), 1)
+                    except Exception as e:
+                        logger.warning(f"USDA enhancement failed in fallback: {e}")
+
+                    return result
+        except Exception as e:
+            print(f"❌ [Gemini] Unstructured fallback also failed: {e}")
+
+        print(f"❌ [Gemini] All {max_retries} attempts + fallback failed. Last error: {last_error}")
         print(f"❌ [Gemini] Last content was: {content[:500] if content else 'empty'}")
         return None
 
@@ -2719,10 +2835,25 @@ Return ONLY valid JSON (no markdown):
   "duration_minutes_max": {duration_minutes_max or 'null'},
   "target_muscles": ["muscle1", "muscle2"],
   "exercises": [
-    {{"name": "Exercise", "sets": 3, "reps": 12, "rest_seconds": 60, "equipment": "equipment", "muscle_group": "muscle", "notes": "tips"}}
+    {{
+      "name": "Exercise Name",
+      "sets": 3,
+      "reps": 10,
+      "rest_seconds": 60,
+      "equipment": "equipment used",
+      "muscle_group": "primary muscle",
+      "notes": "Form tips",
+      "set_targets": [
+        {{"set_number": 1, "set_type": "warmup", "target_reps": 12, "target_weight_kg": 10, "target_rpe": 5}},
+        {{"set_number": 2, "set_type": "working", "target_reps": 10, "target_weight_kg": 20, "target_rpe": 7}},
+        {{"set_number": 3, "set_type": "working", "target_reps": 10, "target_weight_kg": 20, "target_rpe": 8}}
+      ]
+    }}
   ],
   "notes": "Overall tips"
 }}
+
+CRITICAL: Every exercise MUST include "set_targets" array with set_number, set_type (warmup/working/drop/failure/amrap), target_reps, target_weight_kg, and target_rpe for each set.
 
 Include 5-8 exercises for {fitness_level} level using only: {safe_join_list(equipment, 'bodyweight')}
 
@@ -2737,19 +2868,30 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
             logger.info(f"[Streaming] Starting workout generation for {fitness_level} user")
 
         try:
+            logger.info(f"[Streaming] Calling Gemini API with model={self.model}, prompt length={len(prompt)}")
             stream = await client.aio.models.generate_content_stream(
                 model=self.model,
                 contents=prompt,
                 config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=GeneratedWorkoutResponse,
                     temperature=0.7,
-                    max_output_tokens=4000
+                    max_output_tokens=8192
                 ),
             )
+
+            if stream is None:
+                logger.error(f"❌ [Streaming] Gemini returned None stream - API may be unavailable or prompt rejected")
+                raise ValueError("Gemini streaming returned None - check API key and prompt")
+
+            logger.info(f"[Streaming] Stream created successfully, type={type(stream).__name__}")
 
             chunk_count = 0
             total_chars = 0
             async for chunk in stream:
                 chunk_count += 1
+                logger.debug(f"[Streaming] Received chunk {chunk_count}, type={type(chunk).__name__}")
+
                 # Check for blocked content or safety issues
                 if hasattr(chunk, 'candidates') and chunk.candidates:
                     candidate = chunk.candidates[0]
@@ -2757,7 +2899,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                         finish_reason = str(candidate.finish_reason)
                         if finish_reason not in ['STOP', 'MAX_TOKENS', 'FinishReason.STOP', 'FinishReason.MAX_TOKENS', '1', '2']:
                             logger.warning(f"⚠️ [Streaming] Unexpected finish reason: {finish_reason}")
-                    if hasattr(candidate, 'safety_ratings'):
+                    if hasattr(candidate, 'safety_ratings') and candidate.safety_ratings:
                         for rating in candidate.safety_ratings:
                             if hasattr(rating, 'blocked') and rating.blocked:
                                 logger.error(f"🚫 [Streaming] Content blocked by safety filter: {rating}")
@@ -2771,7 +2913,9 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                 logger.warning(f"⚠️ [Gemini Streaming] Response seems short ({total_chars} chars) - may be incomplete")
 
         except Exception as e:
+            import traceback
             logger.error(f"Streaming workout generation failed: {e}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             raise
 
     async def generate_workout_from_library(

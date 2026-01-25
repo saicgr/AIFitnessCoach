@@ -5,7 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from datetime import date, datetime
 from typing import Optional, List
-from ..dependencies import get_supabase, get_current_user
+from core.supabase_client import get_supabase
+from core.auth import get_current_user
 
 router = APIRouter(prefix="/xp", tags=["XP & Progression"])
 
