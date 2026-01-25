@@ -36,6 +36,46 @@ settings = get_settings()
 logger = logging.getLogger("gemini")
 
 
+def safe_join_list(items, default: str = "") -> str:
+    """
+    Safely join a list of items that might contain strings or dicts.
+
+    This handles the case where goals, equipment, etc. might be stored as
+    dictionaries instead of strings (e.g., [{"name": "weight_loss"}]).
+
+    Args:
+        items: List of strings or dicts to join
+        default: Default value if items is empty or None
+
+    Returns:
+        Comma-separated string of items
+    """
+    if not items:
+        return default
+
+    result = []
+    for item in items:
+        if isinstance(item, str):
+            if item.strip():
+                result.append(item.strip())
+        elif isinstance(item, dict):
+            # Try common keys for name
+            name = (
+                item.get("name") or
+                item.get("goal") or
+                item.get("title") or
+                item.get("value") or
+                item.get("id") or
+                str(item)
+            )
+            if name and isinstance(name, str):
+                result.append(name.strip())
+        else:
+            result.append(str(item))
+
+    return ", ".join(result) if result else default
+
+
 def validate_set_targets_strict(exercises: List[Dict], user_context: Dict = None) -> List[Dict]:
     """
     STRICTLY validates that every exercise has set_targets array from Gemini.
@@ -971,7 +1011,7 @@ WEIGHT/COUNT FIELDS (required for portion editing):
         if user_goals or nutrition_targets:
             user_context = "\nUSER FITNESS CONTEXT:\n"
             if user_goals:
-                user_context += f"- Fitness Goals: {', '.join(user_goals)}\n"
+                user_context += f"- Fitness Goals: {safe_join_list(user_goals, 'General fitness')}\n"
             if nutrition_targets:
                 if nutrition_targets.get('daily_calorie_target'):
                     user_context += f"- Daily Calorie Target: {nutrition_targets['daily_calorie_target']} kcal\n"
@@ -2193,9 +2233,9 @@ REQUIREMENTS:
 
         prompt = f"""Generate a {duration_text}-minute workout plan for a user with:
 - Fitness Level: {fitness_level}
-- Goals: {', '.join(goals) if goals else 'General fitness'}
-- Available Equipment: {', '.join(equipment) if equipment else 'Bodyweight only'}
-- Focus Areas: {', '.join(focus_areas) if focus_areas else 'Full body'}
+- Goals: {safe_join_list(goals, 'General fitness')}
+- Available Equipment: {safe_join_list(equipment, 'Bodyweight only')}
+- Focus Areas: {safe_join_list(focus_areas, 'Full body')}
 - Workout Type: {workout_type}{environment_instruction}{age_activity_context}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}{preference_constraints_instruction}{comeback_instruction}{progression_philosophy_instruction}{workout_patterns_instruction}{primary_goal_instruction}{muscle_focus_instruction}
 
 ⚠️ CRITICAL - MUSCLE GROUP TARGETING:
@@ -2411,10 +2451,10 @@ FORMAT: [Adjective/Action] + [Animal/Mythic/Theme] + [Body Part]
 Requirements:
 - MUST include AT LEAST 5 exercises (minimum 5, ideally 6-8) appropriate for {fitness_level} fitness level
 - EVERY exercise MUST match the focus area - do NOT include exercises for other muscle groups!
-- ONLY use equipment from this list: {', '.join(equipment) if equipment else 'bodyweight'}
+- ONLY use equipment from this list: {safe_join_list(equipment, 'bodyweight')}
 
 🚨🚨🚨 ABSOLUTE CRITICAL RULE - EQUIPMENT USAGE 🚨🚨🚨
-Available equipment: {', '.join(equipment) if equipment else 'bodyweight only'}
+Available equipment: {safe_join_list(equipment, 'bodyweight only')}
 
 IF THE USER HAS GYM EQUIPMENT, YOU **MUST** USE IT! This is NON-NEGOTIABLE.
 - If "full_gym" OR "dumbbells" OR "barbell" OR "cable_machine" OR "machines" is in the equipment list:
@@ -2665,9 +2705,9 @@ If user has gym equipment - most exercises MUST use that equipment!"""
 
             prompt = f"""Generate a {duration_text}-minute workout for:
 - Fitness Level: {fitness_level}
-- Goals: {', '.join(goals) if goals else 'General fitness'}
-- Equipment: {', '.join(equipment) if equipment else 'Bodyweight only'}
-- Focus: {', '.join(focus_areas) if focus_areas else 'Full body'}{age_activity_context}{preference_constraints}
+- Goals: {safe_join_list(goals, 'General fitness')}
+- Equipment: {safe_join_list(equipment, 'Bodyweight only')}
+- Focus: {safe_join_list(focus_areas, 'Full body')}{age_activity_context}{preference_constraints}
 
 Return ONLY valid JSON (no markdown):
 {{
@@ -2684,7 +2724,7 @@ Return ONLY valid JSON (no markdown):
   "notes": "Overall tips"
 }}
 
-Include 5-8 exercises for {fitness_level} level using only: {', '.join(equipment) if equipment else 'bodyweight'}
+Include 5-8 exercises for {fitness_level} level using only: {safe_join_list(equipment, 'bodyweight')}
 
 🚨🚨 ABSOLUTE REQUIREMENT - EQUIPMENT USAGE 🚨🚨
 If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines):
@@ -3010,10 +3050,10 @@ TRAINING SPLIT: {training_split}
 
 USER PROFILE:
 - Fitness Level: {fitness_level}
-- Goals: {', '.join(user_goals) if user_goals else 'general fitness'}
-- Equipment Available: {', '.join(user_equipment) if user_equipment else 'various'}
-- Injuries/Limitations: {', '.join(injuries) if injuries else 'none noted'}
-- Focus Areas: {', '.join(focus_areas) if focus_areas else 'balanced'}
+- Goals: {safe_join_list(user_goals, 'general fitness')}
+- Equipment Available: {safe_join_list(user_equipment, 'various')}
+- Injuries/Limitations: {safe_join_list(injuries, 'none noted')}
+- Focus Areas: {safe_join_list(focus_areas, 'balanced')}
 
 EXERCISES:
 {chr(10).join([f"- {ex['name']} ({ex['muscle']}, {ex['sets']}x{ex['reps']}, {ex['equipment']})" for ex in exercise_list])}

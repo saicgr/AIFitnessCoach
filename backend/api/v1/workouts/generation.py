@@ -38,6 +38,7 @@ from .utils import (
     log_workout_change,
     index_workout_to_rag,
     parse_json_field,
+    normalize_goals_list,
     get_all_equipment,
     get_recently_used_exercises,
     get_user_strength_history,
@@ -159,10 +160,10 @@ async def generate_workout(request: GenerateWorkoutRequest):
                 equipment_details = gym_profile.get("equipment_details") or []
                 workout_environment = gym_profile.get("workout_environment") or preferences.get("workout_environment")
                 training_split = gym_profile.get("training_split")
-                profile_goals = gym_profile.get("goals") or []
+                profile_goals = normalize_goals_list(gym_profile.get("goals"))
                 # Parse user goals if it's a JSON string
-                user_goals = parse_json_field(user.get("goals"), [])
-                goals = request.goals or profile_goals if profile_goals else user_goals
+                user_goals = normalize_goals_list(user.get("goals"))
+                goals = normalize_goals_list(request.goals) if request.goals else (profile_goals if profile_goals else user_goals)
                 focus_areas = gym_profile.get("focus_areas") or []
 
                 logger.info(f"🏋️ [GymProfile] Profile equipment: {len(equipment)} items")
@@ -171,7 +172,7 @@ async def generate_workout(request: GenerateWorkoutRequest):
                     logger.info(f"📅 [GymProfile] Training split: {training_split}")
             else:
                 # Fall back to user settings (parse JSON strings)
-                goals = request.goals or parse_json_field(user.get("goals"), [])
+                goals = normalize_goals_list(request.goals) if request.goals else normalize_goals_list(user.get("goals"))
                 equipment = request.equipment or parse_json_field(user.get("equipment"), [])
                 equipment_details = parse_json_field(user.get("equipment_details"), [])
                 workout_environment = preferences.get("workout_environment")
@@ -739,14 +740,14 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     # Load settings from gym profile
                     gym_profile_id = gym_profile.get("id")
                     equipment = body.equipment or gym_profile.get("equipment") or []
-                    profile_goals = gym_profile.get("goals") or []
+                    profile_goals = normalize_goals_list(gym_profile.get("goals"))
                     # Parse user goals if it's a JSON string
-                    user_goals = parse_json_field(user.get("goals"), [])
-                    goals = body.goals or profile_goals if profile_goals else user_goals
+                    user_goals = normalize_goals_list(user.get("goals"))
+                    goals = normalize_goals_list(body.goals) if body.goals else (profile_goals if profile_goals else user_goals)
                     logger.info(f"🏋️ [GymProfile] Profile equipment: {len(equipment)} items")
                 else:
                     # Fall back to user settings (parse JSON strings)
-                    goals = body.goals or parse_json_field(user.get("goals"), [])
+                    goals = normalize_goals_list(body.goals) if body.goals else normalize_goals_list(user.get("goals"))
                     equipment = body.equipment or parse_json_field(user.get("equipment"), [])
 
                 # Use explicit intensity_preference if set, otherwise derive from fitness level

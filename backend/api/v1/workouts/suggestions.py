@@ -18,7 +18,7 @@ from core.logger import get_logger
 from services.langgraph_agents.workout_insights.graph import generate_workout_insights
 from models.gemini_schemas import WorkoutSuggestionsResponse
 
-from .utils import parse_json_field
+from .utils import parse_json_field, normalize_goals_list
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -75,7 +75,7 @@ async def get_workout_suggestions(request: WorkoutSuggestionRequest):
 
         # Get user context
         fitness_level = user.get("fitness_level") or "intermediate"
-        goals = parse_json_field(user.get("goals"), [])
+        goals = normalize_goals_list(user.get("goals"))
         equipment = parse_json_field(user.get("equipment"), [])
         injuries = parse_json_field(user.get("active_injuries"), [])
 
@@ -298,7 +298,7 @@ async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False
         user_goals = []
         fitness_level = "intermediate"
         if user_result.data:
-            user_goals = parse_json_field(user_result.data[0].get("goals"), [])
+            user_goals = normalize_goals_list(user_result.data[0].get("goals"))
             fitness_level = user_result.data[0].get("fitness_level", "intermediate")
 
         # Generate the AI summary using LangGraph agent
@@ -422,7 +422,7 @@ async def get_workout_generation_params(workout_id: str):
             user_data = user_result.data[0]
             user_profile = {
                 "fitness_level": user_data.get("fitness_level", "intermediate"),
-                "goals": parse_json_field(user_data.get("goals"), []),
+                "goals": normalize_goals_list(user_data.get("goals")),
                 "equipment": parse_json_field(user_data.get("equipment"), []),
                 "injuries": parse_json_field(user_data.get("active_injuries"), []),
                 "age": user_data.get("age"),

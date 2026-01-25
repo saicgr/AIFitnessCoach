@@ -6,13 +6,43 @@ import '../providers/library_providers.dart';
 import '../widgets/exercise_search_bar.dart';
 import '../widgets/filter_chip_widget.dart';
 import '../widgets/program_card.dart';
+import '../components/programs_intro_sheet.dart';
 
 /// Programs tab content with search, category filter, and list
-class ProgramsTab extends ConsumerWidget {
+class ProgramsTab extends ConsumerStatefulWidget {
   const ProgramsTab({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProgramsTab> createState() => _ProgramsTabState();
+}
+
+class _ProgramsTabState extends ConsumerState<ProgramsTab> {
+  bool _hasShownIntro = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Show intro sheet after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_hasShownIntro && mounted) {
+        _showIntroSheet();
+        _hasShownIntro = true;
+      }
+    });
+  }
+
+  void _showIntroSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: true,
+      builder: (context) => const ProgramsIntroSheet(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final programsAsync = ref.watch(programsProvider);
     final categoriesAsync = ref.watch(programCategoriesProvider);
     final searchQuery = ref.watch(programSearchProvider);
@@ -21,9 +51,48 @@ class ProgramsTab extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
 
     return Column(
       children: [
+        // Info banner
+        Container(
+          margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: orange.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: orange.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline, color: orange, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Programs are being finalized. Tap any to learn more!',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: orange,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: Icon(Icons.help_outline, color: orange, size: 20),
+                onPressed: _showIntroSheet,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
         // Search bar
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
@@ -187,7 +256,10 @@ class ProgramsTab extends ConsumerWidget {
                 itemCount: filtered.length,
                 itemBuilder: (context, index) {
                   final program = filtered[index];
-                  return ProgramCard(program: program)
+                  return ProgramCard(
+                    program: program,
+                    showComingSoon: true, // All programs coming soon
+                  )
                       .animate()
                       .fadeIn(delay: Duration(milliseconds: index * 50));
                 },

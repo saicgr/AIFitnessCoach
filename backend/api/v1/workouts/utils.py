@@ -45,6 +45,63 @@ def parse_json_field(value, default):
     return value if isinstance(value, (list, dict)) else default
 
 
+def normalize_goals_list(goals) -> List[str]:
+    """
+    Normalize goals to a list of strings.
+
+    Goals can come in various formats from the database:
+    - List of strings: ["weight_loss", "muscle_gain"]
+    - List of dicts: [{"name": "weight_loss"}, {"goal": "muscle_gain"}]
+    - JSON string: '["weight_loss"]'
+    - Single string: "weight_loss"
+    - None
+
+    This function handles all cases and returns a clean list of strings.
+
+    Args:
+        goals: Raw goals data from database or API
+
+    Returns:
+        List of goal strings
+    """
+    if goals is None:
+        return []
+
+    # Parse JSON string if needed
+    if isinstance(goals, str):
+        try:
+            goals = json.loads(goals)
+        except json.JSONDecodeError:
+            # Single goal string
+            return [goals] if goals.strip() else []
+
+    # Not a list - return empty
+    if not isinstance(goals, list):
+        return []
+
+    # Normalize each item in the list
+    result = []
+    for item in goals:
+        if isinstance(item, str):
+            if item.strip():
+                result.append(item.strip())
+        elif isinstance(item, dict):
+            # Try common dict keys for goal name
+            goal_name = (
+                item.get("name") or
+                item.get("goal") or
+                item.get("title") or
+                item.get("value") or
+                item.get("id") or
+                str(item)  # Fallback to string representation
+            )
+            if goal_name and isinstance(goal_name, str):
+                result.append(goal_name.strip())
+        # Skip other types (int, float, etc.)
+
+    return result
+
+
 def get_intensity_from_fitness_level(fitness_level: Optional[str]) -> str:
     """
     Derive workout intensity/difficulty from user's fitness level.

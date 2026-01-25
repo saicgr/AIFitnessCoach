@@ -11,7 +11,8 @@ UPCOMING:
 56. 
 
 ISSUES:
-
+1. Welcome Screen NEdds changed
+2. 
 ASAP:
 -0.01. 
 	a. Need to create programs

@@ -23,7 +23,7 @@ Last Updated: January 2026
 | 7 | Celebrity-Style | 18 | ⬜ | 0/18 | 0/? | 0/? | 0/? | ✅ Yes |
 | 8 | Challenges | 14 | ⬜ | 0/14 | 0/? | 0/? | 0/? | ✅ Some |
 | 9 | Progressions | 26 | ⬜ | 0/26 | 0/? | 0/? | 0/? | ❌ No |
-| 10 | Women's Health | 20 | ⬜ | 0/20 | 0/? | 0/? | 0/? | ✅ Yes |
+| 10 | Women's Health | 21 | ⬜ | 0/21 | 0/? | 0/? | 0/? | ✅ Yes |
 | 11 | Men's Health | 20 | ⬜ | 0/20 | 0/? | 0/? | 0/? | ✅ Yes |
 | 12 | Body-Specific | 23 | ⬜ | 0/23 | 0/? | 0/? | 0/? | ✅ Yes |
 | 13 | Equipment-Specific | 26 | ⬜ | 0/26 | 0/? | 0/? | 0/? | ✅ Yes |
@@ -107,7 +107,7 @@ Last Updated: January 2026
 
 | Program | Pri | Duration | Sessions | Description | SS | Done | JSON | Valid | DB |
 |---------|:---:|----------|:--------:|-------------|:--:|:----:|:----:|:-----:|:--:|
-| HYROX Race Prep | High | 8, 12, 16, 24w | 5-6/wk | Race-date targeted training | ✅ | ✅ | ⬜ | ⬜ | ⬜ |
+| HYROX Race Prep | High | 8, 12, 16, 24w | 5-6/wk | Race-date targeted training | ✅ | ⬜ | ⬜ | ⬜ | ⬜ |
 | HYROX Home Edition | High | 8, 12, 16, 24w | 4-5/wk | Home equipment version | ✅ | ⬜ | ⬜ | ⬜ | ⬜ |
 | Elite Performance Camp | High | 8, 12, 16w | 5-6/wk | Advanced athletic conditioning | ✅ | ⬜ | ⬜ | ⬜ | ⬜ |
 | Tactical Fitness | Med | 8, 12w | 5-6/wk | Military/first responder style | ✅ | ⬜ | ⬜ | ⬜ | ⬜ |
@@ -375,7 +375,7 @@ Last Updated: January 2026
 
 ---
 
-## 10. Women's Health (20 programs)
+## 10. Women's Health (21 programs)
 *Comprehensive women's fitness covering all life stages*
 
 ### Core Women's Health
@@ -391,6 +391,7 @@ Last Updated: January 2026
 | Bone Density Builder | Med | 4, 8, 12w | 3-4/wk | Osteoporosis prevention | ✅ | ⬜ | ⬜ | ⬜ | ⬜ |
 | Low Impact Women's | Med | 4, 8w | 4-5/wk | Joint-friendly | ✅ | ⬜ | ⬜ | ⬜ | ⬜ |
 | Women's Strength Basics | High | 4, 8, 12w | 3-4/wk | Confidence building | ✅ | ⬜ | ⬜ | ⬜ | ⬜ |
+| Women's Self-Defense | High | 2, 4, 8w | 2-3/wk | Safety & empowerment focused | ✅ | ⬜ | ⬜ | ⬜ | ⬜ |
 
 ### Pregnancy & Postpartum Journey
 
@@ -2193,7 +2194,7 @@ Last Updated: January 2026
 | Celebrity | 18 | 100 |
 | Challenges | 14 | 60 |
 | Progressions | 26 | 130 |
-| Women's Health | 20 | 110 |
+| Women's Health | 21 | 117 |
 | Men's Health | 20 | 110 |
 | Body-Specific | 23 | 125 |
 | Equipment-Specific | 26 | 150 |

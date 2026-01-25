@@ -7,6 +7,7 @@ import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import 'add_gym_profile_sheet.dart';
+import 'components/sheet_theme_colors.dart';
 import 'manage_gym_profiles_sheet.dart';
 
 /// Robinhood-style horizontal gym profile switcher strip
@@ -120,29 +121,26 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
     );
 
     // Robinhood style: Just text with dropdown arrow
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: GestureDetector(
-        onTap: () => _showProfilePicker(context, profiles, isDark),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              activeProfile.name,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: textColor,
-              ),
+    return GestureDetector(
+      onTap: () => _showProfilePicker(context, profiles, isDark),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            activeProfile.name,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: textColor,
             ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 20,
-              color: secondaryColor,
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 4),
+          Icon(
+            Icons.keyboard_arrow_down_rounded,
+            size: 20,
+            color: secondaryColor,
+          ),
+        ],
       ),
     );
   }
@@ -175,32 +173,9 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
       ),
     );
   }
-
-  IconData _getIconData(String iconName) {
-    switch (iconName) {
-      case 'fitness_center':
-        return Icons.fitness_center_rounded;
-      case 'home':
-        return Icons.home_rounded;
-      case 'business':
-        return Icons.business_rounded;
-      case 'hotel':
-        return Icons.hotel_rounded;
-      case 'park':
-        return Icons.park_rounded;
-      case 'sports_gymnastics':
-        return Icons.sports_gymnastics_rounded;
-      case 'self_improvement':
-        return Icons.self_improvement_rounded;
-      case 'directions_run':
-        return Icons.directions_run_rounded;
-      default:
-        return Icons.fitness_center_rounded;
-    }
-  }
 }
 
-/// Robinhood-style profile picker bottom sheet
+/// Draggable profile picker bottom sheet (matches app design system)
 class _ProfilePickerSheet extends StatelessWidget {
   final List<GymProfile> profiles;
   final bool isDark;
@@ -218,85 +193,120 @@ class _ProfilePickerSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.sheetColors;
     final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final secondaryColor = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     return Container(
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.45,
+        minChildSize: 0.3,
+        maxChildSize: 0.85,
+        expand: false,
+        builder: (context, scrollController) => Column(
           children: [
-            // Handle bar
+            // Handle bar (draggable)
             Container(
               margin: const EdgeInsets.only(top: 12),
-              width: 36,
+              width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: secondaryColor.withOpacity(0.3),
+                color: colors.textMuted.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
 
-            // Title
+            // Header
             Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: colors.cyan.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.fitness_center_rounded,
+                      color: colors.cyan,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      'Switch Gym',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.close_rounded, color: colors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+
+            Divider(height: 1, color: colors.cardBorder),
+
+            // Scrollable profile list
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                children: profiles.map((profile) => _buildProfileTile(
+                      context,
+                      profile,
+                      colors,
+                    )).toList(),
+              ),
+            ),
+
+            // Action buttons (fixed at bottom)
+            Container(
               padding: const EdgeInsets.all(16),
-              child: Text(
-                'Switch Gym',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                border: Border(
+                  top: BorderSide(color: colors.cardBorder),
+                ),
+              ),
+              child: SafeArea(
+                child: Row(
+                  children: [
+                    // Add gym button
+                    Expanded(
+                      child: _buildActionButton(
+                        icon: Icons.add_rounded,
+                        label: 'Add Gym',
+                        color: colors.cyan,
+                        colors: colors,
+                        onTap: onAddProfile,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Manage button
+                    Expanded(
+                      child: _buildActionButton(
+                        icon: Icons.settings_rounded,
+                        label: 'Manage',
+                        color: colors.textSecondary,
+                        colors: colors,
+                        onTap: onManageProfiles,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-
-            // Profile list
-            ...profiles.map((profile) => _buildProfileTile(
-                  profile,
-                  textColor,
-                  secondaryColor,
-                )),
-
-            const Divider(height: 1),
-
-            // Add gym option
-            ListTile(
-              leading: Icon(
-                Icons.add_rounded,
-                color: AppColors.cyan,
-              ),
-              title: Text(
-                'Add New Gym',
-                style: TextStyle(
-                  color: AppColors.cyan,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              onTap: onAddProfile,
-            ),
-
-            // Manage profiles option
-            ListTile(
-              leading: Icon(
-                Icons.settings_rounded,
-                color: secondaryColor,
-              ),
-              title: Text(
-                'Manage Gyms',
-                style: TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              onTap: onManageProfiles,
-            ),
-
-            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -304,51 +314,137 @@ class _ProfilePickerSheet extends StatelessWidget {
   }
 
   Widget _buildProfileTile(
+    BuildContext context,
     GymProfile profile,
-    Color textColor,
-    Color secondaryColor,
+    SheetColors colors,
   ) {
     final profileColor = profile.profileColor;
     final isActive = profile.isActive;
 
-    return ListTile(
-      leading: Container(
-        width: 40,
-        height: 40,
+    return GestureDetector(
+      onTap: () => onProfileSelected(profile),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: profileColor.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Center(
-          child: Icon(
-            _getIconData(profile.icon),
-            color: profileColor,
-            size: 22,
+          color: isActive
+              ? profileColor.withOpacity(0.12)
+              : colors.glassSurface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isActive ? profileColor.withOpacity(0.5) : colors.cardBorder,
+            width: isActive ? 2 : 1,
           ),
         ),
-      ),
-      title: Text(
-        profile.name,
-        style: TextStyle(
-          fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-          color: textColor,
+        child: Row(
+          children: [
+            // Profile icon
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: profileColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Icon(
+                  _getIconData(profile.icon),
+                  color: profileColor,
+                  size: 22,
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            // Profile info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    profile.name,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '${profile.equipmentCount} equipment • ${profile.environmentDisplayName}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Active indicator
+            if (isActive)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: profileColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: profileColor,
+                      size: 14,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Active',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: profileColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
       ),
-      subtitle: Text(
-        '${profile.equipmentCount} equipment • ${profile.environmentDisplayName}',
-        style: TextStyle(
-          fontSize: 12,
-          color: secondaryColor,
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required SheetColors colors,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: colors.glassSurface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colors.cardBorder),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
         ),
       ),
-      trailing: isActive
-          ? Icon(
-              Icons.check_rounded,
-              color: profileColor,
-              size: 22,
-            )
-          : null,
-      onTap: () => onProfileSelected(profile),
     );
   }
 

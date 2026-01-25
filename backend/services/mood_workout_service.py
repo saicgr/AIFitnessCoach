@@ -223,8 +223,23 @@ class MoodWorkoutService:
             duration_override=duration_minutes,
         )
 
-        equipment_str = ", ".join(user_equipment) if user_equipment else "Bodyweight only"
-        goals_str = ", ".join(user_goals) if user_goals else "General fitness"
+        # Safely join lists - handle case where items might be dicts
+        def safe_join(items, default=""):
+            if not items:
+                return default
+            result = []
+            for item in items:
+                if isinstance(item, str):
+                    result.append(item)
+                elif isinstance(item, dict):
+                    name = item.get("name") or item.get("goal") or item.get("title") or str(item)
+                    result.append(str(name))
+                else:
+                    result.append(str(item))
+            return ", ".join(result) if result else default
+
+        equipment_str = safe_join(user_equipment, "Bodyweight only")
+        goals_str = safe_join(user_goals, "General fitness")
 
         prompt = f"""Generate a {duration_minutes}-minute quick workout for a user who is feeling {mood.value.upper()} {config.emoji}.
 

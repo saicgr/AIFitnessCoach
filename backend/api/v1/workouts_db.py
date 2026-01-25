@@ -109,6 +109,64 @@ def parse_json_field(value, default):
             return default
     return value if isinstance(value, (list, dict)) else default
 
+
+def normalize_goals_list(goals) -> List[str]:
+    """
+    Normalize goals to a list of strings.
+
+    Goals can come in various formats from the database:
+    - List of strings: ["weight_loss", "muscle_gain"]
+    - List of dicts: [{"name": "weight_loss"}, {"goal": "muscle_gain"}]
+    - JSON string: '["weight_loss"]'
+    - Single string: "weight_loss"
+    - None
+
+    This function handles all cases and returns a clean list of strings.
+
+    Args:
+        goals: Raw goals data from database or API
+
+    Returns:
+        List of goal strings
+    """
+    if goals is None:
+        return []
+
+    # Parse JSON string if needed
+    if isinstance(goals, str):
+        try:
+            goals = json.loads(goals)
+        except json.JSONDecodeError:
+            # Single goal string
+            return [goals] if goals.strip() else []
+
+    # Not a list - return empty
+    if not isinstance(goals, list):
+        return []
+
+    # Normalize each item in the list
+    result = []
+    for item in goals:
+        if isinstance(item, str):
+            if item.strip():
+                result.append(item.strip())
+        elif isinstance(item, dict):
+            # Try common dict keys for goal name
+            goal_name = (
+                item.get("name") or
+                item.get("goal") or
+                item.get("title") or
+                item.get("value") or
+                item.get("id") or
+                str(item)  # Fallback to string representation
+            )
+            if goal_name and isinstance(goal_name, str):
+                result.append(goal_name.strip())
+        # Skip other types (int, float, etc.)
+
+    return result
+
+
 # Initialize workout RAG service (lazy loading)
 _workout_rag_service: Optional[WorkoutRAGService] = None
 
@@ -891,7 +949,7 @@ async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRe
         fitness_level = request.fitness_level or user.get("fitness_level") or "intermediate"
         # IMPORTANT: Use explicit None check so empty list [] is respected
         equipment = request.equipment if request.equipment is not None else parse_json_field(user.get("equipment"), [])
-        goals = parse_json_field(user.get("goals"), [])
+        goals = normalize_goals_list(user.get("goals"))
         preferences = parse_json_field(user.get("preferences"), {})
         # Get equipment counts - use request if provided, otherwise fall back to user preferences
         dumbbell_count = request.dumbbell_count if request.dumbbell_count is not None else preferences.get("dumbbell_count", 2)
@@ -1222,7 +1280,7 @@ async def get_workout_suggestions(http_request: Request, request: WorkoutSuggest
 
         # Get user context
         fitness_level = user.get("fitness_level") or "intermediate"
-        goals = parse_json_field(user.get("goals"), [])
+        goals = normalize_goals_list(user.get("goals"))
         equipment = parse_json_field(user.get("equipment"), [])
         injuries = parse_json_field(user.get("active_injuries"), [])
 
@@ -1475,7 +1533,7 @@ async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False
         user_goals = []
         fitness_level = "intermediate"
         if user_result.data:
-            user_goals = parse_json_field(user_result.data[0].get("goals"), [])
+            user_goals = normalize_goals_list(user_result.data[0].get("goals"))
             fitness_level = user_result.data[0].get("fitness_level", "intermediate")
 
         # Generate the AI summary using LangGraph agent
@@ -1930,7 +1988,7 @@ async def get_workout_generation_params(workout_id: str):
             user_data = user_result.data[0]
             user_profile = {
                 "fitness_level": user_data.get("fitness_level", "intermediate"),
-                "goals": parse_json_field(user_data.get("goals"), []),
+                "goals": normalize_goals_list(user_data.get("goals")),
                 "equipment": parse_json_field(user_data.get("equipment"), []),
                 "injuries": parse_json_field(user_data.get("active_injuries"), []),
                 "age": user_data.get("age"),

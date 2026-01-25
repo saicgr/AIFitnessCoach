@@ -1753,17 +1753,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           child: SafeArea(
             child: CustomScrollView(
             slivers: [
-              // Gym Profile Switcher - collapsed by default, above greeting
-              const SliverToBoxAdapter(
-                child: GymProfileSwitcher(collapsed: true),
-              ),
-
-              // Header - compact in split screen
+              // Combined header: Gym Profile Switcher + Icons on same row
               SliverToBoxAdapter(
-                child: _buildHeader(
+                child: _buildCombinedHeader(
                   context,
-                  // Use first name only to avoid truncation
-                  (user?.displayName ?? 'User').split(' ').first,
                   currentStreak,
                   isDark,
                   isCompact: isInSplitScreen || isNarrowLayout,
@@ -3327,6 +3320,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
       ],
     ];
+  }
+
+  /// Combined header with Gym Profile Switcher and icons on same row
+  Widget _buildCombinedHeader(
+    BuildContext context,
+    int currentStreak,
+    bool isDark, {
+    bool isCompact = false,
+  }) {
+    final padding = isCompact ? 10.0 : 16.0;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: padding, vertical: 8),
+      child: Row(
+        children: [
+          // Gym Profile Switcher - takes remaining space
+          const Expanded(
+            child: GymProfileSwitcher(collapsed: true),
+          ),
+          // XP Level Progress - Compact version in header
+          if (!isCompact) const XPLevelBarCompact(),
+          // Notification Bell
+          NotificationBellButton(isDark: isDark),
+          // Streak Badge - Consolidated metric
+          _StreakBadge(streak: currentStreak, isDark: isDark, isCompact: isCompact),
+        ],
+      ),
+    );
   }
 
   Widget _buildHeader(

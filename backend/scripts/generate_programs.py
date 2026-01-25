@@ -808,6 +808,15 @@ def get_or_create_branded_program(supabase, program: dict) -> Optional[str]:
             print(f"      ✨ Created branded_program: {base_name}")
             return result.data[0]['id']
     except Exception as e:
+        error_str = str(e)
+        # Handle race condition - another thread created it first
+        if '23505' in error_str or 'duplicate key' in error_str.lower():
+            # Re-fetch the existing record
+            result = supabase.table(TABLE_BRANDED_PROGRAMS).select('id').eq(
+                'name', base_name
+            ).limit(1).execute()
+            if result.data:
+                return result.data[0]['id']
         print(f"      ⚠️ Failed to create branded_program: {e}")
 
     return None

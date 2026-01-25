@@ -153,15 +153,31 @@ class CoachService:
 
         # User profile context
         if user_profile:
+            # Safely join lists - handle case where items might be dicts
+            def safe_join(items):
+                if not items:
+                    return "Not specified"
+                result = []
+                for item in items:
+                    if isinstance(item, str):
+                        result.append(item)
+                    elif isinstance(item, dict):
+                        # Try common keys for name
+                        name = item.get("name") or item.get("goal") or item.get("title") or str(item)
+                        result.append(str(name))
+                    else:
+                        result.append(str(item))
+                return ", ".join(result) if result else "Not specified"
+
             context_parts.extend([
                 "USER PROFILE:",
                 f"- Fitness Level: {user_profile.fitness_level}",
-                f"- Goals: {', '.join(user_profile.goals) or 'Not specified'}",
-                f"- Equipment: {', '.join(user_profile.equipment) or 'Not specified'}",
+                f"- Goals: {safe_join(user_profile.goals)}",
+                f"- Equipment: {safe_join(user_profile.equipment)}",
             ])
             if user_profile.active_injuries:
                 context_parts.append(
-                    f"- Active Injuries: {', '.join(user_profile.active_injuries)}"
+                    f"- Active Injuries: {safe_join(user_profile.active_injuries)}"
                 )
 
         # Current workout context
