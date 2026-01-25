@@ -1,13 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/providers/avoided_provider.dart';
-import '../../../core/providers/exercise_queue_provider.dart';
-import '../../../core/providers/favorites_provider.dart';
-import '../../../core/providers/staples_provider.dart';
 import '../../../core/providers/video_cache_provider.dart';
 import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/models/exercise.dart';
@@ -66,7 +61,6 @@ class NetflixExerciseCarousel extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
     if (exercises.isEmpty) return const SizedBox.shrink();
@@ -186,7 +180,6 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
   /// Animation controller for page transitions
   late AnimationController _slideController;
   late Animation<Offset> _slideAnimation;
-  int _slideDirection = 0; // -1 = left, 1 = right, 0 = none
 
   /// Whether reduced motion is enabled
   bool _reducedMotion = false;
@@ -346,7 +339,6 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
 
@@ -401,7 +393,7 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
               );
             },
             child: Container(
-            height: 280,
+            height: 180,
             margin: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: isDark ? AppColors.elevated : AppColorsLight.elevated,
@@ -477,25 +469,25 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
                   ),
                 ),
 
-                // Content
+                // Content - simplified
                 Positioned(
-                  bottom: 16,
-                  left: 16,
-                  right: 16,
+                  bottom: 12,
+                  left: 12,
+                  right: 12,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         currentExercise.name,
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: textPrimary,
                         ),
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
                       Row(
                         children: [
                           if (currentExercise.muscleGroup != null)
@@ -504,32 +496,12 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
                               color: purple,
                             ),
                           if (currentExercise.difficulty != null) ...[
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 6),
                             _HeroChip(
                               label: DifficultyUtils.getDisplayName(currentExercise.difficulty!),
                               color: DifficultyUtils.getColor(currentExercise.difficulty!),
                             ),
                           ],
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          _HeroButton(
-                            icon: Icons.play_arrow,
-                            label: 'View',
-                            isPrimary: true,
-                            onTap: () => _showExerciseDetail(currentExercise),
-                          ),
-                          const SizedBox(width: 12),
-                          _HeroButton(
-                            icon: Icons.add,
-                            label: 'Add',
-                            isPrimary: false,
-                            onTap: () {
-                              // TODO: Add to workout functionality
-                            },
-                          ),
                         ],
                       ),
                     ],
@@ -559,37 +531,6 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
           ),
         ),
         ),
-        // Page indicators
-        if (widget.exercises.length > 1)
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                widget.exercises.length.clamp(0, 8),
-                (index) => GestureDetector(
-                  onTap: () {
-                    setState(() => _currentPage = index);
-                    HapticService.selection();
-                    _loadVideoForExercise(widget.exercises[index]);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: index == _currentPage ? 24 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: index == _currentPage
-                          ? cyan
-                          : textMuted.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
         const SizedBox(height: 8),
       ],
     );
@@ -699,56 +640,8 @@ class _HeroChip extends StatelessWidget {
   }
 }
 
-/// Hero section button (like Netflix Play/More Info)
-class _HeroButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isPrimary;
-  final VoidCallback onTap;
-
-  const _HeroButton({
-    required this.icon,
-    required this.label,
-    required this.isPrimary,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isPrimary ? Colors.white : Colors.white.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: isPrimary ? Colors.black : Colors.white,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: isPrimary ? Colors.black : Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Netflix-style small card (poster style) with smooth animations
-class _NetflixCard extends ConsumerStatefulWidget {
+/// Netflix-style small card - clean and minimal
+class _NetflixCard extends StatelessWidget {
   final LibraryExercise exercise;
   final int index;
 
@@ -757,284 +650,13 @@ class _NetflixCard extends ConsumerStatefulWidget {
     this.index = 0,
   });
 
-  @override
-  ConsumerState<_NetflixCard> createState() => _NetflixCardState();
-}
-
-class _NetflixCardState extends ConsumerState<_NetflixCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _scaleController;
-  late Animation<double> _scaleAnimation;
-  bool _isPressed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _scaleController = AnimationController(
-      duration: const Duration(milliseconds: 150),
-      vsync: this,
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _scaleController.dispose();
-    super.dispose();
-  }
-
   void _showExerciseDetail(BuildContext context) {
     HapticService.light();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => ExerciseDetailSheet(exercise: widget.exercise),
-    );
-  }
-
-  void _onTapDown(TapDownDetails details) {
-    setState(() => _isPressed = true);
-    _scaleController.forward();
-  }
-
-  void _onTapUp(TapUpDetails details) {
-    setState(() => _isPressed = false);
-    _scaleController.reverse();
-  }
-
-  void _onTapCancel() {
-    setState(() => _isPressed = false);
-    _scaleController.reverse();
-  }
-
-  void _toggleFavorite() {
-    HapticFeedback.lightImpact();
-    ref.read(favoritesProvider.notifier).toggleFavorite(widget.exercise.name);
-  }
-
-  void _toggleQueue() {
-    HapticFeedback.lightImpact();
-    ref.read(exerciseQueueProvider.notifier).toggleQueue(
-      widget.exercise.name,
-      targetMuscleGroup: widget.exercise.muscleGroup,
-    );
-  }
-
-  void _toggleAvoided() {
-    HapticFeedback.lightImpact();
-    ref.read(avoidedProvider.notifier).toggleAvoided(widget.exercise.name);
-  }
-
-  void _toggleStaple() {
-    HapticFeedback.lightImpact();
-    ref.read(staplesProvider.notifier).toggleStaple(
-      widget.exercise.name,
-      muscleGroup: widget.exercise.muscleGroup,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-
-    // Watch providers for state
-    final isFavorite = ref.watch(favoritesProvider).isFavorite(widget.exercise.name);
-    final isQueued = ref.watch(exerciseQueueProvider).isQueued(widget.exercise.name);
-    final isAvoided = ref.watch(avoidedProvider).isAvoided(widget.exercise.name);
-    final isStaple = ref.watch(staplesProvider).isStaple(widget.exercise.name);
-
-    return GestureDetector(
-      onTap: () => _showExerciseDetail(context),
-      onTapDown: _onTapDown,
-      onTapUp: _onTapUp,
-      onTapCancel: _onTapCancel,
-      child: AnimatedBuilder(
-        animation: _scaleAnimation,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: _scaleAnimation.value,
-            child: child,
-          );
-        },
-        child: Container(
-          width: 120, // Netflix poster width
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          decoration: BoxDecoration(
-            color: elevated,
-            borderRadius: BorderRadius.circular(8),
-            border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
-            boxShadow: _isPressed
-                ? []
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-          ),
-          clipBehavior: Clip.hardEdge,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Thumbnail (poster area)
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        purple.withValues(alpha: 0.3),
-                        cyan.withValues(alpha: 0.2),
-                      ],
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      // Icon
-                      Center(
-                        child: Icon(
-                          _getBodyPartIcon(widget.exercise.bodyPart),
-                          size: 36,
-                          color: purple.withValues(alpha: 0.6),
-                        ),
-                      ),
-                      // Difficulty badge (first letter of display name)
-                      if (widget.exercise.difficulty != null)
-                        Positioned(
-                          top: 6,
-                          left: 6,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: DifficultyUtils.getColor(widget.exercise.difficulty!)
-                                  .withValues(alpha: 0.9),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              DifficultyUtils.getDisplayName(widget.exercise.difficulty!)[0], // First letter: B, M, C, E
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      // Action buttons overlay at bottom
-                      Positioned(
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withValues(alpha: 0.7),
-                              ],
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            mainAxisSize: MainAxisSize.max,
-                            children: [
-                              // Favorite
-                              _buildCompactActionButton(
-                                icon: isFavorite ? Icons.favorite : Icons.favorite_border,
-                                isActive: isFavorite,
-                                activeColor: AppColors.error,
-                                inactiveColor: Colors.white70,
-                                onTap: _toggleFavorite,
-                              ),
-                              // Queue
-                              _buildCompactActionButton(
-                                icon: isQueued ? Icons.playlist_add_check : Icons.playlist_add,
-                                isActive: isQueued,
-                                activeColor: cyan,
-                                inactiveColor: Colors.white70,
-                                onTap: _toggleQueue,
-                              ),
-                              // Avoid
-                              _buildCompactActionButton(
-                                icon: isAvoided ? Icons.block : Icons.block_outlined,
-                                isActive: isAvoided,
-                                activeColor: AppColors.orange,
-                                inactiveColor: Colors.white70,
-                                onTap: _toggleAvoided,
-                              ),
-                              // Staple
-                              _buildCompactActionButton(
-                                icon: isStaple ? Icons.push_pin : Icons.push_pin_outlined,
-                                isActive: isStaple,
-                                activeColor: purple,
-                                inactiveColor: Colors.white70,
-                                onTap: _toggleStaple,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Title area
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: Text(
-                  widget.exercise.name,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCompactActionButton({
-    required IconData icon,
-    required bool isActive,
-    required Color activeColor,
-    required Color inactiveColor,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.all(4),
-        child: Icon(
-          icon,
-          size: 14,
-          color: isActive ? activeColor : inactiveColor,
-        ),
-      ),
+      builder: (context) => ExerciseDetailSheet(exercise: exercise),
     );
   }
 
@@ -1062,5 +684,126 @@ class _NetflixCardState extends ConsumerState<_NetflixCard>
       default:
         return Icons.fitness_center;
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+
+    return GestureDetector(
+      onTap: () => _showExerciseDetail(context),
+      child: Container(
+        width: 120,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(8),
+          border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.hardEdge,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Thumbnail area - clean gradient with icon
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      purple.withValues(alpha: 0.3),
+                      cyan.withValues(alpha: 0.2),
+                    ],
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    // Body part icon
+                    Center(
+                      child: Icon(
+                        _getBodyPartIcon(exercise.bodyPart),
+                        size: 36,
+                        color: purple.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    // Difficulty badge
+                    if (exercise.difficulty != null)
+                      Positioned(
+                        top: 6,
+                        left: 6,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: DifficultyUtils.getColor(exercise.difficulty!)
+                                .withValues(alpha: 0.9),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            DifficultyUtils.getDisplayName(exercise.difficulty!)[0],
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            // Title and body part
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    exercise.name,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (exercise.bodyPart != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      exercise.bodyPart!,
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: textMuted,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

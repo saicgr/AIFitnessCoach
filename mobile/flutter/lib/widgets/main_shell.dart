@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +15,6 @@ import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/nutrition/quick_log_overlay.dart';
 import 'coach_avatar.dart';
 import 'floating_chat/floating_chat_overlay.dart';
-import 'quick_actions_sheet.dart';
 
 /// Provider to control floating nav bar visibility
 final floatingNavBarVisibleProvider = StateProvider<bool>((ref) => true);
@@ -35,19 +32,17 @@ class MainShell extends ConsumerWidget {
   int _calculateSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/home')) return 0;
-    if (location.startsWith('/social')) return 1;
-    // Index 2 is the + button (no selection state)
-    if (location.startsWith('/stats')) return 2;
-    if (location.startsWith('/profile')) return 3;
+    if (location.startsWith('/workouts')) return 1;
+    if (location.startsWith('/nutrition')) return 2;
+    if (location.startsWith('/social')) return 3;
+    if (location.startsWith('/profile')) return 4;
     return 0;
   }
 
   bool _isSecondaryPage(BuildContext context) {
     // Use the full URI path to detect secondary pages, not just the shell's matched location
     final fullPath = GoRouter.of(context).routerDelegate.currentConfiguration.uri.path;
-    return fullPath.startsWith('/workouts') ||
-           fullPath.startsWith('/nutrition') ||
-           fullPath.startsWith('/fasting');
+    return fullPath.startsWith('/fasting');
   }
 
   void _onItemTapped(BuildContext context, int index) {
@@ -56,13 +51,15 @@ class MainShell extends ConsumerWidget {
         context.go('/home');
         break;
       case 1:
-        context.go('/social');
+        context.go('/workouts');
         break;
-      // Index 2 is + button - handled separately
       case 2:
-        context.go('/stats');
+        context.go('/nutrition');
         break;
       case 3:
+        context.go('/social');
+        break;
+      case 4:
         context.go('/profile');
         break;
     }
@@ -188,17 +185,20 @@ class _DraggableAICoachButtonState extends State<_DraggableAICoachButton> {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final topPadding = MediaQuery.of(context).padding.top;
 
-    // Initialize position on first build
+    // Position just above the nav bar (64px height + small gap)
+    const navBarOffset = 72.0; // 64px nav bar + 8px gap
+
+    // Initialize position on first build - position just above nav bar
     if (_xPosition < 0 || _yPosition < 0) {
       _xPosition = size.width - buttonSize - 16;
-      _yPosition = size.height - buttonSize - bottomPadding - 140; // Above nav bar
+      _yPosition = size.height - buttonSize - bottomPadding - navBarOffset;
     }
 
     // Boundaries for dragging - allow going lower (just above nav bar)
     const minX = 8.0;
     final maxX = size.width - buttonSize - 8;
     final minY = topPadding + 60;
-    final maxY = size.height - buttonSize - bottomPadding - 90; // Closer to nav bar
+    final maxY = size.height - buttonSize - bottomPadding - navBarOffset;
 
     return Positioned(
       left: _xPosition.clamp(minX, maxX),
@@ -252,16 +252,13 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
     // Get dynamic accent color from provider
     final accentColor = ref.colors(context).accent;
 
-    // Nav bar dimensions
+    // Nav bar dimensions (no more + button protrusion)
     const navBarHeight = 64.0;
     const itemHeight = 50.0;
-    const plusButtonSize = 52.0;
-    const plusButtonProtrusion = 12.0; // How much the + button sticks up
-
     const fadeHeight = 50.0;
 
     return SizedBox(
-      height: navBarHeight + bottomPadding + plusButtonProtrusion + fadeHeight,
+      height: navBarHeight + bottomPadding + fadeHeight,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -304,68 +301,59 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                 height: navBarHeight,
                 child: Stack(
                   children: [
-                    // Main nav items
+                    // Main nav items - 5 items evenly spaced
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        // Left side nav items
-                        Expanded(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _AnchoredNavItem(
-                                icon: Icons.home_outlined,
-                                selectedIcon: Icons.home_rounded,
-                                label: 'Home',
-                                isSelected: selectedIndex == 0,
-                                onTap: () => onItemTapped(0),
-                                itemHeight: itemHeight,
-                                selectedColor: accentColor,
-                                isDark: isDark,
-                              ),
-                              _AnchoredNavItem(
-                                icon: Icons.public_outlined,
-                                selectedIcon: Icons.public,
-                                label: 'Social',
-                                isSelected: selectedIndex == 1,
-                                onTap: () => onItemTapped(1),
-                                itemHeight: itemHeight,
-                                selectedColor: accentColor,
-                                isDark: isDark,
-                              ),
-                            ],
-                          ),
+                        _AnchoredNavItem(
+                          icon: Icons.home_outlined,
+                          selectedIcon: Icons.home_rounded,
+                          label: 'Home',
+                          isSelected: selectedIndex == 0,
+                          onTap: () => onItemTapped(0),
+                          itemHeight: itemHeight,
+                          selectedColor: accentColor,
+                          isDark: isDark,
                         ),
-
-                        // Space for center + button
-                        const SizedBox(width: plusButtonSize + 16),
-
-                        // Right side nav items
-                        Expanded(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _AnchoredNavItem(
-                                icon: Icons.bar_chart_outlined,
-                                selectedIcon: Icons.bar_chart,
-                                label: 'Stats',
-                                isSelected: selectedIndex == 2,
-                                onTap: () => onItemTapped(2),
-                                itemHeight: itemHeight,
-                                selectedColor: accentColor,
-                                isDark: isDark,
-                              ),
-                              _AnchoredNavItem(
-                                icon: Icons.person_outline,
-                                selectedIcon: Icons.person,
-                                label: 'Profile',
-                                isSelected: selectedIndex == 3,
-                                onTap: () => onItemTapped(3),
-                                itemHeight: itemHeight,
-                                selectedColor: accentColor,
-                                isDark: isDark,
-                              ),
-                            ],
-                          ),
+                        _AnchoredNavItem(
+                          icon: Icons.fitness_center_outlined,
+                          selectedIcon: Icons.fitness_center,
+                          label: 'Workout',
+                          isSelected: selectedIndex == 1,
+                          onTap: () => onItemTapped(1),
+                          itemHeight: itemHeight,
+                          selectedColor: accentColor,
+                          isDark: isDark,
+                        ),
+                        _AnchoredNavItem(
+                          icon: Icons.restaurant_outlined,
+                          selectedIcon: Icons.restaurant,
+                          label: 'Nutrition',
+                          isSelected: selectedIndex == 2,
+                          onTap: () => onItemTapped(2),
+                          itemHeight: itemHeight,
+                          selectedColor: accentColor,
+                          isDark: isDark,
+                        ),
+                        _AnchoredNavItem(
+                          icon: Icons.public_outlined,
+                          selectedIcon: Icons.public,
+                          label: 'Social',
+                          isSelected: selectedIndex == 3,
+                          onTap: () => onItemTapped(3),
+                          itemHeight: itemHeight,
+                          selectedColor: accentColor,
+                          isDark: isDark,
+                        ),
+                        _AnchoredNavItem(
+                          icon: Icons.person_outline,
+                          selectedIcon: Icons.person,
+                          label: 'Profile',
+                          isSelected: selectedIndex == 4,
+                          onTap: () => onItemTapped(4),
+                          itemHeight: itemHeight,
+                          selectedColor: accentColor,
+                          isDark: isDark,
                         ),
                       ],
                     ),
@@ -379,21 +367,6 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     ),
                   ],
                 ),
-              ),
-            ),
-          ),
-
-          // Center + button aligned with nav bar, slight protrusion above
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: bottomPadding + (navBarHeight - plusButtonSize) / 2 + plusButtonProtrusion,
-            child: Center(
-              child: _ProtrudingPlusButton(
-                size: plusButtonSize,
-                onTap: () => showQuickActionsSheet(context, ref),
-                isDark: isDark,
-                accentColor: accentColor,
               ),
             ),
           ),

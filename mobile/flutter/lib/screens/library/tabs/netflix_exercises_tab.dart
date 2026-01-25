@@ -1,12 +1,13 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/exceptions/app_exceptions.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/exercise.dart';
+import '../../../data/services/haptic_service.dart';
 import '../components/exercise_filter_sheet.dart';
 import '../providers/library_providers.dart';
-import '../widgets/exercise_search_bar.dart';
-import '../widgets/filter_button.dart';
 import '../widgets/netflix_exercise_carousel.dart';
 
 /// Netflix-style exercises tab with horizontal carousels by category
@@ -20,11 +21,16 @@ class NetflixExercisesTab extends ConsumerStatefulWidget {
 
 class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   String _prevSearchQuery = '';
+  bool _isSearchExpanded = false;
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -37,6 +43,20 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
     );
   }
 
+  void _toggleSearch() {
+    HapticService.light();
+    setState(() {
+      _isSearchExpanded = !_isSearchExpanded;
+      if (_isSearchExpanded) {
+        _searchFocusNode.requestFocus();
+      } else {
+        _searchFocusNode.unfocus();
+        _searchController.clear();
+        ref.read(exerciseSearchProvider.notifier).state = '';
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final exercisesState = ref.watch(exercisesNotifierProvider);
@@ -44,6 +64,9 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final accentColor = ThemeColors.of(context).accent;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     final isSearchMode = searchQuery.isNotEmpty;
 
@@ -60,32 +83,262 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
     // Get active filter count for badge
     final activeFilterCount = getActiveFilterCount(ref);
 
-    return Column(
+    return Stack(
       children: [
-        // Search bar with filter button
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+        // Main content
+        Column(
+          children: [
+            // Content
+            Expanded(
+              child: isSearchMode
+                  ? _buildSearchResults(
+                      exercisesState, searchQuery, cyan, textMuted, isDark)
+                  : _buildCategoryCarousels(exercisesState, cyan, isDark),
+            ),
+          ],
+        ),
+
+        // Floating buttons - search and filter
+        Positioned(
+          left: _isSearchExpanded ? 16 : null,
+          right: 16,
+          bottom: bottomPadding + 16,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            child: _isSearchExpanded
+                ? _buildExpandedSearchBar(context, isDark, elevated, accentColor, textMuted, activeFilterCount)
+                : _buildFloatingButtons(context, isDark, accentColor, activeFilterCount),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFloatingButtons(BuildContext context, bool isDark, Color accentColor, int activeFilterCount) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Filter button
+        GestureDetector(
+          onTap: () => _showFilterSheet(context),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: isDark ? 0.3 : 0.2),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(
+                    color: accentColor.withValues(alpha: 0.4),
+                    width: 1.5,
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Icon(
+                        Icons.tune_rounded,
+                        color: accentColor,
+                        size: 26,
+                      ),
+                    ),
+                    if (activeFilterCount > 0)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          width: 18,
+                          height: 18,
+                          decoration: BoxDecoration(
+                            color: accentColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              '$activeFilterCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Search button
+        GestureDetector(
+          onTap: _toggleSearch,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: isDark ? 0.3 : 0.2),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(
+                    color: accentColor.withValues(alpha: 0.4),
+                    width: 1.5,
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.search_rounded,
+                    color: accentColor,
+                    size: 26,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExpandedSearchBar(
+    BuildContext context,
+    bool isDark,
+    Color elevated,
+    Color accentColor,
+    Color textMuted,
+    int activeFilterCount,
+  ) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          height: 56,
+          decoration: BoxDecoration(
+            color: accentColor.withValues(alpha: isDark ? 0.15 : 0.1),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: accentColor.withValues(alpha: 0.3),
+              width: 1.5,
+            ),
+          ),
           child: Row(
             children: [
-              const Expanded(child: ExerciseSearchBar()),
+              const SizedBox(width: 18),
+              Icon(
+                Icons.search_rounded,
+                color: accentColor,
+                size: 22,
+              ),
               const SizedBox(width: 12),
-              FilterButton(
-                activeFilterCount: activeFilterCount,
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  onChanged: (value) {
+                    ref.read(exerciseSearchProvider.notifier).state = value;
+                  },
+                  cursorColor: accentColor,
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontSize: 16,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Search exercises...',
+                    hintStyle: TextStyle(
+                      color: textMuted.withValues(alpha: 0.7),
+                      fontSize: 16,
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    filled: false,
+                    contentPadding: EdgeInsets.zero,
+                    isDense: true,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Filter button inside search bar
+              GestureDetector(
                 onTap: () => _showFilterSheet(context),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Stack(
+                    children: [
+                      Center(
+                        child: Icon(
+                          Icons.tune_rounded,
+                          color: accentColor,
+                          size: 18,
+                        ),
+                      ),
+                      if (activeFilterCount > 0)
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: Container(
+                            width: 14,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: accentColor,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                '$activeFilterCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Close button
+              GestureDetector(
+                onTap: _toggleSearch,
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  margin: const EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.close_rounded,
+                      color: accentColor,
+                      size: 18,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 8),
-
-        // Content
-        Expanded(
-          child: isSearchMode
-              ? _buildSearchResults(
-                  exercisesState, searchQuery, cyan, textMuted, isDark)
-              : _buildCategoryCarousels(exercisesState, cyan, isDark),
-        ),
-      ],
+      ),
     );
   }
 
@@ -126,6 +379,10 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
             TextButton(
               onPressed: () {
                 ref.read(exerciseSearchProvider.notifier).state = '';
+                _searchController.clear();
+                setState(() {
+                  _isSearchExpanded = false;
+                });
               },
               child: Text(
                 'Clear search',

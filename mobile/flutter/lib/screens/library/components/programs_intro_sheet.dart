@@ -1,259 +1,306 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Introductory sheet shown when users first navigate to Programs tab
-/// Explains what to expect and shows the program is under development
+/// Uses glassmorphism styling with accent colors
 class ProgramsIntroSheet extends StatelessWidget {
   const ProgramsIntroSheet({super.key});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accentColor = ThemeColors.of(context).accent;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final orange = isDark ? AppColors.orange : AppColorsLight.orange;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.7)
+                : Colors.white.withValues(alpha: 0.85),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border(
+              top: BorderSide(
+                color: accentColor.withValues(alpha: 0.3),
+                width: 1.5,
               ),
-              const SizedBox(height: 24),
-
-              // Header with icon
-              Row(
+            ),
+          ),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [cyan.withOpacity(0.2), orange.withOpacity(0.2)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                  // Handle bar
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: accentColor.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(
-                      Icons.fitness_center,
-                      size: 32,
-                      color: cyan,
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Workout Programs',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: orange.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(6),
+                  const SizedBox(height: 20),
+
+                  // Header with icon
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              accentColor.withValues(alpha: 0.25),
+                              accentColor.withValues(alpha: 0.1),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                          child: Text(
-                            'Currently Being Developed',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: orange,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: accentColor.withValues(alpha: 0.3),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.fitness_center_rounded,
+                          size: 32,
+                          color: accentColor,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Workout Programs',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: orange.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: orange.withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: Text(
+                                'In Development',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: orange,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  // What to expect section
+                  Text(
+                    'What You Can Expect',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  _buildExpectationItem(
+                    icon: Icons.calendar_month_rounded,
+                    title: 'Flexible Duration',
+                    description: 'Programs from 1 to 16 weeks',
+                    accentColor: accentColor,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                  ),
+
+                  _buildExpectationItem(
+                    icon: Icons.event_repeat_rounded,
+                    title: 'Custom Frequency',
+                    description: '3-7 workout days per week',
+                    accentColor: accentColor,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                  ),
+
+                  _buildExpectationItem(
+                    icon: Icons.speed_rounded,
+                    title: 'All Levels',
+                    description: 'Beginner to Advanced',
+                    accentColor: accentColor,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                  ),
+
+                  _buildExpectationItem(
+                    icon: Icons.list_alt_rounded,
+                    title: '185+ Programs',
+                    description: 'Strength, cardio, mobility & more',
+                    accentColor: accentColor,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                  ),
+
+                  _buildExpectationItem(
+                    icon: Icons.play_circle_outline_rounded,
+                    title: 'Video Demos',
+                    description: 'Professional exercise tutorials',
+                    accentColor: accentColor,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Program categories preview
+                  Text(
+                    'Categories',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildCategoryChip('Strength', accentColor),
+                      _buildCategoryChip('Weight Loss', accentColor),
+                      _buildCategoryChip('Muscle Building', accentColor),
+                      _buildCategoryChip('Athletic', accentColor),
+                      _buildCategoryChip('Home', accentColor),
+                      _buildCategoryChip('Bodyweight', accentColor),
+                      _buildCategoryChip('HIIT', accentColor),
+                      _buildCategoryChip('Yoga', accentColor),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Current status with glassmorphic style
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: orange.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: orange.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.schedule_rounded, color: orange, size: 18),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Coming Soon',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: orange,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Programs are being finalized with exercise videos and detailed instructions.',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: textSecondary,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // CTA Button with glassmorphic style
+                  SizedBox(
+                    width: double.infinity,
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  accentColor.withValues(alpha: 0.8),
+                                  accentColor.withValues(alpha: 0.6),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: accentColor.withValues(alpha: 0.5),
+                                width: 1,
+                              ),
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'Browse Programs',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 32),
-
-              // What to expect section
-              Text(
-                'What You Can Expect',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 16),
-
-              _buildExpectationItem(
-                icon: Icons.calendar_month,
-                title: 'Flexible Duration',
-                description: 'Choose programs ranging from 1 to 16 weeks based on your goals',
-                color: cyan,
-                isDark: isDark,
-              ),
-
-              _buildExpectationItem(
-                icon: Icons.event_repeat,
-                title: 'Custom Frequency',
-                description: 'Select 3-7 workout days per week to fit your schedule',
-                color: cyan,
-                isDark: isDark,
-              ),
-
-              _buildExpectationItem(
-                icon: Icons.speed,
-                title: 'Intensity Levels',
-                description: 'Programs tailored for Beginner, Intermediate, and Advanced levels',
-                color: cyan,
-                isDark: isDark,
-              ),
-
-              _buildExpectationItem(
-                icon: Icons.list_alt,
-                title: '185+ Unique Programs',
-                description: 'Covering strength, cardio, mobility, sport-specific training, and more',
-                color: cyan,
-                isDark: isDark,
-              ),
-
-              _buildExpectationItem(
-                icon: Icons.video_library,
-                title: 'Exercise Demonstrations',
-                description: 'High-quality videos and detailed instructions for every exercise',
-                color: cyan,
-                isDark: isDark,
-              ),
-
-              _buildExpectationItem(
-                icon: Icons.trending_up,
-                title: 'Progress Tracking',
-                description: 'Track your workouts, weights, and see your improvement over time',
-                color: cyan,
-                isDark: isDark,
-              ),
-
-              const SizedBox(height: 32),
-
-              // Program categories preview
-              Text(
-                'Program Categories',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 16),
-
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _buildCategoryChip('Strength Training', isDark),
-                  _buildCategoryChip('Weight Loss', isDark),
-                  _buildCategoryChip('Muscle Building', isDark),
-                  _buildCategoryChip('Athletic Performance', isDark),
-                  _buildCategoryChip('Home Workouts', isDark),
-                  _buildCategoryChip('Bodyweight Training', isDark),
-                  _buildCategoryChip('Powerlifting', isDark),
-                  _buildCategoryChip('HIIT', isDark),
-                  _buildCategoryChip('Yoga & Mobility', isDark),
-                  _buildCategoryChip('Sport-Specific', isDark),
-                ],
-              ),
-
-              const SizedBox(height: 32),
-
-              // Current status
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: orange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: orange.withOpacity(0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.construction, color: orange, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Work in Progress',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: orange,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'We\'re currently finalizing exercise videos, instructions, and program structures. '
-                      'All programs are marked as "Coming Soon" while we ensure they meet our quality standards.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                        height: 1.5,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '🎯 Our Goal: Deliver 100% complete programs with full video demonstrations',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // CTA Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: cyan,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
                   ),
-                  child: const Text(
-                    'Browse Programs',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
 
-              const SizedBox(height: 8),
-            ],
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -264,21 +311,21 @@ class ProgramsIntroSheet extends StatelessWidget {
     required IconData icon,
     required String title,
     required String description,
-    required Color color,
-    required bool isDark,
+    required Color accentColor,
+    required Color textPrimary,
+    required Color textSecondary,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: accentColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, size: 20, color: color),
+            child: Icon(icon, size: 18, color: accentColor),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -288,18 +335,16 @@ class ProgramsIntroSheet extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                    color: textPrimary,
                   ),
                 ),
-                const SizedBox(height: 4),
                 Text(
                   description,
                   style: TextStyle(
-                    fontSize: 13,
-                    color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                    height: 1.4,
+                    fontSize: 12,
+                    color: textSecondary,
                   ),
                 ),
               ],
@@ -310,26 +355,22 @@ class ProgramsIntroSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryChip(String label, bool isDark) {
+  Widget _buildCategoryChip(String label, Color accentColor) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.cyan.withOpacity(0.1)
-            : AppColorsLight.cyan.withOpacity(0.1),
+        color: accentColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isDark
-              ? AppColors.cyan.withOpacity(0.3)
-              : AppColorsLight.cyan.withOpacity(0.3),
+          color: accentColor.withValues(alpha: 0.3),
         ),
       ),
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: FontWeight.w500,
-          color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+          color: accentColor,
         ),
       ),
     );

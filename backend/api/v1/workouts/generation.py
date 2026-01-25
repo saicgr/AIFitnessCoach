@@ -274,6 +274,9 @@ async def generate_workout(request: GenerateWorkoutRequest):
             if hormonal_ai_context:
                 combined_context = f"{combined_context}\n\nHORMONAL HEALTH CONTEXT:\n{hormonal_ai_context}" if combined_context else f"HORMONAL HEALTH CONTEXT:\n{hormonal_ai_context}"
 
+            # Convert staple exercises from dicts to names
+            staple_names = get_staple_names(staple_exercises) if staple_exercises else None
+
             workout_data = await gemini_service.generate_workout_plan(
                 fitness_level=fitness_level or "intermediate",
                 goals=goals if isinstance(goals, list) else [],
@@ -286,7 +289,7 @@ async def generate_workout(request: GenerateWorkoutRequest):
                 equipment_details=equipment_details if equipment_details else None,
                 avoided_exercises=avoided_exercises if avoided_exercises else None,
                 avoided_muscles=avoided_muscles if (avoided_muscles.get("avoid") or avoided_muscles.get("reduce")) else None,
-                staple_exercises=staple_exercises if staple_exercises else None,
+                staple_exercises=staple_names,
                 progression_philosophy=combined_context if combined_context else None,
                 workout_patterns_context=workout_patterns_context if workout_patterns_context else None,
                 set_type_context=set_type_context if set_type_context else None,
@@ -795,6 +798,9 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             accumulated_text = ""
             chunk_count = 0
 
+            # Convert staple exercises from dicts to names
+            staple_names = get_staple_names(staple_exercises) if staple_exercises else None
+
             async for chunk in gemini_service.generate_workout_plan_streaming(
                 fitness_level=fitness_level or "intermediate",
                 goals=goals if isinstance(goals, list) else [],
@@ -804,7 +810,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 intensity_preference=intensity_preference,
                 avoided_exercises=avoided_exercises if avoided_exercises else None,
                 avoided_muscles=avoided_muscles if (avoided_muscles.get("avoid") or avoided_muscles.get("reduce")) else None,
-                staple_exercises=staple_exercises if staple_exercises else None,
+                staple_exercises=staple_names,
                 progression_philosophy=combined_context if combined_context else None,
             ):
                 accumulated_text += chunk
@@ -2109,6 +2115,7 @@ async def extend_workout(request: ExtendWorkoutRequest):
         avoided_exercises = await get_user_avoided_exercises(request.user_id)
         avoided_muscles = await get_user_avoided_muscles(request.user_id)
         staple_exercises = await get_user_staple_exercises(request.user_id)
+        staple_names = get_staple_names(staple_exercises) if staple_exercises else []
 
         # Determine intensity for new exercises
         workout_difficulty = existing_workout.get("difficulty", "medium")
@@ -2148,7 +2155,7 @@ ORIGINAL WORKOUT CONTEXT:
 ⚠️ CRITICAL CONSTRAINTS:
 - Do NOT repeat any exercises already in the workout: {', '.join(existing_exercise_names)}
 - Do NOT include these avoided exercises: {', '.join(avoided_exercises) if avoided_exercises else 'None'}
-- Staple exercises to consider including: {', '.join(staple_exercises) if staple_exercises else 'None'}
+- Staple exercises to consider including: {', '.join(staple_names) if staple_names else 'None'}
 
 Return ONLY a JSON array of exercises (no wrapper object):
 [

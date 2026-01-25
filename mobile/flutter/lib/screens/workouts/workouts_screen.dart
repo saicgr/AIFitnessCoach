@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -66,105 +68,150 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     return Scaffold(
       backgroundColor: backgroundColor,
       body: wrapWithSwipeDetector(
-        child: CustomScrollView(
-          slivers: [
-          // App Bar with Back, Library and Settings buttons
-          SliverAppBar(
-            floating: true,
-            snap: true,
-            backgroundColor: backgroundColor,
-            surfaceTintColor: Colors.transparent,
-            automaticallyImplyLeading: false,
-            centerTitle: false,
-            leading: IconButton(
-              onPressed: () {
-                HapticService.light();
-                context.go('/home');
-              },
-              icon: Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: accentColor,
-                size: 22,
-              ),
-              tooltip: 'Back to Home',
-            ),
-            title: Text(
-              'Workouts',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: textPrimary,
-              ),
-            ),
-            actions: [
-              // Library button
-              IconButton(
-                onPressed: () {
-                  HapticService.light();
-                  context.push('/library');
-                },
-                icon: Icon(
-                  Icons.fitness_center,
-                  color: accentColor,
-                  size: 24,
+        child: Stack(
+          children: [
+            // Scrollable content
+            CustomScrollView(
+              slivers: [
+                // Top padding for floating icons
+                SliverToBoxAdapter(
+                  child: SizedBox(height: MediaQuery.of(context).padding.top + 56),
                 ),
-                tooltip: 'Exercise Library',
-              ),
-              // Settings button
-              IconButton(
-                onPressed: () {
-                  HapticService.light();
-                  context.push('/settings');
-                },
-                icon: Icon(
-                  Icons.settings_outlined,
-                  color: textSecondary,
-                  size: 24,
-                ),
-                tooltip: 'Settings',
-              ),
-              const SizedBox(width: 8),
-            ],
-          ),
 
-          // Content
-          workoutsState.when(
-            data: (workouts) => _buildContent(
+                // Title - scrolls with content
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                    child: Text(
+                      'Workouts',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Content
+                workoutsState.when(
+                  data: (workouts) => _buildContent(
+                    context,
+                    isDark,
+                    textPrimary,
+                    textSecondary,
+                    accentColor,
+                    workouts,
+                    todayWorkoutState,
+                  ),
+                  loading: () => const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (error, _) => SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Failed to load workouts',
+                            style: TextStyle(color: textPrimary),
+                          ),
+                          const SizedBox(height: 8),
+                          ElevatedButton(
+                            onPressed: () {
+                              ref.invalidate(workoutsProvider);
+                              ref.invalidate(todayWorkoutProvider);
+                            },
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            // Floating header with back, title, and action icons
+            _buildFloatingHeader(
               context,
               isDark,
               textPrimary,
               textSecondary,
               accentColor,
-              workouts,
-              todayWorkoutState,
             ),
-            loading: () => const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
-            ),
-            error: (error, _) => SliverFillRemaining(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 48, color: AppColors.error),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Failed to load workouts',
-                      style: TextStyle(color: textPrimary),
-                    ),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        ref.invalidate(workoutsProvider);
-                        ref.invalidate(todayWorkoutProvider);
-                      },
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Floating header with back button, title, and action icons
+  Widget _buildFloatingHeader(
+    BuildContext context,
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+    Color accentColor,
+  ) {
+    final topPadding = MediaQuery.of(context).padding.top;
+
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        padding: EdgeInsets.only(top: topPadding + 8, left: 16, right: 16, bottom: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Back button - glassmorphic (left side)
+            _GlassmorphicButton(
+              onTap: () {
+                HapticService.light();
+                context.go('/home');
+              },
+              isDark: isDark,
+              child: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: accentColor,
+                size: 20,
               ),
             ),
-          ),
+            // Right side buttons
+            Row(
+              children: [
+                // Library button - glassmorphic
+                _GlassmorphicButton(
+                  onTap: () {
+                    HapticService.light();
+                    context.push('/library');
+                  },
+                  isDark: isDark,
+                  child: Icon(
+                    Icons.fitness_center,
+                    color: accentColor,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Settings button - glassmorphic
+                _GlassmorphicButton(
+                  onTap: () {
+                    HapticService.light();
+                    context.push('/settings');
+                  },
+                  isDark: isDark,
+                  child: Icon(
+                    Icons.settings_outlined,
+                    color: textSecondary,
+                    size: 22,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -807,6 +854,51 @@ class _PreviousSessionCard extends StatelessWidget {
             // Arrow
             Icon(Icons.chevron_right, color: textSecondary, size: 20),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Glassmorphic button with blur effect
+class _GlassmorphicButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final Widget child;
+  final bool isDark;
+  final double size;
+
+  const _GlassmorphicButton({
+    required this.onTap,
+    required this.child,
+    required this.isDark,
+    this.size = 40,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(size / 2),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.black.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(size / 2),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : Colors.black.withValues(alpha: 0.08),
+                width: 1,
+              ),
+            ),
+            child: Center(child: child),
+          ),
         ),
       ),
     );

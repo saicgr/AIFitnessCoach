@@ -219,6 +219,11 @@ class ProfileScreen extends ConsumerWidget {
         SettingsCard(
           items: [
             SettingItem(
+              icon: Icons.bar_chart_rounded,
+              title: 'Stats',
+              onTap: () => context.push('/stats'),
+            ),
+            SettingItem(
               icon: Icons.person_outline,
               title: 'Edit Profile',
               onTap: () => _showEditPersonalInfoSheet(context),

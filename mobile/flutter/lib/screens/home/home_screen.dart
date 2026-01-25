@@ -1763,15 +1763,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 ),
               ),
 
-              // Category Pills - Workout Filtering
-              SliverToBoxAdapter(
-                child: WorkoutCategoryPills(isDark: isDark),
-              ),
-
               // Daily XP Strip - Shows daily goals progress
               const SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.only(top: 8, bottom: 4),
+                  padding: EdgeInsets.only(top: 8, bottom: 8),
                   child: DailyXPStrip(),
                 ),
               ),
@@ -2376,6 +2371,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Top spacing before WORKOUT header
+        const SizedBox(height: 16),
         // Section header with "WORKOUT" and "View Programs" button
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -3330,6 +3327,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     bool isCompact = false,
   }) {
     final padding = isCompact ? 10.0 : 16.0;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: padding, vertical: 8),
@@ -3338,6 +3336,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           // Gym Profile Switcher - takes remaining space
           const Expanded(
             child: GymProfileSwitcher(collapsed: true),
+          ),
+          // Edit Home Screen button
+          GestureDetector(
+            onTap: () {
+              HapticService.selection();
+              context.push('/settings/homescreen');
+            },
+            child: Container(
+              width: 36,
+              height: 36,
+              margin: const EdgeInsets.only(right: 4),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.glassSurface
+                    : AppColorsLight.glassSurface,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Icon(
+                Icons.edit_outlined,
+                size: 18,
+                color: textSecondary,
+              ),
+            ),
           ),
           // XP Level Progress - Compact version in header
           if (!isCompact) const XPLevelBarCompact(),

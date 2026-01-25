@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -44,81 +46,74 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            _buildHeader(context, isDark),
+      body: Stack(
+        children: [
+          // Main content
+          SafeArea(
+            child: Column(
+              children: [
+                // Header (without back button - it's floating now)
+                _buildHeader(context, isDark),
 
-            // Tab Bar
-            _buildTabBar(context, elevated, cyan, textMuted, isDark),
+                // Tab Bar
+                _buildTabBar(context, elevated, cyan, textMuted, isDark),
 
-            const SizedBox(height: 8),
+                const SizedBox(height: 8),
 
-            // Tab Content
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: const [
-                  NetflixExercisesTab(),
-                  ProgramsTab(),
-                  SkillsTab(),
-                ],
+                // Tab Content
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: const [
+                      NetflixExercisesTab(),
+                      ProgramsTab(),
+                      SkillsTab(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Floating back button
+          Positioned(
+            top: topPadding + 16,
+            left: 16,
+            child: _GlassmorphicButton(
+              onTap: () {
+                HapticService.light();
+                context.pop();
+              },
+              isDark: isDark,
+              child: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: isDark ? Colors.white : Colors.black87,
+                size: 18,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context, bool isDark) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(
         children: [
-          // Back button
-          IconButton(
-            onPressed: () {
-              HapticService.light();
-              context.pop();
-            },
-            icon: Icon(
-              Icons.arrow_back_ios,
-              color: textMuted,
-              size: 20,
-            ),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
-          const SizedBox(width: 12),
-          // Title
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Library',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+          // Space for floating back button
+          const SizedBox(width: 44),
+          // Title only - clean and minimal
+          Text(
+            'Library',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Browse exercises and programs',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: isDark
-                            ? AppColors.textSecondary
-                            : AppColorsLight.textSecondary,
-                      ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -143,7 +138,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         controller: _tabController,
         indicatorSize: TabBarIndicatorSize.tab,
         indicator: BoxDecoration(
-          color: cyan.withOpacity(0.2),
+          color: cyan.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(10),
         ),
         labelColor: cyan,
@@ -163,6 +158,50 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           Tab(text: 'Programs'),
           Tab(text: 'Skills'),
         ],
+      ),
+    );
+  }
+}
+
+/// Glassmorphic button with blur effect
+class _GlassmorphicButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final Widget child;
+  final bool isDark;
+
+  const _GlassmorphicButton({
+    required this.onTap,
+    required this.child,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const size = 40.0;
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(size / 2),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.black.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(size / 2),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : Colors.black.withValues(alpha: 0.08),
+                width: 1,
+              ),
+            ),
+            child: Center(child: child),
+          ),
+        ),
       ),
     );
   }
