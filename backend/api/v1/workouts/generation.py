@@ -176,6 +176,7 @@ async def generate_workout(request: GenerateWorkoutRequest):
                 equipment = request.equipment or parse_json_field(user.get("equipment"), [])
                 equipment_details = parse_json_field(user.get("equipment_details"), [])
                 workout_environment = preferences.get("workout_environment")
+                focus_areas = []  # No focus areas when no gym profile
 
             # Use explicit intensity_preference if set, otherwise derive from fitness level
             # This ensures beginners get 'easy' difficulty, not 'medium'
@@ -918,6 +919,9 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 # FOCUS AREA VALIDATION: Ensure exercises match the workout focus
                 # This catches AI hallucinations where exercise names don't match the workout type
                 MIN_EXERCISES_REQUIRED = 3  # Minimum exercises per workout
+
+                # Get focus areas from request body
+                focus_areas = body.focus_areas if hasattr(body, 'focus_areas') and body.focus_areas else []
 
                 if focus_areas and len(focus_areas) > 0 and exercises:
                     primary_focus = focus_areas[0]
