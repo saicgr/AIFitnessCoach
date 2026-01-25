@@ -1081,8 +1081,7 @@ SCORING (1-10): Be strict. Restaurant/fast food: 4-6. Whole foods: 7-8. Score 9-
 - Weight loss: Penalize >500 cal, need fiber for score >7
 - Fried foods: -2 points. High sodium/sugar: -1 point each."""
 
-        # Simplified response format for faster parsing
-        # Micronutrients are optional - only core macros required
+        # Response format with micronutrients for complete nutrient tracking
         # Added count, weight_per_unit_g for countable items, and unit for measurement type
         if user_goals or nutrition_targets:
             response_format = '''{{
@@ -1094,6 +1093,15 @@ SCORING (1-10): Be strict. Restaurant/fast food: 4-6. Whole foods: 7-8. Score 9-
   "carbs_g": 40,
   "fat_g": 15,
   "fiber_g": 5,
+  "sugar_g": 8,
+  "sodium_mg": 500,
+  "cholesterol_mg": 50,
+  "vitamin_a_ug": 150,
+  "vitamin_c_mg": 10,
+  "vitamin_d_iu": 40,
+  "calcium_mg": 100,
+  "iron_mg": 2,
+  "potassium_mg": 300,
   "overall_meal_score": 7,
   "encouragements": ["What's good about this meal for their goals"],
   "warnings": ["Any concerns - skip if none"],
@@ -1110,6 +1118,15 @@ SCORING (1-10): Be strict. Restaurant/fast food: 4-6. Whole foods: 7-8. Score 9-
   "carbs_g": 40,
   "fat_g": 15,
   "fiber_g": 5,
+  "sugar_g": 8,
+  "sodium_mg": 500,
+  "cholesterol_mg": 50,
+  "vitamin_a_ug": 150,
+  "vitamin_c_mg": 10,
+  "vitamin_d_iu": 40,
+  "calcium_mg": 100,
+  "iron_mg": 2,
+  "potassium_mg": 300,
   "encouragements": ["What's good about this meal"],
   "warnings": ["Any concerns - skip if none"],
   "ai_suggestion": "Next time: specific actionable tip",

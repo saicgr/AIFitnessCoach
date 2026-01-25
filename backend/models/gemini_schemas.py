@@ -193,6 +193,17 @@ class FoodAnalysisResponse(BaseModel):
     carbs_g: float = Field(..., description="Total carbs")
     fat_g: float = Field(..., description="Total fat")
     fiber_g: float = Field(default=0, description="Total fiber")
+    # Micronutrients
+    sugar_g: Optional[float] = Field(default=None, description="Total sugar in grams")
+    sodium_mg: Optional[float] = Field(default=None, description="Sodium in mg")
+    cholesterol_mg: Optional[float] = Field(default=None, description="Cholesterol in mg")
+    vitamin_a_ug: Optional[float] = Field(default=None, description="Vitamin A in micrograms")
+    vitamin_c_mg: Optional[float] = Field(default=None, description="Vitamin C in mg")
+    vitamin_d_iu: Optional[float] = Field(default=None, description="Vitamin D in IU")
+    calcium_mg: Optional[float] = Field(default=None, description="Calcium in mg")
+    iron_mg: Optional[float] = Field(default=None, description="Iron in mg")
+    potassium_mg: Optional[float] = Field(default=None, description="Potassium in mg")
+    # Feedback fields
     feedback: Optional[str] = Field(default=None, description="Nutritional feedback")
     overall_meal_score: Optional[int] = Field(default=None, description="Overall score 1-10")
     encouragements: Optional[List[str]] = Field(default=None, description="Positive aspects")
