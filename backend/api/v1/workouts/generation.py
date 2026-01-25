@@ -802,30 +802,40 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             # Convert staple exercises from dicts to names
             staple_names = get_staple_names(staple_exercises) if staple_exercises else None
 
-            async for chunk in gemini_service.generate_workout_plan_streaming(
-                fitness_level=fitness_level or "intermediate",
-                goals=goals if isinstance(goals, list) else [],
-                equipment=equipment if isinstance(equipment, list) else [],
-                duration_minutes=body.duration_minutes or 45,
-                focus_areas=body.focus_areas,
-                intensity_preference=intensity_preference,
-                avoided_exercises=avoided_exercises if avoided_exercises else None,
-                avoided_muscles=avoided_muscles if (avoided_muscles.get("avoid") or avoided_muscles.get("reduce")) else None,
-                staple_exercises=staple_names,
-                progression_philosophy=combined_context if combined_context else None,
-            ):
-                accumulated_text += chunk
-                chunk_count += 1
+            try:
+                async for chunk in gemini_service.generate_workout_plan_streaming(
+                    fitness_level=fitness_level or "intermediate",
+                    goals=goals if isinstance(goals, list) else [],
+                    equipment=equipment if isinstance(equipment, list) else [],
+                    duration_minutes=body.duration_minutes or 45,
+                    focus_areas=body.focus_areas,
+                    intensity_preference=intensity_preference,
+                    avoided_exercises=avoided_exercises if avoided_exercises else None,
+                    avoided_muscles=avoided_muscles if (avoided_muscles.get("avoid") or avoided_muscles.get("reduce")) else None,
+                    staple_exercises=staple_names,
+                    progression_philosophy=combined_context if combined_context else None,
+                ):
+                    accumulated_text += chunk
+                    chunk_count += 1
 
-                # Send progress updates every few chunks
-                if chunk_count % 3 == 0:
-                    elapsed_ms = (datetime.now() - start_time).total_seconds() * 1000
-                    yield f"event: chunk\ndata: {json.dumps({'status': 'generating', 'progress': len(accumulated_text), 'elapsed_ms': elapsed_ms})}\n\n"
+                    # Send progress updates every few chunks
+                    if chunk_count % 3 == 0:
+                        elapsed_ms = (datetime.now() - start_time).total_seconds() * 1000
+                        yield f"event: chunk\ndata: {json.dumps({'status': 'generating', 'progress': len(accumulated_text), 'elapsed_ms': elapsed_ms})}\n\n"
+
+                logger.info(f"✅ [Streaming] Stream completed: {chunk_count} chunks, {len(accumulated_text)} total chars")
+            except Exception as stream_error:
+                logger.error(f"❌ [Streaming] Stream error after {chunk_count} chunks, {len(accumulated_text)} chars: {stream_error}")
+                yield f"event: error\ndata: {json.dumps({'error': f'Streaming failed: {str(stream_error)}'})}\n\n"
+                return
 
             # Parse the complete response
             try:
                 # Extract JSON from potential markdown code blocks
                 content = accumulated_text.strip()
+                logger.info(f"🔍 [Streaming Parse] Raw response length: {len(accumulated_text)} chars")
+                logger.debug(f"🔍 [Streaming Parse] Raw content: {accumulated_text[:500]}...")
+
                 if "```json" in content:
                     content = content.split("```json")[1].split("```")[0].strip()
                 elif "```" in content:
@@ -834,6 +844,10 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                         content = parts[1].strip()
                         if content.startswith(("json", "JSON")):
                             content = content[4:].strip()
+
+                logger.info(f"🔍 [Streaming Parse] Cleaned content length: {len(content)} chars")
+                if len(content) < 100:
+                    logger.error(f"🚨 [Streaming Parse] Content too short, full content: {content}")
 
                 workout_data = json.loads(content)
                 exercises = workout_data.get("exercises", [])
@@ -974,8 +988,10 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 exercises = validate_set_targets_strict(exercises, user_context)
 
             except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse streaming response: {e}")
-                yield f"event: error\ndata: {json.dumps({'error': 'Failed to parse workout data'})}\n\n"
+                logger.error(f"❌ Failed to parse streaming response: {e}")
+                logger.error(f"❌ Raw accumulated text ({len(accumulated_text)} chars): {accumulated_text[:1000]}")
+                logger.error(f"❌ Cleaned content for parsing ({len(content)} chars): {content[:1000]}")
+                yield f"event: error\ndata: {json.dumps({'error': 'Failed to parse workout data', 'raw_length': len(accumulated_text)})}\n\n"
                 return
 
             # Determine scheduled date - use provided date or default to today

@@ -69,6 +69,7 @@ from api.v1 import watch_sync  # WearOS watch sync (batch sync, activity goals)
 from api.v1 import weight_increments  # Equipment-specific weight increment preferences
 from api.v1 import trophies  # Trophy room and achievement system
 from api.v1 import gym_profiles  # Multi-gym profile system (Robinhood-style switcher)
+from api.v1 import xp  # XP events, daily login, streaks, double XP
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -316,3 +317,6 @@ router.include_router(trophies.router, prefix="/progress", tags=["Trophies"])
 
 # Multi-gym profile system (Robinhood-style switcher for different gyms/locations)
 router.include_router(gym_profiles.router, prefix="/gym-profiles", tags=["Gym Profiles"])
+
+# XP events, daily login, streaks, double XP multipliers
+router.include_router(xp.router, tags=["XP & Progression"])

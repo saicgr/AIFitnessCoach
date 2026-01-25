@@ -2746,9 +2746,29 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                 ),
             )
 
+            chunk_count = 0
+            total_chars = 0
             async for chunk in stream:
+                chunk_count += 1
+                # Check for blocked content or safety issues
+                if hasattr(chunk, 'candidates') and chunk.candidates:
+                    candidate = chunk.candidates[0]
+                    if hasattr(candidate, 'finish_reason') and candidate.finish_reason:
+                        finish_reason = str(candidate.finish_reason)
+                        if finish_reason not in ['STOP', 'MAX_TOKENS', 'FinishReason.STOP', 'FinishReason.MAX_TOKENS', '1', '2']:
+                            logger.warning(f"⚠️ [Streaming] Unexpected finish reason: {finish_reason}")
+                    if hasattr(candidate, 'safety_ratings'):
+                        for rating in candidate.safety_ratings:
+                            if hasattr(rating, 'blocked') and rating.blocked:
+                                logger.error(f"🚫 [Streaming] Content blocked by safety filter: {rating}")
+
                 if chunk.text:
+                    total_chars += len(chunk.text)
                     yield chunk.text
+
+            logger.info(f"✅ [Gemini Streaming] Complete: {chunk_count} chunks, {total_chars} chars")
+            if total_chars < 500:
+                logger.warning(f"⚠️ [Gemini Streaming] Response seems short ({total_chars} chars) - may be incomplete")
 
         except Exception as e:
             logger.error(f"Streaming workout generation failed: {e}")
