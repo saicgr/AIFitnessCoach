@@ -331,6 +331,7 @@ class RepPreferencesSection extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -401,6 +402,7 @@ class RepPreferencesSection extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -426,6 +428,7 @@ class RepPreferencesSection extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -496,6 +499,7 @@ class RepPreferencesSection extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),

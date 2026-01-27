@@ -305,6 +305,7 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const CreateExerciseSheet(),
     );

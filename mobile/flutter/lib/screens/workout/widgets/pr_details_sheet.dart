@@ -20,6 +20,7 @@ Future<void> showPRDetailsSheet({
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
+    useRootNavigator: true,
     builder: (context) => PRDetailsSheet(prs: prs),
   );
 }

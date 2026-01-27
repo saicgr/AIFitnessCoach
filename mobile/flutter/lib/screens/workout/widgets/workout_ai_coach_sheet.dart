@@ -36,6 +36,7 @@ Future<void> showWorkoutAICoachSheet({
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.2),
     isScrollControlled: true,
+    useRootNavigator: true,
     builder: (ctx) => WorkoutAICoachSheet(
       currentExercise: currentExercise,
       completedSets: completedSets,

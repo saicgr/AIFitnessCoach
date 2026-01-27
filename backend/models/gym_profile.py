@@ -17,7 +17,7 @@ class GymProfileBase(BaseModel):
     workout_environment: str = Field(default="commercial_gym", max_length=50, description="Environment type: commercial_gym, home_gym, home, hotel, outdoors")
 
     # Workout preferences
-    training_split: Optional[str] = Field(default=None, max_length=50, description="Training split: full_body, upper_lower, push_pull_legs, body_part")
+    training_split: Optional[str] = Field(default=None, max_length=50, description="Training split: full_body, upper_lower, push_pull_legs, body_part, pplul, phul, arnold_split, ai_adaptive")
     workout_days: List[int] = Field(default=[], description="Workout days as indices (0=Mon, 6=Sun)")
     duration_minutes: int = Field(default=45, ge=10, le=180, description="Default workout duration")
     duration_minutes_min: Optional[int] = Field(default=None, ge=10, le=180, description="Minimum duration for range")

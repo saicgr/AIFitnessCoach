@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../models/equipment_item.dart';
 
-/// Sheet for editing available weights for a specific equipment
+/// Sheet for editing available weights for a specific equipment with quantity tracking
 class EditWeightsSheet extends StatefulWidget {
   final EquipmentItem equipment;
   final void Function(EquipmentItem updated) onSave;
@@ -19,7 +19,7 @@ class EditWeightsSheet extends StatefulWidget {
 }
 
 class _EditWeightsSheetState extends State<EditWeightsSheet> {
-  late List<double> _selectedWeights;
+  late Map<double, int> _weightInventory;
   late String _weightUnit;
   final TextEditingController _customWeightController = TextEditingController();
 
@@ -34,8 +34,19 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
   @override
   void initState() {
     super.initState();
-    _selectedWeights = List.from(widget.equipment.weights);
     _weightUnit = widget.equipment.weightUnit;
+
+    // Initialize inventory from equipment
+    if (widget.equipment.weightInventory.isNotEmpty) {
+      _weightInventory = Map.from(widget.equipment.weightInventory);
+    } else if (widget.equipment.weights.isNotEmpty) {
+      // Migrate from legacy weights - assume pairs (quantity 2)
+      _weightInventory = {
+        for (final w in widget.equipment.weights) w: 2,
+      };
+    } else {
+      _weightInventory = {};
+    }
   }
 
   @override
@@ -47,23 +58,110 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
   List<double> get _commonWeights =>
       _weightUnit == 'kg' ? commonWeightsKg : commonWeightsLbs;
 
-  void _toggleWeight(double weight) {
+  /// Cycle quantity: 0 → 1 → 2 → 3 → 4 → 0
+  void _cycleQuantity(double weight) {
     setState(() {
-      if (_selectedWeights.contains(weight)) {
-        _selectedWeights.remove(weight);
+      final currentQty = _weightInventory[weight] ?? 0;
+      if (currentQty == 0) {
+        _weightInventory[weight] = 1;
+      } else if (currentQty < 4) {
+        _weightInventory[weight] = currentQty + 1;
       } else {
-        _selectedWeights.add(weight);
-        _selectedWeights.sort();
+        _weightInventory.remove(weight);
       }
     });
   }
 
+  /// Show dialog to directly set quantity
+  Future<void> _setQuantity(double weight) async {
+    final currentQty = _weightInventory[weight] ?? 0;
+    final controller = TextEditingController(text: currentQty > 0 ? currentQty.toString() : '');
+
+    final result = await showDialog<int>(
+      context: context,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
+        return AlertDialog(
+          backgroundColor: isDark ? AppColors.elevated : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            'Set Quantity',
+            style: TextStyle(color: textPrimary),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${_formatWeight(weight)} $_weightUnit',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                style: TextStyle(color: textPrimary),
+                decoration: InputDecoration(
+                  labelText: 'Quantity',
+                  labelStyle: TextStyle(color: textPrimary.withValues(alpha: 0.7)),
+                  hintText: 'Enter 0 to remove',
+                  hintStyle: TextStyle(color: textPrimary.withValues(alpha: 0.5)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: textPrimary.withValues(alpha: 0.7)),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final qty = int.tryParse(controller.text) ?? 0;
+                Navigator.pop(context, qty);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                foregroundColor: isDark ? Colors.black : Colors.white,
+              ),
+              child: const Text('Set'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != null) {
+      setState(() {
+        if (result == 0) {
+          _weightInventory.remove(weight);
+        } else {
+          _weightInventory[weight] = result;
+        }
+      });
+    }
+  }
+
   void _addCustomWeight() {
     final value = double.tryParse(_customWeightController.text.trim());
-    if (value != null && value > 0 && !_selectedWeights.contains(value)) {
+    if (value != null && value > 0) {
       setState(() {
-        _selectedWeights.add(value);
-        _selectedWeights.sort();
+        // Add or increment
+        _weightInventory[value] = (_weightInventory[value] ?? 0) + 1;
       });
       _customWeightController.clear();
     }
@@ -71,24 +169,22 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
 
   void _removeWeight(double weight) {
     setState(() {
-      _selectedWeights.remove(weight);
+      _weightInventory.remove(weight);
     });
   }
 
   void _selectAll() {
     setState(() {
       for (final w in _commonWeights) {
-        if (!_selectedWeights.contains(w)) {
-          _selectedWeights.add(w);
-        }
+        // Add with quantity 2 (pair) if not already present
+        _weightInventory[w] = _weightInventory[w] ?? 2;
       }
-      _selectedWeights.sort();
     });
   }
 
   void _clearAll() {
     setState(() {
-      _selectedWeights.clear();
+      _weightInventory.clear();
     });
   }
 
@@ -96,12 +192,16 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
     return w == w.roundToDouble() ? w.toInt().toString() : w.toString();
   }
 
+  int get _totalWeights => _weightInventory.values.fold(0, (sum, qty) => sum + qty);
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final bgColor = isDark ? AppColors.elevated : AppColorsLight.surface;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.accent;
+    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
     return Container(
       constraints: BoxConstraints(
@@ -141,7 +241,7 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                          color: textPrimary,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -173,14 +273,50 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
             ),
           ),
 
+          // Quantity instructions
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: accentColor.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 18,
+                    color: accentColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Tap to cycle quantity (0→1→2→3→4). Long press for custom amount.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
           // Selected weights display
-          if (_selectedWeights.isNotEmpty) ...[
+          if (_weightInventory.isNotEmpty) ...[
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
                   Text(
-                    'Selected:',
+                    'Selected: $_totalWeights items',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
@@ -206,30 +342,70 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
               ),
             ),
             Container(
-              height: 44,
+              height: 48,
               margin: const EdgeInsets.symmetric(horizontal: 16),
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: _selectedWeights.length,
+                itemCount: _weightInventory.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
                 itemBuilder: (context, index) {
-                  final weight = _selectedWeights[index];
-                  return Chip(
-                    label: Text(
-                      '${_formatWeight(weight)} $_weightUnit',
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  final weight = _weightInventory.keys.toList()..sort();
+                  final w = weight[index];
+                  final qty = _weightInventory[w]!;
+
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: accentColor,
+                        width: 1.5,
+                      ),
                     ),
-                    deleteIcon: const Icon(Icons.close, size: 16),
-                    onDeleted: () => _removeWeight(weight),
-                    backgroundColor: accentColor.withOpacity(0.15),
-                    side: BorderSide.none,
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: accentColor,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '$qty',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.black : Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${_formatWeight(w)} $_weightUnit',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: accentColor,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        GestureDetector(
+                          onTap: () => _removeWeight(w),
+                          child: Icon(
+                            Icons.close,
+                            size: 16,
+                            color: accentColor,
+                          ),
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
           ],
 
           const Divider(height: 1),
@@ -240,7 +416,7 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
             child: Row(
               children: [
                 Text(
-                  'Tap to add/remove',
+                  'Tap to cycle • Long press to set',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -255,7 +431,7 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
                     minimumSize: const Size(0, 32),
                   ),
                   child: Text(
-                    'Select All',
+                    'Select All Pairs',
                     style: TextStyle(
                       fontSize: 12,
                       color: accentColor,
@@ -274,31 +450,57 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
                 spacing: 8,
                 runSpacing: 8,
                 children: _commonWeights.map((weight) {
-                  final isSelected = _selectedWeights.contains(weight);
+                  final qty = _weightInventory[weight] ?? 0;
+                  final isSelected = qty > 0;
+
                   return GestureDetector(
-                    onTap: () => _toggleWeight(weight),
+                    onTap: () => _cycleQuantity(weight),
+                    onLongPress: () => _setQuantity(weight),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? accentColor.withOpacity(0.2)
+                            ? accentColor.withValues(alpha: 0.2)
                             : bgColor,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: isSelected ? accentColor : Colors.transparent,
-                          width: 1.5,
+                          color: isSelected ? accentColor : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
+                          width: isSelected ? 1.5 : 1,
                         ),
                       ),
-                      child: Text(
-                        '${_formatWeight(weight)}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                          color: isSelected
-                              ? accentColor
-                              : (isDark ? Colors.white70 : AppColorsLight.textSecondary),
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isSelected) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: accentColor,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '$qty',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark ? Colors.black : Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                          Text(
+                            '${_formatWeight(weight)}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                              color: isSelected
+                                  ? accentColor
+                                  : textSecondary,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -319,6 +521,7 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
                     ],
+                    style: TextStyle(color: textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Custom weight...',
                       hintStyle: TextStyle(color: textMuted, fontSize: 14),
@@ -340,7 +543,7 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
                   icon: const Icon(Icons.add),
                   style: IconButton.styleFrom(
                     backgroundColor: accentColor,
-                    foregroundColor: Colors.white,
+                    foregroundColor: isDark ? Colors.black : Colors.white,
                   ),
                 ),
               ],
@@ -361,16 +564,16 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
                 onPressed: _save,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: accentColor,
-                  foregroundColor: Colors.white,
+                  foregroundColor: isDark ? Colors.black : Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: Text(
-                  _selectedWeights.isEmpty
+                  _weightInventory.isEmpty
                       ? 'Save (No Weights)'
-                      : 'Save ${_selectedWeights.length} Weights',
+                      : 'Save $_totalWeights Weights',
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -383,7 +586,7 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
 
   Widget _buildUnitButton(String unit, bool isDark) {
     final isSelected = _weightUnit == unit;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.accent;
+    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
     return GestureDetector(
       onTap: () => setState(() => _weightUnit = unit),
@@ -400,7 +603,7 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
             fontSize: 13,
             fontWeight: FontWeight.w500,
             color: isSelected
-                ? Colors.white
+                ? (isDark ? Colors.black : Colors.white)
                 : (isDark ? Colors.white70 : AppColorsLight.textSecondary),
           ),
         ),
@@ -410,7 +613,7 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
 
   void _save() {
     final updated = widget.equipment.copyWith(
-      weights: _selectedWeights,
+      weightInventory: _weightInventory,
       weightUnit: _weightUnit,
     );
     widget.onSave(updated);

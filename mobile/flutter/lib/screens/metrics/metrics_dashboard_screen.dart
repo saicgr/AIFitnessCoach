@@ -544,6 +544,7 @@ class _MetricsDashboardScreenState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _AddMetricSheet(
         onSubmit: (metricType, value) async {

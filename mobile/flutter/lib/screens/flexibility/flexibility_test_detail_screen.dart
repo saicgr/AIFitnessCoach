@@ -544,6 +544,7 @@ class _FlexibilityTestDetailScreenState extends ConsumerState<FlexibilityTestDet
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (context) => RecordAssessmentSheet(
         test: widget.test,
         userId: widget.userId,

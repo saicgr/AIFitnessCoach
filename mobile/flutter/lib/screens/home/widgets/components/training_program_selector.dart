@@ -125,6 +125,7 @@ class TrainingProgramSelector extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _CustomProgramSheet(
         initialDescription: customProgramDescription,

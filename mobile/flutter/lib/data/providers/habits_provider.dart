@@ -84,10 +84,14 @@ List<bool> _getWorkoutDays(AsyncValue<List<Workout>> workoutsAsync, DateTime tod
 List<bool> _getFoodLogDays(NutritionState nutritionState, DateTime today) {
   final List<bool> days = List.filled(30, false);
 
+  // Debug: Log nutrition state
+  debugPrint('🍎 _getFoodLogDays: todaySummary=${nutritionState.todaySummary != null}, recentLogs=${nutritionState.recentLogs.length}');
+
   // Check if today has any food logged (calories > 0)
   if (nutritionState.todaySummary != null) {
     final hasFood = nutritionState.todaySummary!.totalCalories > 0;
     days[29] = hasFood; // Today is the last index
+    debugPrint('🍎 Today food: $hasFood (calories: ${nutritionState.todaySummary!.totalCalories})');
   }
 
   // Check recent logs for historical data
@@ -98,11 +102,15 @@ List<bool> _getFoodLogDays(NutritionState nutritionState, DateTime today) {
 
       if (daysDiff >= 0 && daysDiff < 30) {
         days[29 - daysDiff] = true;
+        debugPrint('🍎 Found food log at daysDiff=$daysDiff');
       }
     } catch (_) {
       // Invalid date, skip
     }
   }
+
+  final completedDays = days.where((d) => d).length;
+  debugPrint('🍎 Food log days: $completedDays/30');
 
   return days;
 }

@@ -60,6 +60,7 @@ class ExerciseCard extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => ExerciseDetailSheet(exercise: exercise),
     );
@@ -70,6 +71,7 @@ class ExerciseCard extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (context) => _AddToWorkoutSheet(
         exerciseName: exercise.name,
       ),

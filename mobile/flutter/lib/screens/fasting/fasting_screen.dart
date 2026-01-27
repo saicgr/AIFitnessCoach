@@ -538,6 +538,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => StartFastSheet(
         userId: userId,
@@ -575,6 +576,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => ProtocolSelectorSheet(
         currentProtocol: _selectedProtocol,
@@ -758,6 +760,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
@@ -807,6 +810,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => FastingSettingsSheet(preferences: preferences),
     );

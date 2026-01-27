@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -34,9 +35,9 @@ class QuickActionsGrid extends ConsumerWidget {
         : Colors.black.withValues(alpha: 0.03);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(20),
@@ -46,7 +47,7 @@ class QuickActionsGrid extends ConsumerWidget {
           children: [
             // Hero card (Track Your Progress / Active Fasting)
             _HeroActionCard(),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             // Row 1: Photo, Food, Water, Weight
             Row(
               children: [
@@ -62,7 +63,7 @@ class QuickActionsGrid extends ConsumerWidget {
                     isDark: isDark,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 Expanded(
                   child: _GridActionItem(
                     icon: Icons.restaurant_outlined,
@@ -75,11 +76,11 @@ class QuickActionsGrid extends ConsumerWidget {
                     isDark: isDark,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 Expanded(
                   child: _WaterGridActionItem(isDark: isDark),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 Expanded(
                   child: _GridActionItem(
                     icon: Icons.monitor_weight_outlined,
@@ -94,7 +95,7 @@ class QuickActionsGrid extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             // Row 2: Measure, History, Workout, Fast
             Row(
               children: [
@@ -110,7 +111,7 @@ class QuickActionsGrid extends ConsumerWidget {
                     isDark: isDark,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 Expanded(
                   child: _GridActionItem(
                     icon: Icons.history_outlined,
@@ -123,7 +124,7 @@ class QuickActionsGrid extends ConsumerWidget {
                     isDark: isDark,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 Expanded(
                   child: _GridActionItem(
                     icon: Icons.fitness_center_outlined,
@@ -136,7 +137,7 @@ class QuickActionsGrid extends ConsumerWidget {
                     isDark: isDark,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 Expanded(
                   child: _FastGridActionItem(isDark: isDark),
                 ),
@@ -195,30 +196,30 @@ class _PhotoHeroCard extends StatelessWidget {
           HapticService.light();
           context.push('/progress');
         },
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(color: borderColor, width: 1),
           ),
           child: Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: iconBg,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.camera_alt,
-                  size: 24,
+                  size: 22,
                   color: textColor,
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,7 +227,7 @@ class _PhotoHeroCard extends StatelessWidget {
                     Text(
                       'Track Your Progress',
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: textColor,
                       ),
@@ -235,7 +236,7 @@ class _PhotoHeroCard extends StatelessWidget {
                     Text(
                       'Take a progress photo to see your transformation',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         color: textMuted,
                       ),
                     ),
@@ -512,12 +513,12 @@ class _GridActionItem extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: borderColor, width: 1),
           ),
           child: Column(
@@ -525,14 +526,14 @@ class _GridActionItem extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                size: 24,
+                size: 22,
                 color: iconColor,
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: FontWeight.w600,
                   color: textColor,
                 ),
@@ -643,7 +644,6 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
   void _showWaterSizeOptions() {
     HapticService.medium();
     final isDark = widget.isDark;
-    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
@@ -652,81 +652,98 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 16),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
+      useRootNavigator: true,
+      barrierColor: Colors.black.withValues(alpha: 0.2),
+      builder: (context) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.4)
+                  : Colors.white.withValues(alpha: 0.6),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              border: Border(
+                top: BorderSide(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : Colors.black.withValues(alpha: 0.1),
+                  width: 0.5,
                 ),
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Log Water',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Select amount to log',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: textMuted,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: _waterSizes.map((size) {
-                    return Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: _WaterSizeOption(
-                          ml: size.ml,
-                          label: size.label,
-                          icon: size.icon,
-                          isDark: isDark,
-                          onTap: () {
-                            Navigator.pop(context);
-                            _quickAddWater(size.ml);
-                          },
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  context.push('/hydration');
-                },
-                child: Text(
-                  'Open Hydration Tracker',
-                  style: TextStyle(
-                    color: _QuickActionColors.water,
-                    fontWeight: FontWeight.w500,
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: textMuted,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Log Water',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Select amount to log',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: _waterSizes.map((size) {
+                        return Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: _WaterSizeOption(
+                              ml: size.ml,
+                              label: size.label,
+                              icon: size.icon,
+                              isDark: isDark,
+                              onTap: () {
+                                Navigator.pop(context);
+                                _quickAddWater(size.ml);
+                              },
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      context.push('/hydration');
+                    },
+                    child: Text(
+                      'Open Hydration Tracker',
+                      style: TextStyle(
+                        color: _QuickActionColors.water,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
               ),
-              const SizedBox(height: 16),
-            ],
+            ),
           ),
         ),
       ),
@@ -750,12 +767,12 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
       child: InkWell(
         onTap: () => _quickAddWater(_defaultWaterMl),
         onLongPress: _showWaterSizeOptions,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: borderColor, width: 1),
           ),
           child: Column(
@@ -763,8 +780,8 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
             children: [
               _isLoading
                   ? SizedBox(
-                      width: 24,
-                      height: 24,
+                      width: 22,
+                      height: 22,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         color: _QuickActionColors.water,
@@ -772,14 +789,14 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
                     )
                   : Icon(
                       Icons.water_drop_outlined,
-                      size: 24,
+                      size: 22,
                       color: _QuickActionColors.water,
                     ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 'Water',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: FontWeight.w600,
                   color: textColor,
                 ),
@@ -829,12 +846,12 @@ class _FastGridActionItem extends ConsumerWidget {
           HapticService.light();
           context.push('/fasting');
         },
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: borderColor, width: 1),
           ),
           child: Column(
@@ -845,7 +862,7 @@ class _FastGridActionItem extends ConsumerWidget {
                 children: [
                   Icon(
                     hasFast ? Icons.timer : Icons.timer_outlined,
-                    size: 24,
+                    size: 22,
                     color: _QuickActionColors.fast,
                   ),
                   if (hasFast)
@@ -867,11 +884,11 @@ class _FastGridActionItem extends ConsumerWidget {
                     ),
                 ],
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: FontWeight.w600,
                   color: textColor,
                 ),

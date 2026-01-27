@@ -48,6 +48,12 @@ class PreferencesSection extends StatelessWidget {
               subtitle: 'Customize +/- step per equipment',
               isWeightIncrementsSelector: true,
             ),
+            SettingItemData(
+              icon: Icons.bolt_outlined,
+              title: 'Show Daily Goals',
+              subtitle: 'XP progress strip on home screen',
+              isDailyXPStripToggle: true,
+            ),
           ],
         ),
       ],

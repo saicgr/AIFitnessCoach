@@ -124,6 +124,7 @@ class _ProgramsTabState extends ConsumerState<ProgramsTab> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       isDismissible: true,
       builder: (context) => const ProgramsIntroSheet(),
@@ -158,6 +159,7 @@ class _ProgramsTabState extends ConsumerState<ProgramsTab> {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final accentColor = ref.colors(context).accent;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
     return Stack(
       children: [
@@ -169,7 +171,7 @@ class _ProgramsTabState extends ConsumerState<ProgramsTab> {
               margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: orange.withOpacity(0.1),
+                color: orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -387,46 +389,85 @@ class _ProgramsTabState extends ConsumerState<ProgramsTab> {
           ],
         ),
 
-        // Floating search button / expanded search bar
+        // Bottom fade gradient
         Positioned(
-          left: _isSearchExpanded ? 16 : null,
-          right: 16,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: IgnorePointer(
+            child: Container(
+              height: bottomPadding + 100,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    backgroundColor.withValues(alpha: 0),
+                    backgroundColor.withValues(alpha: 0.8),
+                    backgroundColor,
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // Floating pill bar
+        Positioned(
+          left: 0,
+          right: 0,
           bottom: bottomPadding + 16,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOutCubic,
+          child: Center(
             child: _isSearchExpanded
                 ? _buildExpandedSearchBar(context, isDark, elevated, accentColor, textMuted)
-                : _buildSearchFAB(context, isDark, accentColor),
+                : _buildFloatingPillBar(context, isDark, accentColor),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSearchFAB(BuildContext context, bool isDark, Color accentColor) {
-    return GestureDetector(
-      onTap: _toggleSearch,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: accentColor.withOpacity(isDark ? 0.3 : 0.2),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: accentColor.withOpacity(0.4),
-                width: 1.5,
+  Widget _buildFloatingPillBar(BuildContext context, bool isDark, Color accentColor) {
+    final iconColor = isDark ? Colors.white70 : Colors.black54;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(32),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.grey.shade900.withValues(alpha: 0.85)
+                : Colors.grey.shade200.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(32),
+          ),
+          child: GestureDetector(
+            onTap: _toggleSearch,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
               ),
-            ),
-            child: Center(
-              child: Icon(
-                Icons.search_rounded,
-                color: accentColor,
-                size: 26,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.search_rounded,
+                    color: iconColor,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Search',
+                    style: TextStyle(
+                      color: iconColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -442,78 +483,79 @@ class _ProgramsTabState extends ConsumerState<ProgramsTab> {
     Color accentColor,
     Color textMuted,
   ) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          height: 56,
-          decoration: BoxDecoration(
-            color: accentColor.withOpacity(isDark ? 0.15 : 0.1),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(
-              color: accentColor.withOpacity(0.3),
-              width: 1.5,
+    return SizedBox(
+      width: MediaQuery.of(context).size.width - 32,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+          child: Container(
+            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.grey.shade900.withValues(alpha: 0.85)
+                  : Colors.grey.shade200.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(32),
             ),
-          ),
-          child: Row(
-            children: [
-              const SizedBox(width: 18),
-              Icon(
-                Icons.search_rounded,
-                color: accentColor,
-                size: 22,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _searchController,
-                  focusNode: _searchFocusNode,
-                  onChanged: (value) {
-                    ref.read(programSearchProvider.notifier).state = value;
-                  },
-                  cursorColor: accentColor,
-                  style: TextStyle(
-                    color: isDark ? Colors.white : Colors.black87,
-                    fontSize: 16,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Search programs...',
-                    hintStyle: TextStyle(
-                      color: textMuted.withOpacity(0.7),
+            child: Row(
+              children: [
+                const SizedBox(width: 16),
+                Icon(
+                  Icons.search_rounded,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                  size: 22,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    onChanged: (value) {
+                      ref.read(programSearchProvider.notifier).state = value;
+                    },
+                    cursorColor: accentColor,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
                       fontSize: 16,
                     ),
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    filled: false,
-                    contentPadding: EdgeInsets.zero,
-                    isDense: true,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Close button
-              GestureDetector(
-                onTap: _toggleSearch,
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  margin: const EdgeInsets.only(right: 10),
-                  decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.25),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.close_rounded,
-                      color: accentColor,
-                      size: 18,
+                    decoration: InputDecoration(
+                      hintText: 'Search programs...',
+                      hintStyle: TextStyle(
+                        color: textMuted.withValues(alpha: 0.7),
+                        fontSize: 16,
+                      ),
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      filled: false,
+                      contentPadding: EdgeInsets.zero,
+                      isDense: true,
                     ),
                   ),
                 ),
-              ),
-            ],
+                // Close button
+                GestureDetector(
+                  onTap: _toggleSearch,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    margin: const EdgeInsets.only(right: 2),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.close_rounded,
+                        color: accentColor,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -11,6 +11,7 @@ Future<void> showWeightIncrementsSheet(BuildContext context) async {
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    useRootNavigator: true,
     backgroundColor: Colors.transparent,
     enableDrag: true,
     builder: (context) => DraggableScrollableSheet(

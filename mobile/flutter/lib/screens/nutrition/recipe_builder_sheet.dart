@@ -111,6 +111,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
     final result = await showModalBottomSheet<_IngredientEntry>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _AddIngredientSheet(
         userId: widget.userId,
@@ -204,6 +205,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
     final result = await showModalBottomSheet<CookingConversionResult>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => CookingConverterSheet(
         isDark: widget.isDark,
@@ -230,6 +232,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
     final result = await showModalBottomSheet<BatchPortioningResult>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => BatchPortioningSheet(
         isDark: widget.isDark,

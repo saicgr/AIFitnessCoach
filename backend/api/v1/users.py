@@ -549,6 +549,7 @@ def merge_extended_fields_into_preferences(
     progression_pace: Optional[str] = None,
     workout_type_preference: Optional[str] = None,
     workout_environment: Optional[str] = None,
+    gym_name: Optional[str] = None,
     # Enhanced pre-auth quiz fields
     sleep_quality: Optional[str] = None,
     obstacles: Optional[List[str]] = None,
@@ -592,6 +593,8 @@ def merge_extended_fields_into_preferences(
         prefs["workout_type_preference"] = workout_type_preference
     if workout_environment is not None:
         prefs["workout_environment"] = workout_environment
+    if gym_name is not None:
+        prefs["gym_name"] = gym_name
     # Enhanced pre-auth quiz fields
     if sleep_quality is not None:
         prefs["sleep_quality"] = sleep_quality
@@ -650,6 +653,8 @@ async def create_user(request: Request, user: UserCreate):
             user.preferred_time,
             user.progression_pace,
             user.workout_type_preference,
+            user.workout_environment,
+            user.gym_name,
         )
         logger.debug(f"User preferences: {final_preferences}")
 
@@ -983,6 +988,7 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest):
             request.progression_pace,
             request.workout_type,
             request.workout_environment,  # Where they train: commercial_gym, home_gym, home, outdoors
+            None,  # gym_name - not used in this endpoint (quick updates)
             # Enhanced pre-auth quiz fields
             request.sleep_quality,
             request.obstacles,
@@ -1085,7 +1091,7 @@ async def update_user(user_id: str, user: UserUpdate):
             user.days_per_week, user.workout_duration, user.training_split,
             user.intensity_preference, user.preferred_time,
             user.progression_pace, user.workout_type_preference,
-            user.workout_environment
+            user.workout_environment, user.gym_name
         ])
 
         if user.preferences is not None or has_extended_fields:
@@ -1100,6 +1106,7 @@ async def update_user(user_id: str, user: UserUpdate):
                 user.progression_pace,
                 user.workout_type_preference,
                 user.workout_environment,
+                user.gym_name,
             )
             update_data["preferences"] = final_preferences
             logger.info(f"🔍 [DEBUG] Final preferences to save: {final_preferences}")
@@ -1176,6 +1183,29 @@ async def update_user(user_id: str, user: UserUpdate):
         if update_data:
             updated = db.update_user(user_id, update_data)
             logger.debug(f"Updated {len(update_data)} fields for user {user_id}")
+
+            # NEW: Create gym profile(s) when onboarding is completed
+            if user.onboarding_completed and update_data.get("onboarding_completed"):
+                try:
+                    prefs = update_data.get("preferences", {})
+                    logger.info(f"🏋️ [GymProfile] Onboarding completed - preferences: {prefs}")
+                    logger.info(f"🏋️ [GymProfile] Equipment: {update_data.get('equipment', [])}")
+                    logger.info(f"🏋️ [GymProfile] Equipment details: {len(update_data.get('equipment_details', []))} items")
+
+                    await create_gym_profiles_from_onboarding(
+                        user_id=user_id,
+                        gym_name=prefs.get("gym_name"),
+                        workout_environment=prefs.get("workout_environment"),
+                        equipment=update_data.get("equipment", []),
+                        equipment_details=update_data.get("equipment_details", []),
+                        preferences=prefs,
+                    )
+                    logger.info(f"🏋️ [GymProfile] ✅ Created gym profile(s) for user {user_id} during onboarding")
+                except Exception as gym_error:
+                    logger.error(f"⚠️ [GymProfile] Failed to create gym profiles during onboarding: {gym_error}")
+                    import traceback
+                    logger.error(f"⚠️ [GymProfile] Traceback: {traceback.format_exc()}")
+                    # Don't fail onboarding if gym profile creation fails
 
             # If onboarding was just completed, index preferences to ChromaDB for AI
             if user.onboarding_completed and update_data.get("onboarding_completed"):
@@ -2271,3 +2301,136 @@ async def sync_fasting_preferences(user_id: str, request: SyncFastingRequest):
     except Exception as e:
         logger.error(f"Failed to sync fasting preferences: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# =============================================================================
+# GYM PROFILE CREATION FROM ONBOARDING
+# =============================================================================
+
+
+async def create_gym_profiles_from_onboarding(
+    user_id: str,
+    gym_name: Optional[str],
+    workout_environment: Optional[str],
+    equipment: list,
+    equipment_details: list,
+    preferences: dict,
+):
+    """
+    Create gym profile(s) from onboarding data.
+
+    Handles three scenarios:
+    1. Single profile (home_gym, commercial_gym, other)
+    2. Both home and gym - creates 2 profiles
+    3. Fallback to "My Gym" if no data provided
+
+    Args:
+        user_id: User ID
+        gym_name: User-provided gym name (optional)
+        workout_environment: 'home_gym', 'commercial_gym', 'both', 'other'
+        equipment: List of equipment strings
+        equipment_details: Detailed equipment with quantities/weights
+        preferences: Full preferences dict with training settings
+    """
+    from datetime import datetime
+    supabase = get_supabase()
+
+    # Default values
+    gym_name = gym_name or "My Gym"
+    workout_environment = workout_environment or "commercial_gym"
+
+    logger.info(f"🏋️ [GymProfile] Creating gym profile(s) for user {user_id}")
+    logger.info(f"🏋️ [GymProfile] Environment: {workout_environment}, Name: {gym_name}")
+
+    # Helper function to create a single profile
+    def create_profile_data(name: str, environment: str, is_active: bool, display_order: int = 0) -> dict:
+        now = datetime.utcnow().isoformat()
+        icon = "fitness_center" if environment == "commercial_gym" else "home"
+
+        return {
+            "user_id": user_id,
+            "name": name,
+            "icon": icon,
+            "color": "#00BCD4",
+            "equipment": equipment,
+            "equipment_details": equipment_details,
+            "workout_environment": environment,
+            "training_split": preferences.get("training_split"),
+            "workout_days": preferences.get("workout_days", []),
+            "duration_minutes": preferences.get("workout_duration", 45),
+            "goals": [],
+            "focus_areas": [],
+            "display_order": display_order,
+            "is_active": is_active,
+            "created_at": now,
+            "updated_at": now,
+        }
+
+    try:
+        profiles_created = []
+
+        if workout_environment == "both":
+            # Create two profiles: Home (active) and Commercial Gym (inactive)
+            logger.info("🏋️ [GymProfile] Creating 2 profiles for 'both' scenario")
+
+            # Home profile (active by default)
+            home_profile = create_profile_data(
+                name="Home Gym",
+                environment="home_gym",
+                is_active=True,
+                display_order=0
+            )
+            result_home = supabase.client.table("gym_profiles").insert(home_profile).execute()
+            if result_home.data:
+                profiles_created.append(result_home.data[0])
+                logger.info(f"✅ [GymProfile] Created Home Gym profile (active)")
+
+            # Commercial gym profile (inactive)
+            gym_profile_name = gym_name if "Gym" in gym_name else f"{gym_name} Gym"
+            commercial_profile = create_profile_data(
+                name=gym_profile_name,
+                environment="commercial_gym",
+                is_active=False,
+                display_order=1
+            )
+            result_commercial = supabase.client.table("gym_profiles").insert(commercial_profile).execute()
+            if result_commercial.data:
+                profiles_created.append(result_commercial.data[0])
+                logger.info(f"✅ [GymProfile] Created {gym_profile_name} profile (inactive)")
+
+            # Set Home Gym as active profile
+            if result_home.data:
+                active_profile_id = result_home.data[0]["id"]
+                supabase.client.table("users") \
+                    .update({"active_gym_profile_id": active_profile_id}) \
+                    .eq("id", user_id) \
+                    .execute()
+
+        else:
+            # Single profile
+            logger.info("🏋️ [GymProfile] Creating single profile")
+            profile_data = create_profile_data(
+                name=gym_name,
+                environment=workout_environment,
+                is_active=True,
+                display_order=0
+            )
+            result = supabase.client.table("gym_profiles").insert(profile_data).execute()
+
+            if result.data:
+                profiles_created.append(result.data[0])
+                profile_id = result.data[0]["id"]
+                logger.info(f"✅ [GymProfile] Created {gym_name} profile (active)")
+
+                # Set as active profile
+                supabase.client.table("users") \
+                    .update({"active_gym_profile_id": profile_id}) \
+                    .eq("id", user_id) \
+                    .execute()
+
+        logger.info(f"🏋️ [GymProfile] Successfully created {len(profiles_created)} profile(s)")
+        return profiles_created
+
+    except Exception as e:
+        logger.error(f"❌ [GymProfile] Failed to create gym profiles: {e}")
+        raise

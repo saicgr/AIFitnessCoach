@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../widgets/main_shell.dart';
 import 'sections/sections.dart';
 import 'widgets/widgets.dart';
 
@@ -651,6 +652,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               color: AppColors.purple,
               onTap: () => context.push('/ai-settings'),
             ),
+            const SizedBox(height: 12),
+            _buildEdgeHandleToggle(),
           ],
         );
       case 'appearance':
@@ -803,6 +806,63 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Icon(Icons.chevron_right, color: textMuted, size: 18),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Build the edge handle toggle for AI Coach access
+  Widget _buildEdgeHandleToggle() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final isEnabled = ref.watch(edgeHandleEnabledProvider);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.swipe_left,
+            color: AppColors.info,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Edge AI Coach Handle',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: textPrimary,
+                  ),
+                ),
+                Text(
+                  'Swipe from edge to open AI Coach',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch.adaptive(
+            value: isEnabled,
+            onChanged: (value) {
+              HapticFeedback.lightImpact();
+              ref.read(edgeHandleEnabledProvider.notifier).setEnabled(value);
+            },
+            activeColor: AppColors.info,
+          ),
+        ],
       ),
     );
   }

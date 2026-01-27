@@ -6,12 +6,19 @@ import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/sheet_header.dart';
 import 'add_gym_profile_sheet.dart';
 import 'edit_gym_profile_sheet.dart';
 
 /// Bottom sheet for managing gym profiles (reorder, edit, delete)
 class ManageGymProfilesSheet extends ConsumerStatefulWidget {
-  const ManageGymProfilesSheet({super.key});
+  /// Optional callback for back button - if null, no back button shown
+  final VoidCallback? onBack;
+
+  const ManageGymProfilesSheet({
+    super.key,
+    this.onBack,
+  });
 
   @override
   ConsumerState<ManageGymProfilesSheet> createState() =>
@@ -72,8 +79,12 @@ class _ManageGymProfilesSheetState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => EditGymProfileSheet(profile: profile),
+      builder: (context) => EditGymProfileSheet(
+        profile: profile,
+        onBack: () => _reopenManageSheet(),
+      ),
     );
   }
 
@@ -82,8 +93,23 @@ class _ManageGymProfilesSheetState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const AddGymProfileSheet(),
+      builder: (context) => AddGymProfileSheet(
+        onBack: () => _reopenManageSheet(),
+      ),
+    );
+  }
+
+  void _reopenManageSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ManageGymProfilesSheet(
+        onBack: widget.onBack,
+      ),
     );
   }
 
@@ -239,9 +265,21 @@ class _ManageGymProfilesSheetState
 
             // Header
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 12, 16),
               child: Row(
                 children: [
+                  // Back button (if provided)
+                  if (widget.onBack != null) ...[
+                    SheetBackButton(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          widget.onBack?.call();
+                        });
+                      },
+                    ),
+                    const SizedBox(width: 12),
+                  ],
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(

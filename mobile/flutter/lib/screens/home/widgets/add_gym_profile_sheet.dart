@@ -5,6 +5,7 @@ import '../../../data/models/gym_profile.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../models/equipment_item.dart';
+import '../../../widgets/sheet_header.dart';
 import 'gym_equipment_sheet.dart';
 
 /// Bottom sheet for adding a new gym profile
@@ -13,7 +14,13 @@ import 'gym_equipment_sheet.dart';
 /// 1. Quick Setup - 5 steps with environment presets
 /// 2. Full Setup - Complete onboarding flow (future)
 class AddGymProfileSheet extends ConsumerStatefulWidget {
-  const AddGymProfileSheet({super.key});
+  /// Optional callback for back button - if null, no back button shown
+  final VoidCallback? onBack;
+
+  const AddGymProfileSheet({
+    super.key,
+    this.onBack,
+  });
 
   @override
   ConsumerState<AddGymProfileSheet> createState() => _AddGymProfileSheetState();
@@ -141,6 +148,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => GymEquipmentSheet(
         selectedEquipment: _selectedEquipment,
@@ -206,6 +214,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
     return Container(
       decoration: BoxDecoration(
@@ -232,18 +241,30 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
 
             // Header
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 12, 16),
               child: Row(
                 children: [
+                  // Back button (if provided)
+                  if (widget.onBack != null) ...[
+                    SheetBackButton(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          widget.onBack?.call();
+                        });
+                      },
+                    ),
+                    const SizedBox(width: 12),
+                  ],
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withOpacity(0.15),
+                      color: accentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       Icons.add_circle_outline_rounded,
-                      color: AppColors.cyan,
+                      color: accentColor,
                       size: 24,
                     ),
                   ),
@@ -291,10 +312,10 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                       height: 4,
                       decoration: BoxDecoration(
                         color: isCompleted || isCurrent
-                            ? AppColors.cyan
+                            ? accentColor
                             : (isDark
-                                ? Colors.white.withOpacity(0.1)
-                                : Colors.black.withOpacity(0.1)),
+                                ? Colors.white.withValues(alpha: 0.1)
+                                : Colors.black.withValues(alpha: 0.1)),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -310,7 +331,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
               child: SingleChildScrollView(
                 controller: scrollController,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _buildStepContent(isDark, textPrimary, textSecondary),
+                child: _buildStepContent(isDark, textPrimary, textSecondary, accentColor),
               ),
             ),
 
@@ -322,8 +343,8 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                 border: Border(
                   top: BorderSide(
                     color: isDark
-                        ? Colors.white.withOpacity(0.1)
-                        : Colors.black.withOpacity(0.1),
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.1),
                   ),
                 ),
               ),
@@ -342,8 +363,8 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                     ElevatedButton(
                       onPressed: _isLoading ? null : _nextStep,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.cyan,
-                        foregroundColor: Colors.white,
+                        backgroundColor: accentColor,
+                        foregroundColor: isDark ? Colors.black : Colors.white,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 32,
                           vertical: 14,
@@ -353,12 +374,12 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                         ),
                       ),
                       child: _isLoading
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: isDark ? Colors.black : Colors.white,
                               ),
                             )
                           : Text(
@@ -378,14 +399,14 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     );
   }
 
-  Widget _buildStepContent(bool isDark, Color textPrimary, Color textSecondary) {
+  Widget _buildStepContent(bool isDark, Color textPrimary, Color textSecondary, Color accentColor) {
     switch (_currentStep) {
       case 0:
-        return _buildNameStep(isDark, textPrimary, textSecondary);
+        return _buildNameStep(isDark, textPrimary, textSecondary, accentColor);
       case 1:
-        return _buildEnvironmentStep(isDark, textPrimary, textSecondary);
+        return _buildEnvironmentStep(isDark, textPrimary, textSecondary, accentColor);
       case 2:
-        return _buildEquipmentStep(isDark, textPrimary, textSecondary);
+        return _buildEquipmentStep(isDark, textPrimary, textSecondary, accentColor);
       case 3:
         return _buildStyleStep(isDark, textPrimary, textSecondary);
       default:
@@ -393,7 +414,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     }
   }
 
-  Widget _buildNameStep(bool isDark, Color textPrimary, Color textSecondary) {
+  Widget _buildNameStep(bool isDark, Color textPrimary, Color textSecondary, Color accentColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -420,18 +441,18 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
           style: TextStyle(color: textPrimary, fontSize: 16),
           decoration: InputDecoration(
             hintText: 'e.g., Home Gym, Planet Fitness, Hotel',
-            hintStyle: TextStyle(color: textSecondary.withOpacity(0.5)),
+            hintStyle: TextStyle(color: textSecondary.withValues(alpha: 0.5)),
             filled: true,
             fillColor: isDark
-                ? Colors.white.withOpacity(0.05)
-                : Colors.black.withOpacity(0.05),
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.black.withValues(alpha: 0.08),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.cyan, width: 2),
+              borderSide: BorderSide(color: accentColor, width: 2),
             ),
             prefixIcon: Icon(Icons.edit_rounded, color: textSecondary),
           ),
@@ -451,19 +472,19 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
           spacing: 8,
           runSpacing: 8,
           children: [
-            _buildSuggestionChip('Home Gym', isDark, textPrimary),
-            _buildSuggestionChip('Commercial Gym', isDark, textPrimary),
-            _buildSuggestionChip('24 Hour Fitness', isDark, textPrimary),
-            _buildSuggestionChip('Planet Fitness', isDark, textPrimary),
-            _buildSuggestionChip('Hotel', isDark, textPrimary),
-            _buildSuggestionChip('Office', isDark, textPrimary),
+            _buildSuggestionChip('Home Gym', isDark, textPrimary, accentColor),
+            _buildSuggestionChip('Commercial Gym', isDark, textPrimary, accentColor),
+            _buildSuggestionChip('24 Hour Fitness', isDark, textPrimary, accentColor),
+            _buildSuggestionChip('Planet Fitness', isDark, textPrimary, accentColor),
+            _buildSuggestionChip('Hotel', isDark, textPrimary, accentColor),
+            _buildSuggestionChip('Office', isDark, textPrimary, accentColor),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildSuggestionChip(String text, bool isDark, Color textPrimary) {
+  Widget _buildSuggestionChip(String text, bool isDark, Color textPrimary, Color accentColor) {
     final isSelected = _name == text;
     return GestureDetector(
       onTap: () {
@@ -474,28 +495,28 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.cyan.withOpacity(0.15)
+              ? accentColor.withValues(alpha: 0.15)
               : (isDark
-                  ? Colors.white.withOpacity(0.05)
-                  : Colors.black.withOpacity(0.05)),
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.06)),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppColors.cyan : Colors.transparent,
+            color: isSelected ? accentColor : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
           ),
         ),
         child: Text(
           text,
           style: TextStyle(
             fontSize: 13,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            color: isSelected ? AppColors.cyan : textPrimary,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            color: isSelected ? accentColor : textPrimary,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildEnvironmentStep(bool isDark, Color textPrimary, Color textSecondary) {
+  Widget _buildEnvironmentStep(bool isDark, Color textPrimary, Color textSecondary, Color accentColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -526,14 +547,14 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppColors.cyan.withOpacity(0.1)
+                    ? accentColor.withValues(alpha: 0.1)
                     : (isDark
-                        ? Colors.white.withOpacity(0.05)
-                        : Colors.black.withOpacity(0.03)),
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.04)),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isSelected ? AppColors.cyan : Colors.transparent,
-                  width: 2,
+                  color: isSelected ? accentColor : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
+                  width: isSelected ? 2 : 1,
                 ),
               ),
               child: Row(
@@ -543,15 +564,15 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                     height: 48,
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.cyan.withOpacity(0.2)
+                          ? accentColor.withValues(alpha: 0.2)
                           : (isDark
-                              ? Colors.white.withOpacity(0.1)
-                              : Colors.black.withOpacity(0.05)),
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : Colors.black.withValues(alpha: 0.06)),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       preset['icon'] as IconData,
-                      color: isSelected ? AppColors.cyan : textSecondary,
+                      color: isSelected ? accentColor : textSecondary,
                       size: 24,
                     ),
                   ),
@@ -565,7 +586,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: isSelected ? AppColors.cyan : textPrimary,
+                            color: isSelected ? accentColor : textPrimary,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -582,7 +603,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                   if (isSelected)
                     Icon(
                       Icons.check_circle_rounded,
-                      color: AppColors.cyan,
+                      color: accentColor,
                       size: 24,
                     ),
                 ],
@@ -594,7 +615,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     );
   }
 
-  Widget _buildEquipmentStep(bool isDark, Color textPrimary, Color textSecondary) {
+  Widget _buildEquipmentStep(bool isDark, Color textPrimary, Color textSecondary, Color accentColor) {
     // Format equipment name for display
     String formatName(String name) {
       return name
@@ -631,11 +652,11 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: isDark
-                  ? Colors.white.withOpacity(0.05)
-                  : Colors.black.withOpacity(0.03),
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.black.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppColors.cyan.withOpacity(0.3),
+                color: accentColor.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
@@ -644,12 +665,12 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withOpacity(0.15),
+                    color: accentColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.fitness_center_rounded,
-                    color: AppColors.cyan,
+                    color: accentColor,
                     size: 24,
                   ),
                 ),
@@ -671,7 +692,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                         'Tap to add, remove, or edit weights',
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.cyan,
+                          color: accentColor,
                         ),
                       ),
                     ],
@@ -716,7 +737,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withOpacity(0.15),
+                  color: accentColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -727,7 +748,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.cyan,
+                        color: accentColor,
                       ),
                     ),
                     if (hasWeights) ...[
@@ -735,7 +756,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                       Icon(
                         Icons.scale_rounded,
                         size: 14,
-                        color: AppColors.cyan,
+                        color: accentColor,
                       ),
                     ],
                   ],

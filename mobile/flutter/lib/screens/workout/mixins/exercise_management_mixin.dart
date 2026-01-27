@@ -85,6 +85,7 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
     showModalBottomSheet(
       context: ctx,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (context) => Container(
         padding: const EdgeInsets.all(20),
         decoration: const BoxDecoration(

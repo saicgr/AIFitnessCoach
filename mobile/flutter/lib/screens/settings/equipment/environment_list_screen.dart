@@ -132,6 +132,7 @@ class _EnvironmentListScreenState extends ConsumerState<EnvironmentListScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (context) => Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,

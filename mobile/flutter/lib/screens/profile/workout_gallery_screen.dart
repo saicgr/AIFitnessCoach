@@ -515,6 +515,7 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         child: Column(

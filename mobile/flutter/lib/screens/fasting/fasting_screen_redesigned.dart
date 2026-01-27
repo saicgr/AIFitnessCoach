@@ -968,6 +968,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => ProtocolSelectorSheet(
         currentProtocol: _selectedProtocol,
@@ -989,6 +990,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => FastingSettingsSheet(
         preferences: fastingState.preferences ?? const FastingPreferences(userId: ''),

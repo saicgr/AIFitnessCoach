@@ -422,6 +422,7 @@ class HelpScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: EdgeInsets.only(

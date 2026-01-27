@@ -105,6 +105,7 @@ class SectionHeader extends StatelessWidget {
       context: context,
       backgroundColor: elevatedColor,
       isScrollControlled: true,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),

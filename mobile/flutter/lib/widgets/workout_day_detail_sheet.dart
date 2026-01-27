@@ -23,6 +23,7 @@ class WorkoutDayDetailSheet extends ConsumerWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => WorkoutDayDetailSheet(date: date),
     );

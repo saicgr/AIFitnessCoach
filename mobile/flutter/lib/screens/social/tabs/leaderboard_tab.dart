@@ -341,6 +341,7 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       builder: (sheetContext) {
         final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
         final accentColor = sheetContext.colors.accent;

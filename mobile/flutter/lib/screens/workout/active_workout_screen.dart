@@ -2190,6 +2190,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: AppColors.elevated,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -2534,6 +2535,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     showModalBottomSheet(
       context: ctx,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (context) => Container(
         padding: const EdgeInsets.all(20),
         decoration: const BoxDecoration(
@@ -3744,6 +3746,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) => DraggableScrollableSheet(
           initialChildSize: 0.6,
@@ -4519,6 +4522,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => FullScreenVideoModal(
         videoController: _videoController,

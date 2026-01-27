@@ -146,6 +146,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (ctx) => Container(
         margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -417,7 +418,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                   child: InkWell(
                     onTap: () {
                       Navigator.pop(ctx);
-                      context.push('/programs');
+                      context.push('/library?tab=1');
                     },
                     borderRadius: BorderRadius.circular(12),
                     child: Container(

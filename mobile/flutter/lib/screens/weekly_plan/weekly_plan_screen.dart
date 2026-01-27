@@ -29,6 +29,7 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const GeneratePlanSheet(),
     );
@@ -38,6 +39,7 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DailyPlanDetailSheet(entry: entry),
     );

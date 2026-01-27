@@ -47,6 +47,7 @@ Future<ExercisePickerResult?> showExercisePickerSheet(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
+    useRootNavigator: true,
     builder: (context) => _ExercisePickerSheet(
       type: type,
       excludeExercises: excludeExercises ?? {},
@@ -223,6 +224,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (context) => Container(
         decoration: BoxDecoration(
           color: backgroundColor,

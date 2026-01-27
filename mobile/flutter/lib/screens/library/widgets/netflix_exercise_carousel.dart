@@ -320,6 +320,7 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => ExerciseDetailSheet(exercise: exercise),
     );
@@ -655,6 +656,7 @@ class _NetflixCard extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => ExerciseDetailSheet(exercise: exercise),
     );

@@ -52,6 +52,7 @@ class QuickAddFAB extends ConsumerWidget {
     showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => QuickAddSheet(
         userId: userId,
@@ -112,6 +113,7 @@ class QuickAddFABSimple extends ConsumerWidget {
     showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => QuickAddSheet(
         userId: userId,

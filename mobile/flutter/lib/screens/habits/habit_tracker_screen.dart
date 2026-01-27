@@ -195,6 +195,7 @@ class _HabitTrackerScreenState extends ConsumerState<HabitTrackerScreen> {
   void _showAddHabitOptions(BuildContext context, String userId) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -228,6 +229,7 @@ class _HabitTrackerScreenState extends ConsumerState<HabitTrackerScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       useSafeArea: true,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.7,
@@ -259,6 +261,7 @@ class _HabitTrackerScreenState extends ConsumerState<HabitTrackerScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       useSafeArea: true,
       builder: (context) => Padding(
         padding: EdgeInsets.only(
@@ -288,6 +291,7 @@ class _HabitTrackerScreenState extends ConsumerState<HabitTrackerScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       useSafeArea: true,
       builder: (context) => Padding(
         padding: EdgeInsets.only(
@@ -345,6 +349,7 @@ class _HabitTrackerScreenState extends ConsumerState<HabitTrackerScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       useSafeArea: true,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.6,

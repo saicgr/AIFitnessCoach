@@ -339,6 +339,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
     await showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (context) => _SortOptionsSheet(
         currentSort: currentSort,
         isDark: isDark,
@@ -360,6 +361,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => RecipeBuilderSheet(
         userId: _userId!,
@@ -385,6 +387,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
     final mealType = await showModalBottomSheet<MealType>(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (context) => _MealTypeSelector(isDark: isDark),
     );
 
@@ -481,6 +484,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _FoodDetailSheet(
         item: item,
@@ -504,6 +508,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
                 final result = await showModalBottomSheet<bool>(
                   context: context,
                   isScrollControlled: true,
+                  useRootNavigator: true,
                   backgroundColor: Colors.transparent,
                   builder: (context) => RecipeBuilderSheet(
                     userId: _userId!,

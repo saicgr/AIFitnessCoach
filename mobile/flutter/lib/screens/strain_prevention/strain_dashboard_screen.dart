@@ -593,6 +593,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.7,
@@ -663,6 +664,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(

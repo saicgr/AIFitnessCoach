@@ -453,6 +453,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (context) {
         return DraggableScrollableSheet(
           initialChildSize: 0.7,

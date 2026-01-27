@@ -264,6 +264,7 @@ class _AdminChatScreenState extends ConsumerState<AdminChatScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.elevated,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),

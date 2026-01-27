@@ -61,6 +61,7 @@ Future<void> showLogMealSheet(BuildContext context, WidgetRef ref, {String? init
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    useRootNavigator: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.2),
     builder: (context) => LogMealSheet(
@@ -2252,7 +2253,7 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Food description
+                    // Food description - show original query AND matched food
                     Expanded(
                       child: Container(
                         padding: const EdgeInsets.all(12),
@@ -2260,18 +2261,76 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
                           color: elevated,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.restaurant, size: 18, color: textMuted),
-                            const SizedBox(width: 10),
-                            Expanded(
+                            // Original search query
+                            Row(
+                              children: [
+                                Icon(Icons.search, size: 14, color: textMuted),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'You searched:',
+                                  style: TextStyle(
+                                    color: textMuted,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              description,
+                              style: TextStyle(
+                                color: textSecondary,
+                                fontSize: 13,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 8),
+                            // Matched food items with quantities
+                            Row(
+                              children: [
+                                Icon(Icons.restaurant, size: 14, color: isDark ? AppColors.teal : AppColorsLight.teal),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Found:',
+                                  style: TextStyle(
+                                    color: isDark ? AppColors.teal : AppColorsLight.teal,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            // Display matched food items with their amounts
+                            ...response.foodItemsRanked.take(3).map((item) => Padding(
+                              padding: const EdgeInsets.only(bottom: 2),
                               child: Text(
-                                description,
-                                style: TextStyle(color: textPrimary, fontSize: 15, fontWeight: FontWeight.w500),
-                                maxLines: 2,
+                                item.amount != null && item.amount!.isNotEmpty
+                                    ? '${item.name} (${item.amount})'
+                                    : item.name,
+                                style: TextStyle(
+                                  color: textPrimary,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                            ),
+                            )),
+                            if (response.foodItemsRanked.length > 3)
+                              Text(
+                                '+${response.foodItemsRanked.length - 3} more items',
+                                style: TextStyle(
+                                  color: textMuted,
+                                  fontSize: 12,
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -2291,7 +2350,7 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
                 // AI Estimated header row
                 Row(
                   children: [
-                    const Icon(Icons.auto_awesome, color: AppColors.textSecondary, size: 20),
+                    Icon(Icons.auto_awesome, color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary, size: 20),
                     const SizedBox(width: 8),
                     Text(
                       'AI Estimated',
@@ -2316,15 +2375,15 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         child: _isSaving
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textSecondary),
+                                child: CircularProgressIndicator(strokeWidth: 2, color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
                               )
                             : Icon(
                                 _isSaved ? Icons.star : Icons.star_border,
                                 size: 24,
-                                color: _isSaved ? AppColors.textSecondary : textMuted,
+                                color: _isSaved ? AppColors.yellow : textMuted,
                               ),
                       ),
                     ),
@@ -2345,35 +2404,35 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
 
                 // COMPACT MACROS ROW - All 4 in one row with animated calories
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   decoration: BoxDecoration(
                     color: elevated,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
-                      // Animated calorie display
+                      // Animated calorie display - use coral/red for visibility
                       _AnimatedCalorieChip(
                         calories: response.totalCalories,
-                        color: caloriesColor,
+                        color: AppColors.coral,  // Red/coral for calories - visible in both themes
                       ),
                       _CompactMacroChip(
                         icon: Icons.fitness_center,
                         value: '${response.proteinG.toStringAsFixed(0)}g',
                         unit: 'Protein',
-                        color: AppColors.textSecondary,  // Darker gold for readability
+                        color: AppColors.yellow,  // Gold for protein
                       ),
                       _CompactMacroChip(
                         icon: Icons.grain,
                         value: '${response.carbsG.toStringAsFixed(0)}g',
                         unit: 'Carbs',
-                        color: AppColors.textMuted,  // Darker green for readability
+                        color: AppColors.green,  // Green for carbs
                       ),
                       _CompactMacroChip(
                         icon: Icons.opacity,
                         value: '${response.fatG.toStringAsFixed(0)}g',
                         unit: 'Fat',
-                        color: AppColors.textSecondary,  // Darker blue for readability
+                        color: AppColors.quickActionWater,  // Blue for fat
                       ),
                     ],
                   ),
@@ -3862,9 +3921,10 @@ class _CompactGoalScore extends StatelessWidget {
   });
 
   Color _getScoreColor() {
-    if (score >= 8) return AppColors.textMuted;  // Green
-    if (score >= 5) return AppColors.textSecondary;  // Blue instead of yellow
-    return AppColors.textPrimary;  // Red
+    // Semantic colors for score - visible in both themes
+    if (score >= 8) return AppColors.green;  // Green for good score
+    if (score >= 5) return AppColors.yellow;  // Yellow/amber for okay score
+    return AppColors.coral;  // Red/coral for low score
   }
 
   @override

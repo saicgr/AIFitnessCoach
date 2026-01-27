@@ -40,20 +40,35 @@ class FloatingChatOverlay extends StatelessWidget {
 /// Shows the chat bottom sheet using the given context.
 /// This should be called from a widget that has Navigator access (like MainShell).
 void showChatBottomSheet(BuildContext context, WidgetRef ref) {
+  debugPrint('🤖 [EdgeHandle] showChatBottomSheet called');
+  debugPrint('🤖 [EdgeHandle] Context: $context');
+
   // Hide nav bar while sheet is open
   ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+
+  // Get the container to pass to the sheet (needed for provider access)
+  final container = ProviderScope.containerOf(context);
 
   showModalBottomSheet(
     context: context,
     isScrollControlled: true, // Allows the sheet to take full height
     backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withOpacity(0.6),
-    builder: (sheetContext) => _ChatBottomSheet(
-      onClose: () {
-        Navigator.of(sheetContext).pop();
-      },
-    ),
+    barrierColor: Colors.black.withValues(alpha: 0.2), // Light scrim to match weekly check-in
+    useRootNavigator: true, // Use root navigator to ensure proper overlay
+    builder: (sheetContext) {
+      debugPrint('🤖 [EdgeHandle] Building _ChatBottomSheet');
+      // Wrap with UncontrolledProviderScope to give access to providers
+      return UncontrolledProviderScope(
+        container: container,
+        child: _ChatBottomSheet(
+          onClose: () {
+            Navigator.of(sheetContext).pop();
+          },
+        ),
+      );
+    },
   ).whenComplete(() {
+    debugPrint('🤖 [EdgeHandle] Sheet closed');
     // Collapse the state when sheet is dismissed
     ref.read(floatingChatProvider.notifier).collapse();
     // Show nav bar when sheet is closed
@@ -66,20 +81,27 @@ void showChatBottomSheetNoAnimation(BuildContext context, WidgetRef ref) {
   // Hide nav bar while sheet is open
   ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
+  // Get the container to pass to the sheet (needed for provider access)
+  final container = ProviderScope.containerOf(context);
+
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withOpacity(0.6),
+    barrierColor: Colors.black.withValues(alpha: 0.2), // Light scrim to match weekly check-in
+    useRootNavigator: true,
     // Use a very fast animation to appear instantly
     transitionAnimationController: AnimationController(
       duration: const Duration(milliseconds: 1),
       vsync: Navigator.of(context),
     ),
-    builder: (sheetContext) => _ChatBottomSheet(
-      onClose: () {
-        Navigator.of(sheetContext).pop();
-      },
+    builder: (sheetContext) => UncontrolledProviderScope(
+      container: container,
+      child: _ChatBottomSheet(
+        onClose: () {
+          Navigator.of(sheetContext).pop();
+        },
+      ),
     ),
   ).whenComplete(() {
     ref.read(floatingChatProvider.notifier).collapse();
@@ -193,42 +215,28 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
     // Use Padding to handle keyboard - this is the Flutter-recommended way
     return Padding(
       padding: EdgeInsets.only(bottom: keyboardHeight),
-      child: Container(
-        height: screenHeight * 0.7,
-        margin: const EdgeInsets.symmetric(horizontal: 8),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-            child: Container(
-              decoration: BoxDecoration(
-                // Semi-transparent background for glassmorphic effect
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.5)
-                    : Colors.white.withValues(alpha: 0.7),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                border: Border(
-                  top: BorderSide(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.15)
-                        : Colors.black.withValues(alpha: 0.08),
-                    width: 0.5,
-                  ),
-                  left: BorderSide(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : Colors.black.withValues(alpha: 0.05),
-                    width: 0.5,
-                  ),
-                  right: BorderSide(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : Colors.black.withValues(alpha: 0.05),
-                    width: 0.5,
-                  ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            height: screenHeight * 0.7,
+            decoration: BoxDecoration(
+              // Glassmorphic semi-transparent background (matches weekly check-in)
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.4)
+                  : Colors.white.withValues(alpha: 0.6),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              border: Border(
+                top: BorderSide(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : Colors.black.withValues(alpha: 0.1),
+                  width: 0.5,
                 ),
               ),
-              child: Column(
+            ),
+            child: Column(
           children: [
             // Handle bar
             Container(
@@ -445,7 +453,6 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
               ),
             ),
           ],
-              ),
             ),
           ),
         ),

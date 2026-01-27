@@ -16,6 +16,7 @@ class DateRangeFilterSheet extends ConsumerStatefulWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const DateRangeFilterSheet(),
     );

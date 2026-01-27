@@ -197,6 +197,7 @@ class SupersetSettingsSection extends ConsumerWidget {
           ? AppColors.elevated
           : AppColorsLight.elevated,
       isScrollControlled: true,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),

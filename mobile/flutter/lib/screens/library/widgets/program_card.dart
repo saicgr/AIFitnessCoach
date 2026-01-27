@@ -50,6 +50,7 @@ class ProgramCard extends StatelessWidget {
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
+        useRootNavigator: true,
         backgroundColor: Colors.transparent,
         builder: (context) => ComingSoonBottomSheet(program: program),
       );
@@ -58,6 +59,7 @@ class ProgramCard extends StatelessWidget {
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
+        useRootNavigator: true,
         backgroundColor: Colors.transparent,
         builder: (context) => ProgramDetailSheet(program: program),
       );

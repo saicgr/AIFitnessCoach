@@ -126,6 +126,7 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => NutrientDetailSheet(
         nutrient: nutrient,

@@ -465,6 +465,7 @@ class _NutritionFastingCard extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (context) => _ProtocolSelectorSheet(
         currentProtocol: settingsState.fastingProtocol,
         onSelect: (protocol) {

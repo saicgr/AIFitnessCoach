@@ -1231,6 +1231,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (context) => Container(
         decoration: BoxDecoration(
           color: AppColors.surface,

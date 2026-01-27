@@ -2,17 +2,84 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/accent_color_provider.dart';
+import '../../../../data/providers/daily_xp_strip_provider.dart';
 import '../../../../data/providers/xp_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../widgets/xp_goals_sheet.dart';
 
 /// Compact horizontal strip showing today's XP goals progress
 /// Positioned above the hero card on home screen
-class DailyXPStrip extends ConsumerWidget {
+/// Can be dismissed for the day by tapping the close button
+class DailyXPStrip extends ConsumerStatefulWidget {
   const DailyXPStrip({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DailyXPStrip> createState() => _DailyXPStripState();
+}
+
+class _DailyXPStripState extends ConsumerState<DailyXPStrip>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _dismissController;
+  late Animation<double> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+  bool _isDismissing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _dismissController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _slideAnimation = Tween<double>(begin: 0, end: -50).animate(
+      CurvedAnimation(parent: _dismissController, curve: Curves.easeInCubic),
+    );
+    _fadeAnimation = Tween<double>(begin: 1, end: 0).animate(
+      CurvedAnimation(parent: _dismissController, curve: Curves.easeOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _dismissController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _dismiss() async {
+    if (_isDismissing) return;
+    _isDismissing = true;
+    HapticService.light();
+
+    await _dismissController.forward();
+    if (mounted) {
+      ref.read(dailyXPStripDismissedTodayProvider.notifier).dismissForToday();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isVisible = ref.watch(dailyXPStripVisibleProvider);
+    if (!isVisible) {
+      return const SizedBox.shrink();
+    }
+
+    return AnimatedBuilder(
+      animation: _dismissController,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _slideAnimation.value),
+          child: Opacity(
+            opacity: _fadeAnimation.value,
+            child: child,
+          ),
+        );
+      },
+      child: _buildContent(context),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    final ref = this.ref;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -185,11 +252,25 @@ class DailyXPStrip extends ConsumerWidget {
               const SizedBox(width: 4),
             ],
 
-            // Chevron
+            // Chevron for tap to open details
             Icon(
               Icons.chevron_right,
               color: textSecondary,
               size: 20,
+            ),
+
+            // Close button to dismiss for the day
+            GestureDetector(
+              onTap: _dismiss,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Icon(
+                  Icons.close,
+                  color: textSecondary,
+                  size: 18,
+                ),
+              ),
             ),
           ],
         ),

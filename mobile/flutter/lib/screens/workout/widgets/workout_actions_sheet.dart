@@ -19,6 +19,7 @@ Future<void> showWorkoutActionsSheet(
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.2),
     isScrollControlled: true,
+    useRootNavigator: true,
     builder: (context) => _WorkoutActionsSheet(
       workout: workout,
       onRefresh: onRefresh,
@@ -388,6 +389,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (context) => _VersionHistorySheet(
         workoutId: widget.workout.id!,
         versions: versions,
@@ -421,6 +423,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
         context: context,
         backgroundColor: Colors.transparent,
         isScrollControlled: true,
+        useRootNavigator: true,
         builder: (context) => _WarmupStretchesSheet(
           title: 'Warmup Exercises',
           exercises: warmup,
@@ -459,6 +462,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
         context: context,
         backgroundColor: Colors.transparent,
         isScrollControlled: true,
+        useRootNavigator: true,
         builder: (context) => _WarmupStretchesSheet(
           title: 'Cool-Down Stretches',
           exercises: stretches,

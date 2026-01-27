@@ -304,6 +304,7 @@ class _ActivityCardState extends State<ActivityCard> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (context) => Container(
         decoration: BoxDecoration(
           color: elevated,
@@ -461,6 +462,7 @@ class _ActivityCardState extends State<ActivityCard> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (context) => Container(
         decoration: BoxDecoration(
           color: elevated,

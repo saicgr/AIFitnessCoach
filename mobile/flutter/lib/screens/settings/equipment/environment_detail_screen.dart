@@ -295,6 +295,7 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (context) => _AddEquipmentSheet(
         existingEquipment: _equipmentItems.map((e) => e.name).toSet(),
         onAdd: (item) {
@@ -317,6 +318,7 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (context) => _EditEquipmentSheet(
         item: item,
         onSave: onSave,

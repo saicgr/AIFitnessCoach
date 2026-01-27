@@ -292,3 +292,4 @@ class _WorkoutMiniPlayerOverlay extends ConsumerWidget {
     );
   }
 }
+

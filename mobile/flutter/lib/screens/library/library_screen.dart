@@ -16,7 +16,10 @@ export 'models/exercises_state.dart';
 
 /// Main Library Screen with tabs for Exercises, Programs, and My Stats
 class LibraryScreen extends ConsumerStatefulWidget {
-  const LibraryScreen({super.key});
+  /// Initial tab index: 0 = Exercises, 1 = Programs, 2 = Skills
+  final int initialTab;
+
+  const LibraryScreen({super.key, this.initialTab = 0});
 
   @override
   ConsumerState<LibraryScreen> createState() => _LibraryScreenState();
@@ -29,7 +32,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.initialTab.clamp(0, 2),
+    );
   }
 
   @override
@@ -46,20 +53,19 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: Stack(
-        children: [
-          // Main content
-          SafeArea(
-            child: Column(
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Main content
+            Column(
               children: [
-                // Header (without back button - it's floating now)
+                // Header with title only
                 _buildHeader(context, isDark),
 
-                // Tab Bar
+                // Tab Bar - full width
                 _buildTabBar(context, elevated, cyan, textMuted, isDark),
 
                 const SizedBox(height: 8),
@@ -77,38 +83,36 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 ),
               ],
             ),
-          ),
 
-          // Floating back button
-          Positioned(
-            top: topPadding + 16,
-            left: 16,
-            child: _GlassmorphicButton(
-              onTap: () {
-                HapticService.light();
-                context.pop();
-              },
-              isDark: isDark,
-              child: Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: isDark ? Colors.white : Colors.black87,
-                size: 18,
+            // Floating back button
+            Positioned(
+              top: 8,
+              left: 8,
+              child: _GlassmorphicButton(
+                onTap: () {
+                  HapticService.light();
+                  context.pop();
+                },
+                isDark: isDark,
+                child: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: isDark ? Colors.white : Colors.black87,
+                  size: 18,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      padding: const EdgeInsets.fromLTRB(56, 12, 16, 16),
       child: Row(
         children: [
-          // Space for floating back button
-          const SizedBox(width: 44),
-          // Title only - clean and minimal
+          // Title (offset to account for floating back button)
           Text(
             'Library',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(

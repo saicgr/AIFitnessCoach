@@ -596,6 +596,7 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => PracticeAttemptSheet(
         step: step,
@@ -614,6 +615,7 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _StepDetailSheet(step: step),
     );

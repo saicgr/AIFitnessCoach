@@ -1012,6 +1012,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _AddMeasurementSheet(
         selectedType: _selectedType,

@@ -143,6 +143,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.elevated,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),

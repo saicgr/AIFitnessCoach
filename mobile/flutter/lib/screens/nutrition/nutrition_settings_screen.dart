@@ -1235,6 +1235,7 @@ class _NutritionSettingsScreenState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Padding(
         padding: EdgeInsets.only(
@@ -1576,6 +1577,7 @@ class _NutritionSettingsScreenState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) => Padding(

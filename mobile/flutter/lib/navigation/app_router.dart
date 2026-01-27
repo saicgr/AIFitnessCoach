@@ -91,7 +91,6 @@ import '../screens/demo/demo_active_workout_screen.dart';
 import '../screens/demo/plan_preview_screen.dart';
 import '../screens/guest/guest_home_screen.dart';
 import '../screens/guest/guest_library_screen.dart';
-import '../screens/programs/program_selection_screen.dart';
 import '../screens/cardio/log_cardio_screen.dart';
 import '../screens/neat/neat_dashboard_screen.dart';
 import '../screens/live_chat/live_chat_screen.dart';
@@ -117,6 +116,7 @@ import '../screens/hormonal_health/hormonal_health_screen.dart';
 import '../screens/hormonal_health/hormonal_health_settings_screen.dart';
 import '../screens/kegel/kegel_session_screen.dart';
 import '../screens/habits/habit_tracker_screen.dart';
+import '../screens/habits/habit_detail_screen.dart';
 
 /// Listenable for auth, language, and accessibility state changes to trigger router refresh
 class _AuthStateNotifier extends ChangeNotifier {
@@ -1148,15 +1148,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // Library (Exercise database, programs) - Full screen outside shell
+      // Supports ?tab=0 (Exercises), ?tab=1 (Programs), ?tab=2 (Skills)
       GoRoute(
         path: '/library',
-        builder: (context, state) => const LibraryScreen(),
-      ),
-
-      // Branded Programs Selection Screen
-      GoRoute(
-        path: '/programs',
-        builder: (context, state) => const ProgramSelectionScreen(),
+        builder: (context, state) {
+          final tabParam = state.uri.queryParameters['tab'];
+          final initialTab = tabParam != null ? int.tryParse(tabParam) ?? 0 : 0;
+          return LibraryScreen(initialTab: initialTab);
+        },
       ),
 
       // Hydration
@@ -1169,6 +1168,35 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/habits',
         builder: (context, state) => const HabitsScreen(),
+      ),
+
+      // Habit Detail - View habit detail with yearly heatmap and stats
+      GoRoute(
+        path: '/habit/:id',
+        pageBuilder: (context, state) {
+          final habitId = state.pathParameters['id']!;
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: HabitDetailScreen(habitId: habitId),
+            transitionDuration: const Duration(milliseconds: 400),
+            reverseTransitionDuration: const Duration(milliseconds: 300),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0.05, 0),
+                    end: Offset.zero,
+                  ).animate(CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  )),
+                  child: child,
+                ),
+              );
+            },
+          );
+        },
       ),
 
       // NEAT Dashboard - Daily Activity & Step Goals

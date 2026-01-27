@@ -15,6 +15,9 @@ from services.gemini_service import GeminiService
 
 settings = get_settings()
 
+# Import split descriptions from dedicated module (avoids circular imports)
+from services.split_descriptions import SPLIT_DESCRIPTIONS, get_split_context
+
 
 class RAGService:
     """
@@ -671,17 +674,9 @@ class WorkoutRAGService:
             parts.append(f"Progression Pace: {progression_pace} - {pace_desc}")
 
         if training_split:
-            split_desc = {
-                'full_body': 'Full Body - All muscle groups each workout',
-                'upper_lower': 'Upper/Lower - Alternating upper and lower body',
-                'push_pull_legs': 'Push/Pull/Legs - Classic PPL split',
-                'body_part': 'Body Part Split - One muscle group per day',
-                'phul': 'PHUL - Power Hypertrophy Upper Lower',
-                'arnold_split': 'Arnold Split - Chest/Back, Shoulders/Arms, Legs',
-                'hyrox': 'HYROX - Hybrid running + functional',
-                'dont_know': 'Let AI Decide - Based on schedule and goals',
-            }.get(training_split, training_split)
-            parts.append(f"Training Split: {split_desc}")
+            # Use comprehensive split descriptions with scientific context
+            split_context = get_split_context(training_split)
+            parts.append(split_context)
 
         if workout_type:
             type_desc = {

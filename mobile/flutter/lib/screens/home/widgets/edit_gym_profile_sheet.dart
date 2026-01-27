@@ -5,15 +5,20 @@ import '../../../data/models/gym_profile.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../models/equipment_item.dart';
+import '../../../widgets/sheet_header.dart';
 import 'gym_equipment_sheet.dart';
 
 /// Bottom sheet for editing an existing gym profile
 class EditGymProfileSheet extends ConsumerStatefulWidget {
   final GymProfile profile;
 
+  /// Optional callback for back button - if null, no back button shown
+  final VoidCallback? onBack;
+
   const EditGymProfileSheet({
     super.key,
     required this.profile,
+    this.onBack,
   });
 
   @override
@@ -87,6 +92,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => GymEquipmentSheet(
         selectedEquipment: _selectedEquipment,
@@ -218,11 +224,23 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
 
             // Header
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 12, 16),
               child: Column(
                 children: [
                   Row(
                     children: [
+                      // Back button (if provided)
+                      if (widget.onBack != null) ...[
+                        SheetBackButton(
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              widget.onBack?.call();
+                            });
+                          },
+                        ),
+                        const SizedBox(width: 12),
+                      ],
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
@@ -250,7 +268,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                       ),
                       IconButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        icon: Icon(Icons.more_vert_rounded, color: textSecondary),
+                        icon: Icon(Icons.close_rounded, color: textSecondary),
                       ),
                     ],
                   ),
@@ -707,6 +725,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
     showModalBottomSheet(
       context: context,
       backgroundColor: isDark ? AppColors.elevated : Colors.white,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),

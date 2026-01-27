@@ -23,6 +23,7 @@ void showXPGoalsSheet(BuildContext context, WidgetRef ref) {
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.2),
     isScrollControlled: true,
+    useRootNavigator: true,
     builder: (context) => const XPGoalsSheet(),
   ).then((_) {
     // Show nav bar when sheet is closed
@@ -1043,6 +1044,7 @@ void _showAllLevelsSheet(BuildContext context, int currentLevel, Color accentCol
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
+    useRootNavigator: true,
     builder: (context) => _AllLevelsSheet(
       currentLevel: currentLevel,
       accentColor: accentColor,

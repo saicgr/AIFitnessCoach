@@ -276,6 +276,7 @@ class _FlexibilityHistoryScreenState extends ConsumerState<FlexibilityHistoryScr
   void _showAssessmentDetails(FlexibilityAssessment assessment, ThemeData theme) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         child: Column(

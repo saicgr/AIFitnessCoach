@@ -10,7 +10,12 @@ class EquipmentItem {
   final int quantity;
 
   /// List of available weights in lbs (e.g., [15, 25, 40] for dumbbells)
+  /// DEPRECATED: Use weightInventory instead for quantity tracking
   final List<double> weights;
+
+  /// Map of weight to quantity (e.g., {15: 1, 20: 2, 25: 2})
+  /// This allows tracking "1x 15lb, 2x 20lb, 2x 25lb" dumbbells
+  final Map<double, int> weightInventory;
 
   /// Unit for weights (lbs or kg)
   final String weightUnit;
@@ -23,17 +28,40 @@ class EquipmentItem {
     required this.displayName,
     this.quantity = 1,
     this.weights = const [],
+    this.weightInventory = const {},
     this.weightUnit = 'lbs',
     this.notes,
   });
 
   /// Create from JSON map
   factory EquipmentItem.fromJson(Map<String, dynamic> json) {
+    // Parse weight inventory if present
+    Map<double, int> inventory = {};
+    if (json['weight_inventory'] != null) {
+      final rawInventory = json['weight_inventory'] as Map<String, dynamic>;
+      inventory = rawInventory.map(
+        (key, value) => MapEntry(double.parse(key), value as int),
+      );
+    }
+
+    // Parse legacy weights list
+    final legacyWeights = (json['weights'] as List<dynamic>?)
+            ?.map((e) => (e as num).toDouble())
+            .toList() ??
+        [];
+
+    // If no inventory but has legacy weights, migrate them (assume quantity 2 for pairs)
+    if (inventory.isEmpty && legacyWeights.isNotEmpty) {
+      inventory = {for (final w in legacyWeights) w: 2};
+    }
+
     return EquipmentItem(
       name: json['name'] as String,
-      displayName: json['display_name'] as String? ?? _formatDisplayName(json['name'] as String),
+      displayName: json['display_name'] as String? ??
+          _formatDisplayName(json['name'] as String),
       quantity: json['quantity'] as int? ?? 1,
-      weights: (json['weights'] as List<dynamic>?)?.map((e) => (e as num).toDouble()).toList() ?? [],
+      weights: legacyWeights,
+      weightInventory: inventory,
       weightUnit: json['weight_unit'] as String? ?? 'lbs',
       notes: json['notes'] as String?,
     );
@@ -41,14 +69,39 @@ class EquipmentItem {
 
   /// Convert to JSON map
   Map<String, dynamic> toJson() {
+    // Convert weightInventory to string keys for JSON compatibility
+    final inventoryJson = weightInventory.map(
+      (key, value) => MapEntry(key.toString(), value),
+    );
+
+    // Also output weights list for backward compatibility
+    final weightsList = weightInventory.keys.toList()..sort();
+
     return {
       'name': name,
       'display_name': displayName,
       'quantity': quantity,
-      'weights': weights,
+      'weights': weightsList,
+      'weight_inventory': inventoryJson,
       'weight_unit': weightUnit,
       if (notes != null) 'notes': notes,
     };
+  }
+
+  /// Get sorted list of weights from inventory
+  List<double> get availableWeights {
+    final keys = weightInventory.keys.toList()..sort();
+    return keys;
+  }
+
+  /// Get quantity for a specific weight
+  int getQuantityForWeight(double weight) {
+    return weightInventory[weight] ?? 0;
+  }
+
+  /// Check if this is a "pair" type equipment (dumbbells, kettlebells)
+  bool get isPairType {
+    return name == 'dumbbells' || name == 'kettlebells';
   }
 
   /// Create from just a name (legacy format)
@@ -75,7 +128,24 @@ class EquipmentItem {
       parts.add('$quantity');
     }
 
-    if (weights.isNotEmpty) {
+    // Use weight inventory for detailed summary
+    if (weightInventory.isNotEmpty) {
+      final sortedWeights = availableWeights;
+      if (sortedWeights.length == 1) {
+        final w = sortedWeights.first;
+        final qty = weightInventory[w]!;
+        parts.add('${qty}x ${_formatWeight(w)}$weightUnit');
+      } else if (sortedWeights.length <= 3) {
+        parts.add(sortedWeights
+            .map((w) => '${weightInventory[w]}x ${_formatWeight(w)}')
+            .join(', ') + weightUnit);
+      } else {
+        // Show range with total count
+        final totalCount = weightInventory.values.fold(0, (a, b) => a + b);
+        parts.add('${_formatWeight(sortedWeights.first)}-${_formatWeight(sortedWeights.last)}$weightUnit ($totalCount items)');
+      }
+    } else if (weights.isNotEmpty) {
+      // Fallback to legacy weights display
       if (weights.length == 1) {
         parts.add('${_formatWeight(weights.first)}$weightUnit');
       } else if (weights.length <= 3) {
@@ -103,6 +173,7 @@ class EquipmentItem {
     String? displayName,
     int? quantity,
     List<double>? weights,
+    Map<double, int>? weightInventory,
     String? weightUnit,
     String? notes,
   }) {
@@ -111,6 +182,7 @@ class EquipmentItem {
       displayName: displayName ?? this.displayName,
       quantity: quantity ?? this.quantity,
       weights: weights ?? this.weights,
+      weightInventory: weightInventory ?? this.weightInventory,
       weightUnit: weightUnit ?? this.weightUnit,
       notes: notes ?? this.notes,
     );

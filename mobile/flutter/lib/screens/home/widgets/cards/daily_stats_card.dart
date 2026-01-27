@@ -94,7 +94,7 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
     }
 
     // Minimum height to ensure consistent sizing with other half-width cards
-    const minCardHeight = 140.0;
+    const minCardHeight = 120.0;
 
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: minCardHeight),
@@ -127,7 +127,7 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: elevatedColor,
                 border: Border(
@@ -288,17 +288,18 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         // Header row
         Row(
           children: [
-            Icon(Icons.insights, color: accentColor, size: 20),
-            const SizedBox(width: 8),
+            Icon(Icons.insights, color: accentColor, size: 18),
+            const SizedBox(width: 6),
             Expanded(
               child: Text(
                 'Daily Stats',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: textColor,
                 ),
@@ -306,14 +307,14 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
             ),
             Icon(
               Icons.chevron_right,
-              color: textColor,
-              size: 20,
+              color: textMuted,
+              size: 18,
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
-        // Stats row
+        // Stats row - more compact
         Row(
           children: [
             // Steps
@@ -325,11 +326,12 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
                 label: 'steps',
                 textColor: textColor,
                 textMuted: textMuted,
+                compact: true,
               ),
             ),
             Container(
               width: 1,
-              height: 40,
+              height: 32,
               color: textMuted.withValues(alpha: 0.2),
             ),
             // Calorie deficit/surplus
@@ -341,6 +343,7 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
                 label: isInDeficit ? 'deficit' : 'surplus',
                 textColor: textColor,
                 textMuted: textMuted,
+                compact: true,
               ),
             ),
           ],
@@ -439,6 +442,7 @@ class _StatItem extends StatelessWidget {
   final String label;
   final Color textColor;
   final Color textMuted;
+  final bool compact;
 
   const _StatItem({
     required this.icon,
@@ -447,6 +451,7 @@ class _StatItem extends StatelessWidget {
     required this.label,
     required this.textColor,
     required this.textMuted,
+    this.compact = false,
   });
 
   @override
@@ -455,6 +460,7 @@ class _StatItem extends StatelessWidget {
     final numericValue = _extractNumericValue(value);
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         // Large metric number with animation - use FittedBox to prevent overflow
         TweenAnimationBuilder<double>(
@@ -468,7 +474,7 @@ class _StatItem extends StatelessWidget {
               child: Text(
                 displayValue,
                 style: TextStyle(
-                  fontSize: 32,
+                  fontSize: compact ? 24 : 32,
                   fontWeight: FontWeight.bold,
                   color: textColor,
                   height: 1.0,
@@ -478,17 +484,18 @@ class _StatItem extends StatelessWidget {
             );
           },
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: compact ? 2 : 4),
         // Small label with icon
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: iconColor),
-            const SizedBox(width: 4),
+            Icon(icon, size: compact ? 12 : 14, color: iconColor),
+            const SizedBox(width: 3),
             Text(
               label,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: compact ? 10 : 11,
                 fontWeight: FontWeight.w500,
                 color: textMuted,
               ),

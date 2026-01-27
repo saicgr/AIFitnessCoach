@@ -900,6 +900,7 @@ class _WeightProjectionScreenState
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useRootNavigator: true,
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),

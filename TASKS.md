@@ -11,8 +11,9 @@ UPCOMING:
 56. 
 
 ISSUES:
-1. Welcome Screen NEdds changed
-2. 
+1. Welcome Screen NEdds changed 
+2. Need consistent bottom sheet - weekly check in and XP goals sheet
+3. 
 ASAP:
 -0.01. 
 	a. Need to create programs

@@ -892,6 +892,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (context) => _TrophyDetailSheet(
         trophyProgress: trophy,
         isDark: isDark,

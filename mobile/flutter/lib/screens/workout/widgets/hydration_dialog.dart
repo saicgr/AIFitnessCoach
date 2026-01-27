@@ -29,6 +29,7 @@ Future<HydrationDialogResult?> showHydrationDialog({
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
+    useRootNavigator: true,
     enableDrag: true,
     builder: (ctx) => StatefulBuilder(
       builder: (context, setModalState) {

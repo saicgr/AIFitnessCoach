@@ -27,6 +27,7 @@ import 'widgets/quick_add_sheet.dart';
 import 'widgets/nutrition_goals_card.dart';
 import 'widgets/hydration_summary_block.dart';
 import 'tabs/hydration_tab.dart';
+import 'tabs/fasting_tab.dart';
 import '../../data/repositories/hydration_repository.dart';
 
 class NutritionScreen extends ConsumerStatefulWidget {
@@ -53,7 +54,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     _loadData();
     // Collapse nav bar labels on this secondary page
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -224,148 +225,174 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     // Get dynamic accent color from provider
     final accentColor = ref.colors(context).accent;
 
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        foregroundColor: textPrimary,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          onPressed: () => context.go('/home'),
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: accentColor,
-            size: 22,
-          ),
-          tooltip: 'Back to Home',
-        ),
-        title: Text(
-          'Food Diary',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: false,
-        actions: [
-          // Date Navigation
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: Icon(Icons.chevron_left, color: textPrimary),
-                onPressed: () => _changeDate(-1),
-                visualDensity: VisualDensity.compact,
-              ),
-              GestureDetector(
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: _selectedDate,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime.now(),
-                  );
-                  if (picked != null) {
-                    setState(() => _selectedDate = picked);
-                    if (_userId != null) {
-                      final dateStr = DateFormat('yyyy-MM-dd').format(picked);
-                      ref
-                          .read(nutritionProvider.notifier)
-                          .loadTodaySummary(_userId!);
-                      _loadMicronutrients(_userId!, dateStr);
-                    }
-                  }
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: elevated,
-                    borderRadius: BorderRadius.circular(8),
+      body: SafeArea(
+        child: wrapWithSwipeDetector(
+        child: Column(
+          children: [
+            // Floating Header Row
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  // Back button - floating circle
+                  GestureDetector(
+                    onTap: () => context.go('/home'),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: glassSurface,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 18,
+                        color: accentColor,
+                      ),
+                    ),
                   ),
-                  child: Text(
-                    _dateLabel,
+                  const SizedBox(width: 12),
+                  // Title
+                  Text(
+                    'Food',
                     style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                       color: textPrimary,
                     ),
                   ),
-                ),
+                  const Spacer(),
+                  // Date Navigation
+                  GestureDetector(
+                    onTap: () => _changeDate(-1),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: glassSurface,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(Icons.chevron_left, size: 20, color: textPrimary),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  GestureDetector(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: _selectedDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) {
+                        setState(() => _selectedDate = picked);
+                        if (_userId != null) {
+                          final dateStr = DateFormat('yyyy-MM-dd').format(picked);
+                          ref.read(nutritionProvider.notifier).loadTodaySummary(_userId!);
+                          _loadMicronutrients(_userId!, dateStr);
+                        }
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: elevated,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        _dateLabel,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  GestureDetector(
+                    onTap: _isToday ? null : () => _changeDate(1),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: glassSurface,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        Icons.chevron_right,
+                        size: 20,
+                        color: _isToday ? textMuted : textPrimary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Favorites - floating circle
+                  GestureDetector(
+                    onTap: () => _showFavoritesSheet(isDark),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: glassSurface,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Icon(Icons.star_outline, size: 20, color: AppColors.yellow),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Analytics - floating circle
+                  GestureDetector(
+                    onTap: () => _showAnalyticsSheet(isDark),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: glassSurface,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Icon(Icons.insights_outlined, size: 20, color: textSecondary),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Settings - floating circle
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const NutritionSettingsScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: glassSurface,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Icon(Icons.settings_outlined, size: 20, color: textSecondary),
+                    ),
+                  ),
+                ],
               ),
-              IconButton(
-                icon: Icon(
-                  Icons.chevron_right,
-                  color: _isToday ? textMuted : textPrimary,
-                ),
-                onPressed: _isToday ? null : () => _changeDate(1),
-                visualDensity: VisualDensity.compact,
-              ),
-            ],
-          ),
-          // Favorites icon - shows saved/starred foods
-          IconButton(
-            icon: Icon(Icons.star_outline, color: AppColors.yellow),
-            onPressed: () => _showFavoritesSheet(isDark),
-            tooltip: 'Favorites',
-          ),
-          // Analytics icon
-          IconButton(
-            icon: Icon(Icons.insights_outlined, color: textPrimary),
-            onPressed: () => _showAnalyticsSheet(isDark),
-            tooltip: 'Analytics',
-          ),
-          IconButton(
-            icon: Icon(Icons.settings_outlined, color: textPrimary),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const NutritionSettingsScreen(),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: wrapWithSwipeDetector(
-        child: Column(
-          children: [
-            // Tab Bar
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: elevated,
-              borderRadius: BorderRadius.circular(12),
             ),
-            child: TabBar(
-              controller: _tabController,
-              indicator: BoxDecoration(
-                color: teal,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              indicatorSize: TabBarIndicatorSize.tab,
-              labelColor: Colors.white,
-              unselectedLabelColor: textMuted,
-              labelStyle:
-                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-              dividerColor: Colors.transparent,
-              tabs: const [
-                Tab(text: 'Daily'),
-                Tab(text: 'Nutrients'),
-                Tab(text: 'Recipes'),
-                Tab(text: 'Hydration'),
-              ],
+            // Tab Bar with colored tabs
+            _ColoredNutritionTabBar(
+              tabController: _tabController,
+              isDark: isDark,
             ),
-          ),
 
           // Tab Content
           Expanded(
@@ -431,11 +458,18 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             userId: _userId ?? '',
                             isDark: isDark,
                           ),
+
+                          // Fasting Tab
+                          FastingTab(
+                            userId: _userId ?? '',
+                            isDark: isDark,
+                          ),
                         ],
                       ),
           ),
           ],
         ),
+      ),
       ),
       // FAB removed - using compact meal row and app bar icons instead
     );
@@ -475,6 +509,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => LogMealSheet(
         userId: userId!,
@@ -501,6 +536,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) =>
           RecipeBuilderSheet(userId: _userId!, isDark: isDark),
@@ -527,6 +563,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.7,
@@ -610,6 +647,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.6,
@@ -800,6 +838,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     return showModalBottomSheet<MealType>(
       context: context,
       backgroundColor: nearBlack,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -866,6 +905,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Padding(
         padding: EdgeInsets.only(
@@ -978,6 +1018,107 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Colored Tab Bar with distinct colors for each tab
+// ─────────────────────────────────────────────────────────────────
+
+class _ColoredNutritionTabBar extends StatelessWidget {
+  final TabController tabController;
+  final bool isDark;
+
+  const _ColoredNutritionTabBar({
+    required this.tabController,
+    required this.isDark,
+  });
+
+  // Tab colors - each tab has its own accent color
+  static const List<Color> _tabColors = [
+    Color(0xFF10B981), // Daily - green (teal)
+    Color(0xFFF59E0B), // Nutrients - amber/orange
+    Color(0xFFEC4899), // Recipes - pink
+    Color(0xFF3B82F6), // Hydration - blue
+    Color(0xFF8B5CF6), // Fasting - purple
+  ];
+
+  static const List<String> _tabLabels = [
+    'Daily',
+    'Nutri',
+    'Recipes',
+    'Water',
+    'Fast',
+  ];
+
+  static const List<IconData> _tabIcons = [
+    Icons.restaurant_menu_rounded,
+    Icons.science_outlined,
+    Icons.menu_book_rounded,
+    Icons.water_drop_outlined,
+    Icons.timer_outlined,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: AnimatedBuilder(
+        animation: tabController,
+        builder: (context, child) {
+          return Row(
+            children: List.generate(5, (index) {
+              final isSelected = tabController.index == index;
+              final color = _tabColors[index];
+
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => tabController.animateTo(index),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? color : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          _tabIcons[index],
+                          size: 16,
+                          color: isSelected ? Colors.white : textMuted,
+                        ),
+                        if (isSelected) ...[
+                          const SizedBox(width: 4),
+                          Text(
+                            _tabLabels[index],
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          );
+        },
       ),
     );
   }
@@ -1118,6 +1259,7 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.55,
@@ -1293,6 +1435,7 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
@@ -1539,6 +1682,7 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.7,
@@ -3253,6 +3397,7 @@ class _CollapsibleMealSectionState extends State<_CollapsibleMealSection> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _FoodDetailSheet(
         meal: meal,

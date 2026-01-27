@@ -290,6 +290,7 @@ class KegelSettingsSection extends ConsumerWidget {
   ) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       builder: (context) {
         return SafeArea(
           child: Column(
@@ -344,6 +345,7 @@ class KegelSettingsSection extends ConsumerWidget {
   ) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       builder: (context) {
         return SafeArea(
           child: Column(

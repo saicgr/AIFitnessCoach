@@ -384,6 +384,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => LogMeasurementSheet(userId: userId),
     );

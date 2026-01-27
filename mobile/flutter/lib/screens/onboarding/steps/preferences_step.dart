@@ -18,6 +18,20 @@ class PreferencesStep extends StatefulWidget {
 }
 
 class _PreferencesStepState extends State<PreferencesStep> {
+  late TextEditingController _gymNameController;
+
+  @override
+  void initState() {
+    super.initState();
+    _gymNameController = TextEditingController(text: widget.data.gymName ?? '');
+  }
+
+  @override
+  void dispose() {
+    _gymNameController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -46,32 +60,71 @@ class _PreferencesStepState extends State<PreferencesStep> {
 
           // Training Split
           _buildLabel('Training Split', isRequired: true),
+          const SizedBox(height: 4),
+          Text(
+            'Choose how you want to structure your workouts',
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.textMuted,
+            ),
+          ),
           const SizedBox(height: 12),
           SingleSelectGroup(
             options: const [
+              // === BEGINNER ===
               SelectionOption(
                 label: 'Full Body',
                 value: 'full_body',
-                description: 'Train all muscle groups each session',
+                description: '3 days/week - Best for beginners',
                 icon: Icons.accessibility_new,
               ),
               SelectionOption(
-                label: 'Upper/Lower',
+                label: 'Upper / Lower',
                 value: 'upper_lower',
-                description: 'Alternate between upper and lower body',
+                description: '4 days/week - Great balance',
                 icon: Icons.swap_vert,
               ),
+
+              // === INTERMEDIATE ===
               SelectionOption(
-                label: 'Push/Pull/Legs',
+                label: 'Push / Pull / Legs',
                 value: 'push_pull_legs',
-                description: 'Classic 3-day split for muscle building',
+                description: '3-6 days/week - Most popular',
                 icon: Icons.splitscreen,
               ),
               SelectionOption(
-                label: 'Body Part',
+                label: 'PHUL',
+                value: 'phul',
+                description: '4 days/week - Strength + Size',
+                icon: Icons.fitness_center,
+              ),
+              SelectionOption(
+                label: 'PPLUL Hybrid',
+                value: 'pplul',
+                description: '5 days/week - Optimal for gains',
+                icon: Icons.auto_graph,
+              ),
+
+              // === ADVANCED ===
+              SelectionOption(
+                label: 'Arnold Split',
+                value: 'arnold_split',
+                description: '6 days/week - Classic bodybuilding',
+                icon: Icons.star,
+              ),
+              SelectionOption(
+                label: 'Bro Split',
                 value: 'body_part',
-                description: 'Focus on one muscle group per session',
+                description: '5 days/week - One muscle per day',
                 icon: Icons.filter_frames,
+              ),
+
+              // === AI MODE ===
+              SelectionOption(
+                label: 'Let AI Decide',
+                value: 'ai_adaptive',
+                description: 'AI picks optimal split for you',
+                icon: Icons.auto_awesome,
               ),
             ],
             selectedValue: widget.data.trainingSplit,
@@ -116,8 +169,128 @@ class _PreferencesStepState extends State<PreferencesStep> {
           ),
           const SizedBox(height: 32),
 
+          // === NEW: Gym Location Context ===
+          _buildLabel('Workout Location', isRequired: true),
+          const Text(
+            'Where do you primarily work out?',
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.textMuted,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SingleSelectGroup(
+            options: const [
+              SelectionOption(
+                label: 'Home',
+                value: 'home_gym',
+                description: 'I work out at home',
+                icon: Icons.home_rounded,
+              ),
+              SelectionOption(
+                label: 'Gym',
+                value: 'commercial_gym',
+                description: 'I have a gym membership',
+                icon: Icons.business_rounded,
+              ),
+              SelectionOption(
+                label: 'Both',
+                value: 'both',
+                description: 'Home and gym',
+                icon: Icons.compare_arrows_rounded,
+              ),
+              SelectionOption(
+                label: 'Other',
+                value: 'other',
+                description: 'Hotel, outdoors, etc.',
+                icon: Icons.more_horiz_rounded,
+              ),
+            ],
+            selectedValue: widget.data.workoutEnvironment,
+            onChanged: (value) {
+              widget.data.workoutEnvironment = value;
+              // Auto-populate gym name suggestion
+              if (value == 'home_gym') {
+                _gymNameController.text = 'Home Gym';
+                widget.data.gymName = 'Home Gym';
+              } else if (value == 'both') {
+                _gymNameController.text = 'Home Gym';
+                widget.data.gymName = 'Home Gym';
+              } else {
+                _gymNameController.text = '';
+                widget.data.gymName = null;
+              }
+              widget.onDataChanged();
+              setState(() {}); // Rebuild to show/hide suggestions
+            },
+            showDescriptions: true,
+          ),
+          const SizedBox(height: 24),
+
+          // Gym Name Input
+          _buildLabel('Location Name'),
+          const Text(
+            'What would you like to call this workout location?',
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.textMuted,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _gymNameController,
+            onChanged: (value) {
+              widget.data.gymName = value;
+              widget.onDataChanged();
+            },
+            decoration: InputDecoration(
+              hintText: _getGymNameHint(),
+              filled: true,
+              fillColor: AppColors.glassSurface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.cardBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.cardBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.accent, width: 2),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            ),
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 15,
+            ),
+          ),
+
+          // Smart Suggestions
+          if (widget.data.workoutEnvironment == 'commercial_gym') ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                '24 Hour Fitness',
+                'Planet Fitness',
+                'LA Fitness',
+                'Gold\'s Gym',
+                'Anytime Fitness',
+              ].map((name) => _buildSuggestionChip(name)).toList(),
+            ),
+          ],
+          const SizedBox(height: 32),
+
           // Equipment
-          _buildLabel('Equipment Available', isRequired: true),
+          _buildLabel(
+            widget.data.gymName != null && widget.data.gymName!.isNotEmpty
+                ? 'Equipment at ${widget.data.gymName}'
+                : 'Equipment Available',
+            isRequired: true,
+          ),
           const Text(
             'Select all equipment you have access to',
             style: TextStyle(
@@ -410,6 +583,46 @@ class _PreferencesStepState extends State<PreferencesStep> {
             ),
           ),
       ],
+    );
+  }
+
+  String _getGymNameHint() {
+    switch (widget.data.workoutEnvironment) {
+      case 'home_gym':
+        return 'Home Gym';
+      case 'commercial_gym':
+        return '24 Hour Fitness, Planet Fitness, etc.';
+      case 'both':
+        return 'Home Gym';
+      case 'other':
+        return 'Hotel Gym, Outdoor Gym, etc.';
+      default:
+        return 'My Gym';
+    }
+  }
+
+  Widget _buildSuggestionChip(String name) {
+    return InkWell(
+      onTap: () {
+        _gymNameController.text = name;
+        widget.data.gymName = name;
+        widget.onDataChanged();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.elevated,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.cardBorder),
+        ),
+        child: Text(
+          name,
+          style: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ),
     );
   }
 }

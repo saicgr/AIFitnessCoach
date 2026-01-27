@@ -290,6 +290,7 @@ class _FeatureVotingScreenState extends ConsumerState<FeatureVotingScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const SuggestFeatureSheet(),
     );

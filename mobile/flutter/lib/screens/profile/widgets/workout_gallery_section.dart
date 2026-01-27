@@ -327,6 +327,7 @@ class _WorkoutGallerySectionState extends ConsumerState<WorkoutGallerySection> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _ImageDetailSheet(image: image, userId: _userId!),
     );

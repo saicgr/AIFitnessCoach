@@ -296,6 +296,7 @@ async def generate_workout(request: GenerateWorkoutRequest):
                 set_type_context=set_type_context if set_type_context else None,
                 primary_goal=primary_goal,
                 muscle_focus_points=muscle_focus_points,
+                training_split=training_split,
             )
 
             exercises = workout_data.get("exercises", [])

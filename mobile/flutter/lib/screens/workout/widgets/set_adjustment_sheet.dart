@@ -469,6 +469,7 @@ Future<(SetAdjustmentReason, String?)?> showSetAdjustmentSheet({
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    useRootNavigator: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.2),
     builder: (context) => SetAdjustmentSheet(
@@ -915,6 +916,7 @@ Future<(SetAdjustmentReason, String?)?> showSkipRemainingSetsSheet({
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    useRootNavigator: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.2),
     builder: (context) => SkipRemainingSetsSheet(
@@ -1788,6 +1790,7 @@ Future<InWorkoutSetEditResult?> showInWorkoutSetEditingSheet({
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    useRootNavigator: true,
     backgroundColor: Colors.transparent,
     builder: (context) => InWorkoutSetEditingSheet(
       exerciseName: exerciseName,

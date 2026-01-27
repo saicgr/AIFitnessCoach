@@ -99,6 +99,9 @@ class SettingItemData {
   /// Whether this item is the weight increments selector.
   final bool isWeightIncrementsSelector;
 
+  /// Whether this item is the daily XP strip toggle.
+  final bool isDailyXPStripToggle;
+
   const SettingItemData({
     required this.icon,
     required this.title,
@@ -132,6 +135,7 @@ class SettingItemData {
     this.isWeightUnitSelector = false,
     this.isAccentColorSelector = false,
     this.isWeightIncrementsSelector = false,
+    this.isDailyXPStripToggle = false,
   });
 }
 

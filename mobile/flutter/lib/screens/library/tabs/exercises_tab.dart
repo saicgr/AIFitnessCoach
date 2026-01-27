@@ -52,6 +52,7 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const ExerciseFilterSheet(),
     );

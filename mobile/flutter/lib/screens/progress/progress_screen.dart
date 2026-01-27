@@ -333,6 +333,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.7,
@@ -1072,6 +1073,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
     // First, pick a view type
     selectedType = await showModalBottomSheet<PhotoViewType>(
       context: context,
+      useRootNavigator: true,
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -1103,6 +1105,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
     // Then pick image source
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
+      useRootNavigator: true,
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -1280,6 +1283,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => LogMeasurementSheet(userId: _userId!),
     );
@@ -1290,6 +1294,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.9,

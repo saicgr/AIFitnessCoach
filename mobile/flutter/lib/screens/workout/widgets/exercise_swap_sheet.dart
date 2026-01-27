@@ -24,6 +24,7 @@ Future<Workout?> showExerciseSwapSheet(
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.2),
     isScrollControlled: true,
+    useRootNavigator: true,
     builder: (context) => _ExerciseSwapSheet(
       workoutId: workoutId,
       exercise: exercise,

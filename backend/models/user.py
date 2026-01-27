@@ -125,6 +125,7 @@ class UserUpdate(BaseModel):
     workout_type_preference: Optional[str] = Field(default=None, max_length=20)  # strength, cardio, mixed
     # Workout environment - stored in preferences
     workout_environment: Optional[str] = Field(default=None, max_length=50)  # commercial_gym, home_gym, home, etc.
+    gym_name: Optional[str] = Field(default=None, max_length=100)  # User-provided gym/location name
     # Detailed equipment with quantities and weights
     # Array of objects: [{"name": "dumbbells", "quantity": 2, "weights": [15, 25], "weight_unit": "lbs", "notes": ""}]
     equipment_details: Optional[list] = None

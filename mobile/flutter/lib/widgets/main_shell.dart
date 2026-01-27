@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_colors.dart';
 import '../core/theme/theme_colors.dart';
 import '../data/models/coach_persona.dart';
@@ -22,6 +23,82 @@ final floatingNavBarVisibleProvider = StateProvider<bool>((ref) => true);
 /// Provider to control whether nav bar labels are expanded
 /// Set to false when on secondary pages (Workouts, Nutrition, Fasting)
 final navBarLabelsExpandedProvider = StateProvider<bool>((ref) => true);
+
+/// Provider to control edge handle visibility (can be toggled in settings)
+/// Persisted to SharedPreferences
+final edgeHandleEnabledProvider =
+    StateNotifierProvider<EdgeHandleEnabledNotifier, bool>((ref) {
+  return EdgeHandleEnabledNotifier();
+});
+
+/// Provider to store edge handle vertical position (0.0 = top, 1.0 = bottom)
+/// Persisted to SharedPreferences
+final edgeHandlePositionProvider =
+    StateNotifierProvider<EdgeHandlePositionNotifier, double>((ref) {
+  return EdgeHandlePositionNotifier();
+});
+
+/// Notifier for edge handle enabled state with persistence
+class EdgeHandleEnabledNotifier extends StateNotifier<bool> {
+  static const _key = 'edge_handle_enabled';
+
+  EdgeHandleEnabledNotifier() : super(true) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final value = prefs.getBool(_key);
+      if (value != null) {
+        state = value;
+      }
+    } catch (e) {
+      debugPrint('Error loading edge handle enabled: $e');
+    }
+  }
+
+  Future<void> setEnabled(bool value) async {
+    state = value;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_key, value);
+    } catch (e) {
+      debugPrint('Error saving edge handle enabled: $e');
+    }
+  }
+}
+
+/// Notifier for edge handle vertical position with persistence
+class EdgeHandlePositionNotifier extends StateNotifier<double> {
+  static const _key = 'edge_handle_position';
+
+  EdgeHandlePositionNotifier() : super(0.3) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final value = prefs.getDouble(_key);
+      if (value != null) {
+        state = value.clamp(0.0, 1.0);
+      }
+    } catch (e) {
+      debugPrint('Error loading edge handle position: $e');
+    }
+  }
+
+  Future<void> setPosition(double value) async {
+    state = value.clamp(0.0, 1.0);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble(_key, state);
+    } catch (e) {
+      debugPrint('Error saving edge handle position: $e');
+    }
+  }
+}
 
 /// Main shell with floating bottom navigation bar
 class MainShell extends ConsumerWidget {
@@ -141,8 +218,8 @@ class MainShell extends ConsumerWidget {
             ),
           ),
           // Note: Workout mini player is now handled globally in app.dart
-          // Floating draggable AI Coach button
-          _DraggableAICoachButton(
+          // Samsung-style edge handle for AI Coach access
+          _EdgePanelHandle(
             onTap: () {
               HapticFeedback.mediumImpact();
               showChatBottomSheet(context, ref);
@@ -154,81 +231,124 @@ class MainShell extends ConsumerWidget {
   }
 }
 
-/// Draggable floating AI Coach button that can be positioned anywhere on screen
-class _DraggableAICoachButton extends StatefulWidget {
+/// Samsung Edge Panel style handle for AI Coach access
+/// A subtle, semi-transparent vertical bar on the right edge.
+/// Tap or swipe left to open AI Coach. Draggable vertically.
+class _EdgePanelHandle extends ConsumerStatefulWidget {
   final VoidCallback onTap;
 
-  const _DraggableAICoachButton({required this.onTap});
+  const _EdgePanelHandle({required this.onTap});
 
   @override
-  State<_DraggableAICoachButton> createState() => _DraggableAICoachButtonState();
+  ConsumerState<_EdgePanelHandle> createState() => _EdgePanelHandleState();
 }
 
-class _DraggableAICoachButtonState extends State<_DraggableAICoachButton> {
-  // Position - initialized in initState
-  late double _xPosition;
-  late double _yPosition;
-
-  static const double buttonSize = 64.0; // Bigger avatar
+class _EdgePanelHandleState extends ConsumerState<_EdgePanelHandle> {
+  double _verticalPosition = 0.3; // 0.0 = top, 1.0 = bottom
+  bool _isDragging = false;
+  double _horizontalDragDistance = 0;
 
   @override
   void initState() {
     super.initState();
-    // Will be properly initialized in first build
-    _xPosition = -1;
-    _yPosition = -1;
+    // Load saved position after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        _verticalPosition = ref.read(edgeHandlePositionProvider);
+      });
+    });
+  }
+
+  void _onPanStart(DragStartDetails details) {
+    setState(() {
+      _isDragging = true;
+      _horizontalDragDistance = 0;
+    });
+  }
+
+  void _onPanUpdate(DragUpdateDetails details) {
+    // Track horizontal drag for swipe detection
+    _horizontalDragDistance += details.delta.dx;
+
+    // Update vertical position
+    final screenHeight = MediaQuery.of(context).size.height;
+    final safeTop = MediaQuery.of(context).padding.top + 100;
+    const safeBottom = 180; // Above nav bar
+    final usableHeight = screenHeight - safeTop - safeBottom;
+
+    setState(() {
+      _verticalPosition += details.delta.dy / usableHeight;
+      _verticalPosition = _verticalPosition.clamp(0.0, 1.0);
+    });
+  }
+
+  void _onPanEnd(DragEndDetails details) {
+    setState(() => _isDragging = false);
+
+    // Check for swipe left gesture (negative horizontal distance or velocity)
+    final horizontalVelocity = details.velocity.pixelsPerSecond.dx;
+    if (_horizontalDragDistance < -30 || horizontalVelocity < -200) {
+      // Swiped left - open AI Coach
+      widget.onTap();
+    }
+
+    // Save position (persisted to SharedPreferences)
+    ref.read(edgeHandlePositionProvider.notifier).setPosition(_verticalPosition);
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-    final topPadding = MediaQuery.of(context).padding.top;
+    final isEnabled = ref.watch(edgeHandleEnabledProvider);
+    final isNavBarVisible = ref.watch(floatingNavBarVisibleProvider);
 
-    // Position just above the nav bar (64px height + small gap)
-    const navBarOffset = 72.0; // 64px nav bar + 8px gap
-
-    // Initialize position on first build - position just above nav bar
-    if (_xPosition < 0 || _yPosition < 0) {
-      _xPosition = size.width - buttonSize - 16;
-      _yPosition = size.height - buttonSize - bottomPadding - navBarOffset;
+    // Don't show if disabled or nav bar is hidden (e.g., bottom sheet open)
+    if (!isEnabled || !isNavBarVisible) {
+      return const SizedBox.shrink();
     }
 
-    // Boundaries for dragging - allow going lower (just above nav bar)
-    const minX = 8.0;
-    final maxX = size.width - buttonSize - 8;
-    final minY = topPadding + 60;
-    final maxY = size.height - buttonSize - bottomPadding - navBarOffset;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final safeTop = MediaQuery.of(context).padding.top + 100;
+    const safeBottom = 180;
+    final usableHeight = screenHeight - safeTop - safeBottom;
+    final topOffset = safeTop + (usableHeight * _verticalPosition);
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Positioned(
-      left: _xPosition.clamp(minX, maxX),
-      top: _yPosition.clamp(minY, maxY),
+      right: 0,
+      top: topOffset,
       child: GestureDetector(
-        onPanUpdate: (details) {
-          setState(() {
-            _xPosition = (_xPosition + details.delta.dx).clamp(minX, maxX);
-            _yPosition = (_yPosition + details.delta.dy).clamp(minY, maxY);
-          });
-        },
-        onPanEnd: (details) {
-          // Snap to nearest edge (left or right)
-          setState(() {
-            final centerX = _xPosition + buttonSize / 2;
-            if (centerX < size.width / 2) {
-              _xPosition = minX;
-            } else {
-              _xPosition = maxX;
-            }
-          });
-        },
+        onPanStart: _onPanStart,
+        onPanUpdate: _onPanUpdate,
+        onPanEnd: _onPanEnd,
         onTap: widget.onTap,
-        child: _AICoachButton(onTap: widget.onTap),
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          // Larger touch area (24px) for easier interaction
+          width: 24,
+          height: 80,
+          alignment: Alignment.centerRight,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: _isDragging ? 12 : 6,
+            height: 60,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: _isDragging ? 0.4 : 0.2)
+                  : Colors.black.withValues(alpha: _isDragging ? 0.3 : 0.15),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(4),
+                bottomLeft: Radius.circular(4),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
 }
 
-/// Container widget with nav bar and AI button side by side
+/// Minimal floating nav bar - expandable items show label when selected
 class _FloatingNavBarWithAI extends ConsumerWidget {
   final int selectedIndex;
   final bool isSecondaryPage;
@@ -243,26 +363,31 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final navBarColor = isDark ? const Color(0xFF1C1C1E) : Colors.white;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
-
-    // Watch the labels expanded provider - secondary pages set this to false
-    final labelsExpanded = ref.watch(navBarLabelsExpandedProvider);
 
     // Get dynamic accent color from provider
     final accentColor = ref.colors(context).accent;
 
-    // Nav bar dimensions (no more + button protrusion)
-    const navBarHeight = 64.0;
-    const itemHeight = 50.0;
-    const fadeHeight = 50.0;
+    // Compact nav bar dimensions
+    const navBarHeight = 52.0;
+    const fadeHeight = 36.0;
+
+    // Clean pill bar colors
+    final pillBarColor = isDark
+        ? Colors.grey.shade900.withValues(alpha: 0.92)
+        : Colors.grey.shade100.withValues(alpha: 0.95);
+
+    final iconMuted = isDark
+        ? Colors.grey.shade500
+        : Colors.grey.shade400;
 
     return SizedBox(
       height: navBarHeight + bottomPadding + fadeHeight,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Full gradient from transparent to solid - covers entire nav area
+          // Subtle fade gradient
           Positioned(
             left: 0,
             right: 0,
@@ -275,102 +400,170 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      navBarColor.withValues(alpha: 0.0),
-                      navBarColor.withValues(alpha: 0.15),
-                      navBarColor.withValues(alpha: 0.4),
-                      navBarColor.withValues(alpha: 0.7),
-                      navBarColor.withValues(alpha: 0.9),
-                      navBarColor,
-                      navBarColor,
+                      backgroundColor.withValues(alpha: 0.0),
+                      backgroundColor.withValues(alpha: 0.9),
+                      backgroundColor,
                     ],
-                    stops: const [0.0, 0.1, 0.25, 0.4, 0.5, 0.6, 1.0],
+                    stops: const [0.0, 0.6, 1.0],
                   ),
                 ),
               ),
             ),
           ),
-          // Nav bar content - positioned at bottom, only this area receives touches
+          // Centered compact pill nav bar
           Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: navBarHeight + bottomPadding,
-            child: SafeArea(
-              top: false,
-              child: SizedBox(
-                height: navBarHeight,
-                child: Stack(
-                  children: [
-                    // Main nav items - 5 items evenly spaced
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _AnchoredNavItem(
-                          icon: Icons.home_outlined,
-                          selectedIcon: Icons.home_rounded,
-                          label: 'Home',
-                          isSelected: selectedIndex == 0,
-                          onTap: () => onItemTapped(0),
-                          itemHeight: itemHeight,
-                          selectedColor: accentColor,
-                          isDark: isDark,
-                        ),
-                        _AnchoredNavItem(
-                          icon: Icons.fitness_center_outlined,
-                          selectedIcon: Icons.fitness_center,
-                          label: 'Workout',
-                          isSelected: selectedIndex == 1,
-                          onTap: () => onItemTapped(1),
-                          itemHeight: itemHeight,
-                          selectedColor: accentColor,
-                          isDark: isDark,
-                        ),
-                        _AnchoredNavItem(
-                          icon: Icons.restaurant_outlined,
-                          selectedIcon: Icons.restaurant,
-                          label: 'Nutrition',
-                          isSelected: selectedIndex == 2,
-                          onTap: () => onItemTapped(2),
-                          itemHeight: itemHeight,
-                          selectedColor: accentColor,
-                          isDark: isDark,
-                        ),
-                        _AnchoredNavItem(
-                          icon: Icons.public_outlined,
-                          selectedIcon: Icons.public,
-                          label: 'Social',
-                          isSelected: selectedIndex == 3,
-                          onTap: () => onItemTapped(3),
-                          itemHeight: itemHeight,
-                          selectedColor: accentColor,
-                          isDark: isDark,
-                        ),
-                        _AnchoredNavItem(
-                          icon: Icons.person_outline,
-                          selectedIcon: Icons.person,
-                          label: 'Profile',
-                          isSelected: selectedIndex == 4,
-                          onTap: () => onItemTapped(4),
-                          itemHeight: itemHeight,
-                          selectedColor: accentColor,
-                          isDark: isDark,
-                        ),
-                      ],
-                    ),
-
-                    // Admin Support Button - only shown for admins
-                    Positioned(
-                      right: 8,
-                      top: 0,
-                      bottom: 0,
-                      child: Center(child: _AdminSupportButton()),
-                    ),
-                  ],
-                ),
+            left: 20,
+            right: 20,
+            bottom: bottomPadding + 10,
+            child: Container(
+              height: navBarHeight,
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              decoration: BoxDecoration(
+                color: pillBarColor,
+                borderRadius: BorderRadius.circular(26),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _ExpandableNavItem(
+                    icon: Icons.home_outlined,
+                    selectedIcon: Icons.home_rounded,
+                    label: 'Home',
+                    isSelected: selectedIndex == 0,
+                    onTap: () => onItemTapped(0),
+                    accentColor: accentColor,
+                    mutedColor: iconMuted,
+                    isDark: isDark,
+                  ),
+                  _ExpandableNavItem(
+                    icon: Icons.fitness_center_outlined,
+                    selectedIcon: Icons.fitness_center,
+                    label: 'Workout',
+                    isSelected: selectedIndex == 1,
+                    onTap: () => onItemTapped(1),
+                    accentColor: accentColor,
+                    mutedColor: iconMuted,
+                    isDark: isDark,
+                  ),
+                  _ExpandableNavItem(
+                    icon: Icons.restaurant_outlined,
+                    selectedIcon: Icons.restaurant,
+                    label: 'Nutrition',
+                    isSelected: selectedIndex == 2,
+                    onTap: () => onItemTapped(2),
+                    accentColor: accentColor,
+                    mutedColor: iconMuted,
+                    isDark: isDark,
+                  ),
+                  _ExpandableNavItem(
+                    icon: Icons.public_outlined,
+                    selectedIcon: Icons.public,
+                    label: 'Social',
+                    isSelected: selectedIndex == 3,
+                    onTap: () => onItemTapped(3),
+                    accentColor: accentColor,
+                    mutedColor: iconMuted,
+                    isDark: isDark,
+                  ),
+                  _ExpandableNavItem(
+                    icon: Icons.person_outline,
+                    selectedIcon: Icons.person,
+                    label: 'Profile',
+                    isSelected: selectedIndex == 4,
+                    onTap: () => onItemTapped(4),
+                    accentColor: accentColor,
+                    mutedColor: iconMuted,
+                    isDark: isDark,
+                  ),
+                ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Expandable nav item - shows icon only when unselected, icon + label when selected
+class _ExpandableNavItem extends StatelessWidget {
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color accentColor;
+  final Color mutedColor;
+  final bool isDark;
+
+  const _ExpandableNavItem({
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    required this.accentColor,
+    required this.mutedColor,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Background pill color when selected
+    final selectedBgColor = accentColor.withValues(alpha: isDark ? 0.15 : 0.12);
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.symmetric(
+          horizontal: isSelected ? 14 : 10,
+          vertical: 8,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected ? selectedBgColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isSelected ? selectedIcon : icon,
+              color: isSelected ? accentColor : mutedColor,
+              size: 22,
+            ),
+            // Animated label that expands when selected
+            AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutCubic,
+              child: isSelected
+                  ? Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          color: accentColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -759,16 +952,18 @@ class _AnchoredNavItem extends StatelessWidget {
           onTap();
         },
         behavior: HitTestBehavior.opaque,
-        child: SizedBox(
+        child: Container(
           height: itemHeight,
+          alignment: Alignment.center,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(
                 isSelected ? selectedIcon : icon,
                 color: activeColor,
-                size: 24,
+                size: 22,
               ),
               // Only show label when selected
               AnimatedSize(
@@ -776,12 +971,12 @@ class _AnchoredNavItem extends StatelessWidget {
                 curve: Curves.easeOutCubic,
                 child: isSelected
                     ? Padding(
-                        padding: const EdgeInsets.only(left: 6),
+                        padding: const EdgeInsets.only(left: 5),
                         child: Text(
                           label,
                           style: TextStyle(
                             color: selectedColor,
-                            fontSize: 13,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

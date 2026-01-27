@@ -23,6 +23,7 @@ void showQuickActionsSheet(BuildContext context, WidgetRef ref) {
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.2), // Light scrim so content shows through
     isScrollControlled: true,
+    useRootNavigator: true,
     builder: (context) => _QuickActionsSheet(ref: ref),
   ).then((_) {
     // Show nav bar when sheet is closed
@@ -218,6 +219,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
             ),
           ),
           child: SafeArea(
+              top: false, // Don't add top padding
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -233,19 +235,16 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Hero Card (contextual)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: _HeroActionCard(
-                      onClose: () => Navigator.pop(context),
-                    ).animateHeroEntrance(),
-                  ),
+                  // Hero Card (contextual) - edge to edge with minimal padding
+                  _HeroActionCard(
+                    onClose: () => Navigator.pop(context),
+                  ).animateHeroEntrance(),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
-                  // Row 1: Track Actions
+                  // Row 1: Track Actions - truly edge to edge
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Row(
                       children: trackActions.asMap().entries.map((entry) {
                         final index = entry.key;
@@ -253,8 +252,8 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                         return Expanded(
                           child: Padding(
                             padding: EdgeInsets.only(
-                              left: index > 0 ? 6 : 0,
-                              right: index < 3 ? 6 : 0,
+                              left: index > 0 ? 2 : 0,
+                              right: index < 3 ? 2 : 0,
                             ),
                             child: _CompactActionItem(
                               icon: action.icon,
@@ -270,11 +269,11 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 6),
 
-                  // Row 2: View/Act Actions
+                  // Row 2: View/Act Actions - truly edge to edge
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Row(
                       children: viewActions.asMap().entries.map((entry) {
                         final index = entry.key;
@@ -282,8 +281,8 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                         return Expanded(
                           child: Padding(
                             padding: EdgeInsets.only(
-                              left: index > 0 ? 6 : 0,
-                              right: index < 3 ? 6 : 0,
+                              left: index > 0 ? 2 : 0,
+                              right: index < 3 ? 2 : 0,
                             ),
                             child: _CompactActionItem(
                               icon: action.icon,
@@ -298,7 +297,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
@@ -388,25 +387,27 @@ class _FastingHeroCard extends ConsumerWidget {
     final hours = elapsedMinutes ~/ 60;
     final mins = elapsedMinutes % 60;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          onClose();
-          context.push('/fasting');
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: borderColor,
-              width: 1,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            onClose();
+            context.push('/fasting');
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: borderColor,
+                width: 1,
+              ),
             ),
-          ),
-          child: Row(
+            child: Row(
             children: [
               // Timer icon
               Container(
@@ -494,6 +495,7 @@ class _FastingHeroCard extends ConsumerWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -620,26 +622,28 @@ class _PhotoHeroCard extends StatelessWidget {
         ? Colors.white.withValues(alpha: 0.1)
         : Colors.black.withValues(alpha: 0.06);
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onClose();
-          context.push('/progress');
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: borderColor,
-              width: 1,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onClose();
+            context.push('/progress');
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: borderColor,
+                width: 1,
+              ),
             ),
-          ),
-          child: Row(
+            child: Row(
             children: [
               // Camera icon
               Container(
@@ -691,6 +695,7 @@ class _PhotoHeroCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

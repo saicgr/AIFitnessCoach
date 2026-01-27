@@ -373,6 +373,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheetState) => Container(
@@ -977,6 +978,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (ctx) => Container(
         decoration: BoxDecoration(
           color: isDark ? AppColors.surface : Colors.white,
@@ -1124,6 +1126,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (ctx) => Container(
         decoration: BoxDecoration(
           color: isDark ? AppColors.surface : Colors.white,
@@ -1220,6 +1223,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useRootNavigator: true,
       enableDrag: true,
       builder: (ctx) => Container(
         decoration: BoxDecoration(
@@ -1744,6 +1748,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (ctx) => Container(
         decoration: BoxDecoration(
           color: isDark ? AppColors.surface : Colors.white,
@@ -2009,6 +2014,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(ctx).viewInsets.bottom,
@@ -2327,6 +2333,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(

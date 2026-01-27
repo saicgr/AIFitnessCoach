@@ -98,6 +98,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
       context: context,
       backgroundColor: surface,
       isScrollControlled: true,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),

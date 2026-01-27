@@ -140,6 +140,7 @@ class _EditWorkoutEquipmentSheetState extends State<EditWorkoutEquipmentSheet> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => EditWeightsSheet(
         equipment: equipment,

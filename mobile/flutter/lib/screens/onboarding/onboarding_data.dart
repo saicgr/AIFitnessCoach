@@ -39,6 +39,9 @@ class OnboardingData {
   String progressionPace = 'medium';
   // New: Workout type preference (strength, cardio, mixed)
   String workoutTypePreference = 'strength';
+  // New: Gym location context
+  String? workoutEnvironment; // 'home_gym', 'commercial_gym', 'both', 'other'
+  String? gymName; // User-provided name for their gym
 
   // Step 6: Health & Limitations
   List<String> injuries = [];
@@ -59,7 +62,9 @@ class OnboardingData {
       case 3: // Schedule
         return workoutDays.isNotEmpty && preferredTime != null;
       case 4: // Preferences
-        return trainingSplit != null && equipment.isNotEmpty;
+        return trainingSplit != null &&
+               equipment.isNotEmpty &&
+               workoutEnvironment != null;
       case 5: // Health
         return activityLevel != null &&
             (injuries.isNotEmpty || healthConditions.isNotEmpty ||
@@ -104,6 +109,8 @@ class OnboardingData {
       'training_split': trainingSplit,
       'intensity_preference': intensityLevel,
       'equipment': equipment,
+      'workout_environment': workoutEnvironment,
+      'gym_name': gymName,
       'workout_variety': workoutVariety,
       'dumbbell_count': dumbbellCount,
       'kettlebell_count': kettlebellCount,
@@ -120,6 +127,8 @@ class OnboardingData {
         'kettlebell_count': kettlebellCount,
         'progression_pace': progressionPace,
         'workout_type_preference': workoutTypePreference,
+        'workout_environment': workoutEnvironment,
+        'gym_name': gymName,
       },
 
       // Health

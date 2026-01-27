@@ -81,6 +81,7 @@ Future<void> showBreathingGuide({
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.2),
     isScrollControlled: true,
+    useRootNavigator: true,
     builder: (ctx) => BreathingGuideSheet(exercise: exercise),
   );
 }

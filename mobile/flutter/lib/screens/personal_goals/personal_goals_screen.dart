@@ -81,6 +81,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => CreateGoalSheet(
         onSubmit: (exerciseName, goalType, targetValue) async {
@@ -146,6 +147,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => ExpandedSuggestionCard(
         suggestion: suggestion,

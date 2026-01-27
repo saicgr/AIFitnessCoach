@@ -97,6 +97,7 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (context) => _SkipReasonSheet(
         workout: workout,
         reasons: skipReasons,

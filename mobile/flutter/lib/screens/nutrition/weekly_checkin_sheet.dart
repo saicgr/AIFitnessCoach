@@ -21,6 +21,7 @@ Future<void> showWeeklyCheckinSheet(BuildContext context, WidgetRef ref) async {
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    useRootNavigator: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.2),
     builder: (context) => WeeklyCheckinSheet(userId: userId, isDark: isDark),

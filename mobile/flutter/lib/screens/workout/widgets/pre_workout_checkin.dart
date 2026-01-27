@@ -625,6 +625,7 @@ Future<bool> showPreWorkoutCheckin(BuildContext context, {String? workoutId}) as
   final result = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
+    useRootNavigator: true,
     backgroundColor: Colors.transparent,
     builder: (context) => PreWorkoutCheckinSheet(workoutId: workoutId),
   );

@@ -42,6 +42,7 @@ class StepGoalEditorSheet extends StatefulWidget {
     return showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => StepGoalEditorSheet(
         currentGoal: currentGoal,

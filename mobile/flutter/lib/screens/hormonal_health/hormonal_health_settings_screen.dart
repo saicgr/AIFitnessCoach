@@ -263,6 +263,7 @@ class _HormonalHealthSettingsScreenState
       BuildContext context, String userId, HormonalProfile? profile) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       builder: (context) {
         return SafeArea(
           child: Column(
@@ -302,6 +303,7 @@ class _HormonalHealthSettingsScreenState
       BuildContext context, String userId, HormonalProfile? profile) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       builder: (context) {
         return SafeArea(
           child: Column(
@@ -342,6 +344,7 @@ class _HormonalHealthSettingsScreenState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (context) {
         return DraggableScrollableSheet(
           initialChildSize: 0.7,
@@ -407,6 +410,7 @@ class _HormonalHealthSettingsScreenState
       BuildContext context, String userId, HormonalProfile? profile) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       builder: (context) {
         int selected = profile?.cycleLengthDays ?? 28;
         return StatefulBuilder(
@@ -455,6 +459,7 @@ class _HormonalHealthSettingsScreenState
       BuildContext context, String userId, HormonalProfile? profile) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       builder: (context) {
         int selected = profile?.typicalPeriodDurationDays ?? 5;
         return StatefulBuilder(

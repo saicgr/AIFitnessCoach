@@ -1092,6 +1092,17 @@ class NutritionRepository {
     final adjustedFat = (analyzedFood.fatG * portionMultiplier).round();
     final adjustedFiber = ((analyzedFood.fiberG ?? 0) * portionMultiplier).round();
 
+    // Adjust micronutrients by portion multiplier
+    final adjustedSugar = analyzedFood.sugarG != null ? analyzedFood.sugarG! * portionMultiplier : null;
+    final adjustedSodium = analyzedFood.sodiumMg != null ? analyzedFood.sodiumMg! * portionMultiplier : null;
+    final adjustedCholesterol = analyzedFood.cholesterolMg != null ? analyzedFood.cholesterolMg! * portionMultiplier : null;
+    final adjustedVitaminA = analyzedFood.vitaminAIu != null ? analyzedFood.vitaminAIu! * portionMultiplier : null;
+    final adjustedVitaminC = analyzedFood.vitaminCMg != null ? analyzedFood.vitaminCMg! * portionMultiplier : null;
+    final adjustedVitaminD = analyzedFood.vitaminDIu != null ? analyzedFood.vitaminDIu! * portionMultiplier : null;
+    final adjustedCalcium = analyzedFood.calciumMg != null ? analyzedFood.calciumMg! * portionMultiplier : null;
+    final adjustedIron = analyzedFood.ironMg != null ? analyzedFood.ironMg! * portionMultiplier : null;
+    final adjustedPotassium = analyzedFood.potassiumMg != null ? analyzedFood.potassiumMg! * portionMultiplier : null;
+
     // Adjust food items
     final adjustedItems = analyzedFood.foodItems.map((item) {
       return {
@@ -1115,6 +1126,16 @@ class NutritionRepository {
       totalFat: adjustedFat,
       totalFiber: adjustedFiber,
       sourceType: sourceType,
+      // Pass micronutrients from AI analysis
+      sugarG: adjustedSugar,
+      sodiumMg: adjustedSodium,
+      cholesterolMg: adjustedCholesterol,
+      vitaminAUg: adjustedVitaminA,
+      vitaminCMg: adjustedVitaminC,
+      vitaminDIu: adjustedVitaminD,
+      calciumMg: adjustedCalcium,
+      ironMg: adjustedIron,
+      potassiumMg: adjustedPotassium,
     );
   }
 

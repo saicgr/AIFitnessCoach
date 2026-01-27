@@ -156,6 +156,7 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
     final result = await showModalBottomSheet<int>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: EdgeInsets.fromLTRB(
@@ -322,6 +323,7 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: EdgeInsets.fromLTRB(
@@ -477,6 +479,7 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(

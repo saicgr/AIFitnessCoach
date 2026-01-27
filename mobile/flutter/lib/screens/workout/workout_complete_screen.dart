@@ -982,6 +982,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => ShareWorkoutSheet(
         workoutName: widget.workout.name ?? 'Workout',
@@ -1814,6 +1815,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.85,

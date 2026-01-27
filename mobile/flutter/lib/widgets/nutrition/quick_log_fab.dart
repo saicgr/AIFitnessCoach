@@ -275,6 +275,7 @@ class _QuickLogFABState extends State<QuickLogFAB>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => BatchPortioningSheet(
         isDark: isDark,
@@ -295,6 +296,7 @@ class _QuickLogFABState extends State<QuickLogFAB>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => LogMealSheet(
         userId: widget.userId,
@@ -333,6 +335,7 @@ class QuickLogFABCompact extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (context) => _QuickActionsSheet(
         userId: userId,
         onLogComplete: onLogComplete,
@@ -485,6 +488,7 @@ class _QuickActionsSheet extends StatelessWidget {
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
+        useRootNavigator: true,
         backgroundColor: Colors.transparent,
         builder: (_) => BatchPortioningSheet(
           isDark: isDark,
@@ -501,6 +505,7 @@ class _QuickActionsSheet extends StatelessWidget {
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
+          useRootNavigator: true,
           backgroundColor: Colors.transparent,
           builder: (_) => LogMealSheet(
             userId: userId,
@@ -512,6 +517,7 @@ class _QuickActionsSheet extends StatelessWidget {
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
+        useRootNavigator: true,
         backgroundColor: Colors.transparent,
         builder: (_) => LogMealSheet(
           userId: userId,

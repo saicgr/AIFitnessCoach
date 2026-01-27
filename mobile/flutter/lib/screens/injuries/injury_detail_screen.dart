@@ -108,6 +108,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _CheckInSheet(
         injury: _injury!,

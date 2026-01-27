@@ -192,6 +192,7 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _AddEditOneRMSheet(
         onSave: (exerciseName, weight, source) async {
@@ -212,6 +213,7 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _AddEditOneRMSheet(
         existingOneRM: oneRM,
@@ -504,6 +506,7 @@ class _OneRMCardState extends ConsumerState<_OneRMCard> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _LinkExerciseSheet(
         primaryExerciseName: widget.oneRM.exerciseName,

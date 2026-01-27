@@ -167,25 +167,8 @@ async def get_program_categories():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/branded-programs/{program_id}", response_model=Dict[str, Any])
-async def get_branded_program(program_id: str):
-    """
-    Get a single branded program by ID.
-    """
-    try:
-        db = get_supabase_db()
-        result = db.client.table("branded_programs").select("*").eq("id", program_id).eq("is_active", True).execute()
-
-        if not result.data:
-            raise HTTPException(status_code=404, detail="Program not found")
-
-        return row_to_branded_program(result.data[0])
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error getting program {program_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+# NOTE: The /{program_id} route is defined at the END of this file
+# to prevent it from matching specific routes like /current, /featured, etc.
 
 
 @router.post("/branded-programs/assign", response_model=Dict[str, Any])
@@ -385,4 +368,27 @@ async def get_program_history(user_id: str = Query(...)):
 
     except Exception as e:
         logger.error(f"Error getting program history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# IMPORTANT: This route MUST be at the end to prevent it from matching
+# specific routes like /current, /featured, /categories, /assign, /history
+@router.get("/branded-programs/{program_id}", response_model=Dict[str, Any])
+async def get_branded_program(program_id: str):
+    """
+    Get a single branded program by ID.
+    """
+    try:
+        db = get_supabase_db()
+        result = db.client.table("branded_programs").select("*").eq("id", program_id).eq("is_active", True).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Program not found")
+
+        return row_to_branded_program(result.data[0])
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting program {program_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))

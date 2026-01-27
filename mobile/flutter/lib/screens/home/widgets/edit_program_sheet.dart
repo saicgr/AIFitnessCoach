@@ -350,6 +350,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
       await showModalBottomSheet(
         context: context,
         isScrollControlled: true,
+        useRootNavigator: true,
         backgroundColor: Colors.transparent,
         builder: (ctx) => _ProgramHistorySheet(
           history: history,
@@ -777,6 +778,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _CustomProgramInputSheet(
         initialDescription: _customProgramDescription,

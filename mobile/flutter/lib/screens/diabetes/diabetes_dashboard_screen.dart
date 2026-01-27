@@ -774,6 +774,7 @@ class _DiabetesDashboardScreenState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: EdgeInsets.fromLTRB(
@@ -926,6 +927,7 @@ class _DiabetesDashboardScreenState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) => Container(

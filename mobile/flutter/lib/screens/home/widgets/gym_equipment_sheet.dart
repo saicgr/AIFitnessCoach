@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../models/equipment_item.dart';
+import '../../../widgets/sheet_header.dart';
 import '../../workout/widgets/edit_weights_sheet.dart';
 
 /// Equipment categories and their items - matching gym equipment structure
@@ -123,12 +124,16 @@ class GymEquipmentSheet extends StatefulWidget {
   /// Optional title override
   final String? title;
 
+  /// Optional callback for back button - if null, no back button shown
+  final VoidCallback? onBack;
+
   const GymEquipmentSheet({
     super.key,
     required this.selectedEquipment,
     required this.equipmentDetails,
     required this.onSave,
     this.title,
+    this.onBack,
   });
 
   @override
@@ -184,6 +189,7 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => EditWeightsSheet(
         equipment: equipment,
@@ -268,9 +274,21 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
 
           // Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 16, 12, 8),
             child: Row(
               children: [
+                // Back button (if provided)
+                if (widget.onBack != null) ...[
+                  SheetBackButton(
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        widget.onBack?.call();
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                ],
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

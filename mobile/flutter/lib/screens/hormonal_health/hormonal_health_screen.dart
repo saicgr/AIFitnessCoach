@@ -399,6 +399,7 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       useSafeArea: true,
       builder: (context) => const HormoneLogSheet(),
     );

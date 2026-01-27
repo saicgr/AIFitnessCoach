@@ -32,6 +32,9 @@ from models.gemini_schemas import (
 )
 import re as regex_module  # For weight parsing
 
+# Import split descriptions for rich AI context
+from services.split_descriptions import SPLIT_DESCRIPTIONS, get_split_context
+
 settings = get_settings()
 logger = logging.getLogger("gemini")
 
@@ -1759,6 +1762,7 @@ IMPORTANT RULES:
         set_type_context: Optional[str] = None,
         primary_goal: Optional[str] = None,
         muscle_focus_points: Optional[Dict[str, int]] = None,
+        training_split: Optional[str] = None,
     ) -> Dict:
         """
         Generate a personalized workout plan using AI.
@@ -1799,6 +1803,9 @@ IMPORTANT RULES:
             muscle_focus_points: Optional dict mapping muscle groups to focus points (1-5).
                                 Example: {"triceps": 2, "lats": 1, "obliques": 2}
                                 Muscles with more points get emphasized more in workouts.
+            training_split: Optional training split identifier (full_body, push_pull_legs, pplul, etc.)
+                           Used to provide rich context about the split's schedule, hypertrophy score,
+                           and scientific rationale to the AI.
 
         Returns:
             Dict with workout structure including name, type, difficulty, exercises
@@ -2364,12 +2371,23 @@ REQUIREMENTS:
         else:
             duration_text = str(duration_minutes)
 
+        # Build training split context with scientific rationale
+        training_split_instruction = ""
+        if training_split:
+            split_context = get_split_context(training_split)
+            training_split_instruction = f"""
+
+📊 TRAINING SPLIT CONTEXT (Research-Backed):
+{split_context}
+
+Use this split information to guide exercise selection and workout structure."""
+
         prompt = f"""Generate a {duration_text}-minute workout plan for a user with:
 - Fitness Level: {fitness_level}
 - Goals: {safe_join_list(goals, 'General fitness')}
 - Available Equipment: {safe_join_list(equipment, 'Bodyweight only')}
 - Focus Areas: {safe_join_list(focus_areas, 'Full body')}
-- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}{preference_constraints_instruction}{comeback_instruction}{progression_philosophy_instruction}{workout_patterns_instruction}{primary_goal_instruction}{muscle_focus_instruction}
+- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{training_split_instruction}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}{preference_constraints_instruction}{comeback_instruction}{progression_philosophy_instruction}{workout_patterns_instruction}{primary_goal_instruction}{muscle_focus_instruction}
 
 ⚠️ CRITICAL - MUSCLE GROUP TARGETING:
 {focus_instruction if focus_instruction else 'Select a balanced mix of exercises.'}
@@ -3222,12 +3240,16 @@ Return a JSON object with:
             training_split = program_preferences.get("training_split", "full_body")
             focus_areas = program_preferences.get("focus_areas", [])
 
+            # Get rich split context with scientific rationale
+            split_context = get_split_context(training_split)
+
             prompt = f"""You are a certified personal trainer explaining workout design to a client.
 
 WORKOUT: {workout_name}
 TYPE: {workout_type}
 DIFFICULTY: {difficulty}
-TRAINING SPLIT: {training_split}
+
+{split_context}
 
 USER PROFILE:
 - Fitness Level: {fitness_level}

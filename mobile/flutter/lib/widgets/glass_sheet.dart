@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 ///   context: context,
 ///   backgroundColor: Colors.transparent,  // CRITICAL
 ///   isScrollControlled: true,
+useRootNavigator: true,
 ///   builder: (context) => GlassSheet(
 ///     child: YourSheetContent(),
 ///   ),

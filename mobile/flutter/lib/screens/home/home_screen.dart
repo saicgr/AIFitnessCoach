@@ -34,6 +34,7 @@ import 'widgets/watch_install_banner.dart';
 import 'widgets/tile_factory.dart';
 import 'widgets/my_program_summary_card.dart';
 import 'widgets/hero_workout_card.dart';
+import 'widgets/hero_workout_carousel.dart';
 import 'widgets/habits_section.dart';
 import 'widgets/body_metrics_section.dart';
 import 'widgets/achievements_section.dart';
@@ -548,6 +549,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       context: context,
       backgroundColor: elevatedColor,
       isScrollControlled: true,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -824,6 +826,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       context: context,
       backgroundColor: elevatedColor,
       isScrollControlled: true,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -2268,106 +2271,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  /// Build hero section - always shows today's workout or next upcoming workout
-  /// Matches what is displayed in the Workouts tab
+  /// Build hero section with weekly carousel
+  /// Shows carousel of workout cards for the current week
   Widget _buildHeroSectionFixed(
     BuildContext context,
     AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
     bool isAIGenerating,
     bool isDark,
   ) {
-    debugPrint('🏠 [HeroSection] Building hero section...');
-    debugPrint('🏠 [HeroSection] _isInitializing: $_isInitializing');
-    debugPrint('🏠 [HeroSection] isAIGenerating: $isAIGenerating');
-    debugPrint('🏠 [HeroSection] todayWorkoutState.isLoading: ${todayWorkoutState.isLoading}');
-    debugPrint('🏠 [HeroSection] todayWorkoutState.isRefreshing: ${todayWorkoutState.isRefreshing}');
-    debugPrint('🏠 [HeroSection] todayWorkoutState.hasError: ${todayWorkoutState.hasError}');
-    debugPrint('🏠 [HeroSection] todayWorkoutState.hasValue: ${todayWorkoutState.hasValue}');
+    debugPrint('🏠 [HeroSection] Building hero section with carousel...');
 
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
-    // Build the workout card content
-    Widget workoutCard;
+    // During initial app load, show loading card
+    Widget workoutContent;
 
-    // Show loading during initial app load
     if (_isInitializing) {
       debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (initializing)');
-      workoutCard = const GeneratingHeroCard(
+      workoutContent = const GeneratingHeroCard(
         message: 'Loading your workout...',
       );
     }
-    // Handle initial loading state (no previous data)
-    else if (todayWorkoutState.isLoading && !todayWorkoutState.hasValue) {
-      debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (initial loading)');
-      workoutCard = const GeneratingHeroCard(
-        message: 'Loading workout...',
+    // During AI generation, show generating card
+    else if (isAIGenerating || todayWorkoutState.valueOrNull?.isGenerating == true) {
+      debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (generating)');
+      workoutContent = GeneratingHeroCard(
+        message: todayWorkoutState.valueOrNull?.generationMessage ?? 'Generating your workout...',
       );
     }
-    // Handle error state - show loading card (more optimistic than error)
-    else if (todayWorkoutState.hasError) {
-      debugPrint('⚠️ [HeroSection] Error: ${todayWorkoutState.error}');
-      // Show loading state instead of error - workouts may still be generating
-      workoutCard = const GeneratingHeroCard(
-        message: 'Setting up your workouts...',
-        subtitle: 'This may take a moment',
-      );
-    }
+    // Otherwise show the carousel
     else {
-      final response = todayWorkoutState.valueOrNull;
-      debugPrint('🏠 [HeroSection] response: $response');
-      debugPrint('🏠 [HeroSection] response?.isGenerating: ${response?.isGenerating}');
-      debugPrint('🏠 [HeroSection] response?.todayWorkout: ${response?.todayWorkout}');
-      debugPrint('🏠 [HeroSection] response?.nextWorkout: ${response?.nextWorkout}');
-      debugPrint('🏠 [HeroSection] response?.completedToday: ${response?.completedToday}');
-
-      // Check if generating
-      if (response?.isGenerating == true || isAIGenerating) {
-        debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (generating)');
-        workoutCard = GeneratingHeroCard(
-          message: response?.generationMessage ?? 'Generating your workout...',
-        );
-      }
-      // No response - show loading state (likely post-onboarding)
-      else if (response == null) {
-        debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (null response)');
-        workoutCard = const GeneratingHeroCard(
-          message: 'Preparing your workout...',
-          subtitle: 'This may take a moment',
-        );
-      }
-      else {
-        // Get today's workout or next upcoming workout (same logic as Workouts tab)
-        final workoutSummary = response.todayWorkout ?? response.nextWorkout;
-
-        if (workoutSummary != null) {
-          debugPrint('🏠 [HeroSection] Showing: HeroWorkoutCard for ${workoutSummary.name}');
-          final workout = workoutSummary.toWorkout();
-          // Always show the HeroWorkoutCard - whether it's today or upcoming
-          workoutCard = HeroWorkoutCard(workout: workout);
-        }
-        // No workouts available - check if workout was completed today
-        else if (response.completedToday && response.completedWorkout != null) {
-          debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (completed today, awaiting next)');
-          // User completed their workout today - show encouraging message
-          workoutCard = const GeneratingHeroCard(
-            message: 'Great job today!',
-            subtitle: 'Rest up for your next workout',
-          );
-        }
-        else {
-          // No workouts available AND not completed today - show loading
-          // This handles the post-onboarding gap where generation hasn't started
-          debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (no workouts, not completed)');
-          workoutCard = const GeneratingHeroCard(
-            message: 'Preparing your workout...',
-            subtitle: 'This may take a moment',
-          );
-        }
-      }
+      debugPrint('🏠 [HeroSection] Showing: HeroWorkoutCarousel');
+      workoutContent = const HeroWorkoutCarousel();
     }
 
-    // Return the section with header and workout card
+    // Return the section with header and workout content
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2391,7 +2330,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               GestureDetector(
                 onTap: () {
                   HapticService.light();
-                  context.push('/programs');
+                  context.push('/library?tab=1');
                 },
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -2417,8 +2356,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ),
         ),
         const SizedBox(height: 12),
-        // Workout card
-        workoutCard,
+        // Workout carousel or loading card
+        workoutContent,
       ],
     );
   }
@@ -3360,12 +3299,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ),
             ),
           ),
-          // XP Level Progress - Compact version in header
-          if (!isCompact) const XPLevelBarCompact(),
           // Notification Bell
           NotificationBellButton(isDark: isDark),
+          const SizedBox(width: 4),
           // Streak Badge - Consolidated metric
           _StreakBadge(streak: currentStreak, isDark: isDark, isCompact: isCompact),
+          // XP Level Progress - Compact version in header (after streak)
+          if (!isCompact) ...[
+            const SizedBox(width: 8),
+            const XPLevelBarCompact(),
+          ],
         ],
       ),
     );
@@ -3414,12 +3357,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ),
           SizedBox(width: spacing),
-          // XP Level Progress - Compact version in header
-          if (!isCompact) const XPLevelBarCompact(),
           // Notification Bell
           NotificationBellButton(isDark: isDark),
+          const SizedBox(width: 4),
           // Streak Badge - Consolidated metric
           _StreakBadge(streak: currentStreak, isDark: isDark, isCompact: isCompact),
+          // XP Level Progress - Compact version in header (after streak)
+          if (!isCompact) ...[
+            const SizedBox(width: 8),
+            const XPLevelBarCompact(),
+          ],
         ],
       ),
     );
@@ -3559,6 +3506,7 @@ class _ProfileMenuButton extends StatelessWidget {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (context) => Container(
         margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(

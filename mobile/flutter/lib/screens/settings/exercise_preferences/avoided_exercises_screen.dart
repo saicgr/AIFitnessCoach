@@ -189,6 +189,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) => Container(
@@ -630,6 +631,7 @@ class _AvoidedExerciseCard extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _SubstitutesSheet(
         exerciseName: exercise.exerciseName,

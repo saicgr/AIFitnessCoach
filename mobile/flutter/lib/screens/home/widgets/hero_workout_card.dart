@@ -1,23 +1,29 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../data/services/api_client.dart';
+import '../../../data/services/image_url_cache.dart';
 import 'regenerate_workout_sheet.dart';
 
-/// Hero workout card - prominent action-focused workout display
-/// Features a big START button as the primary action
+/// Hero workout card - Gravl-inspired design with background image
+/// Features a large background image with gradient overlay and prominent START button
 class HeroWorkoutCard extends ConsumerStatefulWidget {
   final Workout workout;
+
+  /// Whether this card is inside a carousel (removes outer padding)
+  final bool inCarousel;
 
   const HeroWorkoutCard({
     super.key,
     required this.workout,
+    this.inCarousel = false,
   });
 
   @override
@@ -26,9 +32,65 @@ class HeroWorkoutCard extends ConsumerStatefulWidget {
 
 class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   bool _isSkipping = false;
+  String? _backgroundImageUrl;
+  bool _isLoadingImage = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBackgroundImage();
+  }
+
+  Future<void> _loadBackgroundImage() async {
+    // Try to get image from first exercise
+    final exercises = widget.workout.exercises;
+    if (exercises.isEmpty) {
+      setState(() => _isLoadingImage = false);
+      return;
+    }
+
+    final exerciseName = exercises.first.name;
+    if (exerciseName.isEmpty || exerciseName == 'Exercise') {
+      setState(() => _isLoadingImage = false);
+      return;
+    }
+
+    // Check cache first
+    final cachedUrl = ImageUrlCache.get(exerciseName);
+    if (cachedUrl != null) {
+      if (mounted) {
+        setState(() {
+          _backgroundImageUrl = cachedUrl;
+          _isLoadingImage = false;
+        });
+      }
+      return;
+    }
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.get(
+        '/exercise-images/${Uri.encodeComponent(exerciseName)}',
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final url = response.data['url'] as String?;
+        if (url != null && mounted) {
+          await ImageUrlCache.set(exerciseName, url);
+          setState(() {
+            _backgroundImageUrl = url;
+            _isLoadingImage = false;
+          });
+          return;
+        }
+      }
+    } catch (_) {}
+
+    if (mounted) setState(() => _isLoadingImage = false);
+  }
 
   String _getScheduledDateLabel(String? scheduledDate) {
-    if (scheduledDate == null) return 'Scheduled';
+    if (scheduledDate == null) return 'TODAY';
     try {
       final date = DateTime.parse(scheduledDate);
       final now = DateTime.now();
@@ -37,15 +99,15 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       final workoutDate = DateTime(date.year, date.month, date.day);
 
       if (workoutDate == today) {
-        return 'Today';
+        return 'TODAY';
       } else if (workoutDate == tomorrow) {
-        return 'Tomorrow';
+        return 'TOMORROW';
       } else {
-        final weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        final weekdays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
         return weekdays[date.weekday - 1];
       }
     } catch (_) {
-      return 'Scheduled';
+      return 'TODAY';
     }
   }
 
@@ -89,9 +151,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
           ),
           content: Text(
             'This workout will be marked as skipped.',
-            style: TextStyle(
-              color: isDark ? Colors.white70 : Colors.black54,
-            ),
+            style: TextStyle(color: isDark ? Colors.white70 : Colors.black54),
           ),
           actions: [
             TextButton(
@@ -149,227 +209,382 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     }
   }
 
+  void _showOptionsMenu() {
+    HapticService.light();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.elevated : Colors.white,
+      useRootNavigator: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.textMuted,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.skip_next_outlined,
+                  color: AppColors.textMuted,
+                ),
+                title: const Text(
+                  'Skip Workout',
+                  style: TextStyle(color: AppColors.textMuted),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _skipWorkout();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    // Use dark background for hero card - pureBlack in dark mode, elevated (light gray) in light mode
-    final cardBg = isDark ? AppColors.pureBlack : AppColorsLight.elevated;
-
     final workout = widget.workout;
     final dateLabel = _getScheduledDateLabel(workout.scheduledDate);
-    final isToday = dateLabel == 'Today';
+    final isToday = dateLabel == 'TODAY';
 
-    // Get accent color from provider for dynamic accent
+    // Get accent color from provider
     final accentColorEnum = ref.watch(accentColorProvider);
     final accentColor = accentColorEnum.getColor(isDark);
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Container(
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: accentColor.withValues(alpha: isToday ? 0.4 : 0.3),
-            width: isToday ? 2 : 1,
-          ),
-          boxShadow: [
-            // Main colored glow shadow
-            BoxShadow(
-              color: accentColor.withValues(alpha: 0.25),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-              spreadRadius: 2,
-            ),
-            // Subtle depth shadow
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
+    final cardContent = Container(
+      height: 440,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: accentColor.withValues(alpha: 0.5), width: 2),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            // Main content area
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Date badge - monochrome styling
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      dateLabel.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: accentColor,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+            // Background image or gradient
+            _buildBackground(isDark),
 
-                  // Workout name - tappable
-                  GestureDetector(
-                    onTap: () {
-                      HapticService.selection();
-                      context.push('/workout/${workout.id}');
-                    },
-                    child: Text(
-                      workout.name ?? 'Workout',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
+            // Gradient overlay for readability - different for light/dark mode
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: isDark
+                      ? [
+                          Colors.black.withValues(alpha: 0.1),
+                          Colors.black.withValues(alpha: 0.3),
+                          Colors.black.withValues(alpha: 0.85),
+                        ]
+                      : [
+                          Colors.white.withValues(alpha: 0.0),
+                          Colors.white.withValues(alpha: 0.3),
+                          Colors.white.withValues(alpha: 0.9),
+                        ],
+                  stops: const [0.0, 0.35, 1.0],
+                ),
+              ),
+            ),
+
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top row: Day badge and menu
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Day badge (Today, Tomorrow, Tuesday, etc.)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: accentColor,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: accentColor.withValues(alpha: 0.4),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          dateLabel,
+                          style: TextStyle(
+                            color: isDark ? Colors.black : Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                       ),
-                      textAlign: TextAlign.center,
+                      // Menu button
+                      GestureDetector(
+                        onTap: _showOptionsMenu,
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.black.withValues(alpha: 0.4)
+                                : Colors.white.withValues(alpha: 0.8),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : Colors.black.withValues(alpha: 0.1),
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.more_horiz,
+                            color: isDark ? Colors.white : Colors.black87,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const Spacer(),
+
+                  // Workout title - large and prominent
+                  Text(
+                    workout.name ?? 'Workout',
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      height: 1.2,
+                      shadows: isDark
+                          ? [
+                              const Shadow(
+                                color: Colors.black54,
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ]
+                          : null,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
 
                   // Stats row
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _StatChip(
-                        icon: Icons.timer_outlined,
-                        label: '${workout.durationMinutes ?? 45} min',
-                        isDark: isDark,
+                      Icon(
+                        Icons.timer_outlined,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.85)
+                            : Colors.black54,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        workout.formattedDurationShort,
+                        style: TextStyle(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.85)
+                              : Colors.black54,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       const SizedBox(width: 16),
-                      _StatChip(
-                        icon: Icons.fitness_center,
-                        // Show exercise count or fallback to generic label if 0
-                        label: workout.exerciseCount > 0
+                      Icon(
+                        Icons.fitness_center,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.85)
+                            : Colors.black54,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        workout.exerciseCount > 0
                             ? '${workout.exerciseCount} exercises'
                             : 'Ready to start',
-                        isDark: isDark,
+                        style: TextStyle(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.85)
+                              : Colors.black54,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  // Big START button
+                  // Start button - full width
                   SizedBox(
                     width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
+                    child: ElevatedButton.icon(
                       onPressed: () {
                         HapticService.medium();
                         debugPrint('🏋️ [HeroWorkoutCard] START pressed');
-                        debugPrint('🏋️ [HeroWorkoutCard] workout.id=${workout.id}');
-                        debugPrint('🏋️ [HeroWorkoutCard] workout.exercisesJson type=${workout.exercisesJson?.runtimeType}');
-                        debugPrint('🏋️ [HeroWorkoutCard] workout.exercises.length=${workout.exercises.length}');
-                        debugPrint('🏋️ [HeroWorkoutCard] workout.exerciseCount=${workout.exerciseCount}');
+                        debugPrint(
+                          '🏋️ [HeroWorkoutCard] workout.id=${workout.id}',
+                        );
+                        debugPrint(
+                          '🏋️ [HeroWorkoutCard] workout.exercises.length=${workout.exercises.length}',
+                        );
 
-                        // Check if workout has exercises before navigating
                         if (workout.exercises.isEmpty) {
-                          debugPrint('⚠️ [HeroWorkoutCard] Workout has no exercises! exercisesJson=${workout.exercisesJson}');
+                          debugPrint(
+                            '⚠️ [HeroWorkoutCard] Workout has no exercises!',
+                          );
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: const Text('Workout is not ready yet. Please try regenerating.'),
+                              content: const Text(
+                                'Workout is not ready yet. Please try regenerating.',
+                              ),
                               backgroundColor: Colors.orange,
                               behavior: SnackBarBehavior.floating,
-                              margin: const EdgeInsets.only(bottom: 120, left: 16, right: 16),
+                              margin: const EdgeInsets.only(
+                                bottom: 120,
+                                left: 16,
+                                right: 16,
+                              ),
                             ),
                           );
                           return;
                         }
-                        debugPrint('✅ [HeroWorkoutCard] Navigating to active-workout with ${workout.exercises.length} exercises');
+                        debugPrint(
+                          '✅ [HeroWorkoutCard] Navigating to active-workout with ${workout.exercises.length} exercises',
+                        );
                         context.push('/active-workout', extra: workout);
                       },
-                      style: ElevatedButton.styleFrom(
-                        // Monochrome: white button in dark mode, black button in light mode
-                        backgroundColor: accentColor,
-                        // Contrast text: black on white button, white on black button
-                        foregroundColor: isDark ? Colors.black : Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                      icon: const Icon(Icons.play_arrow, size: 22),
+                      label: const Text(
+                        'START',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                          fontSize: 15,
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.play_arrow_rounded, size: 28),
-                          const SizedBox(width: 8),
-                          Text(
-                            'START',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1,
-                            ),
-                          ),
-                        ],
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accentColor,
+                        foregroundColor: isDark ? Colors.black : Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 28,
+                          vertical: 14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 4,
+                        shadowColor: accentColor.withValues(alpha: 0.5),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
-                  // Secondary actions
+                  // View Details and Regenerate row
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Regenerate button
-                      TextButton.icon(
-                        onPressed: () {
-                          HapticService.light();
-                          _regenerateWorkout();
-                        },
-                        icon: Icon(
-                          Icons.refresh_rounded,
-                          size: 18,
-                          color: textSecondary,
-                        ),
-                        label: Text(
-                          'Regenerate',
-                          style: TextStyle(
-                            color: textSecondary,
-                            fontSize: 13,
+                      // View Details button
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticService.selection();
+                            context.push('/workout/${workout.id}');
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : Colors.black.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.15)
+                                    : Colors.black.withValues(alpha: 0.1),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.visibility_outlined,
+                                  size: 16,
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.9)
+                                      : Colors.black87,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'View Details',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.9)
+                                        : Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                      Container(
-                        width: 1,
-                        height: 16,
-                        color: textSecondary.withValues(alpha: 0.3),
-                        margin: const EdgeInsets.symmetric(horizontal: 8),
-                      ),
-                      // Skip button
-                      TextButton.icon(
-                        onPressed: _isSkipping ? null : () {
-                          HapticService.light();
-                          _skipWorkout();
-                        },
-                        icon: _isSkipping
-                            ? SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: textSecondary,
-                                ),
-                              )
-                            : Icon(
-                                Icons.skip_next_rounded,
-                                size: 18,
-                                color: textSecondary,
+                      const SizedBox(width: 10),
+                      // Regenerate button
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: _regenerateWorkout,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: accentColor.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: accentColor.withValues(alpha: 0.3),
                               ),
-                        label: Text(
-                          'Skip',
-                          style: TextStyle(
-                            color: textSecondary,
-                            fontSize: 13,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.refresh,
+                                  size: 16,
+                                  color: accentColor,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Regenerate',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: accentColor,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -378,43 +593,230 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                 ],
               ),
             ),
+
+            // Loading indicator for skipping
+            if (_isSkipping)
+              Container(
+                color: Colors.black.withValues(alpha: 0.6),
+                child: const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
+              ),
           ],
         ),
       ),
     );
+
+    // When in carousel, minimal padding to show peek
+    if (widget.inCarousel) {
+      return GestureDetector(
+        onTap: () {
+          HapticService.selection();
+          context.push('/workout/${workout.id}');
+        },
+        child: cardContent,
+      );
+    }
+
+    // When standalone, add the original padding
+    return GestureDetector(
+      onTap: () {
+        HapticService.selection();
+        context.push('/workout/${workout.id}');
+      },
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        child: cardContent,
+      ),
+    );
   }
-}
 
-/// Small stat chip showing icon + label
-class _StatChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isDark;
+  Widget _buildBackground(bool isDark) {
+    final accentColorEnum = ref.read(accentColorProvider);
+    final accentColor = accentColorEnum.getColor(isDark);
 
-  const _StatChip({
-    required this.icon,
-    required this.label,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: textSecondary),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: textSecondary,
+    if (_isLoadingImage) {
+      return Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+                ? [const Color(0xFF1a1a2e), const Color(0xFF16213e)]
+                : [const Color(0xFFF0F4F8), const Color(0xFFE2E8F0)],
           ),
         ),
-      ],
-    );
+        child: Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: accentColor.withValues(alpha: 0.5),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_backgroundImageUrl != null) {
+      // Image with a nice gradient background behind it (accent-tinted)
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          // Background gradient with accent color tint
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: isDark
+                    ? [
+                        Color.lerp(const Color(0xFF1a1a2e), accentColor, 0.1)!,
+                        const Color(0xFF0f0f1a),
+                      ]
+                    : [
+                        Color.lerp(Colors.white, accentColor, 0.05)!,
+                        Color.lerp(const Color(0xFFF0F4F8), accentColor, 0.1)!,
+                      ],
+              ),
+            ),
+          ),
+          // The actual image
+          CachedNetworkImage(
+            imageUrl: _backgroundImageUrl!,
+            fit: BoxFit.contain,
+            alignment: Alignment.center,
+            placeholder: (_, __) => const SizedBox.shrink(),
+            errorWidget: (_, __, ___) => const SizedBox.shrink(),
+          ),
+        ],
+      );
+    }
+
+    return _buildFallbackBackground(isDark);
+  }
+
+  Widget _buildFallbackBackground(bool isDark) {
+    // Get accent color for consistent theming
+    final accentColorEnum = ref.read(accentColorProvider);
+    final accentColor = accentColorEnum.getColor(isDark);
+
+    if (isDark) {
+      // Dark mode - deep, rich gradient with accent tint
+      return Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF1a1a2e),
+              Color.lerp(const Color(0xFF16213e), accentColor, 0.15)!,
+              const Color(0xFF0f0f1a),
+            ],
+            stops: const [0.0, 0.5, 1.0],
+          ),
+        ),
+        child: Stack(
+          children: [
+            // Subtle pattern overlay
+            Positioned.fill(
+              child: Opacity(
+                opacity: 0.03,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: Alignment.topRight,
+                      radius: 1.5,
+                      colors: [accentColor, Colors.transparent],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Faint icon
+            Center(
+              child: Opacity(
+                opacity: 0.06,
+                child: Icon(
+                  Icons.fitness_center,
+                  size: 200,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // Light mode - clean white/gray with subtle accent glow
+      return Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.white,
+              const Color(0xFFF8F9FA),
+              const Color(0xFFF0F2F5),
+            ],
+            stops: const [0.0, 0.5, 1.0],
+          ),
+        ),
+        child: Stack(
+          children: [
+            // Subtle accent glow at top
+            Positioned(
+              top: -50,
+              right: -50,
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      accentColor.withValues(alpha: 0.15),
+                      accentColor.withValues(alpha: 0.05),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Subtle bottom glow
+            Positioned(
+              bottom: -30,
+              left: -30,
+              child: Container(
+                width: 150,
+                height: 150,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      accentColor.withValues(alpha: 0.1),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Faint icon
+            Center(
+              child: Opacity(
+                opacity: 0.06,
+                child: Icon(
+                  Icons.fitness_center,
+                  size: 200,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
   }
 }
 
@@ -441,10 +843,10 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    // Use dark background for hero card - pureBlack in dark mode, elevated (light gray) in light mode
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
     final cardBg = isDark ? AppColors.pureBlack : AppColorsLight.elevated;
-    // Get accent color from provider for dynamic accent
     final accentColorEnum = ref.watch(accentColorProvider);
     final accentColor = accentColorEnum.getColor(isDark);
 
@@ -480,7 +882,9 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(
                 color: AppColors.success.withValues(alpha: 0.15),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(19)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(19),
+                ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -509,9 +913,11 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Date badge for next workout - monochrome
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: accentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
@@ -528,7 +934,6 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // Next workout name - tappable
                   GestureDetector(
                     onTap: () {
                       HapticService.selection();
@@ -546,7 +951,6 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
 
-                  // Stats row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -565,7 +969,6 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Preview button (not start since it's not today) - monochrome
                   SizedBox(
                     width: double.infinity,
                     height: 56,
@@ -583,7 +986,11 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.visibility_outlined, size: 22, color: accentColor),
+                          Icon(
+                            Icons.visibility_outlined,
+                            size: 22,
+                            color: accentColor,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'PREVIEW',
@@ -604,6 +1011,34 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isDark;
+
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: textSecondary),
+        const SizedBox(width: 4),
+        Text(label, style: TextStyle(fontSize: 14, color: textSecondary)),
+      ],
     );
   }
 }
@@ -640,13 +1075,17 @@ class _GeneratingHeroCardState extends ConsumerState<GeneratingHeroCard>
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('🔄 [GeneratingHeroCard] build() called with message: ${widget.message}');
+    debugPrint(
+      '🔄 [GeneratingHeroCard] build() called with message: ${widget.message}',
+    );
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Use dark background for hero card - pureBlack in dark mode, elevated (light gray) in light mode
     final cardBg = isDark ? AppColors.pureBlack : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    // Get accent color from provider for dynamic accent
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
     final accentColorEnum = ref.watch(accentColorProvider);
     final accentColor = accentColorEnum.getColor(isDark);
 
@@ -654,7 +1093,6 @@ class _GeneratingHeroCardState extends ConsumerState<GeneratingHeroCard>
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Stack(
         children: [
-          // Main card container
           Container(
             constraints: const BoxConstraints(minHeight: 180),
             padding: const EdgeInsets.all(24),
@@ -667,106 +1105,97 @@ class _GeneratingHeroCardState extends ConsumerState<GeneratingHeroCard>
               ),
             ),
             child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Animated loading indicator with glow effect
-            Stack(
-              alignment: Alignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Glow effect
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: accentColor.withValues(alpha: 0.3),
-                        blurRadius: 20,
-                        spreadRadius: 5,
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: accentColor.withValues(alpha: 0.3),
+                            blurRadius: 20,
+                            spreadRadius: 5,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    SizedBox(
+                      width: 56,
+                      height: 56,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 4,
+                        color: accentColor,
+                        backgroundColor: accentColor.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    Icon(
+                      Icons.fitness_center_rounded,
+                      color: accentColor,
+                      size: 24,
+                    ),
+                  ],
                 ),
-                // Spinner
-                SizedBox(
-                  width: 56,
-                  height: 56,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 4,
-                    color: accentColor,
-                    backgroundColor: accentColor.withValues(alpha: 0.2),
+                const SizedBox(height: 24),
+                Text(
+                  widget.message ?? 'Loading your workout...',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
                   ),
+                  textAlign: TextAlign.center,
                 ),
-                // Center icon
-                Icon(
-                  Icons.fitness_center_rounded,
-                  color: accentColor,
-                  size: 24,
+                const SizedBox(height: 8),
+                Text(
+                  widget.subtitle ?? 'This may take a moment',
+                  style: TextStyle(fontSize: 14, color: textSecondary),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                AnimatedBuilder(
+                  animation: _shimmerController,
+                  builder: (context, child) {
+                    return Container(
+                      height: 4,
+                      width: 120,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(2),
+                        color: accentColor.withValues(alpha: 0.2),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              left: _shimmerController.value * 140 - 40,
+                              child: Container(
+                                width: 40,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.transparent,
+                                      accentColor,
+                                      Colors.transparent,
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
-            const SizedBox(height: 24),
-            Text(
-              widget.message ?? 'Loading your workout...',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              widget.subtitle ?? 'This may take a moment',
-              style: TextStyle(
-                fontSize: 14,
-                color: textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            // Shimmer loading bar
-            AnimatedBuilder(
-              animation: _shimmerController,
-              builder: (context, child) {
-                return Container(
-                  height: 4,
-                  width: 120,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(2),
-                    color: accentColor.withValues(alpha: 0.2),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(2),
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          left: _shimmerController.value * 140 - 40,
-                          child: Container(
-                            width: 40,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.transparent,
-                                  accentColor,
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-            ),
           ),
-          // Left accent bar overlay
           Positioned(
             left: 0,
             top: 0,

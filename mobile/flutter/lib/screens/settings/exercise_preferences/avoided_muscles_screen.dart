@@ -374,6 +374,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (context) => Container(
         decoration: BoxDecoration(
           color: backgroundColor,

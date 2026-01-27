@@ -12,6 +12,7 @@ Future<CookingConversionResult?> showCookingConverterSheet(
   return showModalBottomSheet<CookingConversionResult>(
     context: context,
     isScrollControlled: true,
+    useRootNavigator: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.2),
     builder: (context) => CookingConverterSheet(isDark: isDark),

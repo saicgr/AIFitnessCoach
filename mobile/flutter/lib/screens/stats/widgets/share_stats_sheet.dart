@@ -32,6 +32,7 @@ class ShareStatsSheet extends ConsumerStatefulWidget {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const ShareStatsSheet(),
     );

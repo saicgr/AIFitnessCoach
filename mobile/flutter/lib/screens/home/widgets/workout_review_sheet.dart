@@ -24,6 +24,7 @@ Future<Workout?> showWorkoutReviewSheet(
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.2),
     isScrollControlled: true,
+    useRootNavigator: true,
     isDismissible: false,
     enableDrag: false,
     builder: (context) => _WorkoutReviewSheet(workout: generatedWorkout),

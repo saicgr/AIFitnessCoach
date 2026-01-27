@@ -120,6 +120,7 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
     showModalBottomSheet(
       context: context,
       backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),

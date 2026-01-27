@@ -19,6 +19,7 @@ Future<void> showTrophiesEarnedSheet(
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withOpacity(0.5),
     isScrollControlled: true,
+    useRootNavigator: true,
     builder: (context) => _TrophiesEarnedSheet(
       newPRs: newPRs,
       achievements: achievements,

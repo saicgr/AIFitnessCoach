@@ -253,6 +253,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => EditWorkoutEquipmentSheet(
         currentEquipment: workout.equipmentNeeded,
@@ -2159,6 +2160,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (modalContext) => StatefulBuilder(
         builder: (context, setModalState) {
           Future<void> regenerateInsights() async {
@@ -2758,6 +2760,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.75,
         minChildSize: 0.4,

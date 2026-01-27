@@ -14,6 +14,7 @@ Future<WorkoutExercise?> showSupersetExercisePicker(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
+    useRootNavigator: true,
     builder: (context) => _SupersetExercisePicker(
       exercises: exercises,
       excludeExercises: excludeExercises,

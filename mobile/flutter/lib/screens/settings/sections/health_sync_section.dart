@@ -182,6 +182,7 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (context) {
         return DraggableScrollableSheet(
           initialChildSize: 0.7,

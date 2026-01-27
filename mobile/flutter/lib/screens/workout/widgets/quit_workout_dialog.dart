@@ -40,6 +40,7 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
+    useRootNavigator: true,
     isDismissible: false,
     enableDrag: false,
     builder: (ctx) => StatefulBuilder(

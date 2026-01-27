@@ -417,6 +417,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => PRShareSheet(
         pr: widget.pr,

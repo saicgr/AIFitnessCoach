@@ -124,6 +124,24 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
     showLogWeightSheet(context, ref);
   }
 
+  void _toggleUnit() {
+    HapticService.light();
+    final authState = ref.read(authStateProvider);
+    final user = authState.user;
+    if (user == null) return;
+
+    final currentUnit = user.preferredWeightUnit;
+    final newUnit = currentUnit == 'kg' ? 'lbs' : 'kg';
+
+    // Update the user's preference in state
+    final updatedUser = user.copyWith(weightUnit: newUnit);
+    ref.read(authStateProvider.notifier).updateUser(updatedUser);
+
+    // Clear the input when switching units to avoid confusion
+    _weightController.clear();
+    setState(() => _errorMessage = null);
+  }
+
   @override
   Widget build(BuildContext context) {
     final elevatedColor = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -143,19 +161,6 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
     final unit = _getPreferredUnit();
     final unitLabel = unit;
 
-    // Format last logged date
-    String lastLoggedText = 'No logs yet';
-    if (lastWeight != null) {
-      final daysAgo = DateTime.now().difference(lastWeight.loggedAt).inDays;
-      if (daysAgo == 0) {
-        lastLoggedText = 'Today';
-      } else if (daysAgo == 1) {
-        lastLoggedText = 'Yesterday';
-      } else {
-        lastLoggedText = '$daysAgo days ago';
-      }
-    }
-
     // Build the appropriate layout based on size
     if (widget.size == TileSize.compact) {
       return _buildCompactLayout(
@@ -169,7 +174,7 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
     }
 
     // Minimum height to ensure consistent sizing with other half-width cards
-    const minCardHeight = 140.0;
+    const minCardHeight = 120.0;
 
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: minCardHeight),
@@ -196,7 +201,7 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: elevatedColor,
               border: Border(
@@ -208,17 +213,18 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
             ),
             child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
           // Header row
           Row(
             children: [
-              Icon(Icons.monitor_weight_outlined, color: accentColor, size: 20),
-              const SizedBox(width: 8),
+              Icon(Icons.monitor_weight_outlined, color: accentColor, size: 18),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   'Quick Log Weight',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: textColor,
                   ),
@@ -228,71 +234,32 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
                 onTap: _openFullSheet,
                 child: Icon(
                   Icons.open_in_new,
-                  color: textColor,
-                  size: 18,
+                  color: textMuted,
+                  size: 16,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
 
-          // Last weight display
-          if (lastWeight != null) ...[
-            Row(
-              children: [
-                Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      unit == 'lbs'
-                          ? '${lastWeight.weightLbs.toStringAsFixed(1)} lbs'
-                          : '${lastWeight.weightKg.toStringAsFixed(1)} kg',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: textMuted.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    lastLoggedText,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: textMuted,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-          ],
-
           // Success state
           if (_showSuccess) ...[
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: AppColors.success.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
               ),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.check_circle, color: AppColors.success, size: 20),
-                  const SizedBox(width: 8),
+                  Icon(Icons.check_circle, color: AppColors.success, size: 16),
+                  const SizedBox(width: 6),
                   Text(
-                    'Weight logged!',
+                    'Logged!',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: AppColors.success,
                     ),
@@ -301,88 +268,90 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
               ),
             ),
           ] else ...[
-            // Input row
+            // Single row: [input field] [kg] [✓]
             Row(
               children: [
+                // Input container - flex 1
                 Expanded(
                   child: Container(
-                    height: 48,
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
-                      color: textMuted.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      color: textMuted.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: _errorMessage != null
                             ? AppColors.error.withValues(alpha: 0.5)
                             : cardBorder,
                       ),
                     ),
-                    child: TextField(
+                    alignment: Alignment.centerLeft,
+                    child: EditableText(
                       controller: _weightController,
                       focusNode: _focusNode,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      textAlign: TextAlign.center,
-                      textAlignVertical: TextAlignVertical.center,
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                         color: textColor,
                       ),
-                      decoration: InputDecoration(
-                        hintText: lastWeight != null
-                            ? (unit == 'lbs'
-                                ? lastWeight.weightLbs.toStringAsFixed(0)
-                                : lastWeight.weightKg.toStringAsFixed(0))
-                            : (unit == 'lbs' ? '185' : '84'),
-                        hintStyle: TextStyle(
-                          color: textMuted.withValues(alpha: 0.5),
-                          fontWeight: FontWeight.normal,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                        suffixText: unitLabel,
-                        suffixStyle: TextStyle(
-                          color: textMuted,
-                          fontSize: 14,
-                        ),
-                        isDense: true,
-                      ),
+                      cursorColor: accentColor,
+                      backgroundCursorColor: Colors.grey,
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^\d{0,4}\.?\d{0,1}')),
+                        FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+                        _WeightInputFormatter(),
                       ],
                       onSubmitted: (_) => _logWeight(),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                SizedBox(
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _logWeight,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: accentColor,
-                      foregroundColor: widget.isDark ? Colors.black : Colors.white,
-                      disabledBackgroundColor: accentColor.withValues(alpha: 0.5),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                const SizedBox(width: 6),
+                // Unit toggle - fixed width
+                GestureDetector(
+                  onTap: _toggleUnit,
+                  child: Container(
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
                     ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      unitLabel,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: accentColor,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                // Log button - fixed width
+                GestureDetector(
+                  onTap: _isSubmitting ? null : _logWeight,
+                  child: Container(
+                    height: 40,
+                    width: 40,
+                    decoration: BoxDecoration(
+                      color: accentColor,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    alignment: Alignment.center,
                     child: _isSubmitting
                         ? const SizedBox(
-                            width: 20,
-                            height: 20,
+                            width: 16,
+                            height: 16,
                             child: CircularProgressIndicator(
                               color: Colors.white,
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text(
-                            'Log',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        : Icon(
+                            Icons.check,
+                            size: 20,
+                            color: widget.isDark ? Colors.black : Colors.white,
                           ),
                   ),
                 ),
@@ -391,22 +360,24 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
 
             // Error message
             if (_errorMessage != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               Text(
                 _errorMessage!,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 10,
                   color: AppColors.error,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ],
 
           // Full size: show trend info
           if (widget.size == TileSize.full && lastWeight != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Divider(color: cardBorder, height: 1),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             _buildTrendInfo(textMuted, ref),
           ],
         ],
@@ -539,5 +510,29 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
         ),
       ],
     );
+  }
+}
+
+/// Custom input formatter for weight values
+/// Allows up to 4 digits before decimal and 1 digit after
+class _WeightInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text;
+
+    // Empty is allowed
+    if (text.isEmpty) return newValue;
+
+    // Check for valid weight format
+    final regex = RegExp(r'^\d{0,4}\.?\d{0,1}$');
+    if (regex.hasMatch(text)) {
+      return newValue;
+    }
+
+    // If invalid, return old value
+    return oldValue;
   }
 }

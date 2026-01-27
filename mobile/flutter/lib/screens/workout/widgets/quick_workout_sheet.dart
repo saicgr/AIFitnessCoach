@@ -20,6 +20,7 @@ Future<Workout?> showQuickWorkoutSheet(BuildContext context, WidgetRef ref) asyn
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.2),
     isScrollControlled: true,
+    useRootNavigator: true,
     builder: (context) => const _QuickWorkoutSheet(),
   );
 

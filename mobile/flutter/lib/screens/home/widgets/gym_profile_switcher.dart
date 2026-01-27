@@ -6,6 +6,7 @@ import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/sheet_header.dart';
 import 'add_gym_profile_sheet.dart';
 import 'components/sheet_theme_colors.dart';
 import 'manage_gym_profiles_sheet.dart';
@@ -38,19 +39,30 @@ class GymProfileSwitcher extends ConsumerStatefulWidget {
 
 class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
   void _onProfileTap(GymProfile profile) async {
-    if (profile.isActive) return; // Already active
+    debugPrint('🔄 [GymProfileSwitcher] _onProfileTap called for: ${profile.name} (id: ${profile.id})');
+    debugPrint('🔄 [GymProfileSwitcher] Profile isActive: ${profile.isActive}');
+
+    if (profile.isActive) {
+      debugPrint('⚠️ [GymProfileSwitcher] Profile already active, returning early');
+      return; // Already active
+    }
 
     HapticService.medium();
 
     try {
+      debugPrint('🔄 [GymProfileSwitcher] Calling activateProfile...');
       await ref.read(gymProfilesProvider.notifier).activateProfile(profile.id);
+      debugPrint('✅ [GymProfileSwitcher] activateProfile completed successfully');
 
       // Invalidate workout providers to refetch for new profile
       ref.invalidate(todayWorkoutProvider);
       ref.invalidate(workoutsProvider);
+      debugPrint('🔄 [GymProfileSwitcher] Invalidated workout providers');
 
       widget.onProfileSwitched?.call();
+      debugPrint('✅ [GymProfileSwitcher] Profile switch complete!');
     } catch (e) {
+      debugPrint('❌ [GymProfileSwitcher] Error in _onProfileTap: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to switch profile: $e')),
@@ -59,24 +71,41 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
     }
   }
 
-  void _showAddProfileSheet() {
+  void _showAddProfileSheet({bool fromProfilePicker = false}) {
     HapticService.light();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const AddGymProfileSheet(),
+      builder: (context) => AddGymProfileSheet(
+        onBack: fromProfilePicker ? () => _reopenProfilePicker() : null,
+      ),
     );
   }
 
-  void _showManageProfilesSheet() {
+  void _showManageProfilesSheet({bool fromProfilePicker = false}) {
     HapticService.light();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const ManageGymProfilesSheet(),
+      builder: (context) => ManageGymProfilesSheet(
+        onBack: fromProfilePicker ? () => _reopenProfilePicker() : null,
+      ),
     );
+  }
+
+  void _reopenProfilePicker() {
+    final profilesAsync = ref.read(gymProfilesProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    profilesAsync.whenData((profiles) {
+      if (mounted && profiles.isNotEmpty) {
+        _showProfilePicker(context, profiles, isDark);
+      }
+    });
   }
 
   @override
@@ -147,28 +176,42 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
 
   /// Show profile picker bottom sheet (Robinhood style)
   void _showProfilePicker(
-    BuildContext context,
+    BuildContext parentContext,
     List<GymProfile> profiles,
     bool isDark,
   ) {
     HapticService.light();
     showModalBottomSheet(
-      context: context,
+      context: parentContext,
       backgroundColor: Colors.transparent,
-      builder: (context) => _ProfilePickerSheet(
+      isScrollControlled: true,
+      useRootNavigator: true,
+      builder: (sheetContext) => _ProfilePickerSheet(
         profiles: profiles,
         isDark: isDark,
         onProfileSelected: (profile) {
-          Navigator.pop(context);
-          _onProfileTap(profile);
+          debugPrint('🎯 [GymProfileSwitcher] onProfileSelected callback triggered for: ${profile.name}');
+          // Pop the sheet first, then call the handler after a frame
+          Navigator.of(sheetContext).pop();
+          // Use a post-frame callback to ensure the pop completes before we proceed
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              debugPrint('🎯 [GymProfileSwitcher] Sheet popped, calling _onProfileTap...');
+              _onProfileTap(profile);
+            }
+          });
         },
         onAddProfile: () {
-          Navigator.pop(context);
-          _showAddProfileSheet();
+          Navigator.of(sheetContext).pop();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _showAddProfileSheet(fromProfilePicker: true);
+          });
         },
         onManageProfiles: () {
-          Navigator.pop(context);
-          _showManageProfilesSheet();
+          Navigator.of(sheetContext).pop();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _showManageProfilesSheet(fromProfilePicker: true);
+          });
         },
       ),
     );
@@ -196,90 +239,83 @@ class _ProfilePickerSheet extends StatelessWidget {
     final colors = context.sheetColors;
     final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: DraggableScrollableSheet(
-        initialChildSize: 0.45,
-        minChildSize: 0.3,
-        maxChildSize: 0.85,
-        expand: false,
-        builder: (context, scrollController) => Column(
-          children: [
-            // Handle bar (draggable)
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colors.textMuted.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: colors.cyan.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.fitness_center_rounded,
-                      color: colors.cyan,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Text(
-                      'Switch Gym',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.close_rounded, color: colors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-
-            Divider(height: 1, color: colors.cardBorder),
-
-            // Scrollable profile list
-            Expanded(
-              child: ListView(
-                controller: scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                children: profiles.map((profile) => _buildProfileTile(
-                      context,
-                      profile,
-                      colors,
-                    )).toList(),
-              ),
-            ),
-
-            // Action buttons (fixed at bottom)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                border: Border(
-                  top: BorderSide(color: colors.cardBorder),
+    return SafeArea(
+      top: false,
+      child: Container(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colors.textMuted.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              child: SafeArea(
+
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: colors.cyan.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.fitness_center_rounded,
+                        color: colors.cyan,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        'Switch Gym',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(Icons.close_rounded, color: colors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+
+              Divider(height: 1, color: colors.cardBorder),
+
+              // Profile list
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: profiles.map((profile) => _buildProfileTile(
+                    context,
+                    profile,
+                    colors,
+                  )).toList(),
+                ),
+              ),
+
+              // Action buttons
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Row(
                   children: [
                     // Add gym button
@@ -306,8 +342,8 @@ class _ProfilePickerSheet extends StatelessWidget {
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -322,17 +358,21 @@ class _ProfilePickerSheet extends StatelessWidget {
     final isActive = profile.isActive;
 
     return GestureDetector(
-      onTap: () => onProfileSelected(profile),
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        debugPrint('👆 [ProfilePickerSheet] Tapped on profile: ${profile.name} (isActive: $isActive)');
+        onProfileSelected(profile);
+      },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: isActive
-              ? profileColor.withOpacity(0.12)
+              ? profileColor.withValues(alpha: 0.12)
               : colors.glassSurface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isActive ? profileColor.withOpacity(0.5) : colors.cardBorder,
+            color: isActive ? profileColor.withValues(alpha: 0.5) : colors.cardBorder,
             width: isActive ? 2 : 1,
           ),
         ),
@@ -343,7 +383,7 @@ class _ProfilePickerSheet extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: profileColor.withOpacity(0.15),
+                color: profileColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
@@ -384,7 +424,7 @@ class _ProfilePickerSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: profileColor.withOpacity(0.15),
+                  color: profileColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(

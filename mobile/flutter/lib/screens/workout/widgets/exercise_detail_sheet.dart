@@ -22,6 +22,7 @@ Future<void> showExerciseDetailSheet(
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    useRootNavigator: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.2),
     builder: (context) => ExerciseDetailSheet(

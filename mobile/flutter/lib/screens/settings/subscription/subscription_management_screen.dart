@@ -89,6 +89,7 @@ class _SubscriptionManagementScreenState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => CancelConfirmationSheet(
         planName: _subscription?.planName ?? 'Premium',
@@ -103,6 +104,7 @@ class _SubscriptionManagementScreenState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => PauseSubscriptionSheet(
         planName: _subscription?.planName ?? 'Premium',

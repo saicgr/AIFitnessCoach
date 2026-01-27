@@ -71,8 +71,13 @@ def row_to_gym_profile(row: dict) -> GymProfile:
 
 async def create_default_profile_if_needed(user_id: str) -> Optional[GymProfile]:
     """
-    Create a default gym profile from user's current settings if no profiles exist.
-    Returns the created profile or None if profiles already exist.
+    Create a default gym profile ONLY for legacy users who completed onboarding
+    before gym profiles feature was added.
+
+    New users (with onboarding data containing workout_environment) get profiles
+    created during onboarding.
+
+    Returns the created profile or None if profiles already exist or user is new.
     """
     try:
         supabase = get_supabase()
@@ -88,9 +93,9 @@ async def create_default_profile_if_needed(user_id: str) -> Optional[GymProfile]
             # User already has profiles
             return None
 
-        # Fetch user's current equipment and preferences
+        # Fetch user to check if they have workout_environment set
         user_result = supabase.client.table("users") \
-            .select("equipment, equipment_details, preferences") \
+            .select("equipment, equipment_details, preferences, onboarding_completed") \
             .eq("id", user_id) \
             .single() \
             .execute()
@@ -101,6 +106,20 @@ async def create_default_profile_if_needed(user_id: str) -> Optional[GymProfile]
 
         user = user_result.data
         preferences = user.get("preferences") or {}
+
+        # If user has workout_environment in preferences, they're a new user
+        # Their profile will be created during onboarding completion
+        if preferences.get("workout_environment"):
+            logger.info(f"User {user_id} is new user, profile will be created in onboarding")
+            return None
+
+        # If onboarding not complete, skip (profile will be created later)
+        if not user.get("onboarding_completed"):
+            logger.info(f"User {user_id} has not completed onboarding yet, skipping default profile")
+            return None
+
+        # Legacy user - create default profile
+        logger.info(f"Creating default profile for legacy user {user_id}")
 
         # Create default profile from user's settings
         now = datetime.utcnow().isoformat()

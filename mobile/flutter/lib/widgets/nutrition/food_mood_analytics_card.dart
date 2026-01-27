@@ -519,6 +519,7 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _FoodMoodAnalyticsSheet(
         userId: userId,

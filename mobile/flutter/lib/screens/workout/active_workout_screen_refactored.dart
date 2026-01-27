@@ -548,6 +548,7 @@ class _ActiveWorkoutScreenState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       isDismissible: false, // Force user to respond
       enableDrag: false,
@@ -1316,6 +1317,7 @@ class _ActiveWorkoutScreenState
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
@@ -2367,6 +2369,7 @@ class _ActiveWorkoutScreenState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Log1RMSheet(
         exerciseName: exercise.name,
@@ -3832,6 +3835,7 @@ class _ActiveWorkoutScreenState
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (context) => _ExerciseDetailsSheetContent(
         exercise: exercise,
       ),
@@ -3894,6 +3898,7 @@ class _ActiveWorkoutScreenState
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (context) => _buildInfoSheet(
         title: 'Warm Up',
         content: 'Warming up helps prevent injury and improves performance.\n\nRecommended: 1-2 lighter sets before working sets.',
@@ -3908,6 +3913,7 @@ class _ActiveWorkoutScreenState
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return Container(
@@ -3970,6 +3976,7 @@ class _ActiveWorkoutScreenState
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return Padding(
@@ -4043,6 +4050,7 @@ class _ActiveWorkoutScreenState
       showModalBottomSheet(
         context: context,
         backgroundColor: Colors.transparent,
+        useRootNavigator: true,
         builder: (ctx) {
           final isDark = Theme.of(ctx).brightness == Brightness.dark;
           return Container(
@@ -4165,6 +4173,7 @@ class _ActiveWorkoutScreenState
       showModalBottomSheet(
         context: context,
         backgroundColor: Colors.transparent,
+        useRootNavigator: true,
         builder: (ctx) {
           final isDark = Theme.of(ctx).brightness == Brightness.dark;
           return Container(
@@ -4313,6 +4322,7 @@ class _ActiveWorkoutScreenState
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (context) => _buildInfoSheet(
         title: 'Equipment',
         content: 'Required: ${exercise.equipment ?? 'Bodyweight'}\n\nNo equipment? Tap Swap to find alternatives.',
@@ -4327,6 +4337,7 @@ class _ActiveWorkoutScreenState
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return Container(
@@ -5388,6 +5399,7 @@ class _ActiveWorkoutScreenState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
         constraints: BoxConstraints(
