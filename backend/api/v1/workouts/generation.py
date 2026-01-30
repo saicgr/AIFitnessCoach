@@ -1011,7 +1011,14 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 logger.error(f"❌ Failed to parse streaming response: {e}")
                 logger.error(f"❌ Raw accumulated text ({len(accumulated_text)} chars): {accumulated_text[:1000]}")
                 logger.error(f"❌ Cleaned content for parsing ({len(content)} chars): {content[:1000]}")
-                yield f"event: error\ndata: {json.dumps({'error': 'Failed to parse workout data', 'raw_length': len(accumulated_text)})}\n\n"
+
+                # Check if response was truncated (incomplete JSON)
+                if content and (content.rstrip().endswith((',', '{', '[', ':')) or
+                               not content.rstrip().endswith(('}', ']'))):
+                    logger.error(f"❌ Detected truncated response - Gemini stream ended prematurely")
+                    yield f"event: error\ndata: {json.dumps({'error': 'Workout generation was interrupted. Please try again.', 'raw_length': len(accumulated_text), 'truncated': True})}\n\n"
+                else:
+                    yield f"event: error\ndata: {json.dumps({'error': 'Failed to parse workout data', 'raw_length': len(accumulated_text)})}\n\n"
                 return
 
             # Determine scheduled date - use provided date or default to today

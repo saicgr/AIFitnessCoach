@@ -149,19 +149,15 @@ class PreAuthQuizData {
   String? get goal => goals?.isNotEmpty == true ? goals!.first : null;
   String? get motivation => motivations?.isNotEmpty == true ? motivations!.first : null;
 
+  /// Check if quiz is complete - requires core fields from Phase 1
+  /// Note: workoutDays and motivations are optional (feature-flagged or skippable)
   bool get isComplete =>
       goals != null &&
       goals!.isNotEmpty &&
       fitnessLevel != null &&
-      trainingExperience != null &&
       daysPerWeek != null &&
-      workoutDays != null &&
-      workoutDays!.isNotEmpty &&
       equipment != null &&
-      equipment!.isNotEmpty &&
-      // trainingSplit is optional - defaults to push_pull_legs if not set
-      motivations != null &&
-      motivations!.isNotEmpty;
+      equipment!.isNotEmpty;
 
   Map<String, dynamic> toJson() => {
         'goals': goals,

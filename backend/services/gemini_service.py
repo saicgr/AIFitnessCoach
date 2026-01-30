@@ -2939,7 +2939,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                     response_mime_type="application/json",
                     response_schema=GeneratedWorkoutResponse,
                     temperature=0.7,
-                    max_output_tokens=8192
+                    max_output_tokens=16384  # Increased to prevent truncation with detailed workouts
                 ),
             )
 
