@@ -809,6 +809,8 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     goals=goals if isinstance(goals, list) else [],
                     equipment=equipment if isinstance(equipment, list) else [],
                     duration_minutes=body.duration_minutes or 45,
+                    duration_minutes_min=body.duration_minutes_min,
+                    duration_minutes_max=body.duration_minutes_max,
                     focus_areas=body.focus_areas,
                     intensity_preference=intensity_preference,
                     avoided_exercises=avoided_exercises if avoided_exercises else None,
@@ -855,6 +857,23 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 workout_name = workout_data.get("name", "Generated Workout")
                 workout_type = workout_data.get("type", body.workout_type or "strength")
                 difficulty = workout_data.get("difficulty", intensity_preference)
+                estimated_duration = workout_data.get("estimated_duration_minutes")
+
+                # DURATION VALIDATION: Check if estimated duration is within range
+                # If exceeded, we could auto-truncate exercises to fit (future enhancement)
+                if estimated_duration and body.duration_minutes_max:
+                    if estimated_duration > body.duration_minutes_max:
+                        logger.warning(f"⚠️ [Streaming Duration] Estimated duration {estimated_duration} min exceeds max {body.duration_minutes_max} min")
+                        # OPTION 1 (Current): Log warning but allow it - Gemini should learn from this
+                        # OPTION 2 (Future): Auto-truncate exercises to fit duration
+                        # exercises = truncate_exercises_to_duration(exercises, body.duration_minutes_max)
+                        # OPTION 3 (Future): Regenerate with stricter prompt (requires retry loop)
+                    else:
+                        logger.info(f"✅ [Streaming Duration] Estimated {estimated_duration} min is within range {body.duration_minutes_min or 0}-{body.duration_minutes_max} min")
+                elif estimated_duration:
+                    logger.info(f"⏱️ [Streaming Duration] Estimated duration: {estimated_duration} min")
+                else:
+                    logger.warning(f"⚠️ [Streaming Duration] No estimated_duration_minutes returned by Gemini")
 
                 # POST-GENERATION VALIDATION: Filter out any exercises that violate user preferences
                 if avoided_exercises:
@@ -1018,6 +1037,9 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 "scheduled_date": scheduled_date_str,
                 "exercises_json": exercises,
                 "duration_minutes": body.duration_minutes or 45,
+                "duration_minutes_min": body.duration_minutes_min,
+                "duration_minutes_max": body.duration_minutes_max,
+                "estimated_duration_minutes": estimated_duration,
                 "generation_method": "ai",
                 "generation_source": "streaming_generation",
             }

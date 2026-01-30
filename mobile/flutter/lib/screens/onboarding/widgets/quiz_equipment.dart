@@ -108,8 +108,9 @@ class QuizEquipment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    // Use stronger, more visible colors with proper contrast
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
 
     // Total items = equipment list + "Other" option
     final totalItems = _equipment.length + 1;
@@ -194,7 +195,13 @@ class QuizEquipment extends StatelessWidget {
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      gradient: isSelected ? AppColors.accentGradient : null,
+                      gradient: isSelected
+                  ? LinearGradient(
+                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
                       color: isSelected
                           ? null
                           : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
@@ -384,13 +391,19 @@ class QuizEquipment extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            gradient: isSelected ? AppColors.accentGradient : null,
+            gradient: isSelected
+                  ? LinearGradient(
+                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
             color: isSelected
                 ? null
                 : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: isSelected ? AppColors.accent : cardBorder,
+              color: isSelected ? AppColors.orange : cardBorder,
               width: isSelected ? 2 : 1,
             ),
           ),

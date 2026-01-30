@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +18,7 @@ import '../ai_settings/ai_settings_screen.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/coach_profile_card.dart';
 import 'widgets/custom_coach_form.dart';
+import '../../data/models/gemini_profile_payload.dart';
 
 /// Coach Selection Screen - Choose your AI coach persona before onboarding
 /// Also used for changing coach from AI settings (with fromSettings=true)
@@ -163,60 +165,49 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
         final userId = await apiClient.getUserId();
         if (userId == null) return;
 
-        // Build preferences payload from quiz data
+        // Build Gemini-ready payload using the new payload builder
+        final geminiPayload = GeminiProfilePayloadBuilder.buildPayload(quizData);
+
+        // Log payload for debugging (remove in production)
+        if (kDebugMode) {
+          print(GeminiProfilePayloadBuilder.toReadableString(geminiPayload));
+
+          // Validate required fields
+          final isValid = GeminiProfilePayloadBuilder.validateRequiredFields(geminiPayload);
+          print('🔍 [Payload] Validation: ${isValid ? '✅ Valid' : '❌ Invalid'}');
+        }
+
+        // Build full preferences payload (includes personal info + coach)
         final preferencesPayload = <String, dynamic>{
-          // Personal Info
+          ...geminiPayload, // Spread Gemini payload (workout-related fields)
+
+          // Personal Info (not needed for workout generation but stored in DB)
           if (quizData.name != null) 'name': quizData.name,
           if (quizData.dateOfBirth != null) 'date_of_birth': quizData.dateOfBirth!.toIso8601String().split('T').first,
-          if (quizData.age != null) 'age': quizData.age,  // Computed from dateOfBirth
+          if (quizData.age != null) 'age': quizData.age,
           if (quizData.gender != null) 'gender': quizData.gender,
 
-          // Goals & Fitness
-          if (quizData.goals != null) 'goals': quizData.goals,
-          if (quizData.fitnessLevel != null) 'fitness_level': quizData.fitnessLevel,
-          if (quizData.trainingExperience != null) 'training_experience': quizData.trainingExperience,
-          if (quizData.activityLevel != null) 'activity_level': quizData.activityLevel,
-
-          // Body Metrics
+          // Body metrics
           if (quizData.heightCm != null) 'height_cm': quizData.heightCm,
           if (quizData.weightKg != null) 'weight_kg': quizData.weightKg,
           if (quizData.goalWeightKg != null) 'goal_weight_kg': quizData.goalWeightKg,
           if (quizData.weightDirection != null) 'weight_direction': quizData.weightDirection,
           if (quizData.weightChangeAmount != null) 'weight_change_amount': quizData.weightChangeAmount,
+          if (quizData.weightChangeRate != null) 'weight_change_rate': quizData.weightChangeRate,
 
-          // Schedule
-          if (quizData.daysPerWeek != null) 'days_per_week': quizData.daysPerWeek,
-          if (quizData.workoutDays != null) 'selected_days': quizData.workoutDays,
-          if (quizData.workoutDuration != null) 'workout_duration': quizData.workoutDuration,
+          // Activity level
+          if (quizData.activityLevel != null) 'activity_level': quizData.activityLevel,
 
-          // Equipment
-          if (quizData.equipment != null) 'equipment': quizData.equipment,
-          if (quizData.customEquipment != null) 'custom_equipment': quizData.customEquipment,
-
-          // Training Preferences
-          if (quizData.trainingSplit != null) 'training_split': quizData.trainingSplit,
-          if (quizData.workoutTypePreference != null) 'workout_type': quizData.workoutTypePreference,
-          if (quizData.progressionPace != null) 'progression_pace': quizData.progressionPace,
-
-          // Lifestyle
+          // Lifestyle (stored but not sent to Gemini)
           if (quizData.sleepQuality != null) 'sleep_quality': quizData.sleepQuality,
           if (quizData.obstacles != null) 'obstacles': quizData.obstacles,
-
-          // Nutrition
-          if (quizData.nutritionGoals != null) 'nutrition_goals': quizData.nutritionGoals,
-          if (quizData.dietaryRestrictions != null) 'dietary_restrictions': quizData.dietaryRestrictions,
-          if (quizData.mealsPerDay != null) 'meals_per_day': quizData.mealsPerDay,
-
-          // Fasting
-          if (quizData.interestedInFasting != null) 'interested_in_fasting': quizData.interestedInFasting,
-          if (quizData.fastingProtocol != null) 'fasting_protocol': quizData.fastingProtocol,
-
-          // Sleep schedule for fasting optimization
-          if (quizData.wakeTime != null) 'wake_time': quizData.wakeTime,
-          if (quizData.sleepTime != null) 'sleep_time': quizData.sleepTime,
-
-          // Motivations
           if (quizData.motivations != null) 'motivations': quizData.motivations,
+
+          // Custom equipment
+          if (quizData.customEquipment != null) 'custom_equipment': quizData.customEquipment,
+
+          // Workout environment
+          if (quizData.workoutEnvironment != null) 'workout_environment': quizData.workoutEnvironment,
 
           // Coach
           'coach_id': _isCustomMode ? 'custom' : _selectedCoach?.id,

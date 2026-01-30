@@ -31,9 +31,6 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
 
   // Language selection
   Language _selectedLanguage = SupportedLanguages.english;
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-  bool _isDropdownOpen = false;
 
   // Sign-in state
   bool _showSignInButtons = false;
@@ -47,7 +44,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
   ];
 
 
-  // Stats data (hardcoded)
+  // Stats data (hardcoded) - focused on proof points, no redundancy
   static const List<Map<String, dynamic>> _stats = [
     {
       'headline': '1,722',
@@ -73,14 +70,6 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
       'icon': Icons.auto_awesome,
       'color': Color(0xFF14B8A6), // teal
     },
-    {
-      'headline': '<3s',
-      'subheadline': 'workout generation',
-      'description': 'AI-powered instant planning',
-      'longDescription': 'Get custom workout plans tailored to your goals, equipment, and schedule',
-      'icon': Icons.bolt,
-      'color': Color(0xFFFF9800), // orange
-    },
   ];
 
   @override
@@ -103,7 +92,6 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
     _autoScrollTimer?.cancel();
     _progressController.dispose();
     _statsController.dispose();
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -131,18 +119,6 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
     });
   }
 
-  List<Language> get _filteredLanguages {
-    if (_searchQuery.isEmpty) {
-      return SupportedLanguages.all;
-    }
-    return SupportedLanguages.all.where((lang) {
-      final query = _searchQuery.toLowerCase();
-      return lang.name.toLowerCase().contains(query) ||
-          lang.nativeName.toLowerCase().contains(query) ||
-          lang.code.toLowerCase().contains(query);
-    }).toList();
-  }
-
   void _selectLanguage(Language language) {
     HapticFeedback.lightImpact();
 
@@ -160,9 +136,6 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
 
     setState(() {
       _selectedLanguage = language;
-      _isDropdownOpen = false;
-      _searchQuery = '';
-      _searchController.clear();
     });
   }
 
@@ -249,169 +222,117 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                 ),
         ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                    child: IntrinsicHeight(
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 12),
+          child: Column(
+            children: [
+              // Scrollable content area
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 24),
 
-                          // Progress dots (individual fillable)
-                          _buildProgressDots(isDark, colors),
+                      // Hero claim - BIG
+                      _buildHeroClaim(colors),
 
-                          const SizedBox(height: 12),
+                      const SizedBox(height: 32),
 
-                          // App branding (smaller)
-                          _buildBranding(isDark, colors),
+                      // Stats carousel
+                      _buildStatsCarousel(isDark, colors),
+                      const SizedBox(height: 16),
+                      // Long description below carousel
+                      _buildStatDescription(isDark),
 
-                          const SizedBox(height: 12),
-
-                          // Stats carousel - takes remaining space
-                          Expanded(
-                            child: Column(
-                              children: [
-                                Expanded(child: _buildStatsCarousel(isDark, colors)),
-                                const SizedBox(height: 8),
-                                // Long description below carousel
-                                _buildStatDescription(isDark),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          // Pricing transparency section - shows before signup
-                          if (!_showSignInButtons)
-                            _buildPricingTransparencySection(isDark, colors),
-
-                          if (!_showSignInButtons)
-                            const SizedBox(height: 8),
-
-                          // Bottom section: Language + buttons (fixed at bottom)
-                          _buildBottomSection(isDark, colors),
-
-                          const SizedBox(height: 8),
-                        ],
-                      ),
-                    ),
+                      const SizedBox(height: 24),
+                    ],
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+
+              // Bottom section: buttons (pinned to bottom)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+                child: _buildBottomSection(isDark, colors),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildProgressDots(bool isDark, ThemeColors colors) {
-    final accentColor = colors.accent;
-    return AnimatedBuilder(
-      animation: _progressController,
-      builder: (context, child) {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(_stats.length, (index) {
-            final isPast = index < _currentStatIndex;
-            final isCurrent = index == _currentStatIndex;
+  /// Hero claim - the main selling point, BIG and bold
+  Widget _buildHeroClaim(ThemeColors colors) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
-            // Monochrome accent color
-            final activeColor = accentColor;
-            final inactiveColor = isDark ? Colors.white12 : Colors.black12;
+    return Column(
+      children: [
+        // Main claim - one line, BIG type
+        Text(
+          'Workout in <3 seconds',
+          style: TextStyle(
+            fontSize: 44,
+            fontWeight: FontWeight.w900,
+            color: colors.accent,
+            height: 1.1,
+            letterSpacing: -1,
+          ),
+          textAlign: TextAlign.center,
+        ),
 
-            // For past dots: fully filled
-            // For current dot: filling based on animation progress
-            // For future dots: empty
-            double fillProgress = 0.0;
-            if (isPast) {
-              fillProgress = 1.0;
-            } else if (isCurrent) {
-              fillProgress = _progressController.value;
-            }
+        const SizedBox(height: 12),
 
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              margin: const EdgeInsets.symmetric(horizontal: 5),
-              child: _FillingDot(
-                size: isCurrent ? 14 : 10,
-                fillProgress: fillProgress,
-                activeColor: activeColor,
-                inactiveColor: inactiveColor,
-                isCurrent: isCurrent,
-              ),
-            );
-          }),
-        );
-      },
-    ).animate().fadeIn(duration: 400.ms);
+        // Supporting tagline
+        Text(
+          'AI-powered workouts tailored to you',
+          style: TextStyle(
+            fontSize: 16,
+            color: colors.textSecondary,
+            height: 1.4,
+          ),
+          textAlign: TextAlign.center,
+        ),
+
+        const SizedBox(height: 20),
+
+        // Micro-benefits (Fitbod-style)
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 16,
+          runSpacing: 8,
+          children: [
+            _buildMicroBenefit('Adapts to your equipment', Icons.fitness_center, textSecondary),
+            _buildMicroBenefit('Progressive overload built-in', Icons.trending_up, textSecondary),
+            _buildMicroBenefit('Rest timer + tracking', Icons.timer, textSecondary),
+          ],
+        ),
+      ],
+    );
   }
 
-  Widget _buildBranding(bool isDark, ThemeColors colors) {
-    final accentColor = colors.accent;
-    final accentContrast = colors.accentContrast;
+  Widget _buildMicroBenefit(String text, IconData icon, Color textColor) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // App icon - using actual app icon image (smaller)
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: accentColor,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: accentColor.withOpacity(0.3),
-                blurRadius: 12,
-                spreadRadius: 1,
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.asset(
-              'assets/images/app_icon.png',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Icon(
-                Icons.fitness_center,
-                color: accentContrast,
-                size: 24,
-              ),
-            ),
-          ),
-        ).animate().fadeIn(duration: 500.ms).scale(begin: const Offset(0.8, 0.8)),
-
-        const SizedBox(width: 12),
-
-        // App name - monochrome accent color
+        Icon(icon, size: 14, color: textColor.withOpacity(0.7)),
+        const SizedBox(width: 4),
         Text(
-          'FitWiz',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: accentColor,
-              ),
-        ).animate().fadeIn(delay: 200.ms),
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            color: textColor.withOpacity(0.8),
+            height: 1.2,
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildStatsCarousel(bool isDark, ThemeColors colors) {
-    final cardColor = isDark ? AppColors.elevated : Colors.white;
-    final accentColor = colors.accent;
-    final borderColor = isDark
-        ? AppColors.cardBorder.withOpacity(0.3)
-        : accentColor.withOpacity(0.2);
-
-    return Center(
-      child: SizedBox(
-        height: 160,
-        child: GestureDetector(
+    return SizedBox(
+      height: 160,
+      child: GestureDetector(
         onPanDown: (_) => _pauseAutoScroll(),
         child: PageView.builder(
           controller: _statsController,
@@ -424,91 +345,77 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
           itemBuilder: (context, index) {
             final stat = _stats[index];
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: borderColor, width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (stat['color'] as Color).withOpacity(0.1),
-                      blurRadius: 20,
-                      spreadRadius: 0,
-                      offset: const Offset(0, 8),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Icon with subtle background - NO borders
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: (stat['color'] as Color).withOpacity(0.12),
+                      shape: BoxShape.circle,
                     ),
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
+                    child: Icon(
+                      stat['icon'] as IconData,
+                      color: stat['color'] as Color,
+                      size: 24,
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Headline number
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
                     children: [
-                      // Icon
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: (stat['color'] as Color).withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          stat['icon'] as IconData,
-                          color: stat['color'] as Color,
-                          size: 22,
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      // Headline number
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            stat['headline'] as String,
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: stat['color'] as Color,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            stat['subheadline'] as String,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? AppColors.textPrimary
-                                  : AppColorsLight.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 6),
-
-                      // Description
                       Text(
-                        stat['description'] as String,
+                        stat['headline'] as String,
                         style: TextStyle(
-                          fontSize: 13,
-                          color: isDark
-                              ? AppColors.textSecondary
-                              : AppColorsLight.textSecondary,
+                          fontSize: 36,
+                          fontWeight: FontWeight.w800,
+                          color: stat['color'] as Color,
+                          height: 1,
                         ),
-                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        stat['subheadline'] as String,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? AppColors.textPrimary
+                              : AppColorsLight.textPrimary,
+                          height: 1,
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ).animate().fadeIn(duration: 300.ms).slideX(begin: 0.1),
+
+                  const SizedBox(height: 8),
+
+                  // Description
+                  Text(
+                    stat['description'] as String,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark
+                          ? AppColors.textSecondary
+                          : AppColorsLight.textSecondary,
+                      height: 1.3,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                  ),
+                ],
+              ),
             );
           },
-        ),
         ),
       ),
     );
@@ -520,194 +427,24 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
-      child: Text(
-        longDesc,
-        key: ValueKey(_currentStatIndex),
-        style: TextStyle(
-          fontSize: 14,
-          color: textSecondary,
-          height: 1.4,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Text(
+          longDesc,
+          key: ValueKey(_currentStatIndex),
+          style: TextStyle(
+            fontSize: 13,
+            color: textSecondary,
+            height: 1.4,
+          ),
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         ),
-        textAlign: TextAlign.center,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
       ),
     );
   }
 
-  /// Build a compact pricing transparency section showing all 4 tiers before signup
-  Widget _buildPricingTransparencySection(bool isDark, ThemeColors colors) {
-    final cardColor = isDark ? AppColors.elevated : Colors.white;
-    final accentColor = colors.accent;
-    final accentContrast = colors.accentContrast;
-    final borderColor = isDark
-        ? AppColors.cardBorder.withOpacity(0.3)
-        : accentColor.withOpacity(0.15);
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header row with FREE FOREVER badge
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  color: accentColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.check_circle, color: accentContrast, size: 10),
-                    const SizedBox(width: 3),
-                    Text(
-                      'FREE FOREVER',
-                      style: TextStyle(
-                        color: accentContrast,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              Text(
-                'No credit card needed',
-                style: TextStyle(
-                  color: textSecondary,
-                  fontSize: 10,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          // All 4 tiers in 2x2 grid
-          Row(
-            children: [
-              // Free tier
-              Expanded(
-                child: _CompactTierCard(
-                  tierName: 'Free',
-                  price: '\$0',
-                  period: '/forever',
-                  highlight: 'Start here',
-                  accentColor: accentColor,
-                  isDark: isDark,
-                  icon: Icons.person_outline,
-                  onInfoTap: () => _showTierFeaturesSheet(context, isDark, 'Free', accentColor),
-                ),
-              ),
-              const SizedBox(width: 6),
-              // Premium tier
-              Expanded(
-                child: _CompactTierCard(
-                  tierName: 'Premium',
-                  price: '\$4',
-                  period: '/mo',
-                  highlight: '7-day trial',
-                  accentColor: accentColor,
-                  isDark: isDark,
-                  icon: Icons.workspace_premium,
-                  isPopular: true,
-                  onInfoTap: () => _showTierFeaturesSheet(context, isDark, 'Premium', accentColor),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              // Premium Plus tier
-              Expanded(
-                child: _CompactTierCard(
-                  tierName: 'Premium Plus',
-                  price: '\$6.67',
-                  period: '/mo',
-                  highlight: 'Unlimited',
-                  accentColor: accentColor,
-                  isDark: isDark,
-                  icon: Icons.diamond_outlined,
-                  onInfoTap: () => _showTierFeaturesSheet(context, isDark, 'Premium Plus', accentColor),
-                ),
-              ),
-              const SizedBox(width: 6),
-              // Lifetime tier
-              Expanded(
-                child: _CompactTierCard(
-                  tierName: 'Lifetime',
-                  price: '\$99.99',
-                  period: 'once',
-                  highlight: 'Best value',
-                  accentColor: accentColor,
-                  isDark: isDark,
-                  icon: Icons.all_inclusive,
-                  onInfoTap: () => _showTierFeaturesSheet(context, isDark, 'Lifetime', accentColor),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          // Key features comparison row
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.glassSurface.withOpacity(0.5)
-                  : AppColorsLight.glassSurface,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _FeatureComparisonItem(
-                  label: 'Workouts',
-                  free: '4/mo',
-                  paid: '∞',
-                  isDark: isDark,
-                ),
-                Container(
-                  width: 1,
-                  height: 24,
-                  color: borderColor,
-                ),
-                _FeatureComparisonItem(
-                  label: 'Food Scans',
-                  free: '—',
-                  paid: '10/day',
-                  isDark: isDark,
-                ),
-                Container(
-                  width: 1,
-                  height: 24,
-                  color: borderColor,
-                ),
-                _FeatureComparisonItem(
-                  label: 'Nutrition',
-                  free: '—',
-                  paid: 'Full',
-                  isDark: isDark,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 400.ms);
-  }
 
   /// Show a bottom sheet with tier-by-tier feature comparison
   void _showFeaturesBottomSheet(BuildContext context, bool isDark) {
@@ -1138,23 +875,28 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
   }
 
   Widget _buildBottomSection(bool isDark, ThemeColors colors) {
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final elevated = isDark ? AppColors.elevated : Colors.white;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final accentColor = colors.accent;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Language selector (compact dropdown button that opens upward)
-        _buildCompactLanguageSelector(isDark, cardBorder, elevated, textSecondary, colors),
-
-        const SizedBox(height: 12),
-
         // Get Started button (goes to pre-auth quiz) - hide when sign-in buttons shown
         if (!_showSignInButtons) ...[
           _buildGetStartedButton(isDark, colors),
-          const SizedBox(height: 8),
+
+          const SizedBox(height: 6),
+
+          // "No credit card needed" directly under CTA
+          Text(
+            'No credit card needed',
+            style: TextStyle(
+              fontSize: 13,
+              color: textSecondary.withOpacity(0.7),
+            ),
+          ),
+
+          const SizedBox(height: 16),
         ],
 
         // Secondary CTAs in a horizontal row
@@ -1206,28 +948,29 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                     ),
                   ),
                   Text('•', style: TextStyle(color: textSecondary, fontSize: 13)),
-                  // Try Sample Workout
-                  TextButton(
+                  // Language selector (small, inline)
+                  TextButton.icon(
                     onPressed: () {
                       HapticFeedback.lightImpact();
-                      context.push('/demo-workout');
+                      _showLanguageBottomSheet(context, isDark, colors);
                     },
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    child: Text(
-                      'Try Sample',
+                    icon: Icon(Icons.language, size: 14, color: textSecondary),
+                    label: Text(
+                      _selectedLanguage.code.toUpperCase(),
                       style: TextStyle(
                         fontSize: 13,
-                        color: accentColor,
+                        color: textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
                 ],
-              ).animate().fadeIn(delay: 600.ms),
+              ),
 
         // Already have account - sign in section
         if (!_showSignInButtons)
@@ -1248,7 +991,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                 color: textSecondary,
               ),
             ),
-          ).animate().fadeIn(delay: 700.ms),
+          ),
 
         // Sign-in buttons (shown when user clicks "Sign in")
         if (_showSignInButtons) ...[
@@ -1328,7 +1071,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                     ],
                   ),
           ),
-        ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1),
+        ),
 
         const SizedBox(height: 10),
 
@@ -1367,7 +1110,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
               ],
             ),
           ),
-        ).animate().fadeIn(delay: 100.ms, duration: 300.ms).slideY(begin: 0.1),
+        ),
 
         // Error message
         if (authState.status == AuthStatus.error && authState.errorMessage != null)
@@ -1394,7 +1137,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                 ),
               ],
             ),
-          ).animate().fadeIn().shake(),
+          ),
 
         const SizedBox(height: 8),
 
@@ -1409,7 +1152,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
               color: accentColor,
             ),
           ),
-        ).animate().fadeIn(delay: 150.ms),
+        ),
 
         // Cancel/back to get started
         TextButton(
@@ -1424,7 +1167,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
               color: textSecondary,
             ),
           ),
-        ).animate().fadeIn(delay: 200.ms),
+        ),
       ],
     );
   }
@@ -1434,7 +1177,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
     final accentContrast = colors.accentContrast;
     return SizedBox(
       width: double.infinity,
-      height: 48,
+      height: 54,
       child: ElevatedButton(
         onPressed: () {
           HapticFeedback.mediumImpact();
@@ -1446,229 +1189,155 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
         style: ElevatedButton.styleFrom(
           backgroundColor: accentColor,
           foregroundColor: accentContrast,
-          elevation: 4,
-          shadowColor: accentColor.withOpacity(0.4),
+          elevation: 6,
+          shadowColor: accentColor.withOpacity(0.5),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(27),
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Get Started',
+              'Get Started — Free',
               style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
                 color: accentContrast,
               ),
             ),
-            SizedBox(width: 6),
-            Icon(Icons.arrow_forward_rounded, size: 18, color: accentContrast),
+            const SizedBox(width: 8),
+            Icon(Icons.arrow_forward_rounded, size: 20, color: accentContrast),
           ],
         ),
       ),
-    ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1);
+    );
   }
 
-  Widget _buildCompactLanguageSelector(
-    bool isDark,
-    Color cardBorder,
-    Color elevated,
-    Color textSecondary,
-    ThemeColors colors,
-  ) {
+  /// Show language picker as a bottom sheet
+  void _showLanguageBottomSheet(BuildContext context, bool isDark, ThemeColors colors) {
+    final cardColor = isDark ? AppColors.elevated : Colors.white;
+    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final accentColor = colors.accent;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Language dropdown button
-        GestureDetector(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            setState(() => _isDropdownOpen = !_isDropdownOpen);
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: elevated,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: _isDropdownOpen ? accentColor : cardBorder,
-                width: _isDropdownOpen ? 2 : 1,
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: borderColor,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Center(
-                    child: Text(
-                      _selectedLanguage.code.toUpperCase(),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 10,
-                        color: accentColor,
-                      ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Icon(Icons.language, color: accentColor, size: 24),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Select Language',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
                     ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  _selectedLanguage.name,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                ),
-                const SizedBox(width: 8),
-                AnimatedRotation(
-                  duration: const Duration(milliseconds: 200),
-                  turns: _isDropdownOpen ? 0.5 : 0,
-                  child: Icon(
-                    Icons.keyboard_arrow_up,
-                    color: textSecondary,
-                    size: 20,
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.close, color: textSecondary),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ).animate().fadeIn(delay: 500.ms),
+            Divider(color: borderColor, height: 1),
+            // Language list
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                itemCount: SupportedLanguages.all.length,
+                itemBuilder: (context, index) {
+                  final language = SupportedLanguages.all[index];
+                  final isSelected = language == _selectedLanguage;
 
-        // Dropdown options (opens upward with overlay)
-        if (_isDropdownOpen)
-          Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            constraints: const BoxConstraints(maxHeight: 180),
-            decoration: BoxDecoration(
-              color: elevated,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: cardBorder),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 12,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Search field
-                    Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (value) => setState(() => _searchQuery = value),
-                        decoration: InputDecoration(
-                          hintText: 'Search...',
-                          prefixIcon: const Icon(Icons.search, size: 18),
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          filled: true,
-                          fillColor: isDark
-                              ? AppColors.glassSurface
-                              : AppColorsLight.glassSurface,
-                        ),
-                      ),
-                    ),
-                    // Language list
-                    ..._filteredLanguages.map((language) {
-                      final isSelected = language == _selectedLanguage;
-                      return InkWell(
-                        onTap: () => _selectLanguage(language),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? accentColor.withOpacity(0.1)
-                                : Colors.transparent,
-                            border: Border(
-                              top: BorderSide(
-                                color: cardBorder.withOpacity(0.5),
+                  return InkWell(
+                    onTap: () {
+                      _selectLanguage(language);
+                      Navigator.pop(context);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? accentColor.withOpacity(0.15)
+                                  : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Center(
+                              child: Text(
+                                language.code.toUpperCase(),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                  color: isSelected ? accentColor : textSecondary,
+                                ),
                               ),
                             ),
                           ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 24,
-                                height: 24,
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? accentColor.withOpacity(0.2)
-                                      : (isDark
-                                          ? AppColors.glassSurface
-                                          : AppColorsLight.glassSurface),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    language.code.toUpperCase(),
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 10,
-                                      color: isSelected
-                                          ? accentColor
-                                          : textSecondary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Row(
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
                                   children: [
                                     Text(
                                       language.name,
                                       style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.w500,
-                                        color: isSelected
-                                            ? accentColor
-                                            : (isDark
-                                                ? AppColors.textPrimary
-                                                : AppColorsLight.textPrimary),
+                                        fontSize: 15,
+                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                        color: isSelected ? accentColor : textPrimary,
                                       ),
                                     ),
                                     if (language.isComingSoon) ...[
-                                      const SizedBox(width: 6),
+                                      const SizedBox(width: 8),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 4,
-                                          vertical: 2,
-                                        ),
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                         decoration: BoxDecoration(
                                           color: accentColor.withOpacity(0.15),
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: Text(
-                                          'Soon',
+                                          'Coming Soon',
                                           style: TextStyle(
-                                            fontSize: 8,
+                                            fontSize: 9,
                                             fontWeight: FontWeight.w600,
                                             color: accentColor,
                                           ),
@@ -1677,24 +1346,29 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                                     ],
                                   ],
                                 ),
-                              ),
-                              if (isSelected)
-                                Icon(
-                                  Icons.check_circle,
-                                  color: accentColor,
-                                  size: 16,
-                                ),
-                            ],
+                                if (language.nativeName != language.name)
+                                  Text(
+                                    language.nativeName,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: textSecondary,
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    }),
-                  ],
-                ),
+                          if (isSelected)
+                            Icon(Icons.check_circle, color: accentColor, size: 20),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
-          ),
-      ],
+          ],
+        ),
+      ),
     );
   }
 

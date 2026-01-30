@@ -92,8 +92,9 @@ class QuizLifestyle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    // Use stronger, more visible colors with proper contrast
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -303,7 +304,13 @@ class QuizLifestyle extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  gradient: isSelected ? AppColors.accentGradient : null,
+                  gradient: isSelected
+                  ? LinearGradient(
+                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
                   color: isSelected
                       ? null
                       : isDisabled

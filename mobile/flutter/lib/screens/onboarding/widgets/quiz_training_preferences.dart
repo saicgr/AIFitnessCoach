@@ -48,34 +48,34 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
 
   // All 5 training splits with colors + "Nothing structured" option first
   static final _splits = [
-    {'id': 'nothing_structured', 'label': 'Nothing structured', 'icon': Icons.shuffle, 'color': AppColors.accent, 'desc': "I'll let AI decide"},
-    {'id': 'push_pull_legs', 'label': 'Push/Pull/Legs', 'icon': Icons.splitscreen, 'color': AppColors.accent, 'desc': '6 days • Popular'},
-    {'id': 'full_body', 'label': 'Full Body', 'icon': Icons.accessibility_new, 'color': AppColors.success, 'desc': '3 days • Beginners'},
+    {'id': 'nothing_structured', 'label': 'Nothing structured', 'icon': Icons.shuffle, 'color': AppColors.purple, 'desc': "I'll let AI decide"},
+    {'id': 'push_pull_legs', 'label': 'Push/Pull/Legs', 'icon': Icons.splitscreen, 'color': AppColors.orange, 'desc': '6 days • Popular'},
+    {'id': 'full_body', 'label': 'Full Body', 'icon': Icons.accessibility_new, 'color': AppColors.green, 'desc': '3 days • Beginners'},
     {'id': 'upper_lower', 'label': 'Upper/Lower', 'icon': Icons.swap_vert, 'color': AppColors.electricBlue, 'desc': '4 days • Balanced'},
-    {'id': 'phul', 'label': 'PHUL', 'icon': Icons.flash_on, 'color': AppColors.accent, 'desc': '4 days • Power + Hypertrophy'},
-    {'id': 'body_part', 'label': 'Body Part Split', 'icon': Icons.view_week, 'color': AppColors.accent, 'desc': '5-6 days • Advanced'},
+    {'id': 'phul', 'label': 'PHUL', 'icon': Icons.flash_on, 'color': AppColors.pink, 'desc': '4 days • Power + Hypertrophy'},
+    {'id': 'body_part', 'label': 'Body Part Split', 'icon': Icons.view_week, 'color': AppColors.teal, 'desc': '5-6 days • Advanced'},
   ];
 
   // Workout types with colors
   static final _workoutTypes = [
-    {'id': 'strength', 'label': 'Strength', 'icon': Icons.fitness_center, 'color': AppColors.accent},
-    {'id': 'cardio', 'label': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.accent},
-    {'id': 'mixed', 'label': 'Mixed', 'icon': Icons.sports_gymnastics, 'color': AppColors.accent},
+    {'id': 'strength', 'label': 'Strength', 'icon': Icons.fitness_center, 'color': AppColors.purple},
+    {'id': 'cardio', 'label': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.orange},
+    {'id': 'mixed', 'label': 'Mixed', 'icon': Icons.sports_gymnastics, 'color': AppColors.electricBlue},
   ];
 
   // Progression pace with colors
   static final _paces = [
-    {'id': 'slow', 'label': 'Slow', 'desc': '3-4 weeks', 'color': AppColors.success},
+    {'id': 'slow', 'label': 'Slow', 'desc': '3-4 weeks', 'color': AppColors.green},
     {'id': 'medium', 'label': 'Medium', 'desc': '1-2 weeks', 'color': AppColors.electricBlue},
-    {'id': 'fast', 'label': 'Fast', 'desc': 'Every session', 'color': AppColors.accent},
+    {'id': 'fast', 'label': 'Fast', 'desc': 'Every session', 'color': AppColors.orange},
   ];
 
   // Sleep quality options
   static final _sleepQualityOptions = [
-    {'id': 'poor', 'emoji': '😴', 'label': 'Poor', 'desc': '<5 hrs', 'color': AppColors.accent},
-    {'id': 'fair', 'emoji': '😐', 'label': 'Fair', 'desc': '5-6 hrs', 'color': AppColors.accent},
-    {'id': 'good', 'emoji': '😊', 'label': 'Good', 'desc': '7-8 hrs', 'color': AppColors.success},
-    {'id': 'excellent', 'emoji': '🌟', 'label': 'Excellent', 'desc': '8+ hrs', 'color': AppColors.accent},
+    {'id': 'poor', 'emoji': '😴', 'label': 'Poor', 'desc': '<5 hrs', 'color': AppColors.pink},
+    {'id': 'fair', 'emoji': '😐', 'label': 'Fair', 'desc': '5-6 hrs', 'color': AppColors.orange},
+    {'id': 'good', 'emoji': '😊', 'label': 'Good', 'desc': '7-8 hrs', 'color': AppColors.green},
+    {'id': 'excellent', 'emoji': '🌟', 'label': 'Excellent', 'desc': '8+ hrs', 'color': AppColors.electricBlue},
   ];
 
   // Obstacle options
@@ -242,8 +242,9 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    // Use stronger, more visible colors with proper contrast
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -738,7 +739,13 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
-                  gradient: isSelected ? AppColors.accentGradient : null,
+                  gradient: isSelected
+                  ? LinearGradient(
+                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
                   color: isSelected
                       ? null
                       : isDisabled

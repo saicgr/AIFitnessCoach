@@ -11,7 +11,7 @@ UPCOMING:
 56. 
 
 ISSUES:
-1. Welcome Screen NEdds changed 
+1. Welcome Screen NEdds changed - Need to add screenshots as slides
 2. Need consistent bottom sheet - weekly check in and XP goals sheet
 3. 
 ASAP:

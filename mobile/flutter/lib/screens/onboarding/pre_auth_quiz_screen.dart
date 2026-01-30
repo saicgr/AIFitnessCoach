@@ -3,11 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/analytics_service.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/onboarding_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/template_workout_generator.dart';
 import '../../core/constants/api_constants.dart';
+import '../../data/models/workout.dart';
 import 'widgets/quiz_progress_bar.dart';
 import 'widgets/quiz_header.dart';
 import 'widgets/quiz_continue_button.dart';
@@ -24,6 +28,12 @@ import 'widgets/quiz_body_metrics.dart';
 import 'widgets/equipment_search_sheet.dart';
 import 'widgets/quiz_primary_goal.dart';
 import 'widgets/quiz_muscle_focus.dart';
+import 'widgets/quiz_personalization_gate.dart';
+import 'widgets/quiz_training_style.dart';
+import 'widgets/quiz_progression_constraints.dart';
+import 'widgets/quiz_nutrition_gate.dart';
+import 'plan_preview_screen.dart';
+import 'workout_generation_screen.dart';
 
 /// Pre-auth quiz data stored in SharedPreferences
 class PreAuthQuizData {
@@ -77,6 +87,10 @@ class PreAuthQuizData {
   // Muscle focus points allocation (max 5 total)
   // Keys: triceps, upper_traps, obliques, neck, lats, chest, shoulders, biceps, etc.
   final Map<String, int>? muscleFocusPoints;
+  // Nutrition opt-in flag (user chose to set nutrition in Phase 3)
+  final bool? nutritionEnabled;
+  // Physical limitations/injuries (knees, shoulders, lower_back, other, none)
+  final List<String>? limitations;
 
   /// Computed age from dateOfBirth
   int? get age {
@@ -128,6 +142,8 @@ class PreAuthQuizData {
     this.sleepTime,
     this.primaryGoal,
     this.muscleFocusPoints,
+    this.nutritionEnabled,
+    this.limitations,
   });
 
   String? get goal => goals?.isNotEmpty == true ? goals!.first : null;
@@ -187,6 +203,8 @@ class PreAuthQuizData {
         'sleepTime': sleepTime,
         'primaryGoal': primaryGoal,
         'muscleFocusPoints': muscleFocusPoints,
+        'nutritionEnabled': nutritionEnabled,
+        'limitations': limitations,
       };
 
   factory PreAuthQuizData.fromJson(Map<String, dynamic> json) => PreAuthQuizData(
@@ -233,6 +251,8 @@ class PreAuthQuizData {
         muscleFocusPoints: (json['muscleFocusPoints'] as Map<String, dynamic>?)?.map(
           (k, v) => MapEntry(k, v as int),
         ),
+        nutritionEnabled: json['nutritionEnabled'] as bool?,
+        limitations: (json['limitations'] as List<dynamic>?)?.cast<String>(),
       );
 }
 
@@ -305,6 +325,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
         muscleFocusPoints = null;
       }
     }
+    final nutritionEnabled = prefs.getBool('preAuth_nutritionEnabled');
+    final limitations = prefs.getStringList('preAuth_limitations');
 
     state = PreAuthQuizData(
       goals: goals,
@@ -344,6 +366,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       sleepTime: sleepTime,
       primaryGoal: primaryGoal,
       muscleFocusPoints: muscleFocusPoints,
+      nutritionEnabled: nutritionEnabled,
+      limitations: limitations,
     );
     _isLoaded = true;
   }
@@ -395,6 +419,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
     );
   }
@@ -439,6 +465,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
     );
   }
@@ -483,6 +511,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
     );
   }
@@ -527,6 +557,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
     );
   }
@@ -603,6 +635,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
     );
   }
@@ -647,6 +681,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
     );
   }
@@ -691,6 +727,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
     );
   }
@@ -735,6 +773,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
     );
   }
@@ -801,6 +841,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
     );
   }
@@ -845,6 +887,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
     );
   }
@@ -889,6 +933,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
     );
   }
@@ -933,6 +979,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
     );
   }
@@ -977,6 +1025,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
     );
   }
@@ -1021,6 +1071,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
     );
   }
@@ -1123,6 +1175,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
     );
   }
@@ -1167,6 +1221,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
     );
   }
@@ -1211,6 +1267,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
     );
   }
@@ -1255,6 +1313,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       wakeTime: state.wakeTime,
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
     );
   }
@@ -1387,7 +1447,154 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       sleepTime: state.sleepTime,
       primaryGoal: state.primaryGoal,
       muscleFocusPoints: points,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
     );
+  }
+
+  Future<void> setNutritionEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('preAuth_nutritionEnabled', enabled);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
+      weightChangeRate: state.weightChangeRate,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
+      wakeTime: state.wakeTime,
+      sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
+      nutritionEnabled: enabled,
+      limitations: state.limitations,
+    );
+  }
+
+  Future<void> setLimitations(List<String> limitations) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('preAuth_limitations', limitations);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
+      weightChangeRate: state.weightChangeRate,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
+      wakeTime: state.wakeTime,
+      sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: limitations,
+    );
+  }
+
+  Future<void> setWorkoutEnvironment(String environment) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('preAuth_workoutEnvironment', environment);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
+      weightChangeRate: state.weightChangeRate,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: environment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
+      wakeTime: state.wakeTime,
+      sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      muscleFocusPoints: state.muscleFocusPoints,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
+    );
+  }
+
+  Future<void> setIsComplete(bool isComplete) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('preAuth_isComplete', isComplete);
+    // isComplete is a computed getter, so we don't need to set it
+    // Just save the preference for persistence
   }
 }
 
@@ -1402,11 +1609,17 @@ class PreAuthQuizScreen extends ConsumerStatefulWidget {
 class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     with TickerProviderStateMixin {
   int _currentQuestion = 0;
-  // Dynamic total - 12 questions if user wants to lose/gain, 11 if maintaining
+
+  // Feature flag for conditional workout days screen
+  static const bool _featureFlagWorkoutDays = false;
+
+  // Dynamic total - 12 screens base, minus 1 if workout days feature disabled
   int get _totalQuestions {
-    // If maintaining weight, skip the rate question
-    if (_weightDirection == 'maintain') return 11;
-    return 12;
+    int total = 12; // New flow: 12 screens total
+    if (!_featureFlagWorkoutDays) {
+      total -= 1; // Skip Screen 3 (Workout Days)
+    }
+    return total;
   }
 
   // Question 1: Goals (multi-select)
@@ -1462,6 +1675,11 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   String? _selectedPrimaryGoal;
   // Question 11: Muscle Focus Points (max 5 total)
   Map<String, int> _muscleFocusPoints = {};
+
+  // NEW: Phase 2 and Phase 3 tracking
+  bool _skipPersonalization = false;  // Track if user skipped Phase 2
+  bool? _nutritionEnabled;  // Track nutrition opt-in
+  final Set<String> _selectedLimitations = {'none'};  // Physical limitations (default: none)
 
   late AnimationController _progressController;
   late AnimationController _questionController;
@@ -1522,21 +1740,38 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     super.dispose();
   }
 
-  double get _progress => (_currentQuestion + 1) / _totalQuestions;
+  /// Calculate progress value with phase-aware behavior
+  /// Phase 1 (0-5): Show 0-100% progress
+  /// Phase 2 & 3 (6+): Stay at 100% to show Phase 1 completion
+  double get _progress {
+    if (_currentQuestion <= 5) {
+      return (_currentQuestion + 1) / 6;  // Phase 1 only (6 screens)
+    }
+    return 1.0;  // User-selected: Fill to 100% for optional phases
+  }
 
   void _nextQuestion() async {
     HapticFeedback.mediumImpact();
 
-    // Determine if we're showing the rate question (not maintaining weight)
-    final showRateQuestion = _weightDirection != null && _weightDirection != 'maintain';
+    await _saveCurrentQuestionData();
 
-    await _saveCurrentQuestionData(showRateQuestion);
+    // Log analytics for current screen
+    AnalyticsService.logScreenView('onboarding_screen_$_currentQuestion');
+
+    // Special handling for Screen 2 -> Skip Screen 3 if feature flag disabled
+    if (_currentQuestion == 2 && !_featureFlagWorkoutDays) {
+      setState(() => _currentQuestion = 4); // Skip to equipment
+      _questionController.forward(from: 0);
+      return;
+    }
+
+    // Special handling for Screen 5 (Primary Goal + Generate Preview)
+    // Note: This should be triggered by button in _buildPrimaryGoal, not auto-advance
+    // The preview screen will handle navigation to Screen 6 or 10
 
     // Check if this is the last question
     if (_currentQuestion == _totalQuestions - 1) {
-      if (mounted) {
-        context.go('/weight-projection');
-      }
+      _finishOnboarding();
       return;
     }
 
@@ -1546,115 +1781,85 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     _questionController.forward(from: 0);
   }
 
-  Future<void> _saveCurrentQuestionData(bool showRateQuestion) async {
-    // New order: Goals -> Fitness -> Days -> Equipment -> BodyMetrics -> Rate(conditional) -> Training -> Nutrition -> Fasting -> Motivation
-    // Question flow with rate: 0-Goals, 1-Fitness, 2-Days, 3-Equipment, 4-BodyMetrics, 5-Rate, 6-Training, 7-Nutrition, 8-Fasting, 9-Motivation
-    // Question flow without rate: 0-Goals, 1-Fitness, 2-Days, 3-Equipment, 4-BodyMetrics, 5-Training, 6-Nutrition, 7-Fasting, 8-Motivation
+  Future<void> _saveCurrentQuestionData() async {
+    // NEW 12-SCREEN FLOW (Progressive Profiling)
+    // Phase 1 (Required): 0-Goals, 1-Fitness+Experience, 2-Schedule, 3-WorkoutDays[COND], 4-Equipment, 5-PrimaryGoal+Generate
+    // Phase 2 (Optional): 6-PersonalizationGate, 7-MuscleFocus, 8-TrainingStyle, 9-Progression+Constraints
+    // Phase 3 (Optional): 10-NutritionGate, 11-NutritionDetails
 
     switch (_currentQuestion) {
-      case 0:
-        // Goals
+      // PHASE 1: REQUIRED (Screens 0-5)
+      case 0: // Goals (multi-select)
         if (_selectedGoals.isNotEmpty) {
           await ref.read(preAuthQuizProvider.notifier).setGoals(_selectedGoals.toList());
         }
         break;
-      case 1:
-        // Fitness Level
+
+      case 1: // Fitness Level + Training Experience (optional)
         if (_selectedLevel != null) {
           await ref.read(preAuthQuizProvider.notifier).setFitnessLevel(_selectedLevel!);
         }
         if (_selectedTrainingExperience != null) {
           await ref.read(preAuthQuizProvider.notifier).setTrainingExperience(_selectedTrainingExperience!);
         }
-        if (_selectedActivityLevel != null) {
-          await ref.read(preAuthQuizProvider.notifier).setActivityLevel(_selectedActivityLevel!);
-        }
         break;
-      case 2:
-        // Days selector
+
+      case 2: // Schedule (days/week + duration)
         await _saveDaysData();
         break;
-      case 3:
-        // Equipment
+
+      case 3: // Workout Days [CONDITIONAL - only if feature flag enabled]
+        if (_featureFlagWorkoutDays && _selectedWorkoutDays.isNotEmpty) {
+          await ref.read(preAuthQuizProvider.notifier).setWorkoutDays(_selectedWorkoutDays.toList()..sort());
+        }
+        break;
+
+      case 4: // Equipment (environment + equipment list)
         await _saveEquipmentData();
-        break;
-      case 4:
-        // Body metrics with name, DOB, gender, weight direction and amount
-        if (_heightCm != null && _weightKg != null && _goalWeightKg != null) {
-          await ref.read(preAuthQuizProvider.notifier).setBodyMetrics(
-            name: _name,
-            dateOfBirth: _dateOfBirth,
-            gender: _gender,
-            heightCm: _heightCm!,
-            weightKg: _weightKg!,
-            goalWeightKg: _goalWeightKg!,
-            useMetric: _useMetric,
-            weightDirection: _weightDirection,
-            weightChangeAmount: _weightChangeAmount,
-            weightChangeRate: _weightChangeRate,
-          );
+        if (_selectedEnvironment != null) {
+          await ref.read(preAuthQuizProvider.notifier).setWorkoutEnvironment(_selectedEnvironment!);
         }
         break;
-      case 5:
-        if (showRateQuestion) {
-          // Rate selection - update body metrics with rate
-          if (_weightChangeRate != null && _heightCm != null && _weightKg != null && _goalWeightKg != null) {
-            await ref.read(preAuthQuizProvider.notifier).setBodyMetrics(
-              name: _name,
-              dateOfBirth: _dateOfBirth,
-              gender: _gender,
-              heightCm: _heightCm!,
-              weightKg: _weightKg!,
-              goalWeightKg: _goalWeightKg!,
-              useMetric: _useMetric,
-              weightDirection: _weightDirection,
-              weightChangeAmount: _weightChangeAmount,
-              weightChangeRate: _weightChangeRate,
-            );
-          }
-        } else {
-          // Training preferences
-          await _saveTrainingPreferencesData();
+
+      case 5: // Primary Goal (saved when user clicks "Generate My First Workout")
+        if (_selectedPrimaryGoal != null) {
+          await ref.read(preAuthQuizProvider.notifier).setPrimaryGoal(_selectedPrimaryGoal!);
         }
         break;
-      case 6:
-        if (showRateQuestion) {
-          await _saveTrainingPreferencesData();
-        } else {
-          await _saveNutritionData();
-        }
+
+      // PHASE 2: OPTIONAL PERSONALIZATION (Screens 6-9)
+      case 6: // Personalization Gate (no data to save, just navigation)
         break;
-      case 7:
-        if (showRateQuestion) {
-          await _saveNutritionData();
-        } else {
-          await _saveFastingData();
-        }
-        break;
-      case 8:
-        if (showRateQuestion) {
-          await _saveFastingData();
-        } else {
-          await _saveMotivationData();
-        }
-        break;
-      case 9:
-        if (showRateQuestion) {
-          await _saveMotivationData();
-        } else {
-          await _savePrimaryGoalData();
-        }
-        break;
-      case 10:
-        if (showRateQuestion) {
-          await _savePrimaryGoalData();
-        } else {
-          await _saveMuscleFocusData();
-        }
-        break;
-      case 11:
-        // Only reached if showing rate question (12 questions total) - Muscle Focus
+
+      case 7: // Muscle Focus Points
         await _saveMuscleFocusData();
+        break;
+
+      case 8: // Training Style (split + workout type)
+        if (_selectedTrainingSplit != null) {
+          await ref.read(preAuthQuizProvider.notifier).setTrainingSplit(_selectedTrainingSplit!);
+        }
+        if (_selectedWorkoutType != null) {
+          await ref.read(preAuthQuizProvider.notifier).setWorkoutTypePreference(_selectedWorkoutType!);
+        }
+        break;
+
+      case 9: // Progression + Constraints
+        if (_selectedProgressionPace != null) {
+          await ref.read(preAuthQuizProvider.notifier).setProgressionPace(_selectedProgressionPace!);
+        }
+        if (_selectedLimitations.isNotEmpty) {
+          await ref.read(preAuthQuizProvider.notifier).setLimitations(_selectedLimitations.toList());
+        }
+        break;
+
+      // PHASE 3: OPTIONAL NUTRITION (Screens 10-11)
+      case 10: // Nutrition Opt-In Gate (handled in button callbacks)
+        break;
+
+      case 11: // Nutrition Details (merged nutrition + fasting)
+        await _saveNutritionData();
+        await _saveFastingData();
         break;
     }
   }
@@ -1745,6 +1950,104 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     await ref.read(preAuthQuizProvider.notifier).setMuscleFocusPoints(_muscleFocusPoints);
   }
 
+  /// Generate workout preview and navigate to plan preview screen
+  ///
+  /// Shows instant template-based preview without waiting for AI generation
+  Future<void> _generateAndShowPreview() async {
+    try {
+      // Save current primary goal selection
+      await _saveCurrentQuestionData();
+
+      // Log analytics
+      AnalyticsService.logWorkoutGenerated(
+        primaryGoal: _selectedPrimaryGoal ?? 'unknown',
+        duration: _workoutDuration ?? 60,
+        equipment: _selectedEquipment.toList(),
+      );
+
+      // Get current quiz data
+      final quizData = ref.read(preAuthQuizProvider);
+
+      if (!mounted) return;
+
+      // Generate instant template-based workout preview
+      final templateWorkout = TemplateWorkoutGenerator.generateTemplateWorkout(quizData);
+
+      debugPrint('✅ [Onboarding] Generated template workout: ${templateWorkout.name}');
+      debugPrint('   Exercises: ${templateWorkout.exercises.length}');
+      debugPrint('   Duration: ${templateWorkout.estimatedDurationMinutes} min');
+
+      // Show plan preview immediately with template workout
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => PlanPreviewScreen(
+            quizData: quizData,
+            generatedWorkout: templateWorkout,  // ← Pass template workout
+            onContinue: () {
+              Navigator.of(context).pop();
+              setState(() => _currentQuestion = 6); // Go to personalization gate
+              _questionController.forward(from: 0);
+            },
+            onStartNow: () {
+              Navigator.of(context).pop();
+              setState(() => _currentQuestion = 10); // Skip to nutrition gate
+              _questionController.forward(from: 0);
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('❌ [Onboarding] Failed to generate preview: $e');
+      // Show error and stay on current screen
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate workout: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Finish onboarding and navigate to coach selection
+  Future<void> _finishOnboarding() async {
+    try {
+      // Save final screen data
+      await _saveCurrentQuestionData();
+
+      // Mark onboarding as complete
+      await ref.read(preAuthQuizProvider.notifier).setIsComplete(true);
+
+      // Log analytics
+      final skippedScreens = _skipPersonalization ? 4 : 0; // Screens 6-9 skipped
+      AnalyticsService.logOnboardingCompleted(
+        totalScreens: _totalQuestions,
+        skippedScreens: skippedScreens,
+        nutritionOptedIn: _nutritionEnabled ?? false,
+        personalizationCompleted: !_skipPersonalization,
+      );
+
+      // Navigate to sign-in screen (user must create account before coach selection)
+      // Flow: Pre-Auth Quiz → Sign In → Coach Selection → Paywall → Home
+      if (mounted) {
+        context.go('/sign-in');
+      }
+    } catch (e) {
+      debugPrint('❌ [Onboarding] Failed to finish onboarding: $e');
+      // Show error but still try to navigate
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to save onboarding data. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   void _previousQuestion() {
     if (_currentQuestion > 0) {
       HapticFeedback.lightImpact();
@@ -1756,72 +2059,57 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   }
 
   bool get _canProceed {
-    // New order: Goals -> Fitness -> Days -> Equipment -> BodyMetrics -> Rate(conditional) -> Training -> Nutrition -> Fasting -> Motivation -> PrimaryGoal -> MuscleFocus
-    // With rate (12 total): 0-Goals, 1-Fitness, 2-Days, 3-Equipment, 4-BodyMetrics, 5-Rate, 6-Training, 7-Nutrition, 8-Fasting, 9-Motivation, 10-PrimaryGoal, 11-MuscleFocus
-    // Without rate (11 total): 0-Goals, 1-Fitness, 2-Days, 3-Equipment, 4-BodyMetrics, 5-Training, 6-Nutrition, 7-Fasting, 8-Motivation, 9-PrimaryGoal, 10-MuscleFocus
-    final showRateQuestion = _weightDirection != null && _weightDirection != 'maintain';
+    // NEW 12-SCREEN FLOW (Progressive Profiling)
+    // Phase 1 (Required): 0-Goals, 1-Fitness+Experience, 2-Schedule, 3-WorkoutDays[COND], 4-Equipment, 5-PrimaryGoal+Generate
+    // Phase 2 (Optional): 6-PersonalizationGate, 7-MuscleFocus, 8-TrainingStyle, 9-Progression+Constraints
+    // Phase 3 (Optional): 10-NutritionGate, 11-NutritionDetails
 
     switch (_currentQuestion) {
-      case 0:
-        // Goals
+      // PHASE 1: REQUIRED (Screens 0-5)
+      case 0: // Goals (must select at least 1)
         return _selectedGoals.isNotEmpty;
-      case 1:
-        // Fitness Level
-        return _selectedLevel != null && _selectedTrainingExperience != null && _selectedActivityLevel != null;
-      case 2:
-        // Days selector (days + which days + duration)
-        return _selectedDays != null && _selectedWorkoutDays.length >= _selectedDays! && _workoutDuration != null;
-      case 3:
-        // Equipment
-        return _selectedEquipment.isNotEmpty || _otherSelectedEquipment.isNotEmpty;
-      case 4:
-        // Body metrics: name, DOB, gender, height, weight, and goal weight are required
-        return _name != null && _name!.isNotEmpty && _dateOfBirth != null && _gender != null && _heightCm != null && _weightKg != null && _goalWeightKg != null;
-      case 5:
-        if (showRateQuestion) {
-          // Rate selection page - must select a rate
-          return _weightChangeRate != null;
+
+      case 1: // Fitness Level + Training Experience (fitness required, experience optional)
+        return _selectedLevel != null;
+
+      case 2: // Schedule (days/week + duration both required)
+        return _selectedDays != null && _workoutDuration != null;
+
+      case 3: // Workout Days [CONDITIONAL - only if feature flag enabled]
+        if (_featureFlagWorkoutDays) {
+          // Must select at least the number of days specified
+          return _selectedWorkoutDays.length >= (_selectedDays ?? 0);
         }
-        // Training preferences are optional
-        return true;
-      case 6:
-        if (showRateQuestion) {
-          // Training preferences are optional
-          return true;
-        }
-        // Nutrition goals are optional
-        return true;
-      case 7:
-        if (showRateQuestion) {
-          // Nutrition goals are optional
-          return true;
-        }
-        // Fasting - must answer yes or no
-        return _interestedInFasting != null;
-      case 8:
-        if (showRateQuestion) {
-          // Fasting - must answer yes or no
-          return _interestedInFasting != null;
-        }
-        // Motivation
-        return _selectedMotivations.isNotEmpty;
-      case 9:
-        if (showRateQuestion) {
-          // Motivation
-          return _selectedMotivations.isNotEmpty;
-        }
-        // Primary Goal - must select one
+        return true; // Skip validation if feature disabled
+
+      case 4: // Equipment (must select environment + at least 1 equipment)
+        return _selectedEnvironment != null &&
+               (_selectedEquipment.isNotEmpty || _otherSelectedEquipment.isNotEmpty);
+
+      case 5: // Primary Goal (must select 1, but "Generate" button handles navigation)
         return _selectedPrimaryGoal != null;
-      case 10:
-        if (showRateQuestion) {
-          // Primary Goal - must select one
-          return _selectedPrimaryGoal != null;
-        }
-        // Muscle Focus - optional (can have 0 focus points)
+
+      // PHASE 2: OPTIONAL PERSONALIZATION (Screens 6-9, all optional)
+      case 6: // Personalization Gate (no validation, just navigation)
         return true;
-      case 11:
-        // Only reached if showing rate question (12 questions) - Muscle Focus
+
+      case 7: // Muscle Focus Points (optional, 0-5 total)
+        final totalPoints = _muscleFocusPoints.values.fold(0, (sum, val) => sum + val);
+        return totalPoints <= 5; // Can be 0, but max is 5
+
+      case 8: // Training Style (optional)
         return true;
+
+      case 9: // Progression + Constraints (optional)
+        return true;
+
+      // PHASE 3: OPTIONAL NUTRITION (Screens 10-11)
+      case 10: // Nutrition Opt-In Gate (no validation, buttons handle navigation)
+        return true;
+
+      case 11: // Nutrition Details (all optional)
+        return true;
+
       default:
         return false;
     }
@@ -1847,8 +2135,89 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
                 ),
         ),
         child: SafeArea(
-          child: Column(
+          child: Stack(
             children: [
+              // Main content
+              Column(
+                children: [
+                  const SizedBox(height: 72), // Space for floating header
+                  QuizProgressBar(progress: _progress),
+                  const SizedBox(height: 32),
+                  Expanded(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      transitionBuilder: (child, animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0.1, 0),
+                              end: Offset.zero,
+                            ).animate(CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutCubic,
+                            )),
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: _buildCurrentQuestion(),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Case 5 gets special "Generate" button
+                  if (_currentQuestion == 5)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: _canProceed ? _generateAndShowPreview : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _canProceed
+                                ? AppColors.orange
+                                : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                            foregroundColor: _canProceed
+                                ? Colors.white
+                                : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+                            elevation: _canProceed ? 4 : 0,
+                            shadowColor: _canProceed ? AppColors.orange.withValues(alpha: 0.4) : Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                'Generate My First Workout',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              if (_canProceed) ...[
+                                const SizedBox(width: 8),
+                                const Icon(Icons.auto_awesome_rounded, size: 20),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1)
+                  // Cases 6 and 10 have their own action buttons (gate screens)
+                  else if (_currentQuestion != 6 && _currentQuestion != 10)
+                    QuizContinueButton(
+                      canProceed: _canProceed,
+                      isLastQuestion: _currentQuestion == _totalQuestions - 1,
+                      onPressed: _nextQuestion,
+                    ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+
+              // Floating header overlay
               QuizHeader(
                 currentQuestion: _currentQuestion,
                 totalQuestions: _totalQuestions,
@@ -1859,36 +2228,6 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
                   context.go('/stats-welcome');
                 },
               ),
-              QuizProgressBar(progress: _progress),
-              const SizedBox(height: 32),
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0.1, 0),
-                          end: Offset.zero,
-                        ).animate(CurvedAnimation(
-                          parent: animation,
-                          curve: Curves.easeOutCubic,
-                        )),
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: _buildCurrentQuestion(),
-                ),
-              ),
-              const SizedBox(height: 8),
-              QuizContinueButton(
-                canProceed: _canProceed,
-                isLastQuestion: _currentQuestion == _totalQuestions - 1,
-                onPressed: _nextQuestion,
-              ),
-              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -1897,91 +2236,114 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   }
 
   Widget _buildCurrentQuestion() {
-    // New order: Goals -> Fitness -> Days -> Equipment -> BodyMetrics -> Rate(conditional) -> Training -> Nutrition -> Fasting -> Motivation -> PrimaryGoal -> MuscleFocus
-    // With rate question (12 total): 0-Goals, 1-Fitness, 2-Days, 3-Equipment, 4-BodyMetrics, 5-Rate, 6-Training, 7-Nutrition, 8-Fasting, 9-Motivation, 10-PrimaryGoal, 11-MuscleFocus
-    // Without rate (11 total): 0-Goals, 1-Fitness, 2-Days, 3-Equipment, 4-BodyMetrics, 5-Training, 6-Nutrition, 7-Fasting, 8-Motivation, 9-PrimaryGoal, 10-MuscleFocus
-    final showRateQuestion = _weightDirection != null && _weightDirection != 'maintain';
+    // NEW 12-SCREEN FLOW (Progressive Profiling)
+    // Phase 1 (Required): 0-Goals, 1-Fitness+Experience, 2-Schedule, 3-WorkoutDays[COND], 4-Equipment, 5-PrimaryGoal+Generate
+    // Phase 2 (Optional): 6-PersonalizationGate, 7-MuscleFocus, 8-TrainingStyle, 9-Progression+Constraints
+    // Phase 3 (Optional): 10-NutritionGate, 11-NutritionDetails
 
     switch (_currentQuestion) {
-      case 0:
+      // PHASE 1: REQUIRED (Screens 0-5)
+      case 0: // Goals (multi-select) - NO CHANGES
         return _buildGoalQuestion();
-      case 1:
+
+      case 1: // Fitness Level + Training Experience (combined, experience optional)
         return QuizFitnessLevel(
           key: const ValueKey('fitness_level'),
           selectedLevel: _selectedLevel,
           selectedExperience: _selectedTrainingExperience,
-          selectedActivityLevel: _selectedActivityLevel,
+          selectedActivityLevel: null, // Remove activity level from Phase 1
           onLevelChanged: (level) => setState(() => _selectedLevel = level),
           onExperienceChanged: (exp) => setState(() => _selectedTrainingExperience = exp),
-          onActivityLevelChanged: (level) => setState(() => _selectedActivityLevel = level),
+          onActivityLevelChanged: null,
         );
-      case 2:
-        return _buildDaysSelector();
-      case 3:
+
+      case 2: // Schedule (days/week + duration combined)
+        return _buildDaysSelector(); // Already shows both days + duration
+
+      case 3: // Workout Days [CONDITIONAL - only if feature flag enabled]
+        if (_featureFlagWorkoutDays) {
+          return _buildWorkoutDaysSelector();
+        }
+        // If feature disabled, this case shouldn't be reached due to skip logic
+        return const SizedBox.shrink();
+
+      case 4: // Equipment (2-step: environment + equipment list)
         return _buildEquipmentSelector();
-      case 4:
-        return QuizBodyMetrics(
-          key: const ValueKey('body_metrics'),
-          name: _name,
-          dateOfBirth: _dateOfBirth,
-          gender: _gender,
-          heightCm: _heightCm,
-          weightKg: _weightKg,
-          goalWeightKg: _goalWeightKg,
-          useMetric: _useMetric,
-          weightDirection: _weightDirection,
-          weightChangeAmount: _weightChangeAmount,
-          onNameChanged: (name) => setState(() => _name = name),
-          onDateOfBirthChanged: (dob) => setState(() => _dateOfBirth = dob),
-          onGenderChanged: (gender) => setState(() => _gender = gender),
-          onHeightChanged: (height) => setState(() => _heightCm = height),
-          onWeightChanged: (weight) => setState(() => _weightKg = weight),
-          onGoalWeightChanged: (goalWeight) => setState(() => _goalWeightKg = goalWeight),
-          onUnitChanged: (useMetric) => setState(() => _useMetric = useMetric),
-          onWeightDirectionChanged: (direction) => setState(() => _weightDirection = direction),
-          onWeightChangeAmountChanged: (amount) => setState(() => _weightChangeAmount = amount),
-        );
-      case 5:
-        if (showRateQuestion) {
-          return QuizWeightRate(
-            key: const ValueKey('weight_rate'),
-            weightDirection: _weightDirection,
-            selectedRate: _weightChangeRate,
-            currentWeight: _weightKg,
-            goalWeight: _goalWeightKg,
-            useMetric: _useMetric,
-            onRateChanged: (rate) => setState(() => _weightChangeRate = rate),
-          );
-        }
-        return _buildTrainingPreferences();
-      case 6:
-        if (showRateQuestion) {
-          return _buildTrainingPreferences();
-        }
-        return _buildNutritionGoals();
-      case 7:
-        if (showRateQuestion) {
-          return _buildNutritionGoals();
-        }
-        return _buildFasting();
-      case 8:
-        if (showRateQuestion) {
-          return _buildFasting();
-        }
-        return _buildMotivation();
-      case 9:
-        if (showRateQuestion) {
-          return _buildMotivation();
-        }
+
+      case 5: // Training Focus (Primary Goal) + Generate Preview
         return _buildPrimaryGoal();
-      case 10:
-        if (showRateQuestion) {
-          return _buildPrimaryGoal();
-        }
+        // Note: Generate button in _buildPrimaryGoal should call _generateAndShowPreview()
+
+      // PHASE 2: OPTIONAL PERSONALIZATION (Screens 6-9, shown AFTER preview)
+      case 6: // Personalization Gate
+        return QuizPersonalizationGate(
+          key: const ValueKey('personalization_gate'),
+          onPersonalize: () {
+            HapticFeedback.mediumImpact();
+            setState(() => _skipPersonalization = false);
+            _nextQuestion();
+          },
+          onSkip: () {
+            HapticFeedback.selectionClick();
+            AnalyticsService.logPersonalizationSkipped();
+            setState(() {
+              _skipPersonalization = true;
+              _currentQuestion = 10; // Jump to nutrition gate
+            });
+            _questionController.forward(from: 0);
+          },
+        );
+
+      case 7: // Muscle Focus Points (existing widget, repositioned)
         return _buildMuscleFocus();
-      case 11:
-        // Only reached if showing rate question (12 questions)
-        return _buildMuscleFocus();
+
+      case 8: // Training Style (split + workout type)
+        return QuizTrainingStyle(
+          key: const ValueKey('training_style'),
+          selectedSplit: _selectedTrainingSplit,
+          selectedWorkoutType: _selectedWorkoutType,
+          daysPerWeek: _selectedDays ?? 4,
+          onSplitChanged: (split) => setState(() => _selectedTrainingSplit = split),
+          onWorkoutTypeChanged: (type) => setState(() => _selectedWorkoutType = type),
+        );
+
+      case 9: // Progression + Constraints
+        return QuizProgressionConstraints(
+          key: const ValueKey('progression_constraints'),
+          selectedPace: _selectedProgressionPace,
+          selectedLimitations: _selectedLimitations.toList(),
+          fitnessLevel: _selectedLevel ?? 'intermediate',
+          onPaceChanged: (pace) => setState(() => _selectedProgressionPace = pace),
+          onLimitationsChanged: (limitations) => setState(() {
+            _selectedLimitations.clear();
+            _selectedLimitations.addAll(limitations);
+          }),
+        );
+
+      // PHASE 3: OPTIONAL NUTRITION (Screens 10-11)
+      case 10: // Nutrition Opt-In Gate
+        return QuizNutritionGate(
+          key: const ValueKey('nutrition_gate'),
+          goals: _selectedGoals.toList(),
+          onSetNutrition: () async {
+            HapticFeedback.mediumImpact();
+            AnalyticsService.logNutritionOptIn(true);
+            await ref.read(preAuthQuizProvider.notifier).setNutritionEnabled(true);
+            setState(() => _nutritionEnabled = true);
+            _nextQuestion();
+          },
+          onSkip: () async {
+            HapticFeedback.selectionClick();
+            AnalyticsService.logNutritionOptIn(false);
+            await ref.read(preAuthQuizProvider.notifier).setNutritionEnabled(false);
+            setState(() => _nutritionEnabled = false);
+            _finishOnboarding();
+          },
+        );
+
+      case 11: // Nutrition Details (merged nutrition + fasting)
+        return _buildNutritionGoals(); // TODO: Should be merged widget with fasting
+
       default:
         return const SizedBox.shrink();
     }
@@ -2016,6 +2378,127 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         });
       },
     );
+  }
+
+  Widget _buildWorkoutDaysSelector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title
+          Text(
+            'Which days work best?',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : const Color(0xFF0A0A0A),
+            ),
+          ).animate().fadeIn(delay: 100.ms),
+          const SizedBox(height: 6),
+          Text(
+            'Select ${_selectedDays ?? 0} days for your workouts',
+            style: TextStyle(
+              fontSize: 15,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFD4D4D8)
+                  : const Color(0xFF52525B),
+            ),
+          ).animate().fadeIn(delay: 200.ms),
+          const SizedBox(height: 24),
+          // Days of week selector
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                _buildDayCheckbox(1, 'Monday', 300.ms),
+                const SizedBox(height: 12),
+                _buildDayCheckbox(2, 'Tuesday', 350.ms),
+                const SizedBox(height: 12),
+                _buildDayCheckbox(3, 'Wednesday', 400.ms),
+                const SizedBox(height: 12),
+                _buildDayCheckbox(4, 'Thursday', 450.ms),
+                const SizedBox(height: 12),
+                _buildDayCheckbox(5, 'Friday', 500.ms),
+                const SizedBox(height: 12),
+                _buildDayCheckbox(6, 'Saturday', 550.ms),
+                const SizedBox(height: 12),
+                _buildDayCheckbox(7, 'Sunday', 600.ms),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDayCheckbox(int day, String label, Duration delay) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isSelected = _selectedWorkoutDays.contains(day);
+    final canSelect = _selectedWorkoutDays.length < (_selectedDays ?? 7);
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() {
+          if (_selectedWorkoutDays.contains(day)) {
+            _selectedWorkoutDays.remove(day);
+          } else if (canSelect || isSelected) {
+            _selectedWorkoutDays.add(day);
+          }
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.orange.withValues(alpha: 0.15)
+              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.orange
+                : (isDark ? AppColors.glassBorder : AppColorsLight.cardBorder),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            // Checkbox indicator
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? AppColors.orange : textPrimary.withValues(alpha: 0.5),
+                  width: 2,
+                ),
+                color: isSelected ? AppColors.orange : Colors.transparent,
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check, size: 16, color: Colors.white)
+                  : null,
+            ),
+            const SizedBox(width: 16),
+            // Day label
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? AppColors.orange : textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(delay: delay).slideX(begin: -0.05);
   }
 
   Widget _buildEquipmentSelector() {
@@ -2152,24 +2635,31 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     final options = [
       {
         'id': 'muscle_hypertrophy',
-        'label': 'Muscle Hypertrophy',
-        'description': 'Workouts will focus on increasing muscle size using moderate weights and higher reps (8-12 reps).',
-        'icon': Icons.fitness_center,
-        'color': AppColors.accent,
+        'label': 'Hypertrophy',  // ← SHORTENED from "Muscle Hypertrophy"
+        'description': '8–12 reps • muscle size',  // ← CONDENSED to concise format
+        'icon': Icons.fitness_center_rounded,
+        'color': AppColors.orange, // Vibrant orange for visibility
       },
       {
         'id': 'muscle_strength',
-        'label': 'Muscle Strength',
-        'description': 'Workouts will focus on increasing maximal strength using heavier weights for fewer reps (3-6 reps).',
-        'icon': Icons.bolt,
-        'color': AppColors.electricBlue,
+        'label': 'Strength',  // ← SHORTENED from "Muscle Strength"
+        'description': '3–6 reps • heavy & powerful',  // ← CONDENSED
+        'icon': Icons.bolt_rounded,
+        'color': const Color(0xFF3B82F6), // Bright blue
       },
       {
         'id': 'strength_hypertrophy',
-        'label': 'Both Strength & Hypertrophy',
-        'description': 'Workouts will balance strength and size with a variety of weight and rep schemes (6-10 reps).',
-        'icon': Icons.all_inclusive,
-        'color': AppColors.teal,
+        'label': 'Balanced',  // ← SHORTENED from "Both Strength & Hypertrophy"
+        'description': '6–10 reps • size + strength',  // ← CONDENSED
+        'icon': Icons.all_inclusive_rounded,
+        'color': const Color(0xFF8B5CF6), // Vibrant purple
+      },
+      {
+        'id': 'endurance',
+        'label': 'Endurance',  // ← KEEP as-is
+        'description': '12+ reps • stamina',  // ← CONDENSED
+        'icon': Icons.directions_run_rounded,
+        'color': const Color(0xFF10B981), // Vibrant green
       },
     ];
 
@@ -2199,12 +2689,12 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
 
   Widget _buildGoalQuestion() {
     final goals = [
-      {'id': 'build_muscle', 'label': 'Build Muscle', 'icon': Icons.fitness_center, 'color': AppColors.accent},
-      {'id': 'lose_weight', 'label': 'Lose Weight', 'icon': Icons.monitor_weight_outlined, 'color': AppColors.accent},
-      {'id': 'increase_strength', 'label': 'Get Stronger', 'icon': Icons.bolt, 'color': AppColors.accent},
-      {'id': 'improve_endurance', 'label': 'Build Endurance', 'icon': Icons.directions_run, 'color': AppColors.teal},
-      {'id': 'stay_active', 'label': 'Stay Active', 'icon': Icons.favorite_outline, 'color': AppColors.success},
-      {'id': 'athletic_performance', 'label': 'Athletic Performance', 'icon': Icons.sports_martial_arts, 'color': AppColors.electricBlue},
+      {'id': 'build_muscle', 'label': 'Build Muscle', 'icon': Icons.fitness_center, 'color': AppColors.orange},
+      {'id': 'lose_weight', 'label': 'Lose Weight', 'icon': Icons.monitor_weight_outlined, 'color': AppColors.orange},
+      {'id': 'increase_strength', 'label': 'Get Stronger', 'icon': Icons.bolt, 'color': AppColors.orange},
+      {'id': 'improve_endurance', 'label': 'Build Endurance', 'icon': Icons.directions_run, 'color': AppColors.purple},
+      {'id': 'stay_active', 'label': 'Stay Active', 'icon': Icons.favorite_outline, 'color': AppColors.green},
+      {'id': 'athletic_performance', 'label': 'Athletic Performance', 'icon': Icons.sports_martial_arts, 'color': const Color(0xFF3B82F6)}, // Bright blue
     ];
 
     return QuizMultiSelect(

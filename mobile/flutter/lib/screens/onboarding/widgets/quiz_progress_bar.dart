@@ -15,6 +15,8 @@ class QuizProgressBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = isDark ? AppColors.orange : AppColorsLight.orange;
+    final accentColorLight = isDark ? AppColors.orangeLight : AppColorsLight.orangeLight;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -34,11 +36,18 @@ class QuizProgressBar extends StatelessWidget {
               widthFactor: value,
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: AppColors.accentGradient,
+                  gradient: LinearGradient(
+                    colors: [
+                      accentColor,
+                      accentColorLight,
+                    ],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
                   borderRadius: BorderRadius.circular(3),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.accent.withOpacity(0.4),
+                      color: accentColor.withValues(alpha: 0.4),
                       blurRadius: 8,
                       spreadRadius: 0,
                     ),

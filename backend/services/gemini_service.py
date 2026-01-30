@@ -2404,6 +2404,7 @@ Return a valid JSON object with this exact structure:
   "duration_minutes": {duration_minutes},
   "duration_minutes_min": {duration_minutes_min or 'null'},
   "duration_minutes_max": {duration_minutes_max or 'null'},
+  "estimated_duration_minutes": null,
   "target_muscles": ["Primary muscle 1", "Primary muscle 2"],
   "exercises": [
     {{
@@ -2432,6 +2433,28 @@ Return a valid JSON object with this exact structure:
   ],
   "notes": "Overall workout tips including warm-up and cool-down recommendations"
 }}
+
+⏱️ ESTIMATED DURATION CALCULATION (CRITICAL):
+After generating the workout, you MUST calculate the actual estimated duration and set "estimated_duration_minutes".
+Calculate it as: SUM of (each exercise's sets × (reps × 3 seconds + rest_seconds)) / 60
+Include time for transitions between exercises (add ~30 seconds per exercise).
+Round to nearest integer.
+
+🚨 DURATION CONSTRAINT (MANDATORY):
+- If duration_minutes_max is provided, the calculated estimated_duration_minutes MUST be ≤ duration_minutes_max
+- If duration_minutes_min is provided, aim for estimated_duration_minutes to be ≥ duration_minutes_min
+- If range is 30-45 min, aim for 35-42 min (comfortably within range)
+- Adjust number of exercises or sets to fit within the time constraint
+- NEVER exceed the maximum duration - users have limited time!
+
+Example calculation for 4 exercises:
+- Exercise 1: 4 sets × (10 reps × 3s + 60s rest) = 4 × 90s = 360s
+- Exercise 2: 3 sets × (12 reps × 3s + 60s rest) = 3 × 96s = 288s
+- Exercise 3: 3 sets × (8 reps × 3s + 90s rest) = 3 × 114s = 342s
+- Exercise 4: 3 sets × (12 reps × 3s + 45s rest) = 3 × 81s = 243s
+- Transitions: 4 exercises × 30s = 120s
+- Total: (360 + 288 + 342 + 243 + 120) / 60 = 22.55 ≈ 23 minutes
+Set "estimated_duration_minutes": 23
 
 🚨🚨🚨 SET TARGETS - ABSOLUTELY REQUIRED (DO NOT SKIP) 🚨🚨🚨
 This is the MOST IMPORTANT field in the entire response!
@@ -2868,6 +2891,7 @@ Return ONLY valid JSON (no markdown):
   "duration_minutes": {duration_minutes},
   "duration_minutes_min": {duration_minutes_min or 'null'},
   "duration_minutes_max": {duration_minutes_max or 'null'},
+  "estimated_duration_minutes": null,
   "target_muscles": ["muscle1", "muscle2"],
   "exercises": [
     {{
@@ -2887,6 +2911,10 @@ Return ONLY valid JSON (no markdown):
   ],
   "notes": "Overall tips"
 }}
+
+⏱️ DURATION CALCULATION (MANDATORY):
+Calculate "estimated_duration_minutes" = SUM of (sets × (reps × 3s + rest)) / 60 + (exercises × 30s) / 60
+MUST be ≤ duration_minutes_max if provided. Adjust exercises/sets to fit time constraint!
 
 CRITICAL: Every exercise MUST include "set_targets" array with set_number, set_type (warmup/working/drop/failure/amrap), target_reps, target_weight_kg, and target_rpe for each set.
 

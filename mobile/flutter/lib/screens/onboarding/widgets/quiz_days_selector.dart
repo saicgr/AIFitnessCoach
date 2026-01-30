@@ -33,18 +33,19 @@ class QuizDaysSelector extends StatelessWidget {
   ];
 
   static const _durationOptions = [
-    {'minutes': 30, 'label': '30', 'desc': 'Quick'},
-    {'minutes': 45, 'label': '45', 'desc': 'Standard'},
-    {'minutes': 60, 'label': '60', 'desc': 'Full'},
-    {'minutes': 75, 'label': '75', 'desc': 'Extended'},
-    {'minutes': 90, 'label': '90', 'desc': 'Long'},
+    {'minutes': 30, 'label': '<30', 'desc': 'Quick'},
+    {'minutes': 45, 'label': '30-45', 'desc': 'Standard'},
+    {'minutes': 60, 'label': '45-60', 'desc': 'Full'},
+    {'minutes': 75, 'label': '60-75', 'desc': 'Extended'},
+    {'minutes': 90, 'label': '75-90', 'desc': 'Long'},
   ];
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    // Use stronger, more visible colors with proper contrast
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
 
     final requiredDays = selectedDays ?? 0;
     final selectedCount = selectedWorkoutDays.length;
@@ -94,7 +95,7 @@ class QuizDaysSelector extends StatelessWidget {
         ).animate().fadeIn(delay: 100.ms),
         const SizedBox(height: 6),
         Text(
-          'Average session length (including rest)',
+          'Your workout duration target (AI will generate within this range)',
           style: TextStyle(
             fontSize: 13,
             color: textSecondary,
@@ -120,13 +121,19 @@ class QuizDaysSelector extends StatelessWidget {
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      gradient: isSelected ? AppColors.accentGradient : null,
+                      gradient: isSelected
+                  ? LinearGradient(
+                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
                       color: isSelected
                           ? null
                           : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected ? AppColors.accent : cardBorder,
+                        color: isSelected ? AppColors.orange : cardBorder,
                         width: isSelected ? 2 : 1,
                       ),
                       boxShadow: isSelected
@@ -251,13 +258,19 @@ class QuizDaysSelector extends StatelessWidget {
             width: 44,
             height: 64,
             decoration: BoxDecoration(
-              gradient: isSelected ? AppColors.accentGradient : null,
+              gradient: isSelected
+                  ? LinearGradient(
+                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
               color: isSelected
                   ? null
                   : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? AppColors.accent : cardBorder,
+                color: isSelected ? AppColors.orange : cardBorder,
                 width: isSelected ? 2 : 1,
               ),
               boxShadow: isSelected
@@ -344,7 +357,13 @@ class QuizDaysSelector extends StatelessWidget {
                 width: 42,
                 height: 58,
                 decoration: BoxDecoration(
-                  gradient: isSelected ? AppColors.accentGradient : null,
+                  gradient: isSelected
+                  ? LinearGradient(
+                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
                   color: isSelected
                       ? null
                       : isDisabled
@@ -415,42 +434,67 @@ class QuizDaysSelector extends StatelessWidget {
 
   Widget _buildSelectionCounter(bool isDark, Color textPrimary, int requiredDays, int selectedCount) {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final isComplete = selectedCount >= requiredDays;
 
     return Center(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: selectedCount >= requiredDays
-              ? AppColors.success.withValues(alpha: 0.15)
-              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-          borderRadius: BorderRadius.circular(16),
+          gradient: isComplete
+              ? LinearGradient(
+                  colors: [
+                    AppColors.success,
+                    AppColors.success.withValues(alpha: 0.8),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : LinearGradient(
+                  colors: [
+                    (isDark ? AppColors.orange : AppColorsLight.orange).withValues(alpha: 0.15),
+                    (isDark ? AppColors.orange : AppColorsLight.orange).withValues(alpha: 0.08),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selectedCount >= requiredDays
-                ? AppColors.success.withValues(alpha: 0.5)
-                : cardBorder,
+            color: isComplete
+                ? AppColors.success
+                : (isDark ? AppColors.orange : AppColorsLight.orange).withValues(alpha: 0.3),
+            width: isComplete ? 2 : 1.5,
           ),
+          boxShadow: isComplete
+              ? [
+                  BoxShadow(
+                    color: AppColors.success.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    spreadRadius: 0,
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              selectedCount >= requiredDays ? Icons.check_circle : Icons.calendar_today,
-              size: 16,
-              color: selectedCount >= requiredDays ? AppColors.success : AppColors.accent,
+              isComplete ? Icons.check_circle_rounded : Icons.calendar_today_rounded,
+              size: 18,
+              color: isComplete ? Colors.white : (isDark ? AppColors.orange : AppColorsLight.orange),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             Text(
               '$selectedCount / $requiredDays days selected',
               style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: selectedCount >= requiredDays ? AppColors.success : textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: isComplete ? Colors.white : (isDark ? AppColors.orange : AppColorsLight.orange),
               ),
             ),
           ],
         ),
       ),
-    ).animate().fadeIn(delay: 350.ms);
+    ).animate().fadeIn(delay: 350.ms).scale(begin: const Offset(0.95, 0.95));
   }
 
   Widget _buildSelectedDaysSummary(Color textSecondary) {
@@ -472,8 +516,9 @@ class QuizDaysSelector extends StatelessWidget {
       child: Text(
         summary,
         style: TextStyle(
-          fontSize: 12,
-          color: textSecondary,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: AppColors.orange,
         ),
         textAlign: TextAlign.center,
       ),
@@ -493,21 +538,43 @@ class QuizDaysSelector extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 20),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.accent.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+          gradient: LinearGradient(
+            colors: [
+              AppColors.orange.withValues(alpha: 0.15),
+              AppColors.orange.withValues(alpha: 0.08),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.orange.withValues(alpha: 0.3),
+            width: 1.5,
+          ),
         ),
         child: Row(
           children: [
-            const Icon(Icons.lightbulb_outline, color: AppColors.accent, size: 18),
-            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.orange.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.lightbulb_rounded,
+                color: AppColors.orange,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 recommendation,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                   color: textPrimary,
                   height: 1.4,
                 ),

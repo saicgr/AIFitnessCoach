@@ -27,21 +27,21 @@ class QuizFitnessLevel extends StatelessWidget {
       'id': 'beginner',
       'label': 'Beginner',
       'icon': Icons.eco_outlined,
-      'color': AppColors.success,
+      'color': AppColors.green,
       'description': 'New to fitness or returning after a break',
     },
     {
       'id': 'intermediate',
       'label': 'Intermediate',
       'icon': Icons.trending_up,
-      'color': AppColors.warning,
+      'color': AppColors.orange,
       'description': 'Workout regularly, familiar with exercises',
     },
     {
       'id': 'advanced',
       'label': 'Advanced',
       'icon': Icons.rocket_launch_outlined,
-      'color': AppColors.accent,
+      'color': AppColors.purple,
       'description': 'Experienced athlete, seeking new challenges',
     },
   ];
@@ -64,8 +64,9 @@ class QuizFitnessLevel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    // Use stronger, more visible colors with proper contrast
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -133,15 +134,31 @@ class QuizFitnessLevel extends StatelessWidget {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              gradient: isSelected ? AppColors.accentGradient : null,
+              gradient: isSelected
+                  ? LinearGradient(
+                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
               color: isSelected
                   ? null
                   : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? AppColors.accent : cardBorder,
+                color: isSelected ? AppColors.orange : cardBorder,
                 width: isSelected ? 2 : 1,
               ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: AppColors.orange.withOpacity(0.4),
+                        blurRadius: 12,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
             ),
             child: Row(
               children: [
@@ -177,7 +194,7 @@ class QuizFitnessLevel extends StatelessWidget {
                   width: 22,
                   height: 22,
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.white.withOpacity(0.2) : Colors.transparent,
+                    color: isSelected ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
                     shape: BoxShape.circle,
                     border: isSelected
                         ? null
@@ -235,13 +252,19 @@ class QuizFitnessLevel extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  gradient: isSelected ? AppColors.accentGradient : null,
+                  gradient: isSelected
+                      ? LinearGradient(
+                          colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
                   color: isSelected
                       ? null
                       : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected ? AppColors.accent : cardBorder,
+                    color: isSelected ? AppColors.orange : cardBorder,
                     width: isSelected ? 2 : 1,
                   ),
                 ),
@@ -301,13 +324,19 @@ class QuizFitnessLevel extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  gradient: isSelected ? AppColors.accentGradient : null,
+                  gradient: isSelected
+                      ? LinearGradient(
+                          colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
                   color: isSelected
                       ? null
                       : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isSelected ? AppColors.accent : cardBorder,
+                    color: isSelected ? AppColors.orange : cardBorder,
                     width: isSelected ? 2 : 1,
                   ),
                 ),

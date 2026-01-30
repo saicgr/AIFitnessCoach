@@ -24,8 +24,9 @@ class QuizPrimaryGoal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    // Use stronger, more visible colors with proper contrast
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -35,20 +36,22 @@ class QuizPrimaryGoal extends StatelessWidget {
           Text(
             question,
             style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
               color: textPrimary,
               height: 1.3,
+              letterSpacing: -0.5,
             ),
-          ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
-          const SizedBox(height: 8),
+          ),
+          const SizedBox(height: 10),
           Text(
             subtitle,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 15,
               color: textSecondary,
+              fontWeight: FontWeight.w500,
             ),
-          ).animate().fadeIn(delay: 200.ms),
+          ),
           const SizedBox(height: 24),
           Expanded(
             child: ListView.builder(
@@ -102,7 +105,8 @@ class _PrimaryGoalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final color = option['color'] as Color? ?? AppColors.accent;
+    final color = option['color'] as Color? ?? AppColors.orange; // Use orange accent
+    final accentColor = AppColors.orange; // Primary accent color
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -110,23 +114,30 @@ class _PrimaryGoalCard extends StatelessWidget {
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            gradient: isSelected ? AppColors.accentGradient : null,
+            gradient: isSelected
+                ? LinearGradient(
+                    colors: [accentColor, accentColor.withOpacity(0.8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
             color: isSelected
                 ? null
                 : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected ? AppColors.accent : cardBorder,
-              width: isSelected ? 2 : 1,
+              color: isSelected ? accentColor : cardBorder,
+              width: isSelected ? 3.0 : 1,  // ← INCREASED from 2.5 to 3.0 for more obvious selection
             ),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: AppColors.accent.withOpacity(0.3),
-                      blurRadius: 12,
-                      spreadRadius: 0,
+                      color: accentColor.withOpacity(0.5),  // ← INCREASED from 0.4 to 0.5
+                      blurRadius: 16,  // ← INCREASED from 12 to 16
+                      spreadRadius: 2,  // ← ADDED spreadRadius for more presence
+                      offset: const Offset(0, 4),  // ← Subtle lift
                     ),
                   ]
                 : null,
@@ -135,18 +146,38 @@ class _PrimaryGoalCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? Colors.white.withOpacity(0.2)
-                      : color.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
+                  gradient: isSelected
+                      ? LinearGradient(
+                          colors: [
+                            Colors.white.withValues(alpha: 0.25),
+                            Colors.white.withValues(alpha: 0.15),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : LinearGradient(
+                          colors: [
+                            color.withValues(alpha: 0.25),
+                            color.withValues(alpha: 0.15),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isSelected
+                        ? Colors.white.withValues(alpha: 0.3)
+                        : color.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
                 ),
                 child: Icon(
                   option['icon'] as IconData,
                   color: isSelected ? Colors.white : color,
-                  size: 24,
+                  size: 28,
                 ),
               ),
               const SizedBox(width: 14),
@@ -157,18 +188,22 @@ class _PrimaryGoalCard extends StatelessWidget {
                     Text(
                       option['label'] as String,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 17,
                         fontWeight: FontWeight.w600,
-                        color: isSelected ? Colors.white : textPrimary,
+                        color: isSelected ? Colors.white : (isDark ? Colors.white : const Color(0xFF0A0A0A)),
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       option['description'] as String,
                       style: TextStyle(
-                        fontSize: 13,
-                        color: isSelected ? Colors.white70 : textSecondary,
+                        fontSize: 13,  // ← REDUCED from 14 for tighter spacing
+                        fontWeight: FontWeight.w500,  // ← INCREASED from w400 for clarity
+                        color: isSelected
+                            ? Colors.white.withOpacity(0.9)
+                            : (isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B)),
                         height: 1.4,
+                        letterSpacing: 0.2,  // ← ADDED for readability
                       ),
                     ),
                   ],
@@ -176,24 +211,29 @@ class _PrimaryGoalCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Container(
-                width: 24,
-                height: 24,
+                width: 28,  // ← INCREASED from 24 for more prominent checkmark
+                height: 28,  // ← INCREASED from 24
                 margin: const EdgeInsets.only(top: 2),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.white.withOpacity(0.2) : Colors.transparent,
+                  color: isSelected ? Colors.white : Colors.transparent,  // ← Solid white when selected
                   shape: BoxShape.circle,
                   border: isSelected
                       ? null
                       : Border.all(color: cardBorder, width: 2),
                 ),
                 child: isSelected
-                    ? const Icon(Icons.check, color: Colors.white, size: 16)
+                    ? Icon(
+                        Icons.check,
+                        color: accentColor,  // ← Orange checkmark on white background
+                        size: 20,  // ← INCREASED from 16
+                        weight: 700,  // ← ADDED bold weight
+                      )
                     : null,
               ),
             ],
           ),
         ),
-      ).animate(delay: (100 + index * 100).ms).fadeIn().slideX(begin: 0.05),
+      ),
     );
   }
 }

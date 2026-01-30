@@ -15,21 +15,22 @@ class QuizMotivation extends StatelessWidget {
   });
 
   static const _motivations = [
-    {'id': 'look_better', 'label': 'Look better', 'icon': Icons.auto_awesome, 'color': AppColors.accent},
-    {'id': 'feel_stronger', 'label': 'Feel stronger', 'icon': Icons.fitness_center, 'color': AppColors.accent},
-    {'id': 'more_energy', 'label': 'Have more energy', 'icon': Icons.bolt, 'color': AppColors.accent},
-    {'id': 'mental_health', 'label': 'Improve mental health', 'icon': Icons.psychology, 'color': AppColors.success},
+    {'id': 'look_better', 'label': 'Look better', 'icon': Icons.auto_awesome, 'color': AppColors.orange},
+    {'id': 'feel_stronger', 'label': 'Feel stronger', 'icon': Icons.fitness_center, 'color': AppColors.purple},
+    {'id': 'more_energy', 'label': 'Have more energy', 'icon': Icons.bolt, 'color': AppColors.electricBlue},
+    {'id': 'mental_health', 'label': 'Improve mental health', 'icon': Icons.psychology, 'color': AppColors.green},
     {'id': 'sleep_better', 'label': 'Sleep better', 'icon': Icons.nightlight_round, 'color': AppColors.electricBlue},
-    {'id': 'be_healthier', 'label': 'Be healthier overall', 'icon': Icons.favorite, 'color': AppColors.accent},
-    {'id': 'sports_performance', 'label': 'Sports performance', 'icon': Icons.sports_basketball, 'color': AppColors.warning},
-    {'id': 'confidence', 'label': 'Build confidence', 'icon': Icons.star, 'color': AppColors.accent},
+    {'id': 'be_healthier', 'label': 'Be healthier overall', 'icon': Icons.favorite, 'color': AppColors.pink},
+    {'id': 'sports_performance', 'label': 'Sports performance', 'icon': Icons.sports_basketball, 'color': AppColors.orange},
+    {'id': 'confidence', 'label': 'Build confidence', 'icon': Icons.star, 'color': AppColors.orange},
   ];
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    // Use stronger, more visible colors with proper contrast
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),

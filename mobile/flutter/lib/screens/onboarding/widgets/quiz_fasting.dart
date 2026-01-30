@@ -72,7 +72,7 @@ class _QuizFastingState extends State<QuizFasting> {
       'fastingHours': 12,
       'eatingHours': 12,
       'icon': Icons.wb_sunny_outlined,
-      'color': AppColors.success,
+      'color': AppColors.green,
       'difficulty': 'Beginner',
       'bestFor': ['beginners', 'maintain'],
     },
@@ -94,7 +94,7 @@ class _QuizFastingState extends State<QuizFasting> {
       'fastingHours': 16,
       'eatingHours': 8,
       'icon': Icons.schedule,
-      'color': AppColors.accent,
+      'color': AppColors.orange,
       'difficulty': 'Intermediate',
       'bestFor': ['intermediate', 'lose', 'maintain'],
       'popular': true,
@@ -106,7 +106,7 @@ class _QuizFastingState extends State<QuizFasting> {
       'fastingHours': 18,
       'eatingHours': 6,
       'icon': Icons.timer,
-      'color': AppColors.accent,
+      'color': AppColors.purple,
       'difficulty': 'Intermediate',
       'bestFor': ['intermediate', 'advanced', 'lose'],
     },
@@ -117,7 +117,7 @@ class _QuizFastingState extends State<QuizFasting> {
       'fastingHours': 20,
       'eatingHours': 4,
       'icon': Icons.hourglass_top,
-      'color': AppColors.accent,
+      'color': AppColors.electricBlue,
       'difficulty': 'Advanced',
       'bestFor': ['advanced', 'lose'],
     },
@@ -276,21 +276,21 @@ class _QuizFastingState extends State<QuizFasting> {
 
     if (direction == 'lose') {
       benefits = [
-        {'icon': Icons.local_fire_department, 'text': 'Burns fat', 'color': AppColors.accent},
-        {'icon': Icons.trending_down, 'text': 'Reduces cravings', 'color': AppColors.accent},
-        {'icon': Icons.bolt, 'text': 'Boosts energy', 'color': AppColors.accent},
+        {'icon': Icons.local_fire_department, 'text': 'Burns fat', 'color': AppColors.orange},
+        {'icon': Icons.trending_down, 'text': 'Reduces cravings', 'color': AppColors.purple},
+        {'icon': Icons.bolt, 'text': 'Boosts energy', 'color': AppColors.electricBlue},
       ];
     } else if (direction == 'gain') {
       benefits = [
-        {'icon': Icons.fitness_center, 'text': 'Builds muscle', 'color': AppColors.accent},
-        {'icon': Icons.trending_up, 'text': 'Growth hormone', 'color': AppColors.success},
+        {'icon': Icons.fitness_center, 'text': 'Builds muscle', 'color': AppColors.orange},
+        {'icon': Icons.trending_up, 'text': 'Growth hormone', 'color': AppColors.green},
         {'icon': Icons.restaurant, 'text': 'Better digestion', 'color': AppColors.teal},
       ];
     } else {
       benefits = [
-        {'icon': Icons.psychology, 'text': 'Mental clarity', 'color': AppColors.accent},
-        {'icon': Icons.favorite, 'text': 'Heart health', 'color': AppColors.accent},
-        {'icon': Icons.schedule, 'text': 'Simple routine', 'color': AppColors.accent},
+        {'icon': Icons.psychology, 'text': 'Mental clarity', 'color': AppColors.purple},
+        {'icon': Icons.favorite, 'text': 'Heart health', 'color': AppColors.pink},
+        {'icon': Icons.schedule, 'text': 'Simple routine', 'color': AppColors.orange},
       ];
     }
 
@@ -321,8 +321,9 @@ class _QuizFastingState extends State<QuizFasting> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    // Use stronger, more visible colors with proper contrast
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final recommendedId = _getRecommendedProtocol();
 
@@ -468,23 +469,30 @@ class _QuizFastingState extends State<QuizFasting> {
                             duration: const Duration(milliseconds: 200),
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                             decoration: BoxDecoration(
-                              gradient: isSelected ? AppColors.accentGradient : null,
+                              gradient: isSelected
+                                  ? LinearGradient(
+                                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    )
+                                  : null,
                               color: isSelected
                                   ? null
                                   : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isRecommended && !isSelected
-                                    ? AppColors.success
-                                    : (isSelected ? AppColors.accent : cardBorder),
+                                    ? AppColors.green
+                                    : (isSelected ? AppColors.orange : cardBorder),
                                 width: isSelected || isRecommended ? 2 : 1,
                               ),
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                        color: AppColors.accent.withValues(alpha: 0.3),
-                                        blurRadius: 8,
+                                        color: AppColors.orange.withOpacity(0.4),
+                                        blurRadius: 12,
                                         spreadRadius: 0,
+                                        offset: const Offset(0, 4),
                                       ),
                                     ]
                                   : null,
@@ -528,7 +536,7 @@ class _QuizFastingState extends State<QuizFasting> {
                                               decoration: BoxDecoration(
                                                 color: isSelected
                                                     ? Colors.white.withValues(alpha: 0.2)
-                                                    : AppColors.success.withValues(alpha: 0.15),
+                                                    : AppColors.green.withValues(alpha: 0.15),
                                                 borderRadius: BorderRadius.circular(4),
                                               ),
                                               child: Text(
@@ -536,7 +544,7 @@ class _QuizFastingState extends State<QuizFasting> {
                                                 style: TextStyle(
                                                   fontSize: 10,
                                                   fontWeight: FontWeight.w600,
-                                                  color: isSelected ? Colors.white : AppColors.success,
+                                                  color: isSelected ? Colors.white : AppColors.green,
                                                 ),
                                               ),
                                             ),
@@ -578,7 +586,7 @@ class _QuizFastingState extends State<QuizFasting> {
                                           style: TextStyle(
                                             fontSize: 11,
                                             fontStyle: FontStyle.italic,
-                                            color: AppColors.success,
+                                            color: AppColors.green,
                                           ),
                                         ),
                                       ],
@@ -667,13 +675,19 @@ class _QuizFastingState extends State<QuizFasting> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
         decoration: BoxDecoration(
-          gradient: isSelected ? AppColors.accentGradient : null,
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
           color: isSelected
               ? null
               : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.accent : cardBorder,
+            color: isSelected ? AppColors.orange : cardBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -682,7 +696,7 @@ class _QuizFastingState extends State<QuizFasting> {
           children: [
             Icon(
               icon,
-              color: isSelected ? Colors.white : AppColors.accent,
+              color: isSelected ? Colors.white : AppColors.orange,
               size: 18,
             ),
             const SizedBox(width: 8),

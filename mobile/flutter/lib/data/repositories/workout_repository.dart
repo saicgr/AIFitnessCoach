@@ -350,6 +350,8 @@ class WorkoutRepository {
     List<String>? goals,
     List<String>? equipment,
     int durationMinutes = 45,
+    int? durationMinutesMin,
+    int? durationMinutesMax,
     List<String>? focusAreas,
     String? scheduledDate,  // YYYY-MM-DD format for specific date generation
   }) async* {
@@ -390,6 +392,8 @@ class WorkoutRepository {
           if (goals != null && goals.isNotEmpty) 'goals': goals,
           if (equipment != null && equipment.isNotEmpty) 'equipment': equipment,
           'duration_minutes': durationMinutes,
+          if (durationMinutesMin != null) 'duration_minutes_min': durationMinutesMin,
+          if (durationMinutesMax != null) 'duration_minutes_max': durationMinutesMax,
           if (focusAreas != null && focusAreas.isNotEmpty) 'focus_areas': focusAreas,
           if (scheduledDate != null) 'scheduled_date': scheduledDate,
         },

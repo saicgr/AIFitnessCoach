@@ -4322,3 +4322,65 @@ async def validate_and_filter_focus_mismatches(
         "mismatch_count": mismatch_count,
         "warnings": warnings
     }
+
+
+def truncate_exercises_to_duration(
+    exercises: List[Dict[str, Any]],
+    max_duration_minutes: int,
+    transition_time_seconds: int = 30
+) -> List[Dict[str, Any]]:
+    """
+    Truncate exercises to fit within the specified duration constraint.
+
+    This is a fallback when Gemini generates a workout that exceeds the time limit.
+    Removes exercises from the end until the workout fits within max_duration_minutes.
+
+    Args:
+        exercises: List of exercise dictionaries
+        max_duration_minutes: Maximum allowed workout duration in minutes
+        transition_time_seconds: Time between exercises (default 30s)
+
+    Returns:
+        Truncated list of exercises that fits within the time constraint
+    """
+    if not exercises:
+        return exercises
+
+    max_duration_seconds = max_duration_minutes * 60
+
+    def calculate_exercise_duration(exercise: Dict[str, Any]) -> int:
+        """Calculate total duration for one exercise in seconds."""
+        sets = exercise.get("sets", 3)
+        reps = exercise.get("reps", 10)
+        rest_seconds = exercise.get("rest_seconds", 60)
+        duration_seconds = exercise.get("duration_seconds")
+
+        if duration_seconds:
+            # Cardio exercise with duration
+            return sets * (duration_seconds + rest_seconds)
+        else:
+            # Strength exercise with reps (assume 3 seconds per rep)
+            return sets * (reps * 3 + rest_seconds)
+
+    # Calculate cumulative duration
+    truncated_exercises = []
+    cumulative_duration = 0
+
+    for i, exercise in enumerate(exercises):
+        exercise_duration = calculate_exercise_duration(exercise)
+        transition_time = transition_time_seconds if i > 0 else 0
+
+        # Check if adding this exercise would exceed the limit
+        if cumulative_duration + exercise_duration + transition_time <= max_duration_seconds:
+            truncated_exercises.append(exercise)
+            cumulative_duration += exercise_duration + transition_time
+        else:
+            # Would exceed limit - stop here
+            removed_count = len(exercises) - len(truncated_exercises)
+            logger.warning(
+                f"⚠️ [Duration Truncate] Removed {removed_count} exercises to fit within "
+                f"{max_duration_minutes} min (estimated: {cumulative_duration / 60:.1f} min)"
+            )
+            break
+
+    return truncated_exercises

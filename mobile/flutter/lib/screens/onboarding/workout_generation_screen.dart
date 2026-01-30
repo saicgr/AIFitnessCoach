@@ -3,15 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/models/workout.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/gradient_circular_progress_indicator.dart';
 import 'pre_auth_quiz_screen.dart';
 
 /// Full-screen workout generation screen with animated progress steps
 /// Similar to the diet plan generation screen
 class WorkoutGenerationScreen extends ConsumerStatefulWidget {
-  const WorkoutGenerationScreen({super.key});
+  final bool showBackButton;
+  final bool returnWorkout; // If true, pops with the generated workout instead of navigating to home
+
+  const WorkoutGenerationScreen({
+    super.key,
+    this.showBackButton = true,
+    this.returnWorkout = false,
+  });
 
   @override
   ConsumerState<WorkoutGenerationScreen> createState() => _WorkoutGenerationScreenState();
@@ -26,6 +35,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
   double _progress = 0.0;
   int _generatedWorkouts = 0;
   int _totalWorkouts = 0;
+  Workout? _generatedWorkout; // Store the generated workout
 
   // Steps with their completion status
   final List<_GenerationStep> _steps = [
@@ -92,6 +102,33 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
       final selectedDays = quizData.workoutDays ?? [1, 3, 5]; // Default Mon/Wed/Fri
       final workoutDuration = quizData.workoutDuration ?? 45;
 
+      // Calculate duration range based on selected duration
+      // This ensures AI generates workouts within the time constraint
+      int? durationMin;
+      int? durationMax;
+
+      if (workoutDuration == 30) {
+        // <30 min range
+        durationMin = null;
+        durationMax = 30;
+      } else if (workoutDuration == 45) {
+        // 30-45 min range
+        durationMin = 30;
+        durationMax = 45;
+      } else if (workoutDuration == 60) {
+        // 45-60 min range
+        durationMin = 45;
+        durationMax = 60;
+      } else if (workoutDuration == 75) {
+        // 60-75 min range
+        durationMin = 60;
+        durationMax = 75;
+      } else if (workoutDuration == 90) {
+        // 75-90 min range
+        durationMin = 75;
+        durationMax = 90;
+      }
+
       // Generate 1 workout for today or next workout day
       _totalWorkouts = 1;
 
@@ -103,6 +140,8 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
       final stream = repository.generateWorkoutStreaming(
         userId: userId,
         durationMinutes: workoutDuration,
+        durationMinutesMin: durationMin,
+        durationMinutesMax: durationMax,
       );
 
       _generationSubscription = stream.listen(
@@ -115,6 +154,10 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
               _generatedWorkouts = 1;
               _progress = 1.0;
               _currentStep = _steps.length;
+              // Store the generated workout
+              if (progress.workout != null) {
+                _generatedWorkout = progress.workout;
+              }
             } else if (progress.status == WorkoutGenerationStatus.progress) {
               _progress = 0.5;
               if (_currentStep < 4) {
@@ -141,10 +184,15 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
               _progress = 1.0;
             });
 
-            // Navigate to home after showing completion
+            // If returnWorkout is true, pop with the generated workout
+            // Otherwise, navigate to home after showing completion
             Future.delayed(const Duration(milliseconds: 1500), () {
               if (mounted) {
-                context.go('/home');
+                if (widget.returnWorkout) {
+                  Navigator.of(context).pop(_generatedWorkout);
+                } else {
+                  context.go('/home');
+                }
               }
             });
           }
@@ -200,28 +248,35 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
       body: SafeArea(
         child: Column(
           children: [
-            // Back button
-            Align(
-              alignment: Alignment.topLeft,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: IconButton(
-                  onPressed: () => context.go('/coach-selection'),
-                  icon: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.arrow_back,
-                      color: textPrimary,
-                      size: 20,
+            // Back button (conditionally shown)
+            if (widget.showBackButton)
+              Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: IconButton(
+                    onPressed: () {
+                      if (widget.returnWorkout) {
+                        Navigator.of(context).pop();
+                      } else {
+                        context.go('/coach-selection');
+                      }
+                    },
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.arrow_back,
+                        color: textPrimary,
+                        size: 20,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
 
             // Main content
             Expanded(
@@ -247,40 +302,37 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
             alignment: Alignment.center,
             children: [
               // Background circle
-              SizedBox(
-                width: 160,
-                height: 160,
-                child: CircularProgressIndicator(
-                  value: 1.0,
-                  strokeWidth: 8,
-                  backgroundColor: isDark
-                      ? AppColors.elevated
-                      : AppColorsLight.elevated,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    isDark ? AppColors.elevated : AppColorsLight.elevated,
-                  ),
-                ),
+              GradientCircularProgressIndicator(
+                size: 160,
+                strokeWidth: 8,
+                value: 1.0,
+                gradientColors: [
+                  isDark ? AppColors.elevated : AppColorsLight.elevated,
+                  isDark ? AppColors.elevated : AppColorsLight.elevated,
+                ],
+                backgroundColor: Colors.transparent,
               ),
-              // Progress circle
-              SizedBox(
-                width: 160,
-                height: 160,
-                child: TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: _progress),
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeOut,
-                  builder: (context, value, child) {
-                    return CircularProgressIndicator(
-                      value: value > 0 ? value : null,
-                      strokeWidth: 8,
-                      strokeCap: StrokeCap.round,
-                      backgroundColor: Colors.transparent,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        const Color(0xFF4A5FC1), // Indigo blue like the screenshot
-                      ),
-                    );
-                  },
-                ),
+              // Progress circle with gradient
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: _progress),
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOut,
+                builder: (context, value, child) {
+                  final accentColor = isDark ? AppColors.orange : AppColorsLight.orange;
+                  final accentColorLight = isDark ? AppColors.orangeLight : AppColorsLight.orangeLight;
+
+                  return GradientCircularProgressIndicator(
+                    size: 160,
+                    strokeWidth: 8,
+                    value: value > 0 ? value : null,
+                    gradientColors: [
+                      accentColor,
+                      accentColorLight,
+                    ],
+                    backgroundColor: Colors.transparent,
+                    strokeCap: StrokeCap.round,
+                  );
+                },
               ),
               // Percentage text
               Column(

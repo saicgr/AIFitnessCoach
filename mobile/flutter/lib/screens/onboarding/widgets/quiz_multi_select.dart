@@ -25,8 +25,9 @@ class QuizMultiSelect extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    // Use stronger, more visible colors with proper contrast
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -36,20 +37,22 @@ class QuizMultiSelect extends StatelessWidget {
           Text(
             question,
             style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
               color: textPrimary,
               height: 1.3,
+              letterSpacing: -0.5,
             ),
-          ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
-          const SizedBox(height: 8),
+          ),
+          const SizedBox(height: 10),
           Text(
             subtitle,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 15,
               color: textSecondary,
+              fontWeight: FontWeight.w500,
             ),
-          ).animate().fadeIn(delay: 200.ms),
+          ),
           const SizedBox(height: 24),
           Expanded(
             child: ListView.builder(
@@ -106,31 +109,39 @@ class _QuizOptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final color = option['color'] as Color? ?? AppColors.accent;
+    final color = option['color'] as Color? ?? AppColors.orange; // Use orange accent
+    final accentColor = AppColors.orange; // Primary accent color
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 10),
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            gradient: isSelected ? AppColors.accentGradient : null,
+            gradient: isSelected
+                ? LinearGradient(
+                    colors: [accentColor, accentColor.withOpacity(0.8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
             color: isSelected
                 ? null
                 : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: isSelected ? AppColors.accent : cardBorder,
-              width: isSelected ? 2 : 1,
+              color: isSelected ? accentColor : cardBorder,
+              width: isSelected ? 2.5 : 1,
             ),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: AppColors.accent.withOpacity(0.3),
-                      blurRadius: 8,
+                      color: accentColor.withOpacity(0.4),
+                      blurRadius: 12,
                       spreadRadius: 0,
+                      offset: const Offset(0, 4),
                     ),
                   ]
                 : null,
@@ -141,10 +152,30 @@ class _QuizOptionCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? Colors.white.withOpacity(0.2)
-                      : color.withOpacity(0.15),
+                  gradient: isSelected
+                      ? LinearGradient(
+                          colors: [
+                            Colors.white.withValues(alpha: 0.25),
+                            Colors.white.withValues(alpha: 0.15),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : LinearGradient(
+                          colors: [
+                            color.withValues(alpha: 0.25),
+                            color.withValues(alpha: 0.15),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSelected
+                        ? Colors.white.withValues(alpha: 0.3)
+                        : color.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
                 ),
                 child: Icon(
                   option['icon'] as IconData,
@@ -160,18 +191,20 @@ class _QuizOptionCard extends StatelessWidget {
                     Text(
                       option['label'] as String,
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: isSelected ? Colors.white : textPrimary,
+                        color: isSelected ? Colors.white : (isDark ? Colors.white : const Color(0xFF0A0A0A)),
                       ),
                     ),
                     if (showDescription && option['description'] != null) ...[
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 3),
                       Text(
                         option['description'] as String,
                         style: TextStyle(
-                          fontSize: 12,
-                          color: isSelected ? Colors.white70 : textSecondary,
+                          fontSize: 13,
+                          color: isSelected
+                              ? Colors.white.withOpacity(0.9)
+                              : (isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B)),
                         ),
                       ),
                     ],
@@ -195,7 +228,7 @@ class _QuizOptionCard extends StatelessWidget {
             ],
           ),
         ),
-      ).animate(delay: (100 + index * 80).ms).fadeIn().slideX(begin: 0.05),
+      ),
     );
   }
 }

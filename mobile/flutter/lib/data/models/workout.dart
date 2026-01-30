@@ -42,6 +42,8 @@ class Workout extends Equatable {
   final int? durationMinutesMin;
   @JsonKey(name: 'duration_minutes_max')
   final int? durationMinutesMax;
+  @JsonKey(name: 'estimated_duration_minutes')
+  final int? estimatedDurationMinutes;
   @JsonKey(name: 'generation_method')
   final String? generationMethod;
   @JsonKey(name: 'generation_metadata', fromJson: _parseGenerationMetadata)
@@ -68,6 +70,7 @@ class Workout extends Equatable {
     this.durationMinutes,
     this.durationMinutesMin,
     this.durationMinutesMax,
+    this.estimatedDurationMinutes,
     this.generationMethod,
     this.generationMetadata,
     this.createdAt,
@@ -146,8 +149,13 @@ class Workout extends Equatable {
   /// Calculate estimated calories (6 cal/min)
   int get estimatedCalories => (durationMinutes ?? 0) * 6;
 
-  /// Get formatted duration display (e.g., "45-60m" or "45m")
+  /// Get formatted duration display (e.g., "~38m" if estimated, "45-60m" or "45m" otherwise)
   String get formattedDurationShort {
+    // Prefer estimated duration if available
+    if (estimatedDurationMinutes != null) {
+      return '~${estimatedDurationMinutes}m';
+    }
+    // Fall back to range or target duration
     if (durationMinutesMin != null && durationMinutesMax != null &&
         durationMinutesMin != durationMinutesMax) {
       return '$durationMinutesMin-${durationMinutesMax}m';
@@ -155,8 +163,13 @@ class Workout extends Equatable {
     return '${durationMinutes ?? 45}m';
   }
 
-  /// Get formatted duration display full (e.g., "45-60 min" or "45 min")
+  /// Get formatted duration display full (e.g., "~38 min" if estimated, "45-60 min" or "45 min" otherwise)
   String get formattedDuration {
+    // Prefer estimated duration if available
+    if (estimatedDurationMinutes != null) {
+      return '~$estimatedDurationMinutes min';
+    }
+    // Fall back to range or target duration
     if (durationMinutesMin != null && durationMinutesMax != null &&
         durationMinutesMin != durationMinutesMax) {
       return '$durationMinutesMin-$durationMinutesMax min';

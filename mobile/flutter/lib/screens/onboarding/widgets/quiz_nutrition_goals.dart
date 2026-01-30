@@ -99,13 +99,13 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
       'id': 'lose_fat',
       'label': 'Lose Fat',
       'icon': Icons.local_fire_department,
-      'color': AppColors.accent,
+      'color': AppColors.orange,
     },
     {
       'id': 'build_muscle',
       'label': 'Build Muscle',
       'icon': Icons.fitness_center,
-      'color': AppColors.accent,
+      'color': AppColors.purple,
     },
     {
       'id': 'maintain',
@@ -117,13 +117,13 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
       'id': 'improve_energy',
       'label': 'Improve Energy',
       'icon': Icons.bolt,
-      'color': AppColors.accent,
+      'color': AppColors.electricBlue,
     },
     {
       'id': 'eat_healthier',
       'label': 'Eat Healthier',
       'icon': Icons.eco,
-      'color': AppColors.success,
+      'color': AppColors.green,
     },
   ];
 
@@ -141,8 +141,9 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    // Use stronger, more visible colors with proper contrast
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final cardBg = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
@@ -194,13 +195,19 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
-                          gradient: isSelected ? AppColors.accentGradient : null,
+                          gradient: isSelected
+                  ? LinearGradient(
+                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
                           color: isSelected
                               ? null
                               : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isSelected ? AppColors.accent : cardBorder,
+                            color: isSelected ? AppColors.orange : cardBorder,
                             width: isSelected ? 2 : 1,
                           ),
                         ),
@@ -266,13 +273,19 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                           duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           decoration: BoxDecoration(
-                            gradient: isSelected ? AppColors.accentGradient : null,
+                            gradient: isSelected
+                  ? LinearGradient(
+                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
                             color: isSelected
                                 ? null
                                 : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: isSelected ? AppColors.accent : cardBorder,
+                              color: isSelected ? AppColors.orange : cardBorder,
                               width: isSelected ? 2 : 1,
                             ),
                           ),
@@ -340,13 +353,19 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                gradient: isSelected ? AppColors.accentGradient : null,
+                                gradient: isSelected
+                  ? LinearGradient(
+                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
                                 color: isSelected
                                     ? null
                                     : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: isSelected ? AppColors.accent : cardBorder,
+                                  color: isSelected ? AppColors.orange : cardBorder,
                                   width: isSelected ? 2 : 1,
                                 ),
                               ),
