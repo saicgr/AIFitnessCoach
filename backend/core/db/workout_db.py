@@ -119,9 +119,26 @@ class WorkoutDB(BaseDB):
 
         Returns:
             Created workout record or None
+
+        Note:
+            If the insert fails due to a schema cache error (e.g., missing column),
+            it will retry without the problematic field. This handles cases where
+            new columns haven't been migrated yet.
         """
-        result = self.client.table("workouts").insert(data).execute()
-        return result.data[0] if result.data else None
+        try:
+            result = self.client.table("workouts").insert(data).execute()
+            return result.data[0] if result.data else None
+        except Exception as e:
+            error_msg = str(e)
+            # Handle schema cache errors for missing columns
+            # Error format: "Could not find the 'column_name' column of 'table' in the schema cache"
+            if "schema cache" in error_msg and "estimated_duration_minutes" in error_msg:
+                # Remove the problematic field and retry
+                data_copy = {k: v for k, v in data.items() if k != "estimated_duration_minutes"}
+                result = self.client.table("workouts").insert(data_copy).execute()
+                return result.data[0] if result.data else None
+            # Re-raise other errors
+            raise
 
     def update_workout(
         self, workout_id: str, data: Dict[str, Any]
@@ -135,11 +152,26 @@ class WorkoutDB(BaseDB):
 
         Returns:
             Updated workout record or None
+
+        Note:
+            If the update fails due to a schema cache error (e.g., missing column),
+            it will retry without the problematic field.
         """
-        result = (
-            self.client.table("workouts").update(data).eq("id", workout_id).execute()
-        )
-        return result.data[0] if result.data else None
+        try:
+            result = (
+                self.client.table("workouts").update(data).eq("id", workout_id).execute()
+            )
+            return result.data[0] if result.data else None
+        except Exception as e:
+            error_msg = str(e)
+            # Handle schema cache errors for missing columns
+            if "schema cache" in error_msg and "estimated_duration_minutes" in error_msg:
+                data_copy = {k: v for k, v in data.items() if k != "estimated_duration_minutes"}
+                result = (
+                    self.client.table("workouts").update(data_copy).eq("id", workout_id).execute()
+                )
+                return result.data[0] if result.data else None
+            raise
 
     def delete_workout(self, workout_id: str) -> bool:
         """

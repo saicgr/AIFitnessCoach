@@ -10,12 +10,13 @@ import '../../../core/constants/app_colors.dart';
 /// - Workout type preference (Strength, Cardio, Mixed)
 ///
 /// Shows compatibility warnings if split doesn't match days per week.
-class QuizTrainingStyle extends StatelessWidget {
+class QuizTrainingStyle extends StatefulWidget {
   final String? selectedSplit;
   final String? selectedWorkoutType;
   final int daysPerWeek;
   final ValueChanged<String> onSplitChanged;
   final ValueChanged<String> onWorkoutTypeChanged;
+  final ValueChanged<int>? onDaysPerWeekChanged;  // ← ADDED: Allow adjusting days/week
 
   const QuizTrainingStyle({
     super.key,
@@ -24,32 +25,133 @@ class QuizTrainingStyle extends StatelessWidget {
     required this.daysPerWeek,
     required this.onSplitChanged,
     required this.onWorkoutTypeChanged,
+    this.onDaysPerWeekChanged,  // ← ADDED: Optional callback
   });
 
+  @override
+  State<QuizTrainingStyle> createState() => _QuizTrainingStyleState();
+}
+
+class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showScrollIndicator = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_scrollListener);
+
+    // Auto-hide indicator after a delay to show it's scrollable
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted && _scrollController.hasClients) {
+        // Check if content is actually scrollable
+        if (_scrollController.position.maxScrollExtent > 0) {
+          // Keep showing indicator
+        } else {
+          setState(() => _showScrollIndicator = false);
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    // Hide indicator once user scrolls
+    if (_scrollController.offset > 20 && _showScrollIndicator) {
+      setState(() => _showScrollIndicator = false);
+    }
+    // Show indicator if user scrolls back to top
+    else if (_scrollController.offset <= 10 && !_showScrollIndicator) {
+      if (_scrollController.position.maxScrollExtent > 50) {
+        setState(() => _showScrollIndicator = true);
+      }
+    }
+  }
+
   /// Get recommended split based on days per week
-  String get _recommendedSplit {
-    if (daysPerWeek <= 2) return 'full_body';
-    if (daysPerWeek == 3) return 'full_body';
-    if (daysPerWeek == 4) return 'upper_lower';
+  String _getRecommendedSplit() {
+    if (widget.daysPerWeek <= 2) return 'full_body';
+    if (widget.daysPerWeek == 3) return 'full_body';
+    if (widget.daysPerWeek == 4) return 'upper_lower';
     return 'push_pull_legs'; // 5-6 days
+  }
+
+  /// Get recommended days per week for selected split
+  int? _getRecommendedDaysForSplit(String? split) {
+    if (split == null || split == 'ai_decide') return null;
+
+    switch (split) {
+      case 'full_body':
+        return 3;  // Optimal for full body
+      case 'upper_lower':
+        return 4;  // Optimal for upper/lower
+      case 'phul':
+        return 4;  // PHUL is 4 days
+      case 'push_pull_legs':
+        return 6;  // Optimal PPL is 6 days (2 cycles)
+      case 'phat':
+      case 'pplul':
+        return 5;  // Both require exactly 5 days
+      case 'body_part':
+      case 'arnold_split':
+        return 6;  // Optimal for body part splits
+      default:
+        return null;
+    }
   }
 
   /// Check if selected split is compatible with days per week
   bool get _isCompatible {
-    if (selectedSplit == null || selectedSplit == 'ai_decide') return true;
+    if (widget.selectedSplit == null || widget.selectedSplit == 'ai_decide') return true;
 
-    switch (selectedSplit) {
+    switch (widget.selectedSplit) {
       case 'full_body':
-        return daysPerWeek <= 3;
+        return widget.daysPerWeek >= 2 && widget.daysPerWeek <= 4;
       case 'upper_lower':
       case 'phul':
-        return daysPerWeek >= 4 && daysPerWeek <= 5;
+        return widget.daysPerWeek >= 4 && widget.daysPerWeek <= 5;
       case 'push_pull_legs':
-        return daysPerWeek >= 3 && daysPerWeek <= 6;
+        return widget.daysPerWeek >= 3 && widget.daysPerWeek <= 6;
+      case 'phat':
+      case 'pplul':
+        return widget.daysPerWeek == 5;
       case 'body_part':
-        return daysPerWeek >= 5;
+      case 'arnold_split':
+        return widget.daysPerWeek >= 5;
       default:
         return true;
+    }
+  }
+
+  /// Get friendly name for split ID
+  String _getSplitName(String splitId) {
+    switch (splitId) {
+      case 'ai_decide':
+        return 'AI Decide';
+      case 'push_pull_legs':
+        return 'PPL';
+      case 'full_body':
+        return 'Full Body';
+      case 'upper_lower':
+        return 'Upper/Lower';
+      case 'phul':
+        return 'PHUL';
+      case 'phat':
+        return 'PHAT';
+      case 'pplul':
+        return 'PPLUL';
+      case 'body_part':
+        return 'Body Part Split';
+      case 'arnold_split':
+        return 'Arnold Split';
+      default:
+        return splitId;
     }
   }
 
@@ -61,33 +163,36 @@ class QuizTrainingStyle extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          // Title
-          Text(
-            'Training Style',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
-            ),
-          ).animate().fadeIn(delay: 100.ms),
-          const SizedBox(height: 6),
-          Text(
-            'Choose how you want to structure your workouts',
-            style: TextStyle(
-              fontSize: 15,
-              color: textSecondary,
-            ),
-          ).animate().fadeIn(delay: 200.ms),
-          const SizedBox(height: 24),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
+              Text(
+                'Training Style',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: textPrimary,
+                ),
+              ).animate().fadeIn(delay: 100.ms),
+              const SizedBox(height: 6),
+              Text(
+                'Choose how you want to structure your workouts',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: textSecondary,
+                ),
+              ).animate().fadeIn(delay: 200.ms),
+              const SizedBox(height: 24),
 
-          // Section A: Training Split
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
+              // Section A: Training Split
+              Expanded(
+                child: ListView(
+                  controller: _scrollController,
+                  padding: EdgeInsets.zero,
+                  children: [
                 Text(
                   'Training Split',
                   style: TextStyle(
@@ -110,7 +215,7 @@ class QuizTrainingStyle extends StatelessWidget {
                 const SizedBox(height: 12),
                 _buildSplitOption(
                   id: 'push_pull_legs',
-                  title: 'Push / Pull / Legs',
+                  title: 'Push / Pull / Legs (PPL)',
                   description: 'Best for 5-6 days/week',
                   isDark: isDark,
                   delay: 350.ms,
@@ -119,7 +224,7 @@ class QuizTrainingStyle extends StatelessWidget {
                 _buildSplitOption(
                   id: 'full_body',
                   title: 'Full Body',
-                  description: 'Train all muscles each workout (1-3 days)',
+                  description: 'Train all muscles each workout (2-4 days)',
                   isDark: isDark,
                   delay: 400.ms,
                 ),
@@ -135,9 +240,25 @@ class QuizTrainingStyle extends StatelessWidget {
                 _buildSplitOption(
                   id: 'phul',
                   title: 'PHUL',
-                  description: 'Power + Hypertrophy, Upper + Lower',
+                  description: 'Power + Hypertrophy, Upper + Lower (4 days)',
                   isDark: isDark,
                   delay: 500.ms,
+                ),
+                const SizedBox(height: 12),
+                _buildSplitOption(
+                  id: 'phat',
+                  title: 'PHAT',
+                  description: 'Power Hypertrophy Adaptive Training (5 days)',
+                  isDark: isDark,
+                  delay: 550.ms,
+                ),
+                const SizedBox(height: 12),
+                _buildSplitOption(
+                  id: 'pplul',
+                  title: 'PPLUL',
+                  description: 'Push/Pull/Legs/Upper/Lower (5 days)',
+                  isDark: isDark,
+                  delay: 600.ms,
                 ),
                 const SizedBox(height: 12),
                 _buildSplitOption(
@@ -145,39 +266,101 @@ class QuizTrainingStyle extends StatelessWidget {
                   title: 'Body Part Split',
                   description: 'One muscle group per day (5+ days)',
                   isDark: isDark,
-                  delay: 550.ms,
+                  delay: 650.ms,
+                ),
+                const SizedBox(height: 12),
+                _buildSplitOption(
+                  id: 'arnold_split',
+                  title: 'Arnold Split',
+                  description: 'Chest/Back, Shoulders/Arms, Legs (6 days)',
+                  isDark: isDark,
+                  delay: 700.ms,
                 ),
 
-                // Compatibility warning
+                // Compatibility warning with fix button
                 if (!_isCompatible) ...[
                   const SizedBox(height: 16),
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: Colors.orange.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: Colors.orange.withValues(alpha: 0.3),
-                        width: 1,
+                        color: Colors.orange.withValues(alpha: 0.4),
+                        width: 1.5,
                       ),
                     ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
-                          Icons.info_outline,
-                          color: Colors.orange,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'This split works better with $_recommendedSplit for $daysPerWeek days/week',
-                            style: const TextStyle(
-                              fontSize: 13,
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.warning_amber_rounded,
                               color: Colors.orange,
+                              size: 22,
                             ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Schedule conflict',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.orange,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _getSplitName(widget.selectedSplit!) +
+                          ' requires ${_getRecommendedDaysForSplit(widget.selectedSplit)} days/week, but you selected ${widget.daysPerWeek} days/week.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B),
+                            height: 1.4,
                           ),
                         ),
+                        const SizedBox(height: 12),
+                        // Action button to fix
+                        if (widget.onDaysPerWeekChanged != null)
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                HapticFeedback.mediumImpact();
+                                final recommended = _getRecommendedDaysForSplit(widget.selectedSplit);
+                                if (recommended != null) {
+                                  widget.onDaysPerWeekChanged!(recommended);
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.orange,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.auto_fix_high_rounded, size: 18),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Update to ${_getRecommendedDaysForSplit(widget.selectedSplit)} days/week',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ).animate().shake(delay: 600.ms),
@@ -206,10 +389,50 @@ class QuizTrainingStyle extends StatelessWidget {
                     _buildTypeChip('mixed', 'Mixed', isDark, 750.ms),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 100),  // Space for Continue button + scroll indicator
               ],
             ),
           ),
+        ],
+      ),
+
+          // Simple floating scroll indicator - just a down arrow
+          if (_showScrollIndicator)
+            Positioned(
+              bottom: 90,  // Just above Continue button
+              left: 0,
+              right: 0,
+              child: Center(
+                child: IgnorePointer(
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.orange,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.orange.withValues(alpha: 0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  )
+                      .animate(onPlay: (controller) => controller.repeat())
+                      .fadeIn(duration: 400.ms)
+                      .then()
+                      .slideY(begin: 0, end: 0.3, duration: 800.ms, curve: Curves.easeInOut)
+                      .then()
+                      .slideY(begin: 0.3, end: 0, duration: 800.ms, curve: Curves.easeInOut),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -223,14 +446,14 @@ class QuizTrainingStyle extends StatelessWidget {
     required bool isDark,
     required Duration delay,
   }) {
-    final isSelected = selectedSplit == id;
+    final isSelected = widget.selectedSplit == id;
     final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
     final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
 
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
-        onSplitChanged(id);
+        widget.onSplitChanged(id);
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -319,13 +542,13 @@ class QuizTrainingStyle extends StatelessWidget {
   }
 
   Widget _buildTypeChip(String id, String label, bool isDark, Duration delay) {
-    final isSelected = selectedWorkoutType == id;
+    final isSelected = widget.selectedWorkoutType == id;
     final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
 
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
-        onWorkoutTypeChanged(id);
+        widget.onWorkoutTypeChanged(id);
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),

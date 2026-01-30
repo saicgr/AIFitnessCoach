@@ -1680,6 +1680,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   bool _skipPersonalization = false;  // Track if user skipped Phase 2
   bool? _nutritionEnabled;  // Track nutrition opt-in
   final Set<String> _selectedLimitations = {'none'};  // Physical limitations (default: none)
+  String? _customLimitation;  // ← ADDED: Custom limitation text when "Other" is selected
 
   late AnimationController _progressController;
   late AnimationController _questionController;
@@ -1769,8 +1770,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     // Note: This should be triggered by button in _buildPrimaryGoal, not auto-advance
     // The preview screen will handle navigation to Screen 6 or 10
 
-    // Check if this is the last question
-    if (_currentQuestion == _totalQuestions - 1) {
+    // Check if this is the last question (screen 11 - Nutrition Details)
+    // Note: _totalQuestions adjusts for feature flags but screen indices stay fixed (0-11)
+    if (_currentQuestion == 11) {
       _finishOnboarding();
       return;
     }
@@ -1849,7 +1851,17 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           await ref.read(preAuthQuizProvider.notifier).setProgressionPace(_selectedProgressionPace!);
         }
         if (_selectedLimitations.isNotEmpty) {
-          await ref.read(preAuthQuizProvider.notifier).setLimitations(_selectedLimitations.toList());
+          // Build limitations list, including custom limitation if present
+          final limitationsList = _selectedLimitations.toList();
+
+          // If "other" is selected and custom text is provided, append it
+          if (_selectedLimitations.contains('other') && _customLimitation != null && _customLimitation!.isNotEmpty) {
+            // Replace "other" with actual custom limitation text
+            limitationsList.remove('other');
+            limitationsList.add('other: $_customLimitation');
+          }
+
+          await ref.read(preAuthQuizProvider.notifier).setLimitations(limitationsList);
         }
         break;
 
@@ -2305,6 +2317,12 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           daysPerWeek: _selectedDays ?? 4,
           onSplitChanged: (split) => setState(() => _selectedTrainingSplit = split),
           onWorkoutTypeChanged: (type) => setState(() => _selectedWorkoutType = type),
+          onDaysPerWeekChanged: (newDays) async {
+            // Update local state
+            setState(() => _selectedDays = newDays);
+            // Save to SharedPreferences via state notifier
+            await ref.read(preAuthQuizProvider.notifier).setDaysPerWeek(newDays);
+          },
         );
 
       case 9: // Progression + Constraints
@@ -2312,11 +2330,15 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           key: const ValueKey('progression_constraints'),
           selectedPace: _selectedProgressionPace,
           selectedLimitations: _selectedLimitations.toList(),
+          customLimitation: _customLimitation,  // ← ADDED: Pass custom limitation text
           fitnessLevel: _selectedLevel ?? 'intermediate',
           onPaceChanged: (pace) => setState(() => _selectedProgressionPace = pace),
           onLimitationsChanged: (limitations) => setState(() {
             _selectedLimitations.clear();
             _selectedLimitations.addAll(limitations);
+          }),
+          onCustomLimitationChanged: (customText) => setState(() {  // ← ADDED: Handle custom text changes
+            _customLimitation = customText;
           }),
         );
 

@@ -83,21 +83,23 @@ extension XPTitleExtension on XPTitle {
 /// User's XP and level progression data
 @JsonSerializable()
 class UserXP {
+  @JsonKey(defaultValue: '')
   final String id;
-  @JsonKey(name: 'user_id')
+  @JsonKey(name: 'user_id', defaultValue: '')
   final String userId;
-  @JsonKey(name: 'total_xp')
+  @JsonKey(name: 'total_xp', defaultValue: 0)
   final int totalXp;
-  @JsonKey(name: 'current_level')
+  @JsonKey(name: 'current_level', defaultValue: 1)
   final int currentLevel;
-  @JsonKey(name: 'xp_to_next_level')
+  @JsonKey(name: 'xp_to_next_level', defaultValue: 50)
   final int xpToNextLevel;
-  @JsonKey(name: 'xp_in_current_level')
+  @JsonKey(name: 'xp_in_current_level', defaultValue: 0)
   final int xpInCurrentLevel;
-  @JsonKey(name: 'prestige_level')
+  @JsonKey(name: 'prestige_level', defaultValue: 0)
   final int prestigeLevel;
+  @JsonKey(defaultValue: 'Novice')
   final String title;
-  @JsonKey(name: 'trust_level')
+  @JsonKey(name: 'trust_level', defaultValue: 1)
   final int trustLevel;
   @JsonKey(name: 'created_at')
   final DateTime? createdAt;
@@ -105,8 +107,8 @@ class UserXP {
   final DateTime? updatedAt;
 
   const UserXP({
-    required this.id,
-    required this.userId,
+    this.id = '',
+    this.userId = '',
     this.totalXp = 0,
     this.currentLevel = 1,
     this.xpToNextLevel = 50, // Level 1 -> 2 requires only 50 XP (Day 1 achievable!)
@@ -118,7 +120,18 @@ class UserXP {
     this.updatedAt,
   });
 
-  factory UserXP.fromJson(Map<String, dynamic> json) => _$UserXPFromJson(json);
+  /// Custom fromJson to handle API response variations
+  factory UserXP.fromJson(Map<String, dynamic> json) {
+    // Handle 'xp_title' field from API (should be 'title')
+    if (json.containsKey('xp_title') && !json.containsKey('title')) {
+      json['title'] = json['xp_title'];
+    }
+    // Ensure id exists (use user_id as fallback)
+    if (!json.containsKey('id') || json['id'] == null) {
+      json['id'] = json['user_id'] ?? '';
+    }
+    return _$UserXPFromJson(json);
+  }
   Map<String, dynamic> toJson() => _$UserXPToJson(this);
 
   /// Get progress percentage to next level (0.0 to 1.0)

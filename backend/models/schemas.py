@@ -105,6 +105,7 @@ from models.gym_profile import (
     GymProfile,
     GymProfileWithStats,
     ReorderProfilesRequest,
+    DuplicateProfileRequest,
     ActivateProfileResponse,
     GymProfileListResponse,
 )

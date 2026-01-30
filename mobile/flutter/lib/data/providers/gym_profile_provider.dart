@@ -239,13 +239,14 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
 
   /// Duplicate a profile
   ///
-  /// Creates a copy of the profile with "(Copy)" appended to the name.
+  /// Creates a copy of the profile with the specified name (or "(Copy)" appended if not provided).
   /// The duplicated profile is NOT active by default.
-  Future<GymProfile?> duplicateProfile(String profileId) async {
+  /// Throws an exception if a profile with the same name already exists.
+  Future<GymProfile?> duplicateProfile(String profileId, [String? newName]) async {
     try {
-      debugPrint('📋 [GymProfileProvider] Duplicating profile: $profileId');
+      debugPrint('📋 [GymProfileProvider] Duplicating profile: $profileId${newName != null ? ' with name: $newName' : ''}');
 
-      final duplicated = await _repository.duplicateProfile(profileId);
+      final duplicated = await _repository.duplicateProfile(profileId, newName: newName);
 
       // Add to local state
       state.whenData((profiles) {

@@ -29,6 +29,7 @@ from models.gym_profile import (
     GymProfileWithStats,
     GymProfileListResponse,
     ReorderProfilesRequest,
+    DuplicateProfileRequest,
     ActivateProfileResponse,
 )
 
@@ -773,13 +774,17 @@ async def activate_gym_profile(profile_id: str):
 
 
 @router.post("/{profile_id}/duplicate", response_model=GymProfile)
-async def duplicate_gym_profile(profile_id: str):
+async def duplicate_gym_profile(
+    profile_id: str,
+    request: Optional[DuplicateProfileRequest] = None,
+):
     """
     Duplicate an existing gym profile.
 
-    Creates a copy of the profile with "(Copy)" appended to the name.
+    Creates a copy of the profile with the specified name or "(Copy)" appended.
     The duplicated profile is NOT active by default.
     Display order is set to end of list.
+    Fails if a profile with the same name already exists.
     """
     logger.info(f"📋 [GymProfile] Duplicating profile {profile_id}")
 
@@ -810,22 +815,37 @@ async def duplicate_gym_profile(profile_id: str):
         max_order = order_result.data[0]["display_order"] if order_result.data else 0
         new_order = max_order + 1
 
-        # Generate copy name
-        base_name = source_profile["name"]
-        if base_name.endswith(" (Copy)"):
-            # Already a copy, add number
-            copy_name = f"{base_name[:-7]} (Copy 2)"
-        elif " (Copy " in base_name and base_name.endswith(")"):
-            # Already has a number, increment it
-            import re
-            match = re.search(r" \(Copy (\d+)\)$", base_name)
-            if match:
-                num = int(match.group(1)) + 1
-                copy_name = re.sub(r" \(Copy \d+\)$", f" (Copy {num})", base_name)
+        # Use custom name if provided, otherwise generate copy name
+        if request and request.name:
+            copy_name = request.name.strip()
+            # Check if name already exists
+            existing_result = supabase.client.table("gym_profiles") \
+                .select("id") \
+                .eq("user_id", user_id) \
+                .ilike("name", copy_name) \
+                .execute()
+            if existing_result.data:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"A gym profile named '{copy_name}' already exists"
+                )
+        else:
+            # Generate copy name
+            base_name = source_profile["name"]
+            if base_name.endswith(" (Copy)"):
+                # Already a copy, add number
+                copy_name = f"{base_name[:-7]} (Copy 2)"
+            elif " (Copy " in base_name and base_name.endswith(")"):
+                # Already has a number, increment it
+                import re
+                match = re.search(r" \(Copy (\d+)\)$", base_name)
+                if match:
+                    num = int(match.group(1)) + 1
+                    copy_name = re.sub(r" \(Copy \d+\)$", f" (Copy {num})", base_name)
+                else:
+                    copy_name = f"{base_name} (Copy)"
             else:
                 copy_name = f"{base_name} (Copy)"
-        else:
-            copy_name = f"{base_name} (Copy)"
 
         # Create the duplicate
         now = datetime.utcnow().isoformat()

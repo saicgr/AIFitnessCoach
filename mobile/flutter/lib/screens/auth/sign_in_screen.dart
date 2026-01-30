@@ -235,7 +235,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
       child: Row(
         children: [
           IconButton(
-            onPressed: () => context.go('/preview'),
+            onPressed: () => context.go('/pre-auth-quiz'),
             icon: Icon(
               Icons.arrow_back_ios_rounded,
               color: textSecondary,

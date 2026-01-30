@@ -3,9 +3,9 @@ XP Events API - Daily Login, Streaks, Double XP Events
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Optional, List
-from core.supabase_client import get_supabase
+from core.supabase_db import get_supabase_db
 from core.auth import get_current_user
 
 router = APIRouter(prefix="/xp", tags=["XP & Progression"])
@@ -78,7 +78,6 @@ class BonusTemplate(BaseModel):
 
 @router.post("/daily-login", response_model=DailyLoginResponse)
 async def process_daily_login(
-    supabase=Depends(get_supabase),
     current_user=Depends(get_current_user)
 ):
     """
@@ -91,7 +90,8 @@ async def process_daily_login(
     - Double XP multiplier if event is active
     """
     try:
-        result = supabase.rpc(
+        db = get_supabase_db()
+        result = db.client.rpc(
             "process_daily_login",
             {"p_user_id": current_user.id}
         ).execute()
@@ -107,12 +107,12 @@ async def process_daily_login(
 
 @router.get("/login-streak", response_model=LoginStreakInfo)
 async def get_login_streak(
-    supabase=Depends(get_supabase),
     current_user=Depends(get_current_user)
 ):
     """Get user's login streak information."""
     try:
-        result = supabase.rpc(
+        db = get_supabase_db()
+        result = db.client.rpc(
             "get_login_streak",
             {"p_user_id": current_user.id}
         ).execute()
@@ -132,12 +132,11 @@ async def get_login_streak(
 
 
 @router.get("/active-events", response_model=List[XPEvent])
-async def get_active_events(
-    supabase=Depends(get_supabase)
-):
+async def get_active_events():
     """Get all currently active XP events (Double XP, etc.)."""
     try:
-        result = supabase.rpc("get_active_xp_events").execute()
+        db = get_supabase_db()
+        result = db.client.rpc("get_active_xp_events").execute()
         return result.data or []
 
     except Exception as e:
@@ -147,11 +146,11 @@ async def get_active_events(
 @router.get("/events", response_model=List[XPEvent])
 async def get_all_events(
     include_inactive: bool = Query(False, description="Include past/inactive events"),
-    supabase=Depends(get_supabase)
 ):
     """Get all XP events (admin view)."""
     try:
-        query = supabase.table("xp_events").select("*").order("start_at", desc=True)
+        db = get_supabase_db()
+        query = db.client.table("xp_events").select("*").order("start_at", desc=True)
 
         if not include_inactive:
             query = query.eq("is_active", True)
@@ -166,7 +165,6 @@ async def get_all_events(
 @router.post("/events/enable-double-xp")
 async def enable_double_xp_event(
     request: CreateEventRequest,
-    supabase=Depends(get_supabase),
     current_user=Depends(get_current_user)
 ):
     """
@@ -175,7 +173,8 @@ async def enable_double_xp_event(
     Creates a new XP event with the specified multiplier and duration.
     """
     try:
-        result = supabase.rpc(
+        db = get_supabase_db()
+        result = db.client.rpc(
             "enable_double_xp_event",
             {
                 "p_event_name": request.event_name,
@@ -199,12 +198,12 @@ async def enable_double_xp_event(
 @router.delete("/events/{event_id}")
 async def disable_event(
     event_id: str,
-    supabase=Depends(get_supabase),
     current_user=Depends(get_current_user)
 ):
     """Disable/end an XP event early (admin only)."""
     try:
-        result = supabase.table("xp_events").update({
+        db = get_supabase_db()
+        result = db.client.table("xp_events").update({
             "is_active": False,
             "end_at": datetime.utcnow().isoformat()
         }).eq("id", event_id).execute()
@@ -216,12 +215,11 @@ async def disable_event(
 
 
 @router.get("/bonus-templates", response_model=List[BonusTemplate])
-async def get_bonus_templates(
-    supabase=Depends(get_supabase)
-):
+async def get_bonus_templates():
     """Get all XP bonus templates (for reference/admin)."""
     try:
-        result = supabase.table("xp_bonus_templates").select("*").order("bonus_type").execute()
+        db = get_supabase_db()
+        result = db.client.table("xp_bonus_templates").select("*").order("bonus_type").execute()
         return result.data or []
 
     except Exception as e:
@@ -233,12 +231,12 @@ async def update_bonus_template(
     bonus_type: str,
     base_xp: int = Query(..., gt=0, description="New base XP amount"),
     is_active: bool = Query(True, description="Whether the bonus is active"),
-    supabase=Depends(get_supabase),
     current_user=Depends(get_current_user)
 ):
     """Update an XP bonus template (admin only)."""
     try:
-        result = supabase.table("xp_bonus_templates").update({
+        db = get_supabase_db()
+        result = db.client.table("xp_bonus_templates").update({
             "base_xp": base_xp,
             "is_active": is_active
         }).eq("bonus_type", bonus_type).execute()
@@ -257,11 +255,11 @@ async def update_bonus_template(
 @router.get("/checkpoint-progress")
 async def get_checkpoint_progress(
     checkpoint_type: str = Query("weekly", description="'weekly' or 'monthly'"),
-    supabase=Depends(get_supabase),
     current_user=Depends(get_current_user)
 ):
     """Get user's weekly or monthly checkpoint progress."""
     try:
+        db = get_supabase_db()
         # Calculate current period
         today = date.today()
 
@@ -275,7 +273,7 @@ async def get_checkpoint_progress(
             next_month = period_start.replace(day=28) + timedelta(days=4)
             period_end = next_month - timedelta(days=next_month.day)
 
-        result = supabase.table("user_checkpoint_progress").select("*").eq(
+        result = db.client.table("user_checkpoint_progress").select("*").eq(
             "user_id", current_user.id
         ).eq(
             "checkpoint_type", checkpoint_type
@@ -301,7 +299,3 @@ async def get_checkpoint_progress(
             "checkpoints_earned": [],
             "total_xp_earned": 0
         }
-
-
-# Import timedelta for checkpoint calculations
-from datetime import timedelta

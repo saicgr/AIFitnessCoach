@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/gym_profile.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
-import '../../../widgets/sheet_header.dart';
 import 'add_gym_profile_sheet.dart';
 import 'components/sheet_theme_colors.dart';
-import 'manage_gym_profiles_sheet.dart';
+import 'edit_gym_profile_sheet.dart';
 
 /// Robinhood-style horizontal gym profile switcher strip
 ///
@@ -79,19 +79,6 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
       useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => AddGymProfileSheet(
-        onBack: fromProfilePicker ? () => _reopenProfilePicker() : null,
-      ),
-    );
-  }
-
-  void _showManageProfilesSheet({bool fromProfilePicker = false}) {
-    HapticService.light();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => ManageGymProfilesSheet(
         onBack: fromProfilePicker ? () => _reopenProfilePicker() : null,
       ),
     );
@@ -191,9 +178,7 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
         isDark: isDark,
         onProfileSelected: (profile) {
           debugPrint('🎯 [GymProfileSwitcher] onProfileSelected callback triggered for: ${profile.name}');
-          // Pop the sheet first, then call the handler after a frame
           Navigator.of(sheetContext).pop();
-          // Use a post-frame callback to ensure the pop completes before we proceed
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
               debugPrint('🎯 [GymProfileSwitcher] Sheet popped, calling _onProfileTap...');
@@ -207,144 +192,287 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
             if (mounted) _showAddProfileSheet(fromProfilePicker: true);
           });
         },
-        onManageProfiles: () {
+        onEditProfile: (profile) {
           Navigator.of(sheetContext).pop();
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) _showManageProfilesSheet(fromProfilePicker: true);
+            if (mounted) _showEditProfileSheet(profile);
           });
         },
+        onDeleteProfile: (profile) async {
+          try {
+            await ref.read(gymProfilesProvider.notifier).deleteProfile(profile.id);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Deleted "${profile.name}"')),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Failed to delete: $e')),
+              );
+            }
+          }
+        },
+        onReorder: (reorderedProfiles) async {
+          try {
+            final orderedIds = reorderedProfiles.map((p) => p.id).toList();
+            await ref.read(gymProfilesProvider.notifier).reorderProfiles(orderedIds);
+          } catch (e) {
+            debugPrint('❌ Failed to reorder profiles: $e');
+          }
+        },
+        onDuplicateProfile: (profile, newName) async {
+          try {
+            await ref.read(gymProfilesProvider.notifier).duplicateProfile(profile.id, newName);
+            return true;
+          } catch (e) {
+            debugPrint('❌ Failed to duplicate profile: $e');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Failed to duplicate: ${e.toString().contains('already exists') ? 'Name already exists' : e}')),
+              );
+            }
+            return false;
+          }
+        },
+        existingNames: profiles.map((p) => p.name.toLowerCase()).toList(),
+      ),
+    );
+  }
+
+  void _showEditProfileSheet(GymProfile profile) {
+    HapticService.light();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => EditGymProfileSheet(
+        profile: profile,
+        onBack: () => _reopenProfilePicker(),
       ),
     );
   }
 }
 
 /// Draggable profile picker bottom sheet (matches app design system)
-class _ProfilePickerSheet extends StatelessWidget {
+class _ProfilePickerSheet extends ConsumerStatefulWidget {
   final List<GymProfile> profiles;
   final bool isDark;
   final void Function(GymProfile) onProfileSelected;
   final VoidCallback onAddProfile;
-  final VoidCallback onManageProfiles;
+  final void Function(GymProfile) onEditProfile;
+  final void Function(GymProfile) onDeleteProfile;
+  final void Function(List<GymProfile>) onReorder;
+  final Future<bool> Function(GymProfile, String) onDuplicateProfile;
+  final List<String> existingNames;
 
   const _ProfilePickerSheet({
     required this.profiles,
     required this.isDark,
     required this.onProfileSelected,
     required this.onAddProfile,
-    required this.onManageProfiles,
+    required this.onEditProfile,
+    required this.onDeleteProfile,
+    required this.onReorder,
+    required this.onDuplicateProfile,
+    required this.existingNames,
   });
+
+  @override
+  ConsumerState<_ProfilePickerSheet> createState() => _ProfilePickerSheetState();
+}
+
+class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
+  late List<GymProfile> _profiles;
+
+  @override
+  void initState() {
+    super.initState();
+    _profiles = List.from(widget.profiles);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ProfilePickerSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.profiles != widget.profiles) {
+      _profiles = List.from(widget.profiles);
+    }
+  }
+
+  void _onReorder(int oldIndex, int newIndex) {
+    setState(() {
+      if (newIndex > oldIndex) {
+        newIndex -= 1;
+      }
+      final item = _profiles.removeAt(oldIndex);
+      _profiles.insert(newIndex, item);
+    });
+    HapticService.light();
+    widget.onReorder(_profiles);
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.sheetColors;
-    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final backgroundColor = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final accentColor = ref.watch(accentColorProvider);
+    final appAccentColor = accentColor.getColor(widget.isDark);
+    final accentContrastColor = accentColor.isLightColor ? Colors.black : Colors.white;
 
     return SafeArea(
       top: false,
-      child: Container(
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle bar
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colors.textMuted.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-
-              // Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: colors.cyan.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.fitness_center_rounded,
-                        color: colors.cyan,
-                        size: 22,
-                      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Handle bar
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.textMuted.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Text(
-                        'Switch Gym',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
+                  ),
+
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: appAccentColor.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.fitness_center_rounded,
+                            color: appAccentColor,
+                            size: 22,
+                          ),
                         ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Text(
+                            'Switch Gym',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(Icons.close_rounded, color: colors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  Divider(height: 1, color: colors.cardBorder),
+
+                  // Hint text
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, bottom: 4),
+                    child: Text(
+                      'Drag to reorder',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colors.textMuted,
                       ),
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close_rounded, color: colors.textSecondary),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
 
-              Divider(height: 1, color: colors.cardBorder),
-
-              // Profile list
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: profiles.map((profile) => _buildProfileTile(
-                    context,
-                    profile,
-                    colors,
-                  )).toList(),
-                ),
-              ),
-
-              // Action buttons
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: Row(
-                  children: [
-                    // Add gym button
-                    Expanded(
-                      child: _buildActionButton(
-                        icon: Icons.add_rounded,
-                        label: 'Add Gym',
-                        color: colors.cyan,
-                        colors: colors,
-                        onTap: onAddProfile,
-                      ),
+                  // Reorderable profile list
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: ReorderableListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      buildDefaultDragHandles: false,
+                      itemCount: _profiles.length,
+                      proxyDecorator: (child, index, animation) {
+                        return AnimatedBuilder(
+                          animation: animation,
+                          builder: (context, child) {
+                            final elevationValue = Curves.easeInOut.transform(animation.value) * 8;
+                            return Material(
+                              elevation: elevationValue,
+                              color: Colors.transparent,
+                              shadowColor: Colors.black26,
+                              borderRadius: BorderRadius.circular(16),
+                              child: child,
+                            );
+                          },
+                          child: child,
+                        );
+                      },
+                      onReorder: _onReorder,
+                      itemBuilder: (context, index) {
+                        final profile = _profiles[index];
+                        return _buildProfileTile(
+                          context,
+                          profile,
+                          colors,
+                          index,
+                        );
+                      },
                     ),
-                    const SizedBox(width: 12),
-                    // Manage button
-                    Expanded(
-                      child: _buildActionButton(
-                        icon: Icons.settings_rounded,
-                        label: 'Manage',
-                        color: colors.textSecondary,
-                        colors: colors,
-                        onTap: onManageProfiles,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+
+                  // Bottom padding for FAB space
+                  const SizedBox(height: 24),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+
+          // Floating Add Button
+          Positioned(
+            right: 20,
+            bottom: 24,
+            child: GestureDetector(
+              onTap: () {
+                HapticService.light();
+                widget.onAddProfile();
+              },
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: appAccentColor,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: appAccentColor.withValues(alpha: 0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.add_rounded,
+                  color: accentContrastColor,
+                  size: 28,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -353,139 +481,341 @@ class _ProfilePickerSheet extends StatelessWidget {
     BuildContext context,
     GymProfile profile,
     SheetColors colors,
+    int index,
   ) {
     final profileColor = profile.profileColor;
     final isActive = profile.isActive;
+    final canDelete = _profiles.length > 1 && !isActive;
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
-        debugPrint('👆 [ProfilePickerSheet] Tapped on profile: ${profile.name} (isActive: $isActive)');
-        onProfileSelected(profile);
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isActive
-              ? profileColor.withValues(alpha: 0.12)
-              : colors.glassSurface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isActive ? profileColor.withValues(alpha: 0.5) : colors.cardBorder,
-            width: isActive ? 2 : 1,
+    return Padding(
+      key: ValueKey(profile.id),
+      padding: const EdgeInsets.only(bottom: 10),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          debugPrint('👆 [ProfilePickerSheet] Tapped on profile: ${profile.name} (isActive: $isActive)');
+          widget.onProfileSelected(profile);
+        },
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isActive
+                ? profileColor.withValues(alpha: 0.12)
+                : colors.glassSurface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isActive ? profileColor.withValues(alpha: 0.5) : colors.cardBorder,
+              width: isActive ? 2 : 1,
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            // Profile icon
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: profileColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Icon(
-                  _getIconData(profile.icon),
-                  color: profileColor,
-                  size: 22,
+          child: Row(
+            children: [
+              // Drag handle
+              ReorderableDragStartListener(
+                index: index,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  child: Icon(
+                    Icons.drag_handle_rounded,
+                    color: colors.textMuted,
+                    size: 20,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 14),
-            // Profile info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    profile.name,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    '${profile.equipmentCount} equipment • ${profile.environmentDisplayName}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Active indicator
-            if (isActive)
+              const SizedBox(width: 8),
+              // Profile icon
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: profileColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                child: Center(
+                  child: Icon(
+                    _getIconData(profile.icon),
+                    color: profileColor,
+                    size: 20,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Profile info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.check_circle_rounded,
-                      color: profileColor,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 4),
                     Text(
-                      'Active',
+                      profile.name,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${profile.equipmentCount} equipment • ${profile.environmentDisplayName}',
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: profileColor,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
-          ],
+              // Duplicate button
+              GestureDetector(
+                onTap: () {
+                  HapticService.light();
+                  _showDuplicateDialog(context, profile, colors);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colors.glassSurface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: colors.cardBorder),
+                  ),
+                  child: Icon(
+                    Icons.copy_rounded,
+                    color: colors.textSecondary,
+                    size: 16,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              // Edit button
+              GestureDetector(
+                onTap: () {
+                  HapticService.light();
+                  widget.onEditProfile(profile);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colors.glassSurface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: colors.cardBorder),
+                  ),
+                  child: Icon(
+                    Icons.edit_rounded,
+                    color: colors.textSecondary,
+                    size: 16,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              // Delete button (only for non-active and not last profile)
+              if (canDelete)
+                GestureDetector(
+                  onTap: () async {
+                    HapticService.medium();
+                    final confirmed = await _showDeleteConfirmation(context, profile, colors);
+                    if (confirmed) {
+                      setState(() {
+                        _profiles.removeAt(index);
+                      });
+                      widget.onDeleteProfile(profile);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                    ),
+                    child: Icon(
+                      Icons.delete_outline_rounded,
+                      color: Colors.red.shade400,
+                      size: 16,
+                    ),
+                  ),
+                ),
+              if (!canDelete) const SizedBox(width: 6),
+              // Active indicator
+              if (isActive)
+                Container(
+                  margin: const EdgeInsets.only(left: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: profileColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.check_circle_rounded,
+                        color: profileColor,
+                        size: 12,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        'Active',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: profileColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required SheetColors colors,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: colors.glassSurface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colors.cardBorder),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: color,
+  Future<void> _showDuplicateDialog(
+    BuildContext context,
+    GymProfile profile,
+    SheetColors colors,
+  ) async {
+    final controller = TextEditingController(text: '${profile.name} (Copy)');
+    String? errorText;
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: widget.isDark ? AppColors.elevated : AppColorsLight.elevated,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            'Duplicate Gym',
+            style: TextStyle(color: colors.textPrimary),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Enter a name for the duplicated gym:',
+                style: TextStyle(color: colors.textSecondary, fontSize: 14),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                style: TextStyle(color: colors.textPrimary),
+                decoration: InputDecoration(
+                  hintText: 'Gym name',
+                  hintStyle: TextStyle(color: colors.textMuted),
+                  errorText: errorText,
+                  filled: true,
+                  fillColor: colors.glassSurface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: colors.cardBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: colors.cardBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: profile.profileColor, width: 2),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.red.shade400),
+                  ),
+                ),
+                onChanged: (value) {
+                  if (errorText != null) {
+                    setDialogState(() => errorText = null);
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: colors.textSecondary),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                final newName = controller.text.trim();
+                if (newName.isEmpty) {
+                  setDialogState(() => errorText = 'Name cannot be empty');
+                  return;
+                }
+                if (widget.existingNames.contains(newName.toLowerCase())) {
+                  setDialogState(() => errorText = 'A gym with this name already exists');
+                  return;
+                }
+                Navigator.pop(dialogContext, newName);
+              },
+              child: Text(
+                'Duplicate',
+                style: TextStyle(color: profile.profileColor),
               ),
             ),
           ],
         ),
       ),
     );
+
+    controller.dispose();
+
+    if (result != null && result.isNotEmpty) {
+      final success = await widget.onDuplicateProfile(profile, result);
+      if (success && mounted) {
+        setState(() {
+          // Refresh will happen via provider
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Created "$result"')),
+        );
+        // Close the sheet after successful duplication
+        Navigator.of(context).pop();
+      }
+    }
+  }
+
+  Future<bool> _showDeleteConfirmation(
+    BuildContext context,
+    GymProfile profile,
+    SheetColors colors,
+  ) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: widget.isDark ? AppColors.elevated : AppColorsLight.elevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Delete Gym?',
+          style: TextStyle(color: colors.textPrimary),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${profile.name}"? This action cannot be undone.',
+          style: TextStyle(color: colors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: colors.textSecondary),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'Delete',
+              style: TextStyle(color: Colors.red.shade400),
+            ),
+          ),
+        ],
+      ),
+    ) ?? false;
   }
 
   IconData _getIconData(String iconName) {

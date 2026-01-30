@@ -29,6 +29,7 @@ class GeminiProfilePayloadBuilder {
 
     if (profile.daysPerWeek != null) {
       payload['workouts_per_week'] = profile.daysPerWeek;
+      payload['days_per_week'] = profile.daysPerWeek;  // Backend expects this field name
     }
 
     if (profile.workoutDuration != null) {
@@ -55,6 +56,7 @@ class GeminiProfilePayloadBuilder {
 
     if (profile.workoutDays != null && profile.workoutDays!.isNotEmpty) {
       payload['workout_days'] = profile.workoutDays;
+      payload['selected_days'] = profile.workoutDays;  // Backend expects this field name
     }
 
     // ===== PHASE 2: PERSONALIZATION (Only if Provided) =====

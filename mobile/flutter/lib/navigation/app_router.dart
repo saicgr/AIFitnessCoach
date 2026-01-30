@@ -20,10 +20,7 @@ import '../screens/nutrition/nutrition_screen.dart';
 import '../screens/nutrition/nutrition_settings_screen.dart';
 import '../screens/fasting/fasting_screen_redesigned.dart';
 import '../screens/stats/comprehensive_stats_screen.dart';
-import '../screens/onboarding/conversational_onboarding_screen.dart';
 import '../screens/onboarding/pre_auth_quiz_screen.dart';
-import '../screens/onboarding/personalized_preview_screen.dart';
-import '../screens/onboarding/weight_projection_screen.dart';
 import '../screens/onboarding/senior_onboarding_screen.dart';
 import '../screens/onboarding/mode_selection_screen.dart';
 import '../screens/onboarding/coach_selection_screen.dart';
@@ -176,15 +173,12 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final isLoggedIn = authState.status == AuthStatus.authenticated;
       final isOnSplash = state.matchedLocation == '/splash';
-      final isOnboarding = state.matchedLocation == '/onboarding';
       final isOnSeniorOnboarding = state.matchedLocation == '/senior-onboarding';
       final isOnModeSelection = state.matchedLocation == '/mode-selection';
       final isOnStatsWelcome = state.matchedLocation == '/stats-welcome';
 
       // Check if on new onboarding flow screens (declare early for use in loading/error checks)
       final isOnPreAuthQuiz = state.matchedLocation == '/pre-auth-quiz';
-      final isOnWeightProjection = state.matchedLocation == '/weight-projection';
-      final isOnPreview = state.matchedLocation == '/preview';
       final isOnSignIn = state.matchedLocation == '/sign-in';
       final isOnEmailSignIn = state.matchedLocation == '/email-sign-in';
       final isOnPricingPreview = state.matchedLocation == '/pricing-preview';
@@ -215,7 +209,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         // If we're on splash, stay there
         if (isOnSplash) return null;
         // Allow pre-auth screens to stay during loading (sign-in process shouldn't redirect)
-        if (isOnPreAuthQuiz || isOnWeightProjection || isOnPreview || isOnSignIn || isOnEmailSignIn || isOnPricingPreview ||
+        if (isOnPreAuthQuiz || isOnSignIn || isOnEmailSignIn || isOnPricingPreview ||
             isOnDemoWorkout || isOnPlanPreview || isGuestRoute || isOnStatsWelcome) {
           return null;
         }
@@ -228,7 +222,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         // If on sign-in page, stay there to show the error
         if (isOnSignIn || isOnEmailSignIn) return null;
         // If on other pre-auth pages, stay there
-        if (isOnPreAuthQuiz || isOnWeightProjection || isOnPreview || isOnPricingPreview ||
+        if (isOnPreAuthQuiz || isOnPricingPreview ||
             isOnDemoWorkout || isOnPlanPreview || isGuestRoute || isOnStatsWelcome) {
           return null;
         }
@@ -240,6 +234,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Helper to get the next step in onboarding flow for logged-in users
       // NOTE: Conversational onboarding is now SKIPPED - pre-auth quiz collects all data
       String? getNextOnboardingStep(app_user.User user) {
+        // Step 0: Check if pre-auth quiz is complete (stored in SharedPreferences)
+        // If not complete, user needs to do the quiz first before coach selection
+        final quizData = ref.read(preAuthQuizProvider);
+        if (!quizData.isComplete) {
+          return '/pre-auth-quiz';  // Send to pre-auth quiz
+        }
+
         // Step 1: Coach selection
         if (!user.isCoachSelected) {
           return '/coach-selection';
@@ -326,9 +327,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       //   }
       // }
 
-      // Allow pre-auth quiz, weight projection, preview, sign-in, email sign-in, and pricing preview screens for non-logged-in users
+      // Allow pre-auth quiz, sign-in, email sign-in, and pricing preview screens for non-logged-in users
       // Also allow pre-auth quiz for logged-in users who are starting over (no coach selected)
-      if (isOnPreAuthQuiz || isOnWeightProjection || isOnPreview || isOnSignIn || isOnEmailSignIn || isOnPricingPreview) {
+      if (isOnPreAuthQuiz || isOnSignIn || isOnEmailSignIn || isOnPricingPreview) {
         if (isLoggedIn) {
           final user = authState.user;
           // Allow pre-auth quiz if user is starting over (coach not selected)
@@ -370,7 +371,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       // Allow onboarding-related routes
-      if (isOnboarding || isOnSeniorOnboarding || isOnModeSelection) {
+      if (isOnSeniorOnboarding || isOnModeSelection) {
         return null; // Allow these routes
       }
 
@@ -595,52 +596,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
-      // Weight Projection - shows goal timeline before preview
-      GoRoute(
-        path: '/weight-projection',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const WeightProjectionScreen(),
-          transitionDuration: const Duration(milliseconds: 500),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.1, 0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
-                child: child,
-              ),
-            );
-          },
-        ),
-      ),
-
-      // Personalized Preview - shows value before sign-in
-      GoRoute(
-        path: '/preview',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const PersonalizedPreviewScreen(),
-          transitionDuration: const Duration(milliseconds: 500),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: ScaleTransition(
-                scale: Tween<double>(begin: 0.95, end: 1.0).animate(
-                  CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-                ),
-                child: child,
-              ),
-            );
-          },
-        ),
-      ),
-
-      // Sign-In Screen - after quiz and preview
+      // Sign-In Screen - after quiz
       GoRoute(
         path: '/sign-in',
         pageBuilder: (context, state) => CustomTransitionPage(
@@ -735,43 +691,6 @@ final routerProvider = Provider<GoRouter>((ref) {
             return FadeTransition(
               opacity: animation,
               child: child,
-            );
-          },
-        ),
-      ),
-
-      // Onboarding (AI Conversational) - with playful entrance animation
-      GoRoute(
-        path: '/onboarding',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const ConversationalOnboardingScreen(),
-          transitionDuration: const Duration(milliseconds: 600),
-          reverseTransitionDuration: const Duration(milliseconds: 400),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            // Playful scale + fade + slide up animation
-            final curvedAnimation = CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutBack,
-            );
-
-            return SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.15),
-                end: Offset.zero,
-              ).animate(curvedAnimation),
-              child: FadeTransition(
-                opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-                  CurvedAnimation(
-                    parent: animation,
-                    curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
-                  ),
-                ),
-                child: ScaleTransition(
-                  scale: Tween<double>(begin: 0.92, end: 1.0).animate(curvedAnimation),
-                  child: child,
-                ),
-              ),
             );
           },
         ),

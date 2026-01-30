@@ -88,6 +88,11 @@ class ReorderProfilesRequest(BaseModel):
     profile_ids: List[str] = Field(..., min_length=1, description="Ordered list of profile IDs")
 
 
+class DuplicateProfileRequest(BaseModel):
+    """Request model for duplicating a gym profile with optional custom name."""
+    name: Optional[str] = Field(None, min_length=1, max_length=50, description="Custom name for the duplicated profile")
+
+
 class ActivateProfileResponse(BaseModel):
     """Response for profile activation."""
     success: bool

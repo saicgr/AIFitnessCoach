@@ -107,30 +107,30 @@ class QuizMuscleFocus extends StatelessWidget {
   }
 
   static const List<Map<String, dynamic>> _upperMuscles = [
-    {'id': 'chest', 'label': 'Chest', 'icon': Icons.fitness_center},
-    {'id': 'shoulders', 'label': 'Shoulders', 'icon': Icons.accessibility_new},
-    {'id': 'triceps', 'label': 'Triceps', 'icon': Icons.sports_gymnastics},
-    {'id': 'biceps', 'label': 'Biceps', 'icon': Icons.fitness_center},
-    {'id': 'lats', 'label': 'Lats', 'icon': Icons.expand},
-    {'id': 'upper_back', 'label': 'Upper Back', 'icon': Icons.grid_on},
-    {'id': 'upper_traps', 'label': 'Upper Traps', 'icon': Icons.arrow_upward},
-    {'id': 'forearms', 'label': 'Forearms', 'icon': Icons.pan_tool},
-    {'id': 'neck', 'label': 'Neck', 'icon': Icons.person},
+    {'id': 'chest', 'label': 'Chest', 'icon': Icons.favorite_border},  // Heart outline for chest
+    {'id': 'shoulders', 'label': 'Shoulders', 'icon': Icons.airline_seat_individual_suite},  // Wide shoulders
+    {'id': 'triceps', 'label': 'Triceps', 'icon': Icons.straighten},  // Extending arm
+    {'id': 'biceps', 'label': 'Biceps', 'icon': Icons.accessibility},  // Flexing person
+    {'id': 'lats', 'label': 'Lats', 'icon': Icons.unfold_more},  // Wide/expanding
+    {'id': 'upper_back', 'label': 'Upper Back', 'icon': Icons.view_column},  // Columns for back
+    {'id': 'upper_traps', 'label': 'Upper Traps', 'icon': Icons.keyboard_double_arrow_up},  // Up arrows for traps
+    {'id': 'forearms', 'label': 'Forearms', 'icon': Icons.back_hand},  // Hand/forearm
+    {'id': 'neck', 'label': 'Neck', 'icon': Icons.account_circle},  // Head/neck area
   ];
 
   static const List<Map<String, dynamic>> _coreMuscles = [
-    {'id': 'abs', 'label': 'Abs', 'icon': Icons.grid_view},
-    {'id': 'obliques', 'label': 'Obliques', 'icon': Icons.trending_flat},
-    {'id': 'lower_back', 'label': 'Lower Back', 'icon': Icons.airline_seat_flat},
+    {'id': 'abs', 'label': 'Abs', 'icon': Icons.grid_3x3},  // Grid for abs
+    {'id': 'obliques', 'label': 'Obliques', 'icon': Icons.compare_arrows},  // Side-to-side for obliques
+    {'id': 'lower_back', 'label': 'Lower Back', 'icon': Icons.horizontal_rule},  // Lower back line
   ];
 
   static const List<Map<String, dynamic>> _lowerMuscles = [
-    {'id': 'quadriceps', 'label': 'Quadriceps', 'icon': Icons.directions_run},
-    {'id': 'hamstrings', 'label': 'Hamstrings', 'icon': Icons.directions_walk},
-    {'id': 'glutes', 'label': 'Glutes', 'icon': Icons.chair},
-    {'id': 'calves', 'label': 'Calves', 'icon': Icons.hiking},
-    {'id': 'hip_flexors', 'label': 'Hip Flexors', 'icon': Icons.sports_martial_arts},
-    {'id': 'adductors', 'label': 'Adductors', 'icon': Icons.compare_arrows},
+    {'id': 'quadriceps', 'label': 'Quadriceps', 'icon': Icons.vertical_distribute},  // Front thigh
+    {'id': 'hamstrings', 'label': 'Hamstrings', 'icon': Icons.do_not_step},  // Back of leg
+    {'id': 'glutes', 'label': 'Glutes', 'icon': Icons.event_seat},  // Seat/glutes
+    {'id': 'calves', 'label': 'Calves', 'icon': Icons.height},  // Height/standing on toes
+    {'id': 'hip_flexors', 'label': 'Hip Flexors', 'icon': Icons.sports_martial_arts},  // Keep this - good for hip movement
+    {'id': 'adductors', 'label': 'Adductors', 'icon': Icons.compress},  // Squeezing inward
   ];
 }
 
@@ -195,10 +195,15 @@ class _FocusPointsIndicator extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: isFilled ? AppColors.accentGradient : null,
-                    color: isFilled ? null : Colors.transparent,
-                    border: isFilled
+                    color: isFilled
                         ? null
-                        : Border.all(color: cardBorder, width: 2),
+                        : (isDark
+                            ? AppColors.glassSurface
+                            : AppColorsLight.glassSurface),
+                    border: Border.all(
+                      color: isFilled ? AppColors.orange : AppColors.orange.withValues(alpha: 0.3),
+                      width: isFilled ? 2 : 2,
+                    ),
                     boxShadow: isFilled
                         ? [
                             BoxShadow(
@@ -385,9 +390,9 @@ class _MuscleRow extends StatelessWidget {
                     '$points',
                     key: ValueKey(points),
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: hasPoints ? AppColors.accent : textSecondary,
+                      color: hasPoints ? AppColors.orange : textSecondary,
                     ),
                   ),
                 ),
@@ -426,28 +431,29 @@ class _PointButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isEnabled = onTap != null;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedOpacity(
+      child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        opacity: isEnabled ? 1.0 : 0.3,
-        child: Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: cardBorder),
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: isEnabled
+              ? AppColors.orange.withValues(alpha: 0.12)
+              : (isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05)),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isEnabled ? AppColors.orange : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+            width: 1.5,
           ),
-          child: Icon(
-            icon,
-            size: 18,
-            color: isEnabled
-                ? (isDark ? Colors.white : Colors.black87)
-                : (isDark ? Colors.white38 : Colors.black26),
-          ),
+        ),
+        child: Icon(
+          icon,
+          size: 18,
+          color: isEnabled
+              ? AppColors.orange
+              : (isDark ? Colors.white38 : Colors.black26),
         ),
       ),
     );

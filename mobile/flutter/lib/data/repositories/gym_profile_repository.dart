@@ -236,14 +236,16 @@ class GymProfileRepository {
 
   /// Duplicate a gym profile
   ///
-  /// Creates a copy of the profile with "(Copy)" appended to the name.
+  /// Creates a copy of the profile with the specified name (or "(Copy)" appended if not provided).
   /// The duplicated profile is NOT active by default.
-  Future<GymProfile> duplicateProfile(String profileId) async {
+  /// Throws an exception if a profile with the same name already exists.
+  Future<GymProfile> duplicateProfile(String profileId, {String? newName}) async {
     try {
-      debugPrint('📋 [GymProfile] Duplicating profile: $profileId');
+      debugPrint('📋 [GymProfile] Duplicating profile: $profileId${newName != null ? ' with name: $newName' : ''}');
 
       final response = await _apiClient.post(
         '$_basePath/$profileId/duplicate',
+        data: newName != null ? {'name': newName} : null,
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {

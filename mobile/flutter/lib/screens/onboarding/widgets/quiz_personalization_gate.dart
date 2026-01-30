@@ -85,6 +85,15 @@ class QuizPersonalizationGate extends StatelessWidget {
                     isDark: isDark,
                     delay: 500.ms,
                   ),
+                  const SizedBox(height: 16),
+                  _buildBenefitItem(
+                    icon: Icons.health_and_safety_outlined,
+                    title: 'Injury accommodations',
+                    description: 'Flag any injuries or joint issues to work around',
+                    microValue: 'Knees / Shoulders / Lower back / etc.',
+                    isDark: isDark,
+                    delay: 600.ms,
+                  ),
                 ],
               ),
             ),
@@ -115,9 +124,9 @@ class QuizPersonalizationGate extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
-                        'Personalize (2 min)',  // ← UPDATED: More action-oriented
+                        'Continue',
                         style: TextStyle(
-                          fontSize: 17,  // ← Increased from 16
+                          fontSize: 17,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

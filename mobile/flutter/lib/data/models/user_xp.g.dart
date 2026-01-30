@@ -7,8 +7,8 @@ part of 'user_xp.dart';
 // **************************************************************************
 
 UserXP _$UserXPFromJson(Map<String, dynamic> json) => UserXP(
-  id: json['id'] as String,
-  userId: json['user_id'] as String,
+  id: json['id'] as String? ?? '',
+  userId: json['user_id'] as String? ?? '',
   totalXp: (json['total_xp'] as num?)?.toInt() ?? 0,
   currentLevel: (json['current_level'] as num?)?.toInt() ?? 1,
   xpToNextLevel: (json['xp_to_next_level'] as num?)?.toInt() ?? 50,

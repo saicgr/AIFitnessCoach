@@ -222,7 +222,7 @@ class PlanPreviewScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'What\'s included?',
+                                  'Includes injury accommodations',
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: textSecondary.withOpacity(0.8),
