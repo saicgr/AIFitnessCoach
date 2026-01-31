@@ -93,7 +93,7 @@ async def process_daily_login(
         db = get_supabase_db()
         result = db.client.rpc(
             "process_daily_login",
-            {"p_user_id": current_user.id}
+            {"p_user_id": current_user["id"]}
         ).execute()
 
         if result.data:
@@ -114,7 +114,7 @@ async def get_login_streak(
         db = get_supabase_db()
         result = db.client.rpc(
             "get_login_streak",
-            {"p_user_id": current_user.id}
+            {"p_user_id": current_user["id"]}
         ).execute()
 
         if result.data:
@@ -181,7 +181,7 @@ async def enable_double_xp_event(
                 "p_event_type": request.event_type,
                 "p_multiplier": request.multiplier,
                 "p_duration_hours": request.duration_hours,
-                "p_admin_id": current_user.id
+                "p_admin_id": current_user["id"]
             }
         ).execute()
 
@@ -274,7 +274,7 @@ async def get_checkpoint_progress(
             period_end = next_month - timedelta(days=next_month.day)
 
         result = db.client.table("user_checkpoint_progress").select("*").eq(
-            "user_id", current_user.id
+            "user_id", current_user["id"]
         ).eq(
             "checkpoint_type", checkpoint_type
         ).eq(

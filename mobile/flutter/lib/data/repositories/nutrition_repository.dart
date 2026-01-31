@@ -574,8 +574,8 @@ class NutritionRepository {
 
                 if (eventType == 'progress') {
                   yield FoodLoggingProgress(
-                    step: data['step'] as int? ?? 0,
-                    totalSteps: data['total_steps'] as int? ?? 4,
+                    step: (data['step'] as num?)?.toInt() ?? 0,
+                    totalSteps: (data['total_steps'] as num?)?.toInt() ?? 4,
                     message: data['message'] as String? ?? 'Processing...',
                     detail: data['detail'] as String?,
                     elapsedMs: elapsedMs,
@@ -711,8 +711,8 @@ class NutritionRepository {
 
                 if (eventType == 'progress') {
                   yield FoodLoggingProgress(
-                    step: data['step'] as int? ?? 0,
-                    totalSteps: data['total_steps'] as int? ?? 4,
+                    step: (data['step'] as num?)?.toInt() ?? 0,
+                    totalSteps: (data['total_steps'] as num?)?.toInt() ?? 4,
                     message: data['message'] as String? ?? 'Processing...',
                     detail: data['detail'] as String?,
                     elapsedMs: elapsedMs,
@@ -854,8 +854,8 @@ class NutritionRepository {
                 if (eventType == 'progress') {
                   debugPrint('🔍 [Nutrition-Text] Progress: ${data['step']}/${data['total_steps']} - ${data['message']}');
                   yield FoodLoggingProgress(
-                    step: data['step'] as int? ?? 0,
-                    totalSteps: data['total_steps'] as int? ?? 3,
+                    step: (data['step'] as num?)?.toInt() ?? 0,
+                    totalSteps: (data['total_steps'] as num?)?.toInt() ?? 3,
                     message: data['message'] as String? ?? 'Analyzing...',
                     detail: data['detail'] as String?,
                     elapsedMs: elapsedMs,
@@ -1015,8 +1015,8 @@ class NutritionRepository {
 
                 if (eventType == 'progress') {
                   yield FoodLoggingProgress(
-                    step: data['step'] as int? ?? 0,
-                    totalSteps: data['total_steps'] as int? ?? 3,
+                    step: (data['step'] as num?)?.toInt() ?? 0,
+                    totalSteps: (data['total_steps'] as num?)?.toInt() ?? 3,
                     message: data['message'] as String? ?? 'Analyzing...',
                     detail: data['detail'] as String?,
                     elapsedMs: elapsedMs,

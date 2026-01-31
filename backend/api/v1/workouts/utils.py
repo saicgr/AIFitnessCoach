@@ -3842,8 +3842,8 @@ async def get_user_hormonal_context(user_id: str) -> dict:
             # Get latest severity
             context["symptom_severity"] = logs_response.data[0].get("symptom_severity")
 
-        # Get kegel preferences
-        kegel_response = db.client.table("kegel_preferences").select("*").eq("user_id", user_id).single().execute()
+        # Get kegel preferences (use maybe_single to handle 0 rows gracefully)
+        kegel_response = db.client.table("kegel_preferences").select("*").eq("user_id", user_id).maybe_single().execute()
 
         if kegel_response.data:
             prefs = kegel_response.data

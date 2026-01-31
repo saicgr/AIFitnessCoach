@@ -282,8 +282,8 @@ class WorkoutRepository {
                 if (eventType == 'progress') {
                   // Progress update
                   yield RegenerateProgress(
-                    step: data['step'] as int? ?? 0,
-                    totalSteps: data['total_steps'] as int? ?? 4,
+                    step: (data['step'] as num?)?.toInt() ?? 0,
+                    totalSteps: (data['total_steps'] as num?)?.toInt() ?? 4,
                     message: data['message'] as String? ?? 'Processing...',
                     detail: data['detail'] as String?,
                     elapsedMs: elapsedMs,
@@ -297,7 +297,7 @@ class WorkoutRepository {
                     message: 'Workout ready!',
                     elapsedMs: elapsedMs,
                     workout: workout,
-                    totalTimeMs: data['total_time_ms'] as int?,
+                    totalTimeMs: (data['total_time_ms'] as num?)?.toInt(),
                     isCompleted: true,
                   );
                 } else if (eventType == 'error') {
@@ -443,8 +443,8 @@ class WorkoutRepository {
                     message: 'Workout ready!',
                     elapsedMs: elapsedMs,
                     workout: workout,
-                    totalTimeMs: data['total_time_ms'] as int?,
-                    chunkCount: data['chunk_count'] as int?,
+                    totalTimeMs: (data['total_time_ms'] as num?)?.toInt(),
+                    chunkCount: (data['chunk_count'] as num?)?.toInt(),
                   );
                 } else if (eventType == 'error') {
                   yield WorkoutGenerationProgress(
@@ -570,8 +570,8 @@ class WorkoutRepository {
                 if (eventType == 'progress') {
                   // Progress update
                   yield MoodWorkoutProgress(
-                    step: data['step'] as int? ?? 0,
-                    totalSteps: data['total_steps'] as int? ?? 4,
+                    step: (data['step'] as num?)?.toInt() ?? 0,
+                    totalSteps: (data['total_steps'] as num?)?.toInt() ?? 4,
                     message: data['message'] as String? ?? 'Processing...',
                     detail: data['detail'] as String?,
                     mood: mood,
@@ -596,7 +596,7 @@ class WorkoutRepository {
                     moodColor: data['mood_color'] as String?,
                     elapsedMs: elapsedMs,
                     workout: workout,
-                    totalTimeMs: data['total_time_ms'] as int?,
+                    totalTimeMs: (data['total_time_ms'] as num?)?.toInt(),
                     isCompleted: true,
                   );
                 } else if (eventType == 'error') {
@@ -2757,7 +2757,7 @@ class BodyPartExclusionResult {
       workoutId: json['workout_id'] as String? ?? '',
       excludedBodyParts: List<String>.from(json['excluded_body_parts'] as List? ?? []),
       removedExercises: List<String>.from(json['removed_exercises'] as List? ?? []),
-      remainingExercises: json['remaining_exercises'] as int? ?? 0,
+      remainingExercises: (json['remaining_exercises'] as num?)?.toInt() ?? 0,
       success: json['success'] as bool? ?? true,
       message: json['message'] as String? ?? 'Exercises removed successfully',
     );
@@ -2828,7 +2828,7 @@ class ProgressionSuggestion {
     return ProgressionSuggestion(
       exerciseName: json['exercise_name'] as String? ?? '',
       suggestedNextVariant: json['suggested_next_variant'] as String? ?? '',
-      consecutiveEasySessions: json['consecutive_easy_sessions'] as int? ?? 0,
+      consecutiveEasySessions: (json['consecutive_easy_sessions'] as num?)?.toInt() ?? 0,
       difficultyIncrease: (json['difficulty_increase'] as num?)?.toDouble(),
       chainId: json['chain_id'] as String?,
     );
@@ -2871,10 +2871,10 @@ class ExerciseHistoryItem {
   factory ExerciseHistoryItem.fromJson(Map<String, dynamic> json) {
     return ExerciseHistoryItem(
       exerciseName: json['exercise_name'] as String? ?? 'Unknown',
-      totalSets: json['total_sets'] as int? ?? 0,
+      totalSets: (json['total_sets'] as num?)?.toInt() ?? 0,
       totalVolume: (json['total_volume'] as num?)?.toDouble(),
       maxWeight: (json['max_weight'] as num?)?.toDouble(),
-      maxReps: json['max_reps'] as int?,
+      maxReps: (json['max_reps'] as num?)?.toInt(),
       estimated1rm: (json['estimated_1rm'] as num?)?.toDouble(),
       avgRpe: (json['avg_rpe'] as num?)?.toDouble(),
       lastWorkoutDate: json['last_workout_date'] as String?,
@@ -2917,10 +2917,10 @@ class ExerciseStats {
   factory ExerciseStats.fromJson(Map<String, dynamic> json) {
     return ExerciseStats(
       exerciseName: json['exercise_name'] as String?,
-      totalSets: json['total_sets'] as int? ?? 0,
+      totalSets: (json['total_sets'] as num?)?.toInt() ?? 0,
       totalVolume: (json['total_volume'] as num?)?.toDouble(),
       maxWeight: (json['max_weight'] as num?)?.toDouble(),
-      maxReps: json['max_reps'] as int?,
+      maxReps: (json['max_reps'] as num?)?.toInt(),
       estimated1rm: (json['estimated_1rm'] as num?)?.toDouble(),
       avgRpe: (json['avg_rpe'] as num?)?.toDouble(),
       lastWorkoutDate: json['last_workout_date'] as String?,
@@ -3256,7 +3256,7 @@ class ProgramPreferences {
   factory ProgramPreferences.fromJson(Map<String, dynamic> json) {
     return ProgramPreferences(
       difficulty: json['difficulty'] as String?,
-      durationMinutes: json['duration_minutes'] as int?,
+      durationMinutes: (json['duration_minutes'] as num?)?.toInt(),
       workoutType: json['workout_type'] as String?,
       trainingSplit: json['training_split'] as String?,
       workoutDays: (json['workout_days'] as List<dynamic>?)
@@ -3276,8 +3276,8 @@ class ProgramPreferences {
               .toList() ??
           [],
       lastUpdated: json['last_updated'] as String?,
-      dumbbellCount: json['dumbbell_count'] as int?,
-      kettlebellCount: json['kettlebell_count'] as int?,
+      dumbbellCount: (json['dumbbell_count'] as num?)?.toInt(),
+      kettlebellCount: (json['kettlebell_count'] as num?)?.toInt(),
     );
   }
 }

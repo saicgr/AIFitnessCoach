@@ -105,6 +105,37 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
+def normalize_exercise_numeric_fields(exercises: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Convert float values to integers for exercise fields.
+
+    Gemini often returns floats like 3.0, 12.0 instead of 3, 12 which causes
+    type cast errors in Flutter when parsing JSON.
+    """
+    for exercise in exercises:
+        # Core numeric fields
+        for field in ['sets', 'reps', 'rest_seconds', 'duration_seconds', 'hold_seconds',
+                      'superset_group', 'superset_order', 'drop_set_count', 'drop_set_percentage',
+                      'difficulty_num']:
+            if field in exercise and exercise[field] is not None:
+                try:
+                    exercise[field] = int(exercise[field])
+                except (ValueError, TypeError):
+                    pass
+
+        # Convert set_targets if present
+        if 'set_targets' in exercise and exercise['set_targets']:
+            for target in exercise['set_targets']:
+                for field in ['set_number', 'target_reps', 'target_rpe', 'target_rir']:
+                    if field in target and target[field] is not None:
+                        try:
+                            target[field] = int(target[field])
+                        except (ValueError, TypeError):
+                            pass
+
+    return exercises
+
+
 @router.post("/generate", response_model=Workout)
 async def generate_workout(request: GenerateWorkoutRequest):
     """Generate a new workout for a user based on their preferences."""
@@ -300,6 +331,7 @@ async def generate_workout(request: GenerateWorkoutRequest):
             )
 
             exercises = workout_data.get("exercises", [])
+            exercises = normalize_exercise_numeric_fields(exercises)
             workout_name = workout_data.get("name", "Generated Workout")
             difficulty = workout_data.get("difficulty", intensity_preference)
 
@@ -854,10 +886,14 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
 
                 workout_data = json.loads(content)
                 exercises = workout_data.get("exercises", [])
+                exercises = normalize_exercise_numeric_fields(exercises)
+
                 workout_name = workout_data.get("name", "Generated Workout")
                 workout_type = workout_data.get("type", body.workout_type or "strength")
                 difficulty = workout_data.get("difficulty", intensity_preference)
                 estimated_duration = workout_data.get("estimated_duration_minutes")
+                if estimated_duration is not None:
+                    estimated_duration = int(estimated_duration)
 
                 # DURATION VALIDATION: Check if estimated duration is within range
                 # If exceeded, we could auto-truncate exercises to fit (future enhancement)
@@ -1246,8 +1282,11 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
 
                 workout_data = json.loads(content)
                 exercises = workout_data.get("exercises", [])
+                exercises = normalize_exercise_numeric_fields(exercises)
                 warmup = workout_data.get("warmup", [])
+                warmup = normalize_exercise_numeric_fields(warmup)
                 cooldown = workout_data.get("cooldown", [])
+                cooldown = normalize_exercise_numeric_fields(cooldown)
                 workout_name = workout_data.get("name", f"{mood.value.capitalize()} Quick Workout")
                 workout_type = workout_data.get("type", params["workout_type_preference"])
                 difficulty = workout_data.get("difficulty", params["intensity_preference"])
@@ -2247,6 +2286,9 @@ Generate exactly {request.additional_exercises} exercises that complement the ex
                 new_exercises = parsed_response
             else:
                 new_exercises = parsed_response.get("exercises", []) if isinstance(parsed_response, dict) else []
+
+            # Normalize numeric fields (Gemini returns floats like 3.0 instead of 3)
+            new_exercises = normalize_exercise_numeric_fields(new_exercises)
 
             # Validate and filter new exercises
             if avoided_exercises:

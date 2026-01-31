@@ -163,6 +163,18 @@ class User extends Equatable {
   /// Check if FitWiz Support was auto-added as friend on signup
   bool get hasSupportFriend => supportFriendAdded == true;
 
+  /// Check if personal info (name, DOB, gender, height, weight) is complete
+  /// Used to gate coach selection - personal info must be filled first
+  bool get isPersonalInfoComplete =>
+      name != null &&
+      name!.isNotEmpty &&
+      dateOfBirth != null &&
+      gender != null &&
+      heightCm != null &&
+      heightCm! > 0 &&
+      weightKg != null &&
+      weightKg! > 0;
+
   /// Get weight unit preference with fallback to 'kg'
   /// Checks weightUnit field first, then preferences JSON, then defaults to 'kg'
   String get preferredWeightUnit {

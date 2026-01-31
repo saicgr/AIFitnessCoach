@@ -24,6 +24,7 @@ import '../screens/onboarding/pre_auth_quiz_screen.dart';
 import '../screens/onboarding/senior_onboarding_screen.dart';
 import '../screens/onboarding/mode_selection_screen.dart';
 import '../screens/onboarding/coach_selection_screen.dart';
+import '../screens/onboarding/personal_info_screen.dart';
 import '../screens/onboarding/workout_generation_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/summaries/weekly_summary_screen.dart';
@@ -182,6 +183,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isOnSignIn = state.matchedLocation == '/sign-in';
       final isOnEmailSignIn = state.matchedLocation == '/email-sign-in';
       final isOnPricingPreview = state.matchedLocation == '/pricing-preview';
+      final isOnPersonalInfo = state.matchedLocation == '/personal-info';
       final isOnCoachSelection = state.matchedLocation == '/coach-selection';
       final isOnPaywallFeatures = state.matchedLocation == '/paywall-features';
       final isOnPaywallTimeline = state.matchedLocation == '/paywall-timeline';
@@ -241,16 +243,22 @@ final routerProvider = Provider<GoRouter>((ref) {
           return '/pre-auth-quiz';  // Send to pre-auth quiz
         }
 
-        // Step 1: Coach selection
+        // Step 1: Personal info (name, DOB, gender, height, weight)
+        // Must be filled before coach selection
+        if (!user.isPersonalInfoComplete) {
+          return '/personal-info';
+        }
+
+        // Step 2: Coach selection
         if (!user.isCoachSelected) {
           return '/coach-selection';
         }
-        // Step 2: Conversational onboarding is SKIPPED
+        // Step 3: Conversational onboarding is SKIPPED
         // Coach selection now marks onboarding complete and goes directly to paywall/home
         // if (!user.isOnboardingComplete) {
         //   return '/onboarding';
         // }
-        // Step 3: Paywall (after coach selection)
+        // Step 4: Paywall (after coach selection)
         if (!user.isPaywallComplete) {
           return '/paywall-features';
         }
@@ -347,6 +355,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           return getHomeRoute();
         }
         return null; // Allow these screens for non-logged-in users
+      }
+
+      // Personal info screen - allow for logged-in users who need to fill it
+      if (isOnPersonalInfo) {
+        if (isLoggedIn) {
+          return null; // Allow - user is filling personal info
+        }
+        return '/stats-welcome'; // Not logged in, go to start
       }
 
       // Coach selection screen - allow for all logged-in users
@@ -636,6 +652,32 @@ final routerProvider = Provider<GoRouter>((ref) {
               child: SlideTransition(
                 position: Tween<Offset>(
                   begin: const Offset(0, 0.05),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
+      // Personal Info Screen - collect name, DOB, gender, height, weight after sign-in
+      GoRoute(
+        path: '/personal-info',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const PersonalInfoScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
                   end: Offset.zero,
                 ).animate(CurvedAnimation(
                   parent: animation,
