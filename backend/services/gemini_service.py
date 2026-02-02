@@ -944,6 +944,19 @@ Return a summary describing what was found and any warnings about unclear parsin
 
         current_ex_context = current_exercise_name or "Unknown Exercise"
 
+        # Build smart shortcuts section based on available last set data
+        if last_set_weight is not None:
+            smart_shortcuts_section = f'''- "+10" -> {last_set_weight + 10} x {last_set_reps or "N/A"} reps (add 10 to last weight)
+- "-10" -> {last_set_weight - 10} x {last_set_reps or "N/A"} reps (subtract 10)
+- "+10*6" -> {last_set_weight + 10} x 6 reps (add 10, override reps)
+- "same" -> {last_set_weight} x {last_set_reps or "N/A"} (repeat last set exactly)
+- "same*10" -> {last_set_weight} x 10 (same weight, different reps)
+- "drop" -> {round(last_set_weight * 0.9, 1)} x {last_set_reps or "N/A"} (10% drop)
+- "drop 20" -> {last_set_weight - 20} x {last_set_reps or "N/A"} (subtract 20)
+- "up" -> {last_set_weight + 5} x {last_set_reps or "N/A"} (standard +5 progression)'''
+        else:
+            smart_shortcuts_section = "Shortcuts not available - no previous set data"
+
         # Build the comprehensive prompt
         parse_prompt = f'''You are a workout input parser. Parse the user's input and determine their intent.
 
@@ -981,14 +994,7 @@ SPECIAL reps (is_failure = true):
 - "135*8-10" → 135 × 8 reps (use lower bound of range)
 
 SMART SHORTCUTS (ONLY when last set data is available):
-{f'''- "+10" → {last_set_weight + 10 if last_set_weight else "N/A"} × {last_set_reps or "N/A"} reps (add 10 to last weight)
-- "-10" → {last_set_weight - 10 if last_set_weight else "N/A"} × {last_set_reps or "N/A"} reps (subtract 10)
-- "+10*6" → {last_set_weight + 10 if last_set_weight else "N/A"} × 6 reps (add 10, override reps)
-- "same" → {last_set_weight or "N/A"} × {last_set_reps or "N/A"} (repeat last set exactly)
-- "same*10" → {last_set_weight or "N/A"} × 10 (same weight, different reps)
-- "drop" → {round(last_set_weight * 0.9, 1) if last_set_weight else "N/A"} × {last_set_reps or "N/A"} (10% drop)
-- "drop 20" → {last_set_weight - 20 if last_set_weight else "N/A"} × {last_set_reps or "N/A"} (subtract 20)
-- "up" → {last_set_weight + 5 if last_set_weight else "N/A"} × {last_set_reps or "N/A"} (standard +5 progression)''' if last_set_weight is not None else "Shortcuts not available - no previous set data"}
+{smart_shortcuts_section}
 
 MULTIPLE sets on one line:
 - "135*8, 145*6, 155*5" → 3 separate sets (comma-separated)
