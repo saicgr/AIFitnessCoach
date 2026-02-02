@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/measurements_repository.dart';
+import '../../data/services/haptic_service.dart';
 
 /// Detail screen for a specific measurement type
 /// Shows chart, history list, and allows logging new entries
@@ -75,57 +77,58 @@ class _MeasurementDetailScreenState
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          _type.displayName,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          // Unit toggle
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: TextButton(
-              onPressed: () => setState(() => _isMetric = !_isMetric),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: elevated,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: cardBorder),
-                ),
-                child: Text(
-                  _isMetric ? 'Metric' : 'Imperial',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: cyan,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _loadMeasurements,
-          color: cyan,
-          child: CustomScrollView(
-            slivers: [
-              // Current value card
-              SliverToBoxAdapter(
-                child: _buildCurrentValueCard(
+        child: Stack(
+          children: [
+            // Main content
+            RefreshIndicator(
+              onRefresh: _loadMeasurements,
+              color: cyan,
+              child: CustomScrollView(
+                slivers: [
+                  // Header with title (offset for floating back button)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(56, 12, 16, 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _type.displayName,
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: textPrimary,
+                              ),
+                            ),
+                          ),
+                          // Unit toggle
+                          GestureDetector(
+                            onTap: () => setState(() => _isMetric = !_isMetric),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: elevated,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: cardBorder),
+                              ),
+                              child: Text(
+                                _isMetric ? 'Metric' : 'Imperial',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: cyan,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Current value card
+                  SliverToBoxAdapter(
+                    child: _buildCurrentValueCard(
                   latest: latest,
                   change: change,
                   unit: unit,
@@ -242,9 +245,29 @@ class _MeasurementDetailScreenState
                 cyan: cyan,
               ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
-            ],
-          ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                ],
+              ),
+            ),
+
+            // Floating back button
+            Positioned(
+              top: 8,
+              left: 8,
+              child: _GlassmorphicButton(
+                onTap: () {
+                  HapticService.light();
+                  Navigator.pop(context);
+                },
+                isDark: isDark,
+                child: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: isDark ? Colors.white : Colors.black87,
+                  size: 18,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -1101,6 +1124,50 @@ class _StatItem extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Glassmorphic button with blur effect
+class _GlassmorphicButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final Widget child;
+  final bool isDark;
+
+  const _GlassmorphicButton({
+    required this.onTap,
+    required this.child,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const size = 40.0;
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(size / 2),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.black.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(size / 2),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : Colors.black.withValues(alpha: 0.08),
+                width: 1,
+              ),
+            ),
+            child: Center(child: child),
+          ),
+        ),
+      ),
     );
   }
 }

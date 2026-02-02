@@ -634,8 +634,16 @@ class XPGoalsSheet extends ConsumerWidget {
     Color accentColor,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final hasLoggedInToday = streak?.hasLoggedInToday ?? false;
     const dailyLoginXP = 5;
+
+    // Get actual daily goals state
+    final dailyGoalsState = ref.watch(dailyGoalsProvider);
+
+    // Check multiple sources for login status - more robust fallback
+    final xpState = ref.watch(xpProvider);
+    final hasLoggedInToday = streak?.hasLoggedInToday ??
+                              dailyGoalsState?.loggedIn ??
+                              xpState.lastDailyLoginResult != null;
 
     // Stronger colors for light mode
     final cardBackground = isDark ? cardBg : Colors.grey.shade100;
@@ -651,19 +659,25 @@ class XPGoalsSheet extends ConsumerWidget {
       _DailyGoal(
         title: 'Complete 1 workout',
         xp: 100,
-        isComplete: false,
+        isComplete: dailyGoalsState?.completedWorkout ?? false,
         icon: Icons.fitness_center,
       ),
       _DailyGoal(
         title: 'Log a meal',
         xp: 25,
-        isComplete: false,
+        isComplete: dailyGoalsState?.loggedMeal ?? false,
         icon: Icons.restaurant,
+      ),
+      _DailyGoal(
+        title: 'Log weight',
+        xp: 15,
+        isComplete: dailyGoalsState?.loggedWeight ?? false,
+        icon: Icons.monitor_weight_outlined,
       ),
       _DailyGoal(
         title: 'Hit protein goal',
         xp: 50,
-        isComplete: false,
+        isComplete: dailyGoalsState?.hitProteinGoal ?? false,
         icon: Icons.egg_alt,
       ),
     ];

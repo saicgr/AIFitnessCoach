@@ -39,12 +39,14 @@ import 'widgets/habits_section.dart';
 import 'widgets/body_metrics_section.dart';
 import 'widgets/achievements_section.dart';
 import '../../data/providers/consistency_provider.dart';
-import '../../data/providers/xp_provider.dart';
+import '../../data/providers/xp_provider.dart' as xp_provider;
+import '../../data/providers/xp_provider.dart' show xpProvider, xpCurrentStreakProvider, levelUpEventProvider, streakMilestoneProvider, xpEarnedEventProvider, XPEarnedAnimationEvent;
 import '../../data/models/user_xp.dart';
 import '../../widgets/double_xp_banner.dart';
 import '../../widgets/xp_level_bar.dart';
 import '../../widgets/level_up_dialog.dart';
 import '../../widgets/streak_milestone_dialog.dart';
+import '../../widgets/xp_earned_animation.dart';
 import '../../data/models/level_reward.dart';
 import 'widgets/gym_profile_switcher.dart';
 
@@ -284,6 +286,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
       // Refresh Health Connect status - user may have granted permissions externally
       ref.read(healthSyncProvider.notifier).refreshConnectionStatus();
+    }
+  }
+
+  /// Map XPGoalType from provider to animation widget enum
+  XPGoalType _mapXPGoalType(xp_provider.XPGoalType type) {
+    switch (type) {
+      case xp_provider.XPGoalType.dailyLogin:
+        return XPGoalType.dailyLogin;
+      case xp_provider.XPGoalType.weightLog:
+        return XPGoalType.weightLog;
+      case xp_provider.XPGoalType.mealLog:
+        return XPGoalType.mealLog;
+      case xp_provider.XPGoalType.workoutComplete:
+        return XPGoalType.workoutComplete;
+      case xp_provider.XPGoalType.proteinGoal:
+        return XPGoalType.proteinGoal;
     }
   }
 
@@ -1738,6 +1756,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 ref.read(xpProvider.notifier).clearStreakMilestone();
               },
             );
+          }
+        });
+      }
+    });
+
+    // Listen for XP earned events and show animation
+    ref.listen<XPEarnedAnimationEvent?>(xpEarnedEventProvider, (previous, next) {
+      if (next != null && previous == null) {
+        // XP earned - show floating toast animation
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            XPEarnedOverlay.show(
+              context,
+              xpAmount: next.xpAmount,
+              goalType: _mapXPGoalType(next.goalType),
+            );
+            // Clear the event after showing animation
+            Future.delayed(const Duration(milliseconds: 2500), () {
+              ref.read(xpProvider.notifier).clearXPEarnedEvent();
+            });
           }
         });
       }

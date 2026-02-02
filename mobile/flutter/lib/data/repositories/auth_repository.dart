@@ -417,6 +417,12 @@ class AuthRepository {
     final cachedUser = await _getCachedUser();
     if (cachedUser != null) {
       debugPrint('⚡ [Auth] Loaded user from cache instantly: ${cachedUser.name}');
+
+      // Step 1.5: Set user ID in secure storage from cached user
+      // This ensures getUserId() works even before restoreSession() completes
+      // Fixes race condition where home screen requests user ID before session restore finishes
+      await _apiClient.setUserId(cachedUser.id);
+      debugPrint('⚡ [Auth] Set user ID from cache: ${cachedUser.id}');
     }
 
     // Step 2: Create future for fresh data (runs in background)

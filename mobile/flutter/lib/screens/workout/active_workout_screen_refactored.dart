@@ -48,6 +48,7 @@ import 'widgets/workout_bottom_bar.dart';
 import 'widgets/number_input_widgets.dart';
 import 'widgets/set_row.dart'; // For RpeRirSelector
 import 'widgets/fatigue_alert_modal.dart';
+import '../../data/providers/xp_provider.dart';
 import 'widgets/workout_plan_drawer.dart';
 import 'widgets/breathing_guide_sheet.dart';
 import 'widgets/hydration_dialog.dart';
@@ -2020,6 +2021,9 @@ class _ActiveWorkoutScreenState
         // 7. Mark workout as complete and get PRs
         final completionResponse = await workoutRepo.completeWorkout(widget.workout.id!);
         debugPrint('✅ Workout marked as complete');
+
+        // Award XP for completing workout
+        ref.read(xpProvider.notifier).markWorkoutCompleted(workoutId: widget.workout.id);
 
         if (completionResponse != null && completionResponse.hasPRs) {
           personalRecords = completionResponse.personalRecords;

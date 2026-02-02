@@ -302,6 +302,29 @@ class XPRepository {
     }
   }
 
+  /// Award XP for completing a daily goal
+  /// Returns the XP awarded (0 if already claimed today)
+  Future<int> awardGoalXP(String goalType, {String? sourceId}) async {
+    try {
+      final response = await _client.post('/xp/award-goal-xp', data: {
+        'goal_type': goalType,
+        if (sourceId != null) 'source_id': sourceId,
+      });
+      final data = response.data as Map<String, dynamic>;
+      final xpAwarded = data['xp_awarded'] as int? ?? 0;
+      final alreadyClaimed = data['already_claimed'] as bool? ?? false;
+      if (alreadyClaimed) {
+        debugPrint('[XP] Goal $goalType already claimed today');
+      } else if (xpAwarded > 0) {
+        debugPrint('[XP] Awarded $xpAwarded XP for $goalType');
+      }
+      return xpAwarded;
+    } catch (e) {
+      debugPrint('Error awarding goal XP: $e');
+      return 0;
+    }
+  }
+
   /// Get all XP bonus templates
   Future<List<XPBonusTemplate>> getBonusTemplates() async {
     try {

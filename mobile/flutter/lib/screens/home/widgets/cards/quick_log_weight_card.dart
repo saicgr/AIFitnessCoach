@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/models/home_layout.dart';
 import '../../../../data/providers/nutrition_preferences_provider.dart';
+import '../../../../data/providers/xp_provider.dart';
 import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/repositories/fasting_repository.dart';
 import '../../../../data/services/haptic_service.dart';
@@ -48,13 +49,14 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
   }
 
   /// Get adaptive font size based on text length
-  /// Shrinks font when more digits are entered
+  /// Shrinks font when more digits are entered to fit 6 characters (e.g., 999.99)
   double _getAdaptiveFontSize(String text) {
     final length = text.length;
-    if (length <= 4) return 16.0;      // "99.5" fits at normal size
-    if (length == 5) return 14.0;      // "199.5" slightly smaller
-    if (length == 6) return 12.0;      // "1999.5" even smaller
-    return 11.0;                        // Minimum size for very long input
+    if (length <= 3) return 16.0;      // "99." fits at normal size
+    if (length == 4) return 15.0;      // "99.5" slightly smaller
+    if (length == 5) return 14.0;      // "99.55" smaller
+    if (length == 6) return 13.0;      // "999.99" even smaller
+    return 12.0;                        // Minimum size for edge cases
   }
 
   Future<void> _logWeight() async {
@@ -104,6 +106,9 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
 
       // Refresh weight history by re-initializing the provider
       ref.invalidate(nutritionPreferencesProvider);
+
+      // Mark weight logged for daily XP goals
+      ref.read(xpProvider.notifier).markWeightLogged();
 
       if (mounted) {
         HapticService.success();
@@ -245,7 +250,7 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
               GestureDetector(
                 onTap: () {
                   HapticService.light();
-                  context.push('/measurements');
+                  context.push('/measurements/weight');
                 },
                 child: Tooltip(
                   message: 'View Weight History',
@@ -550,7 +555,7 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
 }
 
 /// Custom input formatter for weight values
-/// Allows up to 4 digits before decimal and 1 digit after
+/// Allows up to 3 digits before decimal and 2 digits after (e.g., 999.99)
 class _WeightInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -562,8 +567,8 @@ class _WeightInputFormatter extends TextInputFormatter {
     // Empty is allowed
     if (text.isEmpty) return newValue;
 
-    // Check for valid weight format
-    final regex = RegExp(r'^\d{0,4}\.?\d{0,1}$');
+    // Check for valid weight format: up to 3 digits before decimal, up to 2 after
+    final regex = RegExp(r'^\d{0,3}\.?\d{0,2}$');
     if (regex.hasMatch(text)) {
       return newValue;
     }

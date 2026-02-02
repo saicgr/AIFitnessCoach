@@ -42,6 +42,7 @@ import '../../data/models/smart_weight_suggestion.dart';
 import '../../core/services/fatigue_service.dart';
 import '../../core/providers/heart_rate_provider.dart';
 import '../../widgets/heart_rate_display.dart';
+import '../../data/providers/xp_provider.dart';
 import 'workout_complete_screen.dart' show HeartRateReadingData;
 
 /// Log for a single set
@@ -3258,6 +3259,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
         // 6. Mark workout as complete in workouts table and get PRs
         final completionResponse = await workoutRepo.completeWorkout(widget.workout.id!);
         debugPrint('✅ Workout marked as complete');
+
+        // Award XP for completing workout
+        ref.read(xpProvider.notifier).markWorkoutCompleted(workoutId: widget.workout.id);
 
         // Store PRs from the response
         if (completionResponse != null && completionResponse.hasPRs) {

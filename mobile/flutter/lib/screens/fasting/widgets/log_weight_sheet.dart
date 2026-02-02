@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/fasting_repository.dart';
 import '../../../data/services/haptic_service.dart';
@@ -245,6 +246,14 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
             ? null
             : _notesController.text.trim(),
       );
+
+      // Mark weight logged for daily XP goals (only if logging for today)
+      final today = DateTime.now();
+      if (_selectedDate.year == today.year &&
+          _selectedDate.month == today.month &&
+          _selectedDate.day == today.day) {
+        ref.read(xpProvider.notifier).markWeightLogged();
+      }
 
       if (mounted) {
         HapticService.success();

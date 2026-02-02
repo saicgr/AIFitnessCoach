@@ -299,3 +299,93 @@ async def get_checkpoint_progress(
             "checkpoints_earned": [],
             "total_xp_earned": 0
         }
+
+
+class AwardGoalXPRequest(BaseModel):
+    goal_type: str  # 'weight_log', 'meal_log', 'workout_complete', 'protein_goal'
+    source_id: Optional[str] = None  # Optional ID of the source (e.g., workout ID)
+
+
+class AwardGoalXPResponse(BaseModel):
+    success: bool
+    xp_awarded: int
+    message: str
+    already_claimed: bool = False
+
+
+@router.post("/award-goal-xp", response_model=AwardGoalXPResponse)
+async def award_goal_xp(
+    request: AwardGoalXPRequest,
+    current_user=Depends(get_current_user)
+):
+    """
+    Award XP for completing daily goals.
+
+    Goal types and XP amounts:
+    - weight_log: 15 XP (once per day)
+    - meal_log: 25 XP (once per day)
+    - workout_complete: 100 XP (once per day)
+    - protein_goal: 50 XP (once per day)
+    """
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+        today = date.today().isoformat()
+
+        # Define XP amounts for each goal type
+        goal_xp_amounts = {
+            "weight_log": 15,
+            "meal_log": 25,
+            "workout_complete": 100,
+            "protein_goal": 50,
+        }
+
+        if request.goal_type not in goal_xp_amounts:
+            raise HTTPException(status_code=400, detail=f"Invalid goal_type: {request.goal_type}")
+
+        xp_amount = goal_xp_amounts[request.goal_type]
+        source = f"daily_goal_{request.goal_type}"
+
+        # Check if already awarded today (prevent double claiming)
+        existing = db.client.table("xp_transactions").select("id").eq(
+            "user_id", user_id
+        ).eq(
+            "source", source
+        ).gte(
+            "created_at", f"{today}T00:00:00"
+        ).lt(
+            "created_at", f"{today}T23:59:59"
+        ).execute()
+
+        if existing.data and len(existing.data) > 0:
+            return AwardGoalXPResponse(
+                success=True,
+                xp_awarded=0,
+                message=f"Already claimed {request.goal_type} XP today",
+                already_claimed=True
+            )
+
+        # Award XP using the award_xp function
+        result = db.client.rpc(
+            "award_xp",
+            {
+                "p_user_id": user_id,
+                "p_xp_amount": xp_amount,
+                "p_source": source,
+                "p_source_id": request.source_id,
+                "p_description": f"Daily goal: {request.goal_type.replace('_', ' ')}",
+                "p_is_verified": False
+            }
+        ).execute()
+
+        return AwardGoalXPResponse(
+            success=True,
+            xp_awarded=xp_amount,
+            message=f"+{xp_amount} XP for {request.goal_type.replace('_', ' ')}!"
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error awarding goal XP: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

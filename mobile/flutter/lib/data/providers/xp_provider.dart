@@ -9,6 +9,32 @@ import '../services/api_client.dart';
 import '../services/data_cache_service.dart';
 
 // ============================================
+// XP Earned Animation Event
+// ============================================
+
+/// Types of goals that can earn XP
+enum XPGoalType {
+  dailyLogin,
+  weightLog,
+  mealLog,
+  workoutComplete,
+  proteinGoal,
+}
+
+/// Event representing XP earned that triggers an animation
+class XPEarnedAnimationEvent {
+  final int xpAmount;
+  final XPGoalType goalType;
+  final DateTime timestamp;
+
+  XPEarnedAnimationEvent({
+    required this.xpAmount,
+    required this.goalType,
+    DateTime? timestamp,
+  }) : timestamp = timestamp ?? DateTime.now();
+}
+
+// ============================================
 // Daily Goals Model
 // ============================================
 
@@ -17,6 +43,7 @@ class DailyGoals {
   final bool loggedIn;
   final bool completedWorkout;
   final bool loggedMeal;
+  final bool loggedWeight;
   final bool hitProteinGoal;
   final DateTime date;
 
@@ -24,6 +51,7 @@ class DailyGoals {
     this.loggedIn = false,
     this.completedWorkout = false,
     this.loggedMeal = false,
+    this.loggedWeight = false,
     this.hitProteinGoal = false,
     required this.date,
   });
@@ -32,6 +60,7 @@ class DailyGoals {
     bool? loggedIn,
     bool? completedWorkout,
     bool? loggedMeal,
+    bool? loggedWeight,
     bool? hitProteinGoal,
     DateTime? date,
   }) {
@@ -39,6 +68,7 @@ class DailyGoals {
       loggedIn: loggedIn ?? this.loggedIn,
       completedWorkout: completedWorkout ?? this.completedWorkout,
       loggedMeal: loggedMeal ?? this.loggedMeal,
+      loggedWeight: loggedWeight ?? this.loggedWeight,
       hitProteinGoal: hitProteinGoal ?? this.hitProteinGoal,
       date: date ?? this.date,
     );
@@ -50,12 +80,13 @@ class DailyGoals {
     if (loggedIn) count++;
     if (completedWorkout) count++;
     if (loggedMeal) count++;
+    if (loggedWeight) count++;
     if (hitProteinGoal) count++;
     return count;
   }
 
   /// Total number of daily goals
-  int get totalCount => 4;
+  int get totalCount => 5;
 
   /// Progress as a fraction (0.0 to 1.0)
   double get progress => completedCount / totalCount;
@@ -68,6 +99,7 @@ class DailyGoals {
     if (loggedIn) xp += 5;
     if (completedWorkout) xp += 100;
     if (loggedMeal) xp += 25;
+    if (loggedWeight) xp += 15;
     if (hitProteinGoal) xp += 50;
     return (xp * multiplier).round();
   }
@@ -119,6 +151,9 @@ class XPState {
   final StreakMilestone? lastStreakMilestone;
   final int? previousStreak; // To detect milestone transitions
 
+  // XP earned animation tracking
+  final XPEarnedAnimationEvent? lastXPEarnedEvent;
+
   const XPState({
     this.userXp,
     this.allTrophies = const [],
@@ -144,6 +179,8 @@ class XPState {
     // Streak milestones
     this.lastStreakMilestone,
     this.previousStreak,
+    // XP earned animation
+    this.lastXPEarnedEvent,
   });
 
   XPState copyWith({
@@ -175,6 +212,9 @@ class XPState {
     StreakMilestone? lastStreakMilestone,
     int? previousStreak,
     bool clearStreakMilestone = false,
+    // XP earned animation
+    XPEarnedAnimationEvent? lastXPEarnedEvent,
+    bool clearXPEarnedEvent = false,
   }) {
     return XPState(
       userXp: userXp ?? this.userXp,
@@ -203,6 +243,8 @@ class XPState {
       // Streak milestones
       lastStreakMilestone: clearStreakMilestone ? null : (lastStreakMilestone ?? this.lastStreakMilestone),
       previousStreak: previousStreak ?? this.previousStreak,
+      // XP earned animation
+      lastXPEarnedEvent: clearXPEarnedEvent ? null : (lastXPEarnedEvent ?? this.lastXPEarnedEvent),
     );
   }
 
@@ -330,6 +372,13 @@ class XPState {
 
   /// Days until next streak milestone
   int? get daysToNextStreakMilestone => StreakMilestone.daysUntilNext(currentStreak);
+
+  // =========================================================================
+  // XP Earned Animation Getters
+  // =========================================================================
+
+  /// Whether there's an XP earned event to animate
+  bool get hasXPEarnedEvent => lastXPEarnedEvent != null;
 }
 
 // ============================================
@@ -593,7 +642,8 @@ class XPNotifier extends StateNotifier<XPState> {
     try {
       final result = await _repository.processDailyLogin();
       if (result != null) {
-        // Update state with result
+        // Update state with result - always set hasLoggedInToday to true
+        // since we successfully contacted the server
         state = state.copyWith(
           lastDailyLoginResult: result,
           loginStreak: LoginStreakInfo(
@@ -605,25 +655,23 @@ class XPNotifier extends StateNotifier<XPState> {
           activeEvents: result.activeEvents ?? state.activeEvents,
         );
 
-        // If XP was awarded, update user XP
-        if (result.totalXpAwarded > 0 && state.userXp != null) {
-          final newXp = UserXP(
-            id: state.userXp!.id,
-            userId: state.userXp!.userId,
-            totalXp: state.userXp!.totalXp + result.totalXpAwarded,
-            currentLevel: state.userXp!.currentLevel,
-            xpToNextLevel: state.userXp!.xpToNextLevel,
-            xpInCurrentLevel:
-                state.userXp!.xpInCurrentLevel + result.totalXpAwarded,
-            prestigeLevel: state.userXp!.prestigeLevel,
-            title: state.userXp!.title,
-            trustLevel: state.userXp!.trustLevel,
+        // If XP was awarded, reload from server for accurate total
+        // (instead of doing local math which can get out of sync)
+        if (result.totalXpAwarded > 0) {
+          // Trigger XP earned animation for daily login
+          state = state.copyWith(
+            lastXPEarnedEvent: XPEarnedAnimationEvent(
+              xpAmount: result.totalXpAwarded,
+              goalType: XPGoalType.dailyLogin,
+            ),
           );
-          state = state.copyWith(userXp: newXp);
+          await loadUserXP(userId: _currentUserId, showLoading: false);
         }
 
         debugPrint(
-            '[XPProvider] Daily login: +${result.totalXpAwarded} XP, streak: ${result.currentStreak}');
+            '[XPProvider] Daily login: +${result.totalXpAwarded} XP, streak: ${result.currentStreak}, already_claimed: ${result.alreadyClaimed}');
+      } else {
+        debugPrint('[XPProvider] Daily login returned null - API may have failed');
       }
       return result;
     } catch (e) {
@@ -732,36 +780,99 @@ class XPNotifier extends StateNotifier<XPState> {
     debugPrint('[XPProvider] Initialized daily goals: ${goals.completedCount}/${goals.totalCount}');
   }
 
-  /// Mark workout completed for today
-  void markWorkoutCompleted() {
+  /// Mark workout completed for today and award XP
+  Future<void> markWorkoutCompleted({String? workoutId}) async {
     final goals = _getOrCreateDailyGoals();
     if (!goals.completedWorkout) {
       state = state.copyWith(
         dailyGoals: goals.copyWith(completedWorkout: true),
       );
       debugPrint('[XPProvider] Daily goal: workout completed');
+
+      // Award XP via backend
+      final xpAwarded = await _repository.awardGoalXP('workout_complete', sourceId: workoutId);
+      if (xpAwarded > 0) {
+        // Trigger animation event
+        state = state.copyWith(
+          lastXPEarnedEvent: XPEarnedAnimationEvent(
+            xpAmount: xpAwarded,
+            goalType: XPGoalType.workoutComplete,
+          ),
+        );
+        await loadUserXP(userId: _currentUserId, showLoading: false);
+      }
     }
   }
 
-  /// Mark meal logged for today
-  void markMealLogged() {
+  /// Mark meal logged for today and award XP
+  Future<void> markMealLogged({String? mealId}) async {
     final goals = _getOrCreateDailyGoals();
     if (!goals.loggedMeal) {
       state = state.copyWith(
         dailyGoals: goals.copyWith(loggedMeal: true),
       );
       debugPrint('[XPProvider] Daily goal: meal logged');
+
+      // Award XP via backend
+      final xpAwarded = await _repository.awardGoalXP('meal_log', sourceId: mealId);
+      if (xpAwarded > 0) {
+        // Trigger animation event
+        state = state.copyWith(
+          lastXPEarnedEvent: XPEarnedAnimationEvent(
+            xpAmount: xpAwarded,
+            goalType: XPGoalType.mealLog,
+          ),
+        );
+        await loadUserXP(userId: _currentUserId, showLoading: false);
+      }
     }
   }
 
-  /// Mark protein goal hit for today
-  void markProteinGoalHit() {
+  /// Mark weight logged for today and award XP
+  Future<void> markWeightLogged({String? weightLogId}) async {
+    final goals = _getOrCreateDailyGoals();
+    if (!goals.loggedWeight) {
+      state = state.copyWith(
+        dailyGoals: goals.copyWith(loggedWeight: true),
+      );
+      debugPrint('[XPProvider] Daily goal: weight logged');
+
+      // Award XP via backend
+      final xpAwarded = await _repository.awardGoalXP('weight_log', sourceId: weightLogId);
+      if (xpAwarded > 0) {
+        // Trigger animation event
+        state = state.copyWith(
+          lastXPEarnedEvent: XPEarnedAnimationEvent(
+            xpAmount: xpAwarded,
+            goalType: XPGoalType.weightLog,
+          ),
+        );
+        await loadUserXP(userId: _currentUserId, showLoading: false);
+      }
+    }
+  }
+
+  /// Mark protein goal hit for today and award XP
+  Future<void> markProteinGoalHit() async {
     final goals = _getOrCreateDailyGoals();
     if (!goals.hitProteinGoal) {
       state = state.copyWith(
         dailyGoals: goals.copyWith(hitProteinGoal: true),
       );
       debugPrint('[XPProvider] Daily goal: protein goal hit');
+
+      // Award XP via backend
+      final xpAwarded = await _repository.awardGoalXP('protein_goal');
+      if (xpAwarded > 0) {
+        // Trigger animation event
+        state = state.copyWith(
+          lastXPEarnedEvent: XPEarnedAnimationEvent(
+            xpAmount: xpAwarded,
+            goalType: XPGoalType.proteinGoal,
+          ),
+        );
+        await loadUserXP(userId: _currentUserId, showLoading: false);
+      }
     }
   }
 
@@ -809,6 +920,23 @@ class XPNotifier extends StateNotifier<XPState> {
     if (state.previousStreak == null) {
       state = state.copyWith(previousStreak: currentStreak);
       debugPrint('[XPProvider] Initialized streak tracking at $currentStreak days');
+    }
+  }
+
+  /// Clear XP earned event (after showing animation)
+  void clearXPEarnedEvent() {
+    state = state.copyWith(clearXPEarnedEvent: true);
+  }
+
+  /// Trigger XP earned animation for daily login
+  void triggerDailyLoginXPAnimation(int xpAmount) {
+    if (xpAmount > 0) {
+      state = state.copyWith(
+        lastXPEarnedEvent: XPEarnedAnimationEvent(
+          xpAmount: xpAmount,
+          goalType: XPGoalType.dailyLogin,
+        ),
+      );
     }
   }
 }
@@ -1028,4 +1156,18 @@ final nextStreakMilestoneProvider = Provider<StreakMilestone?>((ref) {
 /// Days until next streak milestone
 final daysToNextStreakMilestoneProvider = Provider<int?>((ref) {
   return ref.watch(xpProvider).daysToNextStreakMilestone;
+});
+
+// ============================================
+// XP Earned Animation Providers
+// ============================================
+
+/// Last XP earned event (for animation)
+final xpEarnedEventProvider = Provider<XPEarnedAnimationEvent?>((ref) {
+  return ref.watch(xpProvider).lastXPEarnedEvent;
+});
+
+/// Whether there's an XP earned event to animate
+final hasXPEarnedEventProvider = Provider<bool>((ref) {
+  return ref.watch(xpProvider).hasXPEarnedEvent;
 });
