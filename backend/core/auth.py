@@ -47,8 +47,8 @@ async def get_current_user(
 
     try:
         # Verify token with Supabase
-        supabase = get_supabase().client
-        user_response = supabase.auth.get_user(token)
+        supabase = get_supabase()
+        user_response = supabase.client.auth.get_user(token)
 
         if not user_response or not user_response.user:
             raise HTTPException(
@@ -57,9 +57,23 @@ async def get_current_user(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+        # Look up backend user ID using Supabase Auth ID
+        # The database uses backend user ID (users.id) for foreign keys,
+        # not Supabase Auth ID (users.auth_id)
+        supabase_auth_id = str(user_response.user.id)
+        result = supabase.client.table("users").select("id, email").eq("auth_id", supabase_auth_id).single().execute()
+
+        if not result.data:
+            logger.error(f"User not found in database for auth_id: {supabase_auth_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found in database",
+            )
+
         return {
-            "id": user_response.user.id,
-            "email": user_response.user.email,
+            "id": result.data["id"],  # Backend user ID for foreign keys
+            "email": result.data["email"],
+            "auth_id": supabase_auth_id,  # Supabase Auth ID if needed
             "user_metadata": user_response.user.user_metadata,
         }
 
