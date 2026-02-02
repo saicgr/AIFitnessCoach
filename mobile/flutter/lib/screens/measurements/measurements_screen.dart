@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +11,7 @@ import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/measurements_repository.dart';
+import '../../data/services/haptic_service.dart';
 import '../../data/services/health_service.dart';
 
 class MeasurementsScreen extends ConsumerStatefulWidget {
@@ -22,6 +25,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
   MeasurementType _selectedType = MeasurementType.weight;
   String _selectedPeriod = '30d';
   bool _isMetric = true;
+  bool _loadingTimedOut = false;
 
   final _periods = [
     {'label': '7D', 'value': '7d', 'days': 7},
@@ -70,9 +74,27 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
   }
 
   Future<void> _loadMeasurements() async {
+    // Reset timeout flag when starting a new load
+    if (mounted) {
+      setState(() => _loadingTimedOut = false);
+    }
+
     final auth = ref.read(authStateProvider);
     if (auth.user != null) {
+      // Start a timeout timer - if loading takes more than 25 seconds, show timeout state
+      Future.delayed(const Duration(seconds: 25), () {
+        if (mounted) {
+          final state = ref.read(measurementsProvider);
+          if (state.isLoading) {
+            setState(() => _loadingTimedOut = true);
+          }
+        }
+      });
+
       await ref.read(measurementsProvider.notifier).loadAllMeasurements(auth.user!.id);
+    } else {
+      // If no user, mark as not loading to prevent infinite spinner
+      debugPrint('⚠️ No user found, cannot load measurements');
     }
   }
 
@@ -90,216 +112,238 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Body Measurements',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          // Unit toggle
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: TextButton(
-              onPressed: () => setState(() => _isMetric = !_isMetric),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: elevated,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: cardBorder),
-                ),
-                child: Text(
-                  _isMetric ? 'Metric' : 'Imperial',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: cyan,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _loadMeasurements,
-          color: cyan,
-          child: CustomScrollView(
-            slivers: [
-              // Period selector
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: _periods.map((period) {
-                      final isSelected = _selectedPeriod == period['value'];
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => _selectedPeriod = period['value'] as String),
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: isSelected ? cyan.withOpacity(0.2) : elevated,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isSelected ? cyan : cardBorder,
+        child: Stack(
+          children: [
+            // Main content
+            RefreshIndicator(
+              onRefresh: _loadMeasurements,
+              color: cyan,
+              child: CustomScrollView(
+                slivers: [
+                  // Header with title (offset for floating back button)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(56, 12, 16, 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Body Measurements',
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: textPrimary,
                               ),
                             ),
-                            child: Center(
+                          ),
+                          // Unit toggle
+                          GestureDetector(
+                            onTap: () => setState(() => _isMetric = !_isMetric),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: elevated,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: cardBorder),
+                              ),
                               child: Text(
-                                period['label'] as String,
+                                _isMetric ? 'Metric' : 'Imperial',
                                 style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                  color: isSelected ? cyan : textSecondary,
+                                  fontSize: 12,
+                                  color: cyan,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ).animate().fadeIn(delay: 100.ms),
-              ),
-
-              // Health Connect sync card
-              SliverToBoxAdapter(
-                child: _HealthConnectCard(
-                  onSyncComplete: _loadMeasurements,
-                ).animate().fadeIn(delay: 120.ms),
-              ),
-
-              // BMI & WHR Cards
-              SliverToBoxAdapter(
-                child: _buildDerivedMetricsSection(
-                  measurementsState,
-                  isDark: isDark,
-                  elevated: elevated,
-                  textPrimary: textPrimary,
-                  textMuted: textMuted,
-                  cyan: cyan,
-                ).animate().fadeIn(delay: 130.ms),
-              ),
-
-              // Selected measurement chart
-              SliverToBoxAdapter(
-                child: _buildChartSection(
-                  measurementsState,
-                  isDark: isDark,
-                  elevated: elevated,
-                  textPrimary: textPrimary,
-                  textMuted: textMuted,
-                  cyan: cyan,
-                ).animate().fadeIn(delay: 150.ms),
-              ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-              // Measurement type selector (horizontal scroll)
-              SliverToBoxAdapter(
-                child: _buildTypeSelector(
-                  measurementsState,
-                  isDark: isDark,
-                  elevated: elevated,
-                  textSecondary: textSecondary,
-                  textMuted: textMuted,
-                  cardBorder: cardBorder,
-                  cyan: cyan,
-                ).animate().fadeIn(delay: 200.ms),
-              ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-              // Measurement summary cards by group
-              ..._measurementGroups.expand((group) => [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    child: Text(
-                      group['title'] as String,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: textMuted,
-                        letterSpacing: 1.5,
+                        ],
                       ),
                     ),
-                  ).animate().fadeIn(delay: 250.ms),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: _buildMeasurementGroupCard(
+                  ),
+
+                  // Period selector
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: _periods.map((period) {
+                          final isSelected = _selectedPeriod == period['value'];
+                          return Expanded(
+                            child: GestureDetector(
+                              onTap: () => setState(() => _selectedPeriod = period['value'] as String),
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 4),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? cyan.withOpacity(0.2) : elevated,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: isSelected ? cyan : cardBorder,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    period['label'] as String,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      color: isSelected ? cyan : textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ).animate().fadeIn(delay: 100.ms),
+                  ),
+
+                  // Health Connect sync card
+                  SliverToBoxAdapter(
+                    child: _HealthConnectCard(
+                      onSyncComplete: _loadMeasurements,
+                    ).animate().fadeIn(delay: 120.ms),
+                  ),
+
+                  // BMI & WHR Cards
+                  SliverToBoxAdapter(
+                    child: _buildDerivedMetricsSection(
                       measurementsState,
-                      group['types'] as List<MeasurementType>,
                       isDark: isDark,
                       elevated: elevated,
                       textPrimary: textPrimary,
+                      textMuted: textMuted,
+                      cyan: cyan,
+                    ).animate().fadeIn(delay: 130.ms),
+                  ),
+
+                  // Selected measurement chart
+                  SliverToBoxAdapter(
+                    child: _buildChartSection(
+                      measurementsState,
+                      isDark: isDark,
+                      elevated: elevated,
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                      cyan: cyan,
+                    ).animate().fadeIn(delay: 150.ms),
+                  ),
+
+                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                  // Measurement type selector (horizontal scroll)
+                  SliverToBoxAdapter(
+                    child: _buildTypeSelector(
+                      measurementsState,
+                      isDark: isDark,
+                      elevated: elevated,
                       textSecondary: textSecondary,
                       textMuted: textMuted,
                       cardBorder: cardBorder,
                       cyan: cyan,
-                    ),
-                  ).animate().fadeIn(delay: 300.ms),
-                ),
-              ]),
+                    ).animate().fadeIn(delay: 200.ms),
+                  ),
 
-              // History list for selected type
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'HISTORY - ${_selectedType.displayName.toUpperCase()}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: textMuted,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      if (measurementsState.historyByType[_selectedType]?.isNotEmpty ?? false)
-                        Text(
-                          '${measurementsState.historyByType[_selectedType]?.length ?? 0} entries',
+                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                  // Measurement summary cards by group
+                  ..._measurementGroups.expand((group) => [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                        child: Text(
+                          group['title'] as String,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
                             color: textMuted,
+                            letterSpacing: 1.5,
                           ),
                         ),
-                    ],
+                      ).animate().fadeIn(delay: 250.ms),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: _buildMeasurementGroupCard(
+                          measurementsState,
+                          group['types'] as List<MeasurementType>,
+                          isDark: isDark,
+                          elevated: elevated,
+                          textPrimary: textPrimary,
+                          textSecondary: textSecondary,
+                          textMuted: textMuted,
+                          cardBorder: cardBorder,
+                          cyan: cyan,
+                        ),
+                      ).animate().fadeIn(delay: 300.ms),
+                    ),
+                  ]),
+
+                  // History list for selected type
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'HISTORY - ${_selectedType.displayName.toUpperCase()}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: textMuted,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          if (measurementsState.historyByType[_selectedType]?.isNotEmpty ?? false)
+                            Text(
+                              '${measurementsState.historyByType[_selectedType]?.length ?? 0} entries',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: textMuted,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ).animate().fadeIn(delay: 350.ms),
                   ),
-                ).animate().fadeIn(delay: 350.ms),
-              ),
 
-              _buildHistoryList(
-                measurementsState,
+                  _buildHistoryList(
+                    measurementsState,
+                    isDark: isDark,
+                    elevated: elevated,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    textMuted: textMuted,
+                    cardBorder: cardBorder,
+                    cyan: cyan,
+                  ),
+
+                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                ],
+              ),
+            ),
+
+            // Floating back button
+            Positioned(
+              top: 8,
+              left: 8,
+              child: _GlassmorphicButton(
+                onTap: () {
+                  HapticService.light();
+                  Navigator.pop(context);
+                },
                 isDark: isDark,
-                elevated: elevated,
-                textPrimary: textPrimary,
-                textSecondary: textSecondary,
-                textMuted: textMuted,
-                cardBorder: cardBorder,
-                cyan: cyan,
+                child: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: isDark ? Colors.white : Colors.black87,
+                  size: 18,
+                ),
               ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -601,7 +645,26 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
           SizedBox(
             height: 180,
             child: state.isLoading
-                ? Center(child: CircularProgressIndicator(color: cyan))
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(color: cyan),
+                        if (_loadingTimedOut) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            'Taking longer than expected...',
+                            style: TextStyle(color: textMuted, fontSize: 12),
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: _loadMeasurements,
+                            child: Text('Retry', style: TextStyle(color: cyan)),
+                          ),
+                        ],
+                      ],
+                    ),
+                  )
                 : filteredHistory.isEmpty
                     ? Center(
                         child: Column(
@@ -2052,6 +2115,50 @@ class _DataTypeChip extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w500),
+      ),
+    );
+  }
+}
+
+/// Glassmorphic button with blur effect
+class _GlassmorphicButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final Widget child;
+  final bool isDark;
+
+  const _GlassmorphicButton({
+    required this.onTap,
+    required this.child,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const size = 40.0;
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(size / 2),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.black.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(size / 2),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : Colors.black.withValues(alpha: 0.08),
+                width: 1,
+              ),
+            ),
+            child: Center(child: child),
+          ),
+        ),
       ),
     );
   }

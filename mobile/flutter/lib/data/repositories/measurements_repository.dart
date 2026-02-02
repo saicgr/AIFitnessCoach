@@ -165,12 +165,22 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
       final changeFromPrevious = <MeasurementType, double>{};
 
       // Load history for all measurement types in PARALLEL for faster loading
+      // But with a timeout to prevent infinite loading
       final allTypes = MeasurementType.values;
       final futures = allTypes.map((type) =>
         _repository.getMeasurementHistory(userId, type)
       ).toList();
 
-      final allHistories = await Future.wait(futures);
+      // Set a 20-second overall timeout to prevent infinite loading
+      final allHistories = await Future.wait(futures)
+          .timeout(
+            const Duration(seconds: 20),
+            onTimeout: () {
+              debugPrint('⚠️ Timeout loading all measurements, returning partial data');
+              // Return empty lists for all types on timeout
+              return List.generate(allTypes.length, (_) => <MeasurementEntry>[]);
+            },
+          );
 
       // Process results
       for (var i = 0; i < allTypes.length; i++) {
@@ -319,15 +329,15 @@ class MeasurementsRepository {
     int limit = 50,
   }) async {
     try {
-      // Add a 15-second timeout to prevent infinite loading
+      // Add an 8-second timeout per request (since we make 15 parallel calls)
       final response = await _client.get(
-        '${ApiConstants.metrics}/history/$userId',
+        '${ApiConstants.metrics}/body/history/$userId',
         queryParameters: {
           'metric_type': type.apiValue,
           'limit': limit,
         },
       ).timeout(
-        const Duration(seconds: 15),
+        const Duration(seconds: 8),
         onTimeout: () {
           debugPrint('⚠️ Timeout getting ${type.displayName} history');
           throw Exception('Request timeout');
@@ -355,7 +365,7 @@ class MeasurementsRepository {
   }) async {
     try {
       final response = await _client.post(
-        '${ApiConstants.metrics}/record',
+        '${ApiConstants.metrics}/body/record',
         data: {
           'user_id': userId,
           'metric_type': type.apiValue,
@@ -379,7 +389,7 @@ class MeasurementsRepository {
   Future<bool> deleteMeasurement(String userId, String measurementId) async {
     try {
       final response = await _client.delete(
-        '${ApiConstants.metrics}/history/$userId/$measurementId',
+        '${ApiConstants.metrics}/body/history/$userId/$measurementId',
       );
       return response.statusCode == 200;
     } catch (e) {

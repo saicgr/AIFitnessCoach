@@ -370,3 +370,208 @@ async def get_active_injuries(user_id: str):
         })
 
     return {"injuries": injuries, "count": len(injuries)}
+
+
+# ============ SIMPLE BODY MEASUREMENT ENDPOINTS ============
+# These endpoints support the Flutter app's simple measurement recording
+
+class SimpleMetricInput(BaseModel):
+    """Simple input for recording a single body measurement."""
+    user_id: str
+    metric_type: str = Field(..., description="Type: weight, body_fat, chest, waist, hips, etc.")
+    value: float = Field(..., gt=0, description="Measurement value")
+    unit: str = Field(..., description="Unit: kg, lbs, cm, in, %")
+    notes: Optional[str] = None
+
+
+class SimpleMetricResponse(BaseModel):
+    """Response for a single measurement entry."""
+    id: str
+    user_id: str
+    metric_type: str
+    value: float
+    unit: str
+    recorded_at: datetime
+    notes: Optional[str] = None
+
+
+# Mapping from metric_type to body_measurements column names
+METRIC_TYPE_TO_COLUMN = {
+    "weight": "weight_kg",
+    "body_fat": "body_fat_percent",
+    "chest": "chest_cm",
+    "waist": "waist_cm",
+    "hips": "hip_cm",
+    "neck": "neck_cm",
+    "shoulders": "shoulder_cm",
+    "biceps_left": "bicep_left_cm",
+    "biceps_right": "bicep_right_cm",
+    "forearm_left": "forearm_left_cm",
+    "forearm_right": "forearm_right_cm",
+    "thigh_left": "thigh_left_cm",
+    "thigh_right": "thigh_right_cm",
+    "calf_left": "calf_left_cm",
+    "calf_right": "calf_right_cm",
+}
+
+
+def _convert_to_metric(value: float, unit: str, metric_type: str) -> float:
+    """Convert value to metric units for storage."""
+    if metric_type == "body_fat":
+        return value  # percentage doesn't need conversion
+    if unit == "lbs":
+        return value / 2.20462  # to kg
+    if unit == "in":
+        return value * 2.54  # to cm
+    return value  # already metric
+
+
+@router.post("/body/record", response_model=SimpleMetricResponse, tags=["body-measurements"])
+async def record_simple_metric(input: SimpleMetricInput):
+    """
+    Record a simple body measurement (weight, body fat, circumferences, etc.)
+
+    This is a simplified endpoint for recording individual measurements
+    without requiring full health metrics calculation.
+    """
+    logger.info(f"Recording simple metric {input.metric_type} for user {input.user_id}")
+
+    db = get_supabase_db()
+
+    # Get the column name for this metric type
+    column_name = METRIC_TYPE_TO_COLUMN.get(input.metric_type)
+    if not column_name:
+        raise HTTPException(status_code=400, detail=f"Unknown metric type: {input.metric_type}")
+
+    # Convert to metric units for storage
+    metric_value = _convert_to_metric(input.value, input.unit, input.metric_type)
+
+    # Insert into body_measurements table
+    data = {
+        "user_id": input.user_id,
+        column_name: metric_value,
+        "notes": input.notes,
+        "measurement_source": "manual",
+    }
+
+    try:
+        result = db.client.table("body_measurements").insert(data).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to record measurement")
+
+        row = result.data[0]
+        return SimpleMetricResponse(
+            id=str(row["id"]),
+            user_id=row["user_id"],
+            metric_type=input.metric_type,
+            value=metric_value,
+            unit="kg" if input.metric_type == "weight" else ("%" if input.metric_type == "body_fat" else "cm"),
+            recorded_at=row.get("measured_at") or row.get("created_at"),
+            notes=row.get("notes"),
+        )
+    except Exception as e:
+        logger.error(f"Failed to record measurement: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/body/history/{user_id}", response_model=List[SimpleMetricResponse], tags=["body-measurements"])
+async def get_body_measurement_history(
+    user_id: str,
+    metric_type: Optional[str] = None,
+    limit: int = 50
+):
+    """
+    Get measurement history for a user.
+
+    If metric_type is provided, returns only measurements of that type.
+    Otherwise returns all measurements.
+    """
+    logger.info(f"Getting measurement history for user {user_id}, type={metric_type}")
+
+    db = get_supabase_db()
+
+    try:
+        # Build the query based on metric_type
+        if metric_type:
+            column_name = METRIC_TYPE_TO_COLUMN.get(metric_type)
+            if not column_name:
+                return []  # Unknown type, return empty
+
+            # Query for non-null values of the specific column
+            result = db.client.table("body_measurements") \
+                .select("*") \
+                .eq("user_id", user_id) \
+                .not_.is_(column_name, "null") \
+                .order("measured_at", desc=True) \
+                .limit(limit) \
+                .execute()
+
+            # Map results to response format
+            entries = []
+            for row in result.data:
+                value = row.get(column_name)
+                if value is not None:
+                    entries.append(SimpleMetricResponse(
+                        id=str(row["id"]),
+                        user_id=row["user_id"],
+                        metric_type=metric_type,
+                        value=value,
+                        unit="kg" if metric_type == "weight" else ("%" if metric_type == "body_fat" else "cm"),
+                        recorded_at=row.get("measured_at") or row.get("created_at"),
+                        notes=row.get("notes"),
+                    ))
+            return entries
+        else:
+            # Return all measurements, flattened
+            result = db.client.table("body_measurements") \
+                .select("*") \
+                .eq("user_id", user_id) \
+                .order("measured_at", desc=True) \
+                .limit(limit) \
+                .execute()
+
+            entries = []
+            for row in result.data:
+                for metric_type_key, column in METRIC_TYPE_TO_COLUMN.items():
+                    value = row.get(column)
+                    if value is not None:
+                        entries.append(SimpleMetricResponse(
+                            id=str(row["id"]),
+                            user_id=row["user_id"],
+                            metric_type=metric_type_key,
+                            value=value,
+                            unit="kg" if metric_type_key == "weight" else ("%" if metric_type_key == "body_fat" else "cm"),
+                            recorded_at=row.get("measured_at") or row.get("created_at"),
+                            notes=row.get("notes"),
+                        ))
+            return entries
+
+    except Exception as e:
+        logger.error(f"Failed to get measurement history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/body/history/{user_id}/{measurement_id}", tags=["body-measurements"])
+async def delete_body_measurement(user_id: str, measurement_id: str):
+    """Delete a specific body measurement entry."""
+    logger.info(f"Deleting measurement {measurement_id} for user {user_id}")
+
+    db = get_supabase_db()
+
+    try:
+        result = db.client.table("body_measurements") \
+            .delete() \
+            .eq("id", measurement_id) \
+            .eq("user_id", user_id) \
+            .execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Measurement not found")
+
+        return {"message": "Measurement deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete measurement: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
