@@ -15,6 +15,7 @@ class SetLog {
   final int? rir; // Reps in Reserve (0-5)
   final int targetReps; // Original target reps for this set
   final String? notes; // Optional user notes for this set
+  final String? aiInputSource; // Original AI input that created this set (e.g., "135*8", "+10")
 
   SetLog({
     required this.reps,
@@ -25,6 +26,7 @@ class SetLog {
     this.rir,
     this.targetReps = 0,
     this.notes,
+    this.aiInputSource,
   }) : completedAt = completedAt ?? DateTime.now();
 
   SetLog copyWith({
@@ -36,6 +38,7 @@ class SetLog {
     int? rir,
     int? targetReps,
     String? notes,
+    String? aiInputSource,
   }) {
     return SetLog(
       reps: reps ?? this.reps,
@@ -46,6 +49,37 @@ class SetLog {
       rir: rir ?? this.rir,
       targetReps: targetReps ?? this.targetReps,
       notes: notes ?? this.notes,
+      aiInputSource: aiInputSource ?? this.aiInputSource,
+    );
+  }
+
+  /// Convert to JSON for database persistence
+  Map<String, dynamic> toJson() => {
+        'reps': reps,
+        'weight': weight,
+        'completed_at': completedAt.toIso8601String(),
+        'set_type': setType,
+        'rpe': rpe,
+        'rir': rir,
+        'target_reps': targetReps,
+        'notes': notes,
+        'ai_input_source': aiInputSource,
+      };
+
+  /// Create from JSON (database retrieval)
+  factory SetLog.fromJson(Map<String, dynamic> json) {
+    return SetLog(
+      reps: json['reps'] as int? ?? 0,
+      weight: (json['weight'] as num?)?.toDouble() ?? 0.0,
+      completedAt: json['completed_at'] != null
+          ? DateTime.parse(json['completed_at'] as String)
+          : DateTime.now(),
+      setType: json['set_type'] as String? ?? 'working',
+      rpe: json['rpe'] as int?,
+      rir: json['rir'] as int?,
+      targetReps: json['target_reps'] as int? ?? 0,
+      notes: json['notes'] as String?,
+      aiInputSource: json['ai_input_source'] as String?,
     );
   }
 }

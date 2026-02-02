@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:go_router/go_router.dart';
 import 'package:health/health.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
@@ -181,6 +182,18 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                 ).animate().fadeIn(delay: 120.ms),
               ),
 
+              // BMI & WHR Cards
+              SliverToBoxAdapter(
+                child: _buildDerivedMetricsSection(
+                  measurementsState,
+                  isDark: isDark,
+                  elevated: elevated,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  cyan: cyan,
+                ).animate().fadeIn(delay: 130.ms),
+              ),
+
               // Selected measurement chart
               SliverToBoxAdapter(
                 child: _buildChartSection(
@@ -296,6 +309,238 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
         child: const Icon(Icons.add),
       ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3),
     );
+  }
+
+  /// Build BMI and Waist-to-Hip Ratio cards
+  Widget _buildDerivedMetricsSection(
+    MeasurementsState state, {
+    required bool isDark,
+    required Color elevated,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color cyan,
+  }) {
+    final auth = ref.watch(authStateProvider);
+    final user = auth.user;
+    final latestWeight = state.summary?.latestByType[MeasurementType.weight];
+    final latestWaist = state.summary?.latestByType[MeasurementType.waist];
+    final latestHips = state.summary?.latestByType[MeasurementType.hips];
+
+    // Calculate BMI if we have height and weight
+    double? bmi;
+    String? bmiCategory;
+    Color? bmiColor;
+    if (user?.heightCm != null && user!.heightCm! > 0 && latestWeight != null) {
+      final heightM = user.heightCm! / 100;
+      // Get weight in kg (always use metric=true for BMI calculation)
+      final weightKg = latestWeight.getValueInUnit(true);
+      bmi = weightKg / (heightM * heightM);
+      final result = _getBmiCategoryAndColor(bmi);
+      bmiCategory = result.$1;
+      bmiColor = result.$2;
+    }
+
+    // Calculate Waist-to-Hip Ratio if we have both measurements
+    double? whr;
+    String? whrCategory;
+    Color? whrColor;
+    if (latestWaist != null && latestHips != null) {
+      // Get measurements in metric (cm) for consistent calculation
+      final waistCm = latestWaist.getValueInUnit(true);
+      final hipsCm = latestHips.getValueInUnit(true);
+      if (hipsCm > 0) {
+        whr = waistCm / hipsCm;
+        final isMale = user?.gender?.toLowerCase() == 'male';
+        final result = _getWhrCategoryAndColor(whr, isMale: isMale);
+        whrCategory = result.$1;
+        whrColor = result.$2;
+      }
+    }
+
+    // Don't show section if no derived metrics available
+    if (bmi == null && whr == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Row(
+        children: [
+          // BMI Card
+          if (bmi != null)
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: elevated,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: bmiColor!.withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: bmiColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Icon(
+                            Icons.monitor_weight_outlined,
+                            size: 16,
+                            color: bmiColor,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'BMI',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      bmi.toStringAsFixed(1),
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: bmiColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: bmiColor.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        bmiCategory!,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: bmiColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          if (bmi != null && whr != null) const SizedBox(width: 12),
+
+          // Waist-to-Hip Ratio Card
+          if (whr != null)
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: elevated,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: whrColor!.withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: whrColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Icon(
+                            Icons.straighten,
+                            size: 16,
+                            color: whrColor,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'WHR',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      whr.toStringAsFixed(2),
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: whrColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: whrColor.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        whrCategory!,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: whrColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Get BMI category and color based on value
+  (String, Color) _getBmiCategoryAndColor(double bmi) {
+    if (bmi < 18.5) {
+      return ('Underweight', AppColors.orange);
+    } else if (bmi < 25) {
+      return ('Normal', AppColors.success);
+    } else if (bmi < 30) {
+      return ('Overweight', AppColors.orange);
+    } else {
+      return ('Obese', AppColors.error);
+    }
+  }
+
+  /// Get Waist-to-Hip Ratio category and color
+  /// WHO guidelines: Men >0.90, Women >0.85 = increased health risk
+  (String, Color) _getWhrCategoryAndColor(double whr, {bool isMale = true}) {
+    if (isMale) {
+      if (whr < 0.90) {
+        return ('Low Risk', AppColors.success);
+      } else if (whr < 1.0) {
+        return ('Moderate', AppColors.orange);
+      } else {
+        return ('High Risk', AppColors.error);
+      }
+    } else {
+      if (whr < 0.80) {
+        return ('Low Risk', AppColors.success);
+      } else if (whr < 0.85) {
+        return ('Moderate', AppColors.orange);
+      } else {
+        return ('High Risk', AppColors.error);
+      }
+    }
   }
 
   Widget _buildChartSection(
@@ -643,7 +888,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
           return Column(
             children: [
               InkWell(
-                onTap: () => setState(() => _selectedType = type),
+                onTap: () => context.push('/measurements/${type.name}'),
                 borderRadius: index == 0
                     ? const BorderRadius.vertical(top: Radius.circular(12))
                     : index == types.length - 1
@@ -1686,10 +1931,42 @@ class _HealthConnectCardState extends ConsumerState<_HealthConnectCard> {
   }
 
   Future<void> _connect() async {
-    final connected = await ref.read(healthSyncProvider.notifier).connect();
+    final notifier = ref.read(healthSyncProvider.notifier);
+
+    // Check availability first
+    final available = await notifier.checkAvailability();
+    if (!available && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            Platform.isAndroid
+                ? 'Health Connect is not available. Please install it from the Play Store.'
+                : 'Apple Health is not available on this device.',
+          ),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+      return;
+    }
+
+    final connected = await notifier.connect();
     if (connected && mounted) {
       // Auto-sync after connecting
       await _sync(30);
+    } else if (mounted) {
+      // Show helpful message about granting permissions manually
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            Platform.isAndroid
+                ? 'Please open Health Connect and grant permissions for FitWiz'
+                : 'Please open Health settings and grant permissions for FitWiz',
+          ),
+          backgroundColor: AppColors.orange,
+          duration: const Duration(seconds: 6),
+        ),
+      );
     }
   }
 

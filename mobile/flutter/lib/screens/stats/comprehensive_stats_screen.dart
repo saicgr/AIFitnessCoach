@@ -1,16 +1,29 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../data/models/progress_photos.dart';
 import '../../data/providers/consistency_provider.dart';
+import '../../data/providers/scores_provider.dart';
+import '../../data/repositories/progress_photos_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/activity_heatmap.dart';
 import '../../widgets/exercise_search_results.dart';
 import '../../widgets/workout_day_detail_sheet.dart';
+import '../progress/comparison_view.dart';
+import '../progress/photo_editor_screen.dart';
+import '../progress/widgets/readiness_checkin_card.dart';
+import '../progress/widgets/strength_overview_card.dart';
+import '../progress/widgets/pr_summary_card.dart';
 import 'widgets/date_range_filter_sheet.dart';
 import 'widgets/export_stats_sheet.dart';
 import 'widgets/share_stats_sheet.dart';
@@ -18,7 +31,13 @@ import 'widgets/share_stats_sheet.dart';
 /// Comprehensive Stats Screen
 /// Combines: Workout stats, achievements, body measurements, progress graphs, nutrition
 class ComprehensiveStatsScreen extends ConsumerStatefulWidget {
-  const ComprehensiveStatsScreen({super.key});
+  /// If true, opens the add photo sheet immediately after loading
+  final bool openPhotoSheet;
+
+  const ComprehensiveStatsScreen({
+    super.key,
+    this.openPhotoSheet = false,
+  });
 
   @override
   ConsumerState<ComprehensiveStatsScreen> createState() => _ComprehensiveStatsScreenState();
@@ -27,11 +46,33 @@ class ComprehensiveStatsScreen extends ConsumerStatefulWidget {
 class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  String? _userId;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final userId = await ref.read(apiClientProvider).getUserId();
+    if (userId != null && mounted) {
+      setState(() {
+        _userId = userId;
+      });
+      // Load photos data
+      ref.read(progressPhotosNotifierProvider(userId).notifier).loadAll();
+
+      // If openPhotoSheet is requested, switch to Photos tab
+      if (widget.openPhotoSheet) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _tabController.animateTo(1); // Switch to Photos tab (index 1)
+          }
+        });
+      }
+    }
   }
 
   @override
@@ -57,7 +98,7 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
         foregroundColor: textPrimary,
         automaticallyImplyLeading: false,
         title: Text(
-          'Your Stats',
+          'Your Progress',
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
@@ -66,6 +107,13 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
         ),
         centerTitle: false,
         actions: [
+          // Compare Photos (only show when photos tab visible)
+          if (_userId != null)
+            IconButton(
+              icon: Icon(Icons.compare_arrows, color: textPrimary),
+              onPressed: () => _showComparisonPicker(),
+              tooltip: 'Compare Photos',
+            ),
           // Time Range Selector
           IconButton(
             icon: Icon(Icons.calendar_month_outlined, color: textPrimary),
@@ -117,7 +165,8 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
               dividerColor: Colors.transparent,
               tabs: const [
                 Tab(text: 'Overview'),
-                Tab(text: 'Progress'),
+                Tab(text: 'Photos'),
+                Tab(text: 'Strength'),
                 Tab(text: 'Body'),
                 Tab(text: 'Nutrition'),
               ],
@@ -130,13 +179,24 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
               controller: _tabController,
               children: [
                 _OverviewTab(),
-                _ProgressTab(),
+                _PhotosTab(userId: _userId, openPhotoSheet: widget.openPhotoSheet),
+                _StrengthTab(userId: _userId),
                 _BodyTab(),
                 _NutritionTab(),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showComparisonPicker() {
+    if (_userId == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ComparisonView(userId: _userId!),
       ),
     );
   }
@@ -361,42 +421,928 @@ class _OverviewTabState extends ConsumerState<_OverviewTab> {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// PROGRESS TAB - Graphs, trends, PRs
+// PHOTOS TAB - Progress photos from different angles
 // ═══════════════════════════════════════════════════════════════════
 
-class _ProgressTab extends StatelessWidget {
+class _PhotosTab extends ConsumerStatefulWidget {
+  final String? userId;
+  final bool openPhotoSheet;
+
+  const _PhotosTab({this.userId, this.openPhotoSheet = false});
+
+  @override
+  ConsumerState<_PhotosTab> createState() => _PhotosTabState();
+}
+
+class _PhotosTabState extends ConsumerState<_PhotosTab> {
+  PhotoViewType? _selectedViewFilter;
+  bool _hasOpenedPhotoSheet = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Open photo sheet if requested and not already opened
+    if (widget.openPhotoSheet && !_hasOpenedPhotoSheet) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_hasOpenedPhotoSheet) {
+          _hasOpenedPhotoSheet = true;
+          _showAddPhotoSheet();
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    if (widget.userId == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final state = ref.watch(progressPhotosNotifierProvider(widget.userId!));
+
+    return RefreshIndicator(
+      onRefresh: () => ref
+          .read(progressPhotosNotifierProvider(widget.userId!).notifier)
+          .loadAll(),
+      child: CustomScrollView(
+        slivers: [
+          // Stats Card
+          SliverToBoxAdapter(
+            child: _buildPhotoStatsCard(state),
+          ),
+
+          // View Type Filter
+          SliverToBoxAdapter(
+            child: _buildViewTypeFilter(),
+          ),
+
+          // Latest Photos by View
+          if (state.latestByView != null && _selectedViewFilter == null)
+            SliverToBoxAdapter(
+              child: _buildLatestPhotosByView(state.latestByView!),
+            ),
+
+          // Photo Grid
+          if (state.isLoading)
+            const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (state.photos.isEmpty)
+            SliverFillRemaining(
+              child: _buildEmptyPhotosState(),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.all(16),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  childAspectRatio: 0.75,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final filteredPhotos = _selectedViewFilter == null
+                        ? state.photos
+                        : state.photos
+                            .where((p) =>
+                                p.viewTypeEnum == _selectedViewFilter)
+                            .toList();
+                    if (index >= filteredPhotos.length) return null;
+                    return _buildPhotoCard(filteredPhotos[index]);
+                  },
+                  childCount: _selectedViewFilter == null
+                      ? state.photos.length
+                      : state.photos
+                          .where(
+                              (p) => p.viewTypeEnum == _selectedViewFilter)
+                          .length,
+                ),
+              ),
+            ),
+
+          // FAB spacer
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 80),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhotoStatsCard(ProgressPhotosState state) {
+    final stats = state.stats;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            colorScheme.primaryContainer,
+            colorScheme.primaryContainer.withOpacity(0.7),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionHeader(title: 'Workout Frequency'),
-          const SizedBox(height: 12),
-          _PlaceholderGraph(
-            height: 200,
-            message: 'Weekly workout frequency chart',
+          Row(
+            children: [
+              Icon(Icons.insights, color: colorScheme.onPrimaryContainer),
+              const SizedBox(width: 8),
+              Text(
+                'Photo Progress',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const Spacer(),
+              // Add Photo button
+              FilledButton.icon(
+                onPressed: () => _showAddPhotoSheet(),
+                icon: const Icon(Icons.add_a_photo, size: 18),
+                label: const Text('Add'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+              ),
+            ],
           ),
-
-          const SizedBox(height: 24),
-
-          _SectionHeader(title: 'Volume Progression'),
-          const SizedBox(height: 12),
-          _PlaceholderGraph(
-            height: 200,
-            message: 'Total volume over time',
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatItem(
+                '${stats?.totalPhotos ?? 0}',
+                'Total Photos',
+                Icons.photo_library,
+              ),
+              _buildStatItem(
+                '${stats?.viewTypesCaptured ?? 0}/4',
+                'Views Captured',
+                Icons.view_carousel,
+              ),
+              _buildStatItem(
+                stats?.formattedTrackingDuration ?? '-',
+                'Tracking',
+                Icons.calendar_month,
+              ),
+            ],
           ),
-
-          const SizedBox(height: 24),
-
-          _SectionHeader(title: 'Personal Records'),
-          const SizedBox(height: 12),
-          _PRList(),
-
-          // Bottom padding for floating nav bar
-          const SizedBox(height: 80),
         ],
+      ),
+    ).animate().fadeIn(duration: 300.ms).slideY(begin: -0.1, end: 0);
+  }
+
+  Widget _buildStatItem(String value, String label, IconData icon) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      children: [
+        Icon(icon, size: 24, color: colorScheme.onPrimaryContainer),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: colorScheme.onPrimaryContainer,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: colorScheme.onPrimaryContainer.withOpacity(0.8),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildViewTypeFilter() {
+    return SizedBox(
+      height: 50,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          FilterChip(
+            label: const Text('All'),
+            selected: _selectedViewFilter == null,
+            onSelected: (_) => setState(() => _selectedViewFilter = null),
+          ),
+          const SizedBox(width: 8),
+          ...PhotoViewType.values.map((type) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: FilterChip(
+                  label: Text(type.displayName),
+                  selected: _selectedViewFilter == type,
+                  onSelected: (_) =>
+                      setState(() => _selectedViewFilter = type),
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLatestPhotosByView(LatestPhotosByView latest) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Latest by View',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 120,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: PhotoViewType.values.map((type) {
+                final photo = latest.getPhoto(type);
+                return _buildLatestViewCard(type, photo);
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLatestViewCard(PhotoViewType type, ProgressPhoto? photo) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      width: 90,
+      margin: const EdgeInsets.only(right: 12),
+      child: Column(
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: photo != null
+                      ? colorScheme.primary.withOpacity(0.5)
+                      : colorScheme.outline.withOpacity(0.3),
+                  width: photo != null ? 2 : 1,
+                ),
+              ),
+              child: photo != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(11),
+                      child: CachedNetworkImage(
+                        imageUrl: photo.thumbnailUrl ?? photo.photoUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        errorWidget: (_, __, ___) => Icon(
+                          Icons.broken_image,
+                          color: colorScheme.error,
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Icon(
+                        Icons.add_a_photo,
+                        color: colorScheme.outline,
+                        size: 28,
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            type.displayName,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: colorScheme.onSurface,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhotoCard(ProgressPhoto photo) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: () => _showPhotoDetail(photo),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              CachedNetworkImage(
+                imageUrl: photo.thumbnailUrl ?? photo.photoUrl,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => Container(
+                  color: colorScheme.surfaceContainerHighest,
+                  child: const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+                errorWidget: (_, __, ___) => Container(
+                  color: colorScheme.errorContainer,
+                  child: Icon(Icons.broken_image, color: colorScheme.error),
+                ),
+              ),
+              // Gradient overlay for text readability
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.7),
+                      ],
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        photo.viewTypeEnum.displayName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        photo.formattedDate,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 9,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyPhotosState() {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.photo_camera_outlined,
+              size: 80,
+              color: colorScheme.outline,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No Progress Photos Yet',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Take photos from different angles to track your visual progress over time.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _showAddPhotoSheet,
+              icon: const Icon(Icons.camera_alt),
+              label: const Text('Take First Photo'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showAddPhotoSheet() async {
+    final colorScheme = Theme.of(context).colorScheme;
+    PhotoViewType? selectedType;
+
+    // First, pick a view type
+    selectedType = await showModalBottomSheet<PhotoViewType>(
+      context: context,
+      useRootNavigator: true,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Select View Type',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ...PhotoViewType.values.map((type) => ListTile(
+                  leading: Icon(_getViewTypeIcon(type)),
+                  title: Text(type.displayName),
+                  subtitle: Text(_getViewTypeDescription(type)),
+                  onTap: () => Navigator.pop(context, type),
+                )),
+          ],
+        ),
+      ),
+    );
+
+    if (selectedType == null || !mounted) return;
+
+    // Then pick image source
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      useRootNavigator: true,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take Photo'),
+              subtitle: const Text('Use camera'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose from Gallery'),
+              subtitle: const Text('Select existing photo'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null || !mounted) return;
+
+    // Pick the image
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source);
+
+    if (pickedFile == null || !mounted) return;
+
+    // Open photo editor for cropping and logo overlay
+    final editedFile = await Navigator.push<File>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PhotoEditorScreen(
+          imageFile: File(pickedFile.path),
+          viewTypeName: selectedType!.displayName,
+        ),
+      ),
+    );
+
+    // If user saved the edited photo, upload it
+    if (editedFile != null && mounted) {
+      _uploadPhoto(editedFile, selectedType);
+    }
+  }
+
+  Future<void> _uploadPhoto(File imageFile, PhotoViewType viewType) async {
+    if (widget.userId == null) return;
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 16),
+            Text('Uploading photo...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      await ref
+          .read(progressPhotosNotifierProvider(widget.userId!).notifier)
+          .uploadPhoto(
+            imageFile: imageFile,
+            viewType: viewType,
+          );
+
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${viewType.displayName} photo saved!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload photo: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showPhotoDetail(ProgressPhoto photo) {
+    final colorScheme = Theme.of(context).colorScheme;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.9,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Handle
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colorScheme.outline.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Photo
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  child: Column(
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 0.75,
+                        child: CachedNetworkImage(
+                          imageUrl: photo.photoUrl,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              photo.viewTypeEnum.displayName,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              DateFormat('MMMM d, yyyy').format(photo.takenAt),
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            if (photo.formattedWeight != null) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                'Weight: ${photo.formattedWeight}',
+                                style: TextStyle(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                            if (photo.notes != null && photo.notes!.isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              Text(
+                                photo.notes!,
+                                style: TextStyle(
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 24),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => _deletePhoto(photo),
+                                    icon: const Icon(Icons.delete_outline),
+                                    label: const Text('Delete'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: colorScheme.error,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deletePhoto(ProgressPhoto photo) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Photo?'),
+        content: const Text('This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted && widget.userId != null) {
+      Navigator.pop(context); // Close detail sheet
+      await ref
+          .read(progressPhotosNotifierProvider(widget.userId!).notifier)
+          .deletePhoto(photo.id);
+    }
+  }
+
+  IconData _getViewTypeIcon(PhotoViewType type) {
+    switch (type) {
+      case PhotoViewType.front:
+        return Icons.person;
+      case PhotoViewType.sideLeft:
+        return Icons.arrow_back;
+      case PhotoViewType.sideRight:
+        return Icons.arrow_forward;
+      case PhotoViewType.back:
+        return Icons.person_outline;
+    }
+  }
+
+  String _getViewTypeDescription(PhotoViewType type) {
+    switch (type) {
+      case PhotoViewType.front:
+        return 'Face the camera directly';
+      case PhotoViewType.sideLeft:
+        return 'Turn your left side to camera';
+      case PhotoViewType.sideRight:
+        return 'Turn your right side to camera';
+      case PhotoViewType.back:
+        return 'Turn your back to camera';
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// STRENGTH TAB - Readiness, Strength Scores, PRs, Analytics
+// ═══════════════════════════════════════════════════════════════════
+
+class _StrengthTab extends ConsumerWidget {
+  final String? userId;
+
+  const _StrengthTab({this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (userId == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        await ref.read(scoresProvider.notifier).loadScoresOverview(userId: userId);
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Readiness Check-in Card
+            ReadinessCheckinCard(
+              userId: userId!,
+              onCheckInComplete: () {
+                // Refresh overview after check-in
+                ref.read(scoresProvider.notifier).loadScoresOverview();
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Strength Overview Card
+            StrengthOverviewCard(
+              userId: userId!,
+              onTapMuscleGroup: (muscleGroup) {
+                // Navigate to muscle analytics detail
+                context.push('/stats/muscle-analytics/$muscleGroup');
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Personal Records Summary Card
+            PRSummaryCard(userId: userId!),
+            const SizedBox(height: 16),
+
+            // Analytics Navigation Cards
+            _buildAnalyticsNavigationSection(context),
+            const SizedBox(height: 80), // Bottom padding for scroll
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsNavigationSection(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Detailed Analytics',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _AnalyticsNavCard(
+                icon: Icons.history,
+                title: 'Exercise History',
+                subtitle: 'Per-exercise progress & PRs',
+                color: colorScheme.primary,
+                onTap: () => context.push('/stats/exercise-history'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _AnalyticsNavCard(
+                icon: Icons.fitness_center,
+                title: 'Muscle Analytics',
+                subtitle: 'Training volume & balance',
+                color: colorScheme.secondary,
+                onTap: () => context.push('/stats/muscle-analytics'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Navigation card for analytics sections
+class _AnalyticsNavCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _AnalyticsNavCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color.withOpacity(0.1),
+                color.withOpacity(0.05),
+              ],
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Text(
+                    'View',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.arrow_forward, size: 16, color: color),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

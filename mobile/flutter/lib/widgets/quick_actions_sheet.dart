@@ -130,7 +130,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
         iconColor: const Color(0xFFA855F7), // Purple for photos
         onTap: () {
           Navigator.pop(context);
-          context.push('/progress');
+          context.push('/stats');
         },
       ),
       _ActionData(
@@ -176,7 +176,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
         iconColor: const Color(0xFF6B7280), // Gray for history
         onTap: () {
           Navigator.pop(context);
-          context.push('/progress');
+          context.push('/stats');
         },
       ),
       _ActionData(
@@ -630,7 +630,7 @@ class _PhotoHeroCard extends StatelessWidget {
           onTap: () {
             HapticFeedback.lightImpact();
             onClose();
-            context.push('/progress');
+            context.push('/stats');
           },
           borderRadius: BorderRadius.circular(16),
           child: Container(

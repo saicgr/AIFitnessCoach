@@ -13,6 +13,7 @@ export 'data_management_section.dart';
 export 'email_preferences_section.dart';
 export 'haptics_section.dart';
 export 'health_sync_section.dart';
+export 'location_settings_section.dart';
 export 'logout_section.dart';
 export 'notifications_section.dart';
 export 'nutrition_fasting_section.dart';

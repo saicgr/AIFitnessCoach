@@ -5,6 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
+import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.wearable.*
 import androidx.wear.remote.interactions.RemoteActivityHelper
 import com.google.common.util.concurrent.ListenableFuture
@@ -20,11 +23,29 @@ import kotlin.coroutines.resumeWithException
  */
 class WearableDataClient(private val context: Context) {
 
-    private val dataClient: DataClient = Wearable.getDataClient(context)
-    private val messageClient: MessageClient = Wearable.getMessageClient(context)
-    private val nodeClient: NodeClient = Wearable.getNodeClient(context)
-    private val capabilityClient: CapabilityClient = Wearable.getCapabilityClient(context)
+    // Lazy initialization to avoid errors on devices without Wearable API
+    private val dataClient: DataClient by lazy { Wearable.getDataClient(context) }
+    private val messageClient: MessageClient by lazy { Wearable.getMessageClient(context) }
+    private val nodeClient: NodeClient by lazy { Wearable.getNodeClient(context) }
+    private val capabilityClient: CapabilityClient by lazy { Wearable.getCapabilityClient(context) }
     private val gson = Gson()
+
+    // Check if Wearable API is available on this device
+    private val isWearableApiAvailable: Boolean by lazy {
+        try {
+            val result = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context)
+            if (result != ConnectionResult.SUCCESS) {
+                Log.d(TAG, "Google Play Services not available: $result")
+                return@lazy false
+            }
+            // Try to check if Wearable API specifically is available
+            // by attempting a simple operation
+            true
+        } catch (e: Exception) {
+            Log.d(TAG, "Wearable API availability check failed: ${e.message}")
+            false
+        }
+    }
 
     companion object {
         private const val TAG = "WearableDataClient"
@@ -55,11 +76,19 @@ class WearableDataClient(private val context: Context) {
      * Check if watch is connected (any WearOS device, regardless of FitWiz app)
      */
     suspend fun isWatchConnected(): Boolean {
+        if (!isWearableApiAvailable) {
+            Log.d(TAG, "Wearable API not available, returning false for isWatchConnected")
+            return false
+        }
         return try {
             val nodes = nodeClient.connectedNodes.await()
             nodes.isNotEmpty()
+        } catch (e: ApiException) {
+            // API_UNAVAILABLE is expected on devices without Wear OS support
+            Log.d(TAG, "Wearable API not available on this device")
+            false
         } catch (e: Exception) {
-            Log.e(TAG, "Error checking watch connection", e)
+            Log.d(TAG, "Watch not connected: ${e.message}")
             false
         }
     }
@@ -70,13 +99,21 @@ class WearableDataClient(private val context: Context) {
      * Use this to determine whether to show "Install on Watch" prompt.
      */
     suspend fun hasConnectedWearDevice(): Boolean {
+        if (!isWearableApiAvailable) {
+            Log.d(TAG, "Wearable API not available, returning false for hasConnectedWearDevice")
+            return false
+        }
         return try {
             val nodes = nodeClient.connectedNodes.await()
             val hasDevice = nodes.isNotEmpty()
             Log.d(TAG, "hasConnectedWearDevice: $hasDevice (${nodes.size} nodes)")
             hasDevice
+        } catch (e: ApiException) {
+            // API_UNAVAILABLE is expected on devices without Wear OS support
+            Log.d(TAG, "Wearable API not available on this device")
+            false
         } catch (e: Exception) {
-            Log.e(TAG, "Error checking for Wear devices", e)
+            Log.d(TAG, "Error checking for Wear devices: ${e.message}")
             false
         }
     }
@@ -86,6 +123,10 @@ class WearableDataClient(private val context: Context) {
      * Uses capability discovery to find watches with FitWiz installed.
      */
     suspend fun isWatchAppInstalled(): Boolean {
+        if (!isWearableApiAvailable) {
+            Log.d(TAG, "Wearable API not available, returning false for isWatchAppInstalled")
+            return false
+        }
         return try {
             val capabilityInfo = capabilityClient
                 .getCapability(FITWIZ_WATCH_CAPABILITY, CapabilityClient.FILTER_REACHABLE)
@@ -93,8 +134,12 @@ class WearableDataClient(private val context: Context) {
             val hasApp = capabilityInfo.nodes.isNotEmpty()
             Log.d(TAG, "isWatchAppInstalled: $hasApp (${capabilityInfo.nodes.size} nodes with capability)")
             hasApp
+        } catch (e: ApiException) {
+            // API_UNAVAILABLE is expected on devices without Wear OS support
+            Log.d(TAG, "Wearable API not available on this device")
+            false
         } catch (e: Exception) {
-            Log.e(TAG, "Error checking watch app installation", e)
+            Log.d(TAG, "Error checking watch app installation: ${e.message}")
             false
         }
     }
@@ -107,12 +152,16 @@ class WearableDataClient(private val context: Context) {
      * @return true if the prompt was sent successfully, false otherwise
      */
     suspend fun promptWatchAppInstall(activity: Activity): Boolean {
+        if (!isWearableApiAvailable) {
+            Log.d(TAG, "Wearable API not available, cannot prompt watch app install")
+            return false
+        }
         return try {
             val nodes = nodeClient.connectedNodes.await()
             val watchNode = nodes.firstOrNull()
 
             if (watchNode == null) {
-                Log.w(TAG, "No connected watch to prompt installation")
+                Log.d(TAG, "No connected watch to prompt installation")
                 return false
             }
 
@@ -137,8 +186,11 @@ class WearableDataClient(private val context: Context) {
 
             Log.i(TAG, "✅ Prompted watch app install on node: ${watchNode.displayName}")
             true
+        } catch (e: ApiException) {
+            Log.d(TAG, "Wearable API not available on this device")
+            false
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Failed to prompt watch app install", e)
+            Log.d(TAG, "Failed to prompt watch app install: ${e.message}")
             false
         }
     }
@@ -147,6 +199,10 @@ class WearableDataClient(private val context: Context) {
      * Get connected watch node ID
      */
     suspend fun getWatchNodeId(): String? {
+        if (!isWearableApiAvailable) {
+            Log.d(TAG, "Wearable API not available, returning null for getWatchNodeId")
+            return null
+        }
         return try {
             val capabilityInfo = capabilityClient
                 .getCapability(FITWIZ_WATCH_CAPABILITY, CapabilityClient.FILTER_REACHABLE)
@@ -155,8 +211,11 @@ class WearableDataClient(private val context: Context) {
             // Find best node (prefer nearby)
             capabilityInfo.nodes.firstOrNull { it.isNearby }?.id
                 ?: capabilityInfo.nodes.firstOrNull()?.id
+        } catch (e: ApiException) {
+            Log.d(TAG, "Wearable API not available on this device")
+            null
         } catch (e: Exception) {
-            Log.e(TAG, "Error getting watch node", e)
+            Log.d(TAG, "Error getting watch node: ${e.message}")
             // Fallback to any connected node
             try {
                 nodeClient.connectedNodes.await().firstOrNull()?.id
@@ -248,6 +307,10 @@ class WearableDataClient(private val context: Context) {
     // ==================== Helper Methods ====================
 
     private suspend fun putData(path: String, jsonData: String): Boolean {
+        if (!isWearableApiAvailable) {
+            Log.d(TAG, "Wearable API not available, cannot send data to $path")
+            return false
+        }
         return try {
             val putDataRequest = PutDataMapRequest.create(path).apply {
                 dataMap.putString("data", jsonData)
@@ -259,15 +322,22 @@ class WearableDataClient(private val context: Context) {
             dataClient.putDataItem(putDataRequest).await()
             Log.d(TAG, "✅ Data sent to $path")
             true
+        } catch (e: ApiException) {
+            Log.d(TAG, "Wearable API not available on this device")
+            false
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Failed to send data to $path", e)
+            Log.d(TAG, "Failed to send data to $path: ${e.message}")
             false
         }
     }
 
     private suspend fun sendMessage(path: String, data: ByteArray): Boolean {
+        if (!isWearableApiAvailable) {
+            Log.d(TAG, "Wearable API not available, cannot send message to $path")
+            return false
+        }
         val nodeId = getWatchNodeId() ?: run {
-            Log.w(TAG, "No watch connected for message: $path")
+            Log.d(TAG, "No watch connected for message: $path")
             return false
         }
 
@@ -275,8 +345,11 @@ class WearableDataClient(private val context: Context) {
             messageClient.sendMessage(nodeId, path, data).await()
             Log.d(TAG, "✅ Message sent: $path")
             true
+        } catch (e: ApiException) {
+            Log.d(TAG, "Wearable API not available on this device")
+            false
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Failed to send message: $path", e)
+            Log.d(TAG, "Failed to send message: $path: ${e.message}")
             false
         }
     }

@@ -253,12 +253,6 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                   _buildWeightGoalSection(isDark, textPrimary, textSecondary, cardBg, cardBorder),
                 ],
 
-                // BMI indicator (if both height and weight are set)
-                if (widget.heightCm != null && widget.weightKg != null) ...[
-                  const SizedBox(height: 24),
-                  _buildBmiIndicator(isDark, textPrimary, textSecondary, cardBg),
-                ],
-
                 const SizedBox(height: 60), // Extra space for scroll hint
               ],
             ),
@@ -512,7 +506,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                     cardBg: cardBg,
                     cardBorder: cardBorder,
                     id: 'other',
-                    label: 'Oth',
+                    label: 'Other',
                   ),
                 ],
               ),
@@ -722,6 +716,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
 
     final now = DateTime.now();
     final initialDate = widget.dateOfBirth ?? DateTime(now.year - 25, now.month, now.day);
+    const orange = Color(0xFFF97316); // App accent color
 
     final picked = await showDatePicker(
       context: context,
@@ -729,22 +724,33 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
       firstDate: DateTime(1920),
       lastDate: DateTime(now.year - 13, now.month, now.day), // Min 13 years old
       helpText: 'SELECT YOUR DATE OF BIRTH',
+      cancelText: 'CANCEL',
+      confirmText: 'OK',
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: isDark
                 ? ColorScheme.dark(
-                    primary: AppColors.accent,
+                    primary: orange,
                     onPrimary: Colors.white,
                     surface: AppColors.elevated,
                     onSurface: AppColors.textPrimary,
+                    secondary: orange,
+                    onSecondary: Colors.white,
                   )
                 : ColorScheme.light(
-                    primary: AppColors.accent,
+                    primary: orange,
                     onPrimary: Colors.white,
                     surface: Colors.white,
                     onSurface: AppColorsLight.textPrimary,
+                    secondary: orange,
+                    onSecondary: Colors.white,
                   ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: orange,
+              ),
+            ),
           ),
           child: child!,
         );
@@ -810,6 +816,13 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     required Color cardBg,
     required Color cardBorder,
   }) {
+    const orange = Color(0xFFF97316);
+    const orangeGradient = LinearGradient(
+      colors: [orange, Color(0xFFEA580C)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+
     return Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
@@ -829,7 +842,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
               duration: const Duration(milliseconds: 150),
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               decoration: BoxDecoration(
-                gradient: isMetric ? AppColors.accentGradient : null,
+                gradient: isMetric ? orangeGradient : null,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
@@ -853,7 +866,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
               duration: const Duration(milliseconds: 150),
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               decoration: BoxDecoration(
-                gradient: !isMetric ? AppColors.accentGradient : null,
+                gradient: !isMetric ? orangeGradient : null,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
@@ -1126,18 +1139,18 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppColors.accent.withOpacity(0.1),
+                    color: const Color(0xFFF97316).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+                    border: Border.all(color: const Color(0xFFF97316).withValues(alpha: 0.3)),
                   ),
                   child: Column(
                     children: [
                       Text(
                         _weightChangeAmount.round().toString(),
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.accent,
+                          color: Color(0xFFF97316),
                         ),
                       ),
                       Text(
@@ -1232,10 +1245,10 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               autofocus: true,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
-                color: AppColors.accent,
+                color: Color(0xFFF97316),
               ),
               decoration: InputDecoration(
                 suffixText: unit,
@@ -1245,11 +1258,11 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.accent),
+                  borderSide: const BorderSide(color: Color(0xFFF97316)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.accent, width: 2),
+                  borderSide: const BorderSide(color: Color(0xFFF97316), width: 2),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
@@ -1288,7 +1301,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.accent,
+              backgroundColor: const Color(0xFFF97316),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -1326,17 +1339,18 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     }
 
     final isValid = goalWeight > 0 && goalWeight < 500;
+    const orange = Color(0xFFF97316);
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isValid
-            ? AppColors.success.withValues(alpha: 0.1)
+            ? orange.withValues(alpha: 0.1)
             : AppColors.error.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isValid
-              ? AppColors.success.withValues(alpha: 0.3)
+              ? orange.withValues(alpha: 0.3)
               : AppColors.error.withValues(alpha: 0.3),
         ),
       ),
@@ -1346,7 +1360,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
             widget.weightDirection == 'maintain'
                 ? Icons.check_circle_outline
                 : Icons.trending_flat,
-            color: isValid ? AppColors.success : AppColors.error,
+            color: isValid ? orange : AppColors.error,
             size: 20,
           ),
           const SizedBox(width: 10),
@@ -1376,7 +1390,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: isValid ? AppColors.success : AppColors.error,
+                          color: isValid ? orange : AppColors.error,
                         ),
                       ),
                     ],

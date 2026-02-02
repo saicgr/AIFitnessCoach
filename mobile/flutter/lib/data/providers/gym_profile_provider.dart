@@ -1,12 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../models/gym_profile.dart';
 import '../repositories/gym_profile_repository.dart';
 import '../repositories/auth_repository.dart';
+import '../services/data_cache_service.dart';
 
 /// Provider for the list of gym profiles for the current user
 ///
-/// Auto-creates a default profile if none exist
+/// Features:
+/// - Cache-first: Shows cached profiles instantly on app open
+/// - Background refresh: Fetches fresh data silently
+/// - Auto-creates a default profile if none exist
 final gymProfilesProvider =
     StateNotifierProvider<GymProfilesNotifier, AsyncValue<List<GymProfile>>>(
         (ref) {
@@ -51,7 +56,7 @@ final activeGymProfileIdProvider = Provider<String?>((ref) {
   return activeProfile?.id;
 });
 
-/// State notifier for managing gym profiles
+/// State notifier for managing gym profiles with cache-first pattern
 class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
   final GymProfileRepository _repository;
   final String? _userId;
@@ -60,23 +65,81 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
   GymProfilesNotifier(this._repository, this._userId, this._ref)
       : super(const AsyncValue.loading()) {
     if (_userId != null) {
-      loadProfiles();
+      _loadWithCacheFirst();
     }
   }
 
-  /// Load all profiles for the current user
-  Future<void> loadProfiles() async {
+  /// Load profiles with cache-first pattern
+  Future<void> _loadWithCacheFirst() async {
+    // Step 1: Try to load from cache first
+    final cachedProfiles = await _loadFromCache();
+    if (cachedProfiles != null && cachedProfiles.isNotEmpty) {
+      debugPrint('⚡ [GymProfileProvider] Loaded ${cachedProfiles.length} profiles from cache');
+      state = AsyncValue.data(cachedProfiles);
+
+      // Sync accent color from cached active profile
+      final activeProfile = cachedProfiles.firstWhere(
+        (p) => p.isActive,
+        orElse: () => cachedProfiles.first,
+      );
+      _syncAccentColor(activeProfile.color);
+    }
+
+    // Step 2: Fetch fresh data from API in background
+    await _fetchFromApi(showLoading: cachedProfiles == null || cachedProfiles.isEmpty);
+  }
+
+  /// Load cached profiles
+  Future<List<GymProfile>?> _loadFromCache() async {
+    try {
+      final cached = await DataCacheService.instance.getCached(
+        DataCacheService.gymProfilesKey,
+      );
+      if (cached != null && cached['profiles'] != null) {
+        final profilesList = (cached['profiles'] as List)
+            .map((p) => GymProfile.fromJson(p as Map<String, dynamic>))
+            .toList();
+        return profilesList;
+      }
+    } catch (e) {
+      debugPrint('⚠️ [GymProfileProvider] Cache parse error: $e');
+    }
+    return null;
+  }
+
+  /// Save profiles to cache
+  Future<void> _saveToCache(List<GymProfile> profiles) async {
+    try {
+      await DataCacheService.instance.cache(
+        DataCacheService.gymProfilesKey,
+        {
+          'profiles': profiles.map((p) => p.toJson()).toList(),
+          'cached_at': DateTime.now().toIso8601String(),
+        },
+      );
+    } catch (e) {
+      debugPrint('⚠️ [GymProfileProvider] Cache save error: $e');
+    }
+  }
+
+  /// Fetch fresh profiles from API
+  Future<void> _fetchFromApi({bool showLoading = false}) async {
     if (_userId == null) {
       state = const AsyncValue.data([]);
       return;
     }
 
     try {
-      state = const AsyncValue.loading();
+      if (showLoading) {
+        state = const AsyncValue.loading();
+      }
       debugPrint('🔄 [GymProfileProvider] Loading profiles for user: $_userId');
 
       final response = await _repository.getProfiles(_userId!);
       state = AsyncValue.data(response.profiles);
+
+      // Save to cache for next app open
+      await _saveToCache(response.profiles);
 
       debugPrint('✅ [GymProfileProvider] Loaded ${response.profiles.length} profiles');
       if (response.activeProfileId != null) {
@@ -85,16 +148,27 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
           orElse: () => response.profiles.first,
         );
         debugPrint('🎯 [GymProfileProvider] Active: ${active.name}');
+
+        // Sync app accent color to match the active profile
+        _syncAccentColor(active.color);
       }
     } catch (e, stack) {
       debugPrint('❌ [GymProfileProvider] Error loading profiles: $e');
-      state = AsyncValue.error(e, stack);
+      // Only set error state if we don't have cached data
+      if (!state.hasValue) {
+        state = AsyncValue.error(e, stack);
+      }
     }
+  }
+
+  /// Load all profiles for the current user (legacy method for compatibility)
+  Future<void> loadProfiles() async {
+    await _fetchFromApi(showLoading: !state.hasValue);
   }
 
   /// Refresh profiles (pull to refresh)
   Future<void> refresh() async {
-    await loadProfiles();
+    await _fetchFromApi(showLoading: false);
   }
 
   /// Create a new gym profile
@@ -106,9 +180,11 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
 
       final created = await _repository.createProfile(_userId!, profile);
 
-      // Add to local state
+      // Add to local state and cache
       state.whenData((profiles) {
-        state = AsyncValue.data([...profiles, created]);
+        final newProfiles = [...profiles, created];
+        state = AsyncValue.data(newProfiles);
+        _saveToCache(newProfiles);
       });
 
       debugPrint('✅ [GymProfileProvider] Profile created: ${created.name}');
@@ -129,13 +205,14 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
 
       final updated = await _repository.updateProfile(profileId, update);
 
-      // Update local state
+      // Update local state and cache
       state.whenData((profiles) {
         final index = profiles.indexWhere((p) => p.id == profileId);
         if (index != -1) {
           final newProfiles = [...profiles];
           newProfiles[index] = updated;
           state = AsyncValue.data(newProfiles);
+          _saveToCache(newProfiles);
         }
       });
 
@@ -154,11 +231,11 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
 
       await _repository.deleteProfile(profileId);
 
-      // Remove from local state
+      // Remove from local state and update cache
       state.whenData((profiles) {
-        state = AsyncValue.data(
-          profiles.where((p) => p.id != profileId).toList(),
-        );
+        final newProfiles = profiles.where((p) => p.id != profileId).toList();
+        state = AsyncValue.data(newProfiles);
+        _saveToCache(newProfiles);
       });
 
       debugPrint('✅ [GymProfileProvider] Profile deleted');
@@ -191,11 +268,15 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
           return p.copyWith(isActive: false);
         }).toList();
         state = AsyncValue.data(newProfiles);
+        _saveToCache(newProfiles);
       });
 
       debugPrint('✅ [GymProfileProvider] Switched to: ${response.activeProfile.name}');
       debugPrint('🏋️ [GymProfileProvider] Active equipment: ${response.activeProfile.equipment.length} items');
       debugPrint('🎯 [GymProfileProvider] Environment: ${response.activeProfile.workoutEnvironment}');
+
+      // Sync app accent color to match the gym profile color
+      _syncAccentColor(response.activeProfile.color);
 
       // Invalidate related providers that depend on the active profile
       // This ensures workouts are refetched for the new profile
@@ -215,7 +296,7 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
 
       await _repository.reorderProfiles(_userId!, orderedIds);
 
-      // Update local state with new order
+      // Update local state with new order and cache
       state.whenData((profiles) {
         final profileMap = {for (var p in profiles) p.id: p};
         final reorderedProfiles = orderedIds
@@ -228,6 +309,7 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
             .whereType<GymProfile>()
             .toList();
         state = AsyncValue.data(reorderedProfiles);
+        _saveToCache(reorderedProfiles);
       });
 
       debugPrint('✅ [GymProfileProvider] Profiles reordered');
@@ -248,9 +330,11 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
 
       final duplicated = await _repository.duplicateProfile(profileId, newName: newName);
 
-      // Add to local state
+      // Add to local state and cache
       state.whenData((profiles) {
-        state = AsyncValue.data([...profiles, duplicated]);
+        final newProfiles = [...profiles, duplicated];
+        state = AsyncValue.data(newProfiles);
+        _saveToCache(newProfiles);
       });
 
       debugPrint('✅ [GymProfileProvider] Profile duplicated: ${duplicated.name}');
@@ -274,5 +358,56 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
     // Note: We can't directly invalidate here since we don't have access
     // to the providers. The UI should listen to activeGymProfileProvider
     // and invalidate as needed.
+  }
+
+  /// Sync app accent color to match gym profile color
+  ///
+  /// Maps the gym profile hex color to the closest AccentColor enum value
+  void _syncAccentColor(String hexColor) {
+    final accentColor = _mapHexToAccentColor(hexColor);
+    debugPrint('🎨 [GymProfileProvider] Syncing accent color: $hexColor -> ${accentColor.name}');
+    _ref.read(accentColorProvider.notifier).setAccent(accentColor);
+  }
+
+  /// Map a hex color string to the closest AccentColor enum
+  AccentColor _mapHexToAccentColor(String hexColor) {
+    final normalizedHex = hexColor.toUpperCase().replaceAll('#', '');
+
+    // Map gym profile colors to accent colors
+    switch (normalizedHex) {
+      case '00BCD4': // Cyan
+        return AccentColor.cyan;
+      case 'F97316': // Orange
+      case 'FF9800': // Also orange
+        return AccentColor.orange;
+      case '8B5CF6': // Purple
+      case '9C27B0': // Also purple
+        return AccentColor.purple;
+      case '10B981': // Green
+      case '4CAF50': // Also green
+        return AccentColor.green;
+      case 'EF4444': // Red
+      case 'F44336': // Also red
+        return AccentColor.red;
+      case 'F59E0B': // Amber
+      case 'FFC107': // Also amber
+        return AccentColor.amber;
+      case 'EC4899': // Pink
+      case 'E91E63': // Also pink
+        return AccentColor.pink;
+      case '6366F1': // Indigo
+      case '3F51B5': // Also indigo
+        return AccentColor.indigo;
+      case '2196F3': // Blue
+        return AccentColor.blue;
+      case '009688': // Teal
+        return AccentColor.teal;
+      case 'CDDC39': // Lime
+        return AccentColor.lime;
+      default:
+        // Default to orange if no match
+        debugPrint('⚠️ [GymProfileProvider] Unknown color $hexColor, defaulting to orange');
+        return AccentColor.orange;
+    }
   }
 }

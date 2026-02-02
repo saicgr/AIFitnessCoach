@@ -5,13 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
-import '../../core/providers/warmup_duration_provider.dart';
-import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/auth_repository.dart';
-import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
-import '../home/widgets/edit_program_sheet.dart';
+import '../workouts/widgets/exercise_preferences_card.dart';
 import 'widgets/nutrition_fasting_card.dart';
 import 'widgets/widgets.dart';
 
@@ -95,19 +92,6 @@ class ProfileScreen extends ConsumerWidget {
         const SizedBox(height: 12),
         TrainingSetupCard(
           user: user,
-          onEdit: () async {
-            HapticService.selection();
-            final result = await showEditProgramSheet(context, ref);
-            if (result == true) {
-              // Small delay to ensure database transaction completes
-              await Future.delayed(const Duration(milliseconds: 500));
-              // Refresh user data and workouts after editing
-              ref.invalidate(authStateProvider);
-              await ref.read(workoutsProvider.notifier).refresh();
-              ref.invalidate(workoutsProvider);
-              ref.invalidate(todayWorkoutProvider);
-            }
-          },
           onCustomEquipment: () {
             HapticService.selection();
             _showCustomEquipmentSheet(context, ref);
@@ -120,9 +104,9 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildExercisePreferencesSection(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
-        const SectionHeader(title: 'EXERCISE PREFERENCES'),
-        const SizedBox(height: 12),
-        const _WarmupStretchPreferencesCard(),
+        // Use the same ExercisePreferencesCard from Workouts tab for consistency
+        // Pass zero margin since profile screen already has 16px padding
+        const ExercisePreferencesCard(margin: EdgeInsets.zero),
         const SizedBox(height: 12),
         const _TrainingFocusCard(),
       ],
@@ -234,9 +218,61 @@ class ProfileScreen extends ConsumerWidget {
               title: 'Manage Membership',
               onTap: () => context.push('/paywall-pricing'),
             ),
+            SettingItem(
+              icon: Icons.logout,
+              title: 'Sign Out',
+              iconColor: AppColors.red,
+              textColor: AppColors.red,
+              onTap: () => _showLogoutDialog(context, ref),
+            ),
           ],
         ).animate().fadeIn(delay: 250.ms),
       ],
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        title: Text(
+          'Sign Out?',
+          style: TextStyle(
+            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to sign out? You can sign back in anytime.',
+          style: TextStyle(
+            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ref.read(authStateProvider.notifier).signOut();
+              context.go('/stats-welcome');
+            },
+            child: const Text(
+              'Sign Out',
+              style: TextStyle(color: AppColors.red),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -666,142 +702,6 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
                 ),
         ),
       ],
-    );
-  }
-}
-
-/// Card for warmup and stretch preferences with toggles
-class _WarmupStretchPreferencesCard extends ConsumerWidget {
-  const _WarmupStretchPreferencesCard();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    // Use dynamic accent color from provider
-    final orange = ref.colors(context).accent;
-    final cyan = ref.colors(context).accent;
-
-    final warmupState = ref.watch(warmupDurationProvider);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Column(
-        children: [
-          // Warmup toggle
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: orange.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.whatshot,
-                    color: orange,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Warmup Phase',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: textPrimary,
-                        ),
-                      ),
-                      Text(
-                        'Dynamic warmup before workouts',
-                        style: TextStyle(fontSize: 12, color: textMuted),
-                      ),
-                    ],
-                  ),
-                ),
-                Switch.adaptive(
-                  value: warmupState.warmupEnabled,
-                  onChanged: warmupState.isLoading
-                      ? null
-                      : (value) {
-                          HapticFeedback.lightImpact();
-                          ref.read(warmupDurationProvider.notifier).setWarmupEnabled(value);
-                        },
-                  activeColor: orange,
-                ),
-              ],
-            ),
-          ),
-
-          Divider(height: 1, color: cardBorder, indent: 16, endIndent: 16),
-
-          // Stretch toggle
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: cyan.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.self_improvement,
-                    color: cyan,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Cooldown Stretch',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: textPrimary,
-                        ),
-                      ),
-                      Text(
-                        'Stretching after workouts',
-                        style: TextStyle(fontSize: 12, color: textMuted),
-                      ),
-                    ],
-                  ),
-                ),
-                Switch.adaptive(
-                  value: warmupState.stretchEnabled,
-                  onChanged: warmupState.isLoading
-                      ? null
-                      : (value) {
-                          HapticFeedback.lightImpact();
-                          ref.read(warmupDurationProvider.notifier).setStretchEnabled(value);
-                        },
-                  activeColor: cyan,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

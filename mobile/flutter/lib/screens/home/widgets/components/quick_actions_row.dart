@@ -58,7 +58,7 @@ class QuickActionsGrid extends ConsumerWidget {
                     iconColor: _QuickActionColors.photo,
                     onTap: () {
                       HapticService.light();
-                      context.push('/progress');
+                      context.push('/stats?openPhoto=true');
                     },
                     isDark: isDark,
                   ),
@@ -119,7 +119,7 @@ class QuickActionsGrid extends ConsumerWidget {
                     iconColor: _QuickActionColors.history,
                     onTap: () {
                       HapticService.light();
-                      context.push('/progress');
+                      context.push('/stats');
                     },
                     isDark: isDark,
                   ),
@@ -194,7 +194,7 @@ class _PhotoHeroCard extends StatelessWidget {
       child: InkWell(
         onTap: () {
           HapticService.light();
-          context.push('/progress');
+          context.push('/stats?openPhoto=true');
         },
         borderRadius: BorderRadius.circular(14),
         child: Container(
@@ -765,8 +765,8 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => _quickAddWater(_defaultWaterMl),
-        onLongPress: _showWaterSizeOptions,
+        onTap: _showWaterSizeOptions,
+        onLongPress: () => _quickAddWater(_defaultWaterMl),
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),

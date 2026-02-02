@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/models/home_layout.dart';
@@ -44,6 +45,16 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
   String _getPreferredUnit() {
     final authState = ref.read(authStateProvider);
     return authState.user?.preferredWeightUnit ?? 'kg';
+  }
+
+  /// Get adaptive font size based on text length
+  /// Shrinks font when more digits are entered
+  double _getAdaptiveFontSize(String text) {
+    final length = text.length;
+    if (length <= 4) return 16.0;      // "99.5" fits at normal size
+    if (length == 5) return 14.0;      // "199.5" slightly smaller
+    if (length == 6) return 12.0;      // "1999.5" even smaller
+    return 11.0;                        // Minimum size for very long input
   }
 
   Future<void> _logWeight() async {
@@ -230,6 +241,22 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
                   ),
                 ),
               ),
+              // View History button
+              GestureDetector(
+                onTap: () {
+                  HapticService.light();
+                  context.push('/measurements');
+                },
+                child: Tooltip(
+                  message: 'View Weight History',
+                  child: Icon(
+                    Icons.history,
+                    color: textMuted,
+                    size: 16,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               GestureDetector(
                 onTap: _openFullSheet,
                 child: Icon(
@@ -271,11 +298,10 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
             // Single row: [input field] [kg] [✓]
             Row(
               children: [
-                // Input container - flex 1
+                // Input container - flex 1, with auto-scaling text
                 Expanded(
                   child: Container(
                     height: 40,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
                       color: textMuted.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(10),
@@ -285,23 +311,33 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
                             : cardBorder,
                       ),
                     ),
-                    alignment: Alignment.centerLeft,
-                    child: EditableText(
+                    child: TextField(
                       controller: _weightController,
                       focusNode: _focusNode,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: _getAdaptiveFontSize(_weightController.text),
                         fontWeight: FontWeight.w600,
                         color: textColor,
                       ),
                       cursorColor: accentColor,
-                      backgroundCursorColor: Colors.grey,
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
                         _WeightInputFormatter(),
                       ],
+                      onChanged: (_) => setState(() {}), // Trigger rebuild for font scaling
                       onSubmitted: (_) => _logWeight(),
+                      decoration: InputDecoration(
+                        hintText: '0.0',
+                        hintStyle: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: textMuted.withValues(alpha: 0.5),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: InputBorder.none,
+                        isDense: true,
+                      ),
                     ),
                   ),
                 ),

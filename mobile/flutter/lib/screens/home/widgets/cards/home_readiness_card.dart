@@ -69,7 +69,7 @@ class _HomeReadinessCardState extends ConsumerState<HomeReadinessCard> {
       child: InkWell(
         onTap: () {
           HapticService.light();
-          context.push('/progress');
+          context.push('/stats');
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(
@@ -182,7 +182,7 @@ class _HomeReadinessCardState extends ConsumerState<HomeReadinessCard> {
       child: InkWell(
         onTap: () {
           HapticService.light();
-          context.push('/progress');
+          context.push('/stats');
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(

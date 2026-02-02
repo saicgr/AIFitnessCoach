@@ -5,11 +5,17 @@ Handles all nutrition-related CRUD operations including:
 - Food log management
 - Daily and weekly nutrition summaries
 - User nutrition targets
+- Food analysis caching (for faster AI responses)
 """
+import hashlib
+import logging
+import re
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 
 from core.db.base import BaseDB
+
+logger = logging.getLogger(__name__)
 
 
 class NutritionDB(BaseDB):
@@ -673,3 +679,315 @@ class NutritionDB(BaseDB):
             .execute()
         )
         return result.data[0] if result.data else None
+
+    # ==================== FOOD ANALYSIS CACHING ====================
+
+    @staticmethod
+    def normalize_food_query(text: str) -> str:
+        """
+        Normalize a food description for consistent cache keys.
+
+        Performs:
+        - Lowercase conversion
+        - Trim whitespace
+        - Collapse multiple spaces to single space
+        - Remove special characters (keep alphanumeric and spaces)
+
+        Args:
+            text: Raw food description
+
+        Returns:
+            Normalized text for hashing
+        """
+        # Lowercase and trim
+        normalized = text.lower().strip()
+        # Collapse multiple spaces
+        normalized = re.sub(r'\s+', ' ', normalized)
+        # Remove special characters but keep alphanumeric and spaces
+        normalized = re.sub(r'[^a-z0-9\s]', '', normalized)
+        return normalized
+
+    @staticmethod
+    def hash_query(text: str) -> str:
+        """
+        Create SHA256 hash of normalized text for cache key.
+
+        Args:
+            text: Normalized food description
+
+        Returns:
+            SHA256 hex digest
+        """
+        return hashlib.sha256(text.encode('utf-8')).hexdigest()
+
+    def get_cached_food_analysis(
+        self, query_hash: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Check cache for existing food analysis.
+
+        Also updates hit_count and last_accessed_at on cache hit.
+
+        Args:
+            query_hash: SHA256 hash of normalized food description
+
+        Returns:
+            Cached analysis result (JSONB) or None if not found
+        """
+        try:
+            result = (
+                self.client.table("food_analysis_cache")
+                .select("id, analysis_result, hit_count")
+                .eq("query_hash", query_hash)
+                .maybe_single()
+                .execute()
+            )
+
+            if result and result.data:
+                cache_entry = result.data
+                # Update hit stats (fire and forget)
+                try:
+                    self.client.table("food_analysis_cache").update({
+                        "hit_count": cache_entry.get("hit_count", 0) + 1,
+                        "last_accessed_at": datetime.utcnow().isoformat()
+                    }).eq("id", cache_entry["id"]).execute()
+                except Exception as e:
+                    logger.warning(f"Failed to update cache hit stats: {e}")
+
+                logger.info(f"🎯 Cache HIT for food query (hash: {query_hash[:8]}...)")
+                return cache_entry.get("analysis_result")
+
+            return None
+
+        except Exception as e:
+            logger.error(f"Error checking food analysis cache: {e}")
+            return None
+
+    def cache_food_analysis(
+        self,
+        food_description: str,
+        analysis_result: Dict[str, Any],
+        model_version: str = "gemini-2.0-flash",
+        prompt_version: str = "v1"
+    ) -> bool:
+        """
+        Cache a food analysis result.
+
+        Args:
+            food_description: Original food description
+            analysis_result: Full Gemini response as dict
+            model_version: AI model version used
+            prompt_version: Prompt template version
+
+        Returns:
+            True if cached successfully
+        """
+        try:
+            normalized = self.normalize_food_query(food_description)
+            query_hash = self.hash_query(normalized)
+
+            self.client.table("food_analysis_cache").upsert({
+                "query_hash": query_hash,
+                "food_description": food_description,
+                "analysis_result": analysis_result,
+                "model_version": model_version,
+                "prompt_version": prompt_version,
+                "last_accessed_at": datetime.utcnow().isoformat(),
+            }, on_conflict="query_hash").execute()
+
+            logger.info(f"✅ Cached food analysis for: {food_description[:50]}...")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error caching food analysis: {e}")
+            return False
+
+    # ==================== COMMON FOODS DATABASE ====================
+
+    def get_common_food(
+        self, name: str, confidence_threshold: float = 0.8
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Search common foods database for a match.
+
+        Searches by:
+        1. Exact name match (case-insensitive)
+        2. Alias array contains match
+
+        Args:
+            name: Food name to search
+            confidence_threshold: Not used currently, for future fuzzy matching
+
+        Returns:
+            Common food record or None
+        """
+        try:
+            normalized_name = name.lower().strip()
+
+            # First try exact name match
+            result = (
+                self.client.table("common_foods")
+                .select("*")
+                .eq("is_active", True)
+                .ilike("name", normalized_name)
+                .maybe_single()
+                .execute()
+            )
+
+            if result and result.data:
+                logger.info(f"🎯 Common food EXACT match: {name}")
+                return result.data
+
+            # Try alias match using contains
+            result = (
+                self.client.table("common_foods")
+                .select("*")
+                .eq("is_active", True)
+                .contains("aliases", [normalized_name])
+                .maybe_single()
+                .execute()
+            )
+
+            if result and result.data:
+                logger.info(f"🎯 Common food ALIAS match: {name} -> {result.data.get('name')}")
+                return result.data
+
+            return None
+
+        except Exception as e:
+            logger.error(f"Error searching common foods: {e}")
+            return None
+
+    def list_common_foods(
+        self, category: Optional[str] = None, limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        """
+        List common foods, optionally filtered by category.
+
+        Args:
+            category: Filter by category (e.g., 'indian', 'protein', 'fruit')
+            limit: Maximum results
+
+        Returns:
+            List of common food records
+        """
+        try:
+            query = (
+                self.client.table("common_foods")
+                .select("*")
+                .eq("is_active", True)
+            )
+
+            if category:
+                query = query.eq("category", category)
+
+            result = query.order("name").limit(limit).execute()
+            return result.data or []
+
+        except Exception as e:
+            logger.error(f"Error listing common foods: {e}")
+            return []
+
+    # ==================== RAG CONTEXT CACHING ====================
+
+    def get_cached_rag_context(
+        self, goal_hash: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Check cache for RAG context by goal hash.
+
+        Args:
+            goal_hash: SHA256 hash of user goals/preferences
+
+        Returns:
+            Cached RAG context or None if not found/expired
+        """
+        try:
+            result = (
+                self.client.table("rag_context_cache")
+                .select("id, context_result, hit_count, expires_at")
+                .eq("goal_hash", goal_hash)
+                .maybe_single()
+                .execute()
+            )
+
+            if result and result.data:
+                cache_entry = result.data
+
+                # Check if expired
+                expires_at = cache_entry.get("expires_at")
+                if expires_at:
+                    expiry_time = datetime.fromisoformat(
+                        expires_at.replace('Z', '+00:00')
+                    )
+                    if datetime.now(expiry_time.tzinfo) > expiry_time:
+                        logger.info(f"RAG cache expired for hash: {goal_hash[:8]}...")
+                        return None
+
+                # Update hit stats
+                try:
+                    self.client.table("rag_context_cache").update({
+                        "hit_count": cache_entry.get("hit_count", 0) + 1,
+                        "last_accessed_at": datetime.utcnow().isoformat()
+                    }).eq("id", cache_entry["id"]).execute()
+                except Exception as e:
+                    logger.warning(f"Failed to update RAG cache hit stats: {e}")
+
+                logger.info(f"🎯 RAG cache HIT for goal hash: {goal_hash[:8]}...")
+                return cache_entry.get("context_result")
+
+            return None
+
+        except Exception as e:
+            logger.error(f"Error checking RAG context cache: {e}")
+            return None
+
+    def cache_rag_context(
+        self,
+        goal_hash: str,
+        context_result: Dict[str, Any],
+        ttl_hours: int = 1
+    ) -> bool:
+        """
+        Cache RAG context for a user goal hash.
+
+        Args:
+            goal_hash: SHA256 hash of user goals/preferences
+            context_result: RAG context documents/embeddings info
+            ttl_hours: Time-to-live in hours (default 1 hour)
+
+        Returns:
+            True if cached successfully
+        """
+        try:
+            expires_at = datetime.utcnow() + timedelta(hours=ttl_hours)
+
+            self.client.table("rag_context_cache").upsert({
+                "goal_hash": goal_hash,
+                "context_result": context_result,
+                "expires_at": expires_at.isoformat(),
+                "last_accessed_at": datetime.utcnow().isoformat(),
+            }, on_conflict="goal_hash").execute()
+
+            logger.info(f"✅ Cached RAG context for goal hash: {goal_hash[:8]}...")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error caching RAG context: {e}")
+            return False
+
+    @staticmethod
+    def create_goal_hash(user_goals: Dict[str, Any]) -> str:
+        """
+        Create a hash from user nutrition goals for RAG caching.
+
+        Args:
+            user_goals: Dict with keys like 'goal', 'target_calories', etc.
+
+        Returns:
+            SHA256 hash of sorted goal string
+        """
+        # Sort keys for consistent hashing
+        sorted_goals = sorted(user_goals.items())
+        goal_str = str(sorted_goals)
+        return hashlib.sha256(goal_str.encode('utf-8')).hexdigest()

@@ -137,18 +137,42 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                Text(
-                  _isLoading ? 'Typing...' : 'Online',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: _isLoading ? AppColors.orange : AppColors.success,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Green dot for online, orange for typing
+                    Container(
+                      width: 8,
+                      height: 8,
+                      margin: const EdgeInsets.only(right: 6),
+                      decoration: BoxDecoration(
+                        color: _isLoading ? AppColors.orange : AppColors.success,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    Text(
+                      _isLoading ? 'Typing...' : 'Online',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _isLoading ? AppColors.orange : AppColors.success,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ],
         ),
         actions: [
+          // Swap coach button
+          IconButton(
+            icon: const Icon(Icons.swap_horiz, size: 22),
+            tooltip: 'Change coach',
+            onPressed: () {
+              HapticService.light();
+              context.push('/coach-selection?fromSettings=true');
+            },
+          ),
           // Minimize button - animate back to floating chat overlay
           IconButton(
             icon: const Icon(Icons.close_fullscreen, size: 22),
@@ -1026,12 +1050,13 @@ class _InputBar extends StatelessWidget {
             child: TextField(
               controller: controller,
               focusNode: focusNode,
-              enabled: !isLoading,
+              // Always enabled so user can type while AI is responding
+              enabled: true,
               textCapitalization: TextCapitalization.sentences,
               maxLines: 4,
               minLines: 1,
               decoration: InputDecoration(
-                hintText: 'Ask your AI coach...',
+                hintText: isLoading ? 'Type your next message...' : 'Ask your AI coach...',
                 filled: true,
                 fillColor: AppColors.glassSurface,
                 border: OutlineInputBorder(

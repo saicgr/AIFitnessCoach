@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/user.dart';
+import '../../../data/providers/gym_profile_provider.dart';
+import '../../home/widgets/edit_gym_profile_sheet.dart';
 
 /// Unified card displaying equipment and workout preferences with edit capability.
-class TrainingSetupCard extends StatelessWidget {
+/// Equipment and Environment are pulled from the active gym profile.
+class TrainingSetupCard extends ConsumerWidget {
   final User? user;
-  final VoidCallback? onEdit;
   final VoidCallback? onCustomEquipment;
 
   const TrainingSetupCard({
     super.key,
     required this.user,
-    this.onEdit,
     this.onCustomEquipment,
   });
 
@@ -57,7 +60,7 @@ class TrainingSetupCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -65,7 +68,10 @@ class TrainingSetupCard extends StatelessWidget {
     // Use monochrome accent
     final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
 
-    final equipment = user?.equipmentList ?? [];
+    // Get the active gym profile for equipment and environment
+    final activeGymProfile = ref.watch(activeGymProfileProvider);
+    final equipment = activeGymProfile?.equipment ?? user?.equipmentList ?? [];
+    final environment = activeGymProfile?.environmentDisplayName ?? user?.workoutEnvironmentDisplay ?? 'Not set';
 
     return Container(
       width: double.infinity,
@@ -89,9 +95,20 @@ class TrainingSetupCard extends StatelessWidget {
                   color: textPrimary,
                 ),
               ),
-              if (onEdit != null)
+              if (activeGymProfile != null)
                 GestureDetector(
-                  onTap: onEdit,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      useRootNavigator: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => EditGymProfileSheet(
+                        profile: activeGymProfile,
+                      ),
+                    );
+                  },
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -119,11 +136,11 @@ class TrainingSetupCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // Environment row
+          // Environment row (from gym profile)
           _SetupRow(
             icon: Icons.location_on_outlined,
             label: 'Environment',
-            value: user?.workoutEnvironmentDisplay ?? 'Not set',
+            value: environment,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),

@@ -130,6 +130,7 @@ async def create_performance_log(log: PerformanceLogCreate):
             "is_completed": log.is_completed,
             "failed_at_rep": log.failed_at_rep,
             "notes": log.notes,
+            "ai_input_source": log.ai_input_source,
         }
 
         created = db.create_performance_log(log_data)

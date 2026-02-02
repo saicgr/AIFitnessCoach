@@ -5,11 +5,17 @@ This service provides contextual nutrition knowledge based on user's fitness goa
 Used to enhance food scoring with relevant nutrition facts and recommendations.
 
 Uses ChromaDB for vector similarity search.
+Includes goal-based caching to avoid repeated embeddings and DB queries.
 """
+import logging
 from typing import List, Dict, Any, Optional
 import uuid
+
 from core.chroma_cloud import get_chroma_cloud_client
+from core.db.nutrition_db import NutritionDB
 from services.gemini_service import GeminiService
+
+logger = logging.getLogger(__name__)
 
 
 # Collection name for nutrition knowledge
@@ -22,13 +28,33 @@ class NutritionRAGService:
 
     Stores goal-specific nutrition facts and retrieves relevant context
     based on user goals and food items being analyzed.
+
+    Includes goal-based caching to dramatically speed up repeated queries.
     """
 
-    def __init__(self, gemini_service: Optional[GeminiService] = None):
+    def __init__(
+        self,
+        gemini_service: Optional[GeminiService] = None,
+        nutrition_db: Optional[NutritionDB] = None,
+    ):
         self.gemini_service = gemini_service or GeminiService()
+        self._nutrition_db = nutrition_db
         self.chroma_client = get_chroma_cloud_client()
         self.collection = self.chroma_client.get_or_create_collection(NUTRITION_COLLECTION_NAME)
         print(f"✅ NutritionRAG initialized with {self.collection.count()} documents")
+
+    @property
+    def nutrition_db(self) -> Optional[NutritionDB]:
+        """Get NutritionDB instance for caching, creating if needed."""
+        if self._nutrition_db is None:
+            try:
+                from core.db.facade import get_supabase_db
+                db = get_supabase_db()
+                self._nutrition_db = db.nutrition
+            except Exception as e:
+                logger.warning(f"Could not initialize NutritionDB for caching: {e}")
+                return None
+        return self._nutrition_db
 
     async def add_knowledge(
         self,
@@ -74,14 +100,19 @@ class NutritionRAGService:
         food_description: str,
         user_goals: List[str],
         n_results: int = 5,
+        use_cache: bool = True,
     ) -> str:
         """
         Get relevant nutrition context based on food and user goals.
+
+        Includes goal-based caching for faster repeated queries.
+        Goals are cached separately from food descriptions since they change rarely.
 
         Args:
             food_description: The food being analyzed
             user_goals: User's fitness goals
             n_results: Number of results to retrieve
+            use_cache: Whether to use goal-based caching (default True)
 
         Returns:
             Formatted context string for Gemini prompt
@@ -89,19 +120,29 @@ class NutritionRAGService:
         if not user_goals:
             return ""
 
+        # Create goal hash for caching (goals don't change often)
+        goal_key = {"goals": sorted(user_goals), "n_results": n_results}
+        goal_hash = NutritionDB.create_goal_hash(goal_key)
+
+        # Try cache first (goals-only cache, independent of food description)
+        if use_cache and self.nutrition_db:
+            try:
+                cached_context = self.nutrition_db.get_cached_rag_context(goal_hash)
+                if cached_context:
+                    logger.info(f"🎯 RAG cache HIT for goals: {user_goals}")
+                    # Return cached context formatted for this food
+                    return self._format_cached_context(cached_context, food_description)
+            except Exception as e:
+                logger.warning(f"RAG cache lookup failed: {e}")
+
+        # Cache miss - do full RAG query
+        logger.info(f"🔄 RAG cache MISS - querying ChromaDB for goals: {user_goals}")
+
         # Create query combining food and goals
         query = f"Food: {food_description}. Goals: {', '.join(user_goals)}"
 
         # Get embedding for query
         query_embedding = await self.gemini_service.get_embedding_async(query)
-
-        # Build filter for goals - match any of the user's goals
-        # ChromaDB where clause for matching any goal
-        where_filter = None
-        if user_goals:
-            # We'll use $contains for substring matching since goals are stored as comma-separated
-            # Actually, ChromaDB doesn't support $contains well, so we'll retrieve more and filter
-            pass
 
         # Query ChromaDB
         results = self.collection.query(
@@ -136,10 +177,54 @@ class NutritionRAGService:
         if not relevant_docs:
             return ""
 
+        # Cache the goal-specific results (not food-specific)
+        if use_cache and self.nutrition_db and relevant_docs:
+            try:
+                cache_data = {
+                    "documents": [doc["content"] for doc in relevant_docs],
+                    "categories": [doc["category"] for doc in relevant_docs],
+                    "goals": user_goals,
+                }
+                self.nutrition_db.cache_rag_context(
+                    goal_hash=goal_hash,
+                    context_result=cache_data,
+                    ttl_hours=1,  # 1 hour TTL for goal context
+                )
+            except Exception as e:
+                logger.warning(f"Failed to cache RAG context: {e}")
+
         # Format as context string
         context_parts = []
         for doc in relevant_docs:
             context_parts.append(f"[{doc['category'].upper()}] {doc['content']}")
+
+        return "\n".join(context_parts)
+
+    def _format_cached_context(
+        self,
+        cached_data: Dict[str, Any],
+        food_description: str
+    ) -> str:
+        """
+        Format cached RAG context into a context string.
+
+        Args:
+            cached_data: Cached context data with documents and categories
+            food_description: Current food being analyzed (for reference)
+
+        Returns:
+            Formatted context string
+        """
+        documents = cached_data.get("documents", [])
+        categories = cached_data.get("categories", [])
+
+        if not documents:
+            return ""
+
+        context_parts = []
+        for i, doc in enumerate(documents):
+            category = categories[i] if i < len(categories) else "general"
+            context_parts.append(f"[{category.upper()}] {doc}")
 
         return "\n".join(context_parts)
 

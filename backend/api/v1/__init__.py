@@ -70,6 +70,8 @@ from api.v1 import weight_increments  # Equipment-specific weight increment pref
 from api.v1 import trophies  # Trophy room and achievement system
 from api.v1 import gym_profiles  # Multi-gym profile system (Robinhood-style switcher)
 from api.v1 import xp  # XP events, daily login, streaks, double XP
+from api.v1 import warmup_preferences  # Custom warmup/stretch preferences and pre/post workout routines
+from api.v1 import custom_exercises  # User-defined custom exercises with media upload
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -320,3 +322,9 @@ router.include_router(gym_profiles.router, prefix="/gym-profiles", tags=["Gym Pr
 
 # XP events, daily login, streaks, double XP multipliers
 router.include_router(xp.router, tags=["XP & Progression"])
+
+# Custom warmup/stretch preferences (pre-workout, post-exercise routines, preferred/avoided)
+router.include_router(warmup_preferences.router, tags=["Warmup Preferences"])
+
+# User-defined custom exercises for equipment not in library (with media upload)
+router.include_router(custom_exercises.router, tags=["Custom Exercises"])

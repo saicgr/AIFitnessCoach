@@ -50,6 +50,25 @@ class OnboardingData {
 
   OnboardingData();
 
+  /// Returns the default gym name based on workout environment
+  String get effectiveGymName {
+    if (gymName != null && gymName!.isNotEmpty) {
+      return gymName!;
+    }
+    switch (workoutEnvironment) {
+      case 'home_gym':
+        return 'Home Gym';
+      case 'commercial_gym':
+        return 'My Gym';
+      case 'both':
+        return 'Home Gym';
+      case 'other':
+        return 'My Gym';
+      default:
+        return 'My Gym';
+    }
+  }
+
   /// Validates if all required fields for a step are filled.
   bool isStepValid(int step) {
     switch (step) {
@@ -110,7 +129,7 @@ class OnboardingData {
       'intensity_preference': intensityLevel,
       'equipment': equipment,
       'workout_environment': workoutEnvironment,
-      'gym_name': gymName,
+      'gym_name': effectiveGymName,
       'workout_variety': workoutVariety,
       'dumbbell_count': dumbbellCount,
       'kettlebell_count': kettlebellCount,
@@ -128,7 +147,7 @@ class OnboardingData {
         'progression_pace': progressionPace,
         'workout_type_preference': workoutTypePreference,
         'workout_environment': workoutEnvironment,
-        'gym_name': gymName,
+        'gym_name': effectiveGymName,
       },
 
       // Health

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,6 +35,8 @@ class ApiClient {
         connectTimeout: ApiConstants.connectTimeout,
         receiveTimeout: ApiConstants.receiveTimeout,
         sendTimeout: ApiConstants.sendTimeout,
+        followRedirects: true,
+        maxRedirects: 5,
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -198,6 +201,32 @@ class ApiClient {
       data: data,
       queryParameters: queryParameters,
       options: options,
+    );
+  }
+
+  /// Upload file using multipart form data
+  Future<Response<dynamic>> uploadFile(
+    String path,
+    File file, {
+    String fieldName = 'file',
+    Map<String, dynamic>? extraFields,
+    Options? options,
+  }) async {
+    final fileName = file.path.split('/').last;
+    final formData = FormData.fromMap({
+      fieldName: await MultipartFile.fromFile(
+        file.path,
+        filename: fileName,
+      ),
+      if (extraFields != null) ...extraFields,
+    });
+
+    return _dio.post(
+      path,
+      data: formData,
+      options: options ?? Options(
+        contentType: 'multipart/form-data',
+      ),
     );
   }
 }

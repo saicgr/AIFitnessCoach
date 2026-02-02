@@ -65,6 +65,7 @@ from services.food_database_service import get_food_database_service
 from services.cooking_conversion_service import get_cooking_conversion_service
 from services.gemini_service import GeminiService
 from services.nutrition_rag_service import get_nutrition_rag_service
+from services.food_analysis_cache_service import get_food_analysis_cache_service
 from services.saved_foods_rag_service import get_saved_foods_rag_service
 from models.saved_food import (
     SavedFood,
@@ -1126,6 +1127,17 @@ async def log_food_from_image(
         fat_g = food_analysis.get('fat_g', 0.0)
         fiber_g = food_analysis.get('fiber_g', 0.0)
 
+        # Extract micronutrients from Gemini analysis
+        sugar_g = food_analysis.get('sugar_g')
+        sodium_mg = food_analysis.get('sodium_mg')
+        cholesterol_mg = food_analysis.get('cholesterol_mg')
+        potassium_mg = food_analysis.get('potassium_mg')
+        vitamin_a_ug = food_analysis.get('vitamin_a_ug')
+        vitamin_c_mg = food_analysis.get('vitamin_c_mg')
+        vitamin_d_iu = food_analysis.get('vitamin_d_iu')
+        calcium_mg = food_analysis.get('calcium_mg')
+        iron_mg = food_analysis.get('iron_mg')
+
         # Create food log with image URL
         db = get_supabase_db()
 
@@ -1143,6 +1155,16 @@ async def log_food_from_image(
             image_url=image_url,
             image_storage_key=storage_key,
             source_type="image",
+            # Micronutrients from Gemini analysis
+            sugar_g=sugar_g,
+            sodium_mg=sodium_mg,
+            cholesterol_mg=cholesterol_mg,
+            potassium_mg=potassium_mg,
+            vitamin_a_ug=vitamin_a_ug,
+            vitamin_c_mg=vitamin_c_mg,
+            vitamin_d_iu=vitamin_d_iu,
+            calcium_mg=calcium_mg,
+            iron_mg=iron_mg,
         )
 
         food_log_id = created_log.get('id') if created_log else "unknown"
@@ -1299,6 +1321,17 @@ async def log_food_from_text(request: LogTextRequest):
         warnings = food_analysis.get('warnings', [])
         recommended_swap = food_analysis.get('recommended_swap')
 
+        # Extract micronutrients from Gemini analysis
+        sugar_g = food_analysis.get('sugar_g')
+        sodium_mg = food_analysis.get('sodium_mg')
+        cholesterol_mg = food_analysis.get('cholesterol_mg')
+        potassium_mg = food_analysis.get('potassium_mg')
+        vitamin_a_ug = food_analysis.get('vitamin_a_ug')
+        vitamin_c_mg = food_analysis.get('vitamin_c_mg')
+        vitamin_d_iu = food_analysis.get('vitamin_d_iu')
+        calcium_mg = food_analysis.get('calcium_mg')
+        iron_mg = food_analysis.get('iron_mg')
+
         # Save to database using positional arguments
         created_log = db.create_food_log(
             user_id=request.user_id,
@@ -1311,6 +1344,16 @@ async def log_food_from_text(request: LogTextRequest):
             fiber_g=fiber_g,
             ai_feedback=ai_suggestion,
             health_score=health_score,
+            # Micronutrients from Gemini analysis
+            sugar_g=sugar_g,
+            sodium_mg=sodium_mg,
+            cholesterol_mg=cholesterol_mg,
+            potassium_mg=potassium_mg,
+            vitamin_a_ug=vitamin_a_ug,
+            vitamin_c_mg=vitamin_c_mg,
+            vitamin_d_iu=vitamin_d_iu,
+            calcium_mg=calcium_mg,
+            iron_mg=iron_mg,
         )
 
         # Get the food log ID from the created record
@@ -1547,28 +1590,47 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest):
             except Exception as e:
                 logger.warning(f"[STREAM] Could not fetch user goals: {e}")
 
-            # Step 2: Get RAG context and analyze with AI
-            yield send_progress(2, 4, "Analyzing your food...", "AI is identifying ingredients")
+            # Step 2: Check cache and analyze with AI
+            yield send_progress(2, 4, "Analyzing your food...", "Checking food database")
 
-            rag_context = None
-            if user_goals:
-                try:
-                    nutrition_rag = get_nutrition_rag_service()
-                    rag_context = await nutrition_rag.get_context_for_goals(
-                        food_description=body.description,
-                        user_goals=user_goals,
-                        n_results=5,
-                    )
-                except Exception as e:
-                    logger.warning(f"[STREAM] Could not fetch RAG context: {e}")
+            # Use caching service for faster lookups
+            cache_service = get_food_analysis_cache_service()
 
-            gemini_service = GeminiService()
-            food_analysis = await gemini_service.parse_food_description(
+            # First try cache (common foods + cached AI responses)
+            food_analysis = await cache_service.analyze_food(
                 description=body.description,
                 user_goals=user_goals,
                 nutrition_targets=nutrition_targets,
-                rag_context=rag_context,
+                rag_context=None,  # Skip RAG on cache hit for speed
+                use_cache=True,
             )
+
+            # If cache hit, log it
+            if food_analysis and food_analysis.get("cache_hit"):
+                cache_source = food_analysis.get("cache_source", "cache")
+                logger.info(f"[STREAM] 🎯 Cache HIT ({cache_source}) for: {body.description[:50]}...")
+            else:
+                # Cache miss - get RAG context for better AI response
+                rag_context = None
+                if user_goals:
+                    try:
+                        nutrition_rag = get_nutrition_rag_service()
+                        rag_context = await nutrition_rag.get_context_for_goals(
+                            food_description=body.description,
+                            user_goals=user_goals,
+                            n_results=3,  # Reduced from 5 for speed
+                        )
+                    except Exception as e:
+                        logger.warning(f"[STREAM] Could not fetch RAG context: {e}")
+
+                # Re-analyze with RAG context (cache will save for next time)
+                food_analysis = await cache_service.analyze_food(
+                    description=body.description,
+                    user_goals=user_goals,
+                    nutrition_targets=nutrition_targets,
+                    rag_context=rag_context,
+                    use_cache=True,  # Will cache this new result
+                )
 
             if not food_analysis or not food_analysis.get('food_items'):
                 yield send_error("Could not identify any food items from your description")
@@ -1631,6 +1693,9 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest):
             logger.info(f"[STREAM] Successfully logged food from text as {food_log_id}")
 
             # Send the completed food log
+            cache_hit = food_analysis.get("cache_hit", False) if food_analysis else False
+            cache_source = food_analysis.get("cache_source") if food_analysis else None
+
             response_data = {
                 "success": True,
                 "food_log_id": food_log_id,
@@ -1648,6 +1713,8 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest):
                 "warnings": warnings,
                 "recommended_swap": recommended_swap,
                 "total_time_ms": elapsed_ms(),
+                "cache_hit": cache_hit,
+                "cache_source": cache_source,
             }
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 
@@ -1752,45 +1819,67 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                                'gnocchi', 'carbonara', 'bolognese', 'osso buco', 'tiramisu', 'panna cotta']
             is_complex = any(keyword in description_lower for keyword in regional_keywords)
 
-            # Step 2: Prepare AI analysis
-            yield send_progress(2, 6, "Preparing AI analysis...", "Building context")
+            # Step 2: Check cache for instant results
+            yield send_progress(2, 6, "Checking food database...", "Looking for cached data")
 
-            rag_context = None
-            if user_goals:
-                try:
-                    nutrition_rag = get_nutrition_rag_service()
-                    rag_context = await nutrition_rag.get_context_for_goals(
-                        food_description=body.description,
-                        user_goals=user_goals,
-                        n_results=5,
-                    )
-                except Exception as e:
-                    logger.warning(f"[ANALYZE-STREAM] Could not fetch RAG context: {e}")
+            # Use caching service for faster lookups
+            cache_service = get_food_analysis_cache_service()
 
-            # Step 3: Identify ingredients
-            desc_preview = body.description[:30] + "..." if len(body.description) > 30 else body.description
-            if is_complex:
-                yield send_progress(3, 6, "Analyzing regional cuisine...", f"🌍 {desc_preview}")
-            else:
-                yield send_progress(3, 6, "Identifying ingredients...", f"Analyzing: {desc_preview}")
-
-            # Step 4: AI portion estimation
-            yield send_progress(4, 6, "Calculating portions...", "AI is estimating serving sizes")
-
-            gemini_service = GeminiService()
-            food_analysis = await gemini_service.parse_food_description(
+            # First try cache (common foods + cached AI responses)
+            food_analysis = await cache_service.analyze_food(
                 description=body.description,
                 user_goals=user_goals,
                 nutrition_targets=nutrition_targets,
-                rag_context=rag_context,
+                rag_context=None,  # Skip RAG on initial cache check
+                use_cache=True,
             )
+
+            # If cache hit, skip the slow AI steps
+            if food_analysis and food_analysis.get("cache_hit"):
+                cache_source = food_analysis.get("cache_source", "cache")
+                logger.info(f"[ANALYZE-STREAM] 🎯 Cache HIT ({cache_source}) for: {body.description[:50]}...")
+                # Skip to step 5 (nutrition data)
+                yield send_progress(5, 6, "Fetching nutrition data...", f"🎯 Found in {cache_source}!")
+            else:
+                # Cache miss - do full AI analysis
+                # Step 3: Identify ingredients
+                desc_preview = body.description[:30] + "..." if len(body.description) > 30 else body.description
+                if is_complex:
+                    yield send_progress(3, 6, "Analyzing regional cuisine...", f"🌍 {desc_preview}")
+                else:
+                    yield send_progress(3, 6, "Identifying ingredients...", f"Analyzing: {desc_preview}")
+
+                # Get RAG context for better AI response
+                rag_context = None
+                if user_goals:
+                    try:
+                        nutrition_rag = get_nutrition_rag_service()
+                        rag_context = await nutrition_rag.get_context_for_goals(
+                            food_description=body.description,
+                            user_goals=user_goals,
+                            n_results=3,  # Reduced from 5 for speed
+                        )
+                    except Exception as e:
+                        logger.warning(f"[ANALYZE-STREAM] Could not fetch RAG context: {e}")
+
+                # Step 4: AI portion estimation
+                yield send_progress(4, 6, "Calculating portions...", "AI is estimating serving sizes")
+
+                # Re-analyze with RAG context (cache will save for next time)
+                food_analysis = await cache_service.analyze_food(
+                    description=body.description,
+                    user_goals=user_goals,
+                    nutrition_targets=nutrition_targets,
+                    rag_context=rag_context,
+                    use_cache=True,  # Will cache this new result
+                )
+
+                # Step 5: Fetch nutrition data
+                yield send_progress(5, 6, "Fetching nutrition data...", f"Found {len(food_analysis.get('food_items', []))} items")
 
             if not food_analysis or not food_analysis.get('food_items'):
                 yield send_error("Could not identify any food items from your description")
                 return
-
-            # Step 5: Fetch nutrition data
-            yield send_progress(5, 6, "Fetching nutrition data...", f"Found {len(food_analysis.get('food_items', []))} items")
 
             # Step 6: Finalize results
             yield send_progress(6, 6, "Finalizing results...", "Almost ready!")
@@ -1824,6 +1913,9 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             logger.info(f"[ANALYZE-STREAM] Analysis complete for user {body.user_id}: {total_calories} calories")
 
             # Send the analysis result (NO database save - user must confirm first)
+            cache_hit = food_analysis.get("cache_hit", False) if food_analysis else False
+            cache_source = food_analysis.get("cache_source") if food_analysis else None
+
             response_data = {
                 "success": True,
                 "is_analysis_only": True,  # Flag to indicate this is not yet saved
@@ -1842,6 +1934,8 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                 "recommended_swap": recommended_swap,
                 "source_type": "text",
                 "total_time_ms": elapsed_ms(),
+                "cache_hit": cache_hit,
+                "cache_source": cache_source,
                 # Micronutrients
                 "sodium_mg": sodium_mg,
                 "sugar_g": sugar_g,

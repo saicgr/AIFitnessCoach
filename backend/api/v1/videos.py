@@ -198,6 +198,52 @@ def generate_name_variants(name: str) -> list:
     return list(variants)
 
 
+def score_exercise_match(search_name: str, db_name: str) -> int:
+    """
+    Score how well a database exercise name matches the search term.
+
+    Higher scores indicate better matches. Used to pick the best match
+    when multiple partial matches are found.
+
+    Args:
+        search_name: The exercise name being searched for
+        db_name: The exercise name from the database
+
+    Returns:
+        Integer score (higher is better)
+    """
+    search_words = set(search_name.lower().split())
+    db_words = set(db_name.lower().split())
+
+    # Remove common suffixes for comparison
+    search_words = {w.replace('_male', '').replace('_female', '') for w in search_words}
+    db_words = {w.replace('_male', '').replace('_female', '') for w in db_words}
+
+    # Count matching words
+    matching_words = len(search_words & db_words)
+
+    # Penalize extra words in db_name that aren't in search
+    # e.g., "Alternating Plank Lunge" has extra "Plank" when searching "Alternating Reverse Lunge"
+    extra_words = len(db_words - search_words)
+
+    # Penalize missing words from search that aren't in db
+    # e.g., searching "Reverse Lunge" but db has "Alternating Lunge" (missing "Reverse")
+    missing_words = len(search_words - db_words)
+
+    # Base score: matching words weighted heavily
+    score = matching_words * 10
+
+    # Penalty for extra/missing words
+    score -= extra_words * 3
+    score -= missing_words * 5  # Missing words are worse than extra words
+
+    # Bonus for exact length match (same word count)
+    if len(search_words) == len(db_words):
+        score += 5
+
+    return score
+
+
 def search_s3_for_image(exercise_name: str, gender: str = None) -> str:
     """
     Search S3 ILLUSTRATIONS folder for matching exercise image.
@@ -302,7 +348,7 @@ async def get_image_by_exercise_name(exercise_name: str, gender: str = None):
         # Try each name variant - use wildcard pattern for partial matches
         found_result = None
         for name in search_names:
-            # First try exact match (case-insensitive)
+            # First try exact match (case-insensitive) - this is definitive
             result = db.client.table("exercise_library").select(
                 "image_s3_path, exercise_name"
             ).ilike("exercise_name", name).limit(1).execute()
@@ -312,22 +358,34 @@ async def get_image_by_exercise_name(exercise_name: str, gender: str = None):
                 break
 
             # Try partial match with wildcards (handles gender suffixes like _female, _male)
+            # Get ALL matches and score them to find the best one
             result = db.client.table("exercise_library").select(
                 "image_s3_path, exercise_name"
-            ).ilike("exercise_name", f"{name}%").limit(1).execute()
+            ).ilike("exercise_name", f"{name}%").execute()
 
-            if result.data and result.data[0].get("image_s3_path"):
-                found_result = result.data[0]
-                break
+            if result.data:
+                # Score all matches and pick the best one
+                candidates = [r for r in result.data if r.get("image_s3_path")]
+                if candidates:
+                    best_match = max(candidates, key=lambda r: score_exercise_match(exercise_name, r["exercise_name"]))
+                    if score_exercise_match(exercise_name, best_match["exercise_name"]) > 0:
+                        found_result = best_match
+                        break
 
             # Try contains match (exercise name contained anywhere)
+            # Get ALL matches and score them to find the best one
             result = db.client.table("exercise_library").select(
                 "image_s3_path, exercise_name"
-            ).ilike("exercise_name", f"%{name}%").limit(1).execute()
+            ).ilike("exercise_name", f"%{name}%").execute()
 
-            if result.data and result.data[0].get("image_s3_path"):
-                found_result = result.data[0]
-                break
+            if result.data:
+                # Score all matches and pick the best one
+                candidates = [r for r in result.data if r.get("image_s3_path")]
+                if candidates:
+                    best_match = max(candidates, key=lambda r: score_exercise_match(exercise_name, r["exercise_name"]))
+                    if score_exercise_match(exercise_name, best_match["exercise_name"]) > 0:
+                        found_result = best_match
+                        break
 
         # If database lookup failed, try fuzzy S3 search
         if not found_result:

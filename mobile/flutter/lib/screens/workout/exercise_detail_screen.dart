@@ -239,28 +239,20 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: CustomScrollView(
-        slivers: [
-          // App bar with video
-          SliverAppBar(
-            expandedHeight: 300,
-            pinned: true,
-            backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
-            leading: IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.black54 : Colors.white70,
-                  shape: BoxShape.circle,
+      body: Stack(
+        children: [
+          CustomScrollView(
+            slivers: [
+              // App bar with video
+              SliverAppBar(
+                expandedHeight: 300,
+                pinned: true,
+                backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+                automaticallyImplyLeading: false, // Remove default back button
+                flexibleSpace: FlexibleSpaceBar(
+                  background: _buildVideoSection(elevated, textMuted),
                 ),
-                child: Icon(Icons.arrow_back, size: 20, color: isDark ? Colors.white : Colors.black87),
               ),
-              onPressed: () => context.pop(),
-            ),
-            flexibleSpace: FlexibleSpaceBar(
-              background: _buildVideoSection(elevated, textMuted),
-            ),
-          ),
 
           // Content
           SliverToBoxAdapter(
@@ -356,6 +348,36 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
               ),
             ),
           ),
+        ],
+      ),
+      // Floating back button
+      Positioned(
+        top: MediaQuery.of(context).padding.top + 8,
+        left: 16,
+        child: GestureDetector(
+          onTap: () => context.pop(),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: isDark ? Colors.black54 : Colors.white.withValues(alpha: 0.9),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.arrow_back,
+              size: 20,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+          ),
+        ),
+      ),
         ],
       ),
     );

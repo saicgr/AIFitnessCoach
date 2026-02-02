@@ -29,6 +29,8 @@ from models.gemini_schemas import (
     DailyMealPlanResponse,
     MealSuggestionsResponse,
     SnackSuggestionsResponse,
+    ParseWorkoutInputResponse,
+    ParseWorkoutInputV2Response,
 )
 import re as regex_module  # For weight parsing
 
@@ -731,6 +733,452 @@ IMPORTANT:
         except Exception as e:
             print(f"Exercise extraction from response failed: {e}")
             return None
+
+    async def parse_workout_input(
+        self,
+        input_text: Optional[str] = None,
+        image_base64: Optional[str] = None,
+        voice_transcript: Optional[str] = None,
+        user_unit_preference: str = "lbs",
+    ) -> Dict:
+        """
+        Parse natural language workout input into structured exercises.
+
+        Supports text, image, or voice transcript input. Uses Gemini to extract
+        exercise names, sets, reps, and weights from free-form input like:
+        - "3x10 deadlift at 135, 5x5 squat at 140"
+        - "bench press 4 sets of 8 at 80"
+        - Image of a workout log or whiteboard
+
+        Args:
+            input_text: Natural language text input
+            image_base64: Base64 encoded image of workout notes
+            voice_transcript: Transcribed voice input
+            user_unit_preference: User's preferred weight unit ('kg' or 'lbs')
+
+        Returns:
+            Dictionary with 'exercises', 'summary', and 'warnings'
+        """
+        logger.info(f"🤖 [ParseWorkout] Parsing input: text={bool(input_text)}, image={bool(image_base64)}, voice={bool(voice_transcript)}")
+
+        # Combine input sources
+        combined_input = ""
+        if input_text:
+            combined_input += input_text
+        if voice_transcript:
+            combined_input += f" {voice_transcript}" if combined_input else voice_transcript
+
+        if not combined_input and not image_base64:
+            logger.warning("❌ [ParseWorkout] No input provided")
+            return {
+                "exercises": [],
+                "summary": "No input provided",
+                "warnings": ["Please provide text, image, or voice input"]
+            }
+
+        parse_prompt = f'''Parse workout exercises from the input. Extract each exercise with:
+- name: Standard gym exercise name (e.g., "Bench Press", "Back Squat", "Deadlift")
+- sets: Number of sets (the number before 'x' or after "sets")
+- reps: Number of reps (the number after 'x' or after "reps")
+- weight_value: Weight number if specified
+- weight_unit: "{user_unit_preference}" unless explicitly stated otherwise (kg/lbs)
+- rest_seconds: Rest period if mentioned, otherwise default to 60
+- original_text: The exact text segment that was parsed for this exercise
+- confidence: Your confidence in the parsing (0.0-1.0)
+- notes: Any additional notes or form cues mentioned
+
+PARSING RULES:
+1. "3x10" means 3 sets of 10 reps
+2. "4 sets of 8" means 4 sets of 8 reps
+3. "at 135" or "@135" means 135 {user_unit_preference}
+4. "100kg" or "100 kg" means 100 kilograms
+5. "225lbs" or "225 lbs" means 225 pounds
+6. If no weight specified, leave weight_value as null
+7. Use standard exercise names (capitalize properly)
+
+EXAMPLES:
+- "3x10 deadlift at 135" → name="Deadlift", sets=3, reps=10, weight=135
+- "bench 5x5 @ 225" → name="Bench Press", sets=5, reps=5, weight=225
+- "4 sets of squats" → name="Back Squat", sets=4, reps=10 (default)
+- "pull-ups 3x12" → name="Pull-ups", sets=3, reps=12, weight=null
+
+INPUT TO PARSE:
+"{combined_input or 'See image below'}"
+
+Return a summary describing what was found and any warnings about unclear parsing.'''
+
+        try:
+            # Build content list
+            contents = [parse_prompt]
+
+            # Add image if provided
+            if image_base64:
+                import base64
+                contents.append(types.Part.from_bytes(
+                    data=base64.b64decode(image_base64),
+                    mime_type="image/jpeg"
+                ))
+
+            response = await client.aio.models.generate_content(
+                model=self.model,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=ParseWorkoutInputResponse,
+                    max_output_tokens=4000,
+                    temperature=0.2,  # Low for consistent parsing
+                ),
+            )
+
+            data = response.parsed
+            if not data:
+                raise ValueError("Gemini returned empty parse response")
+
+            exercises = []
+            for ex in data.exercises:
+                exercise_dict = {
+                    "name": ex.name,
+                    "sets": ex.sets,
+                    "reps": ex.reps,
+                    "weight_value": ex.weight_value,
+                    "weight_unit": ex.weight_unit,
+                    "rest_seconds": ex.rest_seconds,
+                    "original_text": ex.original_text,
+                    "confidence": ex.confidence,
+                    "notes": ex.notes,
+                }
+                # Convert weight to both units for convenience
+                if ex.weight_value is not None:
+                    if ex.weight_unit.lower() == "kg":
+                        exercise_dict["weight_kg"] = ex.weight_value
+                        exercise_dict["weight_lbs"] = round(ex.weight_value * 2.20462, 1)
+                    else:
+                        exercise_dict["weight_lbs"] = ex.weight_value
+                        exercise_dict["weight_kg"] = round(ex.weight_value / 2.20462, 1)
+                else:
+                    exercise_dict["weight_kg"] = None
+                    exercise_dict["weight_lbs"] = None
+
+                exercises.append(exercise_dict)
+
+            result = {
+                "exercises": exercises,
+                "summary": data.summary,
+                "warnings": data.warnings or [],
+            }
+
+            logger.info(f"✅ [ParseWorkout] Parsed {len(exercises)} exercises: {[e['name'] for e in exercises]}")
+            return result
+
+        except Exception as e:
+            logger.error(f"❌ [ParseWorkout] Failed to parse workout input: {e}")
+            return {
+                "exercises": [],
+                "summary": f"Failed to parse input: {str(e)}",
+                "warnings": ["Parsing failed. Please try rephrasing your input."]
+            }
+
+    async def parse_workout_input_v2(
+        self,
+        input_text: Optional[str] = None,
+        image_base64: Optional[str] = None,
+        voice_transcript: Optional[str] = None,
+        user_unit_preference: str = "lbs",
+        current_exercise_name: Optional[str] = None,
+        last_set_weight: Optional[float] = None,
+        last_set_reps: Optional[int] = None,
+    ) -> Dict:
+        """
+        Parse workout input with dual-mode support.
+
+        Supports TWO use cases simultaneously:
+        1. Set logging: "135*8, 145*6" -> logs sets for CURRENT exercise
+        2. Add exercise: "3x10 deadlift at 135" -> adds NEW exercise
+
+        Smart shortcuts:
+        - "+10" -> add 10 to last weight, keep same reps
+        - "-10" -> subtract 10 from last weight
+        - "same" -> repeat last set exactly
+        - "drop" -> 10% weight reduction
+        - "up" -> +5 progression
+
+        Args:
+            input_text: Natural language text input
+            image_base64: Base64 encoded image
+            voice_transcript: Transcribed voice input
+            user_unit_preference: User's preferred weight unit
+            current_exercise_name: Name of current exercise (for set logging context)
+            last_set_weight: Weight from last set (for shortcuts)
+            last_set_reps: Reps from last set (for shortcuts)
+
+        Returns:
+            Dictionary with 'sets_to_log', 'exercises_to_add', 'summary', 'warnings'
+        """
+        logger.info(
+            f"🤖 [ParseWorkoutV2] Parsing: exercise={current_exercise_name}, "
+            f"text={bool(input_text)}, image={bool(image_base64)}"
+        )
+
+        # Combine input sources
+        combined_input = ""
+        if input_text:
+            combined_input += input_text
+        if voice_transcript:
+            combined_input += f" {voice_transcript}" if combined_input else voice_transcript
+
+        if not combined_input and not image_base64:
+            logger.warning("❌ [ParseWorkoutV2] No input provided")
+            return {
+                "sets_to_log": [],
+                "exercises_to_add": [],
+                "summary": "No input provided",
+                "warnings": ["Please provide text, image, or voice input"]
+            }
+
+        # Build context for smart shortcuts
+        last_set_context = ""
+        if last_set_weight is not None and last_set_reps is not None:
+            last_set_context = f"Last logged set: {last_set_weight} {user_unit_preference} × {last_set_reps} reps"
+        else:
+            last_set_context = "No previous set logged yet"
+
+        current_ex_context = current_exercise_name or "Unknown Exercise"
+
+        # Build the comprehensive prompt
+        parse_prompt = f'''You are a workout input parser. Parse the user's input and determine their intent.
+
+CONTEXT:
+- Current exercise: "{current_ex_context}"
+- User's preferred unit: {user_unit_preference} (use this when unit not specified)
+- {last_set_context}
+
+YOUR TASK: Categorize each line/segment as either:
+1. SET LOG - Numbers only (no exercise name) → applies to current exercise "{current_ex_context}"
+2. NEW EXERCISE - Contains exercise name → adds new exercise to workout
+
+═══════════════════════════════════════════════════════════════
+SET LOGGING PATTERNS (for current exercise: "{current_ex_context}")
+═══════════════════════════════════════════════════════════════
+
+Recognize these formats for WEIGHT × REPS:
+- "135*8" or "135x8" or "135X8" or "135×8" → 135 {user_unit_preference} × 8 reps
+- "135 * 8" or "135 x 8" → same with spaces
+- "135, 8" or "135 8" → weight then reps (comma or space separator)
+- "135lbs*8" or "135 lbs x 8" → 135 lbs × 8 (explicit unit overrides preference)
+- "60kg*10" or "60 kg x 10" → 60 kg × 10 (explicit metric)
+- "135#*8" → 135 lbs × 8 (# symbol means pounds)
+
+BODYWEIGHT indicators (weight = 0, is_bodyweight = true):
+- "bw*12" or "BW*12" or "bodyweight*12" → 0 × 12 reps (bodyweight)
+- "0*12" or "-*12" → 0 × 12 reps (bodyweight)
+
+DECIMAL weights:
+- "135.5*8" → 135.5 {user_unit_preference} × 8 reps
+- "60.5kg*10" → 60.5 kg × 10 reps
+
+SPECIAL reps (is_failure = true):
+- "135*AMRAP" or "135*max" or "135*F" → 135 × 0 reps with is_failure=true
+- "135*8-10" → 135 × 8 reps (use lower bound of range)
+
+SMART SHORTCUTS (ONLY when last set data is available):
+{f'''- "+10" → {last_set_weight + 10 if last_set_weight else "N/A"} × {last_set_reps or "N/A"} reps (add 10 to last weight)
+- "-10" → {last_set_weight - 10 if last_set_weight else "N/A"} × {last_set_reps or "N/A"} reps (subtract 10)
+- "+10*6" → {last_set_weight + 10 if last_set_weight else "N/A"} × 6 reps (add 10, override reps)
+- "same" → {last_set_weight or "N/A"} × {last_set_reps or "N/A"} (repeat last set exactly)
+- "same*10" → {last_set_weight or "N/A"} × 10 (same weight, different reps)
+- "drop" → {round(last_set_weight * 0.9, 1) if last_set_weight else "N/A"} × {last_set_reps or "N/A"} (10% drop)
+- "drop 20" → {last_set_weight - 20 if last_set_weight else "N/A"} × {last_set_reps or "N/A"} (subtract 20)
+- "up" → {last_set_weight + 5 if last_set_weight else "N/A"} × {last_set_reps or "N/A"} (standard +5 progression)''' if last_set_weight is not None else "Shortcuts not available - no previous set data"}
+
+MULTIPLE sets on one line:
+- "135*8, 145*6, 155*5" → 3 separate sets (comma-separated)
+- "135*8; 145*6; 155*5" → 3 separate sets (semicolon-separated)
+
+LABELED formats (strip labels, just parse numbers):
+- "Set 1: 135*8" → parse as 135*8
+- "1. 135*8" or "- 135*8" → parse as 135*8
+
+═══════════════════════════════════════════════════════════════
+NEW EXERCISE PATTERNS (adds to workout)
+═══════════════════════════════════════════════════════════════
+
+If input contains an exercise NAME, it's a NEW EXERCISE.
+
+Formats:
+- "3x10 deadlift at 135" → Deadlift: 3 sets × 10 reps @ 135 {user_unit_preference}
+- "3*10 deadlift at 135" → same (star works too)
+- "deadlift 3x10 at 135" → name first also works
+- "deadlift 3x10 @ 135" → @ symbol for "at"
+- "deadlift 3x10 135" → no preposition needed
+- "deadlift 3x10 135lbs" → explicit unit
+- "deadlift 135*8" → single set: 1 × 8 @ 135
+- "bench 5x5 225" → Bench Press: 5×5 @ 225
+
+ABBREVIATIONS to expand to full names:
+- bench, bp → Bench Press
+- squat, sq → Back Squat
+- deadlift, dl → Deadlift
+- ohp, press → Overhead Press
+- row, br → Barbell Row
+- pullups, pull-ups → Pull-ups
+- dips → Dips
+- rdl → Romanian Deadlift
+- lat, pulldown → Lat Pulldown
+- curl, bc → Bicep Curl
+- tri, tricep → Tricep Extension
+- leg press, lp → Leg Press
+
+BODYWEIGHT exercises (is_bodyweight = true, no weight needed):
+- "pull-ups 3x10" → Pull-ups: 3×10 @ bodyweight
+- "dips 3x12" → Dips: 3×12 @ bodyweight
+- "push-ups 3x15" → Push-ups: 3×15 @ bodyweight
+- "weighted dips 3x8 +45" → Dips: 3×8 @ 45 lbs added weight
+
+PLATE MATH (only if user says "plates"):
+- "1 plate" = 135 lbs OR 60 kg (bar + 2×45lb plates)
+- "2 plates" = 225 lbs OR 100 kg
+- "bar only" = 45 lbs OR 20 kg
+
+═══════════════════════════════════════════════════════════════
+IMAGE ANALYSIS (if image provided)
+═══════════════════════════════════════════════════════════════
+
+Analyze the image for workout data:
+1. Handwritten/printed text: exercise names, sets, reps, weights
+2. App screenshots: extract exercise data from other fitness apps
+3. Gym whiteboards: parse WOD/workout of the day
+4. Weight plates on barbell: count plates, calculate total weight
+   - 45lb plates (red/blue), 25lb (green), 10lb (yellow), 5lb, 2.5lb
+   - Bar = 45 lbs / 20 kg
+5. Cardio machine displays: distance, time, calories
+
+═══════════════════════════════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════════════════════════════
+
+Return JSON with this structure:
+{{
+  "sets_to_log": [
+    {{
+      "weight": 135.0,
+      "reps": 8,
+      "unit": "{user_unit_preference}",
+      "is_bodyweight": false,
+      "is_failure": false,
+      "is_warmup": false,
+      "original_input": "135*8",
+      "notes": null
+    }}
+  ],
+  "exercises_to_add": [
+    {{
+      "name": "Deadlift",
+      "sets": 3,
+      "reps": 10,
+      "weight_kg": 61.2,
+      "weight_lbs": 135.0,
+      "rest_seconds": 60,
+      "is_bodyweight": false,
+      "original_text": "3x10 deadlift at 135",
+      "confidence": 1.0,
+      "notes": null
+    }}
+  ],
+  "summary": "Log 1 set for {current_ex_context}, Add Deadlift",
+  "warnings": []
+}}
+
+IMPORTANT RULES:
+1. If NO exercise name → goes to sets_to_log
+2. If HAS exercise name → goes to exercises_to_add
+3. Both can be non-empty for mixed input
+4. Expand abbreviations to full exercise names
+5. Always provide both weight_kg and weight_lbs for exercises_to_add
+6. Use is_bodyweight=true for bodyweight exercises
+
+═══════════════════════════════════════════════════════════════
+INPUT TO PARSE:
+═══════════════════════════════════════════════════════════════
+{combined_input or "See image below"}
+'''
+
+        try:
+            # Build content list
+            contents = [parse_prompt]
+
+            # Add image if provided
+            if image_base64:
+                import base64
+                contents.append(types.Part.from_bytes(
+                    data=base64.b64decode(image_base64),
+                    mime_type="image/jpeg"
+                ))
+
+            response = await client.aio.models.generate_content(
+                model=self.model,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=ParseWorkoutInputV2Response,
+                    max_output_tokens=4000,
+                    temperature=0.2,  # Low for consistent parsing
+                ),
+            )
+
+            data = response.parsed
+            if not data:
+                raise ValueError("Gemini returned empty parse response")
+
+            # Convert to dict format
+            sets_to_log = []
+            for s in data.sets_to_log:
+                sets_to_log.append({
+                    "weight": s.weight,
+                    "reps": s.reps,
+                    "unit": s.unit,
+                    "is_bodyweight": s.is_bodyweight,
+                    "is_failure": s.is_failure,
+                    "is_warmup": s.is_warmup,
+                    "original_input": s.original_input,
+                    "notes": s.notes,
+                })
+
+            exercises_to_add = []
+            for ex in data.exercises_to_add:
+                exercises_to_add.append({
+                    "name": ex.name,
+                    "sets": ex.sets,
+                    "reps": ex.reps,
+                    "weight_kg": ex.weight_kg,
+                    "weight_lbs": ex.weight_lbs,
+                    "rest_seconds": ex.rest_seconds,
+                    "is_bodyweight": ex.is_bodyweight,
+                    "original_text": ex.original_text,
+                    "confidence": ex.confidence,
+                    "notes": ex.notes,
+                })
+
+            result = {
+                "sets_to_log": sets_to_log,
+                "exercises_to_add": exercises_to_add,
+                "summary": data.summary,
+                "warnings": data.warnings or [],
+            }
+
+            logger.info(
+                f"✅ [ParseWorkoutV2] Parsed {len(sets_to_log)} sets, "
+                f"{len(exercises_to_add)} exercises"
+            )
+            return result
+
+        except Exception as e:
+            logger.error(f"❌ [ParseWorkoutV2] Failed to parse: {e}")
+            return {
+                "sets_to_log": [],
+                "exercises_to_add": [],
+                "summary": f"Failed to parse input: {str(e)}",
+                "warnings": ["Parsing failed. Please try rephrasing your input."]
+            }
 
     def get_embedding(self, text: str) -> List[float]:
         """
@@ -2488,6 +2936,25 @@ NOTE: For cardio exercises, use duration_seconds (e.g., 30) instead of reps (set
 For strength exercises, set duration_seconds to null and use reps normally.
 For mobility/stretching exercises, use hold_seconds (e.g., 30-60) for static holds instead of reps.
 For unilateral exercises (single-arm, single-leg), set is_unilateral: true.
+
+For ISOMETRIC/TIME-BASED exercises (planks, wall sits, dead hangs, L-sits, hollow holds, static holds):
+- Set hold_seconds to the BASE time (e.g., 30)
+- Use target_hold_seconds in set_targets for PROGRESSIVE hold times per set
+- Set reps to 1 for each set (since it's time-based, not rep-based)
+
+EXAMPLE for progressive plank (15s -> 30s -> 45s):
+{{
+  "name": "Forearm Plank",
+  "sets": 3,
+  "reps": 1,
+  "hold_seconds": 30,
+  "rest_seconds": 60,
+  "set_targets": [
+    {{"set_number": 1, "set_type": "warmup", "target_reps": 1, "target_hold_seconds": 15}},
+    {{"set_number": 2, "set_type": "working", "target_reps": 1, "target_hold_seconds": 30}},
+    {{"set_number": 3, "set_type": "working", "target_reps": 1, "target_hold_seconds": 45}}
+  ]
+}}
 {set_type_context_str}
 🚨🚨🚨 MANDATORY ADVANCED TECHNIQUES (NON-NEGOTIABLE FOR NON-BEGINNERS) 🚨🚨🚨
 

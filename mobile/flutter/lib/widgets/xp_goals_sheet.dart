@@ -1056,7 +1056,8 @@ void _showAllLevelsSheet(BuildContext context, int currentLevel, Color accentCol
 class _LevelInfo {
   final int level;
   final int xpRequired;
-  final String title;
+  final String title;      // Tier name (Novice, Apprentice, etc.)
+  final String levelName;  // Unique name for each level
   final String? reward;
   final String? rewardIcon;
   final bool isMilestone;
@@ -1065,10 +1066,130 @@ class _LevelInfo {
     required this.level,
     required this.xpRequired,
     required this.title,
+    required this.levelName,
     this.reward,
     this.rewardIcon,
     this.isMilestone = false,
   });
+
+  /// Get unique level name for each level
+  static String getLevelName(int level) {
+    const levelNames = <int, String>{
+      // Novice tier (1-10) - Beginning journey names
+      1: 'First Steps',
+      2: 'Awakening',
+      3: 'Foundation',
+      4: 'Momentum',
+      5: 'Rising Star',
+      6: 'Steadfast',
+      7: 'Determined',
+      8: 'Resilient',
+      9: 'Breakthrough',
+      10: 'Iron Will',
+
+      // Apprentice tier (11-25) - Building strength names
+      11: 'Pathfinder',
+      12: 'Trailblazer',
+      13: 'Forged',
+      14: 'Unyielding',
+      15: 'Disciplined',
+      16: 'Focused',
+      17: 'Driven',
+      18: 'Relentless',
+      19: 'Unstoppable',
+      20: 'Silver Strength',
+      21: 'Tempered',
+      22: 'Hardened',
+      23: 'Unbreakable',
+      24: 'Tenacious',
+      25: 'Dedicated',
+
+      // Athlete tier (26-50) - Athletic achievement names
+      26: 'Competitor',
+      27: 'Challenger',
+      28: 'Fierce',
+      29: 'Powerhouse',
+      30: 'Gold Standard',
+      31: 'Peak Form',
+      32: 'Dynamo',
+      33: 'Juggernaut',
+      34: 'Titan',
+      35: 'Colossus',
+      36: 'Champion',
+      37: 'Conqueror',
+      38: 'Dominator',
+      39: 'Crusher',
+      40: 'Diamond Core',
+      41: 'Invincible',
+      42: 'Supreme',
+      43: 'Almighty',
+      44: 'Transcendent',
+      45: 'Mythic Rise',
+      46: 'Ascended',
+      47: 'Immortal',
+      48: 'Paragon',
+      49: 'Zenith',
+      50: 'Veteran',
+
+      // Elite tier (51-75) - Elite status names
+      51: 'Elite Guard',
+      52: 'Vanguard',
+      53: 'Sentinel',
+      54: 'Warden',
+      55: 'Gladiator',
+      56: 'Spartan',
+      57: 'Berserker',
+      58: 'Valkyrie',
+      59: 'Phoenix',
+      60: 'Elite Force',
+      61: 'Apex',
+      62: 'Sovereign',
+      63: 'Overlord',
+      64: 'Commander',
+      65: 'General',
+      66: 'Warlord',
+      67: 'Conqueror II',
+      68: 'Destroyer',
+      69: 'Annihilator',
+      70: 'Purple Heart',
+      71: 'Harbinger',
+      72: 'Omega',
+      73: 'Absolute',
+      74: 'Supreme II',
+      75: 'Elite',
+
+      // Master tier (76-99) - Mastery names
+      76: 'Grandmaster',
+      77: 'Sage',
+      78: 'Oracle',
+      79: 'Prophet',
+      80: 'Master',
+      81: 'Virtuoso',
+      82: 'Prodigy',
+      83: 'Genius',
+      84: 'Mastermind',
+      85: 'Legendary Rise',
+      86: 'Architect',
+      87: 'Creator',
+      88: 'Worldbreaker',
+      89: 'Godslayer',
+      90: 'Cosmic',
+      91: 'Celestial',
+      92: 'Divine',
+      93: 'Eternal',
+      94: 'Infinite',
+      95: 'Ultimate',
+      96: 'Omega II',
+      97: 'Alpha',
+      98: 'Primordial',
+      99: 'Apex Predator',
+
+      // Legend tier (100)
+      100: 'Legend',
+    };
+
+    return levelNames[level] ?? 'Level $level';
+  }
 }
 
 /// All Levels Sheet
@@ -1113,6 +1234,7 @@ class _AllLevelsSheet extends StatelessWidget {
         level: level,
         xpRequired: noviceLevelXP[i],
         title: 'Novice',
+        levelName: _LevelInfo.getLevelName(level),
         reward: reward,
         rewardIcon: rewardIcon,
         isMilestone: isMilestone,
@@ -1149,6 +1271,7 @@ class _AllLevelsSheet extends StatelessWidget {
         level: level,
         xpRequired: 1500,
         title: 'Apprentice',
+        levelName: _LevelInfo.getLevelName(level),
         reward: reward,
         rewardIcon: rewardIcon,
         isMilestone: isMilestone,
@@ -1185,6 +1308,7 @@ class _AllLevelsSheet extends StatelessWidget {
         level: level,
         xpRequired: 5000,
         title: 'Athlete',
+        levelName: _LevelInfo.getLevelName(level),
         reward: reward,
         rewardIcon: rewardIcon,
         isMilestone: isMilestone,
@@ -1221,6 +1345,7 @@ class _AllLevelsSheet extends StatelessWidget {
         level: level,
         xpRequired: 10000,
         title: 'Elite',
+        levelName: _LevelInfo.getLevelName(level),
         reward: reward,
         rewardIcon: rewardIcon,
         isMilestone: isMilestone,
@@ -1257,6 +1382,7 @@ class _AllLevelsSheet extends StatelessWidget {
         level: level,
         xpRequired: 25000,
         title: 'Master',
+        levelName: _LevelInfo.getLevelName(level),
         reward: reward,
         rewardIcon: rewardIcon,
         isMilestone: isMilestone,
@@ -1264,10 +1390,11 @@ class _AllLevelsSheet extends StatelessWidget {
     }
 
     // Level 100 (Legend)
-    levels.add(const _LevelInfo(
+    levels.add(_LevelInfo(
       level: 100,
       xpRequired: 75000,
       title: 'Legend',
+      levelName: _LevelInfo.getLevelName(100),
       reward: 'LEGEND Badge + Hoodie + Merch Kit!',
       rewardIcon: '🏆',
       isMilestone: true,
@@ -1442,7 +1569,7 @@ class _AllLevelsSheet extends StatelessWidget {
   ) {
     final titleColor = _getTitleColor(level.title);
 
-    // Get reward color based on type
+    // Get reward color based on type - avoid pure yellow for readability
     Color getRewardColor() {
       if (level.reward == null) return Colors.grey;
       if (level.reward!.contains('Crate') || level.reward!.contains('crate')) {
@@ -1451,13 +1578,14 @@ class _AllLevelsSheet extends StatelessWidget {
         if (level.reward!.contains('Fitness')) return const Color(0xFF4CAF50);
         return const Color(0xFF9C27B0);
       }
-      if (level.reward!.contains('Frame')) return const Color(0xFFFFD700);
+      // Use amber/orange instead of pure gold/yellow for better contrast
+      if (level.reward!.contains('Frame')) return const Color(0xFFFF8F00); // Darker amber
       if (level.reward!.contains('Badge')) return titleColor;
       if (level.reward!.contains('Theme')) return const Color(0xFF9C27B0);
       if (level.reward!.contains('T-Shirt') || level.reward!.contains('Hoodie') || level.reward!.contains('Shaker')) {
         return const Color(0xFFE91E63);
       }
-      if (level.reward!.contains('XP')) return const Color(0xFFFFC107);
+      if (level.reward!.contains('XP')) return const Color(0xFFFF8F00); // Darker amber instead of yellow
       if (level.reward!.contains('Shield')) return const Color(0xFF2196F3);
       if (level.reward!.contains('Token')) return const Color(0xFF9C27B0);
       return accentColor;
@@ -1469,20 +1597,20 @@ class _AllLevelsSheet extends StatelessWidget {
     final isBigMilestone = level.level == 10 || level.level == 25 || level.level == 50 ||
                            level.level == 75 || level.level == 100;
 
-    // Stronger colors for light mode visibility
+    // Use solid backgrounds instead of translucent for better readability
     final cardBackground = isCurrentLevel
-        ? accentColor.withValues(alpha: isDark ? 0.15 : 0.12)
+        ? (isDark ? const Color(0xFF1A3A5C) : const Color(0xFFE3F2FD)) // Blue tint
         : isCompleted
-            ? AppColors.green.withValues(alpha: isDark ? 0.08 : 0.1)
+            ? (isDark ? const Color(0xFF1B4332) : const Color(0xFFE8F5E9)) // Green tint
             : isBigMilestone
-                ? rewardColor.withValues(alpha: isDark ? 0.08 : 0.06)
+                ? (isDark ? const Color(0xFF3E2723) : const Color(0xFFFFF8E1)) // Warm amber tint
                 : isDark ? cardBg : Colors.grey.shade100;
     final strongBorder = isCurrentLevel
-        ? accentColor.withValues(alpha: isDark ? 0.5 : 0.6)
+        ? accentColor.withValues(alpha: isDark ? 0.7 : 0.8)
         : isCompleted
-            ? AppColors.green.withValues(alpha: isDark ? 0.3 : 0.4)
+            ? AppColors.green.withValues(alpha: isDark ? 0.5 : 0.6)
             : isBigMilestone
-                ? rewardColor.withValues(alpha: isDark ? 0.4 : 0.5)
+                ? rewardColor.withValues(alpha: isDark ? 0.6 : 0.7)
                 : isDark ? borderColor : Colors.grey.shade300;
     final badgeColor = isCompleted || isCurrentLevel
         ? null
@@ -1562,19 +1690,23 @@ class _AllLevelsSheet extends StatelessWidget {
               ),
               const SizedBox(width: 12),
 
-              // Level info
+              // Level info - now showing unique level name
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Text(
-                          level.title,
-                          style: TextStyle(
-                            fontSize: isBigMilestone ? 15 : 13,
-                            fontWeight: FontWeight.w600,
-                            color: titleColor,
+                        // Show unique level name instead of tier
+                        Flexible(
+                          child: Text(
+                            level.levelName,
+                            style: TextStyle(
+                              fontSize: isBigMilestone ? 15 : 14,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? textColor : Colors.black87,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (isCurrentLevel) ...[
@@ -1601,7 +1733,7 @@ class _AllLevelsSheet extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [Colors.amber.shade400, Colors.orange.shade400],
+                                colors: [Colors.amber.shade600, Colors.orange.shade600],
                               ),
                               borderRadius: BorderRadius.circular(4),
                             ),
@@ -1625,12 +1757,33 @@ class _AllLevelsSheet extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      '${_formatNumber(level.xpRequired)} XP to next level',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isDark ? textMuted : Colors.black54,
-                      ),
+                    // Show tier name as subtitle
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: titleColor.withValues(alpha: isDark ? 0.2 : 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            level.title,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: titleColor,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${_formatNumber(level.xpRequired)} XP',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? textMuted : Colors.black54,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -1641,10 +1794,10 @@ class _AllLevelsSheet extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: rewardColor.withValues(alpha: isDark ? 0.15 : 0.12),
+                    color: rewardColor.withValues(alpha: isDark ? 0.2 : 0.15),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: rewardColor.withValues(alpha: isDark ? 0.3 : 0.25),
+                      color: rewardColor.withValues(alpha: isDark ? 0.4 : 0.35),
                     ),
                   ),
                   child: Row(
@@ -1665,18 +1818,21 @@ class _AllLevelsSheet extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    rewardColor.withValues(alpha: isDark ? 0.2 : 0.15),
-                    rewardColor.withValues(alpha: isDark ? 0.1 : 0.08),
-                  ],
-                ),
+                color: isDark
+                    ? rewardColor.withValues(alpha: 0.15)
+                    : Colors.white.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: rewardColor.withValues(alpha: isDark ? 0.3 : 0.25),
+                  color: rewardColor.withValues(alpha: isDark ? 0.4 : 0.5),
+                  width: 1.5,
                 ),
+                boxShadow: isDark ? null : [
+                  BoxShadow(
+                    color: rewardColor.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
@@ -1684,8 +1840,11 @@ class _AllLevelsSheet extends StatelessWidget {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: rewardColor.withValues(alpha: 0.2),
+                      color: rewardColor.withValues(alpha: isDark ? 0.25 : 0.15),
                       borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: rewardColor.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Center(
                       child: Text(
@@ -1703,7 +1862,7 @@ class _AllLevelsSheet extends StatelessWidget {
                           'REWARD',
                           style: TextStyle(
                             fontSize: 9,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.bold,
                             color: rewardColor,
                             letterSpacing: 1,
                           ),
@@ -1724,7 +1883,7 @@ class _AllLevelsSheet extends StatelessWidget {
                     Icon(
                       Icons.lock_outline,
                       size: 18,
-                      color: textMuted.withValues(alpha: 0.5),
+                      color: isDark ? textMuted.withValues(alpha: 0.5) : Colors.grey.shade500,
                     ),
                   if (isCompleted)
                     const Icon(

@@ -102,7 +102,7 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen> {
                   exercise: exercise,
                   rank: index + 1,
                   onTap: () {
-                    context.push('/progress/exercise-history/${Uri.encodeComponent(exercise.exerciseName)}');
+                    context.push('/stats/exercise-history/${Uri.encodeComponent(exercise.exerciseName)}');
                   },
                 );
               },

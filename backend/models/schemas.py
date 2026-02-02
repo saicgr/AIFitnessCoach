@@ -362,6 +362,7 @@ class PerformanceLogCreate(BaseModel):
     is_completed: bool = True
     failed_at_rep: Optional[int] = Field(default=None, ge=0)
     notes: Optional[str] = Field(default=None, max_length=500)
+    ai_input_source: Optional[str] = Field(default=None, max_length=200, description="Original AI input text that created this set (e.g., '135*8', '+10')")
 
 
 class PerformanceLog(PerformanceLogCreate):

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/time_slot_utils.dart';
+import '../../../data/models/gym_location.dart';
 import '../../../data/models/gym_profile.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../models/equipment_item.dart';
 import '../../../widgets/sheet_header.dart';
+import '../../gym_profile/gym_location_picker_screen.dart';
 import 'gym_equipment_sheet.dart';
 
 /// Bottom sheet for editing an existing gym profile
@@ -33,8 +36,32 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
   late String _selectedEnvironment;
   late List<String> _selectedEquipment;
   late List<Map<String, dynamic>> _equipmentDetails;
+  // Location state
+  GymLocation? _selectedLocation;
+  bool _autoSwitchEnabled = true;
+  int _locationRadiusMeters = 100;
+  // Time preference state
+  String? _selectedTimeSlot;
+  bool _timeAutoSwitchEnabled = true;
+  // Training preferences state
+  String? _selectedTrainingSplit;
+  late List<int> _selectedWorkoutDays;
+  late int _selectedDuration;
   bool _isLoading = false;
   bool _hasChanges = false;
+
+  // Training split options
+  static const List<Map<String, dynamic>> _trainingSplitOptions = [
+    {'id': 'nothing_structured', 'label': 'Let AI Decide', 'icon': Icons.auto_awesome_rounded, 'desc': 'Flexible'},
+    {'id': 'push_pull_legs', 'label': 'Push/Pull/Legs', 'icon': Icons.splitscreen_rounded, 'desc': '6 days'},
+    {'id': 'full_body', 'label': 'Full Body', 'icon': Icons.accessibility_new_rounded, 'desc': '3 days'},
+    {'id': 'upper_lower', 'label': 'Upper/Lower', 'icon': Icons.swap_vert_rounded, 'desc': '4 days'},
+    {'id': 'phul', 'label': 'PHUL', 'icon': Icons.flash_on_rounded, 'desc': '4 days'},
+    {'id': 'body_part', 'label': 'Body Part', 'icon': Icons.view_week_rounded, 'desc': '5-6 days'},
+  ];
+
+  // Day names for workout days picker
+  static const List<String> _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   // Predefined environment presets
   static const Map<String, Map<String, dynamic>> _environmentPresets = {
@@ -81,6 +108,26 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
     _selectedEnvironment = widget.profile.workoutEnvironment;
     _selectedEquipment = List.from(widget.profile.equipment);
     _equipmentDetails = List.from(widget.profile.equipmentDetails ?? []);
+    // Initialize location from existing profile
+    if (widget.profile.hasLocation) {
+      _selectedLocation = GymLocation(
+        placeId: widget.profile.placeId,
+        name: widget.profile.name,
+        address: widget.profile.address ?? '',
+        city: widget.profile.city,
+        latitude: widget.profile.latitude!,
+        longitude: widget.profile.longitude!,
+      );
+    }
+    _autoSwitchEnabled = widget.profile.autoSwitchEnabled;
+    _locationRadiusMeters = widget.profile.locationRadiusMeters;
+    // Initialize time preference from existing profile
+    _selectedTimeSlot = widget.profile.preferredTimeSlot;
+    _timeAutoSwitchEnabled = widget.profile.timeAutoSwitchEnabled;
+    // Initialize training preferences from existing profile
+    _selectedTrainingSplit = widget.profile.trainingSplit;
+    _selectedWorkoutDays = List.from(widget.profile.workoutDays);
+    _selectedDuration = widget.profile.durationMinutes;
   }
 
   void _openEquipmentSheet() {
@@ -164,6 +211,21 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
         workoutEnvironment: _selectedEnvironment,
         equipment: _selectedEquipment,
         equipmentDetails: _equipmentDetails,
+        // Location fields
+        address: _selectedLocation?.address,
+        city: _selectedLocation?.city,
+        latitude: _selectedLocation?.latitude,
+        longitude: _selectedLocation?.longitude,
+        placeId: _selectedLocation?.placeId,
+        locationRadiusMeters: _locationRadiusMeters,
+        autoSwitchEnabled: _autoSwitchEnabled,
+        // Time preference fields
+        preferredTimeSlot: _selectedTimeSlot,
+        timeAutoSwitchEnabled: _timeAutoSwitchEnabled,
+        // Training preferences
+        trainingSplit: _selectedTrainingSplit,
+        workoutDays: _selectedWorkoutDays,
+        durationMinutes: _selectedDuration,
       );
 
       await ref
@@ -604,6 +666,321 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                       ),
                     ),
 
+                    const SizedBox(height: 24),
+
+                    // Training preferences section
+                    Text(
+                      'Training Preferences (Optional)',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Customize workouts for this gym',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Training Split selector
+                    _buildTrainingSplitSelector(
+                      isDark: isDark,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      selectedColorObj: selectedColorObj,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Workout Days picker
+                    Text(
+                      'Workout Days',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildWorkoutDaysPicker(
+                      isDark: isDark,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      selectedColorObj: selectedColorObj,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Duration selector
+                    _buildDurationSelector(
+                      isDark: isDark,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      selectedColorObj: selectedColorObj,
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Location section
+                    Text(
+                      'Location (Optional)',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Set a location to auto-switch profiles',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: _openLocationPicker,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.05)
+                              : Colors.black.withOpacity(0.03),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: _selectedLocation != null
+                                ? selectedColorObj.withOpacity(0.5)
+                                : (isDark
+                                    ? Colors.white.withOpacity(0.1)
+                                    : Colors.black.withOpacity(0.1)),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: _selectedLocation != null
+                                    ? selectedColorObj.withOpacity(0.15)
+                                    : (isDark
+                                        ? Colors.white.withOpacity(0.08)
+                                        : Colors.black.withOpacity(0.05)),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                _selectedLocation != null
+                                    ? Icons.place_rounded
+                                    : Icons.add_location_alt_rounded,
+                                color: _selectedLocation != null
+                                    ? selectedColorObj
+                                    : textSecondary,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _selectedLocation != null
+                                        ? _selectedLocation!.name
+                                        : 'Add Location',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _selectedLocation != null
+                                        ? _selectedLocation!.shortAddress
+                                        : 'Tap to set gym location',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: _selectedLocation != null
+                                          ? selectedColorObj
+                                          : textSecondary.withOpacity(0.7),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (_selectedLocation != null)
+                              IconButton(
+                                onPressed: _removeLocation,
+                                icon: Icon(
+                                  Icons.close_rounded,
+                                  color: textSecondary,
+                                  size: 20,
+                                ),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              )
+                            else
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                color: textSecondary,
+                                size: 24,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // Auto-switch toggle (only show if location is set)
+                    if (_selectedLocation != null) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.05)
+                              : Colors.black.withOpacity(0.03),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.auto_awesome_rounded,
+                              color: selectedColorObj,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Auto-switch when I arrive',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: textPrimary,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Requires location permission',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: _autoSwitchEnabled,
+                              onChanged: (value) {
+                                setState(() => _autoSwitchEnabled = value);
+                                _markChanged();
+                                HapticService.light();
+                              },
+                              activeColor: selectedColorObj,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 24),
+
+                    // Time preference section
+                    Text(
+                      'Workout Time (Optional)',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'When do you usually workout here?',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildTimeSlotPicker(
+                      isDark: isDark,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      selectedColorObj: selectedColorObj,
+                    ),
+
+                    // Time auto-switch toggle (only show if time slot is set)
+                    if (_selectedTimeSlot != null) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.05)
+                              : Colors.black.withOpacity(0.03),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.schedule_rounded,
+                              color: selectedColorObj,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Auto-switch at this time',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: textPrimary,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Suggest this profile during ${TimeSlotUtils.fromValue(_selectedTimeSlot)?.label ?? ''}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: _timeAutoSwitchEnabled,
+                              onChanged: (value) {
+                                setState(() => _timeAutoSwitchEnabled = value);
+                                _markChanged();
+                                HapticService.light();
+                              },
+                              activeColor: selectedColorObj,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
                     const SizedBox(height: 32),
                   ],
                 ),
@@ -836,6 +1213,431 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _openLocationPicker() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => GymLocationPickerScreen(
+          initialLocation: _selectedLocation,
+          onLocationSelected: (location) {
+            setState(() => _selectedLocation = location);
+            _markChanged();
+            debugPrint('✅ [EditGymProfile] Location selected: ${location.name}');
+          },
+        ),
+      ),
+    );
+  }
+
+  void _removeLocation() {
+    setState(() => _selectedLocation = null);
+    _markChanged();
+    HapticService.light();
+  }
+
+  Widget _buildTimeSlotPicker({
+    required bool isDark,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color selectedColorObj,
+  }) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        // Time slot options
+        ...TimeSlot.values.map((slot) {
+          final isSelected = _selectedTimeSlot == slot.value;
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                // Toggle off if already selected
+                if (_selectedTimeSlot == slot.value) {
+                  _selectedTimeSlot = null;
+                } else {
+                  _selectedTimeSlot = slot.value;
+                }
+              });
+              _markChanged();
+              HapticService.light();
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? selectedColorObj.withOpacity(0.15)
+                    : (isDark
+                        ? Colors.white.withOpacity(0.05)
+                        : Colors.black.withOpacity(0.03)),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isSelected
+                      ? selectedColorObj
+                      : Colors.transparent,
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    slot.icon,
+                    size: 24,
+                    color: isSelected
+                        ? selectedColorObj
+                        : textSecondary,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    slot.shortLabel,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                      color: isSelected
+                          ? selectedColorObj
+                          : textPrimary,
+                    ),
+                  ),
+                  Text(
+                    slot.timeRange,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: isSelected
+                          ? selectedColorObj.withOpacity(0.8)
+                          : textSecondary.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+        // Clear option (only show if a time is selected)
+        if (_selectedTimeSlot != null)
+          GestureDetector(
+            onTap: () {
+              setState(() => _selectedTimeSlot = null);
+              _markChanged();
+              HapticService.light();
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withOpacity(0.05)
+                    : Colors.black.withOpacity(0.03),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.clear_rounded,
+                    size: 24,
+                    color: textSecondary,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Clear',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: textSecondary,
+                    ),
+                  ),
+                  Text(
+                    'No pref',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: textSecondary.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildTrainingSplitSelector({
+    required bool isDark,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color selectedColorObj,
+  }) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _trainingSplitOptions.map((split) {
+        final isSelected = _selectedTrainingSplit == split['id'];
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              // Toggle off if already selected
+              if (_selectedTrainingSplit == split['id']) {
+                _selectedTrainingSplit = null;
+              } else {
+                _selectedTrainingSplit = split['id'] as String;
+              }
+            });
+            _markChanged();
+            HapticService.light();
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? selectedColorObj.withOpacity(0.15)
+                  : (isDark
+                      ? Colors.white.withOpacity(0.05)
+                      : Colors.black.withOpacity(0.03)),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected ? selectedColorObj : Colors.transparent,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  split['icon'] as IconData,
+                  size: 18,
+                  color: isSelected ? selectedColorObj : textSecondary,
+                ),
+                const SizedBox(width: 6),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      split['label'] as String,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                        color: isSelected ? selectedColorObj : textPrimary,
+                      ),
+                    ),
+                    Text(
+                      split['desc'] as String,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isSelected
+                            ? selectedColorObj.withOpacity(0.8)
+                            : textSecondary.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildWorkoutDaysPicker({
+    required bool isDark,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color selectedColorObj,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: List.generate(7, (index) {
+        final isSelected = _selectedWorkoutDays.contains(index);
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              if (isSelected) {
+                _selectedWorkoutDays.remove(index);
+              } else {
+                _selectedWorkoutDays.add(index);
+                _selectedWorkoutDays.sort();
+              }
+            });
+            _markChanged();
+            HapticService.light();
+          },
+          child: Container(
+            width: 40,
+            height: 44,
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? selectedColorObj.withOpacity(0.15)
+                  : (isDark
+                      ? Colors.white.withOpacity(0.05)
+                      : Colors.black.withOpacity(0.03)),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isSelected ? selectedColorObj : Colors.transparent,
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _dayNames[index],
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected ? selectedColorObj : textPrimary,
+                  ),
+                ),
+                if (isSelected) ...[
+                  const SizedBox(height: 2),
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: selectedColorObj,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildDurationSelector({
+    required bool isDark,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color selectedColorObj,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withOpacity(0.05)
+            : Colors.black.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.timer_outlined,
+            color: selectedColorObj,
+            size: 22,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Workout Duration',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: textPrimary,
+                  ),
+                ),
+                Text(
+                  '$_selectedDuration minutes',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: selectedColorObj,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildDurationButton(
+                icon: Icons.remove_rounded,
+                onTap: () {
+                  if (_selectedDuration > 15) {
+                    setState(() => _selectedDuration -= 15);
+                    _markChanged();
+                    HapticService.light();
+                  }
+                },
+                isEnabled: _selectedDuration > 15,
+                isDark: isDark,
+                textSecondary: textSecondary,
+                selectedColorObj: selectedColorObj,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  '$_selectedDuration',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: textPrimary,
+                  ),
+                ),
+              ),
+              _buildDurationButton(
+                icon: Icons.add_rounded,
+                onTap: () {
+                  if (_selectedDuration < 180) {
+                    setState(() => _selectedDuration += 15);
+                    _markChanged();
+                    HapticService.light();
+                  }
+                },
+                isEnabled: _selectedDuration < 180,
+                isDark: isDark,
+                textSecondary: textSecondary,
+                selectedColorObj: selectedColorObj,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDurationButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    required bool isEnabled,
+    required bool isDark,
+    required Color textSecondary,
+    required Color selectedColorObj,
+  }) {
+    return GestureDetector(
+      onTap: isEnabled ? onTap : null,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: isEnabled
+              ? selectedColorObj.withOpacity(0.15)
+              : (isDark
+                  ? Colors.white.withOpacity(0.03)
+                  : Colors.black.withOpacity(0.02)),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          icon,
+          color: isEnabled ? selectedColorObj : textSecondary.withOpacity(0.3),
+          size: 20,
+        ),
       ),
     );
   }

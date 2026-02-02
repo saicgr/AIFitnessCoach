@@ -37,6 +37,7 @@ from .quick import router as quick_router
 from .modifications import router as modifications_router
 from .rest_suggestions import router as rest_suggestions_router
 from .fatigue_alerts import router as fatigue_alerts_router
+from .parse_input import router as parse_input_router
 
 # Create the combined router
 router = APIRouter()
@@ -93,6 +94,9 @@ router.include_router(rest_suggestions_router)
 
 # Fatigue detection and next set preview endpoints
 router.include_router(fatigue_alerts_router)
+
+# AI workout input parsing (text/image/voice to exercises)
+router.include_router(parse_input_router)
 
 # Re-export commonly used utilities
 from .utils import (

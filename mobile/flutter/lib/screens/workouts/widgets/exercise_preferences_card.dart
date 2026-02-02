@@ -15,7 +15,11 @@ import '../../../widgets/weight_increments_sheet.dart';
 
 /// Expandable card showing exercise preferences in the Workouts screen
 class ExercisePreferencesCard extends ConsumerStatefulWidget {
-  const ExercisePreferencesCard({super.key});
+  /// Optional margin override. Defaults to horizontal 16px.
+  /// Pass EdgeInsets.zero to disable margin (useful when parent already has padding).
+  final EdgeInsetsGeometry? margin;
+
+  const ExercisePreferencesCard({super.key, this.margin});
 
   @override
   ConsumerState<ExercisePreferencesCard> createState() =>
@@ -60,7 +64,7 @@ class _ExercisePreferencesCardState
     final avoidedCount = avoidedState.activeAvoided.length;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: widget.margin ?? const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(16),

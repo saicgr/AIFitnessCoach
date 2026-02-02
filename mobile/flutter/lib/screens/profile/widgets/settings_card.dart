@@ -11,6 +11,8 @@ class SettingItem {
   final VoidCallback? onTap;
   final Widget? trailing;
   final bool isThemeToggle;
+  final Color? iconColor;
+  final Color? textColor;
 
   const SettingItem({
     required this.icon,
@@ -18,6 +20,8 @@ class SettingItem {
     this.onTap,
     this.trailing,
     this.isThemeToggle = false,
+    this.iconColor,
+    this.textColor,
   });
 }
 
@@ -68,15 +72,16 @@ class SettingsCard extends ConsumerWidget {
                     children: [
                       Icon(
                         item.icon,
-                        color: textSecondary,
+                        color: item.iconColor ?? textSecondary,
                         size: 22,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           item.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
+                            color: item.textColor,
                           ),
                         ),
                       ),

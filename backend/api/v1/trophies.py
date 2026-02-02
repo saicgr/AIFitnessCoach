@@ -227,10 +227,6 @@ async def get_all_trophies(
             is_earned = trophy_id in earned_map
             is_hidden = trophy.get("is_hidden", False)
 
-            # Skip hidden trophies that aren't earned
-            if is_hidden and not is_earned:
-                continue
-
             # Get progress
             current_value = progress_map.get(trophy_id, 0)
             if is_earned:

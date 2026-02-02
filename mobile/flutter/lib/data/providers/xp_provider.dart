@@ -6,6 +6,7 @@ import '../models/trophy.dart';
 import '../models/xp_event.dart';
 import '../repositories/xp_repository.dart';
 import '../services/api_client.dart';
+import '../services/data_cache_service.dart';
 
 // ============================================
 // Daily Goals Model
@@ -346,8 +347,36 @@ class XPNotifier extends StateNotifier<XPState> {
     _currentUserId = userId;
   }
 
-  /// Load user XP data
-  Future<void> loadUserXP({String? userId}) async {
+  /// Load cached XP data for instant display
+  Future<void> _loadFromCache() async {
+    try {
+      final cached = await DataCacheService.instance.getCached(
+        DataCacheService.xpDataKey,
+      );
+      if (cached != null) {
+        final userXp = UserXP.fromJson(cached);
+        state = state.copyWith(userXp: userXp, isLoading: false);
+        debugPrint('⚡ [XPProvider] Loaded from cache: Level ${userXp.currentLevel}, ${userXp.totalXp} XP');
+      }
+    } catch (e) {
+      debugPrint('⚠️ [XPProvider] Cache parse error: $e');
+    }
+  }
+
+  /// Save XP data to cache
+  Future<void> _saveToCache(UserXP userXp) async {
+    try {
+      await DataCacheService.instance.cache(
+        DataCacheService.xpDataKey,
+        userXp.toJson(),
+      );
+    } catch (e) {
+      debugPrint('⚠️ [XPProvider] Cache save error: $e');
+    }
+  }
+
+  /// Load user XP data with cache-first pattern
+  Future<void> loadUserXP({String? userId, bool showLoading = true}) async {
     final uid = userId ?? _currentUserId;
     if (uid == null) {
       debugPrint('[XPProvider] No user ID, skipping load');
@@ -355,7 +384,9 @@ class XPNotifier extends StateNotifier<XPState> {
     }
     _currentUserId = uid;
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    if (showLoading) {
+      state = state.copyWith(isLoading: true, clearError: true);
+    }
 
     try {
       final userXp = await _repository.getUserXP(uid);
@@ -363,14 +394,23 @@ class XPNotifier extends StateNotifier<XPState> {
         userXp: userXp,
         isLoading: false,
       );
+
+      // Save to cache for next app open
+      await _saveToCache(userXp);
+
       debugPrint(
           '[XPProvider] Loaded XP: Level ${userXp.currentLevel}, ${userXp.totalXp} XP');
     } catch (e) {
       debugPrint('[XPProvider] Error loading XP: $e');
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Failed to load XP: $e',
-      );
+      // Only set error if no cached data
+      if (state.userXp == null) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Failed to load XP: $e',
+        );
+      } else {
+        state = state.copyWith(isLoading: false);
+      }
     }
   }
 
@@ -467,27 +507,40 @@ class XPNotifier extends StateNotifier<XPState> {
     }
   }
 
-  /// Load all XP data
+  /// Load all XP data with cache-first pattern
   Future<void> loadAll({String? userId}) async {
     final uid = userId ?? _currentUserId;
     if (uid == null) return;
     _currentUserId = uid;
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    // Step 1: Load from cache first (no loading state)
+    await _loadFromCache();
+
+    // Step 2: Fetch fresh data in background
+    final hasCachedData = state.userXp != null;
+
+    if (!hasCachedData) {
+      state = state.copyWith(isLoading: true, clearError: true);
+    }
 
     try {
       await Future.wait([
-        loadUserXP(userId: uid),
+        loadUserXP(userId: uid, showLoading: !hasCachedData),
         loadTrophySummary(userId: uid),
       ]);
       state = state.copyWith(isLoading: false);
       debugPrint('[XPProvider] Loaded all XP data');
     } catch (e) {
       debugPrint('[XPProvider] Error loading all data: $e');
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Failed to load XP data: $e',
-      );
+      // Only show error if no cached data
+      if (!hasCachedData) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Failed to load XP data: $e',
+        );
+      } else {
+        state = state.copyWith(isLoading: false);
+      }
     }
   }
 

@@ -55,7 +55,7 @@ class AchievementsCard extends ConsumerWidget {
     return InkWell(
       onTap: () {
         HapticService.light();
-        context.push('/progress');
+        context.push('/stats');
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
@@ -99,7 +99,7 @@ class AchievementsCard extends ConsumerWidget {
     return InkWell(
       onTap: () {
         HapticService.light();
-        context.push('/progress');
+        context.push('/stats');
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(

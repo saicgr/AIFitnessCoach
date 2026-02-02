@@ -14,6 +14,8 @@ class SetTarget extends Equatable {
   final int targetReps;
   @JsonKey(name: 'target_weight_kg')
   final double? targetWeightKg;
+  @JsonKey(name: 'target_hold_seconds')
+  final int? targetHoldSeconds; // For timed exercises (planks, wall sits) - progressive hold times per set
   @JsonKey(name: 'target_rpe')
   final int? targetRpe; // 1-10
   @JsonKey(name: 'target_rir')
@@ -24,6 +26,7 @@ class SetTarget extends Equatable {
     this.setType = 'working',
     required this.targetReps,
     this.targetWeightKg,
+    this.targetHoldSeconds,
     this.targetRpe,
     this.targetRir,
   });
@@ -60,8 +63,23 @@ class SetTarget extends Equatable {
   /// Whether this is a failure/AMRAP set
   bool get isFailure => setType.toLowerCase() == 'failure' || setType.toLowerCase() == 'amrap';
 
+  /// Whether this set has a hold time target (for timed exercises)
+  bool get hasHoldTime => targetHoldSeconds != null && targetHoldSeconds! > 0;
+
+  /// Get formatted hold time display (e.g., "30s" or "1m 30s")
+  String get holdTimeDisplay {
+    if (targetHoldSeconds == null || targetHoldSeconds! <= 0) return '';
+    if (targetHoldSeconds! >= 60) {
+      final minutes = targetHoldSeconds! ~/ 60;
+      final seconds = targetHoldSeconds! % 60;
+      if (seconds > 0) return '${minutes}m ${seconds}s';
+      return '${minutes}m';
+    }
+    return '${targetHoldSeconds}s';
+  }
+
   @override
-  List<Object?> get props => [setNumber, setType, targetReps, targetWeightKg, targetRpe, targetRir];
+  List<Object?> get props => [setNumber, setType, targetReps, targetWeightKg, targetHoldSeconds, targetRpe, targetRir];
 }
 
 /// Exercise within a workout
@@ -112,6 +130,8 @@ class WorkoutExercise extends Equatable {
   final bool? fromQueue;
   @JsonKey(name: 'hold_seconds')
   final int? holdSeconds; // For static stretches/holds (e.g., 30-60 seconds)
+  @JsonKey(name: 'is_timed')
+  final bool? isTimed; // True for exercises measured by time (planks, wall sits) rather than reps
   @JsonKey(name: 'is_unilateral')
   final bool? isUnilateral; // Single-arm or single-leg exercises
   @JsonKey(name: 'superset_group')
@@ -172,6 +192,7 @@ class WorkoutExercise extends Equatable {
     this.isFavorite,
     this.fromQueue,
     this.holdSeconds,
+    this.isTimed,
     this.isUnilateral,
     this.supersetGroup,
     this.supersetOrder,
@@ -246,12 +267,20 @@ class WorkoutExercise extends Equatable {
 
   /// Whether this is a timed exercise (planks, holds, cardio with duration)
   bool get isTimedExercise =>
+      (isTimed == true) ||
       (durationSeconds != null && durationSeconds! > 0) ||
       (holdSeconds != null && holdSeconds! > 0);
 
   /// Get the timer duration in seconds (for timed exercises)
   int get timerDurationSeconds =>
       holdSeconds ?? durationSeconds ?? 30;
+
+  /// Get the target hold time for a specific set (for timed exercises)
+  /// Falls back to exercise-level holdSeconds if no per-set target
+  int getHoldSecondsForSet(int setNumber) {
+    final target = getTargetForSet(setNumber);
+    return target?.targetHoldSeconds ?? holdSeconds ?? 30;
+  }
 
   /// Whether this is a unilateral (single-side) exercise
   bool get isSingleSide => isUnilateral == true || alternatingHands == true;
@@ -360,6 +389,7 @@ class WorkoutExercise extends Equatable {
     bool? isFavorite,
     bool? fromQueue,
     int? holdSeconds,
+    bool? isTimed,
     bool? isUnilateral,
     int? supersetGroup,
     int? supersetOrder,
@@ -402,6 +432,7 @@ class WorkoutExercise extends Equatable {
       isFavorite: isFavorite ?? this.isFavorite,
       fromQueue: fromQueue ?? this.fromQueue,
       holdSeconds: holdSeconds ?? this.holdSeconds,
+      isTimed: isTimed ?? this.isTimed,
       isUnilateral: isUnilateral ?? this.isUnilateral,
       supersetGroup: clearSuperset ? null : (supersetGroup ?? this.supersetGroup),
       supersetOrder: clearSuperset ? null : (supersetOrder ?? this.supersetOrder),

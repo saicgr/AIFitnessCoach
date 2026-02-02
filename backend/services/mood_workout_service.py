@@ -241,7 +241,10 @@ class MoodWorkoutService:
         equipment_str = safe_join(user_equipment, "Bodyweight only")
         goals_str = safe_join(user_goals, "General fitness")
 
-        prompt = f"""Generate a {duration_minutes}-minute quick workout for a user who is feeling {mood.value.upper()} {config.emoji}.
+        # Calculate main workout duration (excluding warmup/cooldown which are added separately)
+        main_workout_duration = params['main_workout_duration']
+
+        prompt = f"""Generate a {main_workout_duration}-minute quick workout for a user who is feeling {mood.value.upper()} {config.emoji}.
 
 {config.ai_prompt_suffix}
 
@@ -251,13 +254,10 @@ USER PROFILE:
 - Available Equipment: {equipment_str}
 
 WORKOUT REQUIREMENTS:
-- Total Duration: {duration_minutes} minutes
-- Warmup: {config.warmup_duration} minutes (include 2-3 dynamic warmup exercises)
-- Main Workout: {params['main_workout_duration']} minutes
-- Cooldown: {config.cooldown_duration} minutes (include stretches)
+- Duration: {main_workout_duration} minutes (MAIN EXERCISES ONLY - warmup/cooldown added separately)
 - Intensity: {params['intensity_preference']}
 - Type: {config.workout_type_preference}
-- Maximum Exercises: {config.max_exercises} (excluding warmup/cooldown)
+- Maximum Exercises: {config.max_exercises}
 
 IMPORTANT GUIDELINES:
 - Create a motivating workout name that reflects the "{mood.value}" mood (3-5 words max)
@@ -280,9 +280,6 @@ Return a JSON object with this exact structure:
     "difficulty": "{params['intensity_preference']}",
     "mood_based": true,
     "mood": "{mood.value}",
-    "warmup": [
-        {{"name": "Exercise Name", "duration_seconds": 60, "notes": "Form cue"}}
-    ],
     "exercises": [
         {{
             "name": "Exercise Name",
@@ -294,14 +291,12 @@ Return a JSON object with this exact structure:
             "notes": "Form cue or modification"
         }}
     ],
-    "cooldown": [
-        {{"name": "Stretch Name", "duration_seconds": 30, "notes": "Hold stretch"}}
-    ],
-    "estimated_duration_minutes": {duration_minutes},
+    "estimated_duration_minutes": {main_workout_duration},
     "motivational_message": "A brief encouraging message for someone feeling {mood.value}"
 }}
 
-Return ONLY the JSON object, no additional text."""
+Return ONLY the JSON object, no additional text.
+NOTE: Warmup and cooldown exercises will be added separately using our exercise library - only generate main workout exercises."""
 
         return prompt
 

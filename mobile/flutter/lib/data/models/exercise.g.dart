@@ -11,6 +11,7 @@ SetTarget _$SetTargetFromJson(Map<String, dynamic> json) => SetTarget(
   setType: json['set_type'] as String? ?? 'working',
   targetReps: (json['target_reps'] as num).toInt(),
   targetWeightKg: (json['target_weight_kg'] as num?)?.toDouble(),
+  targetHoldSeconds: (json['target_hold_seconds'] as num?)?.toInt(),
   targetRpe: (json['target_rpe'] as num?)?.toInt(),
   targetRir: (json['target_rir'] as num?)?.toInt(),
 );
@@ -20,6 +21,7 @@ Map<String, dynamic> _$SetTargetToJson(SetTarget instance) => <String, dynamic>{
   'set_type': instance.setType,
   'target_reps': instance.targetReps,
   'target_weight_kg': instance.targetWeightKg,
+  'target_hold_seconds': instance.targetHoldSeconds,
   'target_rpe': instance.targetRpe,
   'target_rir': instance.targetRir,
 };
@@ -52,6 +54,7 @@ WorkoutExercise _$WorkoutExerciseFromJson(Map<String, dynamic> json) =>
       isFavorite: json['is_favorite'] as bool?,
       fromQueue: json['from_queue'] as bool?,
       holdSeconds: (json['hold_seconds'] as num?)?.toInt(),
+      isTimed: json['is_timed'] as bool?,
       isUnilateral: json['is_unilateral'] as bool?,
       supersetGroup: (json['superset_group'] as num?)?.toInt(),
       supersetOrder: (json['superset_order'] as num?)?.toInt(),
@@ -101,6 +104,7 @@ Map<String, dynamic> _$WorkoutExerciseToJson(WorkoutExercise instance) =>
       'is_favorite': instance.isFavorite,
       'from_queue': instance.fromQueue,
       'hold_seconds': instance.holdSeconds,
+      'is_timed': instance.isTimed,
       'is_unilateral': instance.isUnilateral,
       'superset_group': instance.supersetGroup,
       'superset_order': instance.supersetOrder,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/fasting_repository.dart';
@@ -426,7 +427,23 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
                   const SizedBox(height: 16),
                 ],
                 _buildSubmitButton(colors),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+                // View History link
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    context.push('/measurements');
+                  },
+                  icon: Icon(Icons.history, color: colors.textSecondary, size: 18),
+                  label: Text(
+                    'View Weight History',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
               ],
             ),
           ),

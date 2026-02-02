@@ -177,7 +177,7 @@ class _HeatmapTab extends ConsumerWidget {
                 MuscleHeatmapWidget(
                   heatmap: heatmap,
                   onMuscleTap: (muscleId) {
-                    context.push('/progress/muscle-analytics/${Uri.encodeComponent(muscleId)}');
+                    context.push('/stats/muscle-analytics/${Uri.encodeComponent(muscleId)}');
                   },
                 ),
 
@@ -195,7 +195,7 @@ class _HeatmapTab extends ConsumerWidget {
                   muscle: muscle,
                   maxIntensity: heatmap.maxIntensity ?? 1,
                   onTap: () {
-                    context.push('/progress/muscle-analytics/${Uri.encodeComponent(muscle.muscleId)}');
+                    context.push('/stats/muscle-analytics/${Uri.encodeComponent(muscle.muscleId)}');
                   },
                 )),
               ],

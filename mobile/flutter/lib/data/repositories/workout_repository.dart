@@ -10,6 +10,7 @@ import '../models/exercise.dart';
 import '../models/mood.dart';
 import '../models/today_workout.dart';
 import '../models/workout_generation_params.dart';
+import '../models/parsed_exercise.dart';
 import '../services/api_client.dart';
 import 'auth_repository.dart';
 
@@ -1378,6 +1379,147 @@ class WorkoutRepository {
     }
   }
 
+  /// Parse natural language workout input using AI.
+  ///
+  /// Accepts text, image (base64), or voice transcript and returns
+  /// structured exercise data.
+  ///
+  /// Examples:
+  /// - "3x10 deadlift at 135, 5x5 squat at 140"
+  /// - "bench press 4 sets of 8 at 80"
+  Future<ParseWorkoutInputResponse?> parseWorkoutInput({
+    required String userId,
+    required String workoutId,
+    String? inputText,
+    String? imageBase64,
+    String? voiceTranscript,
+    bool useKg = false,
+  }) async {
+    try {
+      debugPrint('🤖 [Workout] Parsing workout input: text=${inputText?.substring(0, inputText.length.clamp(0, 50)) ?? "none"}');
+
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/parse-input',
+        data: {
+          'user_id': userId,
+          'workout_id': workoutId,
+          if (inputText != null) 'input_text': inputText,
+          if (imageBase64 != null) 'image_base64': imageBase64,
+          if (voiceTranscript != null) 'voice_transcript': voiceTranscript,
+          'use_kg': useKg,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final result = ParseWorkoutInputResponse.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+        debugPrint('✅ [Workout] Parsed ${result.exercises.length} exercises');
+        return result;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error parsing workout input: $e');
+      rethrow;
+    }
+  }
+
+  /// Parse workout input with dual-mode support (V2).
+  ///
+  /// Supports TWO use cases simultaneously:
+  /// 1. Set logging: "135*8, 145*6" -> logs sets for CURRENT exercise
+  /// 2. Add exercise: "3x10 deadlift at 135" -> adds NEW exercise
+  ///
+  /// Smart shortcuts supported:
+  /// - "+10" -> add 10 to last weight
+  /// - "same" -> repeat last set
+  /// - "drop" -> 10% weight reduction
+  Future<ParseWorkoutInputV2Response?> parseWorkoutInputV2({
+    required String userId,
+    required String workoutId,
+    String? currentExerciseName,
+    int? currentExerciseIndex,
+    double? lastSetWeight,
+    int? lastSetReps,
+    String? inputText,
+    String? imageBase64,
+    String? voiceTranscript,
+    bool useKg = false,
+  }) async {
+    try {
+      debugPrint(
+        '🤖 [Workout] Parsing V2: exercise=$currentExerciseName, '
+        'text=${inputText?.substring(0, inputText.length.clamp(0, 50)) ?? "none"}',
+      );
+
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/parse-input-v2',
+        data: {
+          'user_id': userId,
+          'workout_id': workoutId,
+          if (currentExerciseName != null)
+            'current_exercise_name': currentExerciseName,
+          if (currentExerciseIndex != null)
+            'current_exercise_index': currentExerciseIndex,
+          if (lastSetWeight != null) 'last_set_weight': lastSetWeight,
+          if (lastSetReps != null) 'last_set_reps': lastSetReps,
+          if (inputText != null) 'input_text': inputText,
+          if (imageBase64 != null) 'image_base64': imageBase64,
+          if (voiceTranscript != null) 'voice_transcript': voiceTranscript,
+          'use_kg': useKg,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final result = ParseWorkoutInputV2Response.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+        debugPrint(
+          '✅ [Workout] Parsed ${result.setsToLog.length} sets, '
+          '${result.exercisesToAdd.length} exercises',
+        );
+        return result;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error parsing workout input V2: $e');
+      rethrow;
+    }
+  }
+
+  /// Add multiple parsed exercises to a workout at once.
+  ///
+  /// Enriches exercises with library metadata and generates set_targets.
+  Future<Workout?> addExercisesBatch({
+    required String workoutId,
+    required String userId,
+    required List<ParsedExercise> exercises,
+    bool useKg = false,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Adding ${exercises.length} exercises to workout $workoutId');
+
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/add-exercises-batch',
+        data: {
+          'workout_id': workoutId,
+          'user_id': userId,
+          'exercises': exercises.map((e) => e.toJson()).toList(),
+          'use_kg': useKg,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] ${exercises.length} exercises added successfully');
+        return Workout.fromJson(response.data as Map<String, dynamic>);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error adding exercises batch: $e');
+      return null;
+    }
+  }
+
   /// Get user's recent exercise swaps for quick re-selection
   Future<List<Map<String, dynamic>>> getRecentSwapHistory({
     required String userId,
@@ -1628,6 +1770,7 @@ class WorkoutRepository {
     double? rpe,
     int? rir,
     String? notes,
+    String? aiInputSource, // Original AI text input that created this set (e.g., "135*8", "+10")
   }) async {
     try {
       debugPrint('🔍 [Workout] Logging set $setNumber ($setType) for $exerciseName');
@@ -1646,6 +1789,7 @@ class WorkoutRepository {
           if (rpe != null) 'rpe': rpe,
           if (rir != null) 'rir': rir,
           if (notes != null && notes.isNotEmpty) 'notes': notes,
+          if (aiInputSource != null && aiInputSource.isNotEmpty) 'ai_input_source': aiInputSource,
         },
       );
       if (response.statusCode == 200) {

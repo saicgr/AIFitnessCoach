@@ -54,6 +54,10 @@ dependencies:
   health: ^11.1.0
   permission_handler: ^11.3.1
 
+  # Location & Maps (for gym profile location)
+  geolocator: ^13.0.2
+  google_maps_flutter: ^2.9.0
+
   # Firebase / Notifications
   firebase_core: ^3.8.1
   firebase_messaging: ^15.1.6
@@ -80,6 +84,9 @@ dependencies:
   image_picker: ^1.1.2
   image_cropper: ^8.0.2
   speech_to_text: ^7.3.0
+
+  # Audio Recording (for exercise notes voice memos)
+  record: ^6.2.0
 
   # Gallery Saver (for saving workout images to device gallery)
   gal: ^2.3.0

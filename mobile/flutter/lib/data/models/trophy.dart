@@ -447,25 +447,55 @@ class TrophyProgress {
     return (threshold - currentValue).clamp(0, threshold);
   }
 
-  /// Check if trophy is visible to user
-  bool get isVisible {
-    if (isEarned) return true;
-    if (trophy.isHidden) return false;
-    return true;
-  }
+  /// Check if trophy is a mystery trophy (hidden or secret, not earned)
+  bool get isMystery => !isEarned && (trophy.isHidden || trophy.isSecret);
 
-  /// Get display name (hidden shows "???")
+  /// All trophies are visible - mystery ones show masked info
+  bool get isVisible => true;
+
+  /// Get display name (mystery shows "Mystery Trophy")
   String get displayName {
-    if (!isEarned && trophy.isSecret) return '???';
+    if (isMystery) return 'Mystery Trophy';
     return trophy.name;
   }
 
-  /// Get display description (hidden shows hint)
+  /// Get display description (mystery shows vague hint)
   String get displayDescription {
-    if (!isEarned && trophy.isSecret) {
-      return trophy.hintText ?? 'A secret achievement awaits...';
+    if (isMystery) {
+      return trophy.hintText ?? 'A special achievement shrouded in mystery...';
     }
     return trophy.description;
+  }
+
+  /// Get display icon (mystery shows ❓)
+  String get displayIcon {
+    if (isMystery) return '❓';
+    return trophy.icon;
+  }
+
+  /// Get display XP (mystery hides XP value)
+  String get displayXp {
+    if (isMystery) return '??? XP';
+    return '+${trophy.xpReward} XP';
+  }
+
+  /// Get display tier (mystery hides tier)
+  String get displayTier {
+    if (isMystery) return 'Mystery';
+    return trophy.trophyTier.displayName;
+  }
+
+  /// Get muscle group from threshold_unit (for filtering)
+  String? get muscleGroup {
+    final unit = trophy.thresholdUnit?.toLowerCase();
+    if (unit == null) return null;
+    if (unit.contains('chest')) return 'Chest';
+    if (unit.contains('back')) return 'Back';
+    if (unit.contains('shoulder') || unit.contains('delt')) return 'Shoulders';
+    if (unit.contains('arm') || unit.contains('bicep') || unit.contains('tricep')) return 'Arms';
+    if (unit.contains('leg') || unit.contains('quad') || unit.contains('hamstring') || unit.contains('calf') || unit.contains('glute')) return 'Legs';
+    if (unit.contains('core') || unit.contains('ab')) return 'Core';
+    return null;
   }
 }
 

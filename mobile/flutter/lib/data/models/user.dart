@@ -53,6 +53,8 @@ class User extends Equatable {
   final String? primaryGoal; // 'muscle_hypertrophy', 'muscle_strength', or 'strength_hypertrophy'
   @JsonKey(name: 'muscle_focus_points')
   final Map<String, int>? muscleFocusPoints; // e.g., {"triceps": 2, "lats": 1}
+  @JsonKey(name: 'photo_url')
+  final String? photoUrl; // Profile photo URL
 
   const User({
     required this.id,
@@ -84,6 +86,7 @@ class User extends Equatable {
     this.weightUnit,
     this.primaryGoal,
     this.muscleFocusPoints,
+    this.photoUrl,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
@@ -200,9 +203,6 @@ class User extends Equatable {
 
   /// Check if user prefers imperial (lbs) units
   bool get usesImperialWeight => preferredWeightUnit == 'lbs';
-
-  /// Get photo URL (placeholder for now - would come from auth provider)
-  String? get photoUrl => null;
 
   /// Get fitness goal (first goal from goals list, formatted for display)
   String? get fitnessGoal {
@@ -601,6 +601,7 @@ class User extends Equatable {
         weightUnit,
         primaryGoal,
         muscleFocusPoints,
+        photoUrl,
       ];
 
   User copyWith({
@@ -633,6 +634,7 @@ class User extends Equatable {
     String? weightUnit,
     String? primaryGoal,
     Map<String, int>? muscleFocusPoints,
+    String? photoUrl,
   }) {
     return User(
       id: id ?? this.id,
@@ -664,6 +666,7 @@ class User extends Equatable {
       weightUnit: weightUnit ?? this.weightUnit,
       primaryGoal: primaryGoal ?? this.primaryGoal,
       muscleFocusPoints: muscleFocusPoints ?? this.muscleFocusPoints,
+      photoUrl: photoUrl ?? this.photoUrl,
     );
   }
 }

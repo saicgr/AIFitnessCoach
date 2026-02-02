@@ -25,7 +25,7 @@ class GymProfileRepository {
       debugPrint('📋 [GymProfile] Fetching profiles for user: $userId');
 
       final response = await _apiClient.get(
-        _basePath,
+        '$_basePath/',
         queryParameters: {'user_id': userId},
       );
 
@@ -112,7 +112,7 @@ class GymProfileRepository {
       debugPrint('🎨 [GymProfile] Color: ${profile.color}');
 
       final response = await _apiClient.post(
-        _basePath,
+        '$_basePath/',
         queryParameters: {'user_id': userId},
         data: profile.toJson(),
       );
@@ -217,7 +217,7 @@ class GymProfileRepository {
       debugPrint('↕️ [GymProfile] Reordering ${orderedIds.length} profiles');
 
       final response = await _apiClient.post(
-        '$_basePath/reorder',
+        '$_basePath/reorder/',
         queryParameters: {'user_id': userId},
         data: {'profile_ids': orderedIds},
       );

@@ -471,7 +471,16 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         ),
       ),
       ),
-      // FAB removed - using compact meal row and app bar icons instead
+      // Quick Add FAB for easy food logging
+      floatingActionButton: _userId != null && _userId!.isNotEmpty
+          ? QuickAddFABSimple(
+              userId: _userId!,
+              onMealLogged: () {
+                // Refresh nutrition data after logging a meal
+                ref.read(nutritionProvider.notifier).loadTodaySummary(_userId!);
+              },
+            )
+          : null,
     );
   }
 
@@ -1047,7 +1056,7 @@ class _ColoredNutritionTabBar extends StatelessWidget {
 
   static const List<String> _tabLabels = [
     'Daily',
-    'Nutri',
+    'Nutrients',
     'Recipes',
     'Water',
     'Fast',
@@ -2000,31 +2009,75 @@ class _LoggedMealsSection extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  ...typeMeals.map((meal) => Padding(
-                    padding: const EdgeInsets.only(left: 24, top: 2),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            meal.foodItems.isNotEmpty
-                                ? meal.foodItems.map((f) => f.name).join(', ')
-                                : 'Food',
+                  ...typeMeals.map((meal) => Dismissible(
+                    key: ValueKey(meal.id),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 16),
+                      margin: const EdgeInsets.only(left: 24, top: 2, bottom: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Delete',
                             style: TextStyle(
+                              color: Colors.white,
                               fontSize: 12,
-                              color: textMuted,
+                              fontWeight: FontWeight.w600,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
+                          SizedBox(width: 4),
+                          Icon(Icons.delete_outline, color: Colors.white, size: 18),
+                        ],
+                      ),
+                    ),
+                    confirmDismiss: (direction) async {
+                      // Show confirmation snackbar with undo option
+                      return true;
+                    },
+                    onDismissed: (_) => onDeleteMeal(meal.id),
+                    child: InkWell(
+                      onTap: () => _showMealDetails(context, meal),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 24, top: 4, bottom: 4, right: 4),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                meal.foodItems.isNotEmpty
+                                    ? meal.foodItems.map((f) => f.name).join(', ')
+                                    : 'Food',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: textMuted,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Text(
+                              '${meal.totalCalories} kcal',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: textMuted,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.chevron_right,
+                              size: 16,
+                              color: textMuted.withOpacity(0.5),
+                            ),
+                          ],
                         ),
-                        Text(
-                          '${meal.totalCalories} kcal',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: textMuted,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   )),
                 ],
@@ -2049,6 +2102,250 @@ class _LoggedMealsSection extends StatelessWidget {
       default:
         return '🍴';
     }
+  }
+
+  void _showMealDetails(BuildContext context, FoodLog meal) {
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDarkTheme ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDarkTheme ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDarkTheme ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = isDarkTheme ? AppColors.teal : AppColorsLight.teal;
+    final cardBorder = isDarkTheme ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: textMuted.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Text(
+                    _getMealEmoji(meal.mealType),
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          meal.mealType.substring(0, 1).toUpperCase() +
+                              meal.mealType.substring(1),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: textPrimary,
+                          ),
+                        ),
+                        Text(
+                          '${meal.totalCalories} kcal',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: teal,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      onDeleteMeal(meal.id);
+                    },
+                    icon: Icon(Icons.delete_outline, color: AppColors.error),
+                    tooltip: 'Delete meal',
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            // Food items list
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                itemCount: meal.foodItems.length,
+                itemBuilder: (context, index) {
+                  final food = meal.foodItems[index];
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: cardBorder.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          food.name,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            _MacroChip(label: 'Cal', value: '${food.calories ?? 0}', color: teal),
+                            const SizedBox(width: 8),
+                            _MacroChip(label: 'P', value: '${(food.proteinG ?? 0).toStringAsFixed(0)}g', color: AppColors.purple),
+                            const SizedBox(width: 8),
+                            _MacroChip(label: 'C', value: '${(food.carbsG ?? 0).toStringAsFixed(0)}g', color: AppColors.orange),
+                            const SizedBox(width: 8),
+                            _MacroChip(label: 'F', value: '${(food.fatG ?? 0).toStringAsFixed(0)}g', color: AppColors.error),
+                          ],
+                        ),
+                        if (food.amount != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Amount: ${food.amount}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: textMuted,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            // Macros summary
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: cardBorder)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _MacroSummary(
+                    label: 'Protein',
+                    value: '${meal.proteinG.toStringAsFixed(0)}g',
+                    color: AppColors.purple,
+                    isDark: isDarkTheme,
+                  ),
+                  _MacroSummary(
+                    label: 'Carbs',
+                    value: '${meal.carbsG.toStringAsFixed(0)}g',
+                    color: AppColors.orange,
+                    isDark: isDarkTheme,
+                  ),
+                  _MacroSummary(
+                    label: 'Fat',
+                    value: '${meal.fatG.toStringAsFixed(0)}g',
+                    color: AppColors.error,
+                    isDark: isDarkTheme,
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: MediaQuery.of(context).padding.bottom),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Helper widget for macro chips in meal details
+class _MacroChip extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _MacroChip({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        '$label: $value',
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+// Helper widget for macro summary in meal details
+class _MacroSummary extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  final bool isDark;
+
+  const _MacroSummary({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: textMuted,
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -2170,11 +2467,20 @@ class _CompactEnergyHeader extends StatelessWidget {
                   ],
                 ),
               ),
-              // Remaining
+              // Remaining - More prominent with label
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    Text(
+                      isOver ? 'OVER' : 'REMAINING',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: textMuted,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                     Text(
                       isOver ? '+${consumed - target}' : '$remaining',
                       style: TextStyle(
@@ -2184,7 +2490,7 @@ class _CompactEnergyHeader extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      isOver ? 'over' : 'left',
+                      'kcal',
                       style: TextStyle(
                         fontSize: 11,
                         color: textMuted,
@@ -3261,49 +3567,85 @@ class _PinnedNutrientChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final glassSurface =
         isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     final color = Color(
         int.parse(nutrient.progressColor.replaceFirst('#', '0xFF')));
+    final percentage = nutrient.percentage.clamp(0.0, 100.0);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      width: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: BoxDecoration(
         color: glassSurface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          // Nutrient name
           Text(
             nutrient.displayName,
             style: TextStyle(
               fontSize: 10,
+              fontWeight: FontWeight.w500,
               color: textMuted,
             ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2),
-          Text(
-            '${nutrient.formattedCurrent}${nutrient.unit}',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: color,
+          const SizedBox(height: 8),
+          // Progress bar with percentage
+          SizedBox(
+            width: double.infinity,
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: (percentage / 100).clamp(0.0, 1.0),
+                    minHeight: 8,
+                    backgroundColor: elevated,
+                    color: color,
+                  ),
+                ),
+                // Percentage overlay (only show if > 10% for visibility)
+                if (percentage >= 10)
+                  Positioned.fill(
+                    child: Center(
+                      child: Text(
+                        '${percentage.toInt()}%',
+                        style: TextStyle(
+                          fontSize: 7,
+                          fontWeight: FontWeight.bold,
+                          color: percentage > 50 ? Colors.white : color,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
-          SizedBox(
-            width: 50,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(2),
-              child: LinearProgressIndicator(
-                value: (nutrient.percentage / 100).clamp(0.0, 1.0),
-                minHeight: 3,
-                backgroundColor: glassSurface,
-                color: color,
-              ),
+          const SizedBox(height: 6),
+          // Current / Target value
+          Text(
+            '${nutrient.formattedCurrent}/${nutrient.formattedTarget}',
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+            maxLines: 1,
+          ),
+          // Unit
+          Text(
+            nutrient.unit,
+            style: TextStyle(
+              fontSize: 8,
+              color: textMuted,
             ),
           ),
         ],

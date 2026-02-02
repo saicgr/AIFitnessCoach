@@ -61,7 +61,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
         child: InkWell(
           onTap: () {
             HapticService.light();
-            context.push('/progress/milestones');
+            context.push('/stats/milestones');
           },
           borderRadius: BorderRadius.circular(16),
           child: Container(
@@ -292,7 +292,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
         child: InkWell(
           onTap: () {
             HapticService.light();
-            context.push('/progress/milestones');
+            context.push('/stats/milestones');
           },
           borderRadius: BorderRadius.circular(16),
           child: Container(

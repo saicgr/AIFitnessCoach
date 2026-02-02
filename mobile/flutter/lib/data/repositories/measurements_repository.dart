@@ -164,9 +164,18 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
       final latestByType = <MeasurementType, MeasurementEntry>{};
       final changeFromPrevious = <MeasurementType, double>{};
 
-      // Load history for each measurement type
-      for (final type in MeasurementType.values) {
-        final history = await _repository.getMeasurementHistory(userId, type);
+      // Load history for all measurement types in PARALLEL for faster loading
+      final allTypes = MeasurementType.values;
+      final futures = allTypes.map((type) =>
+        _repository.getMeasurementHistory(userId, type)
+      ).toList();
+
+      final allHistories = await Future.wait(futures);
+
+      // Process results
+      for (var i = 0; i < allTypes.length; i++) {
+        final type = allTypes[i];
+        final history = allHistories[i];
         if (history.isNotEmpty) {
           historyByType[type] = history;
           latestByType[type] = history.first;
@@ -310,11 +319,18 @@ class MeasurementsRepository {
     int limit = 50,
   }) async {
     try {
+      // Add a 15-second timeout to prevent infinite loading
       final response = await _client.get(
         '${ApiConstants.metrics}/history/$userId',
         queryParameters: {
           'metric_type': type.apiValue,
           'limit': limit,
+        },
+      ).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          debugPrint('⚠️ Timeout getting ${type.displayName} history');
+          throw Exception('Request timeout');
         },
       );
 
@@ -324,7 +340,7 @@ class MeasurementsRepository {
       }
       return [];
     } catch (e) {
-      debugPrint('❌ Error getting measurement history: $e');
+      debugPrint('❌ Error getting ${type.displayName} history: $e');
       return [];
     }
   }

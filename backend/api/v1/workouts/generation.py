@@ -237,24 +237,39 @@ async def generate_workout(request: GenerateWorkoutRequest):
         except Exception as e:
             logger.warning(f"⚠️ [Workout Generation] Failed to fetch custom exercises: {e}")
 
-        # Fetch user preferences (avoided exercises, avoided muscles, staple exercises)
-        # This is CRITICAL for respecting user preferences in workout generation
-        logger.info(f"🎯 [Workout Generation] Fetching user preferences for: {request.user_id}")
-        avoided_exercises = await get_user_avoided_exercises(request.user_id)
-        avoided_muscles = await get_user_avoided_muscles(request.user_id)
-        staple_exercises = await get_user_staple_exercises(request.user_id)
+        # Fetch ALL user preferences in PARALLEL for faster generation
+        # This reduces ~900ms-1.8s of sequential DB calls to ~100-300ms
+        logger.info(f"🚀 [Workout Generation] Fetching all user preferences in parallel for: {request.user_id}")
+        (
+            avoided_exercises,
+            avoided_muscles,
+            staple_exercises,
+            rep_preferences,
+            progression_context,
+            workout_patterns,
+            hormonal_context,
+            set_type_prefs,
+            injuries,
+        ) = await asyncio.gather(
+            get_user_avoided_exercises(request.user_id),
+            get_user_avoided_muscles(request.user_id),
+            get_user_staple_exercises(request.user_id),
+            get_user_rep_preferences(request.user_id),
+            get_user_progression_context(request.user_id),
+            get_user_workout_patterns(request.user_id),
+            get_user_hormonal_context(request.user_id),
+            get_user_set_type_preferences(request.user_id, supabase_client=db.client),
+            get_active_injuries_with_muscles(request.user_id),
+        )
+        logger.info(f"✅ [Workout Generation] All user preferences fetched in parallel")
 
+        # Log what we found
         if avoided_exercises:
             logger.info(f"🚫 [Workout Generation] User has {len(avoided_exercises)} avoided exercises")
         if avoided_muscles.get("avoid") or avoided_muscles.get("reduce"):
             logger.info(f"🚫 [Workout Generation] User has avoided muscles: avoid={avoided_muscles.get('avoid')}, reduce={avoided_muscles.get('reduce')}")
         if staple_exercises:
             logger.info(f"⭐ [Workout Generation] User has {len(staple_exercises)} staple exercises")
-
-        # Fetch progression context and rep preferences for leverage-based progressions
-        logger.info(f"[Workout Generation] Fetching progression context for leverage-based progressions")
-        rep_preferences = await get_user_rep_preferences(request.user_id)
-        progression_context = await get_user_progression_context(request.user_id)
 
         # Build progression philosophy prompt
         progression_philosophy = build_progression_philosophy_prompt(
@@ -266,9 +281,7 @@ async def generate_workout(request: GenerateWorkoutRequest):
         if progression_context.get("mastered_exercises"):
             logger.info(f"[Workout Generation] User has {len(progression_context['mastered_exercises'])} mastered exercises")
 
-        # Fetch user's historical workout patterns and set/rep limits
-        logger.info(f"[Workout Generation] Fetching workout patterns and set/rep limits for user: {request.user_id}")
-        workout_patterns = await get_user_workout_patterns(request.user_id)
+        # Extract workout patterns data
         workout_patterns_context = workout_patterns.get("historical_context", "")
         set_rep_limits = workout_patterns.get("set_rep_limits", {})
         exercise_patterns = workout_patterns.get("exercise_patterns", {})
@@ -280,18 +293,14 @@ async def generate_workout(request: GenerateWorkoutRequest):
         if exercise_patterns:
             logger.info(f"[Workout Generation] Found {len(exercise_patterns)} exercise patterns from history")
 
-        # Fetch hormonal health context for gender-specific and cycle-aware workouts
-        logger.info(f"[Workout Generation] Fetching hormonal health context for user: {request.user_id}")
-        hormonal_context = await get_user_hormonal_context(request.user_id)
+        # Extract hormonal context
         hormonal_ai_context = hormonal_context.get("ai_context", "")
         if hormonal_context.get("cycle_phase"):
             logger.info(f"[Workout Generation] User is in {hormonal_context['cycle_phase']} phase (day {hormonal_context.get('cycle_day')})")
         if hormonal_context.get("kegels_enabled"):
             logger.info(f"[Workout Generation] User has kegels enabled - warmup: {hormonal_context.get('include_kegels_in_warmup')}, cooldown: {hormonal_context.get('include_kegels_in_cooldown')}")
 
-        # Fetch set type preferences for personalized drop set / failure set recommendations
-        logger.info(f"[Workout Generation] Fetching set type preferences for user: {request.user_id}")
-        set_type_prefs = await get_user_set_type_preferences(request.user_id, supabase_client=db.client)
+        # Build set type context
         set_type_context = build_set_type_context(set_type_prefs)
         if set_type_prefs:
             advanced_types = [k for k in set_type_prefs.keys() if k not in ["working", "warmup"]]
@@ -299,6 +308,7 @@ async def generate_workout(request: GenerateWorkoutRequest):
                 logger.info(f"[Workout Generation] User has history with set types: {advanced_types}")
 
         gemini_service = GeminiService()
+        exercise_rag = get_exercise_rag_service()
 
         try:
             # Combine progression philosophy with hormonal context for AI
@@ -309,26 +319,67 @@ async def generate_workout(request: GenerateWorkoutRequest):
             # Convert staple exercises from dicts to names
             staple_names = get_staple_names(staple_exercises) if staple_exercises else None
 
-            workout_data = await gemini_service.generate_workout_plan(
+            # Determine focus area for RAG selection
+            focus_area = request.focus_areas[0] if request.focus_areas else "full_body"
+
+            # Calculate exercise count based on duration
+            target_duration = request.duration_minutes or 45
+            exercise_count = max(4, min(12, target_duration // 6))  # 4-12 exercises
+
+            # Extract injury names (injuries already fetched in parallel above)
+            injury_names = [i.get("name") for i in injuries] if injuries else None
+
+            # Use Exercise RAG to select exercises from the database
+            # This ensures all exercise names match exercise_library_cleaned
+            logger.info(f"🔍 [RAG] Selecting {exercise_count} exercises for {focus_area} workout")
+            rag_exercises = await exercise_rag.select_exercises_for_workout(
+                focus_area=focus_area,
+                equipment=equipment if isinstance(equipment, list) else [],
                 fitness_level=fitness_level or "intermediate",
                 goals=goals if isinstance(goals, list) else [],
-                equipment=equipment if isinstance(equipment, list) else [],
-                duration_minutes=request.duration_minutes or 45,
-                focus_areas=request.focus_areas,
-                intensity_preference=intensity_preference,
-                custom_exercises=custom_exercises if custom_exercises else None,
-                workout_environment=workout_environment,
-                equipment_details=equipment_details if equipment_details else None,
-                avoided_exercises=avoided_exercises if avoided_exercises else None,
+                count=exercise_count,
+                avoid_exercises=avoided_exercises if avoided_exercises else [],
+                injuries=injury_names,
+                staple_exercises=staple_exercises,
                 avoided_muscles=avoided_muscles if (avoided_muscles.get("avoid") or avoided_muscles.get("reduce")) else None,
-                staple_exercises=staple_names,
-                progression_philosophy=combined_context if combined_context else None,
-                workout_patterns_context=workout_patterns_context if workout_patterns_context else None,
-                set_type_context=set_type_context if set_type_context else None,
-                primary_goal=primary_goal,
-                muscle_focus_points=muscle_focus_points,
-                training_split=training_split,
+                workout_environment=workout_environment,
             )
+
+            if rag_exercises:
+                # Use RAG-selected exercises - these have correct names from DB
+                logger.info(f"✅ [RAG] Selected {len(rag_exercises)} exercises from library")
+                workout_data = await gemini_service.generate_workout_from_library(
+                    exercises=rag_exercises,
+                    fitness_level=fitness_level or "intermediate",
+                    goals=goals if isinstance(goals, list) else [],
+                    duration_minutes=request.duration_minutes or 45,
+                    focus_areas=request.focus_areas if request.focus_areas else [focus_area],
+                    intensity_preference=intensity_preference,
+                    workout_type_preference=request.workout_type,
+                )
+            else:
+                # Fallback to free-form generation if RAG returns no exercises
+                logger.warning(f"⚠️ [RAG] No exercises found, falling back to free-form generation")
+                workout_data = await gemini_service.generate_workout_plan(
+                    fitness_level=fitness_level or "intermediate",
+                    goals=goals if isinstance(goals, list) else [],
+                    equipment=equipment if isinstance(equipment, list) else [],
+                    duration_minutes=request.duration_minutes or 45,
+                    focus_areas=request.focus_areas,
+                    intensity_preference=intensity_preference,
+                    custom_exercises=custom_exercises if custom_exercises else None,
+                    workout_environment=workout_environment,
+                    equipment_details=equipment_details if equipment_details else None,
+                    avoided_exercises=avoided_exercises if avoided_exercises else None,
+                    avoided_muscles=avoided_muscles if (avoided_muscles.get("avoid") or avoided_muscles.get("reduce")) else None,
+                    staple_exercises=staple_names,
+                    progression_philosophy=combined_context if combined_context else None,
+                    workout_patterns_context=workout_patterns_context if workout_patterns_context else None,
+                    set_type_context=set_type_context if set_type_context else None,
+                    primary_goal=primary_goal,
+                    muscle_focus_points=muscle_focus_points,
+                    training_split=training_split,
+                )
 
             exercises = workout_data.get("exercises", [])
             exercises = normalize_exercise_numeric_fields(exercises)
@@ -894,6 +945,22 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 estimated_duration = workout_data.get("estimated_duration_minutes")
                 if estimated_duration is not None:
                     estimated_duration = int(estimated_duration)
+                else:
+                    # Calculate fallback duration from exercises if Gemini didn't provide one
+                    # Formula: SUM(sets × (reps × 3s + rest_seconds)) / 60 + (exercises × 30s transitions) / 60
+                    fallback_duration = 0
+                    for ex in exercises:
+                        sets = ex.get("sets", 3)
+                        reps = ex.get("reps", 10)
+                        rest = ex.get("rest_seconds", 60)
+                        # Time per set: reps × 3s (avg rep time) + rest
+                        time_per_set = (reps * 3) + rest
+                        exercise_time = sets * time_per_set
+                        fallback_duration += exercise_time
+                    # Add 30s per exercise for transitions and convert to minutes
+                    fallback_duration = (fallback_duration + len(exercises) * 30) / 60
+                    estimated_duration = max(10, int(fallback_duration))  # Minimum 10 minutes
+                    logger.debug(f"⏱️ [Streaming Duration] Calculated fallback duration: {estimated_duration} min (Gemini didn't provide one)")
 
                 # DURATION VALIDATION: Check if estimated duration is within range
                 # If exceeded, we could auto-truncate exercises to fit (future enhancement)
@@ -905,11 +972,9 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                         # exercises = truncate_exercises_to_duration(exercises, body.duration_minutes_max)
                         # OPTION 3 (Future): Regenerate with stricter prompt (requires retry loop)
                     else:
-                        logger.info(f"✅ [Streaming Duration] Estimated {estimated_duration} min is within range {body.duration_minutes_min or 0}-{body.duration_minutes_max} min")
+                        logger.debug(f"✅ [Streaming Duration] Estimated {estimated_duration} min is within range {body.duration_minutes_min or 0}-{body.duration_minutes_max} min")
                 elif estimated_duration:
-                    logger.info(f"⏱️ [Streaming Duration] Estimated duration: {estimated_duration} min")
-                else:
-                    logger.warning(f"⚠️ [Streaming Duration] No estimated_duration_minutes returned by Gemini")
+                    logger.debug(f"⏱️ [Streaming Duration] Estimated duration: {estimated_duration} min")
 
                 # POST-GENERATION VALIDATION: Filter out any exercises that violate user preferences
                 if avoided_exercises:
@@ -1244,49 +1309,86 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
                 duration_minutes=params["duration_minutes"],
             )
 
-            gemini_service = GeminiService()
+            # Generate workout using NON-STREAMING for faster response
+            # Mood workouts are small (~500 token prompt, ~6KB response)
+            # Non-streaming is 3-5x faster than streaming for small responses
+            yield f"event: chunk\ndata: {json.dumps({'status': 'generating', 'message': 'Creating your ' + mood.value + ' workout...'})}\n\n"
 
-            # Generate workout using streaming
-            yield f"event: chunk\ndata: {json.dumps({'status': 'generating', 'message': 'Creating your {mood.value} workout...'})}\n\n"
+            from google import genai
+            from google.genai import types
+            from core.config import get_settings
+            from models.gemini_schemas import GeneratedWorkoutResponse
 
-            accumulated_text = ""
-            chunk_count = 0
+            settings = get_settings()
+            client = genai.Client(api_key=settings.gemini_api_key)
 
-            async for chunk in gemini_service.generate_workout_plan_streaming(
-                fitness_level=fitness_level,
-                goals=goals if isinstance(goals, list) else [],
-                equipment=equipment if isinstance(equipment, list) else [],
-                duration_minutes=params["duration_minutes"],
-                focus_areas=None,
-                intensity_preference=params["intensity_preference"],
-                custom_prompt_override=prompt,
-            ):
-                accumulated_text += chunk
-                chunk_count += 1
+            try:
+                # Use non-streaming for faster response (3-5s vs 19s with streaming)
+                gemini_start = datetime.now()
+                response = await client.aio.models.generate_content(
+                    model=settings.gemini_model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=GeneratedWorkoutResponse,
+                        temperature=0.7,
+                        max_output_tokens=4096,  # Mood workouts are smaller
+                    ),
+                )
+                gemini_time_ms = (datetime.now() - gemini_start).total_seconds() * 1000
+                logger.info(f"⚡ [Mood Workout] Gemini non-streaming completed in {gemini_time_ms:.0f}ms")
 
-                if chunk_count % 5 == 0:
-                    elapsed_ms = (datetime.now() - start_time).total_seconds() * 1000
-                    yield f"event: chunk\ndata: {json.dumps({'status': 'generating', 'progress': len(accumulated_text), 'elapsed_ms': elapsed_ms})}\n\n"
+                content = response.text.strip() if response.text else ""
+                if not content:
+                    raise ValueError("Empty response from Gemini")
+
+                workout_data = json.loads(content)
+            except Exception as gemini_error:
+                logger.error(f"❌ [Mood Workout] Gemini error: {gemini_error}")
+                yield f"event: error\ndata: {json.dumps({'error': f'Failed to generate workout: {str(gemini_error)}'})}\n\n"
+                return
 
             # Parse the response
             try:
-                content = accumulated_text.strip()
-                if "```json" in content:
-                    content = content.split("```json")[1].split("```")[0].strip()
-                elif "```" in content:
-                    parts = content.split("```")
-                    if len(parts) >= 2:
-                        content = parts[1].strip()
-                        if content.startswith(("json", "JSON")):
-                            content = content[4:].strip()
-
-                workout_data = json.loads(content)
                 exercises = workout_data.get("exercises", [])
                 exercises = normalize_exercise_numeric_fields(exercises)
-                warmup = workout_data.get("warmup", [])
-                warmup = normalize_exercise_numeric_fields(warmup)
-                cooldown = workout_data.get("cooldown", [])
-                cooldown = normalize_exercise_numeric_fields(cooldown)
+
+                # Generate warmup and cooldown using dictionary-based algorithm (not Gemini)
+                # This provides consistent exercise names that match our database
+                warmup_stretch_svc = get_warmup_stretch_service()
+
+                # Get user injuries for injury-aware warmup/cooldown selection
+                user_injuries = user.get("injuries", []) if user else []
+                if isinstance(user_injuries, str):
+                    user_injuries = [user_injuries] if user_injuries else []
+
+                # Determine training split from mood/workout type
+                training_split = "full_body"  # Default for mood workouts
+                if params.get("workout_type_preference") == "cardio":
+                    training_split = "cardio"
+                elif params.get("workout_type_preference") == "strength":
+                    training_split = "full_body"
+
+                # Generate warmup using algorithm (instant, with video URLs)
+                warmup = await warmup_stretch_svc.generate_warmup(
+                    exercises=exercises,
+                    duration_minutes=params.get("warmup_duration", 3),
+                    injuries=user_injuries if user_injuries else None,
+                    user_id=body.user_id,
+                    training_split=training_split,
+                )
+                logger.info(f"🔥 [Mood Workout] Generated {len(warmup)} warmup exercises using algorithm")
+
+                # Generate cooldown/stretches using algorithm (instant, with video URLs)
+                cooldown = await warmup_stretch_svc.generate_stretches(
+                    exercises=exercises,
+                    duration_minutes=params.get("cooldown_duration", 2),
+                    injuries=user_injuries if user_injuries else None,
+                    user_id=body.user_id,
+                    training_split=training_split,
+                )
+                logger.info(f"❄️ [Mood Workout] Generated {len(cooldown)} cooldown/stretch exercises using algorithm")
+
                 workout_name = workout_data.get("name", f"{mood.value.capitalize()} Quick Workout")
                 workout_type = workout_data.get("type", params["workout_type_preference"])
                 difficulty = workout_data.get("difficulty", params["intensity_preference"])
@@ -1413,7 +1515,7 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
                 "cooldown": cooldown,
                 "duration_minutes": params["duration_minutes"],
                 "total_time_ms": total_time_ms,
-                "chunk_count": chunk_count,
+                "gemini_time_ms": gemini_time_ms,  # Track Gemini API time
                 "mood": mood.value,
                 "mood_emoji": params["mood_emoji"],
                 "mood_color": params["mood_color"],

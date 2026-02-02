@@ -1578,6 +1578,14 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
         # Used to display "(each side)" in the UI for weight interpretation
         is_unilateral = self._detect_unilateral(exercise_name, exercise)
 
+        # Check if this is a timed exercise (planks, wall sits, holds)
+        is_timed = exercise.get("is_timed", False)
+        hold_seconds = exercise.get("default_hold_seconds")
+
+        # For timed exercises, set reps to 1 (time-based, not rep-based)
+        if is_timed and hold_seconds:
+            reps = 1
+
         return {
             "name": exercise_name,
             "sets": sets,
@@ -1598,6 +1606,8 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
             "is_staple": exercise.get("is_staple", False),  # User's core lifts that never rotate
             "from_queue": exercise.get("from_queue", False),  # From exercise queue
             "is_unilateral": is_unilateral,  # True if single-arm/leg - display "(each side)" in UI
+            "is_timed": is_timed,  # True for planks, wall sits, holds - display timer instead of reps
+            "hold_seconds": hold_seconds,  # Default hold time for timed exercises
             "set_targets": set_targets,  # CRITICAL: Required by validate_set_targets_strict()
         }
 

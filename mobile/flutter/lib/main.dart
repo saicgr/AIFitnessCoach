@@ -8,6 +8,7 @@ import 'app.dart';
 import 'core/constants/api_constants.dart';
 import 'core/accessibility/accessibility_provider.dart';
 import 'core/providers/subscription_provider.dart';
+import 'data/services/data_cache_service.dart';
 import 'data/services/haptic_service.dart';
 import 'data/services/image_url_cache.dart';
 import 'data/services/notification_service.dart';
@@ -43,6 +44,9 @@ void main() async {
 
   // Initialize persistent image URL cache
   await ImageUrlCache.initialize();
+
+  // Initialize data cache service for cache-first pattern
+  await DataCacheService.initialize();
 
   // Initialize haptic service with saved preference
   await HapticService.initialize();

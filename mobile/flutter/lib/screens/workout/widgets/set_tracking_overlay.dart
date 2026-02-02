@@ -15,6 +15,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../models/workout_state.dart';
+import 'enhanced_notes_sheet.dart';
 import 'exercise_analytics_page.dart';
 import 'inline_rest_row.dart';
 import 'number_input_widgets.dart';
@@ -1470,12 +1471,12 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
               ),
             ),
           ),
-          // Reps input column
-          const Expanded(
+          // Reps/Time input column - show TIME for timed exercises
+          Expanded(
             flex: 2,
             child: Text(
-              'REPS',
-              style: TextStyle(
+              widget.exercise.isTimedExercise ? 'TIME' : 'REPS',
+              style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: AppColors.electricBlue,
@@ -2008,149 +2009,18 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     );
   }
 
-  /// Show notes editing dialog
+  /// Show enhanced notes editing dialog with audio, photo, and voice-to-text
   void _showNotesDialog(bool isDark) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.surface : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Title
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Exercise Notes',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black,
-                    ),
-                  ),
-                  if (_notesController.text.isNotEmpty)
-                    GestureDetector(
-                      onTap: () {
-                        setState(() => _notesController.clear());
-                        Navigator.pop(ctx);
-                      },
-                      child: Text(
-                        'Clear',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.error,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Notes text field
-              TextField(
-                controller: _notesController,
-                focusNode: _notesFocusNode,
-                maxLines: 4,
-                autofocus: true,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: isDark ? Colors.white : Colors.black,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Add notes about form, adjustments, or how this set felt...',
-                  hintStyle: TextStyle(
-                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                  ),
-                  filled: true,
-                  fillColor: isDark
-                      ? Colors.white.withOpacity(0.05)
-                      : Colors.black.withOpacity(0.03),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: isDark
-                          ? Colors.white.withOpacity(0.1)
-                          : Colors.black.withOpacity(0.1),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: isDark
-                          ? Colors.white.withOpacity(0.1)
-                          : Colors.black.withOpacity(0.1),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: AppColors.purple,
-                      width: 2,
-                    ),
-                  ),
-                ),
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 16),
-
-              // Done button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {});
-                    Navigator.pop(ctx);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.purple,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Done',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-
-              SizedBox(height: MediaQuery.of(ctx).padding.bottom + 8),
-            ],
-          ),
-        ),
-      ),
+    showEnhancedNotesSheet(
+      context,
+      initialNotes: _notesController.text,
+      onSave: (notes, audioPath, photoPaths) {
+        setState(() {
+          _notesController.text = notes;
+          // Audio and photo paths can be stored in exercise metadata if needed
+          // For now, we just update the text notes
+        });
+      },
     );
   }
 
@@ -2489,11 +2359,19 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     final unit = widget.useKg ? 'kg' : 'lbs';
     String targetDisplay = '—';
     final setTarget = widget.exercise.getTargetForSet(index + 1); // 1-indexed
+    final isTimedExercise = widget.exercise.isTimedExercise;
+
     if (setTarget != null) {
       // Use per-set AI target (Gravl/Hevy style)
       final targetWeight = setTarget.targetWeightKg;
       final targetReps = setTarget.targetReps;
-      if (targetWeight != null && targetWeight > 0) {
+      final targetHoldSeconds = setTarget.targetHoldSeconds;
+
+      // Check if this is a timed exercise with per-set hold times
+      if (isTimedExercise && targetHoldSeconds != null && targetHoldSeconds > 0) {
+        // Display hold time for timed exercises (planks, wall sits, etc.)
+        targetDisplay = setTarget.holdTimeDisplay;
+      } else if (targetWeight != null && targetWeight > 0) {
         final displayTargetWeight = widget.useKg
             ? targetWeight
             : targetWeight * 2.20462;
@@ -2515,7 +2393,25 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
       // Fallback to exercise-level target
       final targetWeight = widget.exercise.weight;
       final targetReps = widget.exercise.reps;
-      if (targetWeight != null && targetWeight > 0 && targetReps != null) {
+
+      // Check for timed exercise with hold_seconds
+      if (isTimedExercise) {
+        final holdSeconds = widget.exercise.holdSeconds;
+        if (holdSeconds != null && holdSeconds > 0) {
+          // Format hold time display
+          if (holdSeconds >= 60) {
+            final minutes = holdSeconds ~/ 60;
+            final seconds = holdSeconds % 60;
+            if (seconds > 0) {
+              targetDisplay = '${minutes}m ${seconds}s';
+            } else {
+              targetDisplay = '${minutes}m';
+            }
+          } else {
+            targetDisplay = '${holdSeconds}s';
+          }
+        }
+      } else if (targetWeight != null && targetWeight > 0 && targetReps != null) {
         final displayTargetWeight = widget.useKg
             ? targetWeight
             : targetWeight * 2.20462;

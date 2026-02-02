@@ -3784,8 +3784,8 @@ async def get_user_hormonal_context(user_id: str) -> dict:
         if user_response.data:
             context["gender"] = user_response.data.get("gender")
 
-        # Get hormonal profile
-        profile_response = db.client.table("hormonal_profiles").select("*").eq("user_id", user_id).single().execute()
+        # Get hormonal profile (use maybe_single to handle users without hormonal profile)
+        profile_response = db.client.table("hormonal_profiles").select("*").eq("user_id", user_id).maybe_single().execute()
 
         if profile_response.data:
             profile = profile_response.data

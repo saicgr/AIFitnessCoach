@@ -64,6 +64,18 @@
 	<string>FitWiz needs access to the microphone for voice-to-text food logging.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>FitWiz needs camera access to take food photos for AI nutrition analysis and barcode scanning.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>FitWiz needs your location to find nearby gyms and set up automatic gym profile switching.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>FitWiz uses background location to automatically switch to your gym profile when you arrive at a saved gym location.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>FitWiz uses background location to automatically switch to your gym profile when you arrive at a saved gym location.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

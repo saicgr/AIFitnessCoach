@@ -209,29 +209,22 @@ class _PreferencesStepState extends State<PreferencesStep> {
             selectedValue: widget.data.workoutEnvironment,
             onChanged: (value) {
               widget.data.workoutEnvironment = value;
-              // Auto-populate gym name suggestion
-              if (value == 'home_gym') {
-                _gymNameController.text = 'Home Gym';
-                widget.data.gymName = 'Home Gym';
-              } else if (value == 'both') {
-                _gymNameController.text = 'Home Gym';
-                widget.data.gymName = 'Home Gym';
-              } else {
-                _gymNameController.text = '';
-                widget.data.gymName = null;
-              }
+              // Clear gym name - let the default hint show based on environment
+              // User can optionally enter a custom name
+              _gymNameController.text = '';
+              widget.data.gymName = null;
               widget.onDataChanged();
-              setState(() {}); // Rebuild to show/hide suggestions
+              setState(() {}); // Rebuild to show/hide suggestions and update default name
             },
             showDescriptions: true,
           ),
           const SizedBox(height: 24),
 
-          // Gym Name Input
-          _buildLabel('Location Name'),
-          const Text(
-            'What would you like to call this workout location?',
-            style: TextStyle(
+          // Gym Name Input - Optional
+          _buildLabel('Gym Name'),
+          Text(
+            'Optional - defaults to "${_getDefaultGymName()}" if left empty',
+            style: const TextStyle(
               fontSize: 12,
               color: AppColors.textMuted,
             ),
@@ -240,11 +233,11 @@ class _PreferencesStepState extends State<PreferencesStep> {
           TextField(
             controller: _gymNameController,
             onChanged: (value) {
-              widget.data.gymName = value;
+              widget.data.gymName = value.isEmpty ? null : value;
               widget.onDataChanged();
             },
             decoration: InputDecoration(
-              hintText: _getGymNameHint(),
+              hintText: _getDefaultGymName(),
               filled: true,
               fillColor: AppColors.glassSurface,
               border: OutlineInputBorder(
@@ -260,6 +253,17 @@ class _PreferencesStepState extends State<PreferencesStep> {
                 borderSide: const BorderSide(color: AppColors.accent, width: 2),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              suffixIcon: _gymNameController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 18, color: AppColors.textMuted),
+                      onPressed: () {
+                        _gymNameController.clear();
+                        widget.data.gymName = null;
+                        widget.onDataChanged();
+                        setState(() {});
+                      },
+                    )
+                  : null,
             ),
             style: const TextStyle(
               color: AppColors.textPrimary,
@@ -286,8 +290,8 @@ class _PreferencesStepState extends State<PreferencesStep> {
 
           // Equipment
           _buildLabel(
-            widget.data.gymName != null && widget.data.gymName!.isNotEmpty
-                ? 'Equipment at ${widget.data.gymName}'
+            widget.data.workoutEnvironment != null
+                ? 'Equipment at ${widget.data.effectiveGymName}'
                 : 'Equipment Available',
             isRequired: true,
           ),
@@ -584,6 +588,22 @@ class _PreferencesStepState extends State<PreferencesStep> {
           ),
       ],
     );
+  }
+
+  /// Returns the default gym name based on selected environment
+  String _getDefaultGymName() {
+    switch (widget.data.workoutEnvironment) {
+      case 'home_gym':
+        return 'Home Gym';
+      case 'commercial_gym':
+        return 'My Gym';
+      case 'both':
+        return 'Home Gym';
+      case 'other':
+        return 'My Gym';
+      default:
+        return 'My Gym';
+    }
   }
 
   String _getGymNameHint() {

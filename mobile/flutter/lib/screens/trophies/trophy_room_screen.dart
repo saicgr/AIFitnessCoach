@@ -6,47 +6,50 @@ import 'package:simple_circular_progress_bar/simple_circular_progress_bar.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/trophy.dart';
+import '../../data/models/trophy_filter_state.dart';
 import '../../data/models/user_xp.dart';
+import '../../data/providers/trophy_filter_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/services/haptic_service.dart';
+import 'widgets/trophy_filter_sheet.dart';
 
-/// Filter options for trophy display
-enum TrophyFilter {
+/// Filter options for trophy status display
+enum TrophyStatusFilter {
   all,
   earned,
   inProgress,
   locked,
 }
 
-extension TrophyFilterExtension on TrophyFilter {
+extension TrophyStatusFilterExtension on TrophyStatusFilter {
   String get displayName {
     switch (this) {
-      case TrophyFilter.all:
+      case TrophyStatusFilter.all:
         return 'All';
-      case TrophyFilter.earned:
+      case TrophyStatusFilter.earned:
         return 'Earned';
-      case TrophyFilter.inProgress:
+      case TrophyStatusFilter.inProgress:
         return 'In Progress';
-      case TrophyFilter.locked:
+      case TrophyStatusFilter.locked:
         return 'Locked';
     }
   }
 
   IconData get icon {
     switch (this) {
-      case TrophyFilter.all:
+      case TrophyStatusFilter.all:
         return Icons.grid_view_rounded;
-      case TrophyFilter.earned:
+      case TrophyStatusFilter.earned:
         return Icons.emoji_events;
-      case TrophyFilter.inProgress:
+      case TrophyStatusFilter.inProgress:
         return Icons.trending_up;
-      case TrophyFilter.locked:
+      case TrophyStatusFilter.locked:
         return Icons.lock_outline;
     }
   }
 }
 
-/// Trophy Room - View all trophies with filtering and categories
+/// Trophy Room - View all trophies with search, filters, and collapsible sections
 class TrophyRoomScreen extends ConsumerStatefulWidget {
   const TrophyRoomScreen({super.key});
 
@@ -54,45 +57,18 @@ class TrophyRoomScreen extends ConsumerStatefulWidget {
   ConsumerState<TrophyRoomScreen> createState() => _TrophyRoomScreenState();
 }
 
-class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
-    with SingleTickerProviderStateMixin {
-  TrophyFilter _selectedFilter = TrophyFilter.all;
-  TrophyCategory? _selectedCategory;
-  late TabController _tabController;
+class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
+  TrophyStatusFilter _statusFilter = TrophyStatusFilter.all;
+  final TextEditingController _searchController = TextEditingController();
+  final Map<TrophyCategory, bool> _expandedSections = {};
 
-  // Simplified tabs: All, Fitness, Lifestyle, Special
-  static const List<String> _tabNames = ['All', 'Fitness', 'Lifestyle', 'Special'];
-
-  // Category groupings for tabs
-  static const Map<String, List<TrophyCategory>> _categoryGroups = {
-    'Fitness': [
-      TrophyCategory.exerciseMastery,
-      TrophyCategory.volume,
-      TrophyCategory.time,
-      TrophyCategory.personalRecords,
-      TrophyCategory.consistency,
-    ],
-    'Lifestyle': [
-      TrophyCategory.nutrition,
-      TrophyCategory.fasting,
-      TrophyCategory.bodyComposition,
-      TrophyCategory.social,
-    ],
-    'Special': [
-      TrophyCategory.aiCoach,
-      TrophyCategory.special,
-      TrophyCategory.worldRecord,
-    ],
-  };
-
+  // Initialize all sections as expanded
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(
-      length: _tabNames.length,
-      vsync: this,
-    );
-    _tabController.addListener(_onTabChanged);
+    for (final category in TrophyCategory.values) {
+      _expandedSections[category] = true;
+    }
     // Defer provider modification until after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
@@ -101,21 +77,8 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
 
   @override
   void dispose() {
-    _tabController.removeListener(_onTabChanged);
-    _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
-  }
-
-  void _onTabChanged() {
-    if (_tabController.indexIsChanging) return;
-    setState(() {});
-    HapticService.light();
-  }
-
-  List<TrophyCategory>? _getSelectedCategories() {
-    if (_tabController.index == 0) return null; // All
-    final tabName = _tabNames[_tabController.index];
-    return _categoryGroups[tabName];
   }
 
   Future<void> _loadData() async {
@@ -128,42 +91,44 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
   }
 
   List<TrophyProgress> _filterTrophies(List<TrophyProgress> trophies) {
-    // Filter by category group
-    final selectedCategories = _getSelectedCategories();
-    var filtered = selectedCategories != null
-        ? trophies.where((t) => selectedCategories.contains(t.trophy.trophyCategory)).toList()
-        : trophies;
+    var filtered = trophies.toList();
 
-    // Filter by status
-    switch (_selectedFilter) {
-      case TrophyFilter.all:
+    // Apply status filter
+    switch (_statusFilter) {
+      case TrophyStatusFilter.all:
         break;
-      case TrophyFilter.earned:
+      case TrophyStatusFilter.earned:
         filtered = filtered.where((t) => t.isEarned).toList();
         break;
-      case TrophyFilter.inProgress:
+      case TrophyStatusFilter.inProgress:
         filtered = filtered.where((t) => !t.isEarned && t.progressPercentage > 0).toList();
         break;
-      case TrophyFilter.locked:
+      case TrophyStatusFilter.locked:
         filtered = filtered.where((t) => !t.isEarned && t.progressPercentage == 0).toList();
         break;
     }
 
-    // Filter out non-visible trophies (hidden until earned)
-    filtered = filtered.where((t) => t.isVisible).toList();
-
-    // Sort: earned first, then by progress, then by tier
-    filtered.sort((a, b) {
-      if (a.isEarned != b.isEarned) {
-        return a.isEarned ? -1 : 1;
-      }
-      if (a.progressPercentage != b.progressPercentage) {
-        return b.progressPercentage.compareTo(a.progressPercentage);
-      }
-      return a.trophy.tierLevel.compareTo(b.trophy.tierLevel);
-    });
+    // Apply provider filters (search, tier, muscle, category, sort)
+    final filterNotifier = ref.read(trophyFilterProvider.notifier);
+    filtered = filterNotifier.applyFilters(filtered);
 
     return filtered;
+  }
+
+  /// Group trophies by category
+  Map<TrophyCategory, List<TrophyProgress>> _groupByCategory(List<TrophyProgress> trophies) {
+    final grouped = <TrophyCategory, List<TrophyProgress>>{};
+    for (final trophy in trophies) {
+      final category = trophy.trophy.trophyCategory;
+      grouped[category] ??= [];
+      grouped[category]!.add(trophy);
+    }
+    return grouped;
+  }
+
+  /// Get mystery trophies (separate section)
+  List<TrophyProgress> _getMysteryTrophies(List<TrophyProgress> trophies) {
+    return trophies.where((t) => t.isMystery).toList();
   }
 
   @override
@@ -180,108 +145,203 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
     final accentColor = accentEnum.getColor(isDark);
 
     final xpState = ref.watch(xpProvider);
+    final filterState = ref.watch(trophyFilterProvider);
     final userXp = xpState.userXp;
     final allTrophies = xpState.allTrophies;
     final summary = xpState.trophySummary;
     final isLoading = xpState.isLoading || xpState.isLoadingTrophies;
 
     final filteredTrophies = _filterTrophies(allTrophies);
+    final groupedTrophies = _groupByCategory(filteredTrophies);
+    final mysteryTrophies = _getMysteryTrophies(filteredTrophies);
 
     return Scaffold(
       backgroundColor: bgColor,
-      body: CustomScrollView(
-        slivers: [
-          // App Bar
-          SliverAppBar(
-            expandedHeight: 220,
-            pinned: true,
-            backgroundColor: bgColor,
-            surfaceTintColor: Colors.transparent,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: textColor),
-              onPressed: () => context.pop(),
-            ),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.leaderboard_outlined, color: textMuted),
-                onPressed: () => context.push('/xp-leaderboard'),
-                tooltip: 'XP Leaderboard',
-              ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: _buildHeader(
-                userXp,
-                summary,
-                isDark,
-                textColor,
-                textMuted,
-                accentColor,
-                elevatedColor,
-                cardBorder,
-              ),
-            ),
-          ),
-
-          // Category tabs - styled container
-          SliverToBoxAdapter(
-            child: _buildCategoryTabs(isDark, elevatedColor, accentColor, textMuted, cardBorder),
-          ),
-
-          // Filter chips
-          SliverToBoxAdapter(
-            child: _buildFilterChips(isDark, textColor, textMuted, cardBorder, accentColor),
-          ),
-
-          // Stats summary
-          if (summary != null)
-            SliverToBoxAdapter(
-              child: _buildStatsSummary(
-                summary,
-                isDark,
-                textColor,
-                textMuted,
-                elevatedColor,
-                cardBorder,
-                accentColor,
-              ),
-            ),
-
-          // Loading indicator
-          if (isLoading)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Center(
-                  child: CircularProgressIndicator(color: accentColor),
+      body: Stack(
+        children: [
+          CustomScrollView(
+            slivers: [
+              // App Bar with header content
+              SliverAppBar(
+                expandedHeight: 220,
+                pinned: true,
+                backgroundColor: bgColor,
+                surfaceTintColor: Colors.transparent,
+                automaticallyImplyLeading: false,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: _buildHeader(
+                    userXp,
+                    summary,
+                    isDark,
+                    textColor,
+                    textMuted,
+                    accentColor,
+                    elevatedColor,
+                    cardBorder,
+                  ),
                 ),
               ),
-            ),
 
-          // Trophy list
-          if (!isLoading && filteredTrophies.isEmpty)
-            SliverToBoxAdapter(
-              child: _buildEmptyState(textMuted),
-            ),
-
-          if (!isLoading && filteredTrophies.isNotEmpty)
-            SliverPadding(
-              padding: const EdgeInsets.all(16),
-              sliver: _buildTrophyList(
-                filteredTrophies,
-                isDark,
-                textColor,
-                textMuted,
-                elevatedColor,
-                cardBorder,
-                accentColor,
+              // Search bar with filter button
+              SliverToBoxAdapter(
+                child: _buildSearchBar(
+                  isDark,
+                  textColor,
+                  textMuted,
+                  elevatedColor,
+                  cardBorder,
+                  accentColor,
+                  filterState,
+                ),
               ),
-            ),
 
-          // Bottom padding
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 100),
+              // Status filter chips
+              SliverToBoxAdapter(
+                child: _buildStatusFilterChips(isDark, textColor, textMuted, cardBorder, accentColor),
+              ),
+
+              // Stats summary
+              if (summary != null)
+                SliverToBoxAdapter(
+                  child: _buildStatsSummary(
+                    summary,
+                    isDark,
+                    textColor,
+                    textMuted,
+                    elevatedColor,
+                    cardBorder,
+                    accentColor,
+                  ),
+                ),
+
+              // Loading indicator
+              if (isLoading)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Center(
+                      child: CircularProgressIndicator(color: accentColor),
+                    ),
+                  ),
+                ),
+
+              // Empty state
+              if (!isLoading && filteredTrophies.isEmpty)
+                SliverToBoxAdapter(
+                  child: _buildEmptyState(textMuted),
+                ),
+
+              // Mystery Trophies section (special section at top)
+              if (!isLoading && mysteryTrophies.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: _buildMysterySection(
+                    mysteryTrophies,
+                    isDark,
+                    textColor,
+                    textMuted,
+                    elevatedColor,
+                    cardBorder,
+                    accentColor,
+                  ),
+                ),
+
+              // Category sections
+              if (!isLoading && filteredTrophies.isNotEmpty)
+                ...TrophyCategory.values.map((category) {
+                  final categoryTrophies = groupedTrophies[category] ?? [];
+                  // Filter out mystery trophies (shown in separate section)
+                  final visibleTrophies = categoryTrophies.where((t) => !t.isMystery).toList();
+                  if (visibleTrophies.isEmpty) {
+                    return const SliverToBoxAdapter(child: SizedBox.shrink());
+                  }
+                  return SliverToBoxAdapter(
+                    child: _buildCategorySection(
+                      category,
+                      visibleTrophies,
+                      isDark,
+                      textColor,
+                      textMuted,
+                      elevatedColor,
+                      cardBorder,
+                      accentColor,
+                    ),
+                  );
+                }),
+
+              // Bottom padding
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 100),
+              ),
+            ],
+          ),
+
+          // Floating back button
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 16,
+            child: _buildFloatingButton(
+              icon: Icons.arrow_back,
+              onTap: () => context.pop(),
+              isDark: isDark,
+              elevatedColor: elevatedColor,
+              textColor: textColor,
+              cardBorder: cardBorder,
+            ),
+          ),
+
+          // Floating leaderboard button
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            right: 16,
+            child: _buildFloatingButton(
+              icon: Icons.leaderboard_outlined,
+              onTap: () => context.push('/xp-leaderboard'),
+              isDark: isDark,
+              elevatedColor: elevatedColor,
+              textColor: textColor,
+              cardBorder: cardBorder,
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFloatingButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    required bool isDark,
+    required Color elevatedColor,
+    required Color textColor,
+    required Color cardBorder,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        onTap();
+      },
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.black.withValues(alpha: 0.6)
+              : Colors.white.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cardBorder),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(
+          icon,
+          color: textColor,
+          size: 22,
+        ),
       ),
     );
   }
@@ -476,45 +536,92 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
     );
   }
 
-  Widget _buildCategoryTabs(
+  Widget _buildSearchBar(
     bool isDark,
-    Color elevatedColor,
-    Color accentColor,
+    Color textColor,
     Color textMuted,
+    Color elevatedColor,
     Color cardBorder,
+    Color accentColor,
+    TrophyFilterState filterState,
   ) {
+    final filterNotifier = ref.read(trophyFilterProvider.notifier);
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(12),
-        border: isDark ? null : Border.all(color: cardBorder),
+        border: Border.all(color: cardBorder),
       ),
-      child: TabBar(
-        controller: _tabController,
-        indicatorSize: TabBarIndicatorSize.tab,
-        indicator: BoxDecoration(
-          color: accentColor.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(10),
+      child: TextField(
+        controller: _searchController,
+        style: TextStyle(color: textColor, fontSize: 15),
+        decoration: InputDecoration(
+          hintText: 'Search trophies...',
+          hintStyle: TextStyle(color: textMuted),
+          prefixIcon: Icon(Icons.search, color: textMuted, size: 22),
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_searchController.text.isNotEmpty)
+                IconButton(
+                  icon: Icon(Icons.close, color: textMuted, size: 20),
+                  onPressed: () {
+                    _searchController.clear();
+                    filterNotifier.setSearchQuery('');
+                  },
+                ),
+              Stack(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.tune, color: textMuted, size: 22),
+                    onPressed: () => _showFilterSheet(context),
+                  ),
+                  if (filterState.hasActiveFilters)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: accentColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
-        labelColor: accentColor,
-        unselectedLabelColor: textMuted,
-        labelStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.normal,
-          fontSize: 14,
-        ),
-        dividerColor: Colors.transparent,
-        padding: const EdgeInsets.all(4),
-        tabs: _tabNames.map((name) => Tab(text: name)).toList(),
+        onChanged: (value) {
+          filterNotifier.setSearchQuery(value);
+        },
       ),
     );
   }
 
-  Widget _buildFilterChips(
+  void _showFilterSheet(BuildContext context) {
+    HapticService.medium();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => const TrophyFilterSheet(),
+      ),
+    );
+  }
+
+  Widget _buildStatusFilterChips(
     bool isDark,
     Color textColor,
     Color textMuted,
@@ -526,8 +633,8 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children: TrophyFilter.values.map((filter) {
-            final isSelected = _selectedFilter == filter;
+          children: TrophyStatusFilter.values.map((filter) {
+            final isSelected = _statusFilter == filter;
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: FilterChip(
@@ -540,7 +647,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
                 selected: isSelected,
                 onSelected: (_) {
                   HapticService.light();
-                  setState(() => _selectedFilter = filter);
+                  setState(() => _statusFilter = filter);
                 },
                 backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
                 selectedColor: accentColor.withValues(alpha: 0.2),
@@ -602,7 +709,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
           _buildStatItem(
             icon: Icons.help_outline,
             value: '${summary.secretDiscovered}/${summary.totalSecret}',
-            label: 'Secret',
+            label: 'Mystery',
             color: AppColors.purple,
             textMuted: textMuted,
           ),
@@ -664,18 +771,18 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
 
   Widget _buildEmptyState(Color textMuted) {
     String message;
-    switch (_selectedFilter) {
-      case TrophyFilter.earned:
+    switch (_statusFilter) {
+      case TrophyStatusFilter.earned:
         message = 'No trophies earned yet.\nComplete workouts to start earning!';
         break;
-      case TrophyFilter.inProgress:
+      case TrophyStatusFilter.inProgress:
         message = 'No trophies in progress.\nStart working toward your goals!';
         break;
-      case TrophyFilter.locked:
+      case TrophyStatusFilter.locked:
         message = 'All trophies are either earned or in progress!';
         break;
-      case TrophyFilter.all:
-        message = 'No trophies available in this category.';
+      case TrophyStatusFilter.all:
+        message = 'No trophies match your filters.\nTry adjusting your search or filters.';
         break;
     }
 
@@ -703,8 +810,8 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
     );
   }
 
-  Widget _buildTrophyList(
-    List<TrophyProgress> trophies,
+  Widget _buildMysterySection(
+    List<TrophyProgress> mysteryTrophies,
     bool isDark,
     Color textColor,
     Color textMuted,
@@ -712,44 +819,105 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
     Color cardBorder,
     Color accentColor,
   ) {
-    // Group by category if showing "All" tab
-    if (_tabController.index == 0) {
-      return _buildGroupedTrophyList(
-        trophies,
-        isDark,
-        textColor,
-        textMuted,
-        elevatedColor,
-        cardBorder,
-        accentColor,
-      );
-    }
+    final earnedCount = mysteryTrophies.where((t) => t.isEarned).length;
+    final inProgressCount = mysteryTrophies.where((t) => !t.isEarned && t.progressPercentage > 0).length;
 
-    // Show flat list for specific tab
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final trophy = trophies[index];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _TrophyCard(
-              trophyProgress: trophy,
-              onTap: () => _showTrophyDetail(trophy, isDark, textColor, textMuted, elevatedColor, accentColor),
-              isDark: isDark,
-              textColor: textColor,
-              textMuted: textMuted,
-              elevatedColor: elevatedColor,
-              cardBorder: cardBorder,
-              accentColor: accentColor,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section header
+          GestureDetector(
+            onTap: () {
+              HapticService.light();
+              // Mystery section is always expanded (no collapse)
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.purple.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Center(
+                      child: Text('❓', style: TextStyle(fontSize: 20)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Mystery Trophies',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            _buildCountBadge('$earnedCount discovered', AppColors.purple),
+                            const SizedBox(width: 8),
+                            if (inProgressCount > 0)
+                              _buildCountBadge('$inProgressCount close', AppColors.orange),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.purple.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${mysteryTrophies.length}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.purple,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          );
-        },
-        childCount: trophies.length,
+          ),
+
+          // Trophy cards
+          ...mysteryTrophies.map((trophy) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _TrophyCard(
+                trophyProgress: trophy,
+                onTap: () => _showTrophyDetail(trophy, isDark, textColor, textMuted, elevatedColor, accentColor),
+                isDark: isDark,
+                textColor: textColor,
+                textMuted: textMuted,
+                elevatedColor: elevatedColor,
+                cardBorder: cardBorder,
+                accentColor: accentColor,
+              ),
+            );
+          }),
+
+          const SizedBox(height: 8),
+        ],
       ),
     );
   }
 
-  Widget _buildGroupedTrophyList(
+  Widget _buildCategorySection(
+    TrophyCategory category,
     List<TrophyProgress> trophies,
     bool isDark,
     Color textColor,
@@ -758,81 +926,101 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
     Color cardBorder,
     Color accentColor,
   ) {
-    // Group trophies by tab groups (Fitness, Lifestyle, Special)
-    final groupedByTab = <String, List<TrophyProgress>>{};
+    final earnedCount = trophies.where((t) => t.isEarned).length;
+    final inProgressCount = trophies.where((t) => !t.isEarned && t.progressPercentage > 0).length;
+    final isExpanded = _expandedSections[category] ?? true;
 
-    for (final entry in _categoryGroups.entries) {
-      final tabName = entry.key;
-      final categories = entry.value;
-      final tabTrophies = trophies.where(
-        (t) => categories.contains(t.trophy.trophyCategory)
-      ).toList();
-      if (tabTrophies.isNotEmpty) {
-        groupedByTab[tabName] = tabTrophies;
-      }
-    }
-
-    final tabOrder = ['Fitness', 'Lifestyle', 'Special'].where((t) => groupedByTab.containsKey(t)).toList();
-
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final tabName = tabOrder[index];
-          final tabTrophies = groupedByTab[tabName]!;
-          final earnedCount = tabTrophies.where((t) => t.isEarned).length;
-          final tabIndex = _tabNames.indexOf(tabName);
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Tab group header
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Row(
-                  children: [
-                    Icon(
-                      _getTabIcon(tabName),
-                      size: 20,
-                      color: textMuted,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section header (collapsible)
+          GestureDetector(
+            onTap: () {
+              HapticService.light();
+              setState(() {
+                _expandedSections[category] = !isExpanded;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        tabName,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
+                    child: Center(
+                      child: Text(category.icon, style: const TextStyle(fontSize: 20)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          category.displayName,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
                         ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: earnedCount > 0
-                            ? AppColors.green.withValues(alpha: 0.15)
-                            : textMuted.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '$earnedCount / ${tabTrophies.length}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: earnedCount > 0 ? AppColors.green : textMuted,
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            _buildCountBadge('$earnedCount earned', AppColors.green),
+                            const SizedBox(width: 8),
+                            if (inProgressCount > 0)
+                              _buildCountBadge('$inProgressCount in progress', AppColors.orange),
+                          ],
                         ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: earnedCount > 0
+                          ? AppColors.green.withValues(alpha: 0.15)
+                          : textMuted.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '$earnedCount / ${trophies.length}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: earnedCount > 0 ? AppColors.green : textMuted,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    isExpanded ? Icons.expand_less : Icons.expand_more,
+                    color: textMuted,
+                    size: 24,
+                  ),
+                ],
               ),
-              ...tabTrophies.take(4).map((trophy) {
+            ),
+          ),
+
+          // Trophy cards (collapsible)
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 200),
+            crossFadeState: isExpanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+            firstChild: Column(
+              children: trophies.map((trophy) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: _TrophyCard(
                     trophyProgress: trophy,
-                    compact: true,
                     onTap: () => _showTrophyDetail(trophy, isDark, textColor, textMuted, elevatedColor, accentColor),
                     isDark: isDark,
                     textColor: textColor,
@@ -842,41 +1030,33 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
                     accentColor: accentColor,
                   ),
                 );
-              }),
-              if (tabTrophies.length > 4)
-                TextButton(
-                  onPressed: () {
-                    HapticService.light();
-                    _tabController.animateTo(tabIndex);
-                  },
-                  child: Text(
-                    'View all ${tabTrophies.length} trophies →',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: accentColor,
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 16),
-            ],
-          );
-        },
-        childCount: tabOrder.length,
+              }).toList(),
+            ),
+            secondChild: const SizedBox.shrink(),
+          ),
+
+          const SizedBox(height: 8),
+        ],
       ),
     );
   }
 
-  IconData _getTabIcon(String tabName) {
-    switch (tabName) {
-      case 'Fitness':
-        return Icons.fitness_center;
-      case 'Lifestyle':
-        return Icons.self_improvement;
-      case 'Special':
-        return Icons.auto_awesome;
-      default:
-        return Icons.emoji_events;
-    }
+  Widget _buildCountBadge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w500,
+          color: color,
+        ),
+      ),
+    );
   }
 
   void _showTrophyDetail(
@@ -909,7 +1089,6 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen>
 class _TrophyCard extends StatelessWidget {
   final TrophyProgress trophyProgress;
   final VoidCallback? onTap;
-  final bool compact;
   final bool isDark;
   final Color textColor;
   final Color textMuted;
@@ -920,7 +1099,6 @@ class _TrophyCard extends StatelessWidget {
   const _TrophyCard({
     required this.trophyProgress,
     this.onTap,
-    this.compact = false,
     required this.isDark,
     required this.textColor,
     required this.textMuted,
@@ -933,23 +1111,28 @@ class _TrophyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final trophy = trophyProgress.trophy;
     final isEarned = trophyProgress.isEarned;
+    final isMystery = trophyProgress.isMystery;
     final tier = trophy.trophyTier;
-    final primaryColor = tier.primaryColor;
+    final primaryColor = isMystery ? AppColors.purple : tier.primaryColor;
 
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: EdgeInsets.all(compact ? 12 : 16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isEarned
               ? primaryColor.withValues(alpha: 0.15)
-              : elevatedColor,
+              : isMystery
+                  ? AppColors.purple.withValues(alpha: 0.08)
+                  : elevatedColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isEarned
                 ? primaryColor.withValues(alpha: 0.4)
-                : cardBorder,
+                : isMystery
+                    ? AppColors.purple.withValues(alpha: 0.3)
+                    : cardBorder,
             width: isEarned ? 2 : 1,
           ),
         ),
@@ -957,8 +1140,8 @@ class _TrophyCard extends StatelessWidget {
           children: [
             // Trophy icon
             Container(
-              width: compact ? 36 : 48,
-              height: compact ? 36 : 48,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: isEarned
@@ -968,7 +1151,11 @@ class _TrophyCard extends StatelessWidget {
                         end: Alignment.bottomRight,
                       )
                     : null,
-                color: isEarned ? null : textMuted.withValues(alpha: 0.2),
+                color: isEarned
+                    ? null
+                    : isMystery
+                        ? AppColors.purple.withValues(alpha: 0.2)
+                        : textMuted.withValues(alpha: 0.2),
                 boxShadow: isEarned
                     ? [
                         BoxShadow(
@@ -980,10 +1167,8 @@ class _TrophyCard extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  trophy.icon,
-                  style: TextStyle(
-                    fontSize: compact ? 18 : 24,
-                  ),
+                  trophyProgress.displayIcon,
+                  style: const TextStyle(fontSize: 24),
                 ),
               ),
             ),
@@ -998,16 +1183,28 @@ class _TrophyCard extends StatelessWidget {
                   Text(
                     trophyProgress.displayName,
                     style: TextStyle(
-                      fontSize: compact ? 14 : 16,
+                      fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: isEarned ? textColor : textMuted,
+                      color: isEarned ? textColor : (isMystery ? AppColors.purple : textMuted),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
+                  Text(
+                    trophyProgress.displayDescription,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textMuted,
+                      fontStyle: isMystery ? FontStyle.italic : FontStyle.normal,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
+                      // Tier badge
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 6,
@@ -1016,59 +1213,63 @@ class _TrophyCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: isEarned
                               ? primaryColor.withValues(alpha: 0.2)
-                              : textMuted.withValues(alpha: 0.15),
+                              : isMystery
+                                  ? AppColors.purple.withValues(alpha: 0.15)
+                                  : textMuted.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          tier.displayName,
+                          trophyProgress.displayTier,
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: isEarned ? primaryColor : textMuted,
+                            color: isEarned ? primaryColor : (isMystery ? AppColors.purple : textMuted),
                           ),
                         ),
                       ),
-                      if (!compact) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: accentColor.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            '+${trophy.xpReward} XP',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: accentColor,
-                            ),
+                      const SizedBox(width: 8),
+                      // XP badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: accentColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          trophyProgress.displayXp,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: accentColor,
                           ),
                         ),
-                      ],
+                      ),
+                      const Spacer(),
+                      // Progress indicator
+                      if (!isEarned)
+                        Text(
+                          '${trophyProgress.progressPercentage.round()}%',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: trophyProgress.progressPercentage > 0 ? AppColors.orange : textMuted,
+                          ),
+                        ),
                     ],
                   ),
-                  if (!compact && !isEarned) ...[
+                  // Progress bar
+                  if (!isEarned && !isMystery) ...[
                     const SizedBox(height: 8),
-                    // Progress bar
                     ClipRRect(
                       borderRadius: BorderRadius.circular(3),
                       child: LinearProgressIndicator(
                         value: trophyProgress.progressFraction,
-                        minHeight: 6,
+                        minHeight: 4,
                         backgroundColor: textMuted.withValues(alpha: 0.15),
                         valueColor: AlwaysStoppedAnimation(primaryColor.withValues(alpha: 0.7)),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${trophyProgress.currentValue.toInt()} / ${trophy.thresholdValue?.toInt() ?? 0} • ${trophyProgress.progressPercentage.round()}%',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: textMuted,
                       ),
                     ),
                   ],
@@ -1077,20 +1278,12 @@ class _TrophyCard extends StatelessWidget {
             ),
 
             // Status icon
+            const SizedBox(width: 8),
             if (isEarned)
               Icon(
                 Icons.check_circle,
                 color: primaryColor,
-                size: compact ? 18 : 24,
-              )
-            else if (compact)
-              Text(
-                '${trophyProgress.progressPercentage.round()}%',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: textMuted,
-                ),
+                size: 24,
               )
             else
               Icon(
@@ -1100,70 +1293,6 @@ class _TrophyCard extends StatelessWidget {
               ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// Category header with trophy count
-class _TrophyCategoryHeader extends StatelessWidget {
-  final TrophyCategory category;
-  final int earnedCount;
-  final int totalCount;
-  final Color textColor;
-  final Color textMuted;
-  final Color accentColor;
-
-  const _TrophyCategoryHeader({
-    required this.category,
-    required this.earnedCount,
-    required this.totalCount,
-    required this.textColor,
-    required this.textMuted,
-    required this.accentColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        children: [
-          Icon(
-            category.iconData,
-            size: 20,
-            color: textMuted,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              category.displayName,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: earnedCount > 0
-                  ? AppColors.green.withValues(alpha: 0.15)
-                  : textMuted.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              '$earnedCount / $totalCount',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: earnedCount > 0 ? AppColors.green : textMuted,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1192,7 +1321,8 @@ class _TrophyDetailSheet extends StatelessWidget {
     final trophy = trophyProgress.trophy;
     final tier = trophy.trophyTier;
     final isEarned = trophyProgress.isEarned;
-    final primaryColor = tier.primaryColor;
+    final isMystery = trophyProgress.isMystery;
+    final primaryColor = isMystery ? AppColors.purple : tier.primaryColor;
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -1238,10 +1368,14 @@ class _TrophyDetailSheet extends StatelessWidget {
                         height: 80,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: isEarned
+                          gradient: isEarned && !isMystery
                               ? LinearGradient(colors: tier.gradientColors)
                               : null,
-                          color: isEarned ? null : textMuted.withValues(alpha: 0.2),
+                          color: isEarned
+                              ? null
+                              : isMystery
+                                  ? AppColors.purple.withValues(alpha: 0.2)
+                                  : textMuted.withValues(alpha: 0.2),
                           boxShadow: isEarned
                               ? [
                                   BoxShadow(
@@ -1254,7 +1388,7 @@ class _TrophyDetailSheet extends StatelessWidget {
                         ),
                         child: Center(
                           child: Text(
-                            trophy.icon,
+                            trophyProgress.displayIcon,
                             style: const TextStyle(fontSize: 40),
                           ),
                         ),
@@ -1268,7 +1402,7 @@ class _TrophyDetailSheet extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: textColor,
+                          color: isMystery ? AppColors.purple : textColor,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -1289,7 +1423,7 @@ class _TrophyDetailSheet extends StatelessWidget {
                           ),
                         ),
                         child: Text(
-                          tier.displayName,
+                          trophyProgress.displayTier,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -1307,6 +1441,7 @@ class _TrophyDetailSheet extends StatelessWidget {
                           fontSize: 14,
                           color: textMuted,
                           height: 1.5,
+                          fontStyle: isMystery ? FontStyle.italic : FontStyle.normal,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -1345,7 +1480,7 @@ class _TrophyDetailSheet extends StatelessWidget {
                             ],
                           ),
                         )
-                      else
+                      else if (!isMystery)
                         Column(
                           children: [
                             Text(
@@ -1378,6 +1513,37 @@ class _TrophyDetailSheet extends StatelessWidget {
                               ),
                             ),
                           ],
+                        )
+                      else
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.purple.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.purple.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.help_outline,
+                                color: AppColors.purple,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Progress hidden until discovered',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.purple,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
 
                       const SizedBox(height: 20),
@@ -1407,7 +1573,7 @@ class _TrophyDetailSheet extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  '+${trophy.xpReward} XP',
+                                  trophyProgress.displayXp,
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
@@ -1417,7 +1583,7 @@ class _TrophyDetailSheet extends StatelessWidget {
                               ],
                             ),
                           ),
-                          if (trophy.hasMerchReward)
+                          if (trophy.hasMerchReward && !isMystery)
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,

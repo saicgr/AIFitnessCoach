@@ -1239,9 +1239,10 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
       body: Stack(
         children: [
           SafeArea(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   // Title Row (compact)
                   Row(
@@ -1453,7 +1454,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                   // Trophies Section - Shows PRs and achievements earned (animation handled in method)
                   _buildTrophiesSection(elevated),
 
-                  const Spacer(),
+                  const SizedBox(height: 16),
 
                   // Primary Actions
                   Row(
@@ -1580,14 +1581,13 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                   // Expandable Exercise Feedback (shown in bottom sheet if tapped)
                   if (_showExerciseFeedback) ...[
                     const SizedBox(height: 8),
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: elevated,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: _buildCompactExerciseFeedback(),
+                    Container(
+                      constraints: const BoxConstraints(maxHeight: 200),
+                      decoration: BoxDecoration(
+                        color: elevated,
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      child: _buildCompactExerciseFeedback(),
                     ),
                   ],
 

@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/api_constants.dart';
 import '../models/user.dart' as app_user;
 import '../services/api_client.dart';
+import '../services/data_cache_service.dart';
 import '../services/wearable_service.dart';
 
 /// Auth state
@@ -271,11 +272,14 @@ class AuthRepository {
       await _supabase.auth.signOut();
       await _apiClient.clearAuth();
 
+      // Clear all cached data for next user
+      await DataCacheService.instance.clearAll();
+
       // Clear local onboarding flags so next user gets fresh experience
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('onboarding_completed');
 
-      debugPrint('✅ [Auth] Sign-out success');
+      debugPrint('✅ [Auth] Sign-out success (all caches cleared)');
     } catch (e) {
       debugPrint('❌ [Auth] Sign-out error: $e');
       rethrow;
@@ -322,7 +326,12 @@ class AuthRepository {
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
         debugPrint('🔍 [Auth] User data from API: onboarding_completed=${data['onboarding_completed']}, coach_selected=${data['coach_selected']}, paywall_completed=${data['paywall_completed']}');
-        return app_user.User.fromJson(data);
+        final user = app_user.User.fromJson(data);
+
+        // Cache user for faster app startup
+        await _cacheUser(user);
+
+        return user;
       }
       return null;
     } catch (e) {
@@ -331,7 +340,37 @@ class AuthRepository {
     }
   }
 
-  /// Restore session from Supabase or stored token
+  /// Load cached user profile
+  Future<app_user.User?> _getCachedUser() async {
+    try {
+      final cached = await DataCacheService.instance.getCached(
+        DataCacheService.userProfileKey,
+      );
+      if (cached != null) {
+        return app_user.User.fromJson(cached);
+      }
+    } catch (e) {
+      debugPrint('⚠️ [Auth] Cache parse error: $e');
+    }
+    return null;
+  }
+
+  /// Save user to cache
+  Future<void> _cacheUser(app_user.User user) async {
+    try {
+      await DataCacheService.instance.cache(
+        DataCacheService.userProfileKey,
+        user.toJson(),
+      );
+    } catch (e) {
+      debugPrint('⚠️ [Auth] Cache save error: $e');
+    }
+  }
+
+  /// Restore session from Supabase or stored token with cache-first pattern
+  ///
+  /// Returns (cachedUser, freshUser) where cachedUser is immediately available
+  /// and freshUser is fetched in the background
   Future<app_user.User?> restoreSession() async {
     try {
       // First check Supabase session
@@ -339,8 +378,10 @@ class AuthRepository {
       if (session != null) {
         debugPrint('🔍 [Auth] Found Supabase session, refreshing...');
 
-        // Update stored token
+        // Update stored token and user ID
         await _apiClient.setAuthToken(session.accessToken);
+        await _apiClient.setUserId(session.user.id);
+        debugPrint('🔍 [Auth] Set user ID from Supabase session: ${session.user.id}');
 
         // Get user from backend
         final user = await getCurrentUser();
@@ -367,6 +408,22 @@ class AuthRepository {
       return null;
     }
   }
+
+  /// Restore session with cache-first pattern for instant auth
+  ///
+  /// Returns cached user immediately if available, then fetches fresh in background
+  Future<({app_user.User? cached, Future<app_user.User?> fresh})> restoreSessionWithCache() async {
+    // Step 1: Try to load cached user instantly
+    final cachedUser = await _getCachedUser();
+    if (cachedUser != null) {
+      debugPrint('⚡ [Auth] Loaded user from cache instantly: ${cachedUser.name}');
+    }
+
+    // Step 2: Create future for fresh data (runs in background)
+    final freshFuture = restoreSession();
+
+    return (cached: cachedUser, fresh: freshFuture);
+  }
 }
 
 /// Auth state notifier
@@ -377,15 +434,36 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _init();
   }
 
-  /// Initialize - check for existing session
+  /// Initialize with cache-first pattern for instant auth
   Future<void> _init() async {
-    state = state.copyWith(status: AuthStatus.loading);
     try {
-      final user = await _repository.restoreSession();
-      if (user != null) {
-        state = AuthState(status: AuthStatus.authenticated, user: user);
+      // Step 1: Try to load cached user instantly (no loading state)
+      final result = await _repository.restoreSessionWithCache();
+
+      if (result.cached != null) {
+        // Show cached user immediately - no loading spinner!
+        debugPrint('⚡ [Auth] Authenticated from cache instantly');
+        state = AuthState(status: AuthStatus.authenticated, user: result.cached);
+
+        // Step 2: Fetch fresh data in background and update silently
+        result.fresh.then((freshUser) {
+          if (freshUser != null && mounted) {
+            debugPrint('🔄 [Auth] Updated with fresh user data');
+            state = AuthState(status: AuthStatus.authenticated, user: freshUser);
+          }
+        }).catchError((e) {
+          debugPrint('⚠️ [Auth] Background refresh failed: $e');
+          // Keep cached user, don't show error
+        });
       } else {
-        state = const AuthState(status: AuthStatus.unauthenticated);
+        // No cache - show loading and wait for API
+        state = state.copyWith(status: AuthStatus.loading);
+        final user = await result.fresh;
+        if (user != null) {
+          state = AuthState(status: AuthStatus.authenticated, user: user);
+        } else {
+          state = const AuthState(status: AuthStatus.unauthenticated);
+        }
       }
     } catch (e) {
       state = const AuthState(status: AuthStatus.unauthenticated);

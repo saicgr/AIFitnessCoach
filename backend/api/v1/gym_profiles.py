@@ -54,6 +54,15 @@ def row_to_gym_profile(row: dict) -> GymProfile:
         equipment=row.get("equipment") or [],
         equipment_details=row.get("equipment_details") or [],
         workout_environment=row.get("workout_environment", "commercial_gym"),
+        # Location fields
+        address=row.get("address"),
+        city=row.get("city"),
+        latitude=row.get("latitude"),
+        longitude=row.get("longitude"),
+        place_id=row.get("place_id"),
+        location_radius_meters=row.get("location_radius_meters", 100),
+        auto_switch_enabled=row.get("auto_switch_enabled", True),
+        # Workout preferences
         training_split=row.get("training_split"),
         workout_days=row.get("workout_days") or [],
         duration_minutes=row.get("duration_minutes", 45),
@@ -371,6 +380,15 @@ async def create_gym_profile(
             "equipment": profile.equipment,
             "equipment_details": profile.equipment_details,
             "workout_environment": profile.workout_environment,
+            # Location fields
+            "address": profile.address,
+            "city": profile.city,
+            "latitude": profile.latitude,
+            "longitude": profile.longitude,
+            "place_id": profile.place_id,
+            "location_radius_meters": profile.location_radius_meters,
+            "auto_switch_enabled": profile.auto_switch_enabled,
+            # Workout preferences
             "training_split": profile.training_split,
             "workout_days": profile.workout_days,
             "duration_minutes": profile.duration_minutes,
@@ -503,6 +521,22 @@ async def update_gym_profile(profile_id: str, update: GymProfileUpdate):
             update_data["equipment_details"] = update.equipment_details
         if update.workout_environment is not None:
             update_data["workout_environment"] = update.workout_environment
+        # Location fields
+        if update.address is not None:
+            update_data["address"] = update.address
+        if update.city is not None:
+            update_data["city"] = update.city
+        if update.latitude is not None:
+            update_data["latitude"] = update.latitude
+        if update.longitude is not None:
+            update_data["longitude"] = update.longitude
+        if update.place_id is not None:
+            update_data["place_id"] = update.place_id
+        if update.location_radius_meters is not None:
+            update_data["location_radius_meters"] = update.location_radius_meters
+        if update.auto_switch_enabled is not None:
+            update_data["auto_switch_enabled"] = update.auto_switch_enabled
+        # Workout preferences
         if update.training_split is not None:
             update_data["training_split"] = update.training_split
         if update.workout_days is not None:

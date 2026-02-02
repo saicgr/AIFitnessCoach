@@ -114,7 +114,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
   ];
 
   void _nextStep() {
-    if (_currentStep < 3) {
+    if (_currentStep < 2) {
       setState(() => _currentStep++);
       HapticService.light();
     } else {
@@ -168,7 +168,11 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
   Future<void> _createProfile() async {
     if (_name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a name for your gym')),
+        SnackBar(
+          content: const Text('Please enter a name for your gym'),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
+        ),
       );
       return;
     }
@@ -192,13 +196,24 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Created "$_name" profile!')),
+          SnackBar(
+            content: Text('✓ Created "$_name" gym profile'),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
+            duration: const Duration(seconds: 3),
+            backgroundColor: Colors.green.shade700,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create profile: $e')),
+          SnackBar(
+            content: Text('Failed to create profile: $e'),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
+            backgroundColor: Colors.red.shade700,
+          ),
         );
       }
     } finally {
@@ -282,7 +297,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                           ),
                         ),
                         Text(
-                          'Step ${_currentStep + 1} of 4',
+                          'Step ${_currentStep + 1} of 3',
                           style: TextStyle(
                             fontSize: 13,
                             color: textSecondary,
@@ -303,12 +318,12 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
-                children: List.generate(4, (index) {
+                children: List.generate(3, (index) {
                   final isCompleted = index < _currentStep;
                   final isCurrent = index == _currentStep;
                   return Expanded(
                     child: Container(
-                      margin: EdgeInsets.only(right: index < 3 ? 4 : 0),
+                      margin: EdgeInsets.only(right: index < 2 ? 4 : 0),
                       height: 4,
                       decoration: BoxDecoration(
                         color: isCompleted || isCurrent
@@ -383,7 +398,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                               ),
                             )
                           : Text(
-                              _currentStep == 3 ? 'Create Gym' : 'Next',
+                              _currentStep == 2 ? 'Create Gym' : 'Next',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                               ),
@@ -402,19 +417,17 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
   Widget _buildStepContent(bool isDark, Color textPrimary, Color textSecondary, Color accentColor) {
     switch (_currentStep) {
       case 0:
-        return _buildNameStep(isDark, textPrimary, textSecondary, accentColor);
+        return _buildNameAndEnvironmentStep(isDark, textPrimary, textSecondary, accentColor);
       case 1:
-        return _buildEnvironmentStep(isDark, textPrimary, textSecondary, accentColor);
-      case 2:
         return _buildEquipmentStep(isDark, textPrimary, textSecondary, accentColor);
-      case 3:
+      case 2:
         return _buildStyleStep(isDark, textPrimary, textSecondary);
       default:
         return const SizedBox.shrink();
     }
   }
 
-  Widget _buildNameStep(bool isDark, Color textPrimary, Color textSecondary, Color accentColor) {
+  Widget _buildNameAndEnvironmentStep(bool isDark, Color textPrimary, Color textSecondary, Color accentColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -434,7 +447,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
             color: textSecondary,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
         TextField(
           autofocus: true,
           onChanged: (value) => setState(() => _name = value),
@@ -457,69 +470,9 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
             prefixIcon: Icon(Icons.edit_rounded, color: textSecondary),
           ),
         ),
-        const SizedBox(height: 24),
-        // Quick suggestions
-        Text(
-          'Quick suggestions',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: textSecondary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _buildSuggestionChip('Home Gym', isDark, textPrimary, accentColor),
-            _buildSuggestionChip('Commercial Gym', isDark, textPrimary, accentColor),
-            _buildSuggestionChip('24 Hour Fitness', isDark, textPrimary, accentColor),
-            _buildSuggestionChip('Planet Fitness', isDark, textPrimary, accentColor),
-            _buildSuggestionChip('Hotel', isDark, textPrimary, accentColor),
-            _buildSuggestionChip('Office', isDark, textPrimary, accentColor),
-          ],
-        ),
-      ],
-    );
-  }
+        const SizedBox(height: 28),
 
-  Widget _buildSuggestionChip(String text, bool isDark, Color textPrimary, Color accentColor) {
-    final isSelected = _name == text;
-    return GestureDetector(
-      onTap: () {
-        setState(() => _name = text);
-        HapticService.light();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? accentColor.withValues(alpha: 0.15)
-              : (isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.black.withValues(alpha: 0.06)),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? accentColor : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
-          ),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected ? accentColor : textPrimary,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEnvironmentStep(bool isDark, Color textPrimary, Color textSecondary, Color accentColor) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+        // Environment section
         Text(
           'Workout Environment',
           style: TextStyle(
@@ -530,28 +483,28 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
         ),
         const SizedBox(height: 8),
         Text(
-          'This helps us suggest the right equipment and exercises',
+          'This helps us suggest the right equipment',
           style: TextStyle(
             fontSize: 14,
             color: textSecondary,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
         ..._environmentPresets.entries.map((entry) {
           final isSelected = _selectedEnvironment == entry.key;
           final preset = entry.value;
           return GestureDetector(
             onTap: () => _selectEnvironment(entry.key),
             child: Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: isSelected
                     ? accentColor.withValues(alpha: 0.1)
                     : (isDark
                         ? Colors.white.withValues(alpha: 0.05)
                         : Colors.black.withValues(alpha: 0.04)),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isSelected ? accentColor : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
                   width: isSelected ? 2 : 1,
@@ -560,23 +513,23 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
               child: Row(
                 children: [
                   Container(
-                    width: 48,
-                    height: 48,
+                    width: 42,
+                    height: 42,
                     decoration: BoxDecoration(
                       color: isSelected
                           ? accentColor.withValues(alpha: 0.2)
                           : (isDark
                               ? Colors.white.withValues(alpha: 0.1)
                               : Colors.black.withValues(alpha: 0.06)),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       preset['icon'] as IconData,
                       color: isSelected ? accentColor : textSecondary,
-                      size: 24,
+                      size: 22,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -584,16 +537,16 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                         Text(
                           preset['name'] as String,
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.w600,
                             color: isSelected ? accentColor : textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           preset['description'] as String,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             color: textSecondary,
                           ),
                         ),
@@ -604,7 +557,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                     Icon(
                       Icons.check_circle_rounded,
                       color: accentColor,
-                      size: 24,
+                      size: 22,
                     ),
                 ],
               ),
@@ -614,6 +567,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
       ],
     );
   }
+
 
   Widget _buildEquipmentStep(bool isDark, Color textPrimary, Color textSecondary, Color accentColor) {
     // Format equipment name for display
@@ -710,10 +664,10 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
 
         const SizedBox(height: 24),
 
-        // Show selected equipment preview
+        // Show selected equipment list with weight details
         if (_selectedEquipment.isNotEmpty) ...[
           Text(
-            'Selected Equipment',
+            'Selected Equipment (${_selectedEquipment.length})',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -721,60 +675,131 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
             ),
           ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _selectedEquipment.take(10).map((equipment) {
-              // Find weight info if available
-              final details = _equipmentDetails.cast<Map<String, dynamic>?>().firstWhere(
-                (e) => e?['name'] == equipment,
-                orElse: () => null,
-              );
-              final hasWeights = details != null &&
-                  details['weights'] != null &&
-                  (details['weights'] as List).isNotEmpty;
+          // Show equipment as list items with weight info
+          ..._selectedEquipment.map((equipment) {
+            // Find weight info if available
+            final details = _equipmentDetails.cast<Map<String, dynamic>?>().firstWhere(
+              (e) => e?['name'] == equipment,
+              orElse: () => null,
+            );
+            final weights = details?['weights'] as List?;
+            final weightUnit = details?['weight_unit'] as String? ?? 'kg';
+            final hasWeights = weights != null && weights.isNotEmpty;
 
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
+            // Count occurrences of each weight and format display
+            String weightDisplay = '';
+            int totalCount = 0;
+            if (hasWeights) {
+              // Count occurrences of each weight
+              final weightCounts = <num, int>{};
+              for (final w in weights) {
+                final weight = w as num;
+                weightCounts[weight] = (weightCounts[weight] ?? 0) + 1;
+              }
+              totalCount = weights.length;
+
+              // Sort weights and format with counts
+              final sortedWeights = weightCounts.keys.toList()..sort();
+              final weightStrings = sortedWeights.map((w) {
+                final count = weightCounts[w]!;
+                final weightStr = w == w.roundToDouble() ? w.toInt().toString() : w.toStringAsFixed(1);
+                if (count > 1) {
+                  return '$weightStr $weightUnit ×$count';
+                }
+                return '$weightStr $weightUnit';
+              }).toList();
+              weightDisplay = weightStrings.join(', ');
+            }
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.black.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: accentColor.withValues(alpha: 0.2),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      formatName(equipment),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.fitness_center_rounded,
+                      color: accentColor,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              formatName(equipment),
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: textPrimary,
+                              ),
+                            ),
+                            if (hasWeights) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: accentColor.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '$totalCount items',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                    color: accentColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        if (hasWeights) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            weightDisplay,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textSecondary,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (hasWeights)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Icon(
+                        Icons.scale_rounded,
+                        size: 16,
                         color: accentColor,
                       ),
                     ),
-                    if (hasWeights) ...[
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.scale_rounded,
-                        size: 14,
-                        color: accentColor,
-                      ),
-                    ],
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-          if (_selectedEquipment.length > 10)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                '+${_selectedEquipment.length - 10} more',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: textSecondary,
-                ),
+                ],
               ),
-            ),
+            );
+          }),
         ],
       ],
     );

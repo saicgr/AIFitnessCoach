@@ -90,6 +90,7 @@ class SetTargetSchema(BaseModel):
     set_type: str = Field(default="working", description="Set type: 'warmup', 'working', 'drop', 'failure', 'amrap'")
     target_reps: int = Field(..., description="Target reps for this set")
     target_weight_kg: Optional[float] = Field(default=None, description="Target weight in kg for this set")
+    target_hold_seconds: Optional[int] = Field(default=None, description="Target hold time in seconds for timed exercises (planks, wall sits). Use for progressive holds.")
     target_rpe: Optional[int] = Field(default=None, description="Target RPE (1-10) for this set")
     target_rir: Optional[int] = Field(default=None, description="Target RIR (0-5) for this set")
 
@@ -461,3 +462,91 @@ class FastingInsightResponse(BaseModel):
     title: str = Field(..., description="Short title under 50 characters")
     message: str = Field(..., description="Detailed insight message")
     recommendation: str = Field(..., description="Actionable recommendation")
+
+
+# =============================================================================
+# WORKOUT INPUT PARSING SCHEMAS (for AI text/image/voice input)
+# =============================================================================
+
+class ParsedExerciseItem(BaseModel):
+    """Schema for a single parsed exercise from natural language input."""
+    name: str = Field(..., description="Exercise name (use standard gym names)")
+    sets: int = Field(default=3, ge=1, le=20, description="Number of sets")
+    reps: int = Field(default=10, ge=1, le=100, description="Reps per set")
+    weight_value: Optional[float] = Field(default=None, ge=0, description="Weight value")
+    weight_unit: str = Field(default="lbs", description="Weight unit: 'kg' or 'lbs'")
+    rest_seconds: int = Field(default=60, ge=0, le=600, description="Rest between sets")
+    original_text: str = Field(..., description="Original text segment that was parsed")
+    confidence: float = Field(default=1.0, ge=0, le=1, description="Parsing confidence 0-1")
+    notes: Optional[str] = Field(default=None, description="Any additional notes from input")
+
+
+class ParseWorkoutInputResponse(BaseModel):
+    """Schema for parsed workout input response (legacy - exercises only)."""
+    exercises: List[ParsedExerciseItem] = Field(default=[], description="List of parsed exercises")
+    summary: str = Field(..., description="Human-readable summary of what was parsed")
+    warnings: List[str] = Field(default=[], description="Any parsing warnings or issues")
+
+
+# =============================================================================
+# DUAL-MODE WORKOUT INPUT PARSING (Sets + Exercises)
+# =============================================================================
+
+class SetToLogItem(BaseModel):
+    """Schema for a single set to log for the current exercise.
+
+    Used when user types just weight*reps without exercise name.
+    These sets apply to the CURRENT exercise being tracked.
+    """
+    weight: float = Field(..., ge=0, description="Weight value (0 for bodyweight)")
+    reps: int = Field(..., ge=0, le=500, description="Number of reps (0 for failed attempt)")
+    unit: str = Field(default="lbs", description="Weight unit: 'kg' or 'lbs'")
+    is_bodyweight: bool = Field(default=False, description="True if bodyweight exercise (weight=0)")
+    is_failure: bool = Field(default=False, description="True if set was to failure/AMRAP")
+    is_warmup: bool = Field(default=False, description="True if this is a warmup set")
+    original_input: str = Field(default="", description="Original text that produced this set")
+    notes: Optional[str] = Field(default=None, description="Any notes for this set")
+
+
+class ExerciseToAddItem(BaseModel):
+    """Schema for a new exercise to add to the workout.
+
+    Used when user input contains an exercise NAME.
+    """
+    name: str = Field(..., description="Exercise name (use standard gym names, expand abbreviations)")
+    sets: int = Field(default=3, ge=1, le=20, description="Number of sets")
+    reps: int = Field(default=10, ge=1, le=100, description="Reps per set")
+    weight_kg: Optional[float] = Field(default=None, ge=0, description="Weight in kg")
+    weight_lbs: Optional[float] = Field(default=None, ge=0, description="Weight in lbs")
+    rest_seconds: int = Field(default=60, ge=0, le=600, description="Rest between sets in seconds")
+    is_bodyweight: bool = Field(default=False, description="True for bodyweight exercises")
+    original_text: str = Field(default="", description="Original text segment that was parsed")
+    confidence: float = Field(default=1.0, ge=0, le=1, description="Parsing confidence 0-1")
+    notes: Optional[str] = Field(default=None, description="Any additional notes")
+
+
+class ParseWorkoutInputV2Response(BaseModel):
+    """Schema for dual-mode workout input parsing.
+
+    Supports TWO use cases:
+    1. Set logging: User types "135*8, 145*6" -> logs sets for CURRENT exercise
+    2. Add exercise: User types "3x10 deadlift at 135" -> adds NEW exercise
+
+    Both can happen in the same input!
+    """
+    sets_to_log: List[SetToLogItem] = Field(
+        default=[],
+        description="Sets to log for the CURRENT exercise (just weight*reps, no exercise name)"
+    )
+    exercises_to_add: List[ExerciseToAddItem] = Field(
+        default=[],
+        description="New exercises to add to the workout (contains exercise names)"
+    )
+    summary: str = Field(
+        ...,
+        description="Human-readable summary, e.g., 'Log 3 sets for Bench Press, Add Deadlift'"
+    )
+    warnings: List[str] = Field(
+        default=[],
+        description="Any parsing warnings or issues"
+    )

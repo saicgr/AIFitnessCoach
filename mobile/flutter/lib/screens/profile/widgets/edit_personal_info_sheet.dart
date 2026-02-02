@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -23,6 +25,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
   String _selectedActivityLevel = 'moderately_active';
   bool _isSaving = false;
   bool _isLoading = true;
+  bool _isUploadingPhoto = false;
 
   double? _heightCm;
   double? _weightKg;
@@ -30,6 +33,10 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
 
   bool _isHeightMetric = true;
   bool _isWeightMetric = true;
+
+  String? _currentPhotoUrl;
+  File? _selectedPhotoFile;
+  final ImagePicker _imagePicker = ImagePicker();
 
   static const _genderOptions = ['male', 'female', 'other'];
   static const _activityLevels = [
@@ -73,10 +80,134 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
         _heightCm = user.heightCm;
         _weightKg = user.weightKg;
         _targetWeightKg = user.targetWeightKg;
+        _currentPhotoUrl = user.photoUrl;
         _isLoading = false;
       });
     } else {
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        setState(() {
+          _selectedPhotoFile = File(image.path);
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ [EditProfile] Error picking image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pick image: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showImageSourceDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.camera_alt, color: isDark ? AppColors.accent : AppColorsLight.accent),
+                title: const Text('Take Photo'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_library, color: isDark ? AppColors.accent : AppColorsLight.accent),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              if (_currentPhotoUrl != null || _selectedPhotoFile != null)
+                ListTile(
+                  leading: Icon(Icons.delete, color: AppColors.error),
+                  title: const Text('Remove Photo'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _removePhoto();
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _removePhoto() async {
+    setState(() {
+      _selectedPhotoFile = null;
+      _currentPhotoUrl = null;
+    });
+  }
+
+  Future<void> _uploadPhoto() async {
+    if (_selectedPhotoFile == null) return;
+
+    setState(() => _isUploadingPhoto = true);
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) {
+        throw Exception('User not found');
+      }
+
+      final response = await apiClient.uploadFile(
+        '${ApiConstants.users}/$userId/photo',
+        _selectedPhotoFile!,
+        fieldName: 'file',
+      );
+
+      if (response.data != null && response.data['photo_url'] != null) {
+        setState(() {
+          _currentPhotoUrl = response.data['photo_url'];
+          _selectedPhotoFile = null;
+        });
+        debugPrint('✅ [EditProfile] Photo uploaded successfully');
+      }
+    } catch (e) {
+      debugPrint('❌ [EditProfile] Error uploading photo: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload photo: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingPhoto = false);
+      }
     }
   }
 
@@ -260,6 +391,8 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _buildPhotoSection(isDark, elevatedColor, cardBorder, textMuted, cyan),
+              const SizedBox(height: 20),
               _buildNameAgeRow(isDark, elevatedColor, cardBorder, textMuted),
               const SizedBox(height: 14),
               _buildGenderSelector(elevatedColor, cardBorder, textSecondary, cyan, textMuted),
@@ -274,6 +407,115 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPhotoSection(
+    bool isDark,
+    Color elevatedColor,
+    Color cardBorder,
+    Color textMuted,
+    Color cyan,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('PROFILE PHOTO', textMuted),
+        const SizedBox(height: 12),
+        Center(
+          child: GestureDetector(
+            onTap: _isUploadingPhoto ? null : _showImageSourceDialog,
+            child: Stack(
+              children: [
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: elevatedColor,
+                    border: Border.all(color: cardBorder, width: 2),
+                    image: _selectedPhotoFile != null
+                        ? DecorationImage(
+                            image: FileImage(_selectedPhotoFile!),
+                            fit: BoxFit.cover,
+                          )
+                        : _currentPhotoUrl != null && _currentPhotoUrl!.isNotEmpty
+                            ? DecorationImage(
+                                image: NetworkImage(_currentPhotoUrl!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                  ),
+                  child: (_selectedPhotoFile == null &&
+                          (_currentPhotoUrl == null || _currentPhotoUrl!.isEmpty))
+                      ? Icon(
+                          Icons.person,
+                          size: 48,
+                          color: textMuted,
+                        )
+                      : null,
+                ),
+                // Edit badge
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: cyan,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+                        width: 2,
+                      ),
+                    ),
+                    child: _isUploadingPhoto
+                        ? const Padding(
+                            padding: EdgeInsets.all(6),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.camera_alt,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_selectedPhotoFile != null) ...[
+          const SizedBox(height: 12),
+          Center(
+            child: TextButton.icon(
+              onPressed: _isUploadingPhoto ? null : _uploadPhoto,
+              icon: _isUploadingPhoto
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: cyan),
+                    )
+                  : Icon(Icons.cloud_upload, color: cyan),
+              label: Text(
+                _isUploadingPhoto ? 'Uploading...' : 'Upload Photo',
+                style: TextStyle(color: cyan, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 8),
+        Center(
+          child: Text(
+            'Tap to change photo',
+            style: TextStyle(fontSize: 12, color: textMuted),
+          ),
+        ),
+      ],
     );
   }
 

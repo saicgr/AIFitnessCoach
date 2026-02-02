@@ -50,6 +50,7 @@ import '../screens/splash/splash_screen.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/measurements/measurements_screen.dart';
+import '../screens/measurements/measurement_detail_screen.dart';
 import '../screens/glossary/glossary_screen.dart';
 import '../screens/personal_goals/personal_goals_screen.dart';
 import '../screens/paywall/paywall_features_screen.dart';
@@ -57,7 +58,8 @@ import '../screens/paywall/paywall_timeline_screen.dart';
 import '../screens/paywall/paywall_pricing_screen.dart';
 import '../screens/loading/workout_loading_screen.dart';
 import '../screens/profile/workout_gallery_screen.dart';
-import '../screens/progress/progress_screen.dart';
+// Progress screen removed - functionality merged into Stats screen
+// import '../screens/progress/progress_screen.dart';
 import '../screens/progress/milestones_screen.dart';
 import '../screens/progress/charts/progress_charts_screen.dart';
 import '../screens/progress/consistency_screen.dart';
@@ -237,10 +239,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       // NOTE: Conversational onboarding is now SKIPPED - pre-auth quiz collects all data
       String? getNextOnboardingStep(app_user.User user) {
         // Step 0: Check if pre-auth quiz is complete (stored in SharedPreferences)
-        // If not complete, user needs to do the quiz first before coach selection
-        final quizData = ref.read(preAuthQuizProvider);
-        if (!quizData.isComplete) {
-          return '/pre-auth-quiz';  // Send to pre-auth quiz
+        // SKIP this check if user has already completed later steps (coach selection or paywall)
+        // This prevents race condition where SharedPreferences hasn't loaded yet on app reopen
+        // and also handles users who signed up before the pre-auth quiz existed
+        if (!user.isCoachSelected && !user.isPaywallComplete) {
+          final quizData = ref.read(preAuthQuizProvider);
+          if (!quizData.isComplete) {
+            return '/pre-auth-quiz';  // Send to pre-auth quiz
+          }
         }
 
         // Step 1: Personal info (name, DOB, gender, height, weight)
@@ -815,9 +821,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/stats',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: ComprehensiveStatsScreen(),
-            ),
+            pageBuilder: (context, state) {
+              final openPhoto = state.uri.queryParameters['openPhoto'] == 'true';
+              return NoTransitionPage(
+                child: ComprehensiveStatsScreen(openPhotoSheet: openPhoto),
+              );
+            },
           ),
           GoRoute(
             path: '/social',
@@ -840,11 +849,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               );
             },
           ),
+          // Redirect /progress to /stats (Progress merged into Stats)
           GoRoute(
             path: '/progress',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: ProgressScreen(),
-            ),
+            redirect: (context, state) => '/stats',
           ),
         ],
       ),
@@ -1048,39 +1056,59 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AchievementsScreen(),
       ),
 
-      // Progress Milestones & ROI
+      // Stats sub-routes (formerly under /progress)
       GoRoute(
-        path: '/progress/milestones',
+        path: '/stats/milestones',
         builder: (context, state) => const MilestonesScreen(),
       ),
-
-      // Exercise History - Per-exercise workout history
       GoRoute(
-        path: '/progress/exercise-history',
+        path: '/stats/exercise-history',
         builder: (context, state) => const ExerciseHistoryScreen(),
       ),
-
-      // Exercise Detail - Specific exercise progression
       GoRoute(
-        path: '/progress/exercise-history/:exerciseName',
+        path: '/stats/exercise-history/:exerciseName',
         builder: (context, state) {
           final exerciseName = Uri.decodeComponent(state.pathParameters['exerciseName'] ?? '');
           return ExerciseProgressDetailScreen(exerciseName: exerciseName);
         },
       ),
-
-      // Muscle Analytics Dashboard - Heatmap, frequency, balance
       GoRoute(
-        path: '/progress/muscle-analytics',
+        path: '/stats/muscle-analytics',
         builder: (context, state) => const MuscleAnalyticsScreen(),
       ),
-
-      // Muscle Detail - Specific muscle group analytics
       GoRoute(
-        path: '/progress/muscle-analytics/:muscleGroup',
+        path: '/stats/muscle-analytics/:muscleGroup',
         builder: (context, state) {
           final muscleGroup = Uri.decodeComponent(state.pathParameters['muscleGroup'] ?? '');
           return MuscleDetailScreen(muscleGroup: muscleGroup);
+        },
+      ),
+
+      // Redirects from old /progress/* routes to /stats/*
+      GoRoute(
+        path: '/progress/milestones',
+        redirect: (context, state) => '/stats/milestones',
+      ),
+      GoRoute(
+        path: '/progress/exercise-history',
+        redirect: (context, state) => '/stats/exercise-history',
+      ),
+      GoRoute(
+        path: '/progress/exercise-history/:exerciseName',
+        redirect: (context, state) {
+          final exerciseName = state.pathParameters['exerciseName'] ?? '';
+          return '/stats/exercise-history/$exerciseName';
+        },
+      ),
+      GoRoute(
+        path: '/progress/muscle-analytics',
+        redirect: (context, state) => '/stats/muscle-analytics',
+      ),
+      GoRoute(
+        path: '/progress/muscle-analytics/:muscleGroup',
+        redirect: (context, state) {
+          final muscleGroup = state.pathParameters['muscleGroup'] ?? '';
+          return '/stats/muscle-analytics/$muscleGroup';
         },
       ),
 
@@ -1287,6 +1315,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/measurements',
         builder: (context, state) => const MeasurementsScreen(),
+      ),
+      GoRoute(
+        path: '/measurements/:type',
+        builder: (context, state) {
+          final type = state.pathParameters['type'] ?? 'weight';
+          return MeasurementDetailScreen(measurementType: type);
+        },
       ),
 
       // Glossary

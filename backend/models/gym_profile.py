@@ -16,6 +16,19 @@ class GymProfileBase(BaseModel):
     equipment_details: List[dict] = Field(default=[], description="Detailed equipment with quantities and weights")
     workout_environment: str = Field(default="commercial_gym", max_length=50, description="Environment type: commercial_gym, home_gym, home, hotel, outdoors")
 
+    # Location fields for geofencing/auto-switch
+    address: Optional[str] = Field(default=None, max_length=255, description="Full address of the gym location")
+    city: Optional[str] = Field(default=None, max_length=100, description="City name for display")
+    latitude: Optional[float] = Field(default=None, ge=-90, le=90, description="GPS latitude coordinate")
+    longitude: Optional[float] = Field(default=None, ge=-180, le=180, description="GPS longitude coordinate")
+    place_id: Optional[str] = Field(default=None, max_length=255, description="Google Places ID")
+    location_radius_meters: int = Field(default=100, ge=50, le=500, description="Geofence radius in meters")
+    auto_switch_enabled: bool = Field(default=True, description="Auto-switch to this profile when arriving at location")
+
+    # Time-based auto-switch fields
+    preferred_time_slot: Optional[str] = Field(default=None, pattern="^(early_morning|morning|afternoon|evening|night)$", description="Preferred workout time: early_morning (5-7 AM), morning (7-11 AM), afternoon (11 AM-4 PM), evening (4-8 PM), night (8 PM-12 AM)")
+    time_auto_switch_enabled: bool = Field(default=True, description="Auto-switch to this profile during preferred time slot")
+
     # Workout preferences
     training_split: Optional[str] = Field(default=None, max_length=50, description="Training split: full_body, upper_lower, push_pull_legs, body_part, pplul, phul, arnold_split, ai_adaptive")
     workout_days: List[int] = Field(default=[], description="Workout days as indices (0=Mon, 6=Sun)")
@@ -41,6 +54,19 @@ class GymProfileUpdate(BaseModel):
     equipment: Optional[List[str]] = None
     equipment_details: Optional[List[dict]] = None
     workout_environment: Optional[str] = Field(default=None, max_length=50)
+
+    # Location fields for geofencing/auto-switch
+    address: Optional[str] = Field(default=None, max_length=255)
+    city: Optional[str] = Field(default=None, max_length=100)
+    latitude: Optional[float] = Field(default=None, ge=-90, le=90)
+    longitude: Optional[float] = Field(default=None, ge=-180, le=180)
+    place_id: Optional[str] = Field(default=None, max_length=255)
+    location_radius_meters: Optional[int] = Field(default=None, ge=50, le=500)
+    auto_switch_enabled: Optional[bool] = None
+
+    # Time-based auto-switch fields
+    preferred_time_slot: Optional[str] = Field(default=None, pattern="^(early_morning|morning|afternoon|evening|night)$")
+    time_auto_switch_enabled: Optional[bool] = None
 
     # Workout preferences
     training_split: Optional[str] = Field(default=None, max_length=50)

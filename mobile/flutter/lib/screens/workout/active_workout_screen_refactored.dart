@@ -58,7 +58,12 @@ import 'widgets/exercise_info_sheet.dart';
 import 'widgets/exercise_options_sheet.dart';
 import 'widgets/exercise_analytics_page.dart';
 import 'widgets/quit_workout_dialog.dart';
+import 'widgets/enhanced_notes_sheet.dart';
 import 'widgets/exercise_swap_sheet.dart';
+import 'widgets/ai_text_input_bar.dart';
+import 'widgets/parsed_exercises_preview_sheet.dart';
+import 'widgets/ai_input_preview_sheet.dart';
+import '../../data/models/parsed_exercise.dart';
 // MacroFactor-style V2 components
 import 'widgets/workout_top_bar_v2.dart';
 import 'widgets/exercise_thumbnail_strip_v2.dart';
@@ -136,6 +141,7 @@ class _ActiveWorkoutScreenState
 
   // Input controllers
   late TextEditingController _repsController;
+  late TextEditingController _repsRightController; // For L/R mode
   late TextEditingController _weightController;
   bool _useKg = true; // Initialized from user preference
   bool _unitInitialized = false; // Track if unit has been initialized from user preference
@@ -242,6 +248,7 @@ class _ActiveWorkoutScreenState
       debugPrint('❌ [ActiveWorkout] No exercises in workout! Cannot start.');
       // Initialize with defaults to prevent late init errors
       _repsController = TextEditingController(text: '10');
+      _repsRightController = TextEditingController(text: '10');
       _weightController = TextEditingController(text: '0');
       _timerController = WorkoutTimerController();
       _prDetectionService = ref.read(prDetectionServiceProvider);
@@ -268,6 +275,8 @@ class _ActiveWorkoutScreenState
     final initialExercise = _exercises[initialExerciseIndex.clamp(0, _exercises.length - 1)];
     _repsController =
         TextEditingController(text: (initialExercise.reps ?? 10).toString());
+    _repsRightController =
+        TextEditingController(text: (initialExercise.reps ?? 10).toString()); // Same initial reps for L/R
     _weightController =
         TextEditingController(text: (initialExercise.weight ?? 0).toString());
 
@@ -326,6 +335,7 @@ class _ActiveWorkoutScreenState
             setType: map['setType'] as String? ?? 'working',
             rpe: (map['rpe'] as num?)?.toInt(),
             rir: (map['rir'] as num?)?.toInt(),
+            aiInputSource: map['aiInputSource'] as String?,
           )).toList();
         }
       }
@@ -446,6 +456,7 @@ class _ActiveWorkoutScreenState
     _timerController.dispose();
     _videoController?.dispose();
     _repsController.dispose();
+    _repsRightController.dispose();
     _weightController.dispose();
     super.dispose();
   }
@@ -808,6 +819,7 @@ class _ActiveWorkoutScreenState
 
     // Update input controllers for new exercise
     _repsController.text = (nextExercise.reps ?? 10).toString();
+    _repsRightController.text = (nextExercise.reps ?? 10).toString(); // Sync L/R
     _weightController.text = (nextExercise.weight ?? 0).toString();
 
     // Fetch smart weight suggestion based on history (background, non-blocking)
@@ -1465,6 +1477,7 @@ class _ActiveWorkoutScreenState
 
       // Update input controllers for new exercise
       _repsController.text = (nextExercise.reps ?? 10).toString();
+      _repsRightController.text = (nextExercise.reps ?? 10).toString(); // Sync L/R
       _weightController.text = (nextExercise.weight ?? 0).toString();
 
       // Fetch smart weight suggestion based on history (background, non-blocking)
@@ -1536,6 +1549,7 @@ class _ActiveWorkoutScreenState
         'setType': set.setType,
         'rpe': set.rpe,
         'rir': set.rir,
+        'aiInputSource': set.aiInputSource,
       }).toList();
     }
 
@@ -2150,6 +2164,7 @@ class _ActiveWorkoutScreenState
             rpe: setLog.rpe?.toDouble(),
             rir: setLog.rir,
             notes: setLog.notes,
+            aiInputSource: setLog.aiInputSource,
           );
         } catch (e) {
           debugPrint('⚠️ Failed to log set performance: $e');
@@ -2221,6 +2236,253 @@ class _ActiveWorkoutScreenState
           // Non-critical - don't fail workout completion for superset logging
           debugPrint('⚠️ Failed to log superset: $e');
         }
+      }
+    }
+  }
+
+  // ========================================================================
+  // AI TEXT INPUT HANDLING
+  // ========================================================================
+
+  /// Handle parsed exercises from the AI text input bar
+  Future<void> _handleParsedExercises(List<ParsedExercise> exercises) async {
+    if (exercises.isEmpty) return;
+
+    // Show preview sheet for user to confirm
+    final confirmedExercises = await showParsedExercisesPreview(
+      context,
+      ref,
+      exercises: exercises,
+      useKg: _useKg,
+    );
+
+    if (confirmedExercises == null || confirmedExercises.isEmpty || !mounted) {
+      return;
+    }
+
+    // Add exercises to workout
+    try {
+      final userId = await ref.read(apiClientProvider).getUserId();
+      if (userId == null) return;
+
+      final repo = ref.read(workoutRepositoryProvider);
+      final updatedWorkout = await repo.addExercisesBatch(
+        workoutId: widget.workout.id ?? '',
+        userId: userId,
+        exercises: confirmedExercises,
+        useKg: _useKg,
+      );
+
+      if (updatedWorkout != null && mounted) {
+        final newExercises = updatedWorkout.exercises;
+        final addedCount = confirmedExercises.length;
+        final startIndex = _exercises.length;
+
+        setState(() {
+          // Update exercises list
+          _exercises = List.from(newExercises);
+
+          // Initialize tracking data for new exercises
+          for (int i = startIndex; i < _exercises.length; i++) {
+            _completedSets[i] = [];
+            _totalSetsPerExercise[i] = _exercises[i].sets ?? 3;
+            _previousSets[i] = [];
+          }
+        });
+
+        // Show success feedback
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Added $addedCount exercise${addedCount == 1 ? '' : 's'}'),
+              backgroundColor: AppColors.green,
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+
+        debugPrint('✅ [Workout] Added $addedCount exercises via AI input');
+      }
+    } catch (e) {
+      debugPrint('❌ [Workout] Failed to add exercises: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add exercises: $e'),
+            backgroundColor: AppColors.red,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Handle V2 parsed response (sets to log + exercises to add)
+  Future<void> _handleV2Parsed(ParseWorkoutInputV2Response response) async {
+    if (!response.hasData) return;
+
+    final currentExerciseName = _exercises.isNotEmpty
+        ? _exercises[_viewingExerciseIndex].name
+        : null;
+
+    // Show V2 preview sheet
+    final result = await showAIInputPreview(
+      context,
+      ref,
+      response: response,
+      currentExerciseName: currentExerciseName,
+      useKg: _useKg,
+    );
+
+    if (result == null || !result.hasData || !mounted) {
+      return;
+    }
+
+    // Handle sets to log
+    if (result.setsToLog.isNotEmpty) {
+      await _logSetsFromAI(result.setsToLog);
+    }
+
+    // Handle exercises to add
+    if (result.exercisesToAdd.isNotEmpty) {
+      await _addExercisesFromAI(result.exercisesToAdd);
+    }
+  }
+
+  /// Log multiple sets from AI input to the current exercise
+  Future<void> _logSetsFromAI(List<SetToLog> sets) async {
+    if (sets.isEmpty || _exercises.isEmpty) return;
+
+    final exerciseIndex = _viewingExerciseIndex;
+    final exercise = _exercises[exerciseIndex];
+
+    for (final aiSet in sets) {
+      // Convert weight if necessary
+      double weight = aiSet.weight;
+      if (aiSet.isBodyweight) {
+        weight = 0;
+      } else if (_useKg && aiSet.unit == 'lbs') {
+        weight = aiSet.weight / 2.20462;
+      } else if (!_useKg && aiSet.unit == 'kg') {
+        weight = aiSet.weight * 2.20462;
+      }
+
+      // Create a SetLog with AI input source for tracking
+      final setLog = SetLog(
+        reps: aiSet.reps,
+        weight: weight,
+        setType: aiSet.isWarmup ? 'warmup' : 'working',
+        targetReps: exercise.reps ?? aiSet.reps,
+        notes: aiSet.notes,
+        aiInputSource: aiSet.originalInput.isNotEmpty ? aiSet.originalInput : null,
+      );
+
+      // Add to completed sets
+      _completedSets[exerciseIndex] ??= [];
+      _completedSets[exerciseIndex]!.add(setLog);
+    }
+
+    // Update total sets if more were added than expected
+    final currentTotal = _totalSetsPerExercise[exerciseIndex] ?? 3;
+    final completedCount = _completedSets[exerciseIndex]?.length ?? 0;
+    if (completedCount > currentTotal) {
+      _totalSetsPerExercise[exerciseIndex] = completedCount;
+    }
+
+    setState(() {});
+
+    // Show success feedback
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Logged ${sets.length} set${sets.length == 1 ? '' : 's'} for ${exercise.name}',
+          ),
+          backgroundColor: AppColors.green,
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+
+    debugPrint('✅ [Workout] Logged ${sets.length} sets via AI input');
+  }
+
+  /// Add exercises from AI input
+  Future<void> _addExercisesFromAI(List<ExerciseToAdd> exercises) async {
+    if (exercises.isEmpty) return;
+
+    try {
+      final userId = await ref.read(apiClientProvider).getUserId();
+      if (userId == null) return;
+
+      // Convert ExerciseToAdd to ParsedExercise for the repository
+      final parsedExercises = exercises.map((e) {
+        return ParsedExercise(
+          name: e.name,
+          sets: e.sets,
+          reps: e.reps,
+          weightKg: e.weightKg,
+          weightLbs: e.weightLbs,
+          restSeconds: e.restSeconds,
+          originalText: e.originalText,
+          confidence: e.confidence,
+          notes: e.notes,
+        );
+      }).toList();
+
+      final repo = ref.read(workoutRepositoryProvider);
+      final updatedWorkout = await repo.addExercisesBatch(
+        workoutId: widget.workout.id ?? '',
+        userId: userId,
+        exercises: parsedExercises,
+        useKg: _useKg,
+      );
+
+      if (updatedWorkout != null && mounted) {
+        final newExercises = updatedWorkout.exercises;
+        final addedCount = exercises.length;
+        final startIndex = _exercises.length;
+
+        setState(() {
+          // Update exercises list
+          _exercises = List.from(newExercises);
+
+          // Initialize tracking data for new exercises
+          for (int i = startIndex; i < _exercises.length; i++) {
+            _completedSets[i] = [];
+            _totalSetsPerExercise[i] = _exercises[i].sets ?? 3;
+            _previousSets[i] = [];
+          }
+        });
+
+        // Show success feedback
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Added $addedCount exercise${addedCount == 1 ? '' : 's'}'),
+              backgroundColor: AppColors.green,
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+
+        debugPrint('✅ [Workout] Added $addedCount exercises via AI input');
+      }
+    } catch (e) {
+      debugPrint('❌ [Workout] Failed to add exercises: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add exercises: $e'),
+            backgroundColor: AppColors.red,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     }
   }
@@ -2918,6 +3180,7 @@ class _ActiveWorkoutScreenState
                                   activeSetIndex: _completedSets[_viewingExerciseIndex]?.length ?? 0,
                                   weightController: _weightController,
                                   repsController: _repsController,
+                                  repsRightController: _isLeftRightMode ? _repsRightController : null,
                                   onSetCompleted: _handleSetCompletedV2,
                                   onSetUpdated: _updateCompletedSet,
                                   onAddSet: () => setState(() {
@@ -2935,12 +3198,36 @@ class _ActiveWorkoutScreenState
                                   },
                                   onSetDeleted: (index) => _deleteCompletedSet(index),
                                   onToggleUnit: _toggleUnit,
+                                  onRirTapped: (setIndex, currentRir) => _showRirPicker(setIndex, currentRir),
                                   // Inline rest row - shows between completed and active sets
                                   showInlineRest: _showInlineRest &&
                                       _viewingExerciseIndex == _currentExerciseIndex &&
                                       !_isRestingBetweenExercises,
                                   inlineRestRowWidget: _buildInlineRestRowV2(),
                                 ),
+
+                                // AI Text Input Bar (below set table, within scrollable area)
+                                const SizedBox(height: 16),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  child: AiTextInputBar(
+                                    workoutId: widget.workout.id ?? '',
+                                    useKg: _useKg,
+                                    currentExerciseName: _exercises.isNotEmpty
+                                        ? _exercises[_viewingExerciseIndex].name
+                                        : null,
+                                    currentExerciseIndex: _viewingExerciseIndex,
+                                    lastSetWeight: _completedSets[_viewingExerciseIndex]?.isNotEmpty == true
+                                        ? _completedSets[_viewingExerciseIndex]!.last.weight
+                                        : null,
+                                    lastSetReps: _completedSets[_viewingExerciseIndex]?.isNotEmpty == true
+                                        ? _completedSets[_viewingExerciseIndex]!.last.reps
+                                        : null,
+                                    onExercisesParsed: (exercises) => _handleParsedExercises(exercises),
+                                    onV2Parsed: (response) => _handleV2Parsed(response),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
                               ],
                             ),
                           ),
@@ -3124,6 +3411,7 @@ class _ActiveWorkoutScreenState
                             activeSetIndex: _completedSets[_viewingExerciseIndex]?.length ?? 0,
                             weightController: _weightController,
                             repsController: _repsController,
+                            repsRightController: _isLeftRightMode ? _repsRightController : null,
                             onSetCompleted: _handleSetCompletedV2,
                             onSetUpdated: _updateCompletedSet,
                             onAddSet: () => setState(() {
@@ -3139,6 +3427,7 @@ class _ActiveWorkoutScreenState
                             },
                             onSetDeleted: (index) => _deleteCompletedSet(index),
                             onToggleUnit: _toggleUnit,
+                            onRirTapped: (setIndex, currentRir) => _showRirPicker(setIndex, currentRir),
                             showInlineRest: _showInlineRest &&
                                 _viewingExerciseIndex == _currentExerciseIndex &&
                                 !_isRestingBetweenExercises,
@@ -3970,64 +4259,32 @@ class _ActiveWorkoutScreenState
     );
   }
 
-  /// Show notes sheet
+  /// Show enhanced notes sheet with audio, photo, and voice-to-text
   void _showNotesSheet(WorkoutExercise exercise) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      builder: (context) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDark ? WorkoutDesign.surface : Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.sticky_note_2_outlined, color: WorkoutDesign.accentBlue),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Exercise Notes',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : Colors.grey.shade800,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  maxLines: 4,
-                  decoration: InputDecoration(
-                    hintText: 'Add notes about form, cues, or modifications...',
-                    filled: true,
-                    fillColor: isDark ? WorkoutDesign.inputField : Colors.grey.shade100,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  style: TextStyle(
-                    color: isDark ? Colors.white : Colors.grey.shade800,
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
-        );
+    // Get existing notes for this exercise if any
+    final exerciseIndex = _exercises.indexOf(exercise);
+    String existingNotes = '';
+    if (exerciseIndex >= 0 && _completedSets.containsKey(exerciseIndex)) {
+      final sets = _completedSets[exerciseIndex]!;
+      // Get notes from the most recent set with notes
+      for (final set in sets.reversed) {
+        if (set.notes != null && set.notes!.isNotEmpty) {
+          existingNotes = set.notes!;
+          break;
+        }
+      }
+    }
+
+    showEnhancedNotesSheet(
+      context,
+      initialNotes: existingNotes,
+      onSave: (notes, audioPath, photoPaths) {
+        // Store notes - could be applied to current set or exercise-level
+        debugPrint('📝 Notes saved: $notes');
+        if (audioPath != null) debugPrint('🎤 Audio: $audioPath');
+        if (photoPaths.isNotEmpty) debugPrint('📷 Photos: ${photoPaths.length}');
+
+        // Notes are saved via the callback - can extend to store audio/photos as needed
       },
     );
   }
@@ -4649,6 +4906,206 @@ class _ActiveWorkoutScreenState
         setType: existingSet.setType,
       );
     });
+  }
+
+  /// Show RIR picker to edit target RIR for a set
+  void _showRirPicker(int setIndex, int? currentRir) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    int selectedRir = currentRir ?? 2;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Handle bar
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  // Header
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Icon(
+                          Icons.close,
+                          size: 24,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                      const Expanded(
+                        child: Center(
+                          child: Text(
+                            'Set Target RIR',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Text(
+                      'Set ${setIndex + 1}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // RIR options (0-4)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: List.generate(5, (index) {
+                      final rir = index;
+                      final isSelected = selectedRir == rir;
+                      final color = WorkoutDesign.getRirColor(rir);
+                      return GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setModalState(() => selectedRir = rir);
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: isSelected ? color : color.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected ? color : Colors.transparent,
+                              width: 2,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '$rir',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: isSelected
+                                    ? WorkoutDesign.getRirTextColor(rir)
+                                    : color,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // RIR label explanation
+                  Center(
+                    child: Text(
+                      _getRirDescription(selectedRir),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Save button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _updateSetTargetRir(setIndex, selectedRir);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: WorkoutDesign.getRirColor(selectedRir),
+                        foregroundColor: WorkoutDesign.getRirTextColor(selectedRir),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Save',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getRirDescription(int rir) {
+    switch (rir) {
+      case 0:
+        return 'Failure - No reps left in tank';
+      case 1:
+        return 'Very hard - Maybe 1 more rep';
+      case 2:
+        return 'Hard - Could do 2 more reps';
+      case 3:
+        return 'Moderate - 3 reps in reserve';
+      case 4:
+        return 'Easy - 4+ reps in reserve';
+      default:
+        return '';
+    }
+  }
+
+  void _updateSetTargetRir(int setIndex, int newRir) {
+    // Update the exercise's set targets if available
+    final exercise = _exercises[_viewingExerciseIndex];
+    if (exercise.setTargets != null && setIndex < exercise.setTargets!.length) {
+      setState(() {
+        // Create a new list with the updated RIR
+        final updatedTargets = List<SetTarget>.from(exercise.setTargets!);
+        final oldTarget = updatedTargets[setIndex];
+        updatedTargets[setIndex] = SetTarget(
+          setNumber: oldTarget.setNumber,
+          setType: oldTarget.setType,
+          targetWeightKg: oldTarget.targetWeightKg,
+          targetReps: oldTarget.targetReps,
+          targetRir: newRir,
+        );
+        // Update the exercise with new targets
+        _exercises[_viewingExerciseIndex] = exercise.copyWith(setTargets: updatedTargets);
+      });
+    }
   }
 
   void _deleteCompletedSet(int setIndex) {
@@ -5965,14 +6422,55 @@ class _ExerciseDetailsSheetContentState
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Exercise name
-                      Text(
-                        exercise.name,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
-                        ),
+                      // Exercise name with action pills
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              exercise.name,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: textPrimary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Video pill
+                          _buildActionPill(
+                            context: context,
+                            icon: Icons.play_circle_outline,
+                            label: 'Video',
+                            onTap: () {
+                              Navigator.pop(context);
+                              showExerciseInfoSheet(
+                                context: context,
+                                exercise: exercise,
+                              );
+                            },
+                            accentColor: accentColor,
+                            isDark: isDark,
+                            textMuted: textMuted,
+                          ),
+                          const SizedBox(width: 8),
+                          // Breathing pill
+                          _buildActionPill(
+                            context: context,
+                            icon: Icons.air,
+                            label: 'Breathing',
+                            onTap: () {
+                              Navigator.pop(context);
+                              showBreathingGuide(
+                                context: context,
+                                exercise: exercise,
+                              );
+                            },
+                            accentColor: accentColor,
+                            isDark: isDark,
+                            textMuted: textMuted,
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 20),
 
@@ -6327,6 +6825,58 @@ class _ExerciseDetailsSheetContentState
           ),
         ),
       ],
+    );
+  }
+
+  /// Build an action pill button (Video, Breathing, etc.)
+  Widget _buildActionPill({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required Color accentColor,
+    required bool isDark,
+    required Color textMuted,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.15)
+                  : Colors.black.withValues(alpha: 0.1),
+              width: 0.5,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: accentColor),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

@@ -137,7 +137,7 @@ class _MuscleDetailScreenState extends ConsumerState<MuscleDetailScreen> {
                         exercise: exercise,
                         totalVolume: exerciseData.totalVolumeKg ?? 1,
                         onTap: () {
-                          context.push('/progress/exercise-history/${Uri.encodeComponent(exercise.exerciseName)}');
+                          context.push('/stats/exercise-history/${Uri.encodeComponent(exercise.exerciseName)}');
                         },
                       )),
                     ],

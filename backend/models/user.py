@@ -150,6 +150,8 @@ class UserUpdate(BaseModel):
     # Muscle focus points allocation (max 5 total)
     # Format: {"triceps": 2, "lats": 1, "obliques": 2}
     muscle_focus_points: Optional[dict] = None
+    # Profile photo URL (S3 storage)
+    photo_url: Optional[str] = Field(default=None, max_length=1000)
 
 
 class User(BaseModel):
@@ -194,3 +196,5 @@ class User(BaseModel):
     # Muscle focus points allocation (max 5 total)
     # Format: {"triceps": 2, "lats": 1, "obliques": 2}
     muscle_focus_points: Optional[dict] = None
+    # Profile photo URL (S3 storage)
+    photo_url: Optional[str] = Field(default=None, max_length=1000)

@@ -1535,7 +1535,7 @@ class MyJourneyCard extends ConsumerWidget {
     return InkWell(
       onTap: () {
         HapticService.light();
-        context.push('/progress');
+        context.push('/stats');
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
@@ -1751,7 +1751,7 @@ class MyJourneyCard extends ConsumerWidget {
     return InkWell(
       onTap: () {
         HapticService.light();
-        context.push('/progress');
+        context.push('/stats');
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(

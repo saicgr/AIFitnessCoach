@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/providers/wearable_provider.dart';
 import '../repositories/workout_repository.dart';
+import '../services/data_cache_service.dart';
 import '../services/wearable_service.dart';
 
 /// Tracks poll count for exponential backoff
@@ -23,236 +24,315 @@ int _getBackoffSeconds() {
   return min(30, 2 * pow(2, min(_generationPollCount, 4)).toInt());
 }
 
-/// Provider for today's workout data
-///
-/// Fetches the current day's workout summary from the API endpoint.
-/// Returns null if no workout is scheduled or user is not authenticated.
+/// Provider for today's workout data with cache-first pattern
 ///
 /// Features:
-/// - Caches result for the current session (removed autoDispose for faster navigation)
-/// - Auto-refreshes on provider invalidation
+/// - Cache-first: Shows cached data instantly, fetches fresh in background
+/// - Silent updates: UI updates automatically when fresh data arrives
 /// - Auto-polls when is_generating is true (JIT generation in progress)
-/// - Exponential backoff to prevent excessive API calls (2s -> 4s -> 8s -> 16s -> 30s cap)
-/// - Stops polling after 30 attempts (~2 minutes) to prevent infinite loops
+/// - Exponential backoff to prevent excessive API calls
 /// - Auto-syncs to WearOS watch when workout is available (Android only)
 final todayWorkoutProvider =
-    FutureProvider<TodayWorkoutResponse?>((ref) async {
-  final repository = ref.watch(workoutRepositoryProvider);
-  final response = await repository.getTodayWorkout();
+    StateNotifierProvider<TodayWorkoutNotifier, AsyncValue<TodayWorkoutResponse?>>((ref) {
+  return TodayWorkoutNotifier(ref);
+});
 
-  // If generation is in progress, schedule a refresh with exponential backoff
-  // This enables automatic polling until the workout is ready
-  if (response?.isGenerating == true) {
+/// State notifier for today's workout with cache-first pattern
+class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse?>> {
+  final Ref _ref;
+  Timer? _pollingTimer;
+  bool _isRefreshing = false;
+
+  TodayWorkoutNotifier(this._ref) : super(const AsyncValue.loading()) {
+    _loadWithCacheFirst();
+  }
+
+  /// Load data with cache-first pattern:
+  /// 1. Load from cache instantly (no loading state)
+  /// 2. Fetch from API in background
+  /// 3. Update state silently when API returns
+  Future<void> _loadWithCacheFirst() async {
+    // Step 1: Try to load from cache first
+    final cachedData = await _loadFromCache();
+    if (cachedData != null) {
+      debugPrint('⚡ [TodayWorkout] Loaded from cache instantly');
+      state = AsyncValue.data(cachedData);
+    }
+
+    // Step 2: Fetch fresh data from API in background
+    await _fetchFromApi(showLoading: cachedData == null);
+  }
+
+  /// Load cached workout data
+  Future<TodayWorkoutResponse?> _loadFromCache() async {
+    try {
+      final cached = await DataCacheService.instance.getCached(
+        DataCacheService.todayWorkoutKey,
+      );
+      if (cached != null) {
+        return TodayWorkoutResponse.fromJson(cached);
+      }
+    } catch (e) {
+      debugPrint('⚠️ [TodayWorkout] Cache parse error: $e');
+    }
+    return null;
+  }
+
+  /// Save workout data to cache
+  Future<void> _saveToCache(TodayWorkoutResponse response) async {
+    // Don't cache if workout is generating (transient state)
+    if (response.isGenerating) return;
+
+    try {
+      await DataCacheService.instance.cache(
+        DataCacheService.todayWorkoutKey,
+        response.toJson(),
+      );
+    } catch (e) {
+      debugPrint('⚠️ [TodayWorkout] Cache save error: $e');
+    }
+  }
+
+  /// Fetch fresh data from API
+  Future<void> _fetchFromApi({bool showLoading = false}) async {
+    if (_isRefreshing) return;
+    _isRefreshing = true;
+
+    try {
+      if (showLoading) {
+        state = const AsyncValue.loading();
+      }
+
+      final repository = _ref.read(workoutRepositoryProvider);
+      var response = await repository.getTodayWorkout();
+
+      // Handle generation polling
+      if (response?.isGenerating == true) {
+        _handleGenerationPolling();
+      } else {
+        _cancelPolling();
+        if (_generationPollCount > 0) {
+          debugPrint('✅ [Generation] Complete after $_generationPollCount polls');
+        }
+        _generationPollCount = 0;
+      }
+
+      // Handle auto-generation trigger
+      if (response?.needsGeneration == true && response?.nextWorkoutDate != null) {
+        debugPrint('🚀 [Auto-Gen] Backend signaled needs_generation=true, date=${response!.nextWorkoutDate}');
+        _triggerAutoGeneration(response.nextWorkoutDate!);
+
+        response = TodayWorkoutResponse(
+          hasWorkoutToday: response.hasWorkoutToday,
+          todayWorkout: response.todayWorkout,
+          nextWorkout: response.nextWorkout,
+          daysUntilNext: response.daysUntilNext,
+          restDayMessage: response.restDayMessage,
+          completedToday: response.completedToday,
+          completedWorkout: response.completedWorkout,
+          isGenerating: true,
+          generationMessage: 'Generating your workout...',
+          needsGeneration: false,
+          nextWorkoutDate: response.nextWorkoutDate,
+        );
+      }
+
+      // Handle empty state polling
+      if (response?.todayWorkout == null &&
+          response?.nextWorkout == null &&
+          response?.completedToday != true &&
+          response?.isGenerating != true &&
+          response?.needsGeneration != true) {
+        _scheduleEmptyStateRefresh();
+      }
+
+      // Sync to watch (Android only)
+      if (Platform.isAndroid && response?.todayWorkout != null && !response!.isGenerating) {
+        _syncWorkoutToWatch(response.todayWorkout!);
+      }
+
+      // Update state with fresh data
+      state = AsyncValue.data(response);
+
+      // Save to cache for next app open
+      if (response != null) {
+        await _saveToCache(response);
+      }
+    } catch (e, stack) {
+      debugPrint('❌ [TodayWorkout] API error: $e');
+      // Only set error state if we don't have cached data
+      if (!state.hasValue) {
+        state = AsyncValue.error(e, stack);
+      }
+    } finally {
+      _isRefreshing = false;
+    }
+  }
+
+  /// Handle generation polling with exponential backoff
+  void _handleGenerationPolling() {
     if (_generationPollCount < _maxGenerationPolls) {
       _generationPollCount++;
       final backoffSeconds = _getBackoffSeconds();
       debugPrint('🔄 [Generation] Poll #$_generationPollCount, next in ${backoffSeconds}s');
 
-      // Use a timer to auto-refresh with backoff (non-blocking)
-      Timer(Duration(seconds: backoffSeconds), () {
-        // Only invalidate if the provider is still active
-        try {
-          ref.invalidateSelf();
-        } catch (_) {
-          // Provider may have been disposed
-        }
+      _pollingTimer?.cancel();
+      _pollingTimer = Timer(Duration(seconds: backoffSeconds), () {
+        _fetchFromApi();
       });
     } else {
-      // Stop polling after max attempts - something is wrong
       debugPrint('❌ [Generation] Max polls ($_maxGenerationPolls) reached. Stopping auto-refresh.');
-      // Reset counter for next session
       _generationPollCount = 0;
     }
-  } else {
-    // Reset poll count when generation completes or is not in progress
-    if (_generationPollCount > 0) {
-      debugPrint('✅ [Generation] Complete after $_generationPollCount polls');
+  }
+
+  /// Cancel any active polling
+  void _cancelPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
+  }
+
+  /// Schedule refresh for empty state
+  void _scheduleEmptyStateRefresh() {
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer(const Duration(seconds: 3), () {
+      _fetchFromApi();
+    });
+  }
+
+  /// Public method to force refresh from API
+  Future<void> refresh() async {
+    await _fetchFromApi(showLoading: false);
+  }
+
+  /// Invalidate cache and refresh
+  Future<void> invalidateAndRefresh() async {
+    await DataCacheService.instance.invalidate(DataCacheService.todayWorkoutKey);
+    await _fetchFromApi(showLoading: true);
+  }
+
+  @override
+  void dispose() {
+    _cancelPolling();
+    super.dispose();
+  }
+
+  // =====================================================
+  // Auto-generation and watch sync (same as before)
+  // =====================================================
+
+  bool _isAutoGenerating = false;
+
+  void _triggerAutoGeneration(String scheduledDate) {
+    if (_isAutoGenerating) {
+      debugPrint('⏳ [Auto-Gen] Already generating, skipping duplicate request');
+      return;
     }
-    _generationPollCount = 0;
-  }
 
-  // AUTO-GENERATION: If backend signals we need to generate a workout, trigger it
-  // This ensures the hero card ALWAYS shows a workout (never empty/rest day)
-  if (response?.needsGeneration == true && response?.nextWorkoutDate != null) {
-    debugPrint('🚀 [Auto-Gen] Backend signaled needs_generation=true, date=${response!.nextWorkoutDate}');
+    _isAutoGenerating = true;
+    debugPrint('🔄 [Auto-Gen] Starting generation for date: $scheduledDate');
 
-    // Trigger generation in the background
-    _triggerAutoGeneration(ref, response.nextWorkoutDate!);
-
-    // Return response with isGenerating=true so UI shows loading state
-    return TodayWorkoutResponse(
-      hasWorkoutToday: response.hasWorkoutToday,
-      todayWorkout: response.todayWorkout,
-      nextWorkout: response.nextWorkout,
-      daysUntilNext: response.daysUntilNext,
-      restDayMessage: response.restDayMessage,
-      completedToday: response.completedToday,
-      completedWorkout: response.completedWorkout,
-      isGenerating: true,  // Show loading state
-      generationMessage: 'Generating your workout...',
-      needsGeneration: false,  // Prevent re-triggering
-      nextWorkoutDate: response.nextWorkoutDate,
-    );
-  }
-
-  // If no workouts available (post-onboarding), schedule a refresh after 3 seconds
-  // This ensures the UI auto-updates when workouts become available
-  if (response?.todayWorkout == null &&
-      response?.nextWorkout == null &&
-      response?.completedToday != true &&
-      response?.isGenerating != true &&
-      response?.needsGeneration != true) {
-    Timer(const Duration(seconds: 3), () {
+    Future(() async {
       try {
-        ref.invalidateSelf();
-      } catch (_) {
-        // Provider may have been disposed
+        final repository = _ref.read(workoutRepositoryProvider);
+        final userId = await repository.getCurrentUserId();
+        if (userId == null) {
+          debugPrint('❌ [Auto-Gen] No user ID available');
+          return;
+        }
+
+        await for (final progress in repository.generateWorkoutStreaming(
+          userId: userId,
+          scheduledDate: scheduledDate,
+        )) {
+          debugPrint('🔄 [Auto-Gen] Progress: ${progress.status} - ${progress.message}');
+
+          if (progress.status == WorkoutGenerationStatus.completed) {
+            debugPrint('✅ [Auto-Gen] Workout generated successfully!');
+            refresh();
+            break;
+          }
+
+          if (progress.status == WorkoutGenerationStatus.error) {
+            debugPrint('❌ [Auto-Gen] Generation failed: ${progress.message}');
+            break;
+          }
+        }
+      } catch (e) {
+        debugPrint('❌ [Auto-Gen] Error: $e');
+      } finally {
+        _isAutoGenerating = false;
       }
     });
   }
 
-  // Sync today's workout to WearOS watch (Android only, non-blocking)
-  if (Platform.isAndroid && response?.todayWorkout != null && !response!.isGenerating) {
-    _syncWorkoutToWatch(response.todayWorkout!, ref);
-  }
+  void _syncWorkoutToWatch(TodayWorkoutSummary workout) {
+    Future(() async {
+      try {
+        await _cacheWorkoutForWatch(workout);
 
-  return response;
-});
-
-/// Flag to prevent multiple simultaneous auto-generations
-bool _isAutoGenerating = false;
-
-/// Triggers auto-generation of a workout for the specified date
-/// This is called when the backend signals needs_generation=true
-void _triggerAutoGeneration(FutureProviderRef ref, String scheduledDate) {
-  // Prevent multiple simultaneous generations
-  if (_isAutoGenerating) {
-    debugPrint('⏳ [Auto-Gen] Already generating, skipping duplicate request');
-    return;
-  }
-
-  _isAutoGenerating = true;
-  debugPrint('🔄 [Auto-Gen] Starting generation for date: $scheduledDate');
-
-  // Fire and forget - don't block the provider
-  Future(() async {
-    try {
-      final repository = ref.read(workoutRepositoryProvider);
-
-      // Get user ID from repository
-      final userId = await repository.getCurrentUserId();
-      if (userId == null) {
-        debugPrint('❌ [Auto-Gen] No user ID available');
-        return;
-      }
-
-      // Listen to the streaming generation
-      await for (final progress in repository.generateWorkoutStreaming(
-        userId: userId,
-        scheduledDate: scheduledDate,
-      )) {
-        debugPrint('🔄 [Auto-Gen] Progress: ${progress.status} - ${progress.message}');
-
-        if (progress.status == WorkoutGenerationStatus.completed) {
-          debugPrint('✅ [Auto-Gen] Workout generated successfully!');
-          // Refresh the today workout provider to show the new workout
-          try {
-            ref.invalidateSelf();
-          } catch (_) {
-            // Provider may have been disposed
-          }
-          break;
+        final wearableSync = _ref.read(wearableSyncProvider);
+        await wearableSync.refreshConnection();
+        if (!wearableSync.isConnected) {
+          debugPrint('⌚ [Watch] Not connected, workout cached for later');
+          return;
         }
 
-        if (progress.status == WorkoutGenerationStatus.error) {
-          debugPrint('❌ [Auto-Gen] Generation failed: ${progress.message}');
-          break;
-        }
-      }
-    } catch (e) {
-      debugPrint('❌ [Auto-Gen] Error: $e');
-    } finally {
-      _isAutoGenerating = false;
-    }
-  });
-}
+        final watchWorkout = WearableService.instance.createWorkoutForWatch(
+          id: workout.id,
+          name: workout.name,
+          type: workout.type,
+          exercises: workout.exercises.map((e) => {
+            'id': e.id,
+            'name': e.name,
+            'targetSets': e.sets,
+            'targetReps': e.reps.toString(),
+            'targetWeightKg': e.weight,
+            'restSeconds': e.restSeconds ?? 60,
+            'videoUrl': e.videoUrl,
+            'thumbnailUrl': e.gifUrl ?? e.imageS3Path,
+          }).toList(),
+          estimatedDuration: workout.durationMinutes,
+          targetMuscleGroups: workout.primaryMuscles,
+          scheduledDate: workout.scheduledDate,
+        );
 
-/// Syncs the workout to watch in the background (non-blocking)
-void _syncWorkoutToWatch(TodayWorkoutSummary workout, FutureProviderRef ref) {
-  // Fire and forget - don't block the provider
-  Future(() async {
+        await wearableSync.syncWorkoutToWatch(watchWorkout);
+      } catch (e) {
+        debugPrint('⚠️ [Watch] Error syncing workout: $e');
+      }
+    });
+  }
+
+  Future<void> _cacheWorkoutForWatch(TodayWorkoutSummary workout) async {
     try {
-      // Cache workout to SharedPreferences for Kotlin service to read
-      // when watch reconnects
-      await _cacheWorkoutForWatch(workout);
+      final prefs = await SharedPreferences.getInstance();
+      final workoutData = {
+        'workout': {
+          'id': workout.id,
+          'name': workout.name,
+          'type': workout.type,
+          'estimated_duration': workout.durationMinutes,
+          'target_muscles': workout.primaryMuscles,
+          'exercises': workout.exercises.map((e) => {
+            'id': e.id,
+            'name': e.name,
+            'sets': e.sets,
+            'reps': e.reps,
+            'weight_kg': e.weight,
+            'rest_seconds': e.restSeconds ?? 60,
+            'video_url': e.videoUrl,
+            'thumbnail_url': e.gifUrl ?? e.imageS3Path,
+          }).toList(),
+        },
+        'date': workout.scheduledDate,
+      };
 
-      final wearableSync = ref.read(wearableSyncProvider);
-
-      // Check if watch is connected
-      await wearableSync.refreshConnection();
-      if (!wearableSync.isConnected) {
-        debugPrint('⌚ [Watch] Not connected, workout cached for later');
-        return;
-      }
-
-      // Format workout for watch
-      final watchWorkout = WearableService.instance.createWorkoutForWatch(
-        id: workout.id,
-        name: workout.name,
-        type: workout.type,
-        exercises: workout.exercises.map((e) => {
-          'id': e.id,
-          'name': e.name,
-          'targetSets': e.sets,
-          'targetReps': e.reps.toString(),
-          'targetWeightKg': e.weight,
-          'restSeconds': e.restSeconds ?? 60,
-          'videoUrl': e.videoUrl,
-          'thumbnailUrl': e.gifUrl ?? e.imageS3Path,
-        }).toList(),
-        estimatedDuration: workout.durationMinutes,
-        targetMuscleGroups: workout.primaryMuscles,
-        scheduledDate: workout.scheduledDate,
-      );
-
-      await wearableSync.syncWorkoutToWatch(watchWorkout);
+      await prefs.setString('today_workout_cache', jsonEncode(workoutData));
+      debugPrint('💾 [Watch] Workout cached for watch sync');
     } catch (e) {
-      debugPrint('⚠️ [Watch] Error syncing workout: $e');
+      debugPrint('⚠️ [Watch] Error caching workout: $e');
     }
-  });
-}
-
-/// Cache workout data to SharedPreferences for Kotlin service to read
-Future<void> _cacheWorkoutForWatch(TodayWorkoutSummary workout) async {
-  try {
-    final prefs = await SharedPreferences.getInstance();
-
-    // Create a JSON structure that the Kotlin service can parse
-    final workoutData = {
-      'workout': {
-        'id': workout.id,
-        'name': workout.name,
-        'type': workout.type,
-        'estimated_duration': workout.durationMinutes,
-        'target_muscles': workout.primaryMuscles,
-        'exercises': workout.exercises.map((e) => {
-          'id': e.id,
-          'name': e.name,
-          'sets': e.sets,
-          'reps': e.reps,
-          'weight_kg': e.weight,
-          'rest_seconds': e.restSeconds ?? 60,
-          'video_url': e.videoUrl,
-          'thumbnail_url': e.gifUrl ?? e.imageS3Path,
-        }).toList(),
-      },
-      'date': workout.scheduledDate,
-    };
-
-    await prefs.setString('today_workout_cache', jsonEncode(workoutData));
-    debugPrint('💾 [Watch] Workout cached for watch sync');
-  } catch (e) {
-    debugPrint('⚠️ [Watch] Error caching workout: $e');
   }
 }
 

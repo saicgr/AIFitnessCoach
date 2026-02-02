@@ -71,8 +71,11 @@ class SetTrackingTable extends StatefulWidget {
   /// Weight controller for active set
   final TextEditingController weightController;
 
-  /// Reps controller for active set
+  /// Reps controller for active set (or Left reps when L/R mode)
   final TextEditingController repsController;
+
+  /// Right reps controller for L/R mode
+  final TextEditingController? repsRightController;
 
   /// Callback when a set checkbox is tapped
   final void Function(int setIndex) onSetCompleted;
@@ -98,6 +101,9 @@ class SetTrackingTable extends StatefulWidget {
   /// Callback when unit toggle is tapped (kg/lbs)
   final VoidCallback? onToggleUnit;
 
+  /// Callback when RIR badge is tapped for editing (setIndex, currentRir)
+  final void Function(int setIndex, int? currentRir)? onRirTapped;
+
   // ========== Inline Rest Row Props ==========
 
   /// Whether to show inline rest row (between last completed and active set)
@@ -114,6 +120,7 @@ class SetTrackingTable extends StatefulWidget {
     required this.activeSetIndex,
     required this.weightController,
     required this.repsController,
+    this.repsRightController,
     required this.onSetCompleted,
     this.onSetUpdated,
     required this.onAddSet,
@@ -122,6 +129,7 @@ class SetTrackingTable extends StatefulWidget {
     this.onSelectAllTapped,
     this.onSetDeleted,
     this.onToggleUnit,
+    this.onRirTapped,
     this.showInlineRest = false,
     this.inlineRestRowWidget,
   });
@@ -351,17 +359,54 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
 
           const SizedBox(width: 8),
 
-          // Reps column
-          SizedBox(
-            width: widget.isLeftRightMode ? 60 : 72,
-            child: Text(
-              widget.isLeftRightMode ? 'Reps/Side' : 'Reps',
-              style: WorkoutDesign.tableHeaderStyle.copyWith(
-                color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
+          // Reps column - shows L/R labels when in L/R mode
+          if (widget.isLeftRightMode) ...[
+            // Left reps
+            SizedBox(
+              width: 56,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Left',
+                    style: WorkoutDesign.tableHeaderStyle.copyWith(
+                      color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
+                      fontSize: 11,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
-              textAlign: TextAlign.center,
             ),
-          ),
+            const SizedBox(width: 6),
+            // Right reps
+            SizedBox(
+              width: 56,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Right',
+                    style: WorkoutDesign.tableHeaderStyle.copyWith(
+                      color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
+                      fontSize: 11,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ] else
+            SizedBox(
+              width: 72,
+              child: Text(
+                'Reps',
+                style: WorkoutDesign.tableHeaderStyle.copyWith(
+                  color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
 
           const SizedBox(width: 8),
 
@@ -430,6 +475,9 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                 useKg: widget.useKg,
                 isWarmup: set.isWarmup,
                 isDark: isDark,
+                onRirTapped: widget.onRirTapped != null
+                    ? () => widget.onRirTapped!(index, set.targetRir ?? set.previousRir)
+                    : null,
               ),
             ),
 
@@ -461,26 +509,75 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
 
             const SizedBox(width: 8),
 
-            // Reps input (RIR pill now shown in Auto column)
-            SizedBox(
-              width: widget.isLeftRightMode ? 60 : 72,
-              child: isEditing
-                  ? _DarkInputField(
-                      controller: _editRepsController!,
-                      onSubmitted: (_) => _saveEditing(),
-                      isDark: isDark,
-                    )
-                  : isActive
-                      ? _DarkInputField(
-                          controller: widget.repsController,
-                          isDark: isDark,
-                        )
-                      : _CompletedValueCell(
-                          value: set.actualReps?.toString() ?? '',
-                          isCompleted: set.isCompleted,
-                          isDark: isDark,
-                        ),
-            ),
+            // Reps input - shows L/R split inputs when in L/R mode
+            if (widget.isLeftRightMode) ...[
+              // Left reps input
+              SizedBox(
+                width: 56,
+                child: isEditing
+                    ? _DarkInputField(
+                        controller: _editRepsController!,
+                        onSubmitted: (_) => _saveEditing(),
+                        isDark: isDark,
+                        hintText: 'L',
+                      )
+                    : isActive
+                        ? _DarkInputField(
+                            controller: widget.repsController,
+                            isDark: isDark,
+                            hintText: 'L',
+                          )
+                        : _CompletedValueCell(
+                            value: set.actualReps?.toString() ?? '',
+                            isCompleted: set.isCompleted,
+                            isDark: isDark,
+                            label: 'L',
+                          ),
+              ),
+              const SizedBox(width: 6),
+              // Right reps input
+              SizedBox(
+                width: 56,
+                child: isEditing
+                    ? _DarkInputField(
+                        controller: _editRepsController!, // TODO: use right controller
+                        onSubmitted: (_) => _saveEditing(),
+                        isDark: isDark,
+                        hintText: 'R',
+                      )
+                    : isActive
+                        ? _DarkInputField(
+                            controller: widget.repsRightController ?? widget.repsController,
+                            isDark: isDark,
+                            hintText: 'R',
+                          )
+                        : _CompletedValueCell(
+                            value: set.actualReps?.toString() ?? '', // TODO: use right reps
+                            isCompleted: set.isCompleted,
+                            isDark: isDark,
+                            label: 'R',
+                          ),
+              ),
+            ] else
+              SizedBox(
+                width: 72,
+                child: isEditing
+                    ? _DarkInputField(
+                        controller: _editRepsController!,
+                        onSubmitted: (_) => _saveEditing(),
+                        isDark: isDark,
+                      )
+                    : isActive
+                        ? _DarkInputField(
+                            controller: widget.repsController,
+                            isDark: isDark,
+                          )
+                        : _CompletedValueCell(
+                            value: set.actualReps?.toString() ?? '',
+                            isCompleted: set.isCompleted,
+                            isDark: isDark,
+                          ),
+              ),
 
             const SizedBox(width: 8),
 
@@ -860,21 +957,20 @@ class _AutoTargetCell extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.visible,
           ),
-          // RIR pill with info icon
+          // RIR pill with info icon - only ? icon is tappable
           if (targetRir != null)
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Colored RIR pill
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: WorkoutDesign.getRirColor(targetRir!),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: WorkoutDesign.getRirColor(targetRir!),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
                       WorkoutDesign.getRirLabel(targetRir!),
                       style: TextStyle(
                         fontSize: 10,
@@ -882,20 +978,22 @@ class _AutoTargetCell extends StatelessWidget {
                         color: WorkoutDesign.getRirTextColor(targetRir!),
                       ),
                     ),
-                  ),
-                  // Info icon (always visible)
-                  GestureDetector(
-                    onTap: () => _showRirExplanation(context),
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 4),
-                      child: Icon(
-                        Icons.help_outline,
-                        size: 14,
-                        color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade500,
+                    const SizedBox(width: 2),
+                    // Only the ? icon triggers the explanation - larger tap area
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _showRirExplanation(context),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4), // Larger tap target
+                        child: Icon(
+                          Icons.help_outline,
+                          size: 14,
+                          color: WorkoutDesign.getRirTextColor(targetRir!).withOpacity(0.7),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
         ],
@@ -998,6 +1096,8 @@ class _PreviousCellWithRir extends StatelessWidget {
   final bool useKg;
   final bool isWarmup;
   final bool isDark;
+  /// Callback when RIR badge text is tapped (for editing)
+  final VoidCallback? onRirTapped;
 
   const _PreviousCellWithRir({
     this.previousWeight,
@@ -1007,6 +1107,7 @@ class _PreviousCellWithRir extends StatelessWidget {
     required this.useKg,
     this.isWarmup = false,
     this.isDark = true,
+    this.onRirTapped,
   });
 
   void _showRirExplanation(BuildContext context) {
@@ -1127,10 +1228,11 @@ class _PreviousCellWithRir extends StatelessWidget {
           ),
 
           // RIR pill with ? icon (if available and not warmup)
+          // RIR text is tappable to edit, ? icon shows explanation
           if (displayRir != null && !isWarmup) ...[
             const SizedBox(width: 6),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.only(left: 6, top: 2, bottom: 2),
               decoration: BoxDecoration(
                 color: WorkoutDesign.getRirColor(displayRir).withOpacity(isDark ? 0.25 : 0.2),
                 borderRadius: BorderRadius.circular(10),
@@ -1138,25 +1240,42 @@ class _PreviousCellWithRir extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'RIR $displayRir',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: isDark
-                          ? WorkoutDesign.getRirColor(displayRir)
-                          : WorkoutDesign.getRirColor(displayRir).withOpacity(0.9),
+                  // RIR text - tappable to edit
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onRirTapped != null
+                        ? () {
+                            HapticFeedback.lightImpact();
+                            onRirTapped!();
+                          }
+                        : null,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+                      child: Text(
+                        'RIR $displayRir',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? WorkoutDesign.getRirColor(displayRir)
+                              : WorkoutDesign.getRirColor(displayRir).withOpacity(0.9),
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 3),
+                  // ? icon triggers the explanation - larger tap area
                   GestureDetector(
+                    behavior: HitTestBehavior.opaque,
                     onTap: () => _showRirExplanation(context),
-                    child: Icon(
-                      Icons.help_outline,
-                      size: 12,
-                      color: isDark
-                          ? WorkoutDesign.getRirColor(displayRir).withOpacity(0.7)
-                          : WorkoutDesign.getRirColor(displayRir).withOpacity(0.6),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4), // Larger tap target
+                      child: Icon(
+                        Icons.help_outline,
+                        size: 14,
+                        color: isDark
+                            ? WorkoutDesign.getRirColor(displayRir).withOpacity(0.7)
+                            : WorkoutDesign.getRirColor(displayRir).withOpacity(0.6),
+                      ),
                     ),
                   ),
                 ],
@@ -1174,11 +1293,13 @@ class _DarkInputField extends StatelessWidget {
   final TextEditingController controller;
   final void Function(String)? onSubmitted;
   final bool isDark;
+  final String? hintText;
 
   const _DarkInputField({
     required this.controller,
     this.onSubmitted,
     this.isDark = true,
+    this.hintText,
   });
 
   @override
@@ -1195,6 +1316,7 @@ class _DarkInputField extends StatelessWidget {
         decoration: InputDecoration(
           filled: true,
           fillColor: isDark ? WorkoutDesign.inputField : Colors.grey.shade100,
+          hintText: hintText,
           hintStyle: WorkoutDesign.inputStyle.copyWith(
             color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade400,
           ),
@@ -1211,7 +1333,7 @@ class _DarkInputField extends StatelessWidget {
             borderSide: const BorderSide(color: WorkoutDesign.accentBlue, width: 2),
           ),
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
+            horizontal: 8,
             vertical: 12,
           ),
           isDense: true,
@@ -1227,11 +1349,13 @@ class _CompletedValueCell extends StatelessWidget {
   final String value;
   final bool isCompleted;
   final bool isDark;
+  final String? label; // Optional label like "L" or "R" for L/R mode
 
   const _CompletedValueCell({
     required this.value,
     required this.isCompleted,
     this.isDark = true,
+    this.label,
   });
 
   @override
@@ -1246,14 +1370,22 @@ class _CompletedValueCell extends StatelessWidget {
         border: isDark ? null : Border.all(color: Colors.grey.shade300),
       ),
       child: Center(
-        child: Text(
-          value.isEmpty ? '—' : value,
-          style: WorkoutDesign.inputStyle.copyWith(
-            color: isDark
-                ? (isCompleted ? WorkoutDesign.textSecondary : WorkoutDesign.textMuted)
-                : (isCompleted ? Colors.grey.shade700 : Colors.grey.shade500),
-          ),
-        ),
+        child: label != null && value.isEmpty
+            ? Text(
+                label!,
+                style: WorkoutDesign.inputStyle.copyWith(
+                  color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade400,
+                  fontSize: 12,
+                ),
+              )
+            : Text(
+                value.isEmpty ? '—' : value,
+                style: WorkoutDesign.inputStyle.copyWith(
+                  color: isDark
+                      ? (isCompleted ? WorkoutDesign.textSecondary : WorkoutDesign.textMuted)
+                      : (isCompleted ? Colors.grey.shade700 : Colors.grey.shade500),
+                ),
+              ),
       ),
     );
   }

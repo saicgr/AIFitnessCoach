@@ -273,14 +273,31 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                             color: textPrimary,
                           ),
                         ),
-                        Text(
-                          _isLoading ? 'Typing...' : 'Online',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: _isLoading
-                                ? (isDark ? AppColors.orange : AppColorsLight.orange)
-                                : (isDark ? AppColors.success : AppColorsLight.success),
-                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Green dot for online, orange for typing
+                            Container(
+                              width: 8,
+                              height: 8,
+                              margin: const EdgeInsets.only(right: 6),
+                              decoration: BoxDecoration(
+                                color: _isLoading
+                                    ? (isDark ? AppColors.orange : AppColorsLight.orange)
+                                    : (isDark ? AppColors.success : AppColorsLight.success),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            Text(
+                              _isLoading ? 'Typing...' : 'Online',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _isLoading
+                                    ? (isDark ? AppColors.orange : AppColorsLight.orange)
+                                    : (isDark ? AppColors.success : AppColorsLight.success),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -400,14 +417,15 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                     child: TextField(
                       controller: _textController,
                       focusNode: _focusNode,
-                      enabled: !_isLoading,
+                      // Always enabled so user can type while AI is responding
+                      enabled: true,
                       textInputAction: TextInputAction.send,
                       textCapitalization: TextCapitalization.sentences,
                       maxLines: 3,
                       minLines: 1,
                       style: TextStyle(fontSize: 14, color: textPrimary),
                       decoration: InputDecoration(
-                        hintText: 'Ask your AI coach...',
+                        hintText: _isLoading ? 'Type your next message...' : 'Ask your AI coach...',
                         hintStyle: TextStyle(color: textMuted, fontSize: 14),
                         filled: true,
                         fillColor: glassSurface,

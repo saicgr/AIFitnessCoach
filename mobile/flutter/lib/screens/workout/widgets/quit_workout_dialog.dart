@@ -1,8 +1,10 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/coach_persona.dart';
 import '../../../widgets/coach_avatar.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Data class for quit workout result
 class QuitWorkoutResult {
@@ -41,8 +43,9 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
     useRootNavigator: true,
-    isDismissible: false,
-    enableDrag: false,
+    isDismissible: true,
+    enableDrag: true,
+    barrierColor: GlassSheetStyle.barrierColor(),
     builder: (ctx) => StatefulBuilder(
       builder: (context, setModalState) {
         // Show coach feedback view if a reason was selected and confirmed
@@ -68,31 +71,32 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
         final bottomPadding = MediaQuery.of(context).viewInsets.bottom +
             MediaQuery.of(context).padding.bottom;
 
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.surface : AppColorsLight.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottomPadding),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Handle bar
-                Center(
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted).withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(GlassSheetStyle.borderRadius)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: GlassSheetStyle.blurSigma, sigmaY: GlassSheetStyle.blurSigma),
+            child: Container(
+              decoration: BoxDecoration(
+                color: GlassSheetStyle.backgroundColor(isDark),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(GlassSheetStyle.borderRadius)),
+                border: Border(
+                  top: BorderSide(
+                    color: GlassSheetStyle.borderColor(isDark),
+                    width: 0.5,
                   ),
                 ),
+              ),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(20, 0, 20, 20 + bottomPadding),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Handle bar
+                    GlassSheetHandle(isDark: isDark),
+                    const SizedBox(height: 16),
 
-                // Title with progress
+                    // Title with progress
                 Row(
                   children: [
                     Icon(
@@ -232,7 +236,7 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                   decoration: InputDecoration(
                     hintText: 'Add a note (optional)...',
                     hintStyle: TextStyle(
-                      color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted).withOpacity(0.6),
+                      color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted).withValues(alpha: 0.6),
                     ),
                     filled: true,
                     fillColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
@@ -297,11 +301,13 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
+        ),
         );
       },
     ),
@@ -329,7 +335,7 @@ class _ReasonChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final accentColor = isDark ? AppColors.orange : AppColorsLight.orange;
     final bgColor = isSelected
-        ? accentColor.withOpacity(0.15)
+        ? accentColor.withValues(alpha: 0.15)
         : (isDark ? AppColors.elevated : AppColorsLight.elevated);
     final borderColor = isSelected
         ? accentColor
@@ -379,27 +385,30 @@ Widget _buildCoachFeedbackView({
   required String feedback,
   required VoidCallback onConfirm,
 }) {
-  return Container(
-    decoration: BoxDecoration(
-      color: isDark ? AppColors.surface : AppColorsLight.surface,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    padding: const EdgeInsets.all(24),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Handle bar
-        Container(
-          margin: const EdgeInsets.only(bottom: 20),
-          width: 40,
-          height: 4,
-          decoration: BoxDecoration(
-            color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted).withOpacity(0.5),
-            borderRadius: BorderRadius.circular(2),
+  return ClipRRect(
+    borderRadius: const BorderRadius.vertical(top: Radius.circular(GlassSheetStyle.borderRadius)),
+    child: BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: GlassSheetStyle.blurSigma, sigmaY: GlassSheetStyle.blurSigma),
+      child: Container(
+        decoration: BoxDecoration(
+          color: GlassSheetStyle.backgroundColor(isDark),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(GlassSheetStyle.borderRadius)),
+          border: Border(
+            top: BorderSide(
+              color: GlassSheetStyle.borderColor(isDark),
+              width: 0.5,
+            ),
           ),
         ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            GlassSheetHandle(isDark: isDark),
+            const SizedBox(height: 20),
 
-        // Coach avatar with image
+            // Coach avatar with image
         CoachAvatar(
           coach: coach,
           size: 72,
@@ -426,7 +435,7 @@ Widget _buildCoachFeedbackView({
             color: isDark ? AppColors.elevated : AppColorsLight.elevated,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: coach.primaryColor.withOpacity(0.3),
+              color: coach.primaryColor.withValues(alpha: 0.3),
             ),
           ),
           child: Text(
@@ -467,8 +476,10 @@ Widget _buildCoachFeedbackView({
           ),
         ),
 
-        SizedBox(height: MediaQuery.of(context).padding.bottom),
-      ],
+          SizedBox(height: MediaQuery.of(context).padding.bottom),
+        ],
+      ),
+    ),
     ),
   );
 }

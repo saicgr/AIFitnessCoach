@@ -35,6 +35,14 @@ class ApiConstants {
   static const String revenueCatAppleApiKey = 'test_vYc0UpSGFVdQBcuHxeIUEaztDAJ'; // TODO: Add iOS key when available
   static const String revenueCatGoogleApiKey = 'goog_lnoRpFUioBNbTpTzsRsIKswnIWj';
 
+  /// Google Maps API Key (for gym location picker)
+  /// To set up:
+  /// 1. Go to Google Cloud Console: https://console.cloud.google.com/
+  /// 2. Create or select a project
+  /// 3. Enable: Maps SDK for Android, Maps SDK for iOS, Places API, Geocoding API
+  /// 4. Create API Key and add restrictions for your app
+  static const String googleMapsApiKey = 'YOUR_GOOGLE_MAPS_API_KEY_HERE'; // TODO: Add your API key
+
   // Endpoint paths
   static const String auth = '/users/auth/google';
   static const String users = '/users';

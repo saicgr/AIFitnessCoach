@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:flutter/material.dart';
+import '../../core/utils/time_slot_utils.dart';
 
 part 'gym_profile.g.dart';
 
@@ -45,6 +46,25 @@ class GymProfile extends Equatable {
   final List<Map<String, dynamic>>? equipmentDetails;
   @JsonKey(name: 'workout_environment')
   final String workoutEnvironment;
+
+  // Location fields for geofencing/auto-switch
+  final String? address;
+  final String? city;
+  final double? latitude;
+  final double? longitude;
+  @JsonKey(name: 'place_id')
+  final String? placeId;
+  @JsonKey(name: 'location_radius_meters')
+  final int locationRadiusMeters;
+  @JsonKey(name: 'auto_switch_enabled')
+  final bool autoSwitchEnabled;
+
+  // Time-based auto-switch fields
+  @JsonKey(name: 'preferred_time_slot')
+  final String? preferredTimeSlot;
+  @JsonKey(name: 'time_auto_switch_enabled')
+  final bool timeAutoSwitchEnabled;
+
   @JsonKey(name: 'training_split')
   final String? trainingSplit;
   @JsonKey(name: 'workout_days')
@@ -80,6 +100,18 @@ class GymProfile extends Equatable {
     this.equipment = const [],
     this.equipmentDetails,
     this.workoutEnvironment = 'commercial_gym',
+    // Location fields
+    this.address,
+    this.city,
+    this.latitude,
+    this.longitude,
+    this.placeId,
+    this.locationRadiusMeters = 100,
+    this.autoSwitchEnabled = true,
+    // Time-based auto-switch
+    this.preferredTimeSlot,
+    this.timeAutoSwitchEnabled = true,
+    // Workout preferences
     this.trainingSplit,
     this.workoutDays = const [],
     this.durationMinutes = 45,
@@ -144,6 +176,46 @@ class GymProfile extends Equatable {
     return '$durationMinutes min';
   }
 
+  /// Check if this profile has a location set
+  bool get hasLocation => latitude != null && longitude != null;
+
+  /// Check if this profile has a time preference set
+  bool get hasTimePreference => preferredTimeSlot != null;
+
+  /// Get the time slot enum for this profile
+  TimeSlot? get timeSlot => TimeSlotUtils.fromValue(preferredTimeSlot);
+
+  /// Get the time slot label for display
+  String? get timeSlotLabel => timeSlot?.label;
+
+  /// Get the time slot short label for compact display
+  String? get timeSlotShortLabel => timeSlot?.shortLabel;
+
+  /// Get the time slot icon
+  IconData? get timeSlotIcon => timeSlot?.icon;
+
+  /// Get the time slot time range description
+  String? get timeSlotRange => timeSlot?.timeRange;
+
+  /// Check if current time matches this profile's time slot
+  bool get isCurrentTimeSlot => TimeSlotUtils.isCurrentTimeInSlotValue(preferredTimeSlot);
+
+  /// Get a short location display string
+  String get locationDisplay {
+    if (city != null && city!.isNotEmpty) {
+      return city!;
+    }
+    if (address != null && address!.isNotEmpty) {
+      // Extract city from address (simple approach)
+      final parts = address!.split(',');
+      if (parts.length >= 2) {
+        return parts[1].trim();
+      }
+      return address!;
+    }
+    return '';
+  }
+
   /// Create a copy with updated fields
   GymProfile copyWith({
     String? id,
@@ -154,6 +226,18 @@ class GymProfile extends Equatable {
     List<String>? equipment,
     List<Map<String, dynamic>>? equipmentDetails,
     String? workoutEnvironment,
+    // Location fields
+    String? address,
+    String? city,
+    double? latitude,
+    double? longitude,
+    String? placeId,
+    int? locationRadiusMeters,
+    bool? autoSwitchEnabled,
+    // Time-based auto-switch
+    String? preferredTimeSlot,
+    bool? timeAutoSwitchEnabled,
+    // Workout preferences
     String? trainingSplit,
     List<int>? workoutDays,
     int? durationMinutes,
@@ -177,6 +261,18 @@ class GymProfile extends Equatable {
       equipment: equipment ?? this.equipment,
       equipmentDetails: equipmentDetails ?? this.equipmentDetails,
       workoutEnvironment: workoutEnvironment ?? this.workoutEnvironment,
+      // Location fields
+      address: address ?? this.address,
+      city: city ?? this.city,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      placeId: placeId ?? this.placeId,
+      locationRadiusMeters: locationRadiusMeters ?? this.locationRadiusMeters,
+      autoSwitchEnabled: autoSwitchEnabled ?? this.autoSwitchEnabled,
+      // Time-based auto-switch
+      preferredTimeSlot: preferredTimeSlot ?? this.preferredTimeSlot,
+      timeAutoSwitchEnabled: timeAutoSwitchEnabled ?? this.timeAutoSwitchEnabled,
+      // Workout preferences
       trainingSplit: trainingSplit ?? this.trainingSplit,
       workoutDays: workoutDays ?? this.workoutDays,
       durationMinutes: durationMinutes ?? this.durationMinutes,
@@ -203,6 +299,18 @@ class GymProfile extends Equatable {
         equipment,
         equipmentDetails,
         workoutEnvironment,
+        // Location fields
+        address,
+        city,
+        latitude,
+        longitude,
+        placeId,
+        locationRadiusMeters,
+        autoSwitchEnabled,
+        // Time-based auto-switch
+        preferredTimeSlot,
+        timeAutoSwitchEnabled,
+        // Workout preferences
         trainingSplit,
         workoutDays,
         durationMinutes,
@@ -230,6 +338,25 @@ class GymProfileCreate {
   final List<Map<String, dynamic>>? equipmentDetails;
   @JsonKey(name: 'workout_environment')
   final String workoutEnvironment;
+
+  // Location fields
+  final String? address;
+  final String? city;
+  final double? latitude;
+  final double? longitude;
+  @JsonKey(name: 'place_id')
+  final String? placeId;
+  @JsonKey(name: 'location_radius_meters')
+  final int locationRadiusMeters;
+  @JsonKey(name: 'auto_switch_enabled')
+  final bool autoSwitchEnabled;
+
+  // Time-based auto-switch fields
+  @JsonKey(name: 'preferred_time_slot')
+  final String? preferredTimeSlot;
+  @JsonKey(name: 'time_auto_switch_enabled')
+  final bool timeAutoSwitchEnabled;
+
   @JsonKey(name: 'training_split')
   final String? trainingSplit;
   @JsonKey(name: 'workout_days')
@@ -251,6 +378,18 @@ class GymProfileCreate {
     this.equipment = const [],
     this.equipmentDetails,
     this.workoutEnvironment = 'commercial_gym',
+    // Location fields
+    this.address,
+    this.city,
+    this.latitude,
+    this.longitude,
+    this.placeId,
+    this.locationRadiusMeters = 100,
+    this.autoSwitchEnabled = true,
+    // Time-based auto-switch
+    this.preferredTimeSlot,
+    this.timeAutoSwitchEnabled = true,
+    // Workout preferences
     this.trainingSplit,
     this.workoutDays = const [],
     this.durationMinutes = 45,
@@ -276,6 +415,25 @@ class GymProfileUpdate {
   final List<Map<String, dynamic>>? equipmentDetails;
   @JsonKey(name: 'workout_environment')
   final String? workoutEnvironment;
+
+  // Location fields
+  final String? address;
+  final String? city;
+  final double? latitude;
+  final double? longitude;
+  @JsonKey(name: 'place_id')
+  final String? placeId;
+  @JsonKey(name: 'location_radius_meters')
+  final int? locationRadiusMeters;
+  @JsonKey(name: 'auto_switch_enabled')
+  final bool? autoSwitchEnabled;
+
+  // Time-based auto-switch fields
+  @JsonKey(name: 'preferred_time_slot')
+  final String? preferredTimeSlot;
+  @JsonKey(name: 'time_auto_switch_enabled')
+  final bool? timeAutoSwitchEnabled;
+
   @JsonKey(name: 'training_split')
   final String? trainingSplit;
   @JsonKey(name: 'workout_days')
@@ -301,6 +459,18 @@ class GymProfileUpdate {
     this.equipment,
     this.equipmentDetails,
     this.workoutEnvironment,
+    // Location fields
+    this.address,
+    this.city,
+    this.latitude,
+    this.longitude,
+    this.placeId,
+    this.locationRadiusMeters,
+    this.autoSwitchEnabled,
+    // Time-based auto-switch
+    this.preferredTimeSlot,
+    this.timeAutoSwitchEnabled,
+    // Workout preferences
     this.trainingSplit,
     this.workoutDays,
     this.durationMinutes,

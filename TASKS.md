@@ -18,7 +18,7 @@ ISSUES:
 3. 
 ASAP:
 -0.01. 
-	a. Need to create programs
+	a. Need to create programs - NOT YET
 	b. Need to see how a selected program assigns into the current workflow
 	c. Need so many more trophies need implementation like battlefield 6
 	d. Need muscle score for strenght score

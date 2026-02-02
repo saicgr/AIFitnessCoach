@@ -1395,9 +1395,9 @@ class NotificationService {
       case 'hydration_reminder':
         return '/hydration';
       case 'streak_alert':
-        return '/progress';
+        return '/stats';
       case 'weekly_summary':
-        return '/progress';
+        return '/stats';
       case 'movement_reminder':
         return '/home';
       default:

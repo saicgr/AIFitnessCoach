@@ -20,6 +20,16 @@ GymProfile _$GymProfileFromJson(Map<String, dynamic> json) => GymProfile(
       .toList(),
   workoutEnvironment:
       json['workout_environment'] as String? ?? 'commercial_gym',
+  address: json['address'] as String?,
+  city: json['city'] as String?,
+  latitude: (json['latitude'] as num?)?.toDouble(),
+  longitude: (json['longitude'] as num?)?.toDouble(),
+  placeId: json['place_id'] as String?,
+  locationRadiusMeters:
+      (json['location_radius_meters'] as num?)?.toInt() ?? 100,
+  autoSwitchEnabled: json['auto_switch_enabled'] as bool? ?? true,
+  preferredTimeSlot: json['preferred_time_slot'] as String?,
+  timeAutoSwitchEnabled: json['time_auto_switch_enabled'] as bool? ?? true,
   trainingSplit: json['training_split'] as String?,
   workoutDays:
       (json['workout_days'] as List<dynamic>?)
@@ -55,6 +65,15 @@ Map<String, dynamic> _$GymProfileToJson(GymProfile instance) =>
       'equipment': instance.equipment,
       'equipment_details': instance.equipmentDetails,
       'workout_environment': instance.workoutEnvironment,
+      'address': instance.address,
+      'city': instance.city,
+      'latitude': instance.latitude,
+      'longitude': instance.longitude,
+      'place_id': instance.placeId,
+      'location_radius_meters': instance.locationRadiusMeters,
+      'auto_switch_enabled': instance.autoSwitchEnabled,
+      'preferred_time_slot': instance.preferredTimeSlot,
+      'time_auto_switch_enabled': instance.timeAutoSwitchEnabled,
       'training_split': instance.trainingSplit,
       'workout_days': instance.workoutDays,
       'duration_minutes': instance.durationMinutes,
@@ -85,6 +104,16 @@ GymProfileCreate _$GymProfileCreateFromJson(Map<String, dynamic> json) =>
           .toList(),
       workoutEnvironment:
           json['workout_environment'] as String? ?? 'commercial_gym',
+      address: json['address'] as String?,
+      city: json['city'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      placeId: json['place_id'] as String?,
+      locationRadiusMeters:
+          (json['location_radius_meters'] as num?)?.toInt() ?? 100,
+      autoSwitchEnabled: json['auto_switch_enabled'] as bool? ?? true,
+      preferredTimeSlot: json['preferred_time_slot'] as String?,
+      timeAutoSwitchEnabled: json['time_auto_switch_enabled'] as bool? ?? true,
       trainingSplit: json['training_split'] as String?,
       workoutDays:
           (json['workout_days'] as List<dynamic>?)
@@ -112,6 +141,15 @@ Map<String, dynamic> _$GymProfileCreateToJson(GymProfileCreate instance) =>
       'equipment': instance.equipment,
       'equipment_details': instance.equipmentDetails,
       'workout_environment': instance.workoutEnvironment,
+      'address': instance.address,
+      'city': instance.city,
+      'latitude': instance.latitude,
+      'longitude': instance.longitude,
+      'place_id': instance.placeId,
+      'location_radius_meters': instance.locationRadiusMeters,
+      'auto_switch_enabled': instance.autoSwitchEnabled,
+      'preferred_time_slot': instance.preferredTimeSlot,
+      'time_auto_switch_enabled': instance.timeAutoSwitchEnabled,
       'training_split': instance.trainingSplit,
       'workout_days': instance.workoutDays,
       'duration_minutes': instance.durationMinutes,
@@ -133,6 +171,15 @@ GymProfileUpdate _$GymProfileUpdateFromJson(Map<String, dynamic> json) =>
           ?.map((e) => e as Map<String, dynamic>)
           .toList(),
       workoutEnvironment: json['workout_environment'] as String?,
+      address: json['address'] as String?,
+      city: json['city'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      placeId: json['place_id'] as String?,
+      locationRadiusMeters: (json['location_radius_meters'] as num?)?.toInt(),
+      autoSwitchEnabled: json['auto_switch_enabled'] as bool?,
+      preferredTimeSlot: json['preferred_time_slot'] as String?,
+      timeAutoSwitchEnabled: json['time_auto_switch_enabled'] as bool?,
       trainingSplit: json['training_split'] as String?,
       workoutDays: (json['workout_days'] as List<dynamic>?)
           ?.map((e) => (e as num).toInt())
@@ -160,6 +207,19 @@ Map<String, dynamic> _$GymProfileUpdateToJson(
   if (instance.equipmentDetails case final value?) 'equipment_details': value,
   if (instance.workoutEnvironment case final value?)
     'workout_environment': value,
+  if (instance.address case final value?) 'address': value,
+  if (instance.city case final value?) 'city': value,
+  if (instance.latitude case final value?) 'latitude': value,
+  if (instance.longitude case final value?) 'longitude': value,
+  if (instance.placeId case final value?) 'place_id': value,
+  if (instance.locationRadiusMeters case final value?)
+    'location_radius_meters': value,
+  if (instance.autoSwitchEnabled case final value?)
+    'auto_switch_enabled': value,
+  if (instance.preferredTimeSlot case final value?)
+    'preferred_time_slot': value,
+  if (instance.timeAutoSwitchEnabled case final value?)
+    'time_auto_switch_enabled': value,
   if (instance.trainingSplit case final value?) 'training_split': value,
   if (instance.workoutDays case final value?) 'workout_days': value,
   if (instance.durationMinutes case final value?) 'duration_minutes': value,
