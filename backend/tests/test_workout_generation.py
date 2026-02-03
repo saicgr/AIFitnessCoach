@@ -896,8 +896,8 @@ class TestSetTypeGeneration:
             drop_set_count=2,
             drop_set_percentage=20,
             set_targets=[
-                SetTargetSchema(set_number=1, target_reps=12),
-                SetTargetSchema(set_number=2, target_reps=12),
+                SetTargetSchema(set_number=1, target_reps=12, set_type="warmup"),
+                SetTargetSchema(set_number=2, target_reps=12, set_type="working"),
                 SetTargetSchema(set_number=3, target_reps=12, set_type="failure"),
             ],
         )
@@ -909,7 +909,7 @@ class TestSetTypeGeneration:
         assert len(exercise.set_targets) == 3, "CRITICAL: set_targets field must exist"
 
     def test_set_type_defaults(self):
-        """Set type fields should default to False/None."""
+        """Set type fields should default to False/None. Note: set_type is now REQUIRED."""
         from models.gemini_schemas import WorkoutExerciseSchema, SetTargetSchema
 
         exercise = WorkoutExerciseSchema(
@@ -917,9 +917,9 @@ class TestSetTypeGeneration:
             sets=3,
             reps=10,
             set_targets=[
-                SetTargetSchema(set_number=1, target_reps=10),
-                SetTargetSchema(set_number=2, target_reps=10),
-                SetTargetSchema(set_number=3, target_reps=10),
+                SetTargetSchema(set_number=1, target_reps=10, set_type="working"),
+                SetTargetSchema(set_number=2, target_reps=10, set_type="working"),
+                SetTargetSchema(set_number=3, target_reps=10, set_type="working"),
             ],
         )
 
@@ -947,9 +947,9 @@ class TestSetTypeGeneration:
                     is_drop_set=False,
                     set_targets=[
                         SetTargetSchema(set_number=1, target_reps=8, set_type="warmup"),
-                        SetTargetSchema(set_number=2, target_reps=8),
-                        SetTargetSchema(set_number=3, target_reps=8),
-                        SetTargetSchema(set_number=4, target_reps=8),
+                        SetTargetSchema(set_number=2, target_reps=8, set_type="working"),
+                        SetTargetSchema(set_number=3, target_reps=8, set_type="working"),
+                        SetTargetSchema(set_number=4, target_reps=8, set_type="working"),
                     ],
                 ),
                 WorkoutExerciseSchema(
@@ -962,8 +962,8 @@ class TestSetTypeGeneration:
                     drop_set_percentage=20,
                     notes="Final set: AMRAP then drop weight 20% twice",
                     set_targets=[
-                        SetTargetSchema(set_number=1, target_reps=12),
-                        SetTargetSchema(set_number=2, target_reps=12),
+                        SetTargetSchema(set_number=1, target_reps=12, set_type="working"),
+                        SetTargetSchema(set_number=2, target_reps=12, set_type="drop"),
                         SetTargetSchema(set_number=3, target_reps=12, set_type="failure"),
                     ],
                 ),
@@ -988,8 +988,8 @@ class TestSetTypeGeneration:
             drop_set_count=3,
             drop_set_percentage=25,
             set_targets=[
-                SetTargetSchema(set_number=1, target_reps=12),
-                SetTargetSchema(set_number=2, target_reps=12),
+                SetTargetSchema(set_number=1, target_reps=12, set_type="working"),
+                SetTargetSchema(set_number=2, target_reps=12, set_type="working"),
                 SetTargetSchema(set_number=3, target_reps=12, set_type="drop"),
             ],
         )

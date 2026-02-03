@@ -799,8 +799,9 @@ class XPNotifier extends StateNotifier<XPState> {
             goalType: XPGoalType.workoutComplete,
           ),
         );
-        await loadUserXP(userId: _currentUserId, showLoading: false);
       }
+      // Always refresh XP data to keep progress bar in sync
+      await loadUserXP(userId: _currentUserId, showLoading: false);
     }
   }
 
@@ -823,8 +824,9 @@ class XPNotifier extends StateNotifier<XPState> {
             goalType: XPGoalType.mealLog,
           ),
         );
-        await loadUserXP(userId: _currentUserId, showLoading: false);
       }
+      // Always refresh XP data to keep progress bar in sync
+      await loadUserXP(userId: _currentUserId, showLoading: false);
     }
   }
 
@@ -847,8 +849,9 @@ class XPNotifier extends StateNotifier<XPState> {
             goalType: XPGoalType.weightLog,
           ),
         );
-        await loadUserXP(userId: _currentUserId, showLoading: false);
       }
+      // Always refresh XP data to keep progress bar in sync
+      await loadUserXP(userId: _currentUserId, showLoading: false);
     }
   }
 
@@ -871,8 +874,9 @@ class XPNotifier extends StateNotifier<XPState> {
             goalType: XPGoalType.proteinGoal,
           ),
         );
-        await loadUserXP(userId: _currentUserId, showLoading: false);
       }
+      // Always refresh XP data to keep progress bar in sync
+      await loadUserXP(userId: _currentUserId, showLoading: false);
     }
   }
 

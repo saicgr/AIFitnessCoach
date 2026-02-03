@@ -3367,6 +3367,46 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
       debugPrint('⚠️ [Superset] Failed to log supersets: $e');
     }
   }
+
+  /// Generate a workout for a specific date
+  /// This is used when the user taps a placeholder card in the carousel
+  Future<Workout?> generateWorkoutForDate(DateTime date) async {
+    String? userId = _userId;
+    if (userId == null || userId.isEmpty) {
+      userId = await _apiClient.getUserId();
+    }
+    if (userId == null || userId.isEmpty) {
+      debugPrint('❌ [Workouts] Cannot generate workout: no userId');
+      return null;
+    }
+
+    final scheduledDate = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    debugPrint('🏋️ [Workouts] Generating workout for date: $scheduledDate');
+
+    try {
+      Workout? generatedWorkout;
+      await for (final progress in _repository.generateWorkoutStreaming(
+        userId: userId,
+        scheduledDate: scheduledDate,
+      )) {
+        if (progress.status == WorkoutGenerationStatus.completed && progress.workout != null) {
+          generatedWorkout = progress.workout;
+          debugPrint('✅ [Workouts] Generated workout: ${generatedWorkout?.name}');
+        } else if (progress.status == WorkoutGenerationStatus.error) {
+          debugPrint('❌ [Workouts] Generation error: ${progress.message}');
+        }
+      }
+
+      // Refresh workouts list to include the new workout
+      if (generatedWorkout != null) {
+        await refresh();
+      }
+      return generatedWorkout;
+    } catch (e) {
+      debugPrint('❌ [Workouts] Error generating workout for date: $e');
+      return null;
+    }
+  }
 }
 
 /// Program preferences model for customization

@@ -81,6 +81,44 @@ def safe_join_list(items, default: str = "") -> str:
     return ", ".join(result) if result else default
 
 
+def infer_set_type(exercise: Dict, set_target: Dict, set_index: int, total_sets: int) -> str:
+    """
+    Infer set_type from context when Gemini omits it (safety net).
+
+    Inference rules based on prompt guidelines:
+    1. RPE 10 or RIR 0 → failure
+    2. Exercise marked is_failure_set and last set → failure
+    3. Exercise marked is_drop_set and one of last N sets → drop
+    4. First set of weighted exercise → warmup
+    5. Default → working
+    """
+    target_rpe = set_target.get('target_rpe')
+    target_rir = set_target.get('target_rir')
+    target_weight = set_target.get('target_weight_kg')
+    set_num = set_target.get('set_number', set_index + 1)
+
+    # Failure indicators: RPE 10 or RIR 0
+    if target_rpe == 10 or target_rir == 0:
+        return "failure"
+
+    # Exercise marked as failure set and this is the last set
+    if exercise.get('is_failure_set') and set_index == total_sets - 1:
+        return "failure"
+
+    # Drop set detection: last N sets where N = drop_set_count
+    if exercise.get('is_drop_set'):
+        drop_count = exercise.get('drop_set_count', 2)
+        if set_index >= total_sets - drop_count:
+            return "drop"
+
+    # First set of weighted exercise = warmup
+    if set_num == 1 and target_weight and target_weight > 0:
+        return "warmup"
+
+    # Default to working
+    return "working"
+
+
 def validate_set_targets_strict(exercises: List[Dict], user_context: Dict = None) -> List[Dict]:
     """
     STRICTLY validates that every exercise has set_targets array from Gemini.
@@ -109,7 +147,6 @@ def validate_set_targets_strict(exercises: List[Dict], user_context: Dict = None
 
     missing_targets = []
     invalid_set_types = []
-    missing_set_types = []
     valid_set_types = {'warmup', 'working', 'drop', 'failure', 'amrap'}
 
     # Count set types across all exercises
@@ -127,19 +164,19 @@ def validate_set_targets_strict(exercises: List[Dict], user_context: Dict = None
 
         # Validate each set target has proper set_type (W, D, F, A indicators)
         logger.info(f"✅ [set_targets] '{ex_name}' has {len(set_targets)} targets:")
-        for st in set_targets:
+        for idx, st in enumerate(set_targets):
             total_sets += 1
-            set_num = st.get('set_number', '?')
+            set_num = st.get('set_number', idx + 1)
             set_type = st.get('set_type')
             target_reps = st.get('target_reps', 0)
             target_weight = st.get('target_weight_kg')
             target_rpe = st.get('target_rpe')
 
-            # Check if set_type exists
+            # Auto-fill missing set_type using smart inference (safety net)
             if not set_type:
-                missing_set_types.append(f"{ex_name} set {set_num}")
-                logger.error(f"❌ [set_type] MISSING for '{ex_name}' set {set_num}")
-                continue
+                set_type = infer_set_type(exercise, st, idx, len(set_targets))
+                st['set_type'] = set_type  # Mutate the dict to add the inferred value
+                logger.warning(f"⚠️ [set_type] Auto-inferred '{set_type}' for '{ex_name}' set {set_num}")
 
             set_type_lower = set_type.lower()
 
@@ -170,13 +207,7 @@ def validate_set_targets_strict(exercises: List[Dict], user_context: Dict = None
         logger.error(f"❌ [FATAL] {error_msg}")
         raise ValueError(error_msg)
 
-    # FAIL if any set_type is missing
-    if missing_set_types:
-        error_msg = f"Gemini FAILED to generate set_type for {len(missing_set_types)} sets: {missing_set_types}"
-        logger.error(f"❌ [FATAL] {error_msg}")
-        raise ValueError(error_msg)
-
-    # FAIL if any set_type is invalid
+    # FAIL if any set_type is invalid (after auto-fill, this should rarely happen)
     if invalid_set_types:
         error_msg = f"Gemini generated invalid set_type for {len(invalid_set_types)} sets: {invalid_set_types}"
         logger.error(f"❌ [FATAL] {error_msg}")

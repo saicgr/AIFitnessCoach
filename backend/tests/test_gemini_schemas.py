@@ -118,11 +118,11 @@ class TestWorkoutGenerationSchemas:
     """Test workout generation schemas."""
 
     def test_workout_exercise_schema(self):
-        """Test WorkoutExerciseSchema with valid data."""
+        """Test WorkoutExerciseSchema with valid data. Note: set_type is required."""
         set_targets = [
-            SetTargetSchema(set_number=1, target_reps=10, target_weight_kg=60.0),
-            SetTargetSchema(set_number=2, target_reps=10, target_weight_kg=60.0),
-            SetTargetSchema(set_number=3, target_reps=10, target_weight_kg=60.0),
+            SetTargetSchema(set_number=1, target_reps=10, target_weight_kg=60.0, set_type="warmup"),
+            SetTargetSchema(set_number=2, target_reps=10, target_weight_kg=60.0, set_type="working"),
+            SetTargetSchema(set_number=3, target_reps=10, target_weight_kg=60.0, set_type="working"),
         ]
         exercise = WorkoutExerciseSchema(
             name="Bench Press",
@@ -140,11 +140,11 @@ class TestWorkoutGenerationSchemas:
         assert len(exercise.set_targets) == 3
 
     def test_workout_exercise_schema_defaults(self):
-        """Test WorkoutExerciseSchema with defaults."""
+        """Test WorkoutExerciseSchema with defaults. Note: set_type is required."""
         set_targets = [
-            SetTargetSchema(set_number=1, target_reps=12),
-            SetTargetSchema(set_number=2, target_reps=12),
-            SetTargetSchema(set_number=3, target_reps=12),
+            SetTargetSchema(set_number=1, target_reps=12, set_type="warmup"),
+            SetTargetSchema(set_number=2, target_reps=12, set_type="working"),
+            SetTargetSchema(set_number=3, target_reps=12, set_type="working"),
         ]
         exercise = WorkoutExerciseSchema(name="Push-ups", set_targets=set_targets)
         assert exercise.sets == 3
@@ -155,14 +155,14 @@ class TestWorkoutGenerationSchemas:
     def test_generated_workout_response(self):
         """Test GeneratedWorkoutResponse with valid data."""
         bench_targets = [
-            SetTargetSchema(set_number=1, target_reps=10),
-            SetTargetSchema(set_number=2, target_reps=10),
-            SetTargetSchema(set_number=3, target_reps=10),
+            SetTargetSchema(set_number=1, target_reps=10, set_type="warmup"),
+            SetTargetSchema(set_number=2, target_reps=10, set_type="working"),
+            SetTargetSchema(set_number=3, target_reps=10, set_type="working"),
         ]
         incline_targets = [
-            SetTargetSchema(set_number=1, target_reps=10),
-            SetTargetSchema(set_number=2, target_reps=10),
-            SetTargetSchema(set_number=3, target_reps=10),
+            SetTargetSchema(set_number=1, target_reps=10, set_type="warmup"),
+            SetTargetSchema(set_number=2, target_reps=10, set_type="working"),
+            SetTargetSchema(set_number=3, target_reps=10, set_type="working"),
         ]
         workout = GeneratedWorkoutResponse(
             name="Power Chest Day",
@@ -467,11 +467,11 @@ class TestSchemaValidation:
 
     def test_generated_workout_requires_exercises(self):
         """Test that GeneratedWorkoutResponse requires exercises."""
-        # This should work - exercises is required
+        # This should work - exercises is required. Note: set_type is now required.
         test_targets = [
-            SetTargetSchema(set_number=1, target_reps=12),
-            SetTargetSchema(set_number=2, target_reps=12),
-            SetTargetSchema(set_number=3, target_reps=12),
+            SetTargetSchema(set_number=1, target_reps=12, set_type="warmup"),
+            SetTargetSchema(set_number=2, target_reps=12, set_type="working"),
+            SetTargetSchema(set_number=3, target_reps=12, set_type="working"),
         ]
         workout = GeneratedWorkoutResponse(
             name="Test",

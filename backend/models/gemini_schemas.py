@@ -87,7 +87,7 @@ class ExerciseIndicesResponse(BaseModel):
 class SetTargetSchema(BaseModel):
     """Schema for per-set AI targets (like Gravl/Hevy)."""
     set_number: int = Field(..., description="Set number (1-indexed)")
-    set_type: str = Field(default="working", description="Set type: 'warmup', 'working', 'drop', 'failure', 'amrap'")
+    set_type: str = Field(..., description="REQUIRED: Set type - must be one of: 'warmup', 'working', 'drop', 'failure', 'amrap'")
     target_reps: int = Field(..., description="Target reps for this set")
     target_weight_kg: Optional[float] = Field(default=None, description="Target weight in kg for this set")
     target_hold_seconds: Optional[int] = Field(default=None, description="Target hold time in seconds for timed exercises (planks, wall sits). Use for progressive holds.")

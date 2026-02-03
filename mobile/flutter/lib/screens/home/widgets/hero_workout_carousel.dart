@@ -7,6 +7,19 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import 'hero_workout_card.dart';
+import 'generate_workout_placeholder.dart';
+
+/// Represents either a workout or a placeholder date in the carousel
+class CarouselItem {
+  final Workout? workout;
+  final DateTime? placeholderDate;
+
+  CarouselItem.workout(this.workout) : placeholderDate = null;
+  CarouselItem.placeholder(this.placeholderDate) : workout = null;
+
+  bool get isWorkout => workout != null;
+  bool get isPlaceholder => placeholderDate != null;
+}
 
 /// Carousel based on user's workout days from profile.
 /// Each day shows either a workout card or a "Generate" placeholder.
@@ -21,6 +34,7 @@ class HeroWorkoutCarousel extends ConsumerStatefulWidget {
 class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   late PageController _pageController;
   int _currentPage = 0;
+  DateTime? _generatingForDate;
 
   @override
   void initState() {
@@ -33,6 +47,21 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleGenerateWorkout(DateTime date) async {
+    setState(() => _generatingForDate = date);
+    try {
+      // Trigger workout generation for this date
+      await ref.read(workoutsProvider.notifier).generateWorkoutForDate(date);
+      // Refresh the workouts list
+      ref.invalidate(workoutsProvider);
+      ref.invalidate(todayWorkoutProvider);
+    } finally {
+      if (mounted) {
+        setState(() => _generatingForDate = null);
+      }
+    }
   }
 
   /// Get dates for this week based on profile workout days (0=Mon, 6=Sun)
@@ -112,9 +141,8 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
               mergedWorkouts.add(nextWorkout);
             }
 
-            // Build the list of workouts to show in carousel
-            // Priority: use workoutDays-based dates if available, otherwise use workout scheduled dates
-            List<Workout> carouselWorkouts = [];
+            // Build the list of carousel items (workouts + placeholders for workout days)
+            List<CarouselItem> carouselItems = [];
 
             if (workoutDays.isNotEmpty) {
               // Use workoutDays to determine which dates to show
@@ -122,18 +150,21 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
               for (final date in workoutDates) {
                 final workout = _findWorkoutForDate(mergedWorkouts, date);
                 if (workout != null) {
-                  carouselWorkouts.add(workout);
+                  carouselItems.add(CarouselItem.workout(workout));
+                } else {
+                  // Add placeholder for this date
+                  carouselItems.add(CarouselItem.placeholder(date));
                 }
               }
             }
 
-            // If no workouts from workoutDays, use workouts from providers directly
-            if (carouselWorkouts.isEmpty) {
+            // If no workout days configured, fall back to showing available workouts
+            if (carouselItems.isEmpty) {
               // Filter to only show incomplete workouts scheduled for today or future
               final now = DateTime.now();
               final today = DateTime(now.year, now.month, now.day);
 
-              carouselWorkouts = mergedWorkouts.where((w) {
+              final filteredWorkouts = mergedWorkouts.where((w) {
                 if (w.isCompleted == true) return false;
                 if (w.scheduledDate == null) return false;
                 try {
@@ -146,47 +177,56 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
               }).toList();
 
               // Sort by scheduled date
-              carouselWorkouts.sort((a, b) {
+              filteredWorkouts.sort((a, b) {
                 final dateA = a.scheduledDate ?? '';
                 final dateB = b.scheduledDate ?? '';
                 return dateA.compareTo(dateB);
               });
+
+              carouselItems = filteredWorkouts.map((w) => CarouselItem.workout(w)).toList();
             }
 
-            // If still no workouts, show appropriate state
-            if (carouselWorkouts.isEmpty) {
+            // If still no items, show appropriate state
+            if (carouselItems.isEmpty) {
               if (workoutDays.isEmpty) {
                 return _buildNoWorkoutDaysState(isDark, accentColor);
               }
               return _buildAllDoneState(isDark, accentColor);
             }
 
-            // Show single card if only one workout (no carousel needed)
-            if (carouselWorkouts.length == 1) {
+            // Show single card if only one item (no carousel needed)
+            if (carouselItems.length == 1) {
+              final item = carouselItems.first;
               return SizedBox(
                 height: 440,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: HeroWorkoutCard(
-                    workout: carouselWorkouts.first,
-                    inCarousel: false,
-                  ),
+                  child: item.isWorkout
+                      ? HeroWorkoutCard(
+                          workout: item.workout!,
+                          inCarousel: false,
+                        )
+                      : GenerateWorkoutPlaceholder(
+                          date: item.placeholderDate!,
+                          onGenerate: () => _handleGenerateWorkout(item.placeholderDate!),
+                          isGenerating: _generatingForDate == item.placeholderDate,
+                        ),
                 ),
               );
             }
 
-            // PageView carousel for multiple workouts
+            // PageView carousel for multiple items
             return SizedBox(
               height: 440,
               child: PageView.builder(
                 controller: _pageController,
-                itemCount: carouselWorkouts.length,
+                itemCount: carouselItems.length,
                 onPageChanged: (index) {
                   HapticService.selection();
                   setState(() => _currentPage = index);
                 },
                 itemBuilder: (context, index) {
-                  final workout = carouselWorkouts[index];
+                  final item = carouselItems[index];
 
                   // Scale down and slightly dim non-active cards
                   final isActive = index == _currentPage;
@@ -199,10 +239,16 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
                     child: AnimatedOpacity(
                       opacity: opacity,
                       duration: const Duration(milliseconds: 200),
-                      child: HeroWorkoutCard(
-                        workout: workout,
-                        inCarousel: true,
-                      ),
+                      child: item.isWorkout
+                          ? HeroWorkoutCard(
+                              workout: item.workout!,
+                              inCarousel: true,
+                            )
+                          : GenerateWorkoutPlaceholder(
+                              date: item.placeholderDate!,
+                              onGenerate: () => _handleGenerateWorkout(item.placeholderDate!),
+                              isGenerating: _generatingForDate == item.placeholderDate,
+                            ),
                     ),
                   );
                 },
