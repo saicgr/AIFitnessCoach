@@ -393,6 +393,12 @@ class SimpleMetricResponse(BaseModel):
     unit: str
     recorded_at: datetime
     notes: Optional[str] = None
+    # Fasting context (auto-populated by database trigger when weight is logged)
+    is_fasting_day: Optional[bool] = None
+    fasting_record_id: Optional[str] = None
+    fasting_protocol: Optional[str] = None
+    fasting_duration_minutes: Optional[int] = None
+    days_since_last_fast: Optional[int] = None
 
 
 # Mapping from metric_type to body_measurements column names
@@ -461,6 +467,14 @@ async def record_simple_metric(input: SimpleMetricInput):
             raise HTTPException(status_code=500, detail="Failed to record measurement")
 
         row = result.data[0]
+
+        # For weight measurements, fasting context is auto-populated by database trigger
+        # We need to re-fetch the row to get the trigger-populated fasting fields
+        if input.metric_type == "weight":
+            refetch = db.client.table("body_measurements").select("*").eq("id", row["id"]).single().execute()
+            if refetch.data:
+                row = refetch.data
+
         return SimpleMetricResponse(
             id=str(row["id"]),
             user_id=row["user_id"],
@@ -469,6 +483,12 @@ async def record_simple_metric(input: SimpleMetricInput):
             unit="kg" if input.metric_type == "weight" else ("%" if input.metric_type == "body_fat" else "cm"),
             recorded_at=row.get("measured_at") or row.get("created_at"),
             notes=row.get("notes"),
+            # Fasting context (populated by trigger for weight measurements)
+            is_fasting_day=row.get("is_fasting_day"),
+            fasting_record_id=str(row["fasting_record_id"]) if row.get("fasting_record_id") else None,
+            fasting_protocol=row.get("fasting_protocol"),
+            fasting_duration_minutes=row.get("fasting_duration_minutes"),
+            days_since_last_fast=row.get("days_since_last_fast"),
         )
     except Exception as e:
         logger.error(f"Failed to record measurement: {e}")
@@ -520,6 +540,12 @@ async def get_body_measurement_history(
                         unit="kg" if metric_type == "weight" else ("%" if metric_type == "body_fat" else "cm"),
                         recorded_at=row.get("measured_at") or row.get("created_at"),
                         notes=row.get("notes"),
+                        # Fasting context for weight measurements
+                        is_fasting_day=row.get("is_fasting_day") if metric_type == "weight" else None,
+                        fasting_record_id=str(row["fasting_record_id"]) if row.get("fasting_record_id") else None,
+                        fasting_protocol=row.get("fasting_protocol") if metric_type == "weight" else None,
+                        fasting_duration_minutes=row.get("fasting_duration_minutes") if metric_type == "weight" else None,
+                        days_since_last_fast=row.get("days_since_last_fast") if metric_type == "weight" else None,
                     ))
             return entries
         else:

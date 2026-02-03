@@ -91,7 +91,9 @@ def mark_upcoming():
     cur.execute("""
         DROP VIEW IF EXISTS app_programs CASCADE;
 
-        CREATE VIEW app_programs AS
+        CREATE VIEW app_programs
+        WITH (security_invoker = true)
+        AS
         SELECT
             pv.id as variant_id,
             pv.base_program_id,

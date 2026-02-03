@@ -37,7 +37,9 @@ def consolidate_view():
     -- Recreate program_exercises_with_media with week completion columns
     DROP VIEW IF EXISTS program_exercises_with_media CASCADE;
 
-    CREATE VIEW program_exercises_with_media AS
+    CREATE VIEW program_exercises_with_media
+    WITH (security_invoker = true)
+    AS
     WITH variant_week_counts AS (
         SELECT
             variant_id,

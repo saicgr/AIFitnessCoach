@@ -417,24 +417,26 @@ async def log_weight_with_fasting(data: LogWeightWithFastingRequest):
         # Use explicitly provided fasting_record_id if given, otherwise use detected one
         fasting_record_id = data.fasting_record_id or fasting_status.get("fasting_record_id")
 
-        # Create weight log using the actual schema columns
-        # The weight_logs table has: id, user_id, weight_kg, logged_at, source, notes, created_at
-        # Fasting correlation is tracked separately via the fasting_weight_correlation table
-        # which is updated automatically via a database trigger
-        weight_log_db = {
-            "id": str(uuid.uuid4()),
+        # Insert into body_measurements table (consolidated weight storage)
+        # The database trigger will auto-populate fasting context and sync to fasting_weight_correlation
+        measurement_data = {
             "user_id": data.user_id,
             "weight_kg": data.weight_kg,
-            "logged_at": f"{data.date}T12:00:00Z",  # Use noon as default time for date-only input
-            "source": "manual",
+            "measured_at": f"{data.date}T12:00:00Z",  # Use noon as default time for date-only input
+            "measurement_source": "manual",
             "notes": data.notes,
-            "created_at": datetime.utcnow().isoformat(),
         }
 
-        result = db.client.table("weight_logs").insert(weight_log_db).execute()
+        result = db.client.table("body_measurements").insert(measurement_data).execute()
 
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to log weight")
+
+        # Re-fetch to get trigger-populated fasting fields
+        row = result.data[0]
+        refetch = db.client.table("body_measurements").select("*").eq("id", row["id"]).single().execute()
+        if refetch.data:
+            row = refetch.data
 
         # Log activity
         await log_user_activity(
@@ -451,18 +453,19 @@ async def log_weight_with_fasting(data: LogWeightWithFastingRequest):
             status_code=200
         )
 
-        # Construct response with both database data and fasting context
+        # Construct response using data from body_measurements (with trigger-populated fasting context)
         response_data = {
-            "id": weight_log_db["id"],
+            "id": str(row["id"]),
             "user_id": data.user_id,
             "weight_kg": data.weight_kg,
             "date": data.date,
             "notes": data.notes,
-            "fasting_record_id": fasting_record_id,
-            "is_fasting_day": fasting_status["is_fasting_day"],
-            "fasting_protocol": fasting_status.get("protocol"),
+            # Use trigger-populated fasting data from body_measurements, fall back to pre-fetched status
+            "fasting_record_id": str(row["fasting_record_id"]) if row.get("fasting_record_id") else fasting_record_id,
+            "is_fasting_day": row.get("is_fasting_day", fasting_status["is_fasting_day"]),
+            "fasting_protocol": row.get("fasting_protocol") or fasting_status.get("protocol"),
             "fasting_completion_percent": fasting_status.get("completion_percent"),
-            "created_at": weight_log_db["created_at"],
+            "created_at": row.get("created_at") or datetime.utcnow().isoformat(),
         }
 
         return WeightLogResponse(**response_data)

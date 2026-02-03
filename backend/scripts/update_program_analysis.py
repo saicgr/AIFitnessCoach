@@ -33,7 +33,9 @@ def update_view():
     sql = """
     DROP VIEW IF EXISTS program_analysis CASCADE;
 
-    CREATE OR REPLACE VIEW program_analysis AS
+    CREATE OR REPLACE VIEW program_analysis
+    WITH (security_invoker = true)
+    AS
     WITH variant_week_counts AS (
         SELECT
             pvw.variant_id,
