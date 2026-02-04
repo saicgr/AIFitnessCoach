@@ -17,6 +17,7 @@ ISSUES:
 2. Need consistent bottom sheet - weekly check in and XP goals sheet
 3. 
 ASAP:
+NEED PLAN TO INCLUDE MANUAL_PROGRAM file to manually create program/import program ( AI import image etc)
 -0.01. 
 	a. Need to create programs - NOT YET
 	b. Need to see how a selected program assigns into the current workflow
