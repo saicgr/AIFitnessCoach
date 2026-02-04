@@ -132,9 +132,9 @@ class _FitnessAssessmentScreenState
     final calculatedLevel = _calculateFitnessLevel();
     await quizNotifier.setFitnessLevel(calculatedLevel);
 
-    // Navigate to feature showcase
+    // Navigate directly to paywall features
     if (mounted) {
-      context.go('/feature-showcase');
+      context.go('/paywall-features');
     }
   }
 

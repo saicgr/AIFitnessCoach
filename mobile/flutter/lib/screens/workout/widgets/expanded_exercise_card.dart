@@ -1960,25 +1960,29 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
         ),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start, // Align to top so text baselines match
         children: [
           // SET column - Set number with type color badge
-          SizedBox(
-            width: 50,
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: setColor.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: Text(
-                  setLabel,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: setColor,
+          // Add top padding to align badge center with text baseline
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: SizedBox(
+              width: 50,
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: setColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Center(
+                  child: Text(
+                    setLabel,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: setColor,
+                    ),
                   ),
                 ),
               ),
@@ -1986,23 +1990,16 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
           ),
 
           // LAST column - previous session data (shows "—" for preview)
-          // Wrapped in Column to align vertically with TARGET column
           Expanded(
             flex: 3,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '—',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: textMuted,
-                  ),
-                ),
-              ],
+            child: Text(
+              '—',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: textMuted,
+                height: 1.5, // Match line height with TARGET column
+              ),
             ),
           ),
 
@@ -2012,7 +2009,6 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   targetDisplay,

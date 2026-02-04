@@ -1094,6 +1094,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
   ) {
     final unit = _weightInMetric ? 'kg' : 'lbs';
     final directionLabel = widget.weightDirection == 'lose' ? 'lose' : 'gain';
+    const orange = Color(0xFFF97316);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1105,14 +1106,22 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'How much do you want to $directionLabel?',
-            style: TextStyle(
-              fontSize: 13,
-              color: textSecondary,
-            ),
+          // Header row with question and unit toggle
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'How much do you want to $directionLabel?',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: textSecondary,
+                ),
+              ),
+              // Unit toggle (kg/lbs)
+              _buildAmountUnitToggle(isDark, cardBg, cardBorder),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // +/- buttons with amount display (tap number to type)
           Row(
@@ -1139,9 +1148,9 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF97316).withValues(alpha: 0.1),
+                    color: orange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFF97316).withValues(alpha: 0.3)),
+                    border: Border.all(color: orange.withValues(alpha: 0.3)),
                   ),
                   child: Column(
                     children: [
@@ -1150,7 +1159,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                         style: const TextStyle(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFFF97316),
+                          color: orange,
                         ),
                       ),
                       Text(
@@ -1181,7 +1190,187 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
               ),
             ],
           ),
+
+          const SizedBox(height: 16),
+
+          // Quick adjustment buttons
+          _buildQuickAdjustmentButtons(isDark, textSecondary, cardBorder),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAmountUnitToggle(bool isDark, Color cardBg, Color cardBorder) {
+    const orange = Color(0xFFF97316);
+    const orangeGradient = LinearGradient(
+      colors: [orange, Color(0xFFEA580C)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: () {
+              if (!_weightInMetric) {
+                HapticFeedback.selectionClick();
+                _convertWeightUnits(true);
+                setState(() => _weightInMetric = true);
+                widget.onUnitChanged(true);
+              }
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: _weightInMetric ? orangeGradient : null,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                'kg',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: _weightInMetric
+                      ? Colors.white
+                      : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+                ),
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              if (_weightInMetric) {
+                HapticFeedback.selectionClick();
+                _convertWeightUnits(false);
+                setState(() => _weightInMetric = false);
+                widget.onUnitChanged(false);
+              }
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: !_weightInMetric ? orangeGradient : null,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                'lbs',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: !_weightInMetric
+                      ? Colors.white
+                      : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickAdjustmentButtons(bool isDark, Color textSecondary, Color cardBorder) {
+    // Quick values to add/subtract
+    final quickValues = [5, 10, 15, 20];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Quick adjust',
+          style: TextStyle(
+            fontSize: 11,
+            color: textSecondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            // Subtract buttons
+            ...quickValues.map((value) => _buildQuickButton(
+              label: '-$value',
+              onTap: () {
+                final newAmount = _weightChangeAmount - value;
+                if (newAmount >= 1) {
+                  HapticFeedback.selectionClick();
+                  setState(() {
+                    _weightChangeAmount = newAmount;
+                  });
+                  widget.onWeightChangeAmountChanged?.call(_weightChangeAmount);
+                  _updateGoalWeight(widget.weightDirection!);
+                }
+              },
+              isDark: isDark,
+              cardBorder: cardBorder,
+              isSubtract: true,
+            )),
+            // Add buttons
+            ...quickValues.map((value) => _buildQuickButton(
+              label: '+$value',
+              onTap: () {
+                final newAmount = _weightChangeAmount + value;
+                if (newAmount <= 100) {
+                  HapticFeedback.selectionClick();
+                  setState(() {
+                    _weightChangeAmount = newAmount;
+                  });
+                  widget.onWeightChangeAmountChanged?.call(_weightChangeAmount);
+                  _updateGoalWeight(widget.weightDirection!);
+                }
+              },
+              isDark: isDark,
+              cardBorder: cardBorder,
+              isSubtract: false,
+            )),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickButton({
+    required String label,
+    required VoidCallback onTap,
+    required bool isDark,
+    required Color cardBorder,
+    required bool isSubtract,
+  }) {
+    const orange = Color(0xFFF97316);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSubtract
+              ? (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface)
+              : orange.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSubtract ? cardBorder : orange.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isSubtract
+                ? (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary)
+                : orange,
+          ),
+        ),
       ),
     );
   }

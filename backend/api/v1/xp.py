@@ -1136,15 +1136,15 @@ async def claim_daily_crate(
         if result.data:
             data = result.data
             if data.get("success"):
-                reward = data.get("reward", {})
-                reward_type = reward.get("type", "xp")
-                reward_amount = reward.get("amount", 0)
+                # RPC now returns flat structure: reward_type and reward_amount instead of nested reward object
+                reward_type = data.get("reward_type", "xp")
+                reward_amount = data.get("reward_amount", 0)
 
                 print(f"🎉 [XP] Daily crate reward: {reward_amount} {reward_type}")
 
                 return {
                     "success": True,
-                    "crate_type": crate_type,
+                    "crate_type": data.get("crate_type", crate_type),
                     "reward": {
                         "type": reward_type,
                         "amount": reward_amount,
@@ -1164,43 +1164,6 @@ async def claim_daily_crate(
     except HTTPException:
         raise
     except Exception as e:
-        # Handle JSON parsing errors from Supabase client - extract data from error message
-        error_str = str(e)
-        print(f"🔍 [XP] Claim daily crate exception: {error_str}")
-        if "JSON could not be generated" in error_str:
-            import json
-            import re
-            try:
-                # Extract the JSON from the bytes string in the details
-                # Pattern matches: b'{"reward": ...}' with nested objects
-                match = re.search(r"b'(\{[^}]*\"reward\"[^}]*\{[^}]*\}[^}]*\})'", error_str)
-                if match:
-                    json_str = match.group(1)
-                    data = json.loads(json_str)
-                    print(f"✅ [XP] Parsed RPC response from error: {data}")
-                    if data.get("success"):
-                        reward = data.get("reward", {})
-                        reward_type = reward.get("type", "xp")
-                        reward_amount = reward.get("amount", 0)
-                        print(f"🎉 [XP] Daily crate reward (from error parse): {reward_amount} {reward_type}")
-                        return {
-                            "success": True,
-                            "crate_type": data.get("crate_type", crate_type),
-                            "reward": {
-                                "type": reward_type,
-                                "amount": reward_amount,
-                                "display_name": f"{reward_amount} {reward_type.replace('_', ' ').title()}{'s' if reward_amount > 1 and reward_type != 'xp' else ''}"
-                                    if reward_type != "xp" else f"+{reward_amount} XP"
-                            },
-                            "message": data.get("message", "Crate opened!")
-                        }
-                    else:
-                        return {
-                            "success": False,
-                            "message": data.get("message", "Failed to claim crate")
-                        }
-            except Exception as parse_error:
-                print(f"❌ [XP] Failed to parse RPC response: {parse_error}")
         print(f"❌ [XP] Error claiming daily crate: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 

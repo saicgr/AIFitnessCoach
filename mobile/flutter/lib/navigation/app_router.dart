@@ -25,7 +25,6 @@ import '../screens/onboarding/senior_onboarding_screen.dart';
 import '../screens/onboarding/mode_selection_screen.dart';
 import '../screens/onboarding/coach_selection_screen.dart';
 import '../screens/onboarding/fitness_assessment_screen.dart';
-import '../screens/onboarding/feature_showcase_screen.dart';
 import '../screens/onboarding/how_it_works_screen.dart';
 import '../screens/onboarding/personal_info_screen.dart';
 import '../screens/onboarding/weight_projection_screen.dart';
@@ -796,32 +795,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const FitnessAssessmentScreen(),
-          transitionDuration: const Duration(milliseconds: 400),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.05, 0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                )),
-                child: child,
-              ),
-            );
-          },
-        ),
-      ),
-
-      // Feature Showcase - highlights key app features before paywall
-      GoRoute(
-        path: '/feature-showcase',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const FeatureShowcaseScreen(),
           transitionDuration: const Duration(milliseconds: 400),
           reverseTransitionDuration: const Duration(milliseconds: 300),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {

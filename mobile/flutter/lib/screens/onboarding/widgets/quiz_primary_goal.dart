@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 
 /// Primary goal selection widget for quiz screens.
@@ -21,6 +20,184 @@ class QuizPrimaryGoal extends StatelessWidget {
     required this.onSelect,
   });
 
+  void _showInfoSheet(BuildContext context, bool isDark, Color textPrimary, Color textSecondary) {
+    final cardBg = isDark ? AppColors.elevated : Colors.white;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.orange.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.auto_awesome,
+                    color: AppColors.orange,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    'How AI Uses This',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Icon(
+                    Icons.close,
+                    color: textSecondary,
+                    size: 24,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Explanation sections
+            _buildInfoSection(
+              icon: Icons.fitness_center,
+              title: 'Rep Ranges',
+              description: 'Sets the number of reps per exercise. Hypertrophy uses 8-12 reps, Strength uses 3-6, Endurance uses 12+.',
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 16),
+            _buildInfoSection(
+              icon: Icons.speed,
+              title: 'Workout Intensity',
+              description: 'Adjusts rest periods, exercise difficulty, and overall workout volume based on your focus.',
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 16),
+            _buildInfoSection(
+              icon: Icons.list_alt,
+              title: 'Exercise Selection',
+              description: 'AI picks exercises that best match your goal—compound lifts for strength, isolation moves for hypertrophy.',
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 16),
+            _buildInfoSection(
+              icon: Icons.refresh,
+              title: 'Can Change Anytime',
+              description: 'You can update your training focus in Settings whenever your goals evolve.',
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+              isDark: isDark,
+            ),
+
+            const SizedBox(height: 24),
+
+            // Got it button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.orange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Got it',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoSection({
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color textPrimary,
+    required Color textSecondary,
+    required bool isDark,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.grey.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            size: 18,
+            color: textSecondary,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: textSecondary,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -33,15 +210,41 @@ class QuizPrimaryGoal extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            question,
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
-              color: textPrimary,
-              height: 1.3,
-              letterSpacing: -0.5,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  question,
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    color: textPrimary,
+                    height: 1.3,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  _showInfoSheet(context, isDark, textPrimary, textSecondary);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.orange.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.info_outline,
+                    size: 20,
+                    color: AppColors.orange,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
           Text(
