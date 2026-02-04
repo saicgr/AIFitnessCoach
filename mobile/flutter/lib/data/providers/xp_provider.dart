@@ -419,11 +419,22 @@ class XPState {
 // XP Notifier
 // ============================================
 
+/// In-memory cache for instant display on provider recreation
+/// Survives provider invalidation and prevents loading flash
+XPState? _xpInMemoryCache;
+
 class XPNotifier extends StateNotifier<XPState> {
   final XPRepository _repository;
   String? _currentUserId;
 
-  XPNotifier(this._repository) : super(const XPState());
+  XPNotifier(this._repository)
+      : super(_xpInMemoryCache ?? const XPState());
+
+  /// Clear in-memory cache (called on logout)
+  static void clearCache() {
+    _xpInMemoryCache = null;
+    debugPrint('🧹 [XPProvider] In-memory cache cleared');
+  }
 
   /// Set user ID for this session
   void setUserId(String userId) {
@@ -439,6 +450,8 @@ class XPNotifier extends StateNotifier<XPState> {
       if (cached != null) {
         final userXp = UserXP.fromJson(cached);
         state = state.copyWith(userXp: userXp, isLoading: false);
+        // Update in-memory cache for instant access on provider recreation
+        _xpInMemoryCache = state;
         debugPrint('⚡ [XPProvider] Loaded from cache: Level ${userXp.currentLevel}, ${userXp.totalXp} XP');
       }
     } catch (e) {
@@ -446,8 +459,11 @@ class XPNotifier extends StateNotifier<XPState> {
     }
   }
 
-  /// Save XP data to cache
+  /// Save XP data to cache (both in-memory and persistent)
   Future<void> _saveToCache(UserXP userXp) async {
+    // Update in-memory cache FIRST for instant access on provider recreation
+    _xpInMemoryCache = state.copyWith(userXp: userXp);
+
     try {
       await DataCacheService.instance.cache(
         DataCacheService.xpDataKey,

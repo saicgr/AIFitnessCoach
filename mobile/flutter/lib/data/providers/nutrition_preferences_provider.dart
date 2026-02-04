@@ -4,6 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/nutrition_preferences.dart';
 import '../repositories/nutrition_preferences_repository.dart';
 
+/// In-memory cache for instant display on provider recreation
+/// Survives provider invalidation and prevents loading flash
+NutritionPreferencesState? _nutritionPrefsInMemoryCache;
+
 // ============================================
 // Nutrition Preferences State
 // ============================================
@@ -93,7 +97,13 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
   final NutritionPreferencesRepository _repository;
 
   NutritionPreferencesNotifier(this._repository)
-      : super(const NutritionPreferencesState());
+      : super(_nutritionPrefsInMemoryCache ?? const NutritionPreferencesState());
+
+  /// Clear in-memory cache (called on logout)
+  static void clearCache() {
+    _nutritionPrefsInMemoryCache = null;
+    debugPrint('🧹 [NutritionPrefsProvider] In-memory cache cleared');
+  }
 
   /// Initialize nutrition preferences for a user
   Future<void> initialize(String userId) async {
@@ -164,6 +174,8 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         isLoading: false,
         onboardingCompleted: wasOnboardingCompleted || backendOnboardingCompleted,
       );
+      // Update in-memory cache for instant access on provider recreation
+      _nutritionPrefsInMemoryCache = state;
 
       debugPrint(
           '✅ [NutritionPrefsProvider] Initialized: onboarded=${state.onboardingCompleted} (backend=$backendOnboardingCompleted, was=$wasOnboardingCompleted), weights=${weightHistory.length}');

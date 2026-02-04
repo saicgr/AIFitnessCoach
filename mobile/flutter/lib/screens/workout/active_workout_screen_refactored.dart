@@ -274,12 +274,14 @@ class _ActiveWorkoutScreenState
     // Initialize input controllers
     final initialExerciseIndex = isRestoring ? miniPlayerState.currentExerciseIndex : 0;
     final initialExercise = _exercises[initialExerciseIndex.clamp(0, _exercises.length - 1)];
-    _repsController =
-        TextEditingController(text: (initialExercise.reps ?? 10).toString());
-    _repsRightController =
-        TextEditingController(text: (initialExercise.reps ?? 10).toString()); // Same initial reps for L/R
-    _weightController =
-        TextEditingController(text: (initialExercise.weight ?? 0).toString());
+    // Use setTargets for initial values if available, fallback to legacy fields
+    final firstSetTarget = initialExercise.getTargetForSet(1);
+    _repsController = TextEditingController(
+        text: (firstSetTarget?.targetReps ?? initialExercise.reps ?? 10).toString());
+    _repsRightController = TextEditingController(
+        text: (firstSetTarget?.targetReps ?? initialExercise.reps ?? 10).toString()); // Same initial reps for L/R
+    _weightController = TextEditingController(
+        text: (firstSetTarget?.targetWeightKg ?? initialExercise.weight ?? 0).toString());
 
     // Restore exercise index if restoring
     if (isRestoring) {
@@ -536,7 +538,10 @@ class _ActiveWorkoutScreenState
     final weight = double.tryParse(_weightController.text) ?? 0;
     final reps = int.tryParse(_repsController.text) ?? 0;
     final exercise = _exercises[_currentExerciseIndex];
-    final targetReps = exercise.reps ?? 10;
+    // Get target reps from setTargets based on current set number
+    final currentSetNumber = (_completedSets[_currentExerciseIndex]?.length ?? 0) + 1;
+    final setTarget = exercise.getTargetForSet(currentSetNumber);
+    final targetReps = setTarget?.targetReps ?? exercise.reps ?? 10;
 
     final setLog = SetLog(
       reps: reps,
@@ -818,10 +823,11 @@ class _ActiveWorkoutScreenState
       _showInlineRest = false;
     });
 
-    // Update input controllers for new exercise
-    _repsController.text = (nextExercise.reps ?? 10).toString();
-    _repsRightController.text = (nextExercise.reps ?? 10).toString(); // Sync L/R
-    _weightController.text = (nextExercise.weight ?? 0).toString();
+    // Update input controllers for new exercise (use setTargets if available)
+    final firstSetTarget = nextExercise.getTargetForSet(1);
+    _repsController.text = (firstSetTarget?.targetReps ?? nextExercise.reps ?? 10).toString();
+    _repsRightController.text = (firstSetTarget?.targetReps ?? nextExercise.reps ?? 10).toString(); // Sync L/R
+    _weightController.text = (firstSetTarget?.targetWeightKg ?? nextExercise.weight ?? 0).toString();
 
     // Fetch smart weight suggestion based on history (background, non-blocking)
     _fetchSmartWeightForExercise(nextExercise);
@@ -1476,10 +1482,11 @@ class _ActiveWorkoutScreenState
         _viewingExerciseIndex = nextIndex;
       });
 
-      // Update input controllers for new exercise
-      _repsController.text = (nextExercise.reps ?? 10).toString();
-      _repsRightController.text = (nextExercise.reps ?? 10).toString(); // Sync L/R
-      _weightController.text = (nextExercise.weight ?? 0).toString();
+      // Update input controllers for new exercise (use setTargets if available)
+      final firstSetTarget = nextExercise.getTargetForSet(1);
+      _repsController.text = (firstSetTarget?.targetReps ?? nextExercise.reps ?? 10).toString();
+      _repsRightController.text = (firstSetTarget?.targetReps ?? nextExercise.reps ?? 10).toString(); // Sync L/R
+      _weightController.text = (firstSetTarget?.targetWeightKg ?? nextExercise.weight ?? 0).toString();
 
       // Fetch smart weight suggestion based on history (background, non-blocking)
       _fetchSmartWeightForExercise(nextExercise);
@@ -2289,7 +2296,10 @@ class _ActiveWorkoutScreenState
           // Initialize tracking data for new exercises
           for (int i = startIndex; i < _exercises.length; i++) {
             _completedSets[i] = [];
-            _totalSetsPerExercise[i] = _exercises[i].sets ?? 3;
+            final ex = _exercises[i];
+            _totalSetsPerExercise[i] = ex.hasSetTargets && ex.setTargets!.isNotEmpty
+                ? ex.setTargets!.length
+                : ex.sets ?? 3;
             _previousSets[i] = [];
           }
         });
@@ -2457,7 +2467,10 @@ class _ActiveWorkoutScreenState
           // Initialize tracking data for new exercises
           for (int i = startIndex; i < _exercises.length; i++) {
             _completedSets[i] = [];
-            _totalSetsPerExercise[i] = _exercises[i].sets ?? 3;
+            final ex = _exercises[i];
+            _totalSetsPerExercise[i] = ex.hasSetTargets && ex.setTargets!.isNotEmpty
+                ? ex.setTargets!.length
+                : ex.sets ?? 3;
             _previousSets[i] = [];
           }
         });
@@ -3875,6 +3888,32 @@ class _ActiveWorkoutScreenState
     return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
   }
 
+  /// Calculate RIR algorithmically based on set type and position
+  /// Based on RP Strength methodology: progressive intensity through sets
+  int? _calculateRir(String? setType, int setIndex, int totalWorkingSets) {
+    final type = (setType ?? 'working').toLowerCase();
+
+    // Warmup sets don't have RIR - they're for preparation, not stimulation
+    if (type == 'warmup') return null;
+
+    // Failure/AMRAP sets are always RIR 0 (maximum effort)
+    if (type == 'failure' || type == 'amrap') return 0;
+
+    // Drop sets maintain high intensity (RIR 1)
+    if (type == 'drop') return 1;
+
+    // Working sets: progressive RIR decrease (3 → 2 → 1)
+    if (totalWorkingSets <= 1) return 2;  // Single set = moderate intensity
+    if (totalWorkingSets == 2) {
+      return setIndex == 0 ? 3 : 1;  // First=3, Last=1
+    }
+    // 3+ working sets: distribute RIR across thirds (3→2→1)
+    final position = setIndex / (totalWorkingSets - 1);  // 0.0 to 1.0
+    if (position < 0.33) return 3;      // First third: conservative
+    if (position < 0.67) return 2;      // Middle third: moderate
+    return 1;                            // Last third: approaching failure
+  }
+
   /// Build set row data for the V2 table
   List<SetRowData> _buildSetRowsForExercise(int exerciseIndex) {
     final exercise = _exercises[exerciseIndex];
@@ -3883,7 +3922,13 @@ class _ActiveWorkoutScreenState
     final previousSets = _previousSets[exerciseIndex] ?? [];
     final setTargets = exercise.setTargets ?? [];
 
+    // Count working sets for RIR calculation
+    final totalWorkingSets = setTargets.isNotEmpty
+        ? setTargets.where((t) => t.setType.toLowerCase() == 'working').length
+        : totalSets;
+
     final List<SetRowData> rows = [];
+    int workingSetIndex = 0;
 
     for (int i = 0; i < totalSets; i++) {
       final isCompleted = i < completedSets.length;
@@ -3893,6 +3938,14 @@ class _ActiveWorkoutScreenState
       SetTarget? setTarget;
       if (i < setTargets.length) {
         setTarget = setTargets[i];
+      }
+
+      // Track working set index for RIR calculation
+      final isWorkingSet = setTarget?.setType.toLowerCase() == 'working' ||
+          (setTarget == null && i >= 0); // Fallback assumes all are working sets
+      final currentWorkingIndex = isWorkingSet ? workingSetIndex : 0;
+      if (setTarget?.setType.toLowerCase() == 'working') {
+        workingSetIndex++;
       }
 
       // Get previous session data
@@ -3913,6 +3966,10 @@ class _ActiveWorkoutScreenState
         actualReps = completedSets[i].reps;
       }
 
+      // Calculate RIR: use AI value if available, otherwise calculate algorithmically
+      final calculatedRir = setTarget?.targetRir ??
+          _calculateRir(setTarget?.setType, currentWorkingIndex, totalWorkingSets);
+
       rows.add(SetRowData(
         setNumber: i + 1,
         isWarmup: setTarget?.isWarmup ?? false,
@@ -3920,7 +3977,7 @@ class _ActiveWorkoutScreenState
         isActive: isActive,
         targetWeight: setTarget?.targetWeightKg ?? prevWeight ?? exercise.weight?.toDouble(),
         targetReps: setTarget?.targetReps != null ? setTarget!.targetReps.toString() : '${exercise.reps ?? 8}-${(exercise.reps ?? 8) + 2}',
-        targetRir: setTarget?.targetRir ?? 2,
+        targetRir: calculatedRir,
         actualWeight: actualWeight,
         actualReps: actualReps,
         previousWeight: prevWeight,

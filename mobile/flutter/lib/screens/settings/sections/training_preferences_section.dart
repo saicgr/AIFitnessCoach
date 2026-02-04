@@ -106,12 +106,6 @@ class TrainingPreferencesSection extends StatelessWidget {
         SettingsCard(
           items: [
             SettingItemData(
-              icon: Icons.assessment_outlined,
-              title: 'Calibration Test',
-              subtitle: 'Test your fitness level',
-              isCalibrationTestScreen: true,
-            ),
-            SettingItemData(
               icon: Icons.speed,
               title: 'My 1RMs',
               subtitle: 'View and edit your max lifts',

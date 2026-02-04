@@ -4,6 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/fasting.dart';
 import '../repositories/fasting_repository.dart';
 
+/// In-memory cache for instant display on provider recreation
+/// Survives provider invalidation and prevents loading flash
+FastingState? _fastingInMemoryCache;
+
 // ============================================
 // Fasting State
 // ============================================
@@ -104,7 +108,14 @@ class FastingNotifier extends StateNotifier<FastingState> {
   Timer? _refreshTimer;
   String? _initializedUserId;  // Track which user is already initialized
 
-  FastingNotifier(this._repository) : super(const FastingState());
+  FastingNotifier(this._repository)
+      : super(_fastingInMemoryCache ?? const FastingState());
+
+  /// Clear in-memory cache (called on logout)
+  static void clearCache() {
+    _fastingInMemoryCache = null;
+    debugPrint('🧹 [FastingProvider] In-memory cache cleared');
+  }
 
   /// Initialize fasting state for a user
   /// Skips API calls if data is already loaded for this user (prevents redundant calls on tab switch)
@@ -178,6 +189,8 @@ class FastingNotifier extends StateNotifier<FastingState> {
         isLoading: false,
         onboardingCompleted: preferences?.fastingOnboardingCompleted ?? false,
       );
+      // Update in-memory cache for instant access on provider recreation
+      _fastingInMemoryCache = state;
 
       // Start refresh timer if there's an active fast
       if (activeFast != null) {

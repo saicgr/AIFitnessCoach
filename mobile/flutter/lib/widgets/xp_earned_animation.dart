@@ -11,6 +11,7 @@ enum XPGoalType {
   mealLog,
   workoutComplete,
   proteinGoal,
+  bodyMeasurements,
 }
 
 extension XPGoalTypeExtension on XPGoalType {
@@ -27,6 +28,8 @@ extension XPGoalTypeExtension on XPGoalType {
         return Icons.fitness_center_rounded;
       case XPGoalType.proteinGoal:
         return Icons.egg_rounded;
+      case XPGoalType.bodyMeasurements:
+        return Icons.straighten_rounded;
     }
   }
 
@@ -43,6 +46,8 @@ extension XPGoalTypeExtension on XPGoalType {
         return AppColors.orange;
       case XPGoalType.proteinGoal:
         return AppColors.green;
+      case XPGoalType.bodyMeasurements:
+        return const Color(0xFFEC4899); // Pink
     }
   }
 
@@ -59,6 +64,8 @@ extension XPGoalTypeExtension on XPGoalType {
         return 'Workout complete';
       case XPGoalType.proteinGoal:
         return 'Protein goal';
+      case XPGoalType.bodyMeasurements:
+        return 'Measurements logged';
     }
   }
 }

@@ -63,6 +63,10 @@ fi
 echo -e "${YELLOW}Running flutter clean...${NC}"
 $FLUTTER_PATH clean
 
+# Upgrade packages
+echo -e "${YELLOW}Upgrading Flutter packages...${NC}"
+$FLUTTER_PATH pub upgrade
+
 # Get dependencies
 echo -e "${YELLOW}Getting dependencies...${NC}"
 $FLUTTER_PATH pub get

@@ -87,9 +87,6 @@ class SettingItemData {
   /// Whether this item navigates to the Progress Charts screen.
   final bool isProgressChartsScreen;
 
-  /// Whether this item navigates to the Calibration Test screen.
-  final bool isCalibrationTestScreen;
-
   /// Whether this item is the weight unit selector (kg/lbs).
   final bool isWeightUnitSelector;
 
@@ -131,7 +128,6 @@ class SettingItemData {
     this.isTrainingSplitSelector = false,
     this.isWorkoutDaysSelector = false,
     this.isProgressChartsScreen = false,
-    this.isCalibrationTestScreen = false,
     this.isWeightUnitSelector = false,
     this.isAccentColorSelector = false,
     this.isWeightIncrementsSelector = false,

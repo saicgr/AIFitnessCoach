@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/hydration.dart';
 import '../services/api_client.dart';
 
+/// In-memory cache for instant display on provider recreation
+/// Survives provider invalidation and prevents loading flash
+HydrationState? _hydrationInMemoryCache;
+
 /// Hydration repository provider
 final hydrationRepositoryProvider = Provider<HydrationRepository>((ref) {
   return HydrationRepository(ref.watch(apiClientProvider));
@@ -51,7 +55,14 @@ final hydrationProvider =
 class HydrationNotifier extends StateNotifier<HydrationState> {
   final HydrationRepository _repository;
 
-  HydrationNotifier(this._repository) : super(const HydrationState());
+  HydrationNotifier(this._repository)
+      : super(_hydrationInMemoryCache ?? const HydrationState());
+
+  /// Clear in-memory cache (called on logout)
+  static void clearCache() {
+    _hydrationInMemoryCache = null;
+    debugPrint('🧹 [HydrationProvider] In-memory cache cleared');
+  }
 
   /// Load today's hydration summary
   /// Set [showLoading] to false for background refreshes (e.g., after adding water)
@@ -66,6 +77,8 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
         todaySummary: summary,
         dailyGoalMl: summary.goalMl,
       );
+      // Update in-memory cache for instant access on provider recreation
+      _hydrationInMemoryCache = state;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }

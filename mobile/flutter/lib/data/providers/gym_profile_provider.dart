@@ -6,6 +6,10 @@ import '../repositories/gym_profile_repository.dart';
 import '../repositories/auth_repository.dart';
 import '../services/data_cache_service.dart';
 
+/// In-memory cache for instant display on provider recreation
+/// Survives provider invalidation and prevents loading flash
+List<GymProfile>? _gymProfilesInMemoryCache;
+
 /// Provider for the list of gym profiles for the current user
 ///
 /// Features:
@@ -63,10 +67,27 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
   final Ref _ref;
 
   GymProfilesNotifier(this._repository, this._userId, this._ref)
-      : super(const AsyncValue.loading()) {
+      : super(
+          // Start with in-memory cache if available (instant, no loading flash)
+          _gymProfilesInMemoryCache != null
+              ? AsyncValue.data(_gymProfilesInMemoryCache!)
+              : const AsyncValue.loading(),
+        ) {
     if (_userId != null) {
-      _loadWithCacheFirst();
+      // If we have in-memory cache, just fetch fresh data in background
+      if (_gymProfilesInMemoryCache != null) {
+        debugPrint('⚡ [GymProfileProvider] Using in-memory cache (instant)');
+        _fetchFromApi(showLoading: false);
+      } else {
+        _loadWithCacheFirst();
+      }
     }
+  }
+
+  /// Clear in-memory cache (called on logout)
+  static void clearCache() {
+    _gymProfilesInMemoryCache = null;
+    debugPrint('🧹 [GymProfileProvider] In-memory cache cleared');
   }
 
   /// Load profiles with cache-first pattern
@@ -89,7 +110,8 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
     await _fetchFromApi(showLoading: cachedProfiles == null || cachedProfiles.isEmpty);
   }
 
-  /// Load cached profiles
+  /// Load cached profiles from persistent storage
+  /// Also updates in-memory cache for future instant access
   Future<List<GymProfile>?> _loadFromCache() async {
     try {
       final cached = await DataCacheService.instance.getCached(
@@ -99,6 +121,8 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
         final profilesList = (cached['profiles'] as List)
             .map((p) => GymProfile.fromJson(p as Map<String, dynamic>))
             .toList();
+        // Update in-memory cache for instant access on provider recreation
+        _gymProfilesInMemoryCache = profilesList;
         return profilesList;
       }
     } catch (e) {
@@ -107,8 +131,11 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
     return null;
   }
 
-  /// Save profiles to cache
+  /// Save profiles to cache (both in-memory and persistent)
   Future<void> _saveToCache(List<GymProfile> profiles) async {
+    // Update in-memory cache FIRST for instant access on provider recreation
+    _gymProfilesInMemoryCache = profiles;
+
     try {
       await DataCacheService.instance.cache(
         DataCacheService.gymProfilesKey,

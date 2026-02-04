@@ -2248,6 +2248,12 @@ IMPORTANT RULES:
         primary_goal: Optional[str] = None,
         muscle_focus_points: Optional[Dict[str, int]] = None,
         training_split: Optional[str] = None,
+        # Fitness Assessment fields - for smarter workout personalization
+        pushup_capacity: Optional[str] = None,
+        pullup_capacity: Optional[str] = None,
+        plank_capacity: Optional[str] = None,
+        squat_capacity: Optional[str] = None,
+        cardio_capacity: Optional[str] = None,
     ) -> Dict:
         """
         Generate a personalized workout plan using AI.
@@ -2291,6 +2297,16 @@ IMPORTANT RULES:
             training_split: Optional training split identifier (full_body, push_pull_legs, pplul, etc.)
                            Used to provide rich context about the split's schedule, hypertrophy score,
                            and scientific rationale to the AI.
+            pushup_capacity: Optional fitness assessment - push-up capacity
+                            (e.g., 'none', '1-10', '11-25', '26-40', '40+')
+            pullup_capacity: Optional fitness assessment - pull-up capacity
+                            (e.g., 'none', 'assisted', '1-5', '6-10', '10+')
+            plank_capacity: Optional fitness assessment - plank hold duration
+                           (e.g., '<15sec', '15-30sec', '31-60sec', '1-2min', '2+min')
+            squat_capacity: Optional fitness assessment - bodyweight squat capacity
+                           (e.g., '0-10', '11-25', '26-40', '40+')
+            cardio_capacity: Optional fitness assessment - cardio endurance
+                            (e.g., '<5min', '5-15min', '15-30min', '30+min')
 
         Returns:
             Dict with workout structure including name, type, difficulty, exercises
@@ -2867,12 +2883,66 @@ REQUIREMENTS:
 
 Use this split information to guide exercise selection and workout structure."""
 
+        # Build fitness assessment instruction for smarter workout personalization
+        fitness_assessment_instruction = ""
+        assessment_fields = []
+        if pushup_capacity:
+            assessment_fields.append(f"Push-ups: {pushup_capacity}")
+        if pullup_capacity:
+            assessment_fields.append(f"Pull-ups: {pullup_capacity}")
+        if plank_capacity:
+            assessment_fields.append(f"Plank hold: {plank_capacity}")
+        if squat_capacity:
+            assessment_fields.append(f"Bodyweight squats: {squat_capacity}")
+        if cardio_capacity:
+            assessment_fields.append(f"Cardio endurance: {cardio_capacity}")
+
+        if assessment_fields:
+            logger.info(f"💪 [Gemini Service] Including fitness assessment data: {assessment_fields}")
+            fitness_assessment_instruction = f"""
+
+💪 USER FITNESS ASSESSMENT (Use for Personalization):
+The user completed a fitness assessment with the following results:
+{chr(10).join(f'  - {field}' for field in assessment_fields)}
+
+CRITICAL - USE THIS DATA TO PERSONALIZE THE WORKOUT:
+1. SET APPROPRIATE REP RANGES:
+   - User with 1-10 push-ups → prescribe 6-8 reps for pressing exercises
+   - User with 11-25 push-ups → prescribe 8-12 reps for pressing exercises
+   - User with 26-40+ push-ups → prescribe 10-15 reps for pressing exercises
+
+2. CHOOSE EXERCISE DIFFICULTY:
+   - User with 'none' or 'assisted' pull-ups → use lat pulldowns, assisted pull-ups, band-assisted variations
+   - User with 1-5 pull-ups → include 1-2 pull-up sets with low reps, supplement with rows
+   - User with 6+ pull-ups → include weighted pull-ups or higher volume
+
+3. SCALE CORE EXERCISES:
+   - User with <15sec or 15-30sec plank → shorter hold times (15-20 sec), include easier core variations
+   - User with 31-60sec plank → moderate holds (30-45 sec), standard core exercises
+   - User with 1-2min+ plank → longer holds (45-60+ sec), advanced core variations
+
+4. ADJUST LEG EXERCISES:
+   - User with 0-10 squats → lighter loads, focus on form, maybe assisted squats
+   - User with 11-25 squats → moderate loads and volume
+   - User with 26-40+ squats → higher volume, heavier loads, advanced variations
+
+5. SET REST PERIODS:
+   - Lower capacity users → longer rest periods (90-120 sec)
+   - Higher capacity users → standard rest periods (60-90 sec)
+
+6. CARDIO COMPONENTS:
+   - <5min cardio capacity → very short cardio bursts (30-60 sec), more rest
+   - 5-15min → moderate cardio intervals (1-2 min work periods)
+   - 15-30min+ → longer cardio segments if workout type requires it
+
+This assessment data reflects the user's ACTUAL capabilities - use it to create a workout that challenges them appropriately without being too easy or impossibly hard."""
+
         prompt = f"""Generate a {duration_text}-minute workout plan for a user with:
 - Fitness Level: {fitness_level}
 - Goals: {safe_join_list(goals, 'General fitness')}
 - Available Equipment: {safe_join_list(equipment, 'Bodyweight only')}
 - Focus Areas: {safe_join_list(focus_areas, 'Full body')}
-- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{training_split_instruction}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}{preference_constraints_instruction}{comeback_instruction}{progression_philosophy_instruction}{workout_patterns_instruction}{primary_goal_instruction}{muscle_focus_instruction}
+- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{training_split_instruction}{fitness_assessment_instruction}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}{preference_constraints_instruction}{comeback_instruction}{progression_philosophy_instruction}{workout_patterns_instruction}{primary_goal_instruction}{muscle_focus_instruction}
 
 ⚠️ CRITICAL - MUSCLE GROUP TARGETING:
 {focus_instruction if focus_instruction else 'Select a balanced mix of exercises.'}

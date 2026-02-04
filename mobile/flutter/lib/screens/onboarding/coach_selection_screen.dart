@@ -143,9 +143,9 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     ref.read(authStateProvider.notifier).markCoachSelected();
     ref.read(authStateProvider.notifier).markOnboardingComplete();
 
-    // Navigate to paywall screen (correct flow: Coach -> Paywall -> Calibration -> Workout Gen -> Home)
+    // Navigate to fitness assessment screen (correct flow: Coach -> Fitness Assessment -> Paywall -> Workout Gen -> Home)
     if (mounted) {
-      context.go('/paywall-features');
+      context.go('/fitness-assessment');
     }
 
     // Update backend in background (fire-and-forget) - submit all quiz data + coach
@@ -154,10 +154,11 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
 
   /// Submits all user preferences (pre-auth quiz data + coach) to backend
   /// This runs in the background without blocking UI navigation
-  void _submitUserPreferencesAndFlags() {
+  void _submitUserPreferencesAndFlags() async {
     // Capture refs before async operations to avoid "ref after disposed" errors
     final apiClient = ref.read(apiClientProvider);
-    final quizData = ref.read(preAuthQuizProvider);
+    // Ensure quiz data is fully loaded from SharedPreferences before building payload
+    final quizData = await ref.read(preAuthQuizProvider.notifier).ensureLoaded();
     final authNotifier = ref.read(authStateProvider.notifier);
 
     Future(() async {

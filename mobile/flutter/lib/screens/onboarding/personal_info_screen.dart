@@ -109,9 +109,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
         await ref.read(authStateProvider.notifier).refreshUser();
       }
 
-      // Navigate to coach selection
+      // Navigate to weight projection screen
       if (mounted) {
-        context.go('/coach-selection');
+        context.go('/weight-projection');
       }
     } catch (e) {
       debugPrint('❌ [PersonalInfo] Error saving personal info: $e');

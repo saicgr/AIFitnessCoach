@@ -151,6 +151,13 @@ async def generate_workout(request: GenerateWorkoutRequest):
         muscle_focus_points = None
         training_split = None
 
+        # Initialize fitness assessment fields
+        pushup_capacity = None
+        pullup_capacity = None
+        plank_capacity = None
+        squat_capacity = None
+        cardio_capacity = None
+
         if request.fitness_level and request.goals and request.equipment:
             fitness_level = request.fitness_level
             goals = request.goals
@@ -220,6 +227,16 @@ async def generate_workout(request: GenerateWorkoutRequest):
                 logger.info(f"🏋️ [Workout Generation] User has muscle focus points: {muscle_focus_points}")
             if primary_goal:
                 logger.info(f"🎯 [Workout Generation] User has primary goal: {primary_goal}")
+
+            # Get fitness assessment data for smarter workout personalization
+            pushup_capacity = user.get("pushup_capacity")
+            pullup_capacity = user.get("pullup_capacity")
+            plank_capacity = user.get("plank_capacity")
+            squat_capacity = user.get("squat_capacity")
+            cardio_capacity = user.get("cardio_capacity")
+            has_assessment = any([pushup_capacity, pullup_capacity, plank_capacity, squat_capacity, cardio_capacity])
+            if has_assessment:
+                logger.info(f"💪 [Workout Generation] User has fitness assessment: pushups={pushup_capacity}, pullups={pullup_capacity}, plank={plank_capacity}, squats={squat_capacity}, cardio={cardio_capacity}")
 
         # Fetch user's custom exercises
         logger.info(f"🏋️ [Workout Generation] Fetching custom exercises for user: {request.user_id}")
@@ -322,9 +339,78 @@ async def generate_workout(request: GenerateWorkoutRequest):
             # Determine focus area for RAG selection
             focus_area = request.focus_areas[0] if request.focus_areas else "full_body"
 
-            # Calculate exercise count based on duration
+            # Calculate exercise count based on duration and fitness level
             target_duration = request.duration_minutes or 45
-            exercise_count = max(4, min(12, target_duration // 6))  # 4-12 exercises
+
+            # Handle duration ranges (e.g., user selected "45-60 min" during onboarding)
+            # Use the MAX duration for exercise cap to give appropriate variety for longer sessions
+            if request.duration_minutes_max:
+                effective_duration = request.duration_minutes_max
+            elif request.duration_minutes_min:
+                effective_duration = request.duration_minutes_min
+            else:
+                effective_duration = target_duration
+
+            # Calculate base exercise count from duration
+            base_exercise_count = max(4, min(12, effective_duration // 6))
+
+            # Define exercise caps by fitness level AND duration
+            # Research: beginners benefit from 3-5 exercises, intermediate 5-7, advanced can handle more
+            EXERCISE_CAPS = {
+                "beginner": {
+                    30: 4,   # Short session: focus on fundamentals
+                    45: 5,   # Standard session: 5 exercises max
+                    60: 5,   # Longer session: still 5 to master form
+                    75: 6,   # Extended session: allow 1 more
+                    90: 6,   # Marathon session: cap at 6 to prevent overwhelm
+                },
+                "intermediate": {
+                    30: 5,
+                    45: 6,
+                    60: 7,
+                    75: 8,
+                    90: 9,
+                },
+                "advanced": {
+                    30: 5,
+                    45: 7,
+                    60: 8,
+                    75: 10,
+                    90: 11,
+                },
+            }
+
+            # Hell mode gets elevated caps (user accepted risk warning)
+            HELL_MODE_EXERCISE_CAPS = {
+                "beginner": {30: 5, 45: 6, 60: 6, 75: 7, 90: 7},
+                "intermediate": {30: 6, 45: 7, 60: 8, 75: 9, 90: 10},
+                "advanced": {30: 6, 45: 8, 60: 10, 75: 11, 90: 12},
+            }
+
+            # Determine which cap table to use
+            is_hell_mode = intensity_preference and intensity_preference.lower() == "hell"
+            cap_table = HELL_MODE_EXERCISE_CAPS if is_hell_mode else EXERCISE_CAPS
+
+            # Get the appropriate cap for this fitness level and duration
+            level = fitness_level or "intermediate"
+            level_caps = cap_table.get(level, cap_table["intermediate"])
+
+            # Find the closest duration bracket (using effective_duration for ranges)
+            if effective_duration <= 35:
+                duration_bracket = 30
+            elif effective_duration <= 50:
+                duration_bracket = 45
+            elif effective_duration <= 65:
+                duration_bracket = 60
+            elif effective_duration <= 80:
+                duration_bracket = 75
+            else:
+                duration_bracket = 90
+
+            max_exercises = level_caps.get(duration_bracket, 8)
+            exercise_count = min(base_exercise_count, max_exercises)
+
+            logger.info(f"📊 [Exercise Count] Level: {level}, Duration: {effective_duration}min, Hell: {is_hell_mode}, Cap: {max_exercises}, Final: {exercise_count}")
 
             # Extract injury names (injuries already fetched in parallel above)
             injury_names = [i.get("name") for i in injuries] if injuries else None
@@ -379,6 +465,12 @@ async def generate_workout(request: GenerateWorkoutRequest):
                     primary_goal=primary_goal,
                     muscle_focus_points=muscle_focus_points,
                     training_split=training_split,
+                    # Fitness assessment for smarter workout personalization
+                    pushup_capacity=pushup_capacity,
+                    pullup_capacity=pullup_capacity,
+                    plank_capacity=plank_capacity,
+                    squat_capacity=squat_capacity,
+                    cardio_capacity=cardio_capacity,
                 )
 
             exercises = workout_data.get("exercises", [])

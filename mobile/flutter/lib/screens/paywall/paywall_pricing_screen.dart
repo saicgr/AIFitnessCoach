@@ -11,7 +11,6 @@ import '../../core/providers/subscription_provider.dart';
 import '../../core/constants/api_constants.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
-import '../../data/providers/calibration_provider.dart';
 import '../settings/subscription/subscription_history_screen.dart';
 
 /// Paywall/Membership Screen
@@ -488,34 +487,11 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     }
   }
 
-  /// Navigate to calibration intro if user hasn't completed/skipped calibration, otherwise go home
+  /// Navigate to workout loading after paywall completion
   Future<void> _navigateAfterPaywall(BuildContext context, WidgetRef ref) async {
-    try {
-      // Check calibration status
-      await ref.read(calibrationStatusProvider.notifier).refreshStatus();
-      final calibrationStatus = ref.read(calibrationStatusProvider);
-
-      if (context.mounted) {
-        // If calibration not completed and not skipped, offer calibration
-        // For new users, status will be null - they should see calibration
-        final status = calibrationStatus.status;
-        final isCompleted = status?.isCompleted ?? false;
-        final isSkipped = status?.isSkipped ?? false;
-
-        if (!isCompleted && !isSkipped) {
-          debugPrint('🎯 [Paywall] Navigating to calibration (status: ${status == null ? "null" : "exists"}, completed: $isCompleted, skipped: $isSkipped)');
-          context.go('/calibration/intro', extra: {'fromOnboarding': true});
-        } else {
-          debugPrint('🏠 [Paywall] Navigating to workout loading (completed: $isCompleted, skipped: $isSkipped)');
-          context.go('/workout-loading');
-        }
-      }
-    } catch (e) {
-      debugPrint('❌ [Paywall] Error checking calibration status: $e');
-      // On error, go to workout loading to wait for generation
-      if (context.mounted) {
-        context.go('/workout-loading');
-      }
+    if (context.mounted) {
+      debugPrint('🏠 [Paywall] Navigating to workout loading');
+      context.go('/workout-loading');
     }
   }
 
@@ -545,10 +521,10 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
             behavior: SnackBarBehavior.floating,
           ),
         );
-        // Already subscribed users go directly home (no calibration prompt)
+        // Already subscribed users go directly home
         context.go('/home');
       } else {
-        // New subscribers go through calibration flow
+        // New subscribers go to workout loading
         await _markPaywallComplete(ref);
         await _navigateAfterPaywall(context, ref);
       }

@@ -6,6 +6,10 @@ import '../models/workout_day_detail.dart';
 import '../repositories/consistency_repository.dart';
 import '../services/api_client.dart';
 
+/// In-memory cache for instant display on provider recreation
+/// Survives provider invalidation and prevents loading flash
+ConsistencyState? _consistencyInMemoryCache;
+
 // ============================================
 // Consistency State
 // ============================================
@@ -88,7 +92,14 @@ class ConsistencyNotifier extends StateNotifier<ConsistencyState> {
   final ConsistencyRepository _repository;
   String? _currentUserId;
 
-  ConsistencyNotifier(this._repository) : super(const ConsistencyState());
+  ConsistencyNotifier(this._repository)
+      : super(_consistencyInMemoryCache ?? const ConsistencyState());
+
+  /// Clear in-memory cache (called on logout)
+  static void clearCache() {
+    _consistencyInMemoryCache = null;
+    debugPrint('🧹 [ConsistencyProvider] In-memory cache cleared');
+  }
 
   /// Set user ID for this session
   void setUserId(String userId) {
@@ -112,6 +123,8 @@ class ConsistencyNotifier extends StateNotifier<ConsistencyState> {
         insights: insights,
         isLoading: false,
       );
+      // Update in-memory cache for instant access on provider recreation
+      _consistencyInMemoryCache = state;
       debugPrint('[Consistency] Loaded insights - streak: ${insights.currentStreak}');
     } catch (e) {
       debugPrint('[Consistency] Error loading insights: $e');

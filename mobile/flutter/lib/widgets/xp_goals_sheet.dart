@@ -10,6 +10,7 @@ import '../data/providers/xp_provider.dart';
 import '../data/models/xp_event.dart';
 import '../data/models/user_xp.dart';
 import 'main_shell.dart';
+import 'segmented_tab_bar.dart';
 
 /// Shows XP goals sheet from any context
 void showXPGoalsSheet(BuildContext context, WidgetRef ref) {
@@ -31,12 +32,32 @@ void showXPGoalsSheet(BuildContext context, WidgetRef ref) {
   });
 }
 
-/// Bottom sheet showing daily, weekly, and monthly XP goals
-class XPGoalsSheet extends ConsumerWidget {
+/// Bottom sheet showing daily, weekly, and monthly XP goals with tabs
+class XPGoalsSheet extends ConsumerStatefulWidget {
   const XPGoalsSheet({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<XPGoalsSheet> createState() => _XPGoalsSheetState();
+}
+
+class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -46,7 +67,6 @@ class XPGoalsSheet extends ConsumerWidget {
     final accentColor = accentEnum.getColor(isDark);
 
     final loginStreak = ref.watch(loginStreakProvider);
-    final weeklyProgress = ref.watch(weeklyCheckpointsProvider);
     final hasDoubleXP = ref.watch(hasDoubleXPProvider);
     final multiplier = ref.watch(xpMultiplierProvider);
     final xpState = ref.watch(xpProvider);
@@ -87,127 +107,130 @@ class XPGoalsSheet extends ConsumerWidget {
                 ),
               ),
             ),
-            child: CustomScrollView(
-              controller: scrollController,
-              slivers: [
-                // Drag handle and header as a pinned sliver
-                SliverToBoxAdapter(
-                  child: Column(
+            child: Column(
+              children: [
+                // Drag handle
+                const SizedBox(height: 12),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: textMuted.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+
+                // Header with close button
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+                  child: Row(
                     children: [
-                      const SizedBox(height: 12),
-                      // Drag handle
                       Container(
                         width: 40,
-                        height: 4,
+                        height: 40,
                         decoration: BoxDecoration(
-                          color: textMuted.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(2),
+                          color: accentColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.bolt,
+                          color: accentColor,
+                          size: 22,
                         ),
                       ),
-
-                      // Header with close button
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
-                        child: Row(
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: accentColor.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                Icons.bolt,
-                                color: accentColor,
-                                size: 22,
+                            Text(
+                              'XP Goals',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: textColorStrong,
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                            if (hasDoubleXP)
+                              Row(
                                 children: [
+                                  const Icon(
+                                    Icons.bolt,
+                                    color: Colors.amber,
+                                    size: 12,
+                                  ),
+                                  const SizedBox(width: 3),
                                   Text(
-                                    'XP Goals',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: textColorStrong,
+                                    '${multiplier.toInt()}x XP Active!',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.amber,
                                     ),
                                   ),
-                                  if (hasDoubleXP)
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.bolt,
-                                          color: Colors.amber,
-                                          size: 12,
-                                        ),
-                                        const SizedBox(width: 3),
-                                        Text(
-                                          '${multiplier.toInt()}x XP Active!',
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.amber,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
                                 ],
                               ),
-                            ),
-                            IconButton(
-                              onPressed: () => Navigator.pop(context),
-                              icon: Icon(Icons.close, color: textMutedStrong, size: 22),
-                            ),
                           ],
                         ),
                       ),
-
-                      const SizedBox(height: 8),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Icon(Icons.close, color: textMutedStrong, size: 22),
+                      ),
                     ],
                   ),
                 ),
 
-                // Content
-                SliverPadding(
+                // Level Progress Section (compact)
+                Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      // Level Progress Section
-                      _buildLevelProgressSection(
-                        context,
-                        userXp,
-                        textColorStrong,
-                        textMutedStrong,
-                        cardBg,
-                        borderColor,
-                        accentColor,
-                      ),
+                  child: _buildLevelProgressSection(
+                    context,
+                    userXp,
+                    textColorStrong,
+                    textMutedStrong,
+                    cardBg,
+                    borderColor,
+                    accentColor,
+                  ),
+                ),
 
-                      const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
-                      // Login Streak Banner
-                      _buildStreakBanner(
-                        context,
-                        loginStreak,
-                        textColorStrong,
-                        textMutedStrong,
-                        cardBg,
-                        borderColor,
-                        accentColor,
-                      ),
+                // Login Streak Banner
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _buildStreakBanner(
+                    context,
+                    loginStreak,
+                    textColorStrong,
+                    textMutedStrong,
+                    cardBg,
+                    borderColor,
+                    accentColor,
+                  ),
+                ),
 
-                      const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
-                      // Section Header: Daily Goals
-                      _buildSectionHeader('Daily Goals', Icons.today, textColorStrong, textMutedStrong),
-                      const SizedBox(height: 8),
+                // Tab bar
+                SegmentedTabBar(
+                  controller: _tabController,
+                  showIcons: false,
+                  tabs: const [
+                    SegmentedTabItem(label: 'Daily', icon: Icons.today),
+                    SegmentedTabItem(label: 'Weekly', icon: Icons.date_range),
+                    SegmentedTabItem(label: 'Monthly', icon: Icons.calendar_month),
+                  ],
+                ),
 
-                      // Daily Goals Card
-                      _buildDailyGoalsCard(
+                // Tab content
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      // Daily Tab
+                      _buildDailyTab(
                         context,
                         ref,
                         loginStreak,
@@ -218,23 +241,8 @@ class XPGoalsSheet extends ConsumerWidget {
                         multiplier,
                         accentColor,
                       ),
-
-                      const SizedBox(height: 20),
-
-                      // Section Header: Weekly Progress
-                      _buildSectionHeader(
-                        'Weekly Progress',
-                        Icons.date_range,
-                        textColorStrong,
-                        textMutedStrong,
-                        subtitle: weeklyProgress != null
-                            ? '${weeklyProgress.earnedCount}/${weeklyProgress.totalCheckpoints}'
-                            : null,
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Extended Weekly Progress Card (10 checkpoints)
-                      _buildExtendedWeeklyProgressCard(
+                      // Weekly Tab
+                      _buildWeeklyTab(
                         context,
                         ref,
                         textColorStrong,
@@ -243,20 +251,8 @@ class XPGoalsSheet extends ConsumerWidget {
                         borderColor,
                         accentColor,
                       ),
-
-                      const SizedBox(height: 20),
-
-                      // Section Header: Monthly Achievements
-                      _buildSectionHeader(
-                        'Monthly Achievements',
-                        Icons.calendar_month,
-                        textColorStrong,
-                        textMutedStrong,
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Monthly Achievements Card (12 achievements)
-                      _buildMonthlyAchievementsCard(
+                      // Monthly Tab
+                      _buildMonthlyTab(
                         context,
                         ref,
                         textColorStrong,
@@ -265,63 +261,163 @@ class XPGoalsSheet extends ConsumerWidget {
                         borderColor,
                         accentColor,
                       ),
-
-                      const SizedBox(height: 16),
-
-                      // Trophy Room Button
-                      _buildTrophyRoomButton(
-                        context,
-                        textColorStrong,
-                        textMutedStrong,
-                        cardBg,
-                        borderColor,
-                        accentColor,
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Inventory Button
-                      _buildInventoryButton(
-                        context,
-                        ref,
-                        textColorStrong,
-                        textMutedStrong,
-                        cardBg,
-                        borderColor,
-                        accentColor,
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // Section Header: First-Time Bonuses
-                      _buildSectionHeader(
-                        'First-Time Bonuses',
-                        Icons.star_outline,
-                        textColorStrong,
-                        textMutedStrong,
-                      ),
-                      const SizedBox(height: 8),
-
-                      // First-Time Bonuses Card
-                      _buildFirstTimeBonusesCard(
-                        context,
-                        ref,
-                        textColorStrong,
-                        textMutedStrong,
-                        cardBg,
-                        borderColor,
-                        accentColor,
-                      ),
-
-                      // Bottom safe area padding
-                      SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
-                    ]),
+                    ],
                   ),
                 ),
+
+                // Bottom buttons (always visible)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildTrophyRoomButton(
+                          context,
+                          textColorStrong,
+                          textMutedStrong,
+                          cardBg,
+                          borderColor,
+                          accentColor,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildInventoryButton(
+                          context,
+                          ref,
+                          textColorStrong,
+                          textMutedStrong,
+                          cardBg,
+                          borderColor,
+                          accentColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Bottom safe area padding
+                SizedBox(height: MediaQuery.of(context).padding.bottom + 12),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Daily tab content
+  Widget _buildDailyTab(
+    BuildContext context,
+    WidgetRef ref,
+    LoginStreakInfo? loginStreak,
+    Color textColor,
+    Color textMuted,
+    Color cardBg,
+    Color borderColor,
+    double multiplier,
+    Color accentColor,
+  ) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+          // Daily Goals Card
+          _buildDailyGoalsCard(
+            context,
+            ref,
+            loginStreak,
+            textColor,
+            textMuted,
+            cardBg,
+            borderColor,
+            multiplier,
+            accentColor,
+          ),
+          const SizedBox(height: 16),
+          // First-Time Bonuses section
+          _buildSectionHeader(
+            'First-Time Bonuses',
+            Icons.star_outline,
+            textColor,
+            textMuted,
+          ),
+          const SizedBox(height: 8),
+          _buildFirstTimeBonusesCard(
+            context,
+            ref,
+            textColor,
+            textMuted,
+            cardBg,
+            borderColor,
+            accentColor,
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  /// Weekly tab content
+  Widget _buildWeeklyTab(
+    BuildContext context,
+    WidgetRef ref,
+    Color textColor,
+    Color textMuted,
+    Color cardBg,
+    Color borderColor,
+    Color accentColor,
+  ) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+          _buildExtendedWeeklyProgressCard(
+            context,
+            ref,
+            textColor,
+            textMuted,
+            cardBg,
+            borderColor,
+            accentColor,
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  /// Monthly tab content
+  Widget _buildMonthlyTab(
+    BuildContext context,
+    WidgetRef ref,
+    Color textColor,
+    Color textMuted,
+    Color cardBg,
+    Color borderColor,
+    Color accentColor,
+  ) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+          _buildMonthlyAchievementsCard(
+            context,
+            ref,
+            textColor,
+            textMuted,
+            cardBg,
+            borderColor,
+            accentColor,
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }
@@ -337,9 +433,10 @@ class XPGoalsSheet extends ConsumerWidget {
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentLevel = userXp?.currentLevel ?? 1;
-    final xpInCurrentLevel = userXp?.xpInCurrentLevel ?? 0;
-    final xpToNextLevel = userXp?.xpToNextLevel ?? 50;
-    final progressFraction = userXp?.progressFraction ?? 0.0;
+    // Ensure XP values are never negative (data corruption safeguard)
+    final xpInCurrentLevel = (userXp?.xpInCurrentLevel ?? 0).clamp(0, 999999);
+    final xpToNextLevel = (userXp?.xpToNextLevel ?? 50).clamp(1, 100000);
+    final progressFraction = (userXp?.progressFraction ?? 0.0).clamp(0.0, 1.0);
     final xpTitle = userXp?.xpTitle ?? XPTitle.novice;
     final titleColor = Color(xpTitle.colorValue);
 
@@ -1509,20 +1606,23 @@ class XPGoalsSheet extends ConsumerWidget {
               color: accentColor,
               size: 18,
             ),
-            const SizedBox(width: 8),
-            Text(
-              'View Trophy Room',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: isDark ? textColor : Colors.black87,
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                'Trophy Room',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? textColor : Colors.black87,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 4),
             Icon(
               Icons.chevron_right,
               color: accentColor,
-              size: 18,
+              size: 16,
             ),
           ],
         ),
@@ -1581,19 +1681,22 @@ class XPGoalsSheet extends ConsumerWidget {
               color: purpleAccent,
               size: 18,
             ),
-            const SizedBox(width: 8),
-            Text(
-              'View Inventory',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: isDark ? textColor : Colors.black87,
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                'Inventory',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? textColor : Colors.black87,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             if (totalItems > 0) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: 4),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: purpleAccent,
                   borderRadius: BorderRadius.circular(10),
@@ -1601,18 +1704,18 @@ class XPGoalsSheet extends ConsumerWidget {
                 child: Text(
                   '$totalItems',
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
               ),
             ],
-            const SizedBox(width: 6),
+            const SizedBox(width: 4),
             Icon(
               Icons.chevron_right,
               color: purpleAccent,
-              size: 18,
+              size: 16,
             ),
           ],
         ),

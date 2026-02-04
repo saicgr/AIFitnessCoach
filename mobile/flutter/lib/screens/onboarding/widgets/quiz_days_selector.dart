@@ -3,20 +3,25 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 
+/// Callback for duration range selection (min, max)
+typedef DurationRangeCallback = void Function(int min, int max);
+
 /// Combined days per week, specific days, and workout duration selector widget.
 class QuizDaysSelector extends StatelessWidget {
   final int? selectedDays;
   final Set<int> selectedWorkoutDays;
-  final int? workoutDuration;  // Duration in minutes (30, 45, 60, 75, 90)
+  final int? workoutDurationMin;  // Min duration in minutes
+  final int? workoutDurationMax;  // Max duration in minutes (used for selection matching)
   final ValueChanged<int> onDaysChanged;
   final ValueChanged<int> onWorkoutDayToggled;
-  final ValueChanged<int>? onDurationChanged;
+  final DurationRangeCallback? onDurationChanged;
 
   const QuizDaysSelector({
     super.key,
     required this.selectedDays,
     required this.selectedWorkoutDays,
-    this.workoutDuration,
+    this.workoutDurationMin,
+    this.workoutDurationMax,
     required this.onDaysChanged,
     required this.onWorkoutDayToggled,
     this.onDurationChanged,
@@ -33,11 +38,11 @@ class QuizDaysSelector extends StatelessWidget {
   ];
 
   static const _durationOptions = [
-    {'minutes': 30, 'label': '<30', 'desc': 'Quick'},
-    {'minutes': 45, 'label': '30-45', 'desc': 'Standard'},
-    {'minutes': 60, 'label': '45-60', 'desc': 'Full'},
-    {'minutes': 75, 'label': '60-75', 'desc': 'Extended'},
-    {'minutes': 90, 'label': '75-90', 'desc': 'Long'},
+    {'min': 15, 'max': 30, 'label': '<30', 'desc': 'Quick'},
+    {'min': 30, 'max': 45, 'label': '30-45', 'desc': 'Standard'},
+    {'min': 45, 'max': 60, 'label': '45-60', 'desc': 'Full'},
+    {'min': 60, 'max': 75, 'label': '60-75', 'desc': 'Extended'},
+    {'min': 75, 'max': 90, 'label': '75-90', 'desc': 'Long'},
   ];
 
   @override
@@ -106,8 +111,10 @@ class QuizDaysSelector extends StatelessWidget {
           children: _durationOptions.asMap().entries.map((entry) {
             final index = entry.key;
             final option = entry.value;
-            final minutes = option['minutes'] as int;
-            final isSelected = workoutDuration == minutes;
+            final minDuration = option['min'] as int;
+            final maxDuration = option['max'] as int;
+            // Match selection by max value (the upper bound of the range)
+            final isSelected = workoutDurationMax == maxDuration;
 
             return Expanded(
               child: Padding(
@@ -115,7 +122,7 @@ class QuizDaysSelector extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () {
                     HapticFeedback.selectionClick();
-                    onDurationChanged!(minutes);
+                    onDurationChanged!(minDuration, maxDuration);
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
@@ -173,7 +180,7 @@ class QuizDaysSelector extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         // Duration hint
-        if (workoutDuration != null)
+        if (workoutDurationMax != null)
           Center(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -188,7 +195,7 @@ class QuizDaysSelector extends StatelessWidget {
                   Icon(Icons.timer_outlined, size: 16, color: AppColors.accent),
                   const SizedBox(width: 6),
                   Text(
-                    _getDurationHint(workoutDuration!),
+                    _getDurationHint(workoutDurationMax!),
                     style: TextStyle(
                       fontSize: 12,
                       color: textPrimary,

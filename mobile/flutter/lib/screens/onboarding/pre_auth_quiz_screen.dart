@@ -57,7 +57,9 @@ class PreAuthQuizData {
   final String? weightChangeRate;  // slow (0.25kg/wk), moderate (0.5kg/wk), fast (0.75kg/wk), aggressive (1kg/wk)
   final int? daysPerWeek;
   final List<int>? workoutDays;
-  final int? workoutDuration;  // Duration in minutes (30, 45, 60, 75, 90)
+  final int? workoutDuration;  // Duration in minutes (kept for backwards compatibility)
+  final int? workoutDurationMin;  // Min duration in minutes (e.g., 45 for "45-60" range)
+  final int? workoutDurationMax;  // Max duration in minutes (e.g., 60 for "45-60" range)
   final List<String>? equipment;
   final List<String>? customEquipment;  // User-added custom equipment
   final String? workoutEnvironment;
@@ -92,6 +94,13 @@ class PreAuthQuizData {
   // Physical limitations/injuries (knees, shoulders, lower_back, other, none)
   final List<String>? limitations;
 
+  // Fitness Assessment fields (for AI workout personalization)
+  final String? pushupCapacity;    // 'none', '1-10', '11-25', '26-40', '40+'
+  final String? pullupCapacity;    // 'none', 'assisted', '1-5', '6-10', '10+'
+  final String? plankCapacity;     // '<15sec', '15-30sec', '31-60sec', '1-2min', '2+min'
+  final String? squatCapacity;     // '0-10', '11-25', '26-40', '40+'
+  final String? cardioCapacity;    // '<5min', '5-15min', '15-30min', '30+min'
+
   /// Computed age from dateOfBirth
   int? get age {
     if (dateOfBirth == null) return null;
@@ -122,6 +131,8 @@ class PreAuthQuizData {
     this.daysPerWeek,
     this.workoutDays,
     this.workoutDuration,
+    this.workoutDurationMin,
+    this.workoutDurationMax,
     this.equipment,
     this.customEquipment,
     this.workoutEnvironment,
@@ -144,6 +155,11 @@ class PreAuthQuizData {
     this.muscleFocusPoints,
     this.nutritionEnabled,
     this.limitations,
+    this.pushupCapacity,
+    this.pullupCapacity,
+    this.plankCapacity,
+    this.squatCapacity,
+    this.cardioCapacity,
   });
 
   String? get goal => goals?.isNotEmpty == true ? goals!.first : null;
@@ -178,6 +194,8 @@ class PreAuthQuizData {
         'daysPerWeek': daysPerWeek,
         'workoutDays': workoutDays,
         'workoutDuration': workoutDuration,
+        'workoutDurationMin': workoutDurationMin,
+        'workoutDurationMax': workoutDurationMax,
         'equipment': equipment,
         'customEquipment': customEquipment,
         'workoutEnvironment': workoutEnvironment,
@@ -201,6 +219,11 @@ class PreAuthQuizData {
         'muscleFocusPoints': muscleFocusPoints,
         'nutritionEnabled': nutritionEnabled,
         'limitations': limitations,
+        'pushupCapacity': pushupCapacity,
+        'pullupCapacity': pullupCapacity,
+        'plankCapacity': plankCapacity,
+        'squatCapacity': squatCapacity,
+        'cardioCapacity': cardioCapacity,
       };
 
   factory PreAuthQuizData.fromJson(Map<String, dynamic> json) => PreAuthQuizData(
@@ -224,6 +247,8 @@ class PreAuthQuizData {
         daysPerWeek: json['daysPerWeek'] as int?,
         workoutDays: (json['workoutDays'] as List<dynamic>?)?.cast<int>(),
         workoutDuration: json['workoutDuration'] as int?,
+        workoutDurationMin: json['workoutDurationMin'] as int?,
+        workoutDurationMax: json['workoutDurationMax'] as int?,
         equipment: (json['equipment'] as List<dynamic>?)?.cast<String>(),
         customEquipment: (json['customEquipment'] as List<dynamic>?)?.cast<String>(),
         workoutEnvironment: json['workoutEnvironment'] as String?,
@@ -249,6 +274,11 @@ class PreAuthQuizData {
         ),
         nutritionEnabled: json['nutritionEnabled'] as bool?,
         limitations: (json['limitations'] as List<dynamic>?)?.cast<String>(),
+        pushupCapacity: json['pushupCapacity'] as String?,
+        pullupCapacity: json['pullupCapacity'] as String?,
+        plankCapacity: json['plankCapacity'] as String?,
+        squatCapacity: json['squatCapacity'] as String?,
+        cardioCapacity: json['cardioCapacity'] as String?,
       );
 }
 
@@ -288,6 +318,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final workoutDaysStr = prefs.getStringList('preAuth_workoutDays');
     final workoutDays = workoutDaysStr?.map((s) => int.tryParse(s) ?? 0).toList();
     final workoutDuration = prefs.getInt('preAuth_workoutDuration');
+    final workoutDurationMin = prefs.getInt('preAuth_workoutDurationMin');
+    final workoutDurationMax = prefs.getInt('preAuth_workoutDurationMax');
     final equipmentStr = prefs.getStringList('preAuth_equipment');
     final customEquipmentStr = prefs.getStringList('preAuth_customEquipment');
     final workoutEnv = prefs.getString('preAuth_workoutEnvironment');
@@ -323,6 +355,12 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     }
     final nutritionEnabled = prefs.getBool('preAuth_nutritionEnabled');
     final limitations = prefs.getStringList('preAuth_limitations');
+    // Fitness assessment fields
+    final pushupCapacity = prefs.getString('preAuth_pushupCapacity');
+    final pullupCapacity = prefs.getString('preAuth_pullupCapacity');
+    final plankCapacity = prefs.getString('preAuth_plankCapacity');
+    final squatCapacity = prefs.getString('preAuth_squatCapacity');
+    final cardioCapacity = prefs.getString('preAuth_cardioCapacity');
 
     state = PreAuthQuizData(
       goals: goals,
@@ -342,6 +380,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: days,
       workoutDays: workoutDays,
       workoutDuration: workoutDuration,
+      workoutDurationMin: workoutDurationMin,
+      workoutDurationMax: workoutDurationMax,
       equipment: equipmentStr,
       customEquipment: customEquipmentStr,
       workoutEnvironment: workoutEnv,
@@ -364,6 +404,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       muscleFocusPoints: muscleFocusPoints,
       nutritionEnabled: nutritionEnabled,
       limitations: limitations,
+      pushupCapacity: pushupCapacity,
+      pullupCapacity: pullupCapacity,
+      plankCapacity: plankCapacity,
+      squatCapacity: squatCapacity,
+      cardioCapacity: cardioCapacity,
     );
     _isLoaded = true;
   }
@@ -396,6 +441,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -418,6 +465,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       nutritionEnabled: state.nutritionEnabled,
       limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
     );
   }
 
@@ -442,6 +494,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -464,6 +518,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       nutritionEnabled: state.nutritionEnabled,
       limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
     );
   }
 
@@ -488,6 +547,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -510,6 +571,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       nutritionEnabled: state.nutritionEnabled,
       limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
     );
   }
 
@@ -534,6 +600,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -556,6 +624,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       nutritionEnabled: state.nutritionEnabled,
       limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
     );
   }
 
@@ -612,6 +685,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -634,6 +709,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       nutritionEnabled: state.nutritionEnabled,
       limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
     );
   }
 
@@ -658,6 +738,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: days,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -680,6 +762,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       nutritionEnabled: state.nutritionEnabled,
       limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
     );
   }
 
@@ -704,6 +791,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -726,12 +815,21 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       nutritionEnabled: state.nutritionEnabled,
       limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
     );
   }
 
-  Future<void> setWorkoutDuration(int duration) async {
+  Future<void> setWorkoutDuration(int minDuration, int maxDuration) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('preAuth_workoutDuration', duration);
+    // Save min and max separately
+    await prefs.setInt('preAuth_workoutDurationMin', minDuration);
+    await prefs.setInt('preAuth_workoutDurationMax', maxDuration);
+    // Keep the old key for backwards compatibility (use max as the single value)
+    await prefs.setInt('preAuth_workoutDuration', maxDuration);
     state = PreAuthQuizData(
       goals: state.goals,
       fitnessLevel: state.fitnessLevel,
@@ -749,7 +847,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       weightChangeRate: state.weightChangeRate,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
-      workoutDuration: duration,
+      workoutDuration: maxDuration,
+      workoutDurationMin: minDuration,
+      workoutDurationMax: maxDuration,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -772,6 +872,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       nutritionEnabled: state.nutritionEnabled,
       limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
     );
   }
 
@@ -840,6 +945,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       nutritionEnabled: state.nutritionEnabled,
       limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
     );
   }
 
@@ -864,6 +974,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -886,6 +998,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       nutritionEnabled: state.nutritionEnabled,
       limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
     );
   }
 
@@ -910,6 +1027,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -932,6 +1051,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       nutritionEnabled: state.nutritionEnabled,
       limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
     );
   }
 
@@ -956,6 +1080,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -978,6 +1104,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       nutritionEnabled: state.nutritionEnabled,
       limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
     );
   }
 
@@ -1002,6 +1133,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -1024,6 +1157,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       nutritionEnabled: state.nutritionEnabled,
       limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
     );
   }
 
@@ -1048,6 +1186,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -1070,6 +1210,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       nutritionEnabled: state.nutritionEnabled,
       limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
     );
   }
 
@@ -1111,6 +1256,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -1152,6 +1299,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -1174,6 +1323,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       nutritionEnabled: state.nutritionEnabled,
       limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
     );
   }
 
@@ -1198,6 +1352,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -1220,6 +1376,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       nutritionEnabled: state.nutritionEnabled,
       limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
     );
   }
 
@@ -1244,6 +1405,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -1266,6 +1429,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       nutritionEnabled: state.nutritionEnabled,
       limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
     );
   }
 
@@ -1290,6 +1458,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -1312,6 +1482,276 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       nutritionEnabled: state.nutritionEnabled,
       limitations: state.limitations,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
+    );
+  }
+
+  Future<void> setPushupCapacity(String capacity) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('preAuth_pushupCapacity', capacity);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
+      weightChangeRate: state.weightChangeRate,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
+      wakeTime: state.wakeTime,
+      sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
+      muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: capacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
+    );
+  }
+
+  Future<void> setPullupCapacity(String capacity) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('preAuth_pullupCapacity', capacity);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
+      weightChangeRate: state.weightChangeRate,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
+      wakeTime: state.wakeTime,
+      sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
+      muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: capacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
+    );
+  }
+
+  Future<void> setPlankCapacity(String capacity) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('preAuth_plankCapacity', capacity);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
+      weightChangeRate: state.weightChangeRate,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
+      wakeTime: state.wakeTime,
+      sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
+      muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: capacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
+    );
+  }
+
+  Future<void> setSquatCapacity(String capacity) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('preAuth_squatCapacity', capacity);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
+      weightChangeRate: state.weightChangeRate,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
+      wakeTime: state.wakeTime,
+      sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
+      muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: capacity,
+      cardioCapacity: state.cardioCapacity,
+    );
+  }
+
+  Future<void> setCardioCapacity(String capacity) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('preAuth_cardioCapacity', capacity);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      name: state.name,
+      dateOfBirth: state.dateOfBirth,
+      gender: state.gender,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
+      weightChangeRate: state.weightChangeRate,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      mealsPerDay: state.mealsPerDay,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
+      wakeTime: state.wakeTime,
+      sleepTime: state.sleepTime,
+      primaryGoal: state.primaryGoal,
+      nutritionEnabled: state.nutritionEnabled,
+      limitations: state.limitations,
+      muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: capacity,
     );
   }
 
@@ -1333,6 +1773,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     await prefs.remove('preAuth_weightChangeRate');
     await prefs.remove('preAuth_daysPerWeek');
     await prefs.remove('preAuth_workoutDays');
+    await prefs.remove('preAuth_workoutDuration');
+    await prefs.remove('preAuth_workoutDurationMin');
+    await prefs.remove('preAuth_workoutDurationMax');
     await prefs.remove('preAuth_equipment');
     await prefs.remove('preAuth_customEquipment');
     await prefs.remove('preAuth_workoutEnvironment');
@@ -1353,6 +1796,12 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     await prefs.remove('preAuth_sleepTime');
     await prefs.remove('preAuth_primaryGoal');
     await prefs.remove('preAuth_muscleFocusPoints');
+    // Fitness assessment fields
+    await prefs.remove('preAuth_pushupCapacity');
+    await prefs.remove('preAuth_pullupCapacity');
+    await prefs.remove('preAuth_plankCapacity');
+    await prefs.remove('preAuth_squatCapacity');
+    await prefs.remove('preAuth_cardioCapacity');
     state = PreAuthQuizData();
   }
 
@@ -1377,6 +1826,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -1397,6 +1848,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       sleepTime: state.sleepTime,
       primaryGoal: goal,
       muscleFocusPoints: state.muscleFocusPoints,
+      pushupCapacity: state.pushupCapacity,
+      pullupCapacity: state.pullupCapacity,
+      plankCapacity: state.plankCapacity,
+      squatCapacity: state.squatCapacity,
+      cardioCapacity: state.cardioCapacity,
     );
   }
 
@@ -1423,6 +1879,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -1469,6 +1927,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -1515,6 +1975,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: state.workoutEnvironment,
@@ -1561,6 +2023,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       workoutDuration: state.workoutDuration,
+      workoutDurationMin: state.workoutDurationMin,
+      workoutDurationMax: state.workoutDurationMax,
       equipment: state.equipment,
       customEquipment: state.customEquipment,
       workoutEnvironment: environment,
@@ -1645,7 +2109,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   // Question 4: Days per week + which days + duration
   int? _selectedDays;
   final Set<int> _selectedWorkoutDays = {};
-  int? _workoutDuration;  // Duration in minutes (30, 45, 60, 75, 90)
+  int? _workoutDurationMin;  // Min duration in minutes (e.g., 45 for "45-60" range)
+  int? _workoutDurationMax;  // Max duration in minutes (e.g., 60 for "45-60" range)
   // Question 5: Equipment
   final Set<String> _selectedEquipment = {};
   final Set<String> _otherSelectedEquipment = {};
@@ -1876,14 +2341,18 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   }
 
   Future<void> _saveDaysData() async {
+    debugPrint('🔍 [Quiz] Saving days data: days=$_selectedDays, duration=$_workoutDurationMin-$_workoutDurationMax');
     if (_selectedDays != null) {
       await ref.read(preAuthQuizProvider.notifier).setDaysPerWeek(_selectedDays!);
     }
     if (_selectedWorkoutDays.isNotEmpty) {
       await ref.read(preAuthQuizProvider.notifier).setWorkoutDays(_selectedWorkoutDays.toList()..sort());
     }
-    if (_workoutDuration != null) {
-      await ref.read(preAuthQuizProvider.notifier).setWorkoutDuration(_workoutDuration!);
+    if (_workoutDurationMin != null && _workoutDurationMax != null) {
+      await ref.read(preAuthQuizProvider.notifier).setWorkoutDuration(_workoutDurationMin!, _workoutDurationMax!);
+      debugPrint('✅ [Quiz] Saved workout duration range: $_workoutDurationMin-$_workoutDurationMax min');
+    } else {
+      debugPrint('⚠️ [Quiz] workoutDuration is null, not saving!');
     }
   }
 
@@ -1972,7 +2441,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       // Log analytics
       AnalyticsService.logWorkoutGenerated(
         primaryGoal: _selectedPrimaryGoal ?? 'unknown',
-        duration: _workoutDuration ?? 60,
+        duration: _workoutDurationMax ?? 60,
         equipment: _selectedEquipment.toList(),
       );
 
@@ -2084,7 +2553,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         return _selectedLevel != null;
 
       case 2: // Schedule (days/week + duration both required)
-        return _selectedDays != null && _workoutDuration != null;
+        return _selectedDays != null && _workoutDurationMax != null;
 
       case 3: // Workout Days [CONDITIONAL - only if feature flag enabled]
         if (_featureFlagWorkoutDays) {
@@ -2375,7 +2844,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       key: const ValueKey('days_selector'),
       selectedDays: _selectedDays,
       selectedWorkoutDays: _selectedWorkoutDays,
-      workoutDuration: _workoutDuration,
+      workoutDurationMin: _workoutDurationMin,
+      workoutDurationMax: _workoutDurationMax,
       onDaysChanged: (days) {
         setState(() {
           _selectedDays = days;
@@ -2393,10 +2863,13 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           }
         });
       },
-      onDurationChanged: (duration) {
+      onDurationChanged: (minDuration, maxDuration) {
         setState(() {
-          _workoutDuration = duration;
+          _workoutDurationMin = minDuration;
+          _workoutDurationMax = maxDuration;
         });
+        // Save immediately to provider to ensure it's never lost
+        ref.read(preAuthQuizProvider.notifier).setWorkoutDuration(minDuration, maxDuration);
       },
     );
   }

@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/scores.dart';
 import '../repositories/scores_repository.dart';
 
+/// In-memory cache for instant display on provider recreation
+/// Survives provider invalidation and prevents loading flash
+ScoresState? _scoresInMemoryCache;
+
 // ============================================
 // Scores State
 // ============================================
@@ -131,7 +135,14 @@ class ScoresNotifier extends StateNotifier<ScoresState> {
   final ScoresRepository _repository;
   String? _currentUserId;
 
-  ScoresNotifier(this._repository) : super(const ScoresState());
+  ScoresNotifier(this._repository)
+      : super(_scoresInMemoryCache ?? const ScoresState());
+
+  /// Clear in-memory cache (called on logout)
+  static void clearCache() {
+    _scoresInMemoryCache = null;
+    debugPrint('🧹 [ScoresProvider] In-memory cache cleared');
+  }
 
   /// Set user ID for this session
   void setUserId(String userId) {
@@ -156,6 +167,8 @@ class ScoresNotifier extends StateNotifier<ScoresState> {
         todayReadiness: overview.todayReadiness,
         isLoading: false,
       );
+      // Update in-memory cache for instant access on provider recreation
+      _scoresInMemoryCache = state;
       debugPrint('✅ [ScoresProvider] Loaded scores overview');
     } catch (e) {
       debugPrint('❌ [ScoresProvider] Error loading overview: $e');

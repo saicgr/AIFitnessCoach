@@ -262,17 +262,6 @@ const Map<String, List<String>> _settingsSearchIndex = {
     'weekly email', 'workout email', 'coach email', 'product email',
     'cant unsubscribe', 'find unsubscribe', 'where unsubscribe',
   ],
-  // Calibration - strength assessment and baselines
-  'calibration': [
-    // Direct keywords
-    'calibration', 'calibrate', 'test', 'assessment', 'baseline', 'baselines',
-    'strength test', 'strength assessment', '1rm', 'one rep max', 'max',
-    // Natural language
-    'test my strength', 'assess my strength', 'calibrate workout',
-    'strength baselines', 'weight suggestions', 'how strong am i',
-    'recalibrate', 'redo test', 'strength levels', 'fitness test',
-    'workout test', 'test workout', 'calibration workout',
-  ],
   // Shop - merchandise and products
   'shop': [
     // Direct keywords
@@ -373,9 +362,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         id: 'equipment',
         icon: Icons.fitness_center,
         title: 'Equipment & Environment',
-        subtitle: 'Calibration, equipment, warmup, supersets',
+        subtitle: 'Equipment, warmup, supersets',
         color: iconColor,
-        sectionKeys: ['calibration', 'custom_content', 'warmup_settings', 'superset'],
+        sectionKeys: ['custom_content', 'warmup_settings', 'superset'],
       ),
       _SettingsGroup(
         id: 'notifications',
@@ -685,8 +674,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case 'equipment':
         return const Column(
           children: [
-            CalibrationSection(),
-            SizedBox(height: 16),
             CustomContentSection(),
             SizedBox(height: 16),
             WarmupSettingsSection(),
@@ -1142,12 +1129,6 @@ class _WorkoutSettingsContent extends StatelessWidget {
         const SizedBox(height: 12),
         SettingsCard(
           items: [
-            SettingItemData(
-              icon: Icons.assessment_outlined,
-              title: 'Calibration Test',
-              subtitle: 'Test your fitness level',
-              isCalibrationTestScreen: true,
-            ),
             SettingItemData(
               icon: Icons.speed,
               title: 'My 1RMs',

@@ -49,11 +49,11 @@ class AppColors {
   static const Color surface = Color(0xFF121212);
   static const Color background = Color(0xFF000000);
 
-  // Semantic Colors - Keep subtle distinction
-  static const Color success = Color(0xFFE0E0E0);
-  static const Color warning = Color(0xFFD0D0D0);
-  static const Color error = Color(0xFFC0C0C0);
-  static const Color info = Color(0xFFB0B0B0);
+  // Semantic Colors
+  static const Color success = Color(0xFF22C55E);
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color error = Color(0xFFEF4444);
+  static const Color info = Color(0xFF3B82F6);
 
   // ═══════════════════════════════════════════════════════════════
   // RIR (Reps in Reserve) Badge Colors - Monochrome
@@ -233,9 +233,9 @@ class AppColorsLight {
   static const Color magenta = Color(0xFFDB2777);
   static const Color green = Color(0xFF16A34A);
 
-  // Semantic Colors - Keep subtle distinction
-  static const Color success = Color(0xFF303030);
-  static const Color warning = Color(0xFF424242);
-  static const Color error = Color(0xFF505050);
-  static const Color info = Color(0xFF606060);
+  // Semantic Colors
+  static const Color success = Color(0xFF16A34A);
+  static const Color warning = Color(0xFFD97706);
+  static const Color error = Color(0xFFDC2626);
+  static const Color info = Color(0xFF2563EB);
 }

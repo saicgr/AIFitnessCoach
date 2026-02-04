@@ -24,7 +24,11 @@ import '../screens/onboarding/pre_auth_quiz_screen.dart';
 import '../screens/onboarding/senior_onboarding_screen.dart';
 import '../screens/onboarding/mode_selection_screen.dart';
 import '../screens/onboarding/coach_selection_screen.dart';
+import '../screens/onboarding/fitness_assessment_screen.dart';
+import '../screens/onboarding/feature_showcase_screen.dart';
+import '../screens/onboarding/how_it_works_screen.dart';
 import '../screens/onboarding/personal_info_screen.dart';
+import '../screens/onboarding/weight_projection_screen.dart';
 import '../screens/onboarding/workout_generation_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/summaries/weekly_summary_screen.dart';
@@ -44,7 +48,6 @@ import '../screens/settings/exercise_preferences/exercise_queue_screen.dart';
 import '../screens/settings/exercise_preferences/staple_exercises_screen.dart';
 import '../screens/settings/workout_history_import_screen.dart';
 import '../screens/settings/training/my_1rms_screen.dart';
-import '../screens/settings/training/strength_baselines_screen.dart';
 import '../screens/settings/layout_editor_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
@@ -96,12 +99,9 @@ import '../screens/neat/neat_dashboard_screen.dart';
 import '../screens/live_chat/live_chat_screen.dart';
 import '../screens/admin_support/admin_support_list_screen.dart';
 import '../screens/admin_support/admin_chat_screen.dart';
-import '../screens/calibration/calibration_intro_screen.dart';
-import '../screens/calibration/calibration_workout_screen.dart';
 import '../screens/trophies/trophy_room_screen.dart';
 import '../screens/rewards/rewards_screen.dart';
 import '../screens/inventory/inventory_screen.dart';
-import '../screens/calibration/calibration_results_screen.dart';
 import '../data/providers/guest_mode_provider.dart';
 import '../screens/injuries/injuries_list_screen.dart';
 import '../screens/injuries/report_injury_screen.dart';
@@ -182,11 +182,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isOnStatsWelcome = state.matchedLocation == '/stats-welcome';
 
       // Check if on new onboarding flow screens (declare early for use in loading/error checks)
+      final isOnHowItWorks = state.matchedLocation == '/how-it-works';
       final isOnPreAuthQuiz = state.matchedLocation == '/pre-auth-quiz';
       final isOnSignIn = state.matchedLocation == '/sign-in';
       final isOnEmailSignIn = state.matchedLocation == '/email-sign-in';
       final isOnPricingPreview = state.matchedLocation == '/pricing-preview';
       final isOnPersonalInfo = state.matchedLocation == '/personal-info';
+      final isOnWeightProjection = state.matchedLocation == '/weight-projection';
       final isOnCoachSelection = state.matchedLocation == '/coach-selection';
       final isOnPaywallFeatures = state.matchedLocation == '/paywall-features';
       final isOnPaywallTimeline = state.matchedLocation == '/paywall-timeline';
@@ -214,7 +216,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         // If we're on splash, stay there
         if (isOnSplash) return null;
         // Allow pre-auth screens to stay during loading (sign-in process shouldn't redirect)
-        if (isOnPreAuthQuiz || isOnSignIn || isOnEmailSignIn || isOnPricingPreview ||
+        if (isOnHowItWorks || isOnPreAuthQuiz || isOnSignIn || isOnEmailSignIn || isOnPricingPreview ||
             isOnDemoWorkout || isOnPlanPreview || isGuestRoute || isOnStatsWelcome) {
           return null;
         }
@@ -227,7 +229,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         // If on sign-in page, stay there to show the error
         if (isOnSignIn || isOnEmailSignIn) return null;
         // If on other pre-auth pages, stay there
-        if (isOnPreAuthQuiz || isOnPricingPreview ||
+        if (isOnHowItWorks || isOnPreAuthQuiz || isOnPricingPreview ||
             isOnDemoWorkout || isOnPlanPreview || isGuestRoute || isOnStatsWelcome) {
           return null;
         }
@@ -342,13 +344,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       //   }
       // }
 
-      // Allow pre-auth quiz, sign-in, email sign-in, and pricing preview screens for non-logged-in users
+      // Allow how-it-works, pre-auth quiz, sign-in, email sign-in, and pricing preview screens for non-logged-in users
       // Also allow pre-auth quiz for logged-in users who are starting over (no coach selected)
-      if (isOnPreAuthQuiz || isOnSignIn || isOnEmailSignIn || isOnPricingPreview) {
+      if (isOnHowItWorks || isOnPreAuthQuiz || isOnSignIn || isOnEmailSignIn || isOnPricingPreview) {
         if (isLoggedIn) {
           final user = authState.user;
-          // Allow pre-auth quiz if user is starting over (coach not selected)
-          if (isOnPreAuthQuiz && user != null && !user.isCoachSelected) {
+          // Allow how-it-works or pre-auth quiz if user is starting over (coach not selected)
+          if ((isOnHowItWorks || isOnPreAuthQuiz) && user != null && !user.isCoachSelected) {
             return null; // Allow - user is starting over
           }
           // Allow pricing preview for logged-in users too (they might want to see pricing)
@@ -368,6 +370,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (isOnPersonalInfo) {
         if (isLoggedIn) {
           return null; // Allow - user is filling personal info
+        }
+        return '/stats-welcome'; // Not logged in, go to start
+      }
+
+      // Weight projection screen - allow for logged-in users after personal info
+      if (isOnWeightProjection) {
+        if (isLoggedIn) {
+          return null; // Allow - user is viewing weight projection
         }
         return '/stats-welcome'; // Not logged in, go to start
       }
@@ -426,6 +436,32 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/stats-welcome',
         builder: (context, state) => const StatsWelcomeScreen(),
+      ),
+
+      // How It Works - explains the 3-step onboarding journey before quiz
+      GoRoute(
+        path: '/how-it-works',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const HowItWorksScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
       ),
 
       // Pricing Preview - see pricing before creating account (pre-auth)
@@ -697,6 +733,32 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
+      // Weight Projection Screen - show goal timeline graph
+      GoRoute(
+        path: '/weight-projection',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const WeightProjectionScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
       // Coach Selection - pick your AI coach personality before onboarding
       // Also used for changing coach from AI settings (with ?fromSettings=true)
       GoRoute(
@@ -726,6 +788,58 @@ final routerProvider = Provider<GoRouter>((ref) {
             },
           );
         },
+      ),
+
+      // Fitness Assessment - quick fitness check after coach selection
+      GoRoute(
+        path: '/fitness-assessment',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const FitnessAssessmentScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
+      // Feature Showcase - highlights key app features before paywall
+      GoRoute(
+        path: '/feature-showcase',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const FeatureShowcaseScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
       ),
 
       // Workout Generation - full screen progress while generating workouts
@@ -1255,12 +1369,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const My1RMsScreen(),
       ),
 
-      // Strength Baselines (from calibration)
-      GoRoute(
-        path: '/settings/training/baselines',
-        builder: (context, state) => const StrengthBaselinesScreen(),
-      ),
-
       // Layout Editor (My Space) - Home screen layout customization
       GoRoute(
         path: '/settings/homescreen',
@@ -1478,105 +1586,6 @@ final routerProvider = Provider<GoRouter>((ref) {
             );
           },
         ),
-      ),
-
-      // Calibration Intro - Introduction screen before calibration workout
-      GoRoute(
-        path: '/calibration/intro',
-        pageBuilder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          final fromOnboarding = extra?['fromOnboarding'] as bool? ?? false;
-          return CustomTransitionPage(
-            key: state.pageKey,
-            child: CalibrationIntroScreen(fromOnboarding: fromOnboarding),
-            transitionDuration: const Duration(milliseconds: 400),
-            reverseTransitionDuration: const Duration(milliseconds: 300),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0, 0.1),
-                    end: Offset.zero,
-                  ).animate(CurvedAnimation(
-                    parent: animation,
-                    curve: Curves.easeOutCubic,
-                  )),
-                  child: child,
-                ),
-              );
-            },
-          );
-        },
-      ),
-
-      // Calibration Workout - The actual calibration exercises
-      GoRoute(
-        path: '/calibration/workout',
-        pageBuilder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          final fromOnboarding = extra?['fromOnboarding'] as bool? ?? false;
-          return CustomTransitionPage(
-            key: state.pageKey,
-            child: CalibrationWorkoutScreen(fromOnboarding: fromOnboarding),
-            transitionDuration: const Duration(milliseconds: 400),
-            reverseTransitionDuration: const Duration(milliseconds: 300),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0.05, 0),
-                    end: Offset.zero,
-                  ).animate(CurvedAnimation(
-                    parent: animation,
-                    curve: Curves.easeOutCubic,
-                  )),
-                  child: child,
-                ),
-              );
-            },
-          );
-        },
-      ),
-
-      // Calibration Results - Shows calibration results and suggested adjustments
-      GoRoute(
-        path: '/calibration/results',
-        pageBuilder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          if (extra == null) {
-            // Fallback if no data
-            return const NoTransitionPage(
-              child: Scaffold(
-                body: Center(child: Text('No calibration data')),
-              ),
-            );
-          }
-          return CustomTransitionPage(
-            key: state.pageKey,
-            child: CalibrationResultsScreen(
-              fromOnboarding: extra['fromOnboarding'] as bool? ?? false,
-              calibrationId: extra['calibrationId'] as String,
-              exercises: extra['exercises'] as List<CalibrationExercise>,
-              result: extra['result'] as Map<String, dynamic>,
-              durationSeconds: extra['durationSeconds'] as int,
-            ),
-            transitionDuration: const Duration(milliseconds: 500),
-            reverseTransitionDuration: const Duration(milliseconds: 300),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(
-                opacity: animation,
-                child: ScaleTransition(
-                  scale: Tween<double>(begin: 0.95, end: 1.0).animate(
-                    CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-                  ),
-                  child: child,
-                ),
-              );
-            },
-          );
-        },
       ),
 
       // Injuries List - View and manage all injuries

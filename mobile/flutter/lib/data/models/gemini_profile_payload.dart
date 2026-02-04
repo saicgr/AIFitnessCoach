@@ -32,7 +32,17 @@ class GeminiProfilePayloadBuilder {
       payload['days_per_week'] = profile.daysPerWeek;  // Backend expects this field name
     }
 
-    if (profile.workoutDuration != null) {
+    // Duration range - send both min and max for Gemini to generate varied workouts
+    if (profile.workoutDurationMin != null) {
+      payload['workout_duration_min'] = profile.workoutDurationMin;
+    }
+    if (profile.workoutDurationMax != null) {
+      payload['workout_duration_max'] = profile.workoutDurationMax;
+    }
+    // Keep workout_duration for backwards compatibility (use max as single value)
+    if (profile.workoutDurationMax != null) {
+      payload['workout_duration'] = profile.workoutDurationMax;
+    } else if (profile.workoutDuration != null) {
       payload['workout_duration'] = profile.workoutDuration;
     }
 
@@ -80,6 +90,29 @@ class GeminiProfilePayloadBuilder {
 
     if (profile.limitations != null && profile.limitations!.isNotEmpty) {
       payload['limitations'] = profile.limitations;
+    }
+
+    // ===== FITNESS ASSESSMENT (For AI workout personalization) =====
+    // These fields help Gemini create workouts matched to user's actual capabilities
+
+    if (profile.pushupCapacity != null) {
+      payload['pushup_capacity'] = profile.pushupCapacity;
+    }
+
+    if (profile.pullupCapacity != null) {
+      payload['pullup_capacity'] = profile.pullupCapacity;
+    }
+
+    if (profile.plankCapacity != null) {
+      payload['plank_capacity'] = profile.plankCapacity;
+    }
+
+    if (profile.squatCapacity != null) {
+      payload['squat_capacity'] = profile.squatCapacity;
+    }
+
+    if (profile.cardioCapacity != null) {
+      payload['cardio_capacity'] = profile.cardioCapacity;
     }
 
     // ===== PHASE 3: NUTRITION (Only if Opted In) =====
@@ -146,7 +179,14 @@ class GeminiProfilePayloadBuilder {
     buffer.writeln('Goals: ${payload['goals'] ?? 'N/A'}');
     buffer.writeln('Fitness Level: ${payload['fitness_level'] ?? 'N/A'}');
     buffer.writeln('Workouts/Week: ${payload['workouts_per_week'] ?? 'N/A'}');
-    buffer.writeln('Duration: ${payload['workout_duration'] ?? 'N/A'} min');
+    // Show duration range if available
+    final durationMin = payload['workout_duration_min'];
+    final durationMax = payload['workout_duration_max'];
+    if (durationMin != null && durationMax != null) {
+      buffer.writeln('Duration Range: $durationMin-$durationMax min');
+    } else {
+      buffer.writeln('Duration: ${payload['workout_duration'] ?? 'N/A'} min');
+    }
     buffer.writeln('Environment: ${payload['workout_environment'] ?? 'N/A'}');
     buffer.writeln('Equipment: ${payload['equipment'] ?? 'N/A'}');
     buffer.writeln('Primary Goal: ${payload['primary_goal'] ?? 'N/A'}');
@@ -182,6 +222,35 @@ class GeminiProfilePayloadBuilder {
 
       if (payload.containsKey('limitations')) {
         buffer.writeln('Limitations: ${payload['limitations']}');
+      }
+    }
+
+    // Fitness Assessment
+    if (payload.containsKey('pushup_capacity') ||
+        payload.containsKey('pullup_capacity') ||
+        payload.containsKey('plank_capacity') ||
+        payload.containsKey('squat_capacity') ||
+        payload.containsKey('cardio_capacity')) {
+      buffer.writeln('\n[Fitness Assessment]');
+
+      if (payload.containsKey('pushup_capacity')) {
+        buffer.writeln('Push-ups: ${payload['pushup_capacity']}');
+      }
+
+      if (payload.containsKey('pullup_capacity')) {
+        buffer.writeln('Pull-ups: ${payload['pullup_capacity']}');
+      }
+
+      if (payload.containsKey('plank_capacity')) {
+        buffer.writeln('Plank: ${payload['plank_capacity']}');
+      }
+
+      if (payload.containsKey('squat_capacity')) {
+        buffer.writeln('Squats: ${payload['squat_capacity']}');
+      }
+
+      if (payload.containsKey('cardio_capacity')) {
+        buffer.writeln('Cardio: ${payload['cardio_capacity']}');
       }
     }
 

@@ -494,8 +494,8 @@ class UserXPResponse(BaseModel):
     total_xp: int = 0
     current_level: int = 1
     xp_in_current_level: int = 0
-    xp_to_next_level: int = 50
-    xp_title: str = "novice"
+    xp_to_next_level: int = 25  # Level 1 -> 2 requires 25 XP (migration 227)
+    xp_title: str = "Beginner"
     progress_fraction: float = 0.0
 
 
@@ -524,12 +524,13 @@ async def get_user_xp(user_id: str):
             current_level = data.get("current_level", 1)
 
             # Calculate XP within current level and XP to next level
-            # Using standard level formula: level N requires N*50 XP
-            xp_for_current_level = sum(i * 50 for i in range(1, current_level))
-            xp_for_next_level = sum(i * 50 for i in range(1, current_level + 1))
+            # Using unified 250-level progressive system (migration 227)
+            xp_for_current_level = _calculate_total_xp_for_level(current_level)
+            xp_needed = _get_xp_for_level(current_level)
 
             xp_in_current = total_xp - xp_for_current_level
-            xp_needed = (current_level) * 50
+            # Ensure xp_in_current is not negative (can happen if level was manually set)
+            xp_in_current = max(0, xp_in_current)
 
             progress = xp_in_current / xp_needed if xp_needed > 0 else 0
 
@@ -546,48 +547,106 @@ async def get_user_xp(user_id: str):
                 progress_fraction=min(progress, 1.0)
             )
         else:
-            # Return default for new users
+            # Return default for new users (migration 227 values)
             return UserXPResponse(
                 user_id=user_id,
                 total_xp=0,
                 current_level=1,
                 xp_in_current_level=0,
-                xp_to_next_level=50,
-                xp_title="novice",
+                xp_to_next_level=25,  # Level 1 -> 2 requires 25 XP
+                xp_title="Beginner",
                 progress_fraction=0.0
             )
 
     except Exception as e:
         logger.error(f"Failed to get user XP: {e}")
-        # Return default on error
+        # Return default on error (migration 227 values)
         return UserXPResponse(
             user_id=user_id,
             total_xp=0,
             current_level=1,
             xp_in_current_level=0,
-            xp_to_next_level=50,
-            xp_title="novice",
+            xp_to_next_level=25,  # Level 1 -> 2 requires 25 XP
+            xp_title="Beginner",
             progress_fraction=0.0
         )
 
 
-def _get_xp_title(level: int) -> str:
-    """Get XP title based on level."""
-    if level >= 100:
-        return "legend"
-    elif level >= 75:
-        return "champion"
-    elif level >= 50:
-        return "master"
-    elif level >= 35:
-        return "expert"
-    elif level >= 25:
-        return "advanced"
-    elif level >= 15:
-        return "intermediate"
-    elif level >= 8:
-        return "apprentice"
-    elif level >= 3:
-        return "beginner"
+# ============================================
+# Unified XP System (Migration 227)
+# ============================================
+# 250-level progressive XP system with 11 tiers
+
+# XP required for each level (1-175), levels 176-250 are flat 100,000 XP
+_XP_TABLE = [
+    # Levels 1-10 (Beginner): Quick early wins
+    25, 30, 40, 50, 65, 80, 100, 120, 150, 180,
+    # Levels 11-25 (Novice)
+    200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 500,
+    # Levels 26-50 (Apprentice)
+    550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400, 1450, 1500, 1550, 1600, 1650, 1700, 1800,
+    # Levels 51-75 (Athlete)
+    1900, 2000, 2100, 2200, 2300, 2400, 2500, 2600, 2700, 2800, 2900, 3000, 3100, 3200, 3300, 3400, 3500, 3600, 3700, 3800, 3900, 4000, 4100, 4200, 4500,
+    # Levels 76-100 (Elite)
+    4800, 5000, 5200, 5400, 5600, 5800, 6000, 6200, 6400, 6600, 6800, 7000, 7200, 7400, 7600, 7800, 8000, 8200, 8400, 8600, 8800, 9000, 9200, 9400, 10000,
+    # Levels 101-125 (Master)
+    10500, 11000, 11500, 12000, 12500, 13000, 13500, 14000, 14500, 15000, 15500, 16000, 16500, 17000, 17500, 18000, 18500, 19000, 19500, 20000, 20500, 21000, 21500, 22000, 23000,
+    # Levels 126-150 (Champion)
+    24000, 25000, 26000, 27000, 28000, 29000, 30000, 31000, 32000, 33000, 34000, 35000, 36000, 37000, 38000, 39000, 40000, 41000, 42000, 43000, 44000, 45000, 46000, 47000, 50000,
+    # Levels 151-175 (Legend)
+    52000, 54000, 56000, 58000, 60000, 62000, 64000, 66000, 68000, 70000, 72000, 74000, 76000, 78000, 80000, 82000, 84000, 86000, 88000, 90000, 92000, 94000, 96000, 98000, 100000
+]
+
+
+def _get_xp_for_level(level: int) -> int:
+    """Get XP required to complete the given level (level up to next).
+
+    Uses unified 250-level progressive system (migration 227).
+    """
+    if level >= 250:
+        return 0  # Max level
+    elif level <= 175:
+        return _XP_TABLE[level - 1]
     else:
-        return "novice"
+        # Levels 176-250 are flat 100,000 XP each (prestige tier)
+        return 100000
+
+
+def _calculate_total_xp_for_level(level: int) -> int:
+    """Calculate total XP required to reach the given level.
+
+    Uses unified 250-level progressive system (migration 227).
+    """
+    total = 0
+    for l in range(1, level):
+        total += _get_xp_for_level(l)
+    return total
+
+
+def _get_xp_title(level: int) -> str:
+    """Get XP title based on level.
+
+    11 tiers from Beginner to Transcendent (migration 227).
+    """
+    if level <= 10:
+        return "Beginner"
+    elif level <= 25:
+        return "Novice"
+    elif level <= 50:
+        return "Apprentice"
+    elif level <= 75:
+        return "Athlete"
+    elif level <= 100:
+        return "Elite"
+    elif level <= 125:
+        return "Master"
+    elif level <= 150:
+        return "Champion"
+    elif level <= 175:
+        return "Legend"
+    elif level <= 200:
+        return "Mythic"
+    elif level <= 225:
+        return "Immortal"
+    else:
+        return "Transcendent"

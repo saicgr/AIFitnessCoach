@@ -24,10 +24,15 @@ int _getBackoffSeconds() {
   return min(30, 2 * pow(2, min(_generationPollCount, 4)).toInt());
 }
 
+/// In-memory cache for instant display on provider recreation
+/// This survives provider invalidation and prevents loading flash
+TodayWorkoutResponse? _inMemoryCache;
+
 /// Provider for today's workout data with cache-first pattern
 ///
 /// Features:
 /// - Cache-first: Shows cached data instantly, fetches fresh in background
+/// - In-memory cache: Survives provider invalidation, prevents loading flash
 /// - Silent updates: UI updates automatically when fresh data arrives
 /// - Auto-polls when is_generating is true (JIT generation in progress)
 /// - Exponential backoff to prevent excessive API calls
@@ -42,9 +47,37 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
   final Ref _ref;
   Timer? _pollingTimer;
   bool _isRefreshing = false;
+  bool _disposed = false;
 
-  TodayWorkoutNotifier(this._ref) : super(const AsyncValue.loading()) {
-    _loadWithCacheFirst();
+  /// Cooldown tracking for failed generation attempts
+  /// Prevents rapid-fire retries when rate limited (429)
+  DateTime? _lastGenerationFailure;
+  static const Duration _generationCooldown = Duration(seconds: 30);
+
+  TodayWorkoutNotifier(this._ref)
+      : super(
+          // Start with in-memory cache if available (instant, no loading flash)
+          // Otherwise start with loading state
+          _inMemoryCache != null
+              ? AsyncValue.data(_inMemoryCache)
+              : const AsyncValue.loading(),
+        ) {
+    // Only load if we don't have in-memory cache
+    // This prevents unnecessary loading state when provider is invalidated
+    if (_inMemoryCache != null) {
+      debugPrint('⚡ [TodayWorkout] Using in-memory cache (instant)');
+      // Still fetch fresh data in background silently
+      _fetchFromApi(showLoading: false);
+    } else {
+      _loadWithCacheFirst();
+    }
+  }
+
+  /// Safely update state only if not disposed
+  void _safeSetState(AsyncValue<TodayWorkoutResponse?> newState) {
+    if (!_disposed && mounted) {
+      state = newState;
+    }
   }
 
   /// Load data with cache-first pattern:
@@ -56,21 +89,25 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     final cachedData = await _loadFromCache();
     if (cachedData != null) {
       debugPrint('⚡ [TodayWorkout] Loaded from cache instantly');
-      state = AsyncValue.data(cachedData);
+      _safeSetState(AsyncValue.data(cachedData));
     }
 
     // Step 2: Fetch fresh data from API in background
     await _fetchFromApi(showLoading: cachedData == null);
   }
 
-  /// Load cached workout data
+  /// Load cached workout data from persistent storage
+  /// Also updates in-memory cache for future instant access
   Future<TodayWorkoutResponse?> _loadFromCache() async {
     try {
       final cached = await DataCacheService.instance.getCached(
         DataCacheService.todayWorkoutKey,
       );
       if (cached != null) {
-        return TodayWorkoutResponse.fromJson(cached);
+        final response = TodayWorkoutResponse.fromJson(cached);
+        // Update in-memory cache for instant access on provider recreation
+        _inMemoryCache = response;
+        return response;
       }
     } catch (e) {
       debugPrint('⚠️ [TodayWorkout] Cache parse error: $e');
@@ -78,10 +115,13 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     return null;
   }
 
-  /// Save workout data to cache
+  /// Save workout data to cache (both in-memory and persistent)
   Future<void> _saveToCache(TodayWorkoutResponse response) async {
     // Don't cache if workout is generating (transient state)
     if (response.isGenerating) return;
+
+    // Update in-memory cache FIRST (instant for next provider recreation)
+    _inMemoryCache = response;
 
     try {
       await DataCacheService.instance.cache(
@@ -95,13 +135,16 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
 
   /// Fetch fresh data from API
   Future<void> _fetchFromApi({bool showLoading = false}) async {
-    if (_isRefreshing) return;
+    if (_isRefreshing || _disposed) return;
     _isRefreshing = true;
 
     try {
       if (showLoading) {
-        state = const AsyncValue.loading();
+        _safeSetState(const AsyncValue.loading());
       }
+
+      // Early exit if disposed during async gap
+      if (_disposed) return;
 
       final repository = _ref.read(workoutRepositoryProvider);
       var response = await repository.getTodayWorkout();
@@ -151,8 +194,10 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
         _syncWorkoutToWatch(response.todayWorkout!);
       }
 
-      // Update state with fresh data
-      state = AsyncValue.data(response);
+      // Update state with fresh data (only if not disposed)
+      if (!_disposed) {
+        _safeSetState(AsyncValue.data(response));
+      }
 
       // Save to cache for next app open
       if (response != null) {
@@ -160,9 +205,9 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
       }
     } catch (e, stack) {
       debugPrint('❌ [TodayWorkout] API error: $e');
-      // Only set error state if we don't have cached data
-      if (!state.hasValue) {
-        state = AsyncValue.error(e, stack);
+      // Only set error state if we don't have cached data and not disposed
+      if (!_disposed && !state.hasValue) {
+        _safeSetState(AsyncValue.error(e, stack));
       }
     } finally {
       _isRefreshing = false;
@@ -171,6 +216,8 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
 
   /// Handle generation polling with exponential backoff
   void _handleGenerationPolling() {
+    if (_disposed) return;
+
     if (_generationPollCount < _maxGenerationPolls) {
       _generationPollCount++;
       final backoffSeconds = _getBackoffSeconds();
@@ -178,7 +225,9 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
 
       _pollingTimer?.cancel();
       _pollingTimer = Timer(Duration(seconds: backoffSeconds), () {
-        _fetchFromApi();
+        if (!_disposed) {
+          _fetchFromApi();
+        }
       });
     } else {
       debugPrint('❌ [Generation] Max polls ($_maxGenerationPolls) reached. Stopping auto-refresh.');
@@ -194,9 +243,13 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
 
   /// Schedule refresh for empty state
   void _scheduleEmptyStateRefresh() {
+    if (_disposed) return;
+
     _pollingTimer?.cancel();
     _pollingTimer = Timer(const Duration(seconds: 3), () {
-      _fetchFromApi();
+      if (!_disposed) {
+        _fetchFromApi();
+      }
     });
   }
 
@@ -207,12 +260,21 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
 
   /// Invalidate cache and refresh
   Future<void> invalidateAndRefresh() async {
+    // Clear in-memory cache too
+    _inMemoryCache = null;
     await DataCacheService.instance.invalidate(DataCacheService.todayWorkoutKey);
     await _fetchFromApi(showLoading: true);
   }
 
+  /// Clear all caches (called on logout)
+  static void clearCache() {
+    _inMemoryCache = null;
+    debugPrint('🧹 [TodayWorkout] In-memory cache cleared');
+  }
+
   @override
   void dispose() {
+    _disposed = true;
     _cancelPolling();
     super.dispose();
   }
@@ -224,9 +286,19 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
   bool _isAutoGenerating = false;
 
   void _triggerAutoGeneration(String scheduledDate) {
-    if (_isAutoGenerating) {
-      debugPrint('⏳ [Auto-Gen] Already generating, skipping duplicate request');
+    if (_isAutoGenerating || _disposed) {
+      debugPrint('⏳ [Auto-Gen] Already generating or disposed, skipping request');
       return;
+    }
+
+    // Check cooldown after failed generation (prevents 429 spam)
+    if (_lastGenerationFailure != null) {
+      final timeSinceFailure = DateTime.now().difference(_lastGenerationFailure!);
+      if (timeSinceFailure < _generationCooldown) {
+        final remaining = _generationCooldown - timeSinceFailure;
+        debugPrint('⏳ [Auto-Gen] In cooldown after failure. Wait ${remaining.inSeconds}s before retry');
+        return;
+      }
     }
 
     _isAutoGenerating = true;
@@ -234,6 +306,9 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
 
     Future(() async {
       try {
+        // Check if disposed before making API calls
+        if (_disposed) return;
+
         final repository = _ref.read(workoutRepositoryProvider);
         final userId = await repository.getCurrentUserId();
         if (userId == null) {
@@ -241,25 +316,41 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
           return;
         }
 
+        // Check again after async gap
+        if (_disposed) return;
+
         await for (final progress in repository.generateWorkoutStreaming(
           userId: userId,
           scheduledDate: scheduledDate,
         )) {
+          // Check if disposed during streaming
+          if (_disposed) {
+            debugPrint('⚠️ [Auto-Gen] Notifier disposed during generation, stopping');
+            break;
+          }
+
           debugPrint('🔄 [Auto-Gen] Progress: ${progress.status} - ${progress.message}');
 
           if (progress.status == WorkoutGenerationStatus.completed) {
             debugPrint('✅ [Auto-Gen] Workout generated successfully!');
-            refresh();
+            _lastGenerationFailure = null; // Clear cooldown on success
+            if (!_disposed) {
+              refresh();
+            }
             break;
           }
 
           if (progress.status == WorkoutGenerationStatus.error) {
             debugPrint('❌ [Auto-Gen] Generation failed: ${progress.message}');
+            // Set cooldown to prevent rapid retries (especially on 429 rate limit)
+            _lastGenerationFailure = DateTime.now();
             break;
           }
         }
       } catch (e) {
         debugPrint('❌ [Auto-Gen] Error: $e');
+        // Set cooldown on error
+        _lastGenerationFailure = DateTime.now();
       } finally {
         _isAutoGenerating = false;
       }

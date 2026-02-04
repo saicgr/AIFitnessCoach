@@ -584,6 +584,9 @@ def merge_extended_fields_into_preferences(
     # Sleep schedule for fasting optimization
     wake_time: Optional[str] = None,
     sleep_time: Optional[str] = None,
+    # Duration range for flexible workout generation
+    workout_duration_min: Optional[int] = None,
+    workout_duration_max: Optional[int] = None,
 ) -> dict:
     """Merge extended onboarding fields into preferences dict."""
     try:
@@ -598,6 +601,11 @@ def merge_extended_fields_into_preferences(
         prefs["days_per_week"] = days_per_week
     if workout_duration is not None:
         prefs["workout_duration"] = workout_duration
+    # Duration range for flexible workout generation
+    if workout_duration_min is not None:
+        prefs["workout_duration_min"] = workout_duration_min
+    if workout_duration_max is not None:
+        prefs["workout_duration_max"] = workout_duration_max
     if training_split is not None:
         prefs["training_split"] = training_split
     if intensity_preference is not None:
@@ -714,6 +722,33 @@ async def get_all_users():
         return [row_to_user(row) for row in rows]
     except Exception as e:
         logger.error(f"Failed to get users: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/by-auth/{auth_id}", response_model=User)
+async def get_user_by_auth(auth_id: str):
+    """
+    Get a user by their Supabase auth_id.
+
+    This endpoint is used during session restore when we have the Supabase Auth ID
+    but need to look up the user's internal database ID.
+    """
+    logger.info(f"Fetching user by auth_id: {auth_id}")
+    try:
+        db = get_supabase_db()
+        row = db.get_user_by_auth_id(auth_id)
+
+        if not row:
+            logger.warning(f"User not found by auth_id: {auth_id}")
+            raise HTTPException(status_code=404, detail="User not found")
+
+        logger.debug(f"User found by auth_id: id={row.get('id')}, auth_id={auth_id}")
+        return row_to_user(row)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get user by auth_id: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -904,7 +939,9 @@ class UserPreferencesRequest(BaseModel):
     # Schedule
     days_per_week: Optional[int] = None
     selected_days: Optional[List[int]] = None  # List of day indices [0=Mon, 1=Tue, ..., 6=Sun]
-    workout_duration: Optional[int] = None  # Duration in minutes (30, 45, 60, 75, 90)
+    workout_duration: Optional[int] = None  # Duration in minutes (kept for backwards compatibility)
+    workout_duration_min: Optional[int] = None  # Min duration in range (e.g., 45 for "45-60")
+    workout_duration_max: Optional[int] = None  # Max duration in range (e.g., 60 for "45-60")
 
     # Equipment
     equipment: Optional[List[str]] = None
@@ -1023,6 +1060,9 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest):
             # Sleep schedule for fasting optimization
             request.wake_time,
             request.sleep_time,
+            # Duration range for flexible workout generation
+            request.workout_duration_min,
+            request.workout_duration_max,
         )
         update_data["preferences"] = final_preferences
 

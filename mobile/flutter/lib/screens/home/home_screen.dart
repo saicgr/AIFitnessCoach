@@ -303,6 +303,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         return XPGoalType.workoutComplete;
       case xp_provider.XPGoalType.proteinGoal:
         return XPGoalType.proteinGoal;
+      case xp_provider.XPGoalType.bodyMeasurements:
+        return XPGoalType.bodyMeasurements;
     }
   }
 

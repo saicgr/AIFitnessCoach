@@ -7,9 +7,13 @@ import '../../../core/constants/workout_design.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/week_comparison_provider.dart';
+import '../../../core/providers/favorites_provider.dart';
+import '../../../core/providers/staples_provider.dart';
+import '../../../core/providers/exercise_queue_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
+import 'exercise_options_info_sheet.dart';
 
 /// Expanded exercise card that shows the SET/LBS/REP table inline
 /// Collapsible by default - shows sets/reps summary when collapsed
@@ -21,6 +25,9 @@ class ExpandedExerciseCard extends ConsumerStatefulWidget {
   final VoidCallback? onTap;
   final VoidCallback? onSwap;
   final VoidCallback? onLinkSuperset;
+  final VoidCallback? onRemove;
+  final VoidCallback? onViewHistory;
+  final VoidCallback? onNeverRecommend;
   final bool initiallyExpanded;
   /// Index for ReorderableListView - if provided, drag handle enables reordering
   final int? reorderIndex;
@@ -42,6 +49,9 @@ class ExpandedExerciseCard extends ConsumerStatefulWidget {
     this.onTap,
     this.onSwap,
     this.onLinkSuperset,
+    this.onRemove,
+    this.onViewHistory,
+    this.onNeverRecommend,
     this.initiallyExpanded = false,
     this.reorderIndex,
     this.showDragHandle = true,
@@ -166,6 +176,35 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     return exercise.sets ?? 3;
   }
 
+  /// Calculate RIR algorithmically based on set type and position
+  /// Based on RP Strength methodology: progressive intensity through sets
+  /// Sources:
+  /// - PMC: https://pmc.ncbi.nlm.nih.gov/articles/PMC4961270/
+  /// - RP Strength: https://rpstrength.com/blogs/articles/progressing-for-hypertrophy
+  int? _calculateRir(String setType, int setIndex, int totalWorkingSets) {
+    final type = setType.toLowerCase();
+
+    // Warmup sets don't have RIR - they're for preparation, not stimulation
+    if (type == 'warmup') return null;
+
+    // Failure/AMRAP sets are always RIR 0 (maximum effort)
+    if (type == 'failure' || type == 'amrap') return 0;
+
+    // Drop sets maintain high intensity (RIR 1)
+    if (type == 'drop') return 1;
+
+    // Working sets: progressive RIR decrease (3 → 2 → 1)
+    if (totalWorkingSets <= 1) return 2;  // Single set = moderate intensity
+    if (totalWorkingSets == 2) {
+      return setIndex == 0 ? 3 : 1;  // First=3, Last=1
+    }
+    // 3+ working sets: distribute RIR across thirds (3→2→1)
+    final position = setIndex / (totalWorkingSets - 1);  // 0.0 to 1.0
+    if (position < 0.33) return 3;      // First third: conservative
+    if (position < 0.67) return 2;      // Middle third: moderate
+    return 1;                            // Last third: approaching failure
+  }
+
   /// Build set rows from AI setTargets or fallback to legacy format
   List<Widget> _buildSetRows({
     required WorkoutExercise exercise,
@@ -180,15 +219,25 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     // Use AI-generated setTargets if available
     if (exercise.hasSetTargets && exercise.setTargets!.isNotEmpty) {
       int workingSetNumber = 0;
+      final totalWorkingSets = exercise.setTargets!
+          .where((t) => t.setType.toLowerCase() == 'working')
+          .length;
+
       return exercise.setTargets!.map((target) {
         // For working sets, track the number (1, 2, 3...)
         String setLabel;
+        int currentWorkingIndex = 0;
         if (target.setType.toLowerCase() == 'working') {
+          currentWorkingIndex = workingSetNumber;
           workingSetNumber++;
           setLabel = '$workingSetNumber';
         } else {
           setLabel = target.setTypeLabel; // W, D, F, A
         }
+
+        // Use AI RIR if available, otherwise calculate algorithmically
+        final calculatedRir = target.targetRir ??
+            _calculateRir(target.setType, currentWorkingIndex, totalWorkingSets);
 
         return _buildSetRow(
           setLabel: setLabel,
@@ -196,7 +245,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
           setType: target.setType,
           weightKg: target.targetWeightKg,
           targetReps: target.targetReps,
-          targetRir: target.targetRir,
+          targetRir: calculatedRir,
           useKg: useKg,
           cardBorder: cardBorder,
           glassSurface: glassSurface,
@@ -220,6 +269,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
         setType: 'warmup',
         weightKg: null,
         targetReps: defaultReps,
+        targetRir: null, // Warmups don't have RIR
         useKg: useKg,
         cardBorder: cardBorder,
         glassSurface: glassSurface,
@@ -234,6 +284,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
         setType: 'working',
         weightKg: exercise.weight,
         targetReps: defaultReps,
+        targetRir: _calculateRir('working', i, totalSets), // Algorithmic RIR
         useKg: useKg,
         cardBorder: cardBorder,
         glassSurface: glassSurface,
@@ -838,49 +889,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
             ),
 
             // 3-dot menu for exercise actions
-            if (widget.onSwap != null || widget.onLinkSuperset != null)
-              PopupMenuButton<String>(
-                icon: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.more_vert,
-                    size: 18,
-                    color: accentColor,
-                  ),
-                ),
-                onSelected: (value) {
-                  if (value == 'swap') widget.onSwap?.call();
-                  if (value == 'superset') widget.onLinkSuperset?.call();
-                },
-                itemBuilder: (ctx) => [
-                  if (widget.onSwap != null)
-                    const PopupMenuItem(
-                      value: 'swap',
-                      child: Row(
-                        children: [
-                          Icon(Icons.swap_horiz, size: 20),
-                          SizedBox(width: 12),
-                          Text('Swap Exercise'),
-                        ],
-                      ),
-                    ),
-                  if (widget.onLinkSuperset != null)
-                    const PopupMenuItem(
-                      value: 'superset',
-                      child: Row(
-                        children: [
-                          Icon(Icons.link, size: 20),
-                          SizedBox(width: 12),
-                          Text('Link as Superset'),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
+            _buildExerciseOptionsMenu(context, accentColor),
           ],
         ),
       ),
@@ -923,6 +932,318 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
         color: textMuted,
         size: 28,
       ),
+    );
+  }
+
+  /// Build the 3-dot menu with all exercise options
+  Widget _buildExerciseOptionsMenu(BuildContext context, Color accentColor) {
+    final exerciseName = widget.exercise.name;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
+    // Watch provider states for toggle indicators
+    final isFavorite = ref.watch(favoritesProvider).isFavorite(exerciseName);
+    final isStaple = ref.watch(staplesProvider).isStaple(exerciseName);
+    final isQueued = ref.watch(exerciseQueueProvider).isQueued(exerciseName);
+
+    return PopupMenuButton<String>(
+      icon: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: accentColor.withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.more_vert,
+          size: 18,
+          color: accentColor,
+        ),
+      ),
+      onSelected: (value) async {
+        HapticService.light();
+
+        switch (value) {
+          case 'favorite':
+            final success = await ref.read(favoritesProvider.notifier)
+                .toggleFavorite(exerciseName, exerciseId: widget.exercise.exerciseId);
+            if (mounted && success) {
+              final newState = ref.read(favoritesProvider).isFavorite(exerciseName);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      Icon(
+                        newState ? Icons.favorite : Icons.favorite_border,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(newState ? 'Added to favorites' : 'Removed from favorites'),
+                    ],
+                  ),
+                  backgroundColor: AppColors.success,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
+            break;
+
+          case 'queue':
+            final success = await ref.read(exerciseQueueProvider.notifier)
+                .toggleQueue(exerciseName,
+                  exerciseId: widget.exercise.exerciseId,
+                  targetMuscleGroup: widget.exercise.muscleGroup,
+                );
+            if (mounted && success) {
+              final newState = ref.read(exerciseQueueProvider).isQueued(exerciseName);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      Icon(
+                        newState ? Icons.playlist_add_check : Icons.playlist_add,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(newState ? 'Queued for next workout' : 'Removed from queue'),
+                    ],
+                  ),
+                  backgroundColor: AppColors.cyan,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
+            break;
+
+          case 'staple':
+            final success = await ref.read(staplesProvider.notifier)
+                .toggleStaple(exerciseName,
+                  libraryId: widget.exercise.libraryId,
+                  muscleGroup: widget.exercise.muscleGroup,
+                );
+            if (mounted && success) {
+              final newState = ref.read(staplesProvider).isStaple(exerciseName);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      Icon(
+                        newState ? Icons.push_pin : Icons.push_pin_outlined,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(newState
+                        ? 'Marked as staple - updating workout...'
+                        : 'Removed from staples'),
+                    ],
+                  ),
+                  backgroundColor: AppColors.purple,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
+            break;
+
+          case 'history':
+            widget.onViewHistory?.call();
+            break;
+
+          case 'swap':
+            widget.onSwap?.call();
+            break;
+
+          case 'superset':
+            widget.onLinkSuperset?.call();
+            break;
+
+          case 'remove':
+            widget.onRemove?.call();
+            break;
+
+          case 'never_recommend':
+            widget.onNeverRecommend?.call();
+            break;
+
+          case 'info':
+            showExerciseOptionsInfoSheet(context: context);
+            break;
+        }
+      },
+      itemBuilder: (ctx) => [
+        // === TOGGLE OPTIONS ===
+
+        // Favorite toggle
+        PopupMenuItem(
+          value: 'favorite',
+          child: Row(
+            children: [
+              Icon(
+                isFavorite ? Icons.favorite : Icons.favorite_border,
+                size: 20,
+                color: isFavorite ? AppColors.error : textPrimary,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+                  style: TextStyle(
+                    color: isFavorite ? AppColors.error : textPrimary,
+                  ),
+                ),
+              ),
+              if (isFavorite)
+                Icon(Icons.check, size: 16, color: AppColors.error),
+            ],
+          ),
+        ),
+
+        // Queue toggle (Repeat Next Time)
+        PopupMenuItem(
+          value: 'queue',
+          child: Row(
+            children: [
+              Icon(
+                isQueued ? Icons.playlist_add_check : Icons.playlist_add,
+                size: 20,
+                color: isQueued ? AppColors.cyan : textPrimary,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  isQueued ? 'Remove from Queue' : 'Repeat Next Time',
+                  style: TextStyle(
+                    color: isQueued ? AppColors.cyan : textPrimary,
+                  ),
+                ),
+              ),
+              if (isQueued)
+                Icon(Icons.check, size: 16, color: AppColors.cyan),
+            ],
+          ),
+        ),
+
+        // Staple toggle
+        PopupMenuItem(
+          value: 'staple',
+          child: Row(
+            children: [
+              Icon(
+                isStaple ? Icons.push_pin : Icons.push_pin_outlined,
+                size: 20,
+                color: isStaple ? AppColors.purple : textPrimary,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  isStaple ? 'Remove as Staple' : 'Mark as Staple',
+                  style: TextStyle(
+                    color: isStaple ? AppColors.purple : textPrimary,
+                  ),
+                ),
+              ),
+              if (isStaple)
+                Icon(Icons.check, size: 16, color: AppColors.purple),
+            ],
+          ),
+        ),
+
+        const PopupMenuDivider(),
+
+        // === ACTION OPTIONS ===
+
+        // View History
+        if (widget.onViewHistory != null)
+          PopupMenuItem(
+            value: 'history',
+            child: Row(
+              children: [
+                Icon(Icons.history_rounded, size: 20, color: textPrimary),
+                const SizedBox(width: 12),
+                const Text('View History'),
+              ],
+            ),
+          ),
+
+        // Swap Exercise
+        if (widget.onSwap != null)
+          PopupMenuItem(
+            value: 'swap',
+            child: Row(
+              children: [
+                Icon(Icons.swap_horiz, size: 20, color: textPrimary),
+                const SizedBox(width: 12),
+                const Text('Swap Exercise'),
+              ],
+            ),
+          ),
+
+        // Link as Superset
+        if (widget.onLinkSuperset != null)
+          PopupMenuItem(
+            value: 'superset',
+            child: Row(
+              children: [
+                Icon(Icons.link, size: 20, color: textPrimary),
+                const SizedBox(width: 12),
+                const Text('Link as Superset'),
+              ],
+            ),
+          ),
+
+        const PopupMenuDivider(),
+
+        // === DESTRUCTIVE OPTIONS ===
+
+        // Remove from Workout
+        if (widget.onRemove != null)
+          PopupMenuItem(
+            value: 'remove',
+            child: Row(
+              children: [
+                Icon(Icons.delete_outline, size: 20, color: AppColors.error),
+                const SizedBox(width: 12),
+                Text(
+                  'Remove from Workout',
+                  style: TextStyle(color: AppColors.error),
+                ),
+              ],
+            ),
+          ),
+
+        // Never Recommend
+        if (widget.onNeverRecommend != null)
+          PopupMenuItem(
+            value: 'never_recommend',
+            child: Row(
+              children: [
+                Icon(Icons.block_rounded, size: 20, color: AppColors.error),
+                const SizedBox(width: 12),
+                Text(
+                  'Never Recommend',
+                  style: TextStyle(color: AppColors.error),
+                ),
+              ],
+            ),
+          ),
+
+        const PopupMenuDivider(),
+
+        // === INFO ===
+
+        // What do these mean?
+        PopupMenuItem(
+          value: 'info',
+          child: Row(
+            children: [
+              Icon(Icons.help_outline, size: 20, color: textPrimary),
+              const SizedBox(width: 12),
+              const Text('What do these mean?'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

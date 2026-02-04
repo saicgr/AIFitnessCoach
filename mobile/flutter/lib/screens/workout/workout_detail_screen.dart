@@ -32,6 +32,7 @@ import '../../widgets/coach_avatar.dart';
 import '../../models/equipment_item.dart';
 import '../../core/providers/environment_equipment_provider.dart';
 import 'widgets/edit_workout_equipment_sheet.dart';
+import '../../core/providers/avoided_provider.dart';
 
 class WorkoutDetailScreen extends ConsumerStatefulWidget {
   final String workoutId;
@@ -1136,7 +1137,161 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       onLinkSuperset: exercise.isInSuperset
           ? null  // Already in a superset
           : () => _startSupersetPairing(index),
+      onViewHistory: () {
+        // Navigate to exercise history screen with exercise name
+        final encodedName = Uri.encodeComponent(exercise.name);
+        context.push('/stats/exercise-history/$encodedName');
+      },
+      onRemove: () => _removeExerciseFromWorkout(exercise, index),
+      onNeverRecommend: () => _neverRecommendExercise(exercise),
     );
+  }
+
+  /// Remove an exercise from the current workout
+  Future<void> _removeExerciseFromWorkout(WorkoutExercise exercise, int index) async {
+    if (_workout == null) return;
+
+    // Don't allow removing the last exercise
+    if (_workout!.exercises.length <= 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot remove the last exercise'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remove Exercise'),
+        content: Text('Remove "${exercise.name}" from this workout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    try {
+      // Create updated exercises list without the removed exercise
+      final updatedExercises = List<WorkoutExercise>.from(_workout!.exercises)
+        ..removeAt(index);
+
+      // Convert to JSON format for API
+      final exercisesJson = updatedExercises.map((e) => e.toJson()).toList();
+
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final updatedWorkout = await workoutRepo.updateWorkoutExercises(
+        workoutId: widget.workoutId,
+        exercises: exercisesJson,
+      );
+
+      if (mounted) {
+        if (updatedWorkout != null) {
+          setState(() => _workout = updatedWorkout);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${exercise.name} removed from workout'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to remove exercise'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to remove exercise: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Add exercise to never recommend list
+  Future<void> _neverRecommendExercise(WorkoutExercise exercise) async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Never Recommend'),
+        content: Text(
+          'Block "${exercise.name}" from all future AI recommendations?\n\n'
+          'You can undo this in Settings > Exercise Preferences.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Block'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    // Initialize avoided provider if needed
+    await ref.read(avoidedProvider.notifier).ensureInitialized();
+
+    final success = await ref.read(avoidedProvider.notifier).addAvoided(
+      exercise.name,
+      exerciseId: exercise.exerciseId,
+      reason: 'user_blocked',
+      isTemporary: false,
+    );
+
+    if (mounted) {
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.block_rounded, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Text('${exercise.name} will no longer be recommended'),
+              ],
+            ),
+            backgroundColor: AppColors.purple,
+          ),
+        );
+
+        // Reload workout to remove the blocked exercise if needed
+        _loadWorkout();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to block exercise'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   @override

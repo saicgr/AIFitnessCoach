@@ -1391,18 +1391,6 @@ class SettingsCard extends ConsumerWidget {
               ],
             );
             onTap = () => _navigateToProgressCharts(context);
-          } else if (item.isCalibrationTestScreen) {
-            trailing = Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.chevron_right,
-                  color: textMuted,
-                  size: 20,
-                ),
-              ],
-            );
-            onTap = () => context.push('/calibration/intro');
           } else if (item.isWeightUnitSelector) {
             final weightUnit = ref.watch(weightUnitProvider);
             trailing = Row(
@@ -1534,7 +1522,6 @@ class SettingsCard extends ConsumerWidget {
                     !item.isTrainingSplitSelector &&
                     !item.isWorkoutDaysSelector &&
                     !item.isProgressChartsScreen &&
-                    !item.isCalibrationTestScreen &&
                     !item.isWeightUnitSelector &&
                     !item.isAccentColorSelector && // Has custom trailing with chevron
                     !item.isWeightIncrementsSelector &&

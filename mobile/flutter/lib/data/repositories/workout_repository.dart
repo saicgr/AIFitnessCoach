@@ -30,6 +30,10 @@ final aiGeneratingWorkoutProvider = StateProvider<bool>((ref) => false);
 /// Resets when app restarts - prevents expensive API calls on every Home tab switch
 final hasCheckedRegenerationProvider = StateProvider<bool>((ref) => false);
 
+/// In-memory cache for instant display on provider recreation
+/// Survives provider invalidation and prevents loading flash
+List<Workout>? _workoutsInMemoryCache;
+
 /// Workouts state provider
 final workoutsProvider =
     StateNotifierProvider<WorkoutsNotifier, AsyncValue<List<Workout>>>((ref) {
@@ -472,9 +476,21 @@ class WorkoutRepository {
       }
     } catch (e) {
       debugPrint('❌ [Workout] Streaming generation error: $e');
+
+      // Check for rate limit (429) error
+      String errorMessage = 'Failed to generate workout';
+      if (e is DioException && e.response?.statusCode == 429) {
+        errorMessage = 'Rate limit reached. Please wait a moment before trying again.';
+        debugPrint('⚠️ [Workout] Rate limit (429) hit - user should wait before retrying');
+      } else if (e.toString().contains('429')) {
+        errorMessage = 'Rate limit reached. Please wait a moment before trying again.';
+      } else {
+        errorMessage = 'Failed to generate workout. Please try again.';
+      }
+
       yield WorkoutGenerationProgress(
         status: WorkoutGenerationStatus.error,
-        message: 'Failed to generate workout: $e',
+        message: errorMessage,
         elapsedMs: DateTime.now().difference(startTime).inMilliseconds,
       );
     }
@@ -3109,8 +3125,51 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
   final String? _userId;
 
   WorkoutsNotifier(this._repository, this._apiClient, this._userId)
-      : super(const AsyncValue.loading()) {
-    _init();
+      : super(
+          // Start with in-memory cache if available (instant, no loading flash)
+          _workoutsInMemoryCache != null
+              ? AsyncValue.data(_workoutsInMemoryCache!)
+              : const AsyncValue.loading(),
+        ) {
+    // If we have in-memory cache, fetch fresh data silently in background
+    if (_workoutsInMemoryCache != null) {
+      debugPrint('⚡ [Workouts] Using in-memory cache (instant)');
+      _initSilent();
+    } else {
+      _init();
+    }
+  }
+
+  /// Clear in-memory cache (called on logout)
+  static void clearCache() {
+    _workoutsInMemoryCache = null;
+    debugPrint('🧹 [Workouts] In-memory cache cleared');
+  }
+
+  /// Initialize silently (when we already have cached data)
+  Future<void> _initSilent() async {
+    final userId = _userId ?? await _apiClient.getUserId();
+    if (!mounted || userId == null || userId.isEmpty) return;
+    await _fetchWorkoutsSilent(userId);
+  }
+
+  /// Fetch workouts without showing loading state
+  Future<void> _fetchWorkoutsSilent(String userId) async {
+    try {
+      final workouts = await _repository.getWorkouts(userId);
+      if (!mounted) return;
+      workouts.sort((a, b) {
+        final dateA = a.scheduledDate ?? '';
+        final dateB = b.scheduledDate ?? '';
+        return dateA.compareTo(dateB);
+      });
+      // Update in-memory cache
+      _workoutsInMemoryCache = workouts;
+      state = AsyncValue.data(workouts);
+    } catch (e) {
+      debugPrint('⚠️ [Workouts] Silent fetch error: $e');
+      // Keep existing cached data on error
+    }
   }
 
   Future<void> _init() async {
@@ -3145,6 +3204,8 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
         final dateB = b.scheduledDate ?? '';
         return dateA.compareTo(dateB);
       });
+      // Update in-memory cache for instant access on provider recreation
+      _workoutsInMemoryCache = workouts;
       state = AsyncValue.data(workouts);
     } catch (e, st) {
       if (!mounted) return; // Check mounted after async

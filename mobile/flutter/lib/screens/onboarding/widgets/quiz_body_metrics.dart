@@ -1400,7 +1400,8 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                   message,
                   style: TextStyle(
                     fontSize: 12,
-                    color: isValid ? AppColors.success : AppColors.error,
+                    fontWeight: FontWeight.w500,
+                    color: isValid ? textSecondary : AppColors.error,
                   ),
                 ),
               ],

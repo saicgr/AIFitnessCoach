@@ -32,7 +32,7 @@ These bonuses are awarded once per account when you complete each action for the
 **Account Milestones**
 | Action | XP | When |
 |--------|-----|------|
-| Welcome Bonus | 500 XP | First app login |
+| Welcome Bonus | 250 XP (525 XP for first 100 users) | First app login |
 | First Chat with AI Coach | 50 XP | Send first message to coach |
 | Complete Profile | 100 XP | Fill out all profile fields |
 
@@ -72,7 +72,7 @@ These bonuses are awarded once per account when you complete each action for the
 | First Comment | 15 XP | Comment on a friend's post |
 | First Post Shared | 25 XP | Share a post to your feed |
 
-**Total First-Time Bonuses: Up to 1,700 XP**
+**Total First-Time Bonuses: Up to 1,450 XP** (1,725 XP for first 100 users)
 
 ---
 
@@ -166,33 +166,283 @@ When you level up, you earn consumable rewards:
 
 ## Level Progression (250 Levels)
 
-### XP Required Per Level
+### XP Required Per Level (Full Table)
 
-| Levels | Tier | XP Per Level | Cumulative XP | Time to Complete |
-|--------|------|-------------|---------------|------------------|
-| 1-10 | Beginner | 25-200 XP | ~1,000 XP | ~2-3 days |
-| 11-25 | Novice | 300 XP | 5,500 XP | ~2 weeks |
-| 26-50 | Apprentice | 750 XP | 24,250 XP | ~2 months |
-| 51-75 | Athlete | 2,000 XP | 74,250 XP | ~4 months |
-| 76-100 | Elite | 5,000 XP | 199,250 XP | ~1 year |
-| 101-125 | Master | 8,000 XP | 399,250 XP | ~1.5 years |
-| 126-150 | Champion | 12,000 XP | 699,250 XP | ~2.5 years |
-| 151-175 | Legend | 20,000 XP | 1,199,250 XP | ~4 years |
-| 176-200 | Mythic | 35,000 XP | 2,074,250 XP | ~7 years |
-| 201-225 | Immortal | 50,000 XP | 3,324,250 XP | ~10 years |
-| 226-250 | Transcendent | 75,000 XP | 5,199,250 XP | ~15+ years |
+**Formula**: Retention-optimized progressive curve
+- Quick early levels (hook users in first week)
+- Steady mid-game progression (visible daily progress)
+- Prestige endgame (levels 176+ are flat 100,000 XP each)
+
+| Level | XP to Next | Cumulative | Tier |
+|-------|-----------|------------|------|
+| 1 | 25 | 0 | Beginner |
+| 2 | 30 | 25 | Beginner |
+| 3 | 40 | 55 | Beginner |
+| 4 | 50 | 95 | Beginner |
+| 5 | 65 | 145 | Beginner |
+| 6 | 80 | 210 | Beginner |
+| 7 | 100 | 290 | Beginner |
+| 8 | 120 | 390 | Beginner |
+| 9 | 150 | 510 | Beginner |
+| 10 | 180 | 660 | Beginner |
+| 11 | 200 | 840 | Novice |
+| 12 | 220 | 1,040 | Novice |
+| 13 | 240 | 1,260 | Novice |
+| 14 | 260 | 1,500 | Novice |
+| 15 | 280 | 1,760 | Novice |
+| 16 | 300 | 2,040 | Novice |
+| 17 | 320 | 2,340 | Novice |
+| 18 | 340 | 2,660 | Novice |
+| 19 | 360 | 3,000 | Novice |
+| 20 | 380 | 3,360 | Novice |
+| 21 | 400 | 3,740 | Novice |
+| 22 | 420 | 4,140 | Novice |
+| 23 | 440 | 4,560 | Novice |
+| 24 | 460 | 5,000 | Novice |
+| 25 | 500 | 5,460 | Novice |
+| 26 | 550 | 5,960 | Apprentice |
+| 27 | 600 | 6,510 | Apprentice |
+| 28 | 650 | 7,110 | Apprentice |
+| 29 | 700 | 7,760 | Apprentice |
+| 30 | 750 | 8,460 | Apprentice |
+| 31 | 800 | 9,210 | Apprentice |
+| 32 | 850 | 10,010 | Apprentice |
+| 33 | 900 | 10,860 | Apprentice |
+| 34 | 950 | 11,760 | Apprentice |
+| 35 | 1,000 | 12,710 | Apprentice |
+| 36 | 1,050 | 13,710 | Apprentice |
+| 37 | 1,100 | 14,760 | Apprentice |
+| 38 | 1,150 | 15,860 | Apprentice |
+| 39 | 1,200 | 17,010 | Apprentice |
+| 40 | 1,250 | 18,210 | Apprentice |
+| 41 | 1,300 | 19,460 | Apprentice |
+| 42 | 1,350 | 20,760 | Apprentice |
+| 43 | 1,400 | 22,110 | Apprentice |
+| 44 | 1,450 | 23,510 | Apprentice |
+| 45 | 1,500 | 24,960 | Apprentice |
+| 46 | 1,550 | 26,460 | Apprentice |
+| 47 | 1,600 | 28,010 | Apprentice |
+| 48 | 1,650 | 29,610 | Apprentice |
+| 49 | 1,700 | 31,260 | Apprentice |
+| 50 | 1,800 | 32,960 | Apprentice |
+| 51 | 1,900 | 34,760 | Athlete |
+| 52 | 2,000 | 36,660 | Athlete |
+| 53 | 2,100 | 38,660 | Athlete |
+| 54 | 2,200 | 40,760 | Athlete |
+| 55 | 2,300 | 42,960 | Athlete |
+| 56 | 2,400 | 45,260 | Athlete |
+| 57 | 2,500 | 47,660 | Athlete |
+| 58 | 2,600 | 50,160 | Athlete |
+| 59 | 2,700 | 52,760 | Athlete |
+| 60 | 2,800 | 55,460 | Athlete |
+| 61 | 2,900 | 58,260 | Athlete |
+| 62 | 3,000 | 61,160 | Athlete |
+| 63 | 3,100 | 64,160 | Athlete |
+| 64 | 3,200 | 67,260 | Athlete |
+| 65 | 3,300 | 70,460 | Athlete |
+| 66 | 3,400 | 73,760 | Athlete |
+| 67 | 3,500 | 77,160 | Athlete |
+| 68 | 3,600 | 80,660 | Athlete |
+| 69 | 3,700 | 84,260 | Athlete |
+| 70 | 3,800 | 87,960 | Athlete |
+| 71 | 3,900 | 91,760 | Athlete |
+| 72 | 4,000 | 95,660 | Athlete |
+| 73 | 4,100 | 99,660 | Athlete |
+| 74 | 4,200 | 103,760 | Athlete |
+| 75 | 4,500 | 107,960 | Athlete |
+| 76 | 4,800 | 112,460 | Elite |
+| 77 | 5,000 | 117,260 | Elite |
+| 78 | 5,200 | 122,260 | Elite |
+| 79 | 5,400 | 127,460 | Elite |
+| 80 | 5,600 | 132,860 | Elite |
+| 81 | 5,800 | 138,460 | Elite |
+| 82 | 6,000 | 144,260 | Elite |
+| 83 | 6,200 | 150,260 | Elite |
+| 84 | 6,400 | 156,460 | Elite |
+| 85 | 6,600 | 162,860 | Elite |
+| 86 | 6,800 | 169,460 | Elite |
+| 87 | 7,000 | 176,260 | Elite |
+| 88 | 7,200 | 183,260 | Elite |
+| 89 | 7,400 | 190,460 | Elite |
+| 90 | 7,600 | 197,860 | Elite |
+| 91 | 7,800 | 205,460 | Elite |
+| 92 | 8,000 | 213,260 | Elite |
+| 93 | 8,200 | 221,260 | Elite |
+| 94 | 8,400 | 229,460 | Elite |
+| 95 | 8,600 | 237,860 | Elite |
+| 96 | 8,800 | 246,460 | Elite |
+| 97 | 9,000 | 255,260 | Elite |
+| 98 | 9,200 | 264,260 | Elite |
+| 99 | 9,400 | 273,460 | Elite |
+| 100 | 10,000 | 282,860 | Elite |
+| 101 | 10,500 | 292,860 | Master |
+| 102 | 11,000 | 303,360 | Master |
+| 103 | 11,500 | 314,360 | Master |
+| 104 | 12,000 | 325,860 | Master |
+| 105 | 12,500 | 337,860 | Master |
+| 106 | 13,000 | 350,360 | Master |
+| 107 | 13,500 | 363,360 | Master |
+| 108 | 14,000 | 376,860 | Master |
+| 109 | 14,500 | 390,860 | Master |
+| 110 | 15,000 | 405,360 | Master |
+| 111 | 15,500 | 420,360 | Master |
+| 112 | 16,000 | 435,860 | Master |
+| 113 | 16,500 | 451,860 | Master |
+| 114 | 17,000 | 468,360 | Master |
+| 115 | 17,500 | 485,360 | Master |
+| 116 | 18,000 | 502,860 | Master |
+| 117 | 18,500 | 520,860 | Master |
+| 118 | 19,000 | 539,360 | Master |
+| 119 | 19,500 | 558,360 | Master |
+| 120 | 20,000 | 577,860 | Master |
+| 121 | 20,500 | 597,860 | Master |
+| 122 | 21,000 | 618,360 | Master |
+| 123 | 21,500 | 639,360 | Master |
+| 124 | 22,000 | 660,860 | Master |
+| 125 | 23,000 | 682,860 | Master |
+| 126 | 24,000 | 705,860 | Champion |
+| 127 | 25,000 | 729,860 | Champion |
+| 128 | 26,000 | 754,860 | Champion |
+| 129 | 27,000 | 780,860 | Champion |
+| 130 | 28,000 | 807,860 | Champion |
+| 131 | 29,000 | 835,860 | Champion |
+| 132 | 30,000 | 864,860 | Champion |
+| 133 | 31,000 | 894,860 | Champion |
+| 134 | 32,000 | 925,860 | Champion |
+| 135 | 33,000 | 957,860 | Champion |
+| 136 | 34,000 | 990,860 | Champion |
+| 137 | 35,000 | 1,024,860 | Champion |
+| 138 | 36,000 | 1,059,860 | Champion |
+| 139 | 37,000 | 1,095,860 | Champion |
+| 140 | 38,000 | 1,132,860 | Champion |
+| 141 | 39,000 | 1,170,860 | Champion |
+| 142 | 40,000 | 1,209,860 | Champion |
+| 143 | 41,000 | 1,249,860 | Champion |
+| 144 | 42,000 | 1,290,860 | Champion |
+| 145 | 43,000 | 1,332,860 | Champion |
+| 146 | 44,000 | 1,375,860 | Champion |
+| 147 | 45,000 | 1,419,860 | Champion |
+| 148 | 46,000 | 1,464,860 | Champion |
+| 149 | 47,000 | 1,510,860 | Champion |
+| 150 | 50,000 | 1,557,860 | Champion |
+| 151 | 52,000 | 1,607,860 | Legend |
+| 152 | 54,000 | 1,659,860 | Legend |
+| 153 | 56,000 | 1,713,860 | Legend |
+| 154 | 58,000 | 1,769,860 | Legend |
+| 155 | 60,000 | 1,827,860 | Legend |
+| 156 | 62,000 | 1,887,860 | Legend |
+| 157 | 64,000 | 1,949,860 | Legend |
+| 158 | 66,000 | 2,013,860 | Legend |
+| 159 | 68,000 | 2,079,860 | Legend |
+| 160 | 70,000 | 2,147,860 | Legend |
+| 161 | 72,000 | 2,217,860 | Legend |
+| 162 | 74,000 | 2,289,860 | Legend |
+| 163 | 76,000 | 2,363,860 | Legend |
+| 164 | 78,000 | 2,439,860 | Legend |
+| 165 | 80,000 | 2,517,860 | Legend |
+| 166 | 82,000 | 2,597,860 | Legend |
+| 167 | 84,000 | 2,679,860 | Legend |
+| 168 | 86,000 | 2,763,860 | Legend |
+| 169 | 88,000 | 2,849,860 | Legend |
+| 170 | 90,000 | 2,937,860 | Legend |
+| 171 | 92,000 | 3,027,860 | Legend |
+| 172 | 94,000 | 3,119,860 | Legend |
+| 173 | 96,000 | 3,213,860 | Legend |
+| 174 | 98,000 | 3,309,860 | Legend |
+| 175 | 100,000 | 3,407,860 | Legend |
+| 176 | 100,000 | 3,507,860 | Mythic |
+| 177 | 100,000 | 3,607,860 | Mythic |
+| 178 | 100,000 | 3,707,860 | Mythic |
+| 179 | 100,000 | 3,807,860 | Mythic |
+| 180 | 100,000 | 3,907,860 | Mythic |
+| 181 | 100,000 | 4,007,860 | Mythic |
+| 182 | 100,000 | 4,107,860 | Mythic |
+| 183 | 100,000 | 4,207,860 | Mythic |
+| 184 | 100,000 | 4,307,860 | Mythic |
+| 185 | 100,000 | 4,407,860 | Mythic |
+| 186 | 100,000 | 4,507,860 | Mythic |
+| 187 | 100,000 | 4,607,860 | Mythic |
+| 188 | 100,000 | 4,707,860 | Mythic |
+| 189 | 100,000 | 4,807,860 | Mythic |
+| 190 | 100,000 | 4,907,860 | Mythic |
+| 191 | 100,000 | 5,007,860 | Mythic |
+| 192 | 100,000 | 5,107,860 | Mythic |
+| 193 | 100,000 | 5,207,860 | Mythic |
+| 194 | 100,000 | 5,307,860 | Mythic |
+| 195 | 100,000 | 5,407,860 | Mythic |
+| 196 | 100,000 | 5,507,860 | Mythic |
+| 197 | 100,000 | 5,607,860 | Mythic |
+| 198 | 100,000 | 5,707,860 | Mythic |
+| 199 | 100,000 | 5,807,860 | Mythic |
+| 200 | 100,000 | 5,907,860 | Mythic |
+| 201 | 100,000 | 6,007,860 | Immortal |
+| 202 | 100,000 | 6,107,860 | Immortal |
+| 203 | 100,000 | 6,207,860 | Immortal |
+| 204 | 100,000 | 6,307,860 | Immortal |
+| 205 | 100,000 | 6,407,860 | Immortal |
+| 206 | 100,000 | 6,507,860 | Immortal |
+| 207 | 100,000 | 6,607,860 | Immortal |
+| 208 | 100,000 | 6,707,860 | Immortal |
+| 209 | 100,000 | 6,807,860 | Immortal |
+| 210 | 100,000 | 6,907,860 | Immortal |
+| 211 | 100,000 | 7,007,860 | Immortal |
+| 212 | 100,000 | 7,107,860 | Immortal |
+| 213 | 100,000 | 7,207,860 | Immortal |
+| 214 | 100,000 | 7,307,860 | Immortal |
+| 215 | 100,000 | 7,407,860 | Immortal |
+| 216 | 100,000 | 7,507,860 | Immortal |
+| 217 | 100,000 | 7,607,860 | Immortal |
+| 218 | 100,000 | 7,707,860 | Immortal |
+| 219 | 100,000 | 7,807,860 | Immortal |
+| 220 | 100,000 | 7,907,860 | Immortal |
+| 221 | 100,000 | 8,007,860 | Immortal |
+| 222 | 100,000 | 8,107,860 | Immortal |
+| 223 | 100,000 | 8,207,860 | Immortal |
+| 224 | 100,000 | 8,307,860 | Immortal |
+| 225 | 100,000 | 8,407,860 | Immortal |
+| 226 | 100,000 | 8,507,860 | Transcendent |
+| 227 | 100,000 | 8,607,860 | Transcendent |
+| 228 | 100,000 | 8,707,860 | Transcendent |
+| 229 | 100,000 | 8,807,860 | Transcendent |
+| 230 | 100,000 | 8,907,860 | Transcendent |
+| 231 | 100,000 | 9,007,860 | Transcendent |
+| 232 | 100,000 | 9,107,860 | Transcendent |
+| 233 | 100,000 | 9,207,860 | Transcendent |
+| 234 | 100,000 | 9,307,860 | Transcendent |
+| 235 | 100,000 | 9,407,860 | Transcendent |
+| 236 | 100,000 | 9,507,860 | Transcendent |
+| 237 | 100,000 | 9,607,860 | Transcendent |
+| 238 | 100,000 | 9,707,860 | Transcendent |
+| 239 | 100,000 | 9,807,860 | Transcendent |
+| 240 | 100,000 | 9,907,860 | Transcendent |
+| 241 | 100,000 | 10,007,860 | Transcendent |
+| 242 | 100,000 | 10,107,860 | Transcendent |
+| 243 | 100,000 | 10,207,860 | Transcendent |
+| 244 | 100,000 | 10,307,860 | Transcendent |
+| 245 | 100,000 | 10,407,860 | Transcendent |
+| 246 | 100,000 | 10,507,860 | Transcendent |
+| 247 | 100,000 | 10,607,860 | Transcendent |
+| 248 | 100,000 | 10,707,860 | Transcendent |
+| 249 | 100,000 | 10,807,860 | Transcendent |
+| 250 | MAX | 10,907,860 | Transcendent |
 
 ### Tier Progression Timeline
 
 At ~400 XP/day average:
-- **Level 10** (Beginner complete): ~3 days
-- **Level 25** (Novice complete): ~2 weeks
-- **Level 50** (Apprentice complete): ~2 months
-- **Level 75** (Athlete complete): ~6 months
-- **Level 100** (Elite complete): ~1.5 years
-- **Level 150** (Champion complete): ~4.5 years
-- **Level 200** (Mythic complete): ~14 years
-- **Level 250** (Transcendent): Lifetime achievement
+
+| Milestone | Cumulative XP | Time to Reach |
+|-----------|---------------|---------------|
+| Level 10 (Beginner complete) | 660 XP | ~2 days |
+| Level 25 (Novice complete) | 5,460 XP | ~2 weeks |
+| Level 50 (Apprentice complete) | 32,960 XP | ~3 months |
+| Level 75 (Athlete complete) | 107,960 XP | ~9 months |
+| Level 100 (Elite complete) | 282,860 XP | ~2 years |
+| Level 125 (Master complete) | 682,860 XP | ~4.5 years |
+| Level 150 (Champion complete) | 1,557,860 XP | ~10 years |
+| Level 175 (Legend complete) | 3,407,860 XP | ~23 years |
+| Level 200 (Mythic complete) | 5,907,860 XP | ~40 years |
+| Level 225 (Immortal complete) | 8,407,860 XP | ~57 years |
+| Level 250 (Transcendent) | 10,907,860 XP | Lifetime achievement |
 
 ### Tier Titles
 

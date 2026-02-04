@@ -6,6 +6,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/api_constants.dart';
 import '../models/user.dart' as app_user;
+import '../providers/consistency_provider.dart';
+import '../providers/fasting_provider.dart';
+import '../providers/gym_profile_provider.dart';
+import '../providers/nutrition_preferences_provider.dart';
+import '../providers/scores_provider.dart';
+import '../providers/today_workout_provider.dart';
+import '../providers/xp_provider.dart';
+import '../repositories/hydration_repository.dart';
+import '../repositories/workout_repository.dart';
 import '../services/api_client.dart';
 import '../services/data_cache_service.dart';
 import '../services/wearable_service.dart';
@@ -274,6 +283,16 @@ class AuthRepository {
 
       // Clear all cached data for next user
       await DataCacheService.instance.clearAll();
+      // Clear ALL in-memory caches
+      TodayWorkoutNotifier.clearCache();
+      XPNotifier.clearCache();
+      GymProfilesNotifier.clearCache();
+      WorkoutsNotifier.clearCache();
+      ScoresNotifier.clearCache();
+      ConsistencyNotifier.clearCache();
+      NutritionPreferencesNotifier.clearCache();
+      HydrationNotifier.clearCache();
+      FastingNotifier.clearCache();
 
       // Clear local onboarding flags so next user gets fresh experience
       final prefs = await SharedPreferences.getInstance();
@@ -378,24 +397,40 @@ class AuthRepository {
       if (session != null) {
         debugPrint('🔍 [Auth] Found Supabase session, refreshing...');
 
-        // Update stored token and user ID
+        // Update stored auth token
         await _apiClient.setAuthToken(session.accessToken);
-        await _apiClient.setUserId(session.user.id);
-        debugPrint('🔍 [Auth] Set user ID from Supabase session: ${session.user.id}');
 
-        // Get user from backend
-        final user = await getCurrentUser();
+        // IMPORTANT: Look up user by Supabase Auth ID to get the correct users.id
+        // session.user.id is the Supabase Auth UUID, NOT the users table UUID
+        final authId = session.user.id;
+        debugPrint('🔍 [Auth] Looking up user by auth_id: $authId');
 
-        // Sync credentials to watch on session restore (Android only)
-        if (user != null && Platform.isAndroid) {
-          _syncCredentialsToWatch(
-            userId: user.id,
-            authToken: session.accessToken,
-            refreshToken: session.refreshToken,
-          );
+        final response = await _apiClient.get('${ApiConstants.users}/by-auth/$authId');
+
+        if (response.statusCode == 200) {
+          final user = app_user.User.fromJson(response.data as Map<String, dynamic>);
+
+          // NOW set the correct user ID (from users table, not auth)
+          await _apiClient.setUserId(user.id);
+          debugPrint('✅ [Auth] Set correct user ID: ${user.id} (auth_id was: $authId)');
+
+          // Cache user for faster app startup
+          await _cacheUser(user);
+
+          // Sync credentials to watch on session restore (Android only)
+          if (Platform.isAndroid) {
+            _syncCredentialsToWatch(
+              userId: user.id,
+              authToken: session.accessToken,
+              refreshToken: session.refreshToken,
+            );
+          }
+
+          return user;
+        } else {
+          debugPrint('❌ [Auth] Failed to look up user by auth_id: ${response.statusCode}');
+          return null;
         }
-
-        return user;
       }
 
       // Fall back to stored token

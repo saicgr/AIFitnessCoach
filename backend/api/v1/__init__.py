@@ -45,7 +45,6 @@ from api.v1 import subscription_transparency  # Subscription transparency tracki
 from api.v1 import subscription_context  # Subscription context for AI personalization
 from api.v1 import programs  # Branded workout programs and user program assignments
 from api.v1 import window_mode  # Window mode logging (split screen, PiP, freeform)
-from api.v1 import calibration  # Strength calibration workouts and baselines
 from api.v1 import neat  # NEAT (Non-Exercise Activity Thermogenesis) improvement system
 from api.v1 import supersets  # Superset preferences and manual pairing
 from api.v1 import strain_prevention  # Strain prevention and volume tracking
@@ -248,8 +247,6 @@ router.include_router(programs.router, prefix="/programs", tags=["Programs"])
 # Window mode logging (split screen, PiP, freeform) for analytics
 router.include_router(window_mode.router, prefix="/window-mode", tags=["Window Mode"])
 
-# Strength calibration workouts for assessing user baselines
-router.include_router(calibration.router, tags=["Calibration"])
 
 # NEAT improvement system (step goals, hourly activity, NEAT scores, streaks, achievements)
 router.include_router(neat.router, prefix="/neat", tags=["NEAT"])

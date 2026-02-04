@@ -32,44 +32,51 @@ class _WorkoutLoadingScreenState extends ConsumerState<WorkoutLoadingScreen>
   Timer? _stageTimer;
   int _pollCount = 0;
   int _currentStage = 0;
+  bool _workoutReady = false;
+  bool _hasNavigated = false;
+  DateTime _screenStartTime = DateTime.now();
   static const int _maxPolls = 60;
+  // Minimum time to display the loading screen (ensures users see the stages)
+  static const Duration _minDisplayTime = Duration(seconds: 18);
+  // Minimum time per stage to ensure smooth UX
+  static const Duration _minStageTime = Duration(seconds: 3);
 
-  // Stage data with icons, messages, and tips
+  // Stage data with icons, messages, and tips - enhanced for better UX
   final List<_LoadingStage> _stages = [
     _LoadingStage(
       icon: Icons.person_search_rounded,
       title: 'Analyzing Your Profile',
       subtitle: 'Understanding your fitness level and goals...',
       tip: 'Your workout will be tailored to your experience level',
-      progress: 0.15,
+      progress: 0.10,
+    ),
+    _LoadingStage(
+      icon: Icons.smart_toy_rounded,
+      title: 'Setting Up Your Coach',
+      subtitle: 'Configuring your AI coach preferences...',
+      tip: 'Your coach will adapt to your training style',
+      progress: 0.25,
     ),
     _LoadingStage(
       icon: Icons.fitness_center_rounded,
-      title: 'Selecting Exercises',
-      subtitle: 'Picking the best movements for your goals...',
-      tip: 'We prioritize compound movements for efficiency',
-      progress: 0.35,
+      title: 'Loading Exercise Library',
+      subtitle: 'Preparing thousands of exercises...',
+      tip: 'We have exercises for every equipment and skill level',
+      progress: 0.40,
     ),
     _LoadingStage(
       icon: Icons.tune_rounded,
-      title: 'Optimizing Sets & Reps',
-      subtitle: 'Calculating optimal volume for growth...',
-      tip: 'Progressive overload is key to building strength',
+      title: 'Configuring Workout Templates',
+      subtitle: 'Setting up your personalized structure...',
+      tip: 'Each workout is designed for your schedule',
       progress: 0.55,
     ),
     _LoadingStage(
-      icon: Icons.timer_rounded,
-      title: 'Setting Rest Periods',
-      subtitle: 'Balancing intensity and recovery...',
-      tip: 'Rest 2-3 min for strength, 60-90s for hypertrophy',
-      progress: 0.75,
-    ),
-    _LoadingStage(
-      icon: Icons.auto_graph_rounded,
-      title: 'Adding Progression',
-      subtitle: 'Building in progressive overload...',
-      tip: 'Small consistent gains lead to big results',
-      progress: 0.90,
+      icon: Icons.auto_awesome_rounded,
+      title: 'Generating Personalized Plan',
+      subtitle: 'AI is crafting your perfect workout...',
+      tip: 'Progressive overload is key to building strength',
+      progress: 0.80,
     ),
     _LoadingStage(
       icon: Icons.check_circle_rounded,
@@ -122,6 +129,9 @@ class _WorkoutLoadingScreenState extends ConsumerState<WorkoutLoadingScreen>
       duration: const Duration(seconds: 3),
     )..repeat();
 
+    // Record screen start time
+    _screenStartTime = DateTime.now();
+
     // Start polling and stage progression
     _startPolling();
     _startStageProgression();
@@ -140,17 +150,33 @@ class _WorkoutLoadingScreenState extends ConsumerState<WorkoutLoadingScreen>
   }
 
   void _startStageProgression() {
-    // Progress through stages every 4-5 seconds
-    _stageTimer = Timer.periodic(const Duration(milliseconds: 4500), (_) {
-      if (mounted && _currentStage < _stages.length - 1) {
-        setState(() {
-          _currentStage++;
-        });
-        _iconBounceController.forward(from: 0);
-        _progressController.animateTo(
-          _stages[_currentStage].progress,
-          curve: Curves.easeOutCubic,
-        );
+    // Progress through stages with minimum time per stage
+    // Don't advance to the final stage until workout is ready
+    _stageTimer = Timer.periodic(_minStageTime, (_) {
+      if (mounted) {
+        // Don't advance past stage 4 (index 4) until workout is ready
+        // This keeps the "Generating Personalized Plan" stage visible until completion
+        final maxAutoStage = _workoutReady ? _stages.length - 1 : _stages.length - 2;
+
+        if (_currentStage < maxAutoStage) {
+          setState(() {
+            _currentStage++;
+          });
+          _iconBounceController.forward(from: 0);
+          _progressController.animateTo(
+            _stages[_currentStage].progress,
+            curve: Curves.easeOutCubic,
+          );
+        } else if (_workoutReady && _currentStage < _stages.length - 1) {
+          // Workout is ready and we haven't shown final stage yet
+          setState(() {
+            _currentStage = _stages.length - 1;
+          });
+          _iconBounceController.forward(from: 0);
+          _progressController.animateTo(1.0, curve: Curves.easeOutCubic);
+          // Navigate after showing the final stage briefly
+          _scheduleNavigation();
+        }
       }
     });
 
@@ -186,26 +212,52 @@ class _WorkoutLoadingScreenState extends ConsumerState<WorkoutLoadingScreen>
         if (response != null && !response.isGenerating) {
           if (response.todayWorkout != null || response.nextWorkout != null) {
             debugPrint('✅ [WorkoutLoading] Workouts ready!');
-            // Jump to final stage before navigating
-            setState(() {
-              _currentStage = _stages.length - 1;
-            });
-            _progressController.animateTo(1.0, curve: Curves.easeOutCubic);
-            Future.delayed(const Duration(milliseconds: 800), _navigateToHome);
+            // Mark workout as ready - stage timer will advance to final stage
+            if (!_workoutReady) {
+              setState(() {
+                _workoutReady = true;
+              });
+              // If we're already at stage 4 or beyond, schedule navigation
+              if (_currentStage >= _stages.length - 2) {
+                _scheduleNavigation();
+              }
+            }
           }
         }
       },
     );
 
-    if (_pollCount >= _maxPolls) {
+    // Force navigation after max polls (timeout)
+    if (_pollCount >= _maxPolls && !_hasNavigated) {
+      debugPrint('⚠️ [WorkoutLoading] Max polls reached, navigating anyway');
       _navigateToHome();
     }
   }
 
+  void _scheduleNavigation() {
+    if (_hasNavigated) return;
+
+    // Check if we've displayed the loading screen for minimum time
+    final elapsed = DateTime.now().difference(_screenStartTime);
+    final remainingTime = _minDisplayTime - elapsed;
+
+    if (remainingTime.isNegative || remainingTime == Duration.zero) {
+      // Minimum time has passed, navigate after a brief delay to show final stage
+      Future.delayed(const Duration(milliseconds: 1200), _navigateToHome);
+    } else {
+      // Wait for remaining time plus brief delay for final stage
+      Future.delayed(remainingTime + const Duration(milliseconds: 1200), _navigateToHome);
+    }
+  }
+
   void _navigateToHome() {
+    if (_hasNavigated) return;
+    _hasNavigated = true;
+
     _pollTimer?.cancel();
     _stageTimer?.cancel();
     if (mounted) {
+      debugPrint('🏠 [WorkoutLoading] Navigating to home');
       context.go('/home');
     }
   }

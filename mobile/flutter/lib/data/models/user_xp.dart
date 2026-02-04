@@ -2,8 +2,10 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'user_xp.g.dart';
 
-/// User's XP level title based on their current level
+/// User's XP level title based on their current level (11 tiers - Migration 227)
 enum XPTitle {
+  @JsonValue('Beginner')
+  beginner,
   @JsonValue('Novice')
   novice,
   @JsonValue('Apprentice')
@@ -14,21 +16,23 @@ enum XPTitle {
   elite,
   @JsonValue('Master')
   master,
+  @JsonValue('Champion')
+  champion,
   @JsonValue('Legend')
   legend,
   @JsonValue('Mythic')
   mythic,
-  @JsonValue('Mythic I')
-  mythicI,
-  @JsonValue('Mythic II')
-  mythicII,
-  @JsonValue('Mythic III')
-  mythicIII,
+  @JsonValue('Immortal')
+  immortal,
+  @JsonValue('Transcendent')
+  transcendent,
 }
 
 extension XPTitleExtension on XPTitle {
   String get displayName {
     switch (this) {
+      case XPTitle.beginner:
+        return 'Beginner';
       case XPTitle.novice:
         return 'Novice';
       case XPTitle.apprentice:
@@ -39,23 +43,25 @@ extension XPTitleExtension on XPTitle {
         return 'Elite';
       case XPTitle.master:
         return 'Master';
+      case XPTitle.champion:
+        return 'Champion';
       case XPTitle.legend:
         return 'Legend';
       case XPTitle.mythic:
         return 'Mythic';
-      case XPTitle.mythicI:
-        return 'Mythic I';
-      case XPTitle.mythicII:
-        return 'Mythic II';
-      case XPTitle.mythicIII:
-        return 'Mythic III';
+      case XPTitle.immortal:
+        return 'Immortal';
+      case XPTitle.transcendent:
+        return 'Transcendent';
     }
   }
 
   int get colorValue {
     switch (this) {
-      case XPTitle.novice:
+      case XPTitle.beginner:
         return 0xFF9E9E9E; // Gray
+      case XPTitle.novice:
+        return 0xFF8BC34A; // Light Green
       case XPTitle.apprentice:
         return 0xFF4CAF50; // Green
       case XPTitle.athlete:
@@ -64,42 +70,44 @@ extension XPTitleExtension on XPTitle {
         return 0xFF9C27B0; // Purple
       case XPTitle.master:
         return 0xFFFF9800; // Orange
+      case XPTitle.champion:
+        return 0xFFFF5722; // Deep Orange
       case XPTitle.legend:
         return 0xFFFFD700; // Gold
       case XPTitle.mythic:
         return 0xFFE040FB; // Pink/Magenta
-      case XPTitle.mythicI:
-        return 0xFFE040FB; // Pink/Magenta
-      case XPTitle.mythicII:
+      case XPTitle.immortal:
         return 0xFF00E5FF; // Cyan (cosmic)
-      case XPTitle.mythicIII:
+      case XPTitle.transcendent:
         return 0xFFFF1744; // Red (legendary)
     }
   }
 
-  /// Get level range for this title
+  /// Get level range for this title (Migration 227 - 11 tiers)
   String get levelRange {
     switch (this) {
-      case XPTitle.novice:
+      case XPTitle.beginner:
         return '1-10';
-      case XPTitle.apprentice:
+      case XPTitle.novice:
         return '11-25';
-      case XPTitle.athlete:
+      case XPTitle.apprentice:
         return '26-50';
-      case XPTitle.elite:
+      case XPTitle.athlete:
         return '51-75';
+      case XPTitle.elite:
+        return '76-100';
       case XPTitle.master:
-        return '76-99';
+        return '101-125';
+      case XPTitle.champion:
+        return '126-150';
       case XPTitle.legend:
-        return '100';
+        return '151-175';
       case XPTitle.mythic:
-        return '101+';
-      case XPTitle.mythicI:
-        return '101-150';
-      case XPTitle.mythicII:
-        return '151-200';
-      case XPTitle.mythicIII:
-        return '201-250';
+        return '176-200';
+      case XPTitle.immortal:
+        return '201-225';
+      case XPTitle.transcendent:
+        return '226-250';
     }
   }
 }
@@ -115,13 +123,13 @@ class UserXP {
   final int totalXp;
   @JsonKey(name: 'current_level', defaultValue: 1)
   final int currentLevel;
-  @JsonKey(name: 'xp_to_next_level', defaultValue: 50)
+  @JsonKey(name: 'xp_to_next_level', defaultValue: 25) // Level 1 -> 2 requires 25 XP (Migration 227)
   final int xpToNextLevel;
   @JsonKey(name: 'xp_in_current_level', defaultValue: 0)
   final int xpInCurrentLevel;
   @JsonKey(name: 'prestige_level', defaultValue: 0)
   final int prestigeLevel;
-  @JsonKey(defaultValue: 'Novice')
+  @JsonKey(defaultValue: 'Beginner')
   final String title;
   @JsonKey(name: 'trust_level', defaultValue: 1)
   final int trustLevel;
@@ -135,10 +143,10 @@ class UserXP {
     this.userId = '',
     this.totalXp = 0,
     this.currentLevel = 1,
-    this.xpToNextLevel = 50, // Level 1 -> 2 requires only 50 XP (Day 1 achievable!)
+    this.xpToNextLevel = 25, // Level 1 -> 2 requires 25 XP (Migration 227)
     this.xpInCurrentLevel = 0,
     this.prestigeLevel = 0,
-    this.title = 'Novice',
+    this.title = 'Beginner',
     this.trustLevel = 1,
     this.createdAt,
     this.updatedAt,
@@ -167,17 +175,19 @@ class UserXP {
   /// Get progress percentage as integer (0 to 100)
   int get progressPercent => (progressFraction * 100).round();
 
-  /// Get the XP title enum
+  /// Get the XP title enum (Migration 227 - 11 tiers)
   XPTitle get xpTitle {
-    if (currentLevel <= 10) return XPTitle.novice;
-    if (currentLevel <= 25) return XPTitle.apprentice;
-    if (currentLevel <= 50) return XPTitle.athlete;
-    if (currentLevel <= 75) return XPTitle.elite;
-    if (currentLevel <= 99) return XPTitle.master;
-    if (currentLevel == 100) return XPTitle.legend;
-    if (currentLevel <= 150) return XPTitle.mythicI;
-    if (currentLevel <= 200) return XPTitle.mythicII;
-    return XPTitle.mythicIII;
+    if (currentLevel <= 10) return XPTitle.beginner;
+    if (currentLevel <= 25) return XPTitle.novice;
+    if (currentLevel <= 50) return XPTitle.apprentice;
+    if (currentLevel <= 75) return XPTitle.athlete;
+    if (currentLevel <= 100) return XPTitle.elite;
+    if (currentLevel <= 125) return XPTitle.master;
+    if (currentLevel <= 150) return XPTitle.champion;
+    if (currentLevel <= 175) return XPTitle.legend;
+    if (currentLevel <= 200) return XPTitle.mythic;
+    if (currentLevel <= 225) return XPTitle.immortal;
+    return XPTitle.transcendent;
   }
 
   /// Get formatted total XP string
@@ -190,9 +200,10 @@ class UserXP {
     return totalXp.toString();
   }
 
-  /// Get formatted XP progress string
+  /// Get formatted XP progress string (ensures non-negative display)
   String get formattedProgress {
-    return '$xpInCurrentLevel / $xpToNextLevel XP';
+    final displayXp = xpInCurrentLevel < 0 ? 0 : xpInCurrentLevel;
+    return '$displayXp / $xpToNextLevel XP';
   }
 
   /// Get level display string (includes prestige if applicable)
@@ -206,16 +217,16 @@ class UserXP {
   /// Check if user is at max level (before prestige)
   bool get isMaxLevel => currentLevel >= 250;
 
-  /// Empty constructor for initial state
+  /// Empty constructor for initial state (Migration 227)
   factory UserXP.empty(String userId) => UserXP(
         id: '',
         userId: userId,
         totalXp: 0,
         currentLevel: 1,
-        xpToNextLevel: 50, // Level 1 -> 2 requires only 50 XP (Day 1 achievable!)
+        xpToNextLevel: 25, // Level 1 -> 2 requires 25 XP
         xpInCurrentLevel: 0,
         prestigeLevel: 0,
-        title: 'Novice',
+        title: 'Beginner',
         trustLevel: 1,
       );
 }
@@ -301,8 +312,8 @@ class XPSummary {
   const XPSummary({
     this.totalXp = 0,
     this.currentLevel = 1,
-    this.title = 'Novice',
-    this.xpToNextLevel = 50, // Level 1 -> 2 requires only 50 XP (Day 1 achievable!)
+    this.title = 'Beginner',
+    this.xpToNextLevel = 25, // Level 1 -> 2 requires 25 XP (Migration 227)
     this.xpInCurrentLevel = 0,
     this.progressPercent = 0,
     this.prestigeLevel = 0,
@@ -345,7 +356,7 @@ class XPLeaderboardEntry {
     this.avatarUrl,
     this.totalXp = 0,
     this.currentLevel = 1,
-    this.title = 'Novice',
+    this.title = 'Beginner',
     this.prestigeLevel = 0,
     this.rank = 0,
   });

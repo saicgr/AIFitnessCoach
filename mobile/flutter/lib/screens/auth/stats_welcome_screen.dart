@@ -270,9 +270,9 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
       children: [
         // Main claim - one line, BIG type
         Text(
-          'Workout in <3 seconds',
+          'Your AI Fitness Coach',
           style: TextStyle(
-            fontSize: 44,
+            fontSize: 40,
             fontWeight: FontWeight.w900,
             color: colors.accent,
             height: 1.1,
@@ -1183,8 +1183,8 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
           HapticFeedback.mediumImpact();
           // Save selected language
           ref.read(languageProvider.notifier).setLanguage(_selectedLanguage);
-          // Navigate to pre-auth quiz
-          context.go('/pre-auth-quiz');
+          // Navigate to how it works screen (sets expectations before quiz)
+          context.go('/how-it-works');
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: accentColor,
