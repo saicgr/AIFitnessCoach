@@ -1164,6 +1164,43 @@ async def claim_daily_crate(
     except HTTPException:
         raise
     except Exception as e:
+        # Handle JSON parsing errors from Supabase client - extract data from error message
+        error_str = str(e)
+        print(f"🔍 [XP] Claim daily crate exception: {error_str}")
+        if "JSON could not be generated" in error_str:
+            import json
+            import re
+            try:
+                # Extract the JSON from the bytes string in the details
+                # Pattern matches: b'{"reward": ...}' with nested objects
+                match = re.search(r"b'(\{[^}]*\"reward\"[^}]*\{[^}]*\}[^}]*\})'", error_str)
+                if match:
+                    json_str = match.group(1)
+                    data = json.loads(json_str)
+                    print(f"✅ [XP] Parsed RPC response from error: {data}")
+                    if data.get("success"):
+                        reward = data.get("reward", {})
+                        reward_type = reward.get("type", "xp")
+                        reward_amount = reward.get("amount", 0)
+                        print(f"🎉 [XP] Daily crate reward (from error parse): {reward_amount} {reward_type}")
+                        return {
+                            "success": True,
+                            "crate_type": data.get("crate_type", crate_type),
+                            "reward": {
+                                "type": reward_type,
+                                "amount": reward_amount,
+                                "display_name": f"{reward_amount} {reward_type.replace('_', ' ').title()}{'s' if reward_amount > 1 and reward_type != 'xp' else ''}"
+                                    if reward_type != "xp" else f"+{reward_amount} XP"
+                            },
+                            "message": data.get("message", "Crate opened!")
+                        }
+                    else:
+                        return {
+                            "success": False,
+                            "message": data.get("message", "Failed to claim crate")
+                        }
+            except Exception as parse_error:
+                print(f"❌ [XP] Failed to parse RPC response: {parse_error}")
         print(f"❌ [XP] Error claiming daily crate: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1656,8 +1693,66 @@ async def award_social_xp(
 
 
 # =============================================================================
-# LEVEL PROGRESSION (Extended to 250)
+# LEVEL PROGRESSION (Unified 250-Level System - Migration 227)
 # =============================================================================
+
+# XP required for each level (1-175), levels 176-250 are flat 100,000 XP
+_XP_TABLE = [
+    # Levels 1-10 (Beginner): Quick early wins
+    25, 30, 40, 50, 65, 80, 100, 120, 150, 180,
+    # Levels 11-25 (Novice)
+    200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 500,
+    # Levels 26-50 (Apprentice)
+    550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400, 1450, 1500, 1550, 1600, 1650, 1700, 1800,
+    # Levels 51-75 (Athlete)
+    1900, 2000, 2100, 2200, 2300, 2400, 2500, 2600, 2700, 2800, 2900, 3000, 3100, 3200, 3300, 3400, 3500, 3600, 3700, 3800, 3900, 4000, 4100, 4200, 4500,
+    # Levels 76-100 (Elite)
+    4800, 5000, 5200, 5400, 5600, 5800, 6000, 6200, 6400, 6600, 6800, 7000, 7200, 7400, 7600, 7800, 8000, 8200, 8400, 8600, 8800, 9000, 9200, 9400, 10000,
+    # Levels 101-125 (Master)
+    10500, 11000, 11500, 12000, 12500, 13000, 13500, 14000, 14500, 15000, 15500, 16000, 16500, 17000, 17500, 18000, 18500, 19000, 19500, 20000, 20500, 21000, 21500, 22000, 23000,
+    # Levels 126-150 (Champion)
+    24000, 25000, 26000, 27000, 28000, 29000, 30000, 31000, 32000, 33000, 34000, 35000, 36000, 37000, 38000, 39000, 40000, 41000, 42000, 43000, 44000, 45000, 46000, 47000, 50000,
+    # Levels 151-175 (Legend)
+    52000, 54000, 56000, 58000, 60000, 62000, 64000, 66000, 68000, 70000, 72000, 74000, 76000, 78000, 80000, 82000, 84000, 86000, 88000, 90000, 92000, 94000, 96000, 98000, 100000
+]
+
+
+def _get_xp_for_level(level: int) -> int:
+    """Get XP required to complete the given level (level up to next)."""
+    if level >= 250:
+        return 0  # Max level
+    elif level <= 175:
+        return _XP_TABLE[level - 1]
+    else:
+        # Levels 176-250 are flat 100,000 XP each (prestige tier)
+        return 100000
+
+
+def _get_xp_title(level: int) -> str:
+    """Get XP title based on level (11 tiers)."""
+    if level <= 10:
+        return "Beginner"
+    elif level <= 25:
+        return "Novice"
+    elif level <= 50:
+        return "Apprentice"
+    elif level <= 75:
+        return "Athlete"
+    elif level <= 100:
+        return "Elite"
+    elif level <= 125:
+        return "Master"
+    elif level <= 150:
+        return "Champion"
+    elif level <= 175:
+        return "Legend"
+    elif level <= 200:
+        return "Mythic"
+    elif level <= 225:
+        return "Immortal"
+    else:
+        return "Transcendent"
+
 
 @router.get("/level-info")
 async def get_level_info(
@@ -1666,69 +1761,29 @@ async def get_level_info(
     """
     Get XP requirements and rewards for a specific level.
 
-    Level progression formula:
-    - Levels 1-10: 50 XP per level (Novice)
-    - Levels 11-25: 100 XP per level (Apprentice)
-    - Levels 26-50: 150 XP per level (Athlete)
-    - Levels 51-75: 200 XP per level (Elite)
-    - Levels 76-99: 250 XP per level (Master)
-    - Level 100: 300 XP (Legend)
-    - Levels 101-150: 350 XP per level (Mythic I)
-    - Levels 151-200: 400 XP per level (Mythic II)
-    - Levels 201-250: 500 XP per level (Mythic III)
+    Unified 250-level progressive system (migration 227):
+    - Levels 1-10 (Beginner): 25-180 XP each
+    - Levels 11-25 (Novice): 200-500 XP each
+    - Levels 26-50 (Apprentice): 550-1,800 XP each
+    - Levels 51-75 (Athlete): 1,900-4,500 XP each
+    - Levels 76-100 (Elite): 4,800-10,000 XP each
+    - Levels 101-125 (Master): 10,500-23,000 XP each
+    - Levels 126-150 (Champion): 24,000-50,000 XP each
+    - Levels 151-175 (Legend): 52,000-100,000 XP each
+    - Levels 176-200 (Mythic): 100,000 XP each
+    - Levels 201-225 (Immortal): 100,000 XP each
+    - Levels 226-250 (Transcendent): 100,000 XP each
     """
-    # Calculate XP requirement
-    if level <= 10:
-        xp_needed = 50
-        title = "Novice"
-    elif level <= 25:
-        xp_needed = 100
-        title = "Apprentice"
-    elif level <= 50:
-        xp_needed = 150
-        title = "Athlete"
-    elif level <= 75:
-        xp_needed = 200
-        title = "Elite"
-    elif level <= 99:
-        xp_needed = 250
-        title = "Master"
-    elif level == 100:
-        xp_needed = 300
-        title = "Legend"
-    elif level <= 150:
-        xp_needed = 350
-        title = "Mythic I"
-    elif level <= 200:
-        xp_needed = 400
-        title = "Mythic II"
-    else:
-        xp_needed = 500
-        title = "Mythic III"
+    # Get XP requirement and title using unified formula
+    xp_needed = _get_xp_for_level(level)
+    title = _get_xp_title(level)
 
     # Calculate total XP to reach this level
     total_xp = 0
     for l in range(1, level):
-        if l <= 10:
-            total_xp += 50
-        elif l <= 25:
-            total_xp += 100
-        elif l <= 50:
-            total_xp += 150
-        elif l <= 75:
-            total_xp += 200
-        elif l <= 99:
-            total_xp += 250
-        elif l == 100:
-            total_xp += 300
-        elif l <= 150:
-            total_xp += 350
-        elif l <= 200:
-            total_xp += 400
-        else:
-            total_xp += 500
+        total_xp += _get_xp_for_level(l)
 
-    # Level milestone rewards
+    # Level milestone rewards (updated for new tier system)
     milestone_rewards = {
         5: "Streak Shield x1",
         10: "2x XP Token",
@@ -1740,13 +1795,13 @@ async def get_level_info(
         50: "2x XP Token x3 + Premium Crate",
         60: "Fitness Crate x5",
         75: "Premium Crate x2",
-        100: "Legend Badge + Premium Crate x3",
-        125: "Mythic Crate",
-        150: "Mythic Badge I + Mythic Crate x2",
-        175: "Mythic Crate x3",
-        200: "Mythic Badge II + Mythic Crate x5",
-        225: "Mythic Crate x7",
-        250: "Mythic Badge III + Legendary Crate",
+        100: "Elite Badge + Premium Crate x3",
+        125: "Master Badge + Master Crate",
+        150: "Champion Badge + Champion Crate x2",
+        175: "Legend Badge + Legend Crate x3",
+        200: "Mythic Badge + Mythic Crate x5",
+        225: "Immortal Badge + Immortal Crate x7",
+        250: "Transcendent Badge + Legendary Crate x10",
     }
 
     return {
