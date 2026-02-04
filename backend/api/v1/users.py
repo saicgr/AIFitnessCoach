@@ -40,6 +40,19 @@ from services.admin_service import get_admin_service, SUPPORT_EMAIL
 from core.config import get_settings
 
 
+def get_default_equipment_for_environment(environment: str) -> list:
+    """
+    Returns default equipment for a workout environment.
+    The RAG filter expands 'full_gym' and 'home_gym' to full equipment lists.
+    """
+    if environment == 'commercial_gym':
+        return ['full_gym']
+    elif environment == 'home_gym':
+        return ['home_gym']
+    else:
+        return ['bodyweight']
+
+
 class GoogleAuthRequest(BaseModel):
     """Request body for Google OAuth authentication."""
     access_token: str
@@ -2343,6 +2356,11 @@ async def create_gym_profiles_from_onboarding(
     # Default values
     gym_name = gym_name or "My Gym"
     workout_environment = workout_environment or "commercial_gym"
+
+    # Auto-populate equipment based on environment if not provided
+    if not equipment:
+        equipment = get_default_equipment_for_environment(workout_environment)
+        logger.info(f"🏋️ [GymProfile] Auto-populated equipment for {workout_environment}: {equipment}")
 
     logger.info(f"🏋️ [GymProfile] Creating gym profile(s) for user {user_id}")
     logger.info(f"🏋️ [GymProfile] Environment: {workout_environment}, Name: {gym_name}")

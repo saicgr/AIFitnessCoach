@@ -100,6 +100,7 @@ import '../screens/calibration/calibration_intro_screen.dart';
 import '../screens/calibration/calibration_workout_screen.dart';
 import '../screens/trophies/trophy_room_screen.dart';
 import '../screens/rewards/rewards_screen.dart';
+import '../screens/inventory/inventory_screen.dart';
 import '../screens/calibration/calibration_results_screen.dart';
 import '../data/providers/guest_mode_provider.dart';
 import '../screens/injuries/injuries_list_screen.dart';
@@ -1128,6 +1129,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/rewards',
         builder: (context, state) => const RewardsScreen(),
+      ),
+
+      // Inventory - Consumables and items
+      GoRoute(
+        path: '/inventory',
+        builder: (context, state) => const InventoryScreen(),
       ),
 
       // Feature Voting (Robinhood-style)

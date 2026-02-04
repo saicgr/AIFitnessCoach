@@ -1800,6 +1800,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         if (_selectedTrainingExperience != null) {
           await ref.read(preAuthQuizProvider.notifier).setTrainingExperience(_selectedTrainingExperience!);
         }
+        if (_selectedActivityLevel != null) {
+          await ref.read(preAuthQuizProvider.notifier).setActivityLevel(_selectedActivityLevel!);
+        }
         break;
 
       case 2: // Schedule (days/week + duration)
@@ -2259,10 +2262,10 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           key: const ValueKey('fitness_level'),
           selectedLevel: _selectedLevel,
           selectedExperience: _selectedTrainingExperience,
-          selectedActivityLevel: null, // Remove activity level from Phase 1
+          selectedActivityLevel: _selectedActivityLevel,
           onLevelChanged: (level) => setState(() => _selectedLevel = level),
           onExperienceChanged: (exp) => setState(() => _selectedTrainingExperience = exp),
-          onActivityLevelChanged: null,
+          onActivityLevelChanged: (level) => setState(() => _selectedActivityLevel = level),
         );
 
       case 2: // Schedule (days/week + duration combined)

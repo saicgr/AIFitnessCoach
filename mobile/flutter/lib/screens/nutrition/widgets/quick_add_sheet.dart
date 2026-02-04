@@ -8,6 +8,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/models/recipe.dart';
 import '../../../data/repositories/nutrition_repository.dart';
+import '../../../data/providers/xp_provider.dart';
 
 /// Provider for caching quick add suggestions
 /// This prefetches data when the nutrition screen loads for instant access
@@ -447,6 +448,8 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       );
 
       if (mounted) {
+        // Award XP for daily goal
+        ref.read(xpProvider.notifier).markMealLogged();
         HapticFeedback.mediumImpact();
         Navigator.of(context).pop();
         widget.onMealLogged();
@@ -509,6 +512,8 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       );
 
       if (mounted) {
+        // Award XP for daily goal
+        ref.read(xpProvider.notifier).markMealLogged();
         HapticFeedback.mediumImpact();
         Navigator.of(context).pop();
         widget.onMealLogged();
@@ -565,6 +570,8 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       );
 
       if (mounted) {
+        // Award XP for daily goal
+        ref.read(xpProvider.notifier).markMealLogged();
         HapticFeedback.mediumImpact();
         Navigator.of(context).pop();
         widget.onMealLogged();

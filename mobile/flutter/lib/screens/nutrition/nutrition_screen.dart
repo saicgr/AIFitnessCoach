@@ -13,6 +13,7 @@ import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/repositories/nutrition_preferences_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/providers/xp_provider.dart';
 import '../../widgets/main_shell.dart';
 import '../../widgets/pill_swipe_navigation.dart';
 import '../../widgets/nutrition/health_metrics_card.dart';
@@ -821,6 +822,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         mealType: mealType.value,
       );
       if (mounted) {
+        // Award XP for daily goal
+        ref.read(xpProvider.notifier).markMealLogged();
         _loadData();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1571,6 +1574,12 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
   /// Recalculate nutrition targets based on user profile
   Future<void> _recalculateTargets() async {
     final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+
+    // Guard against empty userId
+    if (widget.userId.isEmpty) {
+      debugPrint('⚠️ [NutritionScreen] Cannot recalculate targets - userId is empty');
+      return;
+    }
 
     try {
       await ref.read(nutritionPreferencesProvider.notifier).recalculateTargets(widget.userId);

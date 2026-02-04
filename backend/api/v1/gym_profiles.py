@@ -43,6 +43,19 @@ logger = get_logger(__name__)
 # =============================================================================
 
 
+def get_default_equipment_for_environment(environment: str) -> list:
+    """
+    Returns default equipment for a workout environment.
+    The RAG filter expands 'full_gym' and 'home_gym' to full equipment lists.
+    """
+    if environment == 'commercial_gym':
+        return ['full_gym']
+    elif environment == 'home_gym':
+        return ['home_gym']
+    else:
+        return ['bodyweight']
+
+
 def row_to_gym_profile(row: dict) -> GymProfile:
     """Convert database row to GymProfile model."""
     return GymProfile(
@@ -117,19 +130,31 @@ async def create_default_profile_if_needed(user_id: str) -> Optional[GymProfile]
         user = user_result.data
         preferences = user.get("preferences") or {}
 
-        # If user has workout_environment in preferences, they're a new user
-        # Their profile will be created during onboarding completion
-        if preferences.get("workout_environment"):
-            logger.info(f"User {user_id} is new user, profile will be created in onboarding")
-            return None
-
         # If onboarding not complete, skip (profile will be created later)
         if not user.get("onboarding_completed"):
             logger.info(f"User {user_id} has not completed onboarding yet, skipping default profile")
             return None
 
-        # Legacy user - create default profile
-        logger.info(f"Creating default profile for legacy user {user_id}")
+        # User completed onboarding but no profile exists - create one
+        # This handles both legacy users and users whose profile creation failed during onboarding
+        logger.info(f"Creating default profile for user {user_id} (no existing profile)")
+
+        # Get equipment from user record
+        import json
+        user_equipment = user.get("equipment") or []
+        if isinstance(user_equipment, str):
+            try:
+                user_equipment = json.loads(user_equipment)
+            except:
+                user_equipment = []
+
+        # Get workout environment
+        workout_environment = preferences.get("workout_environment", "commercial_gym")
+
+        # Auto-populate equipment based on environment if empty
+        if not user_equipment:
+            user_equipment = get_default_equipment_for_environment(workout_environment)
+            logger.info(f"🏋️ [GymProfile] Auto-populated equipment for {workout_environment}: {user_equipment}")
 
         # Create default profile from user's settings
         now = datetime.utcnow().isoformat()
@@ -138,9 +163,9 @@ async def create_default_profile_if_needed(user_id: str) -> Optional[GymProfile]
             "name": "My Gym",
             "icon": "fitness_center",
             "color": "#00BCD4",
-            "equipment": user.get("equipment") or [],
+            "equipment": user_equipment,
             "equipment_details": user.get("equipment_details") or [],
-            "workout_environment": preferences.get("workout_environment", "commercial_gym"),
+            "workout_environment": workout_environment,
             "training_split": preferences.get("training_split"),
             "workout_days": preferences.get("workout_days") or [],
             "duration_minutes": preferences.get("workout_duration", 45),
@@ -287,6 +312,41 @@ async def get_active_profile(
 
         if result.data:
             profile = row_to_gym_profile(result.data)
+
+            # Auto-heal: Fix empty equipment based on environment
+            if not profile.equipment or len(profile.equipment) == 0:
+                default_equipment = get_default_equipment_for_environment(
+                    profile.workout_environment or 'commercial_gym'
+                )
+                logger.info(f"🔧 [GymProfile] Auto-healing empty equipment for profile {profile.id}: {default_equipment}")
+
+                # Update the profile in database
+                supabase.client.table("gym_profiles") \
+                    .update({"equipment": default_equipment, "updated_at": datetime.utcnow().isoformat()}) \
+                    .eq("id", profile.id) \
+                    .execute()
+
+                # Update the profile object to return
+                profile = GymProfile(
+                    id=profile.id,
+                    user_id=profile.user_id,
+                    name=profile.name,
+                    icon=profile.icon,
+                    color=profile.color,
+                    equipment=default_equipment,
+                    equipment_details=profile.equipment_details,
+                    workout_environment=profile.workout_environment,
+                    training_split=profile.training_split,
+                    workout_days=profile.workout_days,
+                    duration_minutes=profile.duration_minutes,
+                    goals=profile.goals,
+                    focus_areas=profile.focus_areas,
+                    display_order=profile.display_order,
+                    is_active=profile.is_active,
+                    created_at=profile.created_at,
+                    updated_at=datetime.utcnow(),
+                )
+
             logger.info(f"✅ [GymProfile] Active profile: {profile.name}")
             return profile
 

@@ -14,6 +14,7 @@ import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/providers/xp_provider.dart';
 import '../../widgets/guest_upgrade_sheet.dart';
 import '../../widgets/main_shell.dart';
 import '../../data/services/food_search_service.dart' as search;
@@ -292,6 +293,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
 
             debugPrint('✅ [LogMeal] Meal saved successfully');
             if (mounted) {
+              // Award XP for daily goal
+              ref.read(xpProvider.notifier).markMealLogged();
               Navigator.pop(context);
               _showSuccessSnackbar(adjustedResponse.totalCalories);
               ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
@@ -451,6 +454,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
 
             debugPrint('✅ [LogMeal] Text meal saved successfully');
             if (mounted) {
+              // Award XP for daily goal
+              ref.read(xpProvider.notifier).markMealLogged();
               Navigator.pop(context);
               _showSuccessSnackbar(adjustedResponse.totalCalories);
               ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
@@ -1926,6 +1931,8 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
 
       if (mounted) {
         setState(() => _isSaving = false);
+        // Award XP for daily goal
+        ref.read(xpProvider.notifier).markMealLogged();
         // Call parent's onLog for any additional handling (fasting, navigation, etc.)
         widget.onLog(_analyzedResponse!);
       }
@@ -3137,6 +3144,8 @@ class _QuickTabState extends ConsumerState<_QuickTab> {
         description: result.name,
         mealType: widget.mealType.value,
       );
+      // Award XP for daily goal
+      ref.read(xpProvider.notifier).markMealLogged();
       widget.onLogged();
     } catch (e) {
       if (mounted) {
@@ -3352,6 +3361,8 @@ class _QuickTabState extends ConsumerState<_QuickTab> {
                     description: food.name,
                     mealType: widget.mealType.value,
                   );
+                  // Award XP for daily goal
+                  ref.read(xpProvider.notifier).markMealLogged();
                   widget.onLogged();
                 } catch (e) {
                   if (context.mounted) {
@@ -3388,6 +3399,8 @@ class _QuickTabState extends ConsumerState<_QuickTab> {
                     description: item['name'] as String,
                     mealType: widget.mealType.value,
                   );
+                  // Award XP for daily goal
+                  ref.read(xpProvider.notifier).markMealLogged();
                   widget.onLogged();
                 } catch (e) {
                   if (context.mounted) {
@@ -3475,6 +3488,8 @@ class _QuickTabState extends ConsumerState<_QuickTab> {
                     description: item['name'] as String,
                     mealType: widget.mealType.value,
                   );
+                  // Award XP for daily goal
+                  ref.read(xpProvider.notifier).markMealLogged();
                   widget.onLogged();
                 } catch (e) {
                   if (context.mounted) {
@@ -4750,14 +4765,13 @@ class _AISuggestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
-    const encourageColor = AppColors.textMuted;  // Green
-    const warningColor = AppColors.textPrimary;    // Red
-    const swapColor = AppColors.textSecondary;       // Blue
+    // Use proper accent colors for feedback types
+    final encourageColor = isDark ? AppColors.green : AppColorsLight.green;
+    final warningColor = isDark ? AppColors.error : AppColorsLight.error;
+    final swapColor = isDark ? AppColors.purple : AppColorsLight.purple;
 
     return Container(
       padding: const EdgeInsets.all(16),

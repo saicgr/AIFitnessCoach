@@ -233,11 +233,32 @@ class XPGoalsSheet extends ConsumerWidget {
                       ),
                       const SizedBox(height: 8),
 
-                      // Weekly Progress Card
-                      _buildProgressCard(
+                      // Extended Weekly Progress Card (10 checkpoints)
+                      _buildExtendedWeeklyProgressCard(
                         context,
-                        weeklyProgress,
-                        1375,
+                        ref,
+                        textColorStrong,
+                        textMutedStrong,
+                        cardBg,
+                        borderColor,
+                        accentColor,
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Section Header: Monthly Achievements
+                      _buildSectionHeader(
+                        'Monthly Achievements',
+                        Icons.calendar_month,
+                        textColorStrong,
+                        textMutedStrong,
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Monthly Achievements Card (12 achievements)
+                      _buildMonthlyAchievementsCard(
+                        context,
+                        ref,
                         textColorStrong,
                         textMutedStrong,
                         cardBg,
@@ -250,6 +271,41 @@ class XPGoalsSheet extends ConsumerWidget {
                       // Trophy Room Button
                       _buildTrophyRoomButton(
                         context,
+                        textColorStrong,
+                        textMutedStrong,
+                        cardBg,
+                        borderColor,
+                        accentColor,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Inventory Button
+                      _buildInventoryButton(
+                        context,
+                        ref,
+                        textColorStrong,
+                        textMutedStrong,
+                        cardBg,
+                        borderColor,
+                        accentColor,
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Section Header: First-Time Bonuses
+                      _buildSectionHeader(
+                        'First-Time Bonuses',
+                        Icons.star_outline,
+                        textColorStrong,
+                        textMutedStrong,
+                      ),
+                      const SizedBox(height: 8),
+
+                      // First-Time Bonuses Card
+                      _buildFirstTimeBonusesCard(
+                        context,
+                        ref,
                         textColorStrong,
                         textMutedStrong,
                         cardBg,
@@ -971,6 +1027,444 @@ class XPGoalsSheet extends ConsumerWidget {
     );
   }
 
+  Widget _buildExtendedWeeklyProgressCard(
+    BuildContext context,
+    WidgetRef ref,
+    Color textColor,
+    Color textMuted,
+    Color cardBg,
+    Color borderColor,
+    Color accentColor,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final extendedProgress = ref.watch(extendedWeeklyProgressProvider);
+
+    // Stronger colors for light mode
+    final cardBackground = isDark ? cardBg : Colors.grey.shade100;
+    final strongBorder = isDark ? borderColor : Colors.grey.shade300;
+    final dividerColor = isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade300;
+    final progressBgColor = isDark ? textMuted.withValues(alpha: 0.2) : Colors.grey.shade300;
+
+    return extendedProgress.when(
+      loading: () => Container(
+        height: 100,
+        decoration: BoxDecoration(
+          color: cardBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: strongBorder, width: 1.5),
+        ),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: cardBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: strongBorder, width: 1.5),
+        ),
+        child: Text('Error loading weekly progress', style: TextStyle(color: textMuted)),
+      ),
+      data: (progress) {
+        final earnedXP = progress.totalXpEarned;
+        final maxXP = progress.totalXpPossible;
+        final percentage = maxXP > 0 ? (earnedXP / maxXP).clamp(0.0, 1.0) : 0.0;
+        final checkpoints = progress.checkpoints;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: cardBackground,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: strongBorder, width: 1.5),
+            boxShadow: isDark ? null : [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // XP Progress header
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '$earnedXP XP',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? textColor : Colors.black87,
+                          ),
+                        ),
+                        Text(
+                          '/ $maxXP XP',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark ? textMuted : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: progressBgColor,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: percentage,
+                          minHeight: 8,
+                          backgroundColor: Colors.transparent,
+                          valueColor: AlwaysStoppedAnimation(accentColor),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${progress.completedCount}/${checkpoints.length} checkpoints complete',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark ? textMuted : Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Checkpoints list
+              ...checkpoints.map((cp) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(color: dividerColor),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // Icon
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: cp.completed
+                              ? AppColors.green.withValues(alpha: isDark ? 0.15 : 0.12)
+                              : (isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade200),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(
+                          child: cp.completed
+                              ? Icon(Icons.check, size: 14, color: AppColors.green)
+                              : Text(
+                                  cp.icon.isNotEmpty ? cp.icon : '📋',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      // Name and progress
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              cp.name,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: cp.completed
+                                    ? (isDark ? textMuted : Colors.black45)
+                                    : (isDark ? textColor : Colors.black87),
+                                decoration: cp.completed ? TextDecoration.lineThrough : null,
+                              ),
+                            ),
+                            if (!cp.completed)
+                              Text(
+                                '${cp.current}/${cp.target}',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: isDark ? textMuted : Colors.black54,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      // XP reward
+                      Text(
+                        '+${cp.xpReward} XP',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: cp.completed ? AppColors.green : accentColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMonthlyAchievementsCard(
+    BuildContext context,
+    WidgetRef ref,
+    Color textColor,
+    Color textMuted,
+    Color cardBg,
+    Color borderColor,
+    Color accentColor,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final monthlyProgress = ref.watch(monthlyAchievementsProgressProvider);
+
+    // Stronger colors for light mode
+    final cardBackground = isDark ? cardBg : Colors.grey.shade100;
+    final strongBorder = isDark ? borderColor : Colors.grey.shade300;
+    final dividerColor = isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade300;
+    final progressBgColor = isDark ? textMuted.withValues(alpha: 0.2) : Colors.grey.shade300;
+
+    return monthlyProgress.when(
+      loading: () => Container(
+        height: 100,
+        decoration: BoxDecoration(
+          color: cardBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: strongBorder, width: 1.5),
+        ),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: cardBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: strongBorder, width: 1.5),
+        ),
+        child: Text('Error loading monthly achievements', style: TextStyle(color: textMuted)),
+      ),
+      data: (progress) {
+        final earnedXP = progress.totalXpEarned;
+        final maxXP = progress.totalXpPossible;
+        final percentage = maxXP > 0 ? (earnedXP / maxXP).clamp(0.0, 1.0) : 0.0;
+        final achievements = progress.achievements;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: cardBackground,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: strongBorder, width: 1.5),
+            boxShadow: isDark ? null : [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // Month header with XP progress
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.purple.withValues(alpha: isDark ? 0.08 : 0.1),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              progress.monthName.isNotEmpty ? progress.monthName : 'This Month',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? textColor : Colors.black87,
+                              ),
+                            ),
+                            Text(
+                              '${progress.daysRemaining} days remaining',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark ? textMuted : Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '$earnedXP / $maxXP XP',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? textColor : Colors.black87,
+                              ),
+                            ),
+                            Text(
+                              '${progress.completedCount}/${achievements.length} complete',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark ? textMuted : Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: progressBgColor,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: percentage,
+                          minHeight: 8,
+                          backgroundColor: Colors.transparent,
+                          valueColor: const AlwaysStoppedAnimation(Colors.purple),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Achievements list
+              ...achievements.map((achievement) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(color: dividerColor),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // Icon
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: achievement.completed
+                              ? Colors.purple.withValues(alpha: isDark ? 0.15 : 0.12)
+                              : (isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade200),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(
+                          child: achievement.completed
+                              ? const Icon(Icons.check, size: 14, color: Colors.purple)
+                              : Text(
+                                  achievement.icon.isNotEmpty ? achievement.icon : '🏆',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      // Name and progress
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              achievement.name,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: achievement.completed
+                                    ? (isDark ? textMuted : Colors.black45)
+                                    : (isDark ? textColor : Colors.black87),
+                                decoration: achievement.completed ? TextDecoration.lineThrough : null,
+                              ),
+                            ),
+                            if (!achievement.completed)
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      height: 3,
+                                      margin: const EdgeInsets.only(top: 4),
+                                      decoration: BoxDecoration(
+                                        color: progressBgColor,
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                      child: FractionallySizedBox(
+                                        widthFactor: achievement.progress,
+                                        alignment: Alignment.centerLeft,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.purple,
+                                            borderRadius: BorderRadius.circular(2),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '${achievement.currentInt}/${achievement.target}',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      color: isDark ? textMuted : Colors.black54,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // XP reward
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: achievement.completed
+                              ? Colors.purple.withValues(alpha: isDark ? 0.15 : 0.12)
+                              : Colors.purple.withValues(alpha: isDark ? 0.1 : 0.08),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '+${achievement.xpReward} XP',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: achievement.completed ? Colors.purple.shade700 : Colors.purple.shade600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildTrophyRoomButton(
     BuildContext context,
     Color textColor,
@@ -1035,6 +1529,298 @@ class XPGoalsSheet extends ConsumerWidget {
       ),
     );
   }
+
+  Widget _buildInventoryButton(
+    BuildContext context,
+    WidgetRef ref,
+    Color textColor,
+    Color textMuted,
+    Color cardBg,
+    Color borderColor,
+    Color accentColor,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final consumables = ref.watch(consumablesProvider);
+    final totalItems = (consumables?.streakShield ?? 0) +
+        (consumables?.xpToken2x ?? 0) +
+        (consumables?.fitnessCrate ?? 0) +
+        (consumables?.premiumCrate ?? 0);
+
+    // Stronger colors for light mode
+    final cardBackground = isDark ? cardBg : Colors.grey.shade100;
+    final purpleAccent = const Color(0xFF9C27B0);
+    final strongBorder = isDark
+        ? purpleAccent.withValues(alpha: 0.3)
+        : purpleAccent.withValues(alpha: 0.5);
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        Navigator.pop(context);
+        context.push('/inventory');
+      },
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: cardBackground,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: strongBorder, width: 1.5),
+          boxShadow: isDark ? null : [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.inventory_2,
+              color: purpleAccent,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'View Inventory',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isDark ? textColor : Colors.black87,
+              ),
+            ),
+            if (totalItems > 0) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: purpleAccent,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$totalItems',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(width: 6),
+            Icon(
+              Icons.chevron_right,
+              color: purpleAccent,
+              size: 18,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFirstTimeBonusesCard(
+    BuildContext context,
+    WidgetRef ref,
+    Color textColor,
+    Color textMuted,
+    Color cardBg,
+    Color borderColor,
+    Color accentColor,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final awardedBonuses = ref.watch(awardedBonusesProvider);
+
+    // Stronger colors for light mode
+    final cardBackground = isDark ? cardBg : Colors.grey.shade100;
+    final strongBorder = isDark ? borderColor : Colors.grey.shade300;
+    final dividerColor = isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade300;
+
+    // First-time bonuses list
+    final bonuses = [
+      _FirstTimeBonus(
+        type: 'first_workout',
+        title: 'Complete First Workout',
+        xp: 150,
+        icon: Icons.fitness_center,
+        isAwarded: awardedBonuses.contains('first_workout'),
+      ),
+      _FirstTimeBonus(
+        type: 'first_meal_log',
+        title: 'Log First Meal',
+        xp: 50,
+        icon: Icons.restaurant,
+        isAwarded: awardedBonuses.contains('first_breakfast') ||
+            awardedBonuses.contains('first_lunch') ||
+            awardedBonuses.contains('first_dinner') ||
+            awardedBonuses.contains('first_snack'),
+      ),
+      _FirstTimeBonus(
+        type: 'first_weight_log',
+        title: 'Log First Weight',
+        xp: 50,
+        icon: Icons.monitor_weight_outlined,
+        isAwarded: awardedBonuses.contains('first_weight_log'),
+      ),
+      _FirstTimeBonus(
+        type: 'first_protein_goal',
+        title: 'Hit First Protein Goal',
+        xp: 100,
+        icon: Icons.egg_alt,
+        isAwarded: awardedBonuses.contains('first_protein_goal'),
+      ),
+      _FirstTimeBonus(
+        type: 'first_chat',
+        title: 'Chat with AI Coach',
+        xp: 50,
+        icon: Icons.chat_bubble_outline,
+        isAwarded: awardedBonuses.contains('first_chat'),
+      ),
+      _FirstTimeBonus(
+        type: 'first_pr',
+        title: 'Set First Personal Record',
+        xp: 100,
+        icon: Icons.emoji_events,
+        isAwarded: awardedBonuses.contains('first_pr'),
+      ),
+    ];
+
+    final earnedCount = bonuses.where((b) => b.isAwarded).length;
+    final totalXPEarned = bonuses.where((b) => b.isAwarded).fold(0, (sum, b) => sum + b.xp);
+    final totalXPAvailable = bonuses.fold(0, (sum, b) => sum + b.xp);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: strongBorder, width: 1.5),
+        boxShadow: isDark ? null : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Summary row
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.amber.withValues(alpha: isDark ? 0.08 : 0.1),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatColumn(
+                  '$earnedCount/${bonuses.length}',
+                  'Bonuses',
+                  isDark ? textColor : Colors.black87,
+                  isDark ? textMuted : Colors.black54,
+                ),
+                Container(
+                  width: 1,
+                  height: 28,
+                  color: isDark ? textMuted.withValues(alpha: 0.2) : Colors.grey.shade400,
+                ),
+                _buildStatColumn(
+                  '+$totalXPEarned',
+                  'of $totalXPAvailable XP',
+                  isDark ? textColor : Colors.black87,
+                  isDark ? textMuted : Colors.black54,
+                ),
+              ],
+            ),
+          ),
+
+          // Bonuses list
+          ...bonuses.map((bonus) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(color: dividerColor),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: bonus.isAwarded
+                            ? Colors.amber.withValues(alpha: isDark ? 0.15 : 0.12)
+                            : (isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade200),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        bonus.isAwarded ? Icons.check : bonus.icon,
+                        size: 15,
+                        color: bonus.isAwarded ? Colors.amber : (isDark ? textMuted : Colors.grey.shade600),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        bonus.title,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: bonus.isAwarded ? textMuted : textColor,
+                          decoration: bonus.isAwarded ? TextDecoration.lineThrough : null,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: bonus.isAwarded
+                            ? Colors.amber.withValues(alpha: isDark ? 0.15 : 0.12)
+                            : Colors.amber.withValues(alpha: isDark ? 0.1 : 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (!bonus.isAwarded)
+                            const Icon(Icons.star, size: 11, color: Colors.amber),
+                          if (!bonus.isAwarded) const SizedBox(width: 3),
+                          Text(
+                            '+${bonus.xp} XP',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: bonus.isAwarded ? Colors.amber.shade700 : Colors.amber.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+}
+
+class _FirstTimeBonus {
+  final String type;
+  final String title;
+  final int xp;
+  final IconData icon;
+  final bool isAwarded;
+
+  _FirstTimeBonus({
+    required this.type,
+    required this.title,
+    required this.xp,
+    required this.icon,
+    required this.isAwarded,
+  });
 }
 
 class _DailyGoal {

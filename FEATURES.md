@@ -3570,7 +3570,7 @@ Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10
 - `conversation_participants` - Links users to conversations
 - `direct_messages` - Stores individual messages
 
-### 13. Achievements & Gamification (32 Features)
+### 13. Achievements & Gamification (38 Features)
 
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus | Navigation |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|-------|
@@ -3596,16 +3596,22 @@ Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10
 | 20 | **Streak Milestones** | Bonus XP at 7, 30, 100, 365 days | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
 | 21 | **Double XP Events** | Admin-enabled 2x XP multiplier | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Admin | Home → Double XP Banner |
 | 22 | **Double XP Banner** | Shows active Double XP with countdown | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Home |
-| 23 | **Weekly Checkpoints** | 8 weekly goals for XP (up to 1,375 XP/week) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Rewards |
-| 24 | **Monthly Checkpoints** | 8 monthly goals for XP (up to 4,350 XP/month) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Rewards |
+| 23 | **Weekly Checkpoints** | 10 weekly goals for XP (up to 1,575 XP/week) | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | XP Goals Sheet |
+| 24 | **Monthly Achievements** | 12 monthly goals for XP (up to 5,250 XP/month) | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | XP Goals Sheet |
 | 25 | **XP Transactions** | History of all XP earned | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Trophy Room |
 | 26 | **XP Leaderboard** | Compare XP with other users | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Trophy Room |
 | 27 | **Former Champion Badges** | Badge for users who held world records | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Profile |
 | 28 | **Rewards System** | Claim rewards at milestones | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Rewards |
 | 29 | **XP Progress Card** | Home tile showing XP progress | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Home |
-| 30 | **Level Titles** | Novice → Master progression | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
-| 31 | **Prestige Levels** | Post-100 prestige system | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
+| 30 | **Level Titles** | Novice → Mythic III progression (1-250) | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | — |
+| 31 | **Prestige Levels** | Mythic I/II/III for 100+ levels | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | — |
 | 32 | **XP Event Notifications** | Celebrate daily login rewards | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Home |
+| 33 | **Daily Social XP** | 4 social actions for XP (up to 270 XP/day) | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | XP Goals Sheet |
+| 34 | **First-Time Bonuses** | 12 one-time XP bonuses (1,525 XP total) | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | XP Goals Sheet |
+| 35 | **Consumables System** | XP tokens, streak shields, crates | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Inventory |
+| 36 | **Daily Crates** | 3 daily crates (login, streak, activity) | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | XP Goals Sheet |
+| 37 | **Level Rewards** | Badges, crates, physical items at milestones | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Level Up |
+| 38 | **Dynamic Workout Targets** | Weekly/monthly targets based on user's days/week | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev | Backend |
 
 #### XP Events System Details
 
@@ -3614,30 +3620,97 @@ Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10
 - Daily check-in: 25 × current streak day (capped at 175 XP/day with 7-day streak)
 - Streak milestones: +100 XP at 7 days, +500 XP at 30 days, +2,000 XP at 100 days, +10,000 XP at 365 days
 
-**Weekly Checkpoints (up to 1,375 XP/week):**
+**Weekly Checkpoints (10 types, up to 1,575 XP/week):**
 | Checkpoint | Requirement | XP |
 |------------|-------------|-----|
-| 3 Workouts | Complete 3 workouts | 100 |
-| 5 Workouts | Complete 5 workouts | 150 |
-| Protein Goal | Hit protein 5 days | 75 |
-| Calorie Goal | Hit calories 5 days | 75 |
-| Hydration | Hit water goal 5 days | 50 |
-| Weight Log | Log weight 3+ times | 50 |
-| Habits | Complete habit 5 days | 75 |
-| Perfect Week | Complete all checkpoints | 800 |
+| Workouts | Complete scheduled workouts (dynamic target) | 200 |
+| Perfect Week | Complete ALL weekly checkpoints | 500 |
+| Protein Goal | Hit protein goal 5+ days | 150 |
+| Calorie Goal | Hit calorie goal 5+ days | 150 |
+| Hydration | Hit water goal 5+ days | 100 |
+| Weight Log | Log weight 3+ times | 75 |
+| Habits | 80%+ habit completion | 100 |
+| Workout Streak | Maintain 7+ day streak | 100 |
+| Social | Engage with 5+ posts | 150 |
+| Measurements | Log body measurements 2+ times | 50 |
 
-**Monthly Checkpoints (up to 4,350 XP/month):**
-| Checkpoint | Requirement | XP |
-|------------|-------------|-----|
-| Dedication | 15+ workouts | 500 |
-| Goal Met | Hit monthly goal | 750 |
-| Nutrition Streak | 20+ days tracked | 400 |
-| Consistency | No 3+ day gaps | 350 |
-| Hydration | 25+ days tracked | 200 |
-| Weight Tracking | 10+ logs | 150 |
-| Habit Master | Complete habit 25 days | 250 |
-| Monthly PRs | Set 3+ PRs | 500 |
-| Perfect Month | Complete all checkpoints | 1,250 |
+**Monthly Achievements (12 types, up to 5,250 XP/month):**
+| Achievement | Requirement | XP |
+|-------------|-------------|-----|
+| Monthly Dedication | 20+ active days | 500 |
+| Monthly Goal | Hit primary fitness goal | 1,000 |
+| Monthly Nutrition | Hit macros 20+ days | 500 |
+| Monthly Consistency | No missed scheduled workouts | 750 |
+| Monthly Hydration | Hit water goal 25+ days | 300 |
+| Monthly Weight | On track with weight goal | 400 |
+| Monthly Habits | 80%+ habit completion | 400 |
+| Monthly PRs | Set 3+ personal records | 500 |
+| Monthly Social Star | Share 10+ posts | 300 |
+| Monthly Supporter | React/comment on 50+ posts | 200 |
+| Monthly Networker | Add 10+ friends | 250 |
+| Monthly Measurements | Log measurements 8+ times | 150 |
+
+**Daily Social XP (4 actions, up to 270 XP/day):**
+| Action | XP per Action | Daily Max | Max XP |
+|--------|---------------|-----------|--------|
+| Share Post | 15 XP | 3/day | 45 XP |
+| React to Post | 5 XP | 10/day | 50 XP |
+| Comment | 10 XP | 5/day | 50 XP |
+| Add Friend | 25 XP | 5/day | 125 XP |
+
+**First-Time Bonuses (12 types, 1,525 XP total):**
+| Bonus | XP |
+|-------|-----|
+| First Chat | 50 |
+| Complete Profile | 100 |
+| First Workout | 200 |
+| First Meal Log | 75 |
+| First Weight Log | 50 |
+| First Hydration Log | 25 |
+| First Body Measurements | 50 |
+| First Photo | 100 |
+| First Week Complete | 250 |
+| First Month Complete | 500 |
+| First PR | 100 |
+| First Share | 25 |
+
+**Level Progression (1-250):**
+| Level Range | Title | XP per Level |
+|-------------|-------|--------------|
+| 1-10 | Novice | 50 XP |
+| 11-25 | Apprentice | 75 XP |
+| 26-50 | Athlete | 100 XP |
+| 51-75 | Elite | 125 XP |
+| 76-100 | Master | 150 XP |
+| 101-150 | Mythic I | 200 XP |
+| 151-200 | Mythic II | 200 XP |
+| 201-250 | Mythic III | 200 XP |
+
+**Level Milestone Rewards:**
+- Level 5: Fitness Crate
+- Level 10: Novice Complete Badge + 2x Fitness Crates
+- Level 25: Apprentice Complete Badge + Premium Crate
+- Level 50: Athlete Complete Badge + 2x Premium Crates
+- Level 75: Elite Complete Badge + 3x Premium Crates
+- Level 100: Legend Badge + Mythic Crate + FitWiz T-Shirt
+- Level 150: Mythic Champion I Badge + 5x Mythic Crates + Custom Medal
+- Level 200: Mythic Champion II Badge + Legendary Crate + Premium Hoodie
+- Level 250: Eternal Legend Badge + 10x Legendary Crates + Lifetime Premium + Ultimate Merch Kit
+
+**Consumables System:**
+| Item | Effect |
+|------|--------|
+| 2x XP Token | 24-hour double XP boost |
+| Streak Shield | Protects login streak for 1 day |
+| Fitness Crate | Common rewards (XP, tokens) |
+| Premium Crate | Better rewards |
+| Mythic Crate | Rare rewards |
+| Legendary Crate | Best rewards |
+
+**Daily Crates:**
+- Login Crate: Available after daily login
+- Streak Crate: Available at 7+ day streak
+- Activity Crate: Available after completing all daily goals
 
 **Double XP Events:**
 - Admin-enabled via backend API
@@ -3650,7 +3723,14 @@ Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10
 - `xp_events` - Active/scheduled XP multiplier events
 - `user_event_participation` - User participation in events
 - `xp_bonus_templates` - 24 bonus type definitions
-- `user_checkpoint_progress` - Weekly/monthly checkpoint tracking
+- `user_checkpoint_progress` - Weekly/monthly checkpoint tracking (extended with 25+ columns)
+- `user_first_time_bonuses` - Tracks awarded first-time bonuses
+- `user_monthly_achievements` - Monthly achievement progress (12 types)
+- `user_daily_social_xp` - Daily social XP tracking (4 actions)
+- `user_consumables` - User's consumable inventory
+- `user_daily_crates` - Daily crate availability and claims
+- `level_rewards` - Rewards for level milestones (badges, crates, physical items)
+- `checkpoint_rewards` - XP rewards for weekly/monthly checkpoints
 
 **Backend API:** `/api/v1/xp/`
 - `POST /daily-login` - Process daily login, award XP
@@ -3659,6 +3739,19 @@ Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10
 - `POST /events/enable-double-xp` - Admin: Enable Double XP
 - `GET /bonus-templates` - Get all bonus types
 - `GET /checkpoint-progress` - Get weekly/monthly progress
+- `GET /weekly-checkpoints` - Get all 10 weekly checkpoint progress
+- `GET /monthly-achievements` - Get all 12 monthly achievement progress
+- `GET /daily-social-xp` - Get daily social XP status (270 cap)
+- `POST /award-social-xp` - Award XP for social action
+- `POST /award-first-time-bonus` - Award first-time bonus
+- `GET /first-time-bonuses` - Get awarded first-time bonuses
+- `GET /consumables` - Get user's consumable inventory
+- `POST /use-consumable` - Use a consumable item
+- `GET /daily-crates` - Get daily crate availability
+- `POST /claim-daily-crate` - Claim a daily crate
+- `POST /increment-checkpoint-workout` - Increment workout count
+- `POST /increment-weekly-checkpoint` - Increment specific weekly checkpoint
+- `POST /increment-monthly-achievement` - Increment specific monthly achievement
 
 ### 14. Profile & Stats (15 Features)
 

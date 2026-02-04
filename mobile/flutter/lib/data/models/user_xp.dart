@@ -18,6 +18,12 @@ enum XPTitle {
   legend,
   @JsonValue('Mythic')
   mythic,
+  @JsonValue('Mythic I')
+  mythicI,
+  @JsonValue('Mythic II')
+  mythicII,
+  @JsonValue('Mythic III')
+  mythicIII,
 }
 
 extension XPTitleExtension on XPTitle {
@@ -37,6 +43,12 @@ extension XPTitleExtension on XPTitle {
         return 'Legend';
       case XPTitle.mythic:
         return 'Mythic';
+      case XPTitle.mythicI:
+        return 'Mythic I';
+      case XPTitle.mythicII:
+        return 'Mythic II';
+      case XPTitle.mythicIII:
+        return 'Mythic III';
     }
   }
 
@@ -55,7 +67,13 @@ extension XPTitleExtension on XPTitle {
       case XPTitle.legend:
         return 0xFFFFD700; // Gold
       case XPTitle.mythic:
-        return 0xFFE040FB; // Pink/Magenta (rainbow effect)
+        return 0xFFE040FB; // Pink/Magenta
+      case XPTitle.mythicI:
+        return 0xFFE040FB; // Pink/Magenta
+      case XPTitle.mythicII:
+        return 0xFF00E5FF; // Cyan (cosmic)
+      case XPTitle.mythicIII:
+        return 0xFFFF1744; // Red (legendary)
     }
   }
 
@@ -75,7 +93,13 @@ extension XPTitleExtension on XPTitle {
       case XPTitle.legend:
         return '100';
       case XPTitle.mythic:
-        return '100+';
+        return '101+';
+      case XPTitle.mythicI:
+        return '101-150';
+      case XPTitle.mythicII:
+        return '151-200';
+      case XPTitle.mythicIII:
+        return '201-250';
     }
   }
 }
@@ -150,8 +174,10 @@ class UserXP {
     if (currentLevel <= 50) return XPTitle.athlete;
     if (currentLevel <= 75) return XPTitle.elite;
     if (currentLevel <= 99) return XPTitle.master;
-    if (currentLevel == 100 && prestigeLevel == 0) return XPTitle.legend;
-    return XPTitle.mythic;
+    if (currentLevel == 100) return XPTitle.legend;
+    if (currentLevel <= 150) return XPTitle.mythicI;
+    if (currentLevel <= 200) return XPTitle.mythicII;
+    return XPTitle.mythicIII;
   }
 
   /// Get formatted total XP string
@@ -178,7 +204,7 @@ class UserXP {
   }
 
   /// Check if user is at max level (before prestige)
-  bool get isMaxLevel => currentLevel >= 100;
+  bool get isMaxLevel => currentLevel >= 250;
 
   /// Empty constructor for initial state
   factory UserXP.empty(String userId) => UserXP(

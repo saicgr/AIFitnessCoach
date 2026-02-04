@@ -8,6 +8,7 @@ import '../../data/models/recipe.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
+import '../../data/providers/xp_provider.dart';
 import 'recipe_builder_sheet.dart';
 
 /// Sort options for the food library
@@ -431,6 +432,9 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
       }
 
       if (!mounted) return;
+
+      // Award XP for daily goal
+      ref.read(xpProvider.notifier).markMealLogged();
 
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(

@@ -345,8 +345,10 @@ async def get_image_by_exercise_name(exercise_name: str, gender: str = None):
             expanded_names.extend(generate_name_variants(name))
         search_names = list(dict.fromkeys(expanded_names))  # Dedupe preserving order
 
-        # Try each name variant - use wildcard pattern for partial matches
+        # Collect ALL potential matches from ALL search variants, then pick best
         found_result = None
+        all_candidates = []
+
         for name in search_names:
             # First try exact match (case-insensitive) - this is definitive
             result = db.client.table("exercise_library").select(
@@ -354,38 +356,44 @@ async def get_image_by_exercise_name(exercise_name: str, gender: str = None):
             ).ilike("exercise_name", name).limit(1).execute()
 
             if result.data and result.data[0].get("image_s3_path"):
+                # Exact match found - use it immediately
                 found_result = result.data[0]
                 break
 
             # Try partial match with wildcards (handles gender suffixes like _female, _male)
-            # Get ALL matches and score them to find the best one
             result = db.client.table("exercise_library").select(
                 "image_s3_path, exercise_name"
             ).ilike("exercise_name", f"{name}%").execute()
 
             if result.data:
-                # Score all matches and pick the best one
                 candidates = [r for r in result.data if r.get("image_s3_path")]
-                if candidates:
-                    best_match = max(candidates, key=lambda r: score_exercise_match(exercise_name, r["exercise_name"]))
-                    if score_exercise_match(exercise_name, best_match["exercise_name"]) > 0:
-                        found_result = best_match
-                        break
+                all_candidates.extend(candidates)
 
             # Try contains match (exercise name contained anywhere)
-            # Get ALL matches and score them to find the best one
             result = db.client.table("exercise_library").select(
                 "image_s3_path, exercise_name"
             ).ilike("exercise_name", f"%{name}%").execute()
 
             if result.data:
-                # Score all matches and pick the best one
                 candidates = [r for r in result.data if r.get("image_s3_path")]
-                if candidates:
-                    best_match = max(candidates, key=lambda r: score_exercise_match(exercise_name, r["exercise_name"]))
-                    if score_exercise_match(exercise_name, best_match["exercise_name"]) > 0:
-                        found_result = best_match
-                        break
+                all_candidates.extend(candidates)
+
+        # If no exact match found, pick the best from all candidates
+        if not found_result and all_candidates:
+            # Dedupe by exercise_name
+            seen = set()
+            unique_candidates = []
+            for c in all_candidates:
+                if c["exercise_name"] not in seen:
+                    seen.add(c["exercise_name"])
+                    unique_candidates.append(c)
+
+            # Score all unique matches and pick the best one
+            if unique_candidates:
+                best_match = max(unique_candidates, key=lambda r: score_exercise_match(exercise_name, r["exercise_name"]))
+                # Accept any match with a reasonable score (negative is OK for partial matches)
+                if score_exercise_match(exercise_name, best_match["exercise_name"]) >= -10:
+                    found_result = best_match
 
         # If database lookup failed, try fuzzy S3 search
         if not found_result:

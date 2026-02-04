@@ -8,6 +8,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/providers/xp_provider.dart';
 import 'widgets/exercise_set_tracker.dart';
 
 /// List-based workout screen similar to Strong app
@@ -328,6 +329,9 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
 
         // Mark workout complete
         await workoutRepo.completeWorkout(widget.workout.id!);
+
+        // Award XP for daily goal
+        ref.read(xpProvider.notifier).markWorkoutCompleted(workoutId: widget.workout.id);
       }
     } catch (e) {
       debugPrint('Error saving workout: $e');

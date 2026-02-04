@@ -401,11 +401,18 @@ final habitsScreenProvider = StateNotifierProvider.autoDispose<HabitsScreenNotif
   final authState = ref.watch(authStateProvider);
   final userId = authState.user?.id ?? '';
 
+  // Watch the accent color - use orange as default for icon coloring
+  // The actual accent color will be applied in the UI via accentColorProvider
+  final accentColorEnum = ref.watch(accentColorProvider);
+  // Use a visible color for auto-tracked habits - get the actual color value
+  // We assume light mode here; the actual theme-aware color is applied in the UI
+  final accentColor = accentColorEnum.getColor(false);
+
   return HabitsScreenNotifier(
     repository,
     userId,
     () => ref.read(habitsProvider),
-    AppColors.accent,
+    accentColor,
   );
 });
 
@@ -641,6 +648,9 @@ class HabitsScreen extends ConsumerWidget {
         ? Colors.white.withValues(alpha: 0.1)
         : Colors.black.withValues(alpha: 0.1);
 
+    // Use theme-aware accent color for auto-tracked habits, otherwise use the habit's stored color
+    final effectiveColor = habit.isAutoTracked ? accentColor : habit.color;
+
     return Padding(
       key: ValueKey(habit.id),
       padding: const EdgeInsets.only(bottom: 12),
@@ -720,7 +730,7 @@ class HabitsScreen extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: habit.todayCompleted
-                      ? habit.color.withValues(alpha: 0.5)
+                      ? effectiveColor.withValues(alpha: 0.5)
                       : cardBorder,
                   width: habit.todayCompleted ? 2 : 1,
                 ),
@@ -744,18 +754,18 @@ class HabitsScreen extends ConsumerWidget {
                           height: 28,
                           decoration: BoxDecoration(
                             color: habit.todayCompleted
-                                ? habit.color.withValues(alpha: 0.15)
+                                ? effectiveColor.withValues(alpha: 0.15)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: habit.todayCompleted
-                                  ? habit.color
+                                  ? effectiveColor
                                   : cardBorder,
                               width: 2,
                             ),
                           ),
                           child: habit.todayCompleted
-                              ? Icon(Icons.check, color: habit.color, size: 18)
+                              ? Icon(Icons.check, color: effectiveColor, size: 18)
                               : null,
                         )
                       else
@@ -773,12 +783,12 @@ class HabitsScreen extends ConsumerWidget {
                             height: 28,
                             decoration: BoxDecoration(
                               color: habit.todayCompleted
-                                  ? habit.color
+                                  ? effectiveColor
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
                                 color: habit.todayCompleted
-                                    ? habit.color
+                                    ? effectiveColor
                                     : cardBorder,
                                 width: 2,
                               ),
@@ -794,10 +804,10 @@ class HabitsScreen extends ConsumerWidget {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: habit.color.withValues(alpha: 0.15),
+                          color: effectiveColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Icon(habit.icon, color: habit.color, size: 20),
+                        child: Icon(habit.icon, color: effectiveColor, size: 20),
                       ),
                       const SizedBox(width: 12),
                       // Info
@@ -871,20 +881,20 @@ class HabitsScreen extends ConsumerWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: habit.color.withValues(alpha: 0.15),
+                            color: effectiveColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.local_fire_department, size: 14, color: habit.color),
+                              Icon(Icons.local_fire_department, size: 14, color: effectiveColor),
                               const SizedBox(width: 2),
                               Text(
                                 '${habit.currentStreak}',
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: habit.color,
+                                  color: effectiveColor,
                                 ),
                               ),
                             ],
@@ -900,7 +910,7 @@ class HabitsScreen extends ConsumerWidget {
                   // Mini grid for auto-tracked habits
                   if (habit.isAutoTracked && habit.last30Days.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    _buildMiniGrid(habit.last30Days, habit.color, emptyColor),
+                    _buildMiniGrid(habit.last30Days, effectiveColor, emptyColor),
                   ],
                 ],
               ),

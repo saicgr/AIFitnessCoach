@@ -9,6 +9,7 @@ import '../models/micronutrients.dart';
 import '../models/nutrition_preferences.dart';
 import '../models/recipe.dart';
 import '../services/api_client.dart';
+import '../providers/xp_provider.dart';
 
 /// Progress event for streaming food logging
 class FoodLoggingProgress {
@@ -102,16 +103,17 @@ class NutritionState {
 /// Nutrition state provider
 final nutritionProvider =
     StateNotifierProvider<NutritionNotifier, NutritionState>((ref) {
-  return NutritionNotifier(ref.watch(nutritionRepositoryProvider));
+  return NutritionNotifier(ref.watch(nutritionRepositoryProvider), ref);
 });
 
 /// Nutrition state notifier
 class NutritionNotifier extends StateNotifier<NutritionState> {
   final NutritionRepository _repository;
+  final Ref _ref;
   String? _lastLoadedUserId;  // Track which user data is loaded for
   DateTime? _lastLoadTime;     // Track when data was last loaded
 
-  NutritionNotifier(this._repository) : super(const NutritionState());
+  NutritionNotifier(this._repository, this._ref) : super(const NutritionState());
 
   /// Check if we should skip loading (data is fresh - less than 5 minutes old)
   bool _shouldSkipLoad(String userId) {
@@ -135,8 +137,26 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       state = state.copyWith(isLoading: false, todaySummary: summary);
       _lastLoadedUserId = userId;
       _lastLoadTime = DateTime.now();
+
+      // Check if protein goal was hit and award XP
+      _checkProteinGoal(summary);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  /// Check if user hit their daily protein goal and award XP
+  void _checkProteinGoal(DailyNutritionSummary summary) {
+    final targets = state.targets;
+    if (targets == null) return;
+
+    final proteinConsumed = summary.totalProteinG ?? 0;
+    final proteinTarget = targets.dailyProteinTargetG ?? 150;
+
+    if (proteinConsumed >= proteinTarget) {
+      debugPrint('🎯 [NutritionProvider] Protein goal hit! ${proteinConsumed.toInt()}g / ${proteinTarget.toInt()}g');
+      // Award XP - the provider handles duplicate prevention
+      _ref.read(xpProvider.notifier).markProteinGoalHit();
     }
   }
 

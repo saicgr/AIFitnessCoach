@@ -49,6 +49,7 @@ import '../../widgets/streak_milestone_dialog.dart';
 import '../../widgets/xp_earned_animation.dart';
 import '../../data/models/level_reward.dart';
 import 'widgets/gym_profile_switcher.dart';
+import 'widgets/daily_crate_banner.dart';
 
 /// Preset layout templates for quick customization
 class LayoutPreset {
@@ -1714,8 +1715,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    // Watch the current streak from consistency provider
-    final currentStreak = ref.watch(currentStreakProvider);
+    // Watch the current streak from XP provider (login streak)
+    final currentStreak = ref.watch(xpCurrentStreakProvider);
 
     // Get responsive padding based on window mode
     final horizontalPadding = responsiveHorizontalPadding;
@@ -1824,6 +1825,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // Double XP Banner - Shows when Double XP event is active
               const SliverToBoxAdapter(
                 child: DoubleXPBanner(),
+              ),
+
+              // Daily Crate Banner - Shows when user has unclaimed daily crates
+              const SliverToBoxAdapter(
+                child: DailyCrateBanner(),
               ),
 
               // Watch Install Banner - One-time prompt for WearOS (Android only)

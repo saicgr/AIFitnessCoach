@@ -153,6 +153,9 @@ class NutritionPreferencesRepository {
 
   /// Recalculate targets based on current user data
   Future<NutritionPreferences> recalculateTargets(String userId) async {
+    if (userId.isEmpty) {
+      throw ArgumentError('userId cannot be empty');
+    }
     try {
       debugPrint('🔄 [NutritionPrefs] Recalculating targets for $userId');
       final response = await _client.post(
