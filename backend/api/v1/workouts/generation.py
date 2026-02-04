@@ -967,6 +967,44 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
 
             gemini_service = GeminiService()
 
+            # Calculate exercise count with fitness-level caps (same logic as /generate endpoint)
+            effective_duration = body.duration_minutes_max or body.duration_minutes_min or (body.duration_minutes or 45)
+            base_exercise_count = max(4, min(12, effective_duration // 6))
+
+            # Define exercise caps by fitness level AND duration
+            EXERCISE_CAPS = {
+                "beginner": {30: 4, 45: 5, 60: 5, 75: 6, 90: 6},
+                "intermediate": {30: 5, 45: 6, 60: 7, 75: 8, 90: 9},
+                "advanced": {30: 5, 45: 7, 60: 8, 75: 10, 90: 11},
+            }
+            HELL_MODE_EXERCISE_CAPS = {
+                "beginner": {30: 5, 45: 6, 60: 6, 75: 7, 90: 7},
+                "intermediate": {30: 6, 45: 7, 60: 8, 75: 9, 90: 10},
+                "advanced": {30: 6, 45: 8, 60: 10, 75: 11, 90: 12},
+            }
+
+            is_hell_mode = intensity_preference and intensity_preference.lower() == "hell"
+            cap_table = HELL_MODE_EXERCISE_CAPS if is_hell_mode else EXERCISE_CAPS
+            level = fitness_level or "intermediate"
+            level_caps = cap_table.get(level, cap_table["intermediate"])
+
+            # Find the closest duration bracket
+            if effective_duration <= 35:
+                duration_bracket = 30
+            elif effective_duration <= 50:
+                duration_bracket = 45
+            elif effective_duration <= 65:
+                duration_bracket = 60
+            elif effective_duration <= 80:
+                duration_bracket = 75
+            else:
+                duration_bracket = 90
+
+            max_exercises = level_caps.get(duration_bracket, 8)
+            exercise_count = min(base_exercise_count, max_exercises)
+
+            logger.info(f"📊 [Streaming Exercise Count] Level: {level}, Duration: {effective_duration}min, Hell: {is_hell_mode}, Cap: {max_exercises}, Final: {exercise_count}")
+
             # Send initial acknowledgment (time to first byte)
             first_chunk_time = (datetime.now() - start_time).total_seconds() * 1000
             yield f"event: chunk\ndata: {json.dumps({'status': 'started', 'ttfb_ms': first_chunk_time})}\n\n"
@@ -992,6 +1030,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     avoided_muscles=avoided_muscles if (avoided_muscles.get("avoid") or avoided_muscles.get("reduce")) else None,
                     staple_exercises=staple_names,
                     progression_philosophy=combined_context if combined_context else None,
+                    exercise_count=exercise_count,
                 ):
                     accumulated_text += chunk
                     chunk_count += 1

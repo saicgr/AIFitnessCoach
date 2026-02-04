@@ -3355,6 +3355,7 @@ If user has gym equipment - most exercises MUST use that equipment!"""
         avoided_muscles: Optional[Dict] = None,
         staple_exercises: Optional[List[str]] = None,
         progression_philosophy: Optional[str] = None,
+        exercise_count: int = 6,
     ):
         """
         Generate a workout plan using streaming for faster perceived response.
@@ -3492,7 +3493,7 @@ MUST be ≤ duration_minutes_max if provided. Adjust exercises/sets to fit time 
 
 CRITICAL: Every exercise MUST include "set_targets" array with set_number, set_type (warmup/working/drop/failure/amrap), target_reps, target_weight_kg, and target_rpe for each set.
 
-Include 5-8 exercises for {fitness_level} level using only: {safe_join_list(equipment, 'bodyweight')}
+Include exactly {exercise_count} exercises for {fitness_level} level using only: {safe_join_list(equipment, 'bodyweight')}
 
 🚨🚨 ABSOLUTE REQUIREMENT - EQUIPMENT USAGE 🚨🚨
 If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines):

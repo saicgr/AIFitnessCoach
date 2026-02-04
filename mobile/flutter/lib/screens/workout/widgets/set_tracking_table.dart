@@ -318,13 +318,25 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
             ),
           ),
 
-          // Previous column (last session data) - expanded since Target removed
+          // Previous column (last session data)
           Expanded(
-            flex: 4,
+            flex: 3,
             child: Text(
               'Previous',
               style: WorkoutDesign.tableHeaderStyle.copyWith(
                 color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
+              ),
+            ),
+          ),
+
+          // TARGET column - AI recommended targets
+          Expanded(
+            flex: 3,
+            child: Text(
+              'TARGET',
+              style: WorkoutDesign.tableHeaderStyle.copyWith(
+                color: WorkoutDesign.accentBlue,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -463,21 +475,33 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
               ),
             ),
 
-            // Previous session column - expanded since Target removed
-            // Now shows previous weight x reps with RIR badge
+            // Previous session column
             Expanded(
-              flex: 4,
+              flex: 3,
               child: _PreviousCellWithRir(
                 previousWeight: set.previousWeight,
                 previousReps: set.previousReps,
                 previousRir: set.previousRir,
-                targetRir: set.targetRir,
+                targetRir: null, // Don't show RIR in previous column
                 useKg: widget.useKg,
                 isWarmup: set.isWarmup,
                 isDark: isDark,
-                onRirTapped: widget.onRirTapped != null
-                    ? () => widget.onRirTapped!(index, set.targetRir ?? set.previousRir)
-                    : null,
+                onRirTapped: null,
+              ),
+            ),
+
+            // TARGET column - AI recommended targets with RIR badge
+            Expanded(
+              flex: 3,
+              child: _AutoTargetCell(
+                targetWeight: set.targetWeight,
+                targetReps: set.targetReps,
+                targetRir: set.targetRir,
+                previousWeight: set.previousWeight,
+                previousReps: set.previousReps,
+                useKg: widget.useKg,
+                isWarmup: set.isWarmup,
+                isDark: isDark,
               ),
             ),
 

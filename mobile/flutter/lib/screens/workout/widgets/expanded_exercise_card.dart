@@ -1960,6 +1960,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // SET column - Set number with type color badge
           SizedBox(
@@ -1985,15 +1986,23 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
           ),
 
           // LAST column - previous session data (shows "—" for preview)
+          // Wrapped in Column to align vertically with TARGET column
           Expanded(
             flex: 3,
-            child: Text(
-              '—',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: textMuted,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '—',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: textMuted,
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -2003,6 +2012,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   targetDisplay,
