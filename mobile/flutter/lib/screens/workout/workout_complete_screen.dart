@@ -16,6 +16,7 @@ import '../../data/services/challenges_service.dart';
 import '../../data/services/personal_goals_service.dart';
 import '../../data/providers/scores_provider.dart';
 import '../../data/providers/subjective_feedback_provider.dart';
+import '../../data/providers/xp_provider.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import '../../data/models/subjective_feedback.dart';
 import '../challenges/widgets/challenge_complete_dialog.dart';
@@ -168,6 +169,10 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
         'is_all_time_pr': pr.isAllTimePr,
       }).toList();
       _isLoadingAchievements = false;
+
+      // Award first-time PR bonus (+100 XP)
+      ref.read(xpProvider.notifier).checkFirstPRBonus();
+
       // Show full-screen trophy celebration overlay
       Future.microtask(() {
         _showTrophyCelebration();
@@ -655,6 +660,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
             _newPRs = newPRs;
             _isLoadingAchievements = false;
           });
+
+          // Award first-time PR bonus (+100 XP) if PRs were detected
+          if (newPRs.isNotEmpty) {
+            ref.read(xpProvider.notifier).checkFirstPRBonus();
+          }
 
           // Show full-screen trophy celebration if there are trophies
           Future.microtask(() {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../data/providers/xp_provider.dart';
 import '../../data/services/api_client.dart';
 
 /// Model for body measurement entry
@@ -578,6 +579,9 @@ class _LogMeasurementSheetState extends ConsumerState<LogMeasurementSheet> {
         '/body-measurements',
         data: measurement.toJson(),
       );
+
+      // Award XP for logging body measurements (+20 XP daily, +50 XP first time)
+      ref.read(xpProvider.notifier).markBodyMeasurementsLogged();
 
       if (mounted) {
         Navigator.pop(context, true);

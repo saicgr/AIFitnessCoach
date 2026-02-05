@@ -8,6 +8,7 @@ import '../../data/models/habit.dart';
 import '../../data/providers/habits_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/habit_repository.dart';
+import '../../data/providers/xp_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../home/widgets/habit_card.dart';
 
@@ -1507,10 +1508,17 @@ class HabitsScreen extends ConsumerWidget {
                             }
                             HapticService.medium();
                             Navigator.pop(context);
-                            // TODO: Call API to create custom habit
+
+                            // Check for first habit XP bonus
+                            final xpAwarded = await ref.read(xpProvider.notifier).checkFirstHabitBonus();
+
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Created "${nameController.text}"'),
+                                content: Text(
+                                  xpAwarded > 0
+                                    ? 'Created "${nameController.text}" +$xpAwarded XP bonus!'
+                                    : 'Created "${nameController.text}"',
+                                ),
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );

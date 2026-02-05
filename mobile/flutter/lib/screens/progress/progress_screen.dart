@@ -12,6 +12,7 @@ import '../../data/models/scores.dart';
 import '../../data/providers/guest_mode_provider.dart';
 import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/providers/scores_provider.dart';
+import '../../data/providers/xp_provider.dart';
 import '../../data/repositories/progress_photos_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/main_shell.dart';
@@ -1178,6 +1179,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
             imageFile: imageFile,
             viewType: viewType,
           );
+
+      // Award first-time progress photo bonus (+75 XP)
+      ref.read(xpProvider.notifier).checkFirstProgressPhotoBonus();
 
       if (mounted) {
         Navigator.pop(context); // Close loading dialog

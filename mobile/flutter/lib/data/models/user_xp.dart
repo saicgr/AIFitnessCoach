@@ -377,6 +377,70 @@ class XPLeaderboardEntry {
   }
 }
 
+/// Reward received when leveling up (Migration 231)
+@JsonSerializable()
+class LevelUpReward {
+  final int level;
+  final String type; // 'fitness_crate', 'streak_shield', 'xp_token_2x', 'premium_crate'
+  final int quantity;
+  final String description;
+  @JsonKey(name: 'bonus_type')
+  final String? bonusType;
+  @JsonKey(name: 'bonus_quantity')
+  final int? bonusQuantity;
+  @JsonKey(name: 'bonus_description')
+  final String? bonusDescription;
+
+  const LevelUpReward({
+    required this.level,
+    required this.type,
+    required this.quantity,
+    required this.description,
+    this.bonusType,
+    this.bonusQuantity,
+    this.bonusDescription,
+  });
+
+  factory LevelUpReward.fromJson(Map<String, dynamic> json) =>
+      _$LevelUpRewardFromJson(json);
+  Map<String, dynamic> toJson() => _$LevelUpRewardToJson(this);
+
+  /// Get emoji icon for reward type
+  String get icon {
+    switch (type) {
+      case 'fitness_crate':
+        return '📦';
+      case 'premium_crate':
+        return '🎁';
+      case 'streak_shield':
+        return '🛡️';
+      case 'xp_token_2x':
+        return '⚡';
+      default:
+        return '🎉';
+    }
+  }
+
+  /// Get display name for reward type
+  String get displayName {
+    switch (type) {
+      case 'fitness_crate':
+        return 'Fitness Crate';
+      case 'premium_crate':
+        return 'Premium Crate';
+      case 'streak_shield':
+        return 'Streak Shield';
+      case 'xp_token_2x':
+        return '2x XP Token';
+      default:
+        return 'Reward';
+    }
+  }
+
+  /// Check if this reward has a bonus (e.g., major milestone)
+  bool get hasBonus => bonusType != null && bonusQuantity != null;
+}
+
 /// Level up notification data
 @JsonSerializable()
 class LevelUpEvent {
@@ -394,6 +458,8 @@ class LevelUpEvent {
   final int xpEarned;
   @JsonKey(name: 'unlocked_reward')
   final String? unlockedReward;
+  /// Rewards distributed for this level-up (from Migration 231)
+  final List<LevelUpReward>? rewards;
 
   const LevelUpEvent({
     required this.newLevel,
@@ -403,6 +469,7 @@ class LevelUpEvent {
     this.totalXp = 0,
     this.xpEarned = 0,
     this.unlockedReward,
+    this.rewards,
   });
 
   factory LevelUpEvent.fromJson(Map<String, dynamic> json) =>
@@ -414,6 +481,9 @@ class LevelUpEvent {
 
   /// Check if user unlocked a reward
   bool get hasReward => unlockedReward != null;
+
+  /// Check if there are any level-up rewards
+  bool get hasRewards => rewards != null && rewards!.isNotEmpty;
 
   /// Get number of levels gained
   int get levelsGained => newLevel - oldLevel;

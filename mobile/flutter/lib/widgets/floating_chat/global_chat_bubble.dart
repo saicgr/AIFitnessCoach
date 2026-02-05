@@ -7,6 +7,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/animations/app_animations.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/models/coach_persona.dart';
+import '../../data/providers/xp_provider.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../screens/ai_settings/ai_settings_screen.dart';
 import '../coach_avatar.dart';
@@ -80,6 +81,9 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
     try {
       await ref.read(chatMessagesProvider.notifier).sendMessage(message);
       _scrollToBottom();
+
+      // Award first-time chat bonus (+50 XP)
+      ref.read(xpProvider.notifier).checkFirstChatBonus();
     } catch (e) {
       debugPrint('Error sending message: $e');
     } finally {

@@ -106,6 +106,26 @@ async def process_daily_login(
     except HTTPException:
         raise
     except Exception as e:
+        # Handle Supabase RPC JSON serialization quirk - data is in error message
+        # The Supabase Python client sometimes returns valid data wrapped in an error
+        error_str = str(e)
+        if "JSON could not be generated" in error_str and "details" in error_str:
+            import ast
+            import json
+            try:
+                # Parse the error string as a Python dict
+                error_dict = ast.literal_eval(error_str)
+                details = error_dict.get('details', '')
+
+                # The details is a string like "b'{json}'"
+                if details.startswith("b'") and details.endswith("'"):
+                    json_str = details[2:-1]  # Remove b' and trailing '
+                    data = json.loads(json_str)
+                    print(f"✅ [XP] daily-login extracted data from RPC response")
+                    return DailyLoginResponse(**data)
+            except Exception as parse_error:
+                print(f"❌ [XP] Failed to parse RPC response: {parse_error}")
+
         print(f"❌ [XP] daily-login error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -1336,6 +1336,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         // Initialize streak tracking for milestone detection
         xpNotifier.initializeStreakTracking();
 
+        // Check for streak milestones (7, 30, 100, 365 days)
+        // This triggers celebration UI when user hits a milestone
+        xpNotifier.checkStreakMilestone(result.currentStreak);
+
         // Initialize daily goals with login status
         // This sets dailyGoals.loggedIn = true based on loginStreak.hasLoggedInToday
         xpNotifier.initializeDailyGoals();

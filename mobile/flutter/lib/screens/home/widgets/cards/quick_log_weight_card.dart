@@ -9,6 +9,7 @@ import '../../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../../data/providers/xp_provider.dart';
 import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/repositories/fasting_repository.dart';
+import '../../../../data/repositories/measurements_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../fasting/widgets/log_weight_sheet.dart';
 
@@ -106,6 +107,9 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
 
       // Refresh weight history by re-initializing the provider
       ref.invalidate(nutritionPreferencesProvider);
+
+      // Refresh measurements history so new weight appears when user views history
+      ref.invalidate(measurementsProvider);
 
       // Mark weight logged for daily XP goals
       ref.read(xpProvider.notifier).markWeightLogged();
@@ -250,7 +254,7 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
               GestureDetector(
                 onTap: () {
                   HapticService.light();
-                  context.push('/measurements/weight');
+                  context.push('/measurements');
                 },
                 child: Tooltip(
                   message: 'View Weight History',

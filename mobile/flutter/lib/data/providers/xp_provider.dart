@@ -886,13 +886,17 @@ class XPNotifier extends StateNotifier<XPState> {
         await loadAllCheckpoints();
       }
 
+      // Check for first-time workout bonus (+150 XP)
+      await checkFirstWorkoutBonus();
+
       // Always refresh XP data to keep progress bar in sync
       await loadUserXP(userId: _currentUserId, showLoading: false);
     }
   }
 
   /// Mark meal logged for today and award XP
-  Future<void> markMealLogged({String? mealId}) async {
+  /// [mealType] should be one of: 'breakfast', 'lunch', 'dinner', 'snack'
+  Future<void> markMealLogged({String? mealId, String? mealType}) async {
     final goals = _getOrCreateDailyGoals();
     if (!goals.loggedMeal) {
       state = state.copyWith(
@@ -911,6 +915,12 @@ class XPNotifier extends StateNotifier<XPState> {
           ),
         );
       }
+
+      // Check for first-time meal bonus (+50 XP for first of each meal type)
+      if (mealType != null) {
+        await checkFirstMealBonus(mealType);
+      }
+
       // Always refresh XP data to keep progress bar in sync
       await loadUserXP(userId: _currentUserId, showLoading: false);
     }
@@ -936,6 +946,10 @@ class XPNotifier extends StateNotifier<XPState> {
           ),
         );
       }
+
+      // Check for first-time weight log bonus (+50 XP)
+      await checkFirstWeightLogBonus();
+
       // Always refresh XP data to keep progress bar in sync
       await loadUserXP(userId: _currentUserId, showLoading: false);
     }
@@ -961,6 +975,10 @@ class XPNotifier extends StateNotifier<XPState> {
           ),
         );
       }
+
+      // Check for first-time protein goal bonus (+100 XP)
+      await checkFirstProteinGoalBonus();
+
       // Always refresh XP data to keep progress bar in sync
       await loadUserXP(userId: _currentUserId, showLoading: false);
     }
@@ -986,6 +1004,13 @@ class XPNotifier extends StateNotifier<XPState> {
           ),
         );
       }
+
+      // Check for first-time body measurements bonus (+50 XP)
+      await checkFirstBodyMeasurementsBonus();
+
+      // Check if all daily goals are complete for activity crate unlock
+      await checkAndUnlockActivityCrate();
+
       // Always refresh XP data to keep progress bar in sync
       await loadUserXP(userId: _currentUserId, showLoading: false);
     }

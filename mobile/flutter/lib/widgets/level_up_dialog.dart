@@ -246,9 +246,12 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
                   _buildChallengesSection(
                       textPrimary, textSecondary, accentColor),
 
-                  // Reward section - EVERY level gets a reward now
+                  // Reward section - Show actual rewards from backend if available
                   const SizedBox(height: 16),
-                  _buildPerLevelRewardSection(textPrimary, titleColor),
+                  if (widget.event.hasRewards)
+                    _buildBackendRewardsSection(textPrimary, titleColor)
+                  else
+                    _buildPerLevelRewardSection(textPrimary, titleColor),
 
                   const SizedBox(height: 20),
 
@@ -541,6 +544,142 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
               ),
             )),
       ],
+    );
+  }
+
+  /// Build rewards section from actual backend response (Migration 231)
+  Widget _buildBackendRewardsSection(Color textPrimary, Color titleColor) {
+    final rewards = widget.event.rewards!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.card_giftcard_rounded, color: titleColor, size: 18),
+            const SizedBox(width: 6),
+            Text(
+              'REWARDS EARNED!',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: titleColor,
+                letterSpacing: 1,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ...rewards.map((reward) => Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: _buildRewardRow(reward, textPrimary, titleColor),
+        )),
+      ],
+    );
+  }
+
+  /// Build a single reward row from backend reward data
+  Widget _buildRewardRow(LevelUpReward reward, Color textPrimary, Color titleColor) {
+    // Determine reward color based on type
+    Color rewardColor;
+    switch (reward.type) {
+      case 'fitness_crate':
+        rewardColor = Colors.orange;
+        break;
+      case 'premium_crate':
+        rewardColor = Colors.purple;
+        break;
+      case 'streak_shield':
+        rewardColor = Colors.blue;
+        break;
+      case 'xp_token_2x':
+        rewardColor = Colors.amber;
+        break;
+      default:
+        rewardColor = titleColor;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            rewardColor.withValues(alpha: 0.15),
+            rewardColor.withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: rewardColor.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: rewardColor.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              reward.icon,
+              style: const TextStyle(fontSize: 24),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Level ${reward.level}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: rewardColor,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${reward.displayName} x${reward.quantity}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  reward.description,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textPrimary.withValues(alpha: 0.7),
+                  ),
+                ),
+                // Show bonus if present (e.g., premium crate at major milestones)
+                if (reward.hasBonus) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '+ ${reward.bonusDescription ?? "Bonus!"}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.purple,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

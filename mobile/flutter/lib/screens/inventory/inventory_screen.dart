@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/repositories/xp_repository.dart';
+import '../../data/services/haptic_service.dart';
 
 /// Screen displaying user's consumables inventory
 /// Shows Streak Shields, 2x XP Tokens, Fitness Crates, Premium Crates
@@ -87,10 +90,15 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
   void _showCrateRewardDialog(CrateReward reward, String crateType) {
     final isPremium = crateType == 'premium_crate';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: elevatedColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -124,18 +132,18 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'You received:',
               style: TextStyle(
-                color: Colors.white70,
+                color: textMuted,
                 fontSize: 14,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               reward.displayName,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: textColor,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
@@ -146,7 +154,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               Text(
                 'Added to your XP total',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.5),
+                  color: textMuted,
                   fontSize: 13,
                 ),
               ),
@@ -155,7 +163,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               Text(
                 'Added to your inventory',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.5),
+                  color: textMuted,
                   fontSize: 13,
                 ),
               ),
@@ -200,18 +208,25 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   }
 
   void _showTrustLevelInfo() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final accentEnum = ref.read(accentColorProvider);
+    final accentColor = accentEnum.getColor(isDark);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: elevatedColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.verified_user, color: Colors.blue.shade400),
+            Icon(Icons.verified_user, color: const Color(0xFF3B82F6)),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               'Trust Levels',
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(color: textColor),
             ),
           ],
         ),
@@ -219,34 +234,40 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTrustLevelRow(
+            _buildTrustLevelDialogRow(
               level: 0,
               name: 'New User',
               multiplier: '0.5x',
               description: 'First 3 days',
               color: Colors.grey,
+              textColor: textColor,
+              textMuted: textMuted,
             ),
             const SizedBox(height: 12),
-            _buildTrustLevelRow(
+            _buildTrustLevelDialogRow(
               level: 1,
               name: 'Verified',
               multiplier: '1.0x',
               description: 'Regular XP rate',
-              color: Colors.blue,
+              color: const Color(0xFF3B82F6),
+              textColor: textColor,
+              textMuted: textMuted,
             ),
             const SizedBox(height: 12),
-            _buildTrustLevelRow(
+            _buildTrustLevelDialogRow(
               level: 2,
               name: 'Trusted',
               multiplier: '1.2x',
               description: '7+ day streak',
-              color: Colors.green,
+              color: const Color(0xFF22C55E),
+              textColor: textColor,
+              textMuted: textMuted,
             ),
             const SizedBox(height: 16),
             Text(
               'Trust level affects XP earned from workouts and activities.',
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.6),
+                color: textMuted,
                 fontSize: 13,
               ),
             ),
@@ -255,6 +276,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(foregroundColor: accentColor),
             child: const Text('Got it'),
           ),
         ],
@@ -262,12 +284,14 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     );
   }
 
-  Widget _buildTrustLevelRow({
+  Widget _buildTrustLevelDialogRow({
     required int level,
     required String name,
     required String multiplier,
     required String description,
     required Color color,
+    required Color textColor,
+    required Color textMuted,
   }) {
     return Row(
       children: [
@@ -293,15 +317,15 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             children: [
               Text(
                 name,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: textColor,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               Text(
                 description,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.5),
+                  color: textMuted,
                   fontSize: 12,
                 ),
               ),
@@ -333,150 +357,286 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     final xpState = ref.watch(xpProvider);
     final trustLevel = xpState.userXp?.trustLevel ?? 1;
 
+    // Theme-aware colors
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.background : AppColorsLight.background;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    // Get dynamic accent color
+    final accentEnum = ref.watch(accentColorProvider);
+    final accentColor = accentEnum.getColor(isDark);
+
     return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => context.pop(),
-        ),
-        title: const Text(
-          'Inventory',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+      backgroundColor: bgColor,
+      body: Stack(
+        children: [
+          RefreshIndicator(
+            onRefresh: () async {
+              await ref.read(xpProvider.notifier).loadConsumables();
+            },
+            color: accentColor,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                // Header with title
+                SliverAppBar(
+                  expandedHeight: 120,
+                  pinned: true,
+                  backgroundColor: bgColor,
+                  surfaceTintColor: Colors.transparent,
+                  automaticallyImplyLeading: false,
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Container(
+                      padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 56, 16, 16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            isDark ? AppColors.elevated : AppColorsLight.elevated,
+                            bgColor,
+                          ],
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.inventory_2_outlined,
+                            size: 28,
+                            color: accentColor,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Inventory',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Main content
+                SliverPadding(
+                  padding: const EdgeInsets.all(16),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      // Trust Level Card
+                      _buildTrustLevelCard(trustLevel, isDark, textColor, textMuted, cardBorder, accentColor),
+                      const SizedBox(height: 24),
+
+                      // Active Boosts Section
+                      if (consumables?.is2xActive == true) ...[
+                        _buildActiveBoostsSection(consumables!, isDark, textColor, textMuted),
+                        const SizedBox(height: 24),
+                      ],
+
+                      // Consumables Section
+                      Text(
+                        'Items',
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // 2x XP Tokens
+                      _ConsumableCard(
+                        icon: Icons.flash_on,
+                        iconColor: const Color(0xFF9C27B0),
+                        name: '2x XP Token',
+                        description: 'Double XP for 24 hours',
+                        count: consumables?.xpToken2x ?? 0,
+                        actionLabel: 'Activate',
+                        isLoading: _isActivating2xToken,
+                        isDisabled: consumables?.is2xActive == true,
+                        disabledReason: consumables?.is2xActive == true ? '2x XP is already active' : null,
+                        onAction: _activate2xXPToken,
+                        isDark: isDark,
+                        elevatedColor: elevatedColor,
+                        textColor: textColor,
+                        textMuted: textMuted,
+                        cardBorder: cardBorder,
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Streak Shields
+                      _ConsumableCard(
+                        icon: Icons.shield,
+                        iconColor: const Color(0xFF2196F3),
+                        name: 'Streak Shield',
+                        description: 'Protect your streak for 1 missed day',
+                        count: consumables?.streakShield ?? 0,
+                        actionLabel: null, // Auto-used when needed
+                        helperText: 'Used automatically when you miss a day',
+                        isDark: isDark,
+                        elevatedColor: elevatedColor,
+                        textColor: textColor,
+                        textMuted: textMuted,
+                        cardBorder: cardBorder,
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Crates Section
+                      Text(
+                        'Crates',
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Open crates to receive XP or consumable items',
+                        style: TextStyle(
+                          color: textMuted,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Fitness Crates
+                      _ConsumableCard(
+                        icon: Icons.inventory_2,
+                        iconColor: const Color(0xFF4CAF50),
+                        name: 'Fitness Crate',
+                        description: 'Contains 25-75 XP or items',
+                        count: consumables?.fitnessCrate ?? 0,
+                        actionLabel: 'Open',
+                        isLoading: _isOpeningCrate,
+                        onAction: () => _openCrate('fitness_crate'),
+                        isDark: isDark,
+                        elevatedColor: elevatedColor,
+                        textColor: textColor,
+                        textMuted: textMuted,
+                        cardBorder: cardBorder,
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Premium Crates
+                      _ConsumableCard(
+                        icon: Icons.workspace_premium,
+                        iconColor: const Color(0xFFFFD700),
+                        name: 'Premium Crate',
+                        description: 'Contains 100-250 XP or rare items',
+                        count: consumables?.premiumCrate ?? 0,
+                        actionLabel: 'Open',
+                        isLoading: _isOpeningCrate,
+                        onAction: () => _openCrate('premium_crate'),
+                        isDark: isDark,
+                        elevatedColor: elevatedColor,
+                        textColor: textColor,
+                        textMuted: textMuted,
+                        cardBorder: cardBorder,
+                      ),
+                      const SizedBox(height: 32),
+
+                      // How to Earn Section
+                      _buildHowToEarnSection(isDark, textColor, textMuted, elevatedColor),
+
+                      // Bottom padding for safe area
+                      const SizedBox(height: 40),
+                    ]),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.help_outline, color: Colors.white.withValues(alpha: 0.7)),
-            onPressed: _showTrustLevelInfo,
-            tooltip: 'Trust Level Info',
+
+          // Floating back button
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 16,
+            child: _buildFloatingButton(
+              icon: Icons.arrow_back,
+              onTap: () => context.pop(),
+              isDark: isDark,
+              elevatedColor: elevatedColor,
+              textColor: textColor,
+              cardBorder: cardBorder,
+            ),
+          ),
+
+          // Floating help button
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            right: 16,
+            child: _buildFloatingButton(
+              icon: Icons.help_outline,
+              onTap: _showTrustLevelInfo,
+              isDark: isDark,
+              elevatedColor: elevatedColor,
+              textColor: textColor,
+              cardBorder: cardBorder,
+            ),
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await ref.read(xpProvider.notifier).loadConsumables();
-        },
-        color: const Color(0xFFFFD700),
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Trust Level Card
-              _buildTrustLevelCard(trustLevel),
-              const SizedBox(height: 24),
+    );
+  }
 
-              // Active Boosts Section
-              if (consumables?.is2xActive == true) ...[
-                _buildActiveBoostsSection(consumables!),
-                const SizedBox(height: 24),
-              ],
-
-              // Consumables Section
-              const Text(
-                'Items',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // 2x XP Tokens
-              _ConsumableCard(
-                icon: Icons.flash_on,
-                iconColor: const Color(0xFF9C27B0),
-                name: '2x XP Token',
-                description: 'Double XP for 24 hours',
-                count: consumables?.xpToken2x ?? 0,
-                actionLabel: 'Activate',
-                isLoading: _isActivating2xToken,
-                isDisabled: consumables?.is2xActive == true,
-                disabledReason: consumables?.is2xActive == true ? '2x XP is already active' : null,
-                onAction: _activate2xXPToken,
-              ),
-              const SizedBox(height: 12),
-
-              // Streak Shields
-              _ConsumableCard(
-                icon: Icons.shield,
-                iconColor: const Color(0xFF2196F3),
-                name: 'Streak Shield',
-                description: 'Protect your streak for 1 missed day',
-                count: consumables?.streakShield ?? 0,
-                actionLabel: null, // Auto-used when needed
-                helperText: 'Used automatically when you miss a day',
-              ),
-              const SizedBox(height: 24),
-
-              // Crates Section
-              const Text(
-                'Crates',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Open crates to receive XP or consumable items',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.5),
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Fitness Crates
-              _ConsumableCard(
-                icon: Icons.inventory_2,
-                iconColor: const Color(0xFF4CAF50),
-                name: 'Fitness Crate',
-                description: 'Contains 25-75 XP or items',
-                count: consumables?.fitnessCrate ?? 0,
-                actionLabel: 'Open',
-                isLoading: _isOpeningCrate,
-                onAction: () => _openCrate('fitness_crate'),
-              ),
-              const SizedBox(height: 12),
-
-              // Premium Crates
-              _ConsumableCard(
-                icon: Icons.workspace_premium,
-                iconColor: const Color(0xFFFFD700),
-                name: 'Premium Crate',
-                description: 'Contains 100-250 XP or rare items',
-                count: consumables?.premiumCrate ?? 0,
-                actionLabel: 'Open',
-                isLoading: _isOpeningCrate,
-                onAction: () => _openCrate('premium_crate'),
-              ),
-              const SizedBox(height: 32),
-
-              // How to Earn Section
-              _buildHowToEarnSection(),
-            ],
-          ),
+  Widget _buildFloatingButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    required bool isDark,
+    required Color elevatedColor,
+    required Color textColor,
+    required Color cardBorder,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        onTap();
+      },
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.black.withValues(alpha: 0.6)
+              : Colors.white.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cardBorder),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(
+          icon,
+          color: textColor,
+          size: 22,
         ),
       ),
     );
   }
 
-  Widget _buildTrustLevelCard(int trustLevel) {
+  Widget _buildTrustLevelCard(
+    int trustLevel,
+    bool isDark,
+    Color textColor,
+    Color textMuted,
+    Color cardBorder,
+    Color accentColor,
+  ) {
     final (name, color, icon, multiplier) = switch (trustLevel) {
       0 => ('New User', Colors.grey, Icons.person_outline, '0.5x'),
-      1 => ('Verified', Colors.blue, Icons.verified, '1.0x'),
-      2 => ('Trusted', Colors.green, Icons.star, '1.2x'),
-      _ => ('Verified', Colors.blue, Icons.verified, '1.0x'),
+      1 => ('Verified', const Color(0xFF3B82F6), Icons.verified, '1.0x'),
+      2 => ('Trusted', const Color(0xFF22C55E), Icons.star, '1.2x'),
+      _ => ('Verified', const Color(0xFF3B82F6), Icons.verified, '1.0x'),
     };
 
     return GestureDetector(
@@ -515,15 +675,15 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   Text(
                     'Trust Level',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.6),
+                      color: textMuted,
                       fontSize: 13,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     name,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: textColor,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -561,7 +721,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             const SizedBox(width: 8),
             Icon(
               Icons.info_outline,
-              color: Colors.white.withValues(alpha: 0.4),
+              color: textMuted,
               size: 20,
             ),
           ],
@@ -570,24 +730,31 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     );
   }
 
-  Widget _buildActiveBoostsSection(UserConsumables consumables) {
+  Widget _buildActiveBoostsSection(
+    UserConsumables consumables,
+    bool isDark,
+    Color textColor,
+    Color textMuted,
+  ) {
     final remaining = consumables.remaining2xTime;
     final hours = remaining?.inHours ?? 0;
     final minutes = (remaining?.inMinutes ?? 0) % 60;
+    const boostColor = Color(0xFF9C27B0);
+    const boostHighlight = Color(0xFFE040FB);
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF9C27B0).withValues(alpha: 0.3),
-            const Color(0xFF9C27B0).withValues(alpha: 0.1),
+            boostColor.withValues(alpha: 0.3),
+            boostColor.withValues(alpha: 0.1),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF9C27B0).withValues(alpha: 0.5)),
+        border: Border.all(color: boostColor.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
@@ -596,11 +763,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             height: 48,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF9C27B0).withValues(alpha: 0.3),
+              color: boostColor.withValues(alpha: 0.3),
             ),
             child: const Icon(
               Icons.flash_on,
-              color: Color(0xFFE040FB),
+              color: boostHighlight,
               size: 28,
             ),
           ),
@@ -614,21 +781,21 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     Text(
                       '2x XP ACTIVE',
                       style: TextStyle(
-                        color: Color(0xFFE040FB),
+                        color: boostHighlight,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1,
                       ),
                     ),
                     SizedBox(width: 6),
-                    Icon(Icons.auto_awesome, color: Color(0xFFE040FB), size: 16),
+                    Icon(Icons.auto_awesome, color: boostHighlight, size: 16),
                   ],
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '${hours}h ${minutes}m remaining',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: textColor.withValues(alpha: 0.7),
                     fontSize: 13,
                   ),
                 ),
@@ -640,11 +807,16 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     );
   }
 
-  Widget _buildHowToEarnSection() {
+  Widget _buildHowToEarnSection(
+    bool isDark,
+    Color textColor,
+    Color textMuted,
+    Color elevatedColor,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: elevatedColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -652,12 +824,12 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.lightbulb_outline, color: Colors.amber.shade400, size: 20),
+              Icon(Icons.lightbulb_outline, color: AppColors.warning, size: 20),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'How to Earn Items',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: textColor,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -669,24 +841,32 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             icon: Icons.calendar_today,
             title: 'Daily Crates',
             description: 'Pick 1 of 3 crates daily',
+            textColor: textColor,
+            textMuted: textMuted,
           ),
           const SizedBox(height: 12),
           _buildEarnMethod(
             icon: Icons.local_fire_department,
             title: 'Streak Milestones',
             description: '7, 30, 100 day streaks',
+            textColor: textColor,
+            textMuted: textMuted,
           ),
           const SizedBox(height: 12),
           _buildEarnMethod(
             icon: Icons.emoji_events,
             title: 'Level Up Rewards',
             description: 'Every 5 levels',
+            textColor: textColor,
+            textMuted: textMuted,
           ),
           const SizedBox(height: 12),
           _buildEarnMethod(
             icon: Icons.check_circle,
             title: 'Complete All Daily Goals',
             description: 'Unlock Activity Crate',
+            textColor: textColor,
+            textMuted: textMuted,
           ),
         ],
       ),
@@ -697,6 +877,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     required IconData icon,
     required String title,
     required String description,
+    required Color textColor,
+    required Color textMuted,
   }) {
     return Row(
       children: [
@@ -705,9 +887,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           height: 36,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: 0.1),
+            color: textColor.withValues(alpha: 0.1),
           ),
-          child: Icon(icon, color: Colors.white70, size: 18),
+          child: Icon(icon, color: textMuted, size: 18),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -716,8 +898,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: textColor,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -725,7 +907,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               Text(
                 description,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.5),
+                  color: textMuted,
                   fontSize: 12,
                 ),
               ),
@@ -750,6 +932,12 @@ class _ConsumableCard extends StatelessWidget {
   final String? disabledReason;
   final String? helperText;
   final VoidCallback? onAction;
+  // Theme parameters
+  final bool isDark;
+  final Color elevatedColor;
+  final Color textColor;
+  final Color textMuted;
+  final Color cardBorder;
 
   const _ConsumableCard({
     required this.icon,
@@ -757,6 +945,11 @@ class _ConsumableCard extends StatelessWidget {
     required this.name,
     required this.description,
     required this.count,
+    required this.isDark,
+    required this.elevatedColor,
+    required this.textColor,
+    required this.textMuted,
+    required this.cardBorder,
     this.actionLabel,
     this.isLoading = false,
     this.isDisabled = false,
@@ -768,16 +961,17 @@ class _ConsumableCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final canUse = count > 0 && !isDisabled && actionLabel != null;
+    final disabledBgColor = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE5E5E5);
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: elevatedColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: count > 0
               ? iconColor.withValues(alpha: 0.3)
-              : Colors.white.withValues(alpha: 0.1),
+              : cardBorder,
         ),
       ),
       child: Row(
@@ -833,7 +1027,7 @@ class _ConsumableCard extends StatelessWidget {
                 Text(
                   name,
                   style: TextStyle(
-                    color: count > 0 ? Colors.white : Colors.white54,
+                    color: count > 0 ? textColor : textMuted,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -842,7 +1036,7 @@ class _ConsumableCard extends StatelessWidget {
                 Text(
                   description,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: count > 0 ? 0.6 : 0.3),
+                    color: count > 0 ? textMuted : textMuted.withValues(alpha: 0.5),
                     fontSize: 13,
                   ),
                 ),
@@ -851,7 +1045,7 @@ class _ConsumableCard extends StatelessWidget {
                   Text(
                     helperText!,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.4),
+                      color: textMuted.withValues(alpha: 0.7),
                       fontSize: 11,
                       fontStyle: FontStyle.italic,
                     ),
@@ -862,7 +1056,7 @@ class _ConsumableCard extends StatelessWidget {
                   Text(
                     disabledReason!,
                     style: TextStyle(
-                      color: Colors.amber.withValues(alpha: 0.7),
+                      color: AppColors.warning.withValues(alpha: 0.9),
                       fontSize: 11,
                     ),
                   ),
@@ -876,22 +1070,22 @@ class _ConsumableCard extends StatelessWidget {
             ElevatedButton(
               onPressed: canUse && !isLoading ? onAction : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: canUse ? iconColor : Colors.grey.shade800,
+                backgroundColor: canUse ? iconColor : disabledBgColor,
                 foregroundColor: Colors.white,
-                disabledBackgroundColor: Colors.grey.shade800,
-                disabledForegroundColor: Colors.white54,
+                disabledBackgroundColor: disabledBgColor,
+                disabledForegroundColor: textMuted,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               child: isLoading
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: textColor,
                       ),
                     )
                   : Text(

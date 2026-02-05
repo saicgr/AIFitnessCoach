@@ -110,6 +110,28 @@ Map<String, dynamic> _$XPLeaderboardEntryToJson(XPLeaderboardEntry instance) =>
       'rank': instance.rank,
     };
 
+LevelUpReward _$LevelUpRewardFromJson(Map<String, dynamic> json) =>
+    LevelUpReward(
+      level: (json['level'] as num).toInt(),
+      type: json['type'] as String,
+      quantity: (json['quantity'] as num).toInt(),
+      description: json['description'] as String,
+      bonusType: json['bonus_type'] as String?,
+      bonusQuantity: (json['bonus_quantity'] as num?)?.toInt(),
+      bonusDescription: json['bonus_description'] as String?,
+    );
+
+Map<String, dynamic> _$LevelUpRewardToJson(LevelUpReward instance) =>
+    <String, dynamic>{
+      'level': instance.level,
+      'type': instance.type,
+      'quantity': instance.quantity,
+      'description': instance.description,
+      'bonus_type': instance.bonusType,
+      'bonus_quantity': instance.bonusQuantity,
+      'bonus_description': instance.bonusDescription,
+    };
+
 LevelUpEvent _$LevelUpEventFromJson(Map<String, dynamic> json) => LevelUpEvent(
   newLevel: (json['new_level'] as num).toInt(),
   oldLevel: (json['old_level'] as num).toInt(),
@@ -118,6 +140,9 @@ LevelUpEvent _$LevelUpEventFromJson(Map<String, dynamic> json) => LevelUpEvent(
   totalXp: (json['total_xp'] as num?)?.toInt() ?? 0,
   xpEarned: (json['xp_earned'] as num?)?.toInt() ?? 0,
   unlockedReward: json['unlocked_reward'] as String?,
+  rewards: (json['rewards'] as List<dynamic>?)
+      ?.map((e) => LevelUpReward.fromJson(e as Map<String, dynamic>))
+      .toList(),
 );
 
 Map<String, dynamic> _$LevelUpEventToJson(LevelUpEvent instance) =>
@@ -129,4 +154,5 @@ Map<String, dynamic> _$LevelUpEventToJson(LevelUpEvent instance) =>
       'total_xp': instance.totalXp,
       'xp_earned': instance.xpEarned,
       'unlocked_reward': instance.unlockedReward,
+      'rewards': instance.rewards,
     };

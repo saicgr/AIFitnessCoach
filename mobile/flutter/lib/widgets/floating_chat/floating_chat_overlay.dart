@@ -8,6 +8,7 @@ import '../../data/models/chat_message.dart';
 import '../../data/models/coach_persona.dart';
 import '../../data/providers/guest_mode_provider.dart';
 import '../../data/providers/guest_usage_limits_provider.dart';
+import '../../data/providers/xp_provider.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../screens/ai_settings/ai_settings_screen.dart';
@@ -180,6 +181,9 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
     try {
       await ref.read(chatMessagesProvider.notifier).sendMessage(message);
       _scrollToBottom();
+
+      // Award first-time chat bonus (+50 XP)
+      ref.read(xpProvider.notifier).checkFirstChatBonus();
     } catch (e) {
       debugPrint('Error sending message: $e');
     } finally {

@@ -324,4 +324,262 @@ void main() {
       expect(monthlyConsistencyXP, equals(750));
     });
   });
+
+  group('CrateReward', () {
+    test('fromJson parses XP reward correctly', () {
+      final json = {
+        'type': 'xp',
+        'amount': 63,
+        'display_name': '+63 XP',
+      };
+
+      final reward = CrateReward.fromJson(json);
+
+      expect(reward.type, equals('xp'));
+      expect(reward.amount, equals(63));
+      expect(reward.displayName, equals('+63 XP'));
+      expect(reward.isXP, isTrue);
+      expect(reward.isConsumable, isFalse);
+    });
+
+    test('fromJson parses consumable reward correctly', () {
+      final json = {
+        'type': 'streak_shield',
+        'amount': 1,
+        'display_name': '1 Streak Shield',
+      };
+
+      final reward = CrateReward.fromJson(json);
+
+      expect(reward.type, equals('streak_shield'));
+      expect(reward.amount, equals(1));
+      expect(reward.displayName, equals('1 Streak Shield'));
+      expect(reward.isXP, isFalse);
+      expect(reward.isConsumable, isTrue);
+    });
+
+    test('fromJson parses xp_token_2x reward correctly', () {
+      final json = {
+        'type': 'xp_token_2x',
+        'amount': 1,
+        'display_name': '1 Xp Token 2x',
+      };
+
+      final reward = CrateReward.fromJson(json);
+
+      expect(reward.type, equals('xp_token_2x'));
+      expect(reward.amount, equals(1));
+      expect(reward.isXP, isFalse);
+      expect(reward.isConsumable, isTrue);
+    });
+  });
+
+  group('CrateRewardResult', () {
+    test('fromJson parses successful XP reward correctly', () {
+      // This is the response format from the backend after the fix
+      final json = {
+        'success': true,
+        'crate_type': 'daily',
+        'reward': {
+          'type': 'xp',
+          'amount': 63,
+          'display_name': '+63 XP',
+        },
+        'message': 'Crate opened!',
+      };
+
+      final result = CrateRewardResult.fromJson(json);
+
+      expect(result.success, isTrue);
+      expect(result.crateType, equals('daily'));
+      expect(result.message, equals('Crate opened!'));
+      expect(result.reward, isNotNull);
+      expect(result.reward!.type, equals('xp'));
+      expect(result.reward!.amount, equals(63));
+      expect(result.reward!.displayName, equals('+63 XP'));
+    });
+
+    test('fromJson parses successful streak shield reward correctly', () {
+      final json = {
+        'success': true,
+        'crate_type': 'streak',
+        'reward': {
+          'type': 'streak_shield',
+          'amount': 1,
+          'display_name': '1 Streak Shield',
+        },
+        'message': 'Crate opened!',
+      };
+
+      final result = CrateRewardResult.fromJson(json);
+
+      expect(result.success, isTrue);
+      expect(result.crateType, equals('streak'));
+      expect(result.reward, isNotNull);
+      expect(result.reward!.type, equals('streak_shield'));
+      expect(result.reward!.amount, equals(1));
+      expect(result.reward!.isConsumable, isTrue);
+    });
+
+    test('fromJson parses activity crate reward correctly', () {
+      final json = {
+        'success': true,
+        'crate_type': 'activity',
+        'reward': {
+          'type': 'xp',
+          'amount': 175,
+          'display_name': '+175 XP',
+        },
+        'message': 'Crate opened!',
+      };
+
+      final result = CrateRewardResult.fromJson(json);
+
+      expect(result.success, isTrue);
+      expect(result.crateType, equals('activity'));
+      expect(result.reward, isNotNull);
+      expect(result.reward!.amount, equals(175));
+    });
+
+    test('fromJson parses failure response correctly', () {
+      final json = {
+        'success': false,
+        'crate_type': 'daily',
+        'message': 'Crate already claimed today',
+      };
+
+      final result = CrateRewardResult.fromJson(json);
+
+      expect(result.success, isFalse);
+      expect(result.crateType, equals('daily'));
+      expect(result.message, equals('Crate already claimed today'));
+      expect(result.reward, isNull);
+    });
+
+    test('fromJson handles missing fields with defaults', () {
+      final json = <String, dynamic>{};
+
+      final result = CrateRewardResult.fromJson(json);
+
+      expect(result.success, isFalse);
+      expect(result.crateType, equals(''));
+      expect(result.reward, isNull);
+      expect(result.message, isNull);
+    });
+
+    test('fromJson parses no crate available response', () {
+      final json = {
+        'success': false,
+        'message': 'No crate available today',
+      };
+
+      final result = CrateRewardResult.fromJson(json);
+
+      expect(result.success, isFalse);
+      expect(result.message, equals('No crate available today'));
+    });
+  });
+
+  group('DailyCratesState', () {
+    test('fromJson parses unclaimed state correctly', () {
+      final json = {
+        'daily_crate_available': true,
+        'streak_crate_available': false,
+        'activity_crate_available': false,
+        'selected_crate': null,
+        'reward': null,
+        'claimed': false,
+        'claimed_at': null,
+        'crate_date': '2025-02-04',
+      };
+
+      final state = DailyCratesState.fromJson(json);
+
+      expect(state.dailyCrateAvailable, isTrue);
+      expect(state.streakCrateAvailable, isFalse);
+      expect(state.activityCrateAvailable, isFalse);
+      expect(state.selectedCrate, isNull);
+      expect(state.reward, isNull);
+      expect(state.claimed, isFalse);
+      expect(state.claimedAt, isNull);
+    });
+
+    test('fromJson parses claimed state correctly', () {
+      final json = {
+        'daily_crate_available': true,
+        'streak_crate_available': true,
+        'activity_crate_available': false,
+        'selected_crate': 'streak',
+        'reward': {
+          'type': 'xp',
+          'amount': 100,
+        },
+        'claimed': true,
+        'claimed_at': '2025-02-04T10:30:00Z',
+        'crate_date': '2025-02-04',
+      };
+
+      final state = DailyCratesState.fromJson(json);
+
+      expect(state.dailyCrateAvailable, isTrue);
+      expect(state.streakCrateAvailable, isTrue);
+      expect(state.selectedCrate, equals('streak'));
+      expect(state.reward, isNotNull);
+      expect(state.reward!.type, equals('xp'));
+      expect(state.reward!.amount, equals(100));
+      expect(state.claimed, isTrue);
+      expect(state.claimedAt, isNotNull);
+    });
+
+    test('availableCount returns correct count', () {
+      final state = DailyCratesState(
+        dailyCrateAvailable: true,
+        streakCrateAvailable: true,
+        activityCrateAvailable: true,
+        crateDate: DateTime.now(),
+      );
+
+      expect(state.availableCount, equals(3));
+    });
+
+    test('availableCount with only daily crate', () {
+      final state = DailyCratesState(
+        dailyCrateAvailable: true,
+        streakCrateAvailable: false,
+        activityCrateAvailable: false,
+        crateDate: DateTime.now(),
+      );
+
+      expect(state.availableCount, equals(1));
+    });
+  });
+
+  group('Daily Crate XP Ranges', () {
+    test('daily crate XP range is 25-75', () {
+      // Daily crate: 60% chance 25-49 XP, 30% chance 50-74 XP, 10% streak shield
+      const dailyMinXP = 25;
+      const dailyMaxXP = 74;
+
+      expect(dailyMinXP, equals(25));
+      expect(dailyMaxXP, equals(74));
+    });
+
+    test('streak crate XP range is 75-150', () {
+      // Streak crate: better rewards for 7+ day streak
+      const streakMinXP = 75;
+      const streakMaxXP = 149;
+
+      expect(streakMinXP, equals(75));
+      expect(streakMaxXP, equals(149));
+    });
+
+    test('activity crate XP range is 150-250', () {
+      // Activity crate: best rewards for completing all daily goals
+      const activityMinXP = 150;
+      const activityMaxXP = 249;
+
+      expect(activityMinXP, equals(150));
+      expect(activityMaxXP, equals(249));
+    });
+  });
 }

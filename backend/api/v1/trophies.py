@@ -485,6 +485,74 @@ async def mark_trophies_notified(
 
 
 # ============================================
+# Trophy Check Endpoints
+# ============================================
+
+class TrophyCheckResponse(BaseModel):
+    """Response for trophy check endpoint."""
+    trophies_awarded: List[Dict[str, Any]] = []
+    count: int = 0
+
+
+@router.post("/trophies/{user_id}/check-all", response_model=TrophyCheckResponse)
+async def check_all_user_trophies(user_id: str):
+    """
+    Check all trophy categories for a user and award any earned trophies.
+
+    This is useful for:
+    - Backfilling trophies for existing users
+    - Manual refresh from the app
+    - Catching any missed trophies
+
+    Returns list of newly awarded trophies.
+    """
+    logger.info(f"Checking all trophies for user {user_id}")
+
+    try:
+        from api.v1.trophy_triggers import check_all_trophies
+
+        awarded = await check_all_trophies(user_id)
+
+        return TrophyCheckResponse(
+            trophies_awarded=awarded,
+            count=len(awarded)
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to check trophies: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/trophies/{user_id}/check-workout")
+async def check_workout_trophies(
+    user_id: str,
+    workout_data: Dict[str, Any] = None
+):
+    """
+    Check trophies after workout completion.
+
+    Should be called after a workout is logged.
+    Checks volume, time, consistency, and exercise mastery trophies.
+    """
+    logger.info(f"Checking workout trophies for user {user_id}")
+
+    try:
+        from api.v1.trophy_triggers import check_workout_completion_trophies
+
+        workout_data = workout_data or {}
+        awarded = await check_workout_completion_trophies(user_id, workout_data)
+
+        return {
+            "trophies_awarded": awarded,
+            "count": len(awarded)
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to check workout trophies: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================
 # XP Endpoints (User XP Data)
 # ============================================
 

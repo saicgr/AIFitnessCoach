@@ -99,9 +99,11 @@ import '../screens/live_chat/live_chat_screen.dart';
 import '../screens/admin_support/admin_support_list_screen.dart';
 import '../screens/admin_support/admin_chat_screen.dart';
 import '../screens/trophies/trophy_room_screen.dart';
+import '../screens/leaderboard/xp_leaderboard_screen.dart';
 import '../screens/rewards/rewards_screen.dart';
 import '../screens/inventory/inventory_screen.dart';
 import '../data/providers/guest_mode_provider.dart';
+import '../data/providers/xp_provider.dart';
 import '../screens/injuries/injuries_list_screen.dart';
 import '../screens/injuries/report_injury_screen.dart';
 import '../screens/injuries/injury_detail_screen.dart';
@@ -175,6 +177,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       final isLoggedIn = authState.status == AuthStatus.authenticated;
+
+      // Process daily login XP early so first login bonus is awarded even if user
+      // doesn't reach HomeScreen (e.g., goes through onboarding first).
+      // This is fire-and-forget - processDailyLogin() has its own deduplication.
+      if (isLoggedIn) {
+        // Schedule async processing without blocking redirect
+        Future.microtask(() {
+          ref.read(xpProvider.notifier).processDailyLogin();
+        });
+      }
+
       final isOnSplash = state.matchedLocation == '/splash';
       final isOnSeniorOnboarding = state.matchedLocation == '/senior-onboarding';
       final isOnModeSelection = state.matchedLocation == '/mode-selection';
@@ -1209,7 +1222,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // XP Leaderboard
       GoRoute(
         path: '/xp-leaderboard',
-        builder: (context, state) => const TrophyRoomScreen(), // TODO: Create dedicated leaderboard screen
+        builder: (context, state) => const XPLeaderboardScreen(),
       ),
 
       // Rewards - Claim gifts and rewards

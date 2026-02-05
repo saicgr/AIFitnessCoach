@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/recipe_suggestion.dart';
 import '../../data/providers/recipe_suggestion_provider.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/providers/xp_provider.dart';
 import 'widgets/recipe_suggestion_card.dart';
 import 'widgets/recipe_preferences_sheet.dart';
 
@@ -379,11 +380,26 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
   Future<void> _toggleSave(RecipeSuggestion recipe) async {
     final user = await ref.read(authRepositoryProvider).getCurrentUser();
     if (user != null && recipe.id != null) {
+      final wasSaved = recipe.userSaved;
+
       ref.read(recipeSuggestionProvider.notifier).toggleSaveRecipe(
         userId: user.id,
         suggestionId: recipe.id!,
-        save: !recipe.userSaved,
+        save: !wasSaved,
       );
+
+      // Check for first recipe XP bonus when SAVING (not unsaving)
+      if (!wasSaved) {
+        final xpAwarded = await ref.read(xpProvider.notifier).checkFirstRecipeBonus();
+        if (xpAwarded > 0 && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Recipe saved! +$xpAwarded XP first recipe bonus!'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
     }
   }
 

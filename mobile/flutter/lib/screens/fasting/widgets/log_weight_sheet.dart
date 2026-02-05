@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/fasting_repository.dart';
+import '../../../data/repositories/measurements_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../home/widgets/components/sheet_theme_colors.dart';
 
@@ -254,6 +255,9 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
           _selectedDate.day == today.day) {
         ref.read(xpProvider.notifier).markWeightLogged();
       }
+
+      // Refresh measurements history so new weight appears when user views history
+      ref.invalidate(measurementsProvider);
 
       if (mounted) {
         HapticService.success();

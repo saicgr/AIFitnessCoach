@@ -7,6 +7,7 @@ import '../../data/models/chat_message.dart';
 import '../../data/models/coach_persona.dart';
 import '../../data/models/live_chat_session.dart';
 import '../../data/providers/live_chat_provider.dart';
+import '../../data/providers/xp_provider.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/coach_avatar.dart';
@@ -67,6 +68,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     try {
       await ref.read(chatMessagesProvider.notifier).sendMessage(message);
       _scrollToBottom();
+
+      // Award first-time chat bonus (+50 XP)
+      ref.read(xpProvider.notifier).checkFirstChatBonus();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

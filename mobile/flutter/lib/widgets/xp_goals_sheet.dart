@@ -320,6 +320,7 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
   ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
+      physics: const ClampingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -372,6 +373,7 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
   ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
+      physics: const ClampingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -403,6 +405,7 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
   ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
+      physics: const ClampingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -467,6 +470,66 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
       ),
       child: Column(
         children: [
+          // Header row with title, total XP, and info button
+          Row(
+            children: [
+              Text(
+                'Level Progress',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: textMuted,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const Spacer(),
+              // Total XP badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: isDark ? 0.15 : 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.stars_rounded,
+                      size: 14,
+                      color: accentColor,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${userXp?.formattedTotalXp ?? "0"} XP',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: accentColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Info button
+              GestureDetector(
+                onTap: () => _showXPInfoDialog(context, isDark),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: textMuted.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.info_outline_rounded,
+                    size: 16,
+                    color: textMuted,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           // Level badges with circular progress
           Row(
             children: [
@@ -1938,6 +2001,141 @@ class _DailyGoal {
     required this.isComplete,
     required this.icon,
   });
+}
+
+/// Shows the XP calculation info dialog
+void _showXPInfoDialog(BuildContext context, bool isDark) {
+  HapticFeedback.lightImpact();
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Row(
+        children: [
+          Icon(
+            Icons.stars_rounded,
+            color: isDark ? const Color(0xFF00D9FF) : const Color(0xFF0099CC),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'How XP Works',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+          ),
+        ],
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildXPInfoSection(
+              'Daily Goals',
+              [
+                'Login: +5 XP',
+                'Complete Workout: +100 XP',
+                'Log Meal: +25 XP',
+                'Log Weight: +15 XP',
+                'Hit Protein Goal: +50 XP',
+                'Log Body Measurements: +20 XP',
+              ],
+              isDark,
+            ),
+            const SizedBox(height: 16),
+            _buildXPInfoSection(
+              'First-Time Bonuses',
+              [
+                'First Workout: +150 XP',
+                'First Protein Goal: +100 XP',
+                'First PR: +100 XP',
+                'First Progress Photo: +75 XP',
+                'First Meal/Weight/Chat/Measurements: +50 XP each',
+              ],
+              isDark,
+            ),
+            const SizedBox(height: 16),
+            _buildXPInfoSection(
+              'Streaks & Milestones',
+              [
+                '7-Day Streak: +100 XP',
+                '30-Day Streak: +500 XP',
+                '100-Day Streak: +2000 XP',
+                '365-Day Streak: +10000 XP',
+              ],
+              isDark,
+            ),
+            const SizedBox(height: 16),
+            _buildXPInfoSection(
+              'Special Bonuses',
+              [
+                'First Login: +250 XP',
+                'Early Adopter (First 100): +525 XP',
+                'Weekly/Monthly Checkpoints: +100-200 XP',
+              ],
+              isDark,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(
+            'Got it!',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isDark ? const Color(0xFF00D9FF) : const Color(0xFF0099CC),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildXPInfoSection(String title, List<String> items, bool isDark) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        title,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: isDark ? Colors.white70 : Colors.black87,
+        ),
+      ),
+      const SizedBox(height: 6),
+      ...items.map((item) => Padding(
+        padding: const EdgeInsets.only(left: 8, bottom: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '\u2022 ',
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.white54 : Colors.black54,
+              ),
+            ),
+            Expanded(
+              child: Text(
+                item,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.white54 : Colors.black54,
+                ),
+              ),
+            ),
+          ],
+        ),
+      )),
+    ],
+  );
 }
 
 /// Shows the "View All Levels" sheet
