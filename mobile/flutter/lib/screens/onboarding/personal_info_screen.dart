@@ -56,7 +56,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   }
 
   bool get _canContinue {
-    // Require name, DOB, gender, height, and weight
+    // Require name, DOB, gender, height, weight, AND weight goal
     return _name != null &&
         _name!.isNotEmpty &&
         _dateOfBirth != null &&
@@ -64,11 +64,96 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
         _heightCm != null &&
         _heightCm! > 0 &&
         _weightKg != null &&
-        _weightKg! > 0;
+        _weightKg! > 0 &&
+        _weightDirection != null &&
+        (_weightDirection == 'maintain' || _weightChangeAmount != null);
+  }
+
+  /// Check if target weight would put user in unhealthy range
+  /// Uses BMI thresholds internally but does not display BMI to user
+  bool _isTargetWeightUnhealthy() {
+    if (_heightCm == null || _weightKg == null) return false;
+    if (_weightDirection == 'maintain' || _weightChangeAmount == null) return false;
+
+    final heightM = _heightCm! / 100;
+    double targetWeightKg;
+
+    if (_weightDirection == 'lose') {
+      targetWeightKg = _weightKg! - _weightChangeAmount!;
+    } else {
+      targetWeightKg = _weightKg! + _weightChangeAmount!;
+    }
+
+    // Ensure target weight is positive
+    if (targetWeightKg <= 0) return true;
+
+    final targetBmi = targetWeightKg / (heightM * heightM);
+
+    // Unhealthy if BMI would be < 18.5 (underweight) or > 40 (severely obese)
+    return targetBmi < 18.5 || targetBmi > 40;
+  }
+
+  Future<bool> _showHealthWarningDialog() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final direction = _weightDirection == 'lose' ? 'lose' : 'gain';
+
+    return await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 28),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Are you sure?',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'This goal may not be healthy for your body type. '
+          'We recommend consulting with a healthcare professional before '
+          'attempting to $direction this much weight.',
+          style: TextStyle(
+            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              'Adjust Goal',
+              style: TextStyle(
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.warning,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('I Understand'),
+          ),
+        ],
+      ),
+    ) ?? false;
   }
 
   Future<void> _saveAndContinue() async {
     if (!_canContinue || _isLoading) return;
+
+    // Check if goal weight is unhealthy
+    if (_isTargetWeightUnhealthy()) {
+      final confirmed = await _showHealthWarningDialog();
+      if (!confirmed) return;
+    }
 
     HapticFeedback.mediumImpact();
     setState(() => _isLoading = true);

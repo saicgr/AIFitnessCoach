@@ -209,6 +209,11 @@ class ProfileScreen extends ConsumerWidget {
               onTap: () => context.push('/stats'),
             ),
             SettingItem(
+              icon: Icons.inventory_2_outlined,
+              title: 'Inventory',
+              onTap: () => context.push('/inventory'),
+            ),
+            SettingItem(
               icon: Icons.person_outline,
               title: 'Edit Profile',
               onTap: () => _showEditPersonalInfoSheet(context),

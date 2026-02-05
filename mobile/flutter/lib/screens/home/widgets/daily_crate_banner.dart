@@ -278,7 +278,22 @@ class _DailyCrateSelectionSheetState
     extends ConsumerState<DailyCrateSelectionSheet> {
   bool _isLoading = false;
   String? _selectedCrate;
-  CrateReward? _reward;
+
+  void _showRewardToast(BuildContext context, CrateReward? reward) {
+    if (reward == null) return;
+
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => _AnimatedRewardToast(
+        reward: reward,
+        onDismiss: () => overlayEntry.remove(),
+      ),
+    );
+
+    overlay.insert(overlayEntry);
+  }
 
   Future<void> _claimCrate(String crateType) async {
     if (_isLoading) return;
@@ -295,16 +310,14 @@ class _DailyCrateSelectionSheetState
 
       if (result.success) {
         HapticService.success();
-        setState(() {
-          _reward = result.reward;
-        });
 
-        // Wait a moment to show the reward, then close
-        await Future.delayed(const Duration(milliseconds: 2000));
-
+        // Close bottom sheet immediately
         if (mounted) {
           Navigator.of(context).pop();
           widget.onCrateClaimed?.call();
+
+          // Show animated reward toast
+          _showRewardToast(context, result.reward);
         }
       } else {
         HapticService.error();
@@ -371,117 +384,91 @@ class _DailyCrateSelectionSheetState
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  if (_reward != null) ...[
-                    const Text(
-                      '🎉',
-                      style: TextStyle(fontSize: 48),
+                  Text(
+                    '🎁 Pick Your Daily Crate',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'You got:',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: textSecondary,
-                      ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Choose 1 crate to open today',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: textSecondary,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _reward!.displayName,
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
-                      ),
-                    ),
-                  ] else ...[
-                    Text(
-                      '🎁 Pick Your Daily Crate',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Choose 1 crate to open today',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: textSecondary,
-                      ),
-                    ),
-                  ],
+                  ),
                 ],
               ),
             ),
 
-            if (_reward == null) ...[
-              // Crate options
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  children: [
-                    // Daily crate - always available
-                    if (widget.cratesState.dailyCrateAvailable)
-                      _CrateOption(
-                        crateType: 'daily',
-                        title: 'Daily Crate',
-                        subtitle: 'Basic rewards',
-                        icon: '📦',
-                        color: const Color(0xFF78909C), // Blue grey
-                        isLoading: _isLoading && _selectedCrate == 'daily',
-                        isDisabled: _isLoading && _selectedCrate != 'daily',
-                        onTap: () => _claimCrate('daily'),
-                        isDark: isDark,
-                      ),
-
-                    const SizedBox(height: 12),
-
-                    // Streak crate - requires 7+ day streak
+            // Crate options
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  // Daily crate - always available
+                  if (widget.cratesState.dailyCrateAvailable)
                     _CrateOption(
-                      crateType: 'streak',
-                      title: 'Streak Crate',
-                      subtitle: widget.cratesState.streakCrateAvailable
-                          ? 'Better rewards for 7+ day streak'
-                          : 'Requires 7+ day streak',
-                      icon: '🔥',
-                      color: const Color(0xFFFF7043), // Deep orange
-                      isLoading: _isLoading && _selectedCrate == 'streak',
-                      isDisabled: !widget.cratesState.streakCrateAvailable ||
-                          (_isLoading && _selectedCrate != 'streak'),
-                      isLocked: !widget.cratesState.streakCrateAvailable,
-                      onTap: widget.cratesState.streakCrateAvailable
-                          ? () => _claimCrate('streak')
-                          : null,
+                      crateType: 'daily',
+                      title: 'Daily Crate',
+                      subtitle: 'Basic rewards',
+                      icon: '📦',
+                      color: const Color(0xFF78909C), // Blue grey
+                      isLoading: _isLoading && _selectedCrate == 'daily',
+                      isDisabled: _isLoading && _selectedCrate != 'daily',
+                      onTap: () => _claimCrate('daily'),
                       isDark: isDark,
                     ),
 
-                    const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-                    // Activity crate - requires all daily goals complete
-                    _CrateOption(
-                      crateType: 'activity',
-                      title: 'Activity Crate',
-                      subtitle: widget.cratesState.activityCrateAvailable
-                          ? 'Best rewards for completing all goals'
-                          : 'Complete all daily goals to unlock',
-                      icon: '⭐',
-                      color: const Color(0xFFFFB300), // Amber
-                      isLoading: _isLoading && _selectedCrate == 'activity',
-                      isDisabled: !widget.cratesState.activityCrateAvailable ||
-                          (_isLoading && _selectedCrate != 'activity'),
-                      isLocked: !widget.cratesState.activityCrateAvailable,
-                      onTap: widget.cratesState.activityCrateAvailable
-                          ? () => _claimCrate('activity')
-                          : null,
-                      isDark: isDark,
-                    ),
-                  ],
-                ),
+                  // Streak crate - requires 7+ day streak
+                  _CrateOption(
+                    crateType: 'streak',
+                    title: 'Streak Crate',
+                    subtitle: widget.cratesState.streakCrateAvailable
+                        ? 'Better rewards for 7+ day streak'
+                        : 'Requires 7+ day streak',
+                    icon: '🔥',
+                    color: const Color(0xFFFF7043), // Deep orange
+                    isLoading: _isLoading && _selectedCrate == 'streak',
+                    isDisabled: !widget.cratesState.streakCrateAvailable ||
+                        (_isLoading && _selectedCrate != 'streak'),
+                    isLocked: !widget.cratesState.streakCrateAvailable,
+                    onTap: widget.cratesState.streakCrateAvailable
+                        ? () => _claimCrate('streak')
+                        : null,
+                    isDark: isDark,
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Activity crate - requires all daily goals complete
+                  _CrateOption(
+                    crateType: 'activity',
+                    title: 'Activity Crate',
+                    subtitle: widget.cratesState.activityCrateAvailable
+                        ? 'Best rewards for completing all goals'
+                        : 'Complete all daily goals to unlock',
+                    icon: '⭐',
+                    color: const Color(0xFFFFB300), // Amber
+                    isLoading: _isLoading && _selectedCrate == 'activity',
+                    isDisabled: !widget.cratesState.activityCrateAvailable ||
+                        (_isLoading && _selectedCrate != 'activity'),
+                    isLocked: !widget.cratesState.activityCrateAvailable,
+                    onTap: widget.cratesState.activityCrateAvailable
+                        ? () => _claimCrate('activity')
+                        : null,
+                    isDark: isDark,
+                  ),
+                ],
               ),
+            ),
 
-              const SizedBox(height: 24),
-            ],
+            const SizedBox(height: 24),
 
             // Bottom padding
             SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
@@ -634,6 +621,137 @@ class _CrateOption extends StatelessWidget {
                   size: 18,
                 ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Animated toast that slides in from top to show crate reward
+class _AnimatedRewardToast extends StatefulWidget {
+  final CrateReward reward;
+  final VoidCallback onDismiss;
+
+  const _AnimatedRewardToast({
+    required this.reward,
+    required this.onDismiss,
+  });
+
+  @override
+  State<_AnimatedRewardToast> createState() => _AnimatedRewardToastState();
+}
+
+class _AnimatedRewardToastState extends State<_AnimatedRewardToast>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, -1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutBack,
+    ));
+
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+    );
+
+    _controller.forward();
+
+    // Auto dismiss after 2.5 seconds
+    Future.delayed(const Duration(milliseconds: 2500), () {
+      if (mounted) {
+        _controller.reverse().then((_) {
+          widget.onDismiss();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+
+    return Positioned(
+      top: MediaQuery.of(context).padding.top + 16,
+      left: 20,
+      right: 20,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  color: backgroundColor,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFFFFB300).withOpacity(0.5),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFFB300).withOpacity(0.3),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      '🎉',
+                      style: TextStyle(fontSize: 28),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      widget.reward.displayName,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),

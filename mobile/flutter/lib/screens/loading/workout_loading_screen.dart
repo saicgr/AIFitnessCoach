@@ -198,8 +198,9 @@ class _WorkoutLoadingScreenState extends ConsumerState<WorkoutLoadingScreen>
     _pollCount++;
     debugPrint('🔄 [WorkoutLoading] Polling for workouts (attempt $_pollCount/$_maxPolls)');
 
-    ref.invalidate(todayWorkoutProvider);
-    await Future.delayed(const Duration(milliseconds: 500));
+    // Use refresh() instead of invalidate() to prevent creating new provider instances
+    // This preserves the _isAutoGenerating flag and prevents duplicate generation calls
+    await ref.read(todayWorkoutProvider.notifier).refresh();
 
     final todayWorkoutState = ref.read(todayWorkoutProvider);
 

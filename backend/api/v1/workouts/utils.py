@@ -3787,7 +3787,7 @@ async def get_user_hormonal_context(user_id: str) -> dict:
         # Get hormonal profile (use maybe_single to handle users without hormonal profile)
         profile_response = db.client.table("hormonal_profiles").select("*").eq("user_id", user_id).maybe_single().execute()
 
-        if profile_response.data:
+        if profile_response and profile_response.data:
             profile = profile_response.data
             context["hormone_goals"] = profile.get("hormone_goals", [])
             context["primary_goal"] = profile.get("primary_goal")
@@ -3829,7 +3829,7 @@ async def get_user_hormonal_context(user_id: str) -> dict:
             "symptoms, symptom_severity, energy_level"
         ).eq("user_id", user_id).gte("log_date", cutoff).order("log_date", desc=True).limit(3).execute()
 
-        if logs_response.data:
+        if logs_response and logs_response.data:
             all_symptoms = []
             for log in logs_response.data:
                 symptoms = log.get("symptoms", [])
@@ -3845,7 +3845,7 @@ async def get_user_hormonal_context(user_id: str) -> dict:
         # Get kegel preferences (use maybe_single to handle 0 rows gracefully)
         kegel_response = db.client.table("kegel_preferences").select("*").eq("user_id", user_id).maybe_single().execute()
 
-        if kegel_response.data:
+        if kegel_response and kegel_response.data:
             prefs = kegel_response.data
             context["kegels_enabled"] = prefs.get("kegels_enabled", False)
             context["include_kegels_in_warmup"] = prefs.get("include_in_warmup", False)

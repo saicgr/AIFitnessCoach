@@ -49,9 +49,13 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
   bool _isRefreshing = false;
   bool _disposed = false;
 
-  /// Cooldown tracking for failed generation attempts
-  /// Prevents rapid-fire retries when rate limited (429)
-  DateTime? _lastGenerationFailure;
+  /// STATIC: Tracks if auto-generation is in progress
+  /// Static so it survives provider invalidation (prevents duplicate /generate-stream calls)
+  static bool _isAutoGenerating = false;
+
+  /// STATIC: Cooldown tracking for failed generation attempts
+  /// Static so it survives provider invalidation (prevents 429 spam after failure)
+  static DateTime? _lastGenerationFailure;
   static const Duration _generationCooldown = Duration(seconds: 30);
 
   TodayWorkoutNotifier(this._ref)
@@ -282,8 +286,6 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
   // =====================================================
   // Auto-generation and watch sync (same as before)
   // =====================================================
-
-  bool _isAutoGenerating = false;
 
   void _triggerAutoGeneration(String scheduledDate) {
     if (_isAutoGenerating || _disposed) {

@@ -6,6 +6,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/repositories/xp_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../home/widgets/daily_crate_banner.dart';
 
 /// Screen displaying user's consumables inventory
 /// Shows Streak Shields, 2x XP Tokens, Fitness Crates, Premium Crates
@@ -541,6 +542,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                       ),
                       const SizedBox(height: 32),
 
+                      // Daily Crates Section
+                      _buildDailyCratesSection(isDark, textColor, textMuted, elevatedColor, cardBorder),
+                      const SizedBox(height: 32),
+
                       // How to Earn Section
                       _buildHowToEarnSection(isDark, textColor, textMuted, elevatedColor),
 
@@ -803,6 +808,114 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDailyCratesSection(
+    bool isDark,
+    Color textColor,
+    Color textMuted,
+    Color elevatedColor,
+    Color cardBorder,
+  ) {
+    final dailyCrates = ref.watch(dailyCratesProvider);
+    final claimed = dailyCrates?.claimed ?? false;
+    final dailyAvailable = dailyCrates?.dailyCrateAvailable ?? true;
+    final streakAvailable = dailyCrates?.streakCrateAvailable ?? false;
+    final activityAvailable = dailyCrates?.activityCrateAvailable ?? false;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Daily Crates',
+          style: TextStyle(
+            color: textColor,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          claimed ? 'Come back tomorrow for more!' : 'Pick 1 of 3 crates daily',
+          style: TextStyle(
+            color: textMuted,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Daily Crate
+        _DailyCrateCard(
+          emoji: '📦',
+          name: 'Daily Crate',
+          description: '25-75 XP',
+          color: const Color(0xFF78909C),
+          isAvailable: dailyAvailable && !claimed,
+          isLocked: false,
+          lockedReason: claimed ? 'Claimed today' : null,
+          onTap: claimed ? null : () => _showDailyCrateSheet(context),
+          isDark: isDark,
+          elevatedColor: elevatedColor,
+          textColor: textColor,
+          textMuted: textMuted,
+          cardBorder: cardBorder,
+        ),
+        const SizedBox(height: 12),
+
+        // Streak Crate
+        _DailyCrateCard(
+          emoji: '🔥',
+          name: 'Streak Crate',
+          description: '75-150 XP + items',
+          color: const Color(0xFFFF7043),
+          isAvailable: streakAvailable && !claimed,
+          isLocked: !streakAvailable,
+          lockedReason: !streakAvailable ? 'Requires 7+ day streak' : (claimed ? 'Claimed today' : null),
+          onTap: (streakAvailable && !claimed) ? () => _showDailyCrateSheet(context) : null,
+          isDark: isDark,
+          elevatedColor: elevatedColor,
+          textColor: textColor,
+          textMuted: textMuted,
+          cardBorder: cardBorder,
+        ),
+        const SizedBox(height: 12),
+
+        // Activity Crate
+        _DailyCrateCard(
+          emoji: '⭐',
+          name: 'Activity Crate',
+          description: '150-250 XP + guaranteed item',
+          color: const Color(0xFFFFB300),
+          isAvailable: activityAvailable && !claimed,
+          isLocked: !activityAvailable,
+          lockedReason: !activityAvailable ? 'Complete all daily goals' : (claimed ? 'Claimed today' : null),
+          onTap: (activityAvailable && !claimed) ? () => _showDailyCrateSheet(context) : null,
+          isDark: isDark,
+          elevatedColor: elevatedColor,
+          textColor: textColor,
+          textMuted: textMuted,
+          cardBorder: cardBorder,
+        ),
+      ],
+    );
+  }
+
+  void _showDailyCrateSheet(BuildContext context) {
+    final dailyCrates = ref.read(dailyCratesProvider);
+    if (dailyCrates == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DailyCrateSelectionSheet(
+        cratesState: dailyCrates,
+        onCrateClaimed: () {
+          ref.read(xpProvider.notifier).loadDailyCrates();
+          ref.read(xpProvider.notifier).loadConsumables();
+        },
       ),
     );
   }
@@ -1094,6 +1207,139 @@ class _ConsumableCard extends StatelessWidget {
                     ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Card widget for daily crate options
+class _DailyCrateCard extends StatelessWidget {
+  final String emoji;
+  final String name;
+  final String description;
+  final Color color;
+  final bool isAvailable;
+  final bool isLocked;
+  final String? lockedReason;
+  final VoidCallback? onTap;
+  final bool isDark;
+  final Color elevatedColor;
+  final Color textColor;
+  final Color textMuted;
+  final Color cardBorder;
+
+  const _DailyCrateCard({
+    required this.emoji,
+    required this.name,
+    required this.description,
+    required this.color,
+    required this.isAvailable,
+    required this.isLocked,
+    required this.isDark,
+    required this.elevatedColor,
+    required this.textColor,
+    required this.textMuted,
+    required this.cardBorder,
+    this.lockedReason,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: isAvailable ? () {
+        HapticService.light();
+        onTap?.call();
+      } : null,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: elevatedColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isAvailable ? color.withValues(alpha: 0.4) : cardBorder,
+          ),
+        ),
+        child: Row(
+          children: [
+            // Emoji icon
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: isAvailable ? 0.15 : 0.05),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  emoji,
+                  style: TextStyle(
+                    fontSize: 28,
+                    color: isAvailable ? null : textMuted,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: TextStyle(
+                      color: isAvailable ? textColor : textMuted,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      color: isAvailable ? textMuted : textMuted.withValues(alpha: 0.5),
+                      fontSize: 13,
+                    ),
+                  ),
+                  if (lockedReason != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      lockedReason!,
+                      style: TextStyle(
+                        color: isLocked ? AppColors.warning.withValues(alpha: 0.9) : textMuted.withValues(alpha: 0.7),
+                        fontSize: 11,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            // Lock or arrow icon
+            if (isLocked)
+              Icon(
+                Icons.lock_outline,
+                color: textMuted.withValues(alpha: 0.5),
+                size: 24,
+              )
+            else if (isAvailable)
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

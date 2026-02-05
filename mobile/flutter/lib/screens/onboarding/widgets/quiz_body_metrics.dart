@@ -1193,8 +1193,8 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
 
           const SizedBox(height: 16),
 
-          // Quick adjustment buttons
-          _buildQuickAdjustmentButtons(isDark, textSecondary, cardBorder),
+          // Weight goal slider
+          _buildWeightGoalSlider(isDark, textSecondary, cardBorder),
         ],
       ),
     );
@@ -1279,99 +1279,69 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     );
   }
 
-  Widget _buildQuickAdjustmentButtons(bool isDark, Color textSecondary, Color cardBorder) {
-    // Quick values to add/subtract
-    final quickValues = [5, 10, 15, 20];
+  Widget _buildWeightGoalSlider(bool isDark, Color textSecondary, Color cardBorder) {
+    final unit = _weightInMetric ? 'kg' : 'lbs';
+    const minAmount = 0.5;
+    const step = 0.5;
+    const orange = Color(0xFFF97316);
+
+    // Calculate max amount based on direction
+    // For "lose": can't lose more than current weight minus 1 kg/lb (to stay positive)
+    // For "gain": use default max (100kg or 200lbs)
+    double defaultMax = _weightInMetric ? 100.0 : 200.0;
+    double maxAmount = defaultMax;
+
+    if (widget.weightDirection == 'lose' && widget.weightKg != null) {
+      // Convert current weight to display unit if needed
+      final currentWeightInUnit = _weightInMetric
+          ? widget.weightKg!
+          : widget.weightKg! * 2.20462;
+      // Max loss is current weight minus 1 (can't go to 0 or negative)
+      maxAmount = (currentWeightInUnit - 1).clamp(minAmount, defaultMax);
+    }
+
+    final divisions = ((maxAmount - minAmount) / step).toInt().clamp(1, 1000);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Quick adjust',
-          style: TextStyle(
-            fontSize: 11,
-            color: textSecondary,
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            activeTrackColor: orange,
+            inactiveTrackColor: orange.withValues(alpha: 0.2),
+            thumbColor: orange,
+            overlayColor: orange.withValues(alpha: 0.1),
+            trackHeight: 6,
+          ),
+          child: Slider(
+            value: _weightChangeAmount.clamp(minAmount, maxAmount),
+            min: minAmount,
+            max: maxAmount,
+            divisions: divisions,
+            onChanged: (value) {
+              HapticFeedback.selectionClick();
+              setState(() {
+                _weightChangeAmount = double.parse(value.toStringAsFixed(1));
+              });
+              widget.onWeightChangeAmountChanged?.call(_weightChangeAmount);
+              if (widget.weightDirection != null) {
+                _updateGoalWeight(widget.weightDirection!);
+              }
+            },
           ),
         ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            // Subtract buttons
-            ...quickValues.map((value) => _buildQuickButton(
-              label: '-$value',
-              onTap: () {
-                final newAmount = _weightChangeAmount - value;
-                if (newAmount >= 1) {
-                  HapticFeedback.selectionClick();
-                  setState(() {
-                    _weightChangeAmount = newAmount;
-                  });
-                  widget.onWeightChangeAmountChanged?.call(_weightChangeAmount);
-                  _updateGoalWeight(widget.weightDirection!);
-                }
-              },
-              isDark: isDark,
-              cardBorder: cardBorder,
-              isSubtract: true,
-            )),
-            // Add buttons
-            ...quickValues.map((value) => _buildQuickButton(
-              label: '+$value',
-              onTap: () {
-                final newAmount = _weightChangeAmount + value;
-                if (newAmount <= 100) {
-                  HapticFeedback.selectionClick();
-                  setState(() {
-                    _weightChangeAmount = newAmount;
-                  });
-                  widget.onWeightChangeAmountChanged?.call(_weightChangeAmount);
-                  _updateGoalWeight(widget.weightDirection!);
-                }
-              },
-              isDark: isDark,
-              cardBorder: cardBorder,
-              isSubtract: false,
-            )),
-          ],
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('0.5 $unit', style: TextStyle(fontSize: 11, color: textSecondary)),
+              Text('${maxAmount.toStringAsFixed(maxAmount == maxAmount.roundToDouble() ? 0 : 1)} $unit',
+                   style: TextStyle(fontSize: 11, color: textSecondary)),
+            ],
+          ),
         ),
       ],
-    );
-  }
-
-  Widget _buildQuickButton({
-    required String label,
-    required VoidCallback onTap,
-    required bool isDark,
-    required Color cardBorder,
-    required bool isSubtract,
-  }) {
-    const orange = Color(0xFFF97316);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSubtract
-              ? (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface)
-              : orange.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSubtract ? cardBorder : orange.withValues(alpha: 0.3),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: isSubtract
-                ? (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary)
-                : orange,
-          ),
-        ),
-      ),
     );
   }
 

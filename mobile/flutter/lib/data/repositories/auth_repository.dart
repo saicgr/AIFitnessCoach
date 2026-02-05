@@ -599,7 +599,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (state.user != null) {
       final updatedUser = state.user!.copyWith(onboardingCompleted: true);
       state = state.copyWith(user: updatedUser);
-      debugPrint('✅ [Auth] Marked onboarding as complete');
+      // Update cache to persist across app restarts
+      await _repository._cacheUser(updatedUser);
+      debugPrint('✅ [Auth] Marked onboarding as complete (cached)');
     }
   }
 
@@ -608,7 +610,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (state.user != null) {
       final updatedUser = state.user!.copyWith(coachSelected: true);
       state = state.copyWith(user: updatedUser);
-      debugPrint('✅ [Auth] Marked coach as selected');
+      // Update cache to persist across app restarts
+      await _repository._cacheUser(updatedUser);
+      debugPrint('✅ [Auth] Marked coach as selected (cached)');
     }
   }
 
@@ -617,7 +621,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (state.user != null) {
       final updatedUser = state.user!.copyWith(paywallCompleted: true);
       state = state.copyWith(user: updatedUser);
-      debugPrint('✅ [Auth] Marked paywall as completed');
+      // Update cache to persist across app restarts
+      await _repository._cacheUser(updatedUser);
+      debugPrint('✅ [Auth] Marked paywall as completed (cached)');
     }
   }
 
@@ -649,7 +655,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (state.user != null) {
       final updatedUser = state.user!.copyWith(coachSelected: false);
       state = state.copyWith(user: updatedUser);
-      debugPrint('✅ [Auth] Reset coach selection');
+      // Update cache to persist across app restarts
+      await _repository._cacheUser(updatedUser);
+      debugPrint('✅ [Auth] Reset coach selection (cached)');
     }
   }
 
@@ -658,7 +666,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (state.user != null) {
       final updatedUser = state.user!.copyWith(onboardingCompleted: false);
       state = state.copyWith(user: updatedUser);
-      debugPrint('✅ [Auth] Reset onboarding status');
+      // Update cache to persist across app restarts
+      await _repository._cacheUser(updatedUser);
+      debugPrint('✅ [Auth] Reset onboarding status (cached)');
     }
   }
 
@@ -667,7 +677,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (state.user != null) {
       final updatedUser = state.user!.copyWith(paywallCompleted: false);
       state = state.copyWith(user: updatedUser);
-      debugPrint('✅ [Auth] Reset paywall status');
+      // Update cache to persist across app restarts
+      await _repository._cacheUser(updatedUser);
+      debugPrint('✅ [Auth] Reset paywall status (cached)');
     }
   }
 }

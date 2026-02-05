@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide MultipartFile;
 import '../../core/constants/api_constants.dart';
 
 /// Secure storage for auth tokens
@@ -56,7 +57,29 @@ class ApiClient {
         },
         onError: (error, handler) async {
           if (error.response?.statusCode == 401) {
-            // Token expired or invalid - clear stored token
+            // Try to refresh Supabase session before clearing auth
+            try {
+              final session = Supabase.instance.client.auth.currentSession;
+              if (session != null) {
+                debugPrint('🔄 [API] 401 received, attempting token refresh...');
+                final refreshed = await Supabase.instance.client.auth.refreshSession();
+                if (refreshed.session != null) {
+                  // Save new token
+                  await _storage.write(key: _tokenKey, value: refreshed.session!.accessToken);
+                  debugPrint('✅ [API] Token refreshed, retrying request...');
+
+                  // Retry the original request with new token
+                  error.requestOptions.headers['Authorization'] = 'Bearer ${refreshed.session!.accessToken}';
+                  final retryResponse = await _dio.fetch(error.requestOptions);
+                  return handler.resolve(retryResponse);
+                }
+              }
+            } catch (refreshError) {
+              debugPrint('❌ [API] Token refresh failed: $refreshError');
+            }
+
+            // Only clear auth if refresh failed
+            debugPrint('🚪 [API] Clearing auth after failed refresh');
             await clearAuth();
           }
           return handler.next(error);

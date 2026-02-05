@@ -457,6 +457,14 @@ class WorkoutRepository {
                     message: data['error'] as String? ?? 'Unknown error',
                     elapsedMs: elapsedMs,
                   );
+                } else if (eventType == 'already_generating') {
+                  // Idempotency: workout generation already in progress
+                  debugPrint('⏳ [Workout] Generation already in progress: ${data['workout_id']}');
+                  yield WorkoutGenerationProgress(
+                    status: WorkoutGenerationStatus.progress,
+                    message: data['message'] as String? ?? 'Workout generation in progress...',
+                    elapsedMs: elapsedMs,
+                  );
                 }
               } catch (e) {
                 debugPrint('⚠️ [Workout] Error parsing SSE data: $e');
