@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/providers/mood_history_provider.dart';
 import 'widgets/mood_analytics_card.dart';
+import 'widgets/mood_calendar_heatmap.dart';
 import 'widgets/mood_history_item_card.dart';
 import 'widgets/mood_streak_card.dart';
+import 'widgets/mood_weekly_chart.dart';
 
 /// Screen showing mood check-in history and analytics
 class MoodHistoryScreen extends ConsumerStatefulWidget {
@@ -52,7 +55,7 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
       backgroundColor: background,
       appBar: AppBar(
         backgroundColor: background,
-        title: const Text('Mood History'),
+        title: const Text('Mood History & Analysis'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -68,6 +71,11 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
               child: CustomScrollView(
                 controller: _scrollController,
                 slivers: [
+                  // Weekly mood chart (always show at top)
+                  const SliverToBoxAdapter(
+                    child: MoodWeeklyChart(),
+                  ),
+
                   // Analytics summary section
                   if (state.analytics != null) ...[
                     SliverToBoxAdapter(
@@ -115,6 +123,11 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
                         ),
                       ),
                   ],
+
+                  // Monthly calendar heatmap
+                  const SliverToBoxAdapter(
+                    child: MoodCalendarHeatmap(),
+                  ),
                   // History section header
                   SliverToBoxAdapter(
                     child: Padding(
@@ -337,7 +350,6 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
   }
 
   void _navigateToWorkout(String workoutId) {
-    // Navigate to workout detail - this would use your app router
-    // context.push('/workout/$workoutId');
+    context.push('/workout/$workoutId');
   }
 }

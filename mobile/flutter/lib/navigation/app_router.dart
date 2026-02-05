@@ -961,7 +961,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Chat (full screen overlay)
       GoRoute(
         path: '/chat',
-        builder: (context, state) => const ChatScreen(),
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return ChatScreen(
+            initialMessage: extra?['initialMessage'] as String?,
+          );
+        },
       ),
 
       // Live Chat - Human support

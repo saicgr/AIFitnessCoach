@@ -13,18 +13,22 @@ import '../../../core/constants/app_colors.dart';
 class QuizTrainingStyle extends StatefulWidget {
   final String? selectedSplit;
   final String? selectedWorkoutType;
+  final String? selectedWorkoutVariety;  // 'consistent' or 'varied'
   final int daysPerWeek;
   final ValueChanged<String> onSplitChanged;
   final ValueChanged<String> onWorkoutTypeChanged;
+  final ValueChanged<String>? onWorkoutVarietyChanged;
   final ValueChanged<int>? onDaysPerWeekChanged;  // ← ADDED: Allow adjusting days/week
 
   const QuizTrainingStyle({
     super.key,
     required this.selectedSplit,
     required this.selectedWorkoutType,
+    this.selectedWorkoutVariety,
     required this.daysPerWeek,
     required this.onSplitChanged,
     required this.onWorkoutTypeChanged,
+    this.onWorkoutVarietyChanged,
     this.onDaysPerWeekChanged,  // ← ADDED: Optional callback
   });
 
@@ -389,6 +393,39 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                     _buildTypeChip('mixed', 'Mixed', isDark, 750.ms),
                   ],
                 ),
+
+                // Section C: Exercise Variety
+                if (widget.onWorkoutVarietyChanged != null) ...[
+                  const SizedBox(height: 28),
+                  Text(
+                    'Exercise Variety',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Do you prefer the same exercises each week or variety?',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Exercise variety options
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      _buildVarietyChip('consistent', 'Consistent', 'Same exercises for progress tracking', Icons.repeat, isDark, 800.ms),
+                      _buildVarietyChip('varied', 'Varied', 'Different exercises to keep it fresh', Icons.shuffle, isDark, 850.ms),
+                    ],
+                  ),
+                ],
+
                 const SizedBox(height: 100),  // Space for Continue button + scroll indicator
               ],
             ),
@@ -572,6 +609,75 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
             fontWeight: FontWeight.w600,
             color: isSelected ? Colors.white : textPrimary,
           ),
+        ),
+      ),
+    ).animate().fadeIn(delay: delay).scale(begin: const Offset(0.9, 0.9));
+  }
+
+  Widget _buildVarietyChip(String id, String label, String description, IconData icon, bool isDark, Duration delay) {
+    final isSelected = widget.selectedWorkoutVariety == id;
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    final textSecondary = isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A);
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        widget.onWorkoutVarietyChanged?.call(id);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.orange.withValues(alpha: 0.15)
+              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.orange
+                : (isDark ? AppColors.glassBorder : AppColorsLight.cardBorder),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: isSelected ? AppColors.orange : textSecondary,
+            ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? AppColors.orange : textPrimary,
+                  ),
+                ),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: textSecondary,
+                  ),
+                ),
+              ],
+            ),
+            if (isSelected) ...[
+              const SizedBox(width: 8),
+              Icon(
+                Icons.check_circle,
+                size: 18,
+                color: AppColors.orange,
+              ),
+            ],
+          ],
         ),
       ),
     ).animate().fadeIn(delay: delay).scale(begin: const Offset(0.9, 0.9));

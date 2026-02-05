@@ -8,18 +8,19 @@ import '../../../../data/repositories/hydration_repository.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../widgets/main_shell.dart';
+import '../../../../widgets/mood_picker_sheet.dart';
 import '../../../nutrition/log_meal_sheet.dart';
 
 /// Quick action icon colors (semantic meaning)
 class _QuickActionColors {
-  static const photo = Color(0xFFA855F7); // Purple
   static const food = Color(0xFF22C55E); // Green
   static const water = Color(0xFF3B82F6); // Blue
   static const weight = Color(0xFFF59E0B); // Amber
   static const measure = Color(0xFFA855F7); // Purple
   static const history = Color(0xFF6B7280); // Gray
-  static const workout = Color(0xFFEF4444); // Red
-  static const fast = Color(0xFFF97316); // Orange
+  static const fasting = Color(0xFFF97316); // Orange
+  static const mood = Color(0xFFEC4899); // Pink
+  static const steps = Color(0xFF10B981); // Emerald/Green
 }
 
 /// A grid of quick action buttons (2 rows x 4 columns) with hero card
@@ -48,20 +49,11 @@ class QuickActionsGrid extends ConsumerWidget {
             // Hero card (Track Your Progress / Active Fasting)
             _HeroActionCard(),
             const SizedBox(height: 8),
-            // Row 1: Photo, Food, Water, Weight
+            // Row 1: Fasting, Food, Water, Weight
             Row(
               children: [
                 Expanded(
-                  child: _GridActionItem(
-                    icon: Icons.camera_alt_outlined,
-                    label: 'Photo',
-                    iconColor: _QuickActionColors.photo,
-                    onTap: () {
-                      HapticService.light();
-                      context.push('/stats?openPhoto=true');
-                    },
-                    isDark: isDark,
-                  ),
+                  child: _FastGridActionItem(isDark: isDark),
                 ),
                 const SizedBox(width: 4),
                 Expanded(
@@ -96,7 +88,7 @@ class QuickActionsGrid extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 4),
-            // Row 2: Measure, History, Workout, Fast
+            // Row 2: Measure, History, Mood, Steps
             Row(
               children: [
                 Expanded(
@@ -126,20 +118,20 @@ class QuickActionsGrid extends ConsumerWidget {
                 ),
                 const SizedBox(width: 4),
                 Expanded(
-                  child: _GridActionItem(
-                    icon: Icons.fitness_center_outlined,
-                    label: 'Workout',
-                    iconColor: _QuickActionColors.workout,
-                    onTap: () {
-                      HapticService.light();
-                      context.push('/workouts');
-                    },
-                    isDark: isDark,
-                  ),
+                  child: _MoodGridActionItem(isDark: isDark),
                 ),
                 const SizedBox(width: 4),
                 Expanded(
-                  child: _FastGridActionItem(isDark: isDark),
+                  child: _GridActionItem(
+                    icon: Icons.directions_walk_outlined,
+                    label: 'Steps',
+                    iconColor: _QuickActionColors.steps,
+                    onTap: () {
+                      HapticService.light();
+                      context.push('/neat');
+                    },
+                    isDark: isDark,
+                  ),
                 ),
               ],
             ),
@@ -812,6 +804,63 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
   }
 }
 
+/// Mood grid action item - opens mood picker sheet
+class _MoodGridActionItem extends ConsumerWidget {
+  final bool isDark;
+
+  const _MoodGridActionItem({required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
+    final cardBg = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.05);
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.black.withValues(alpha: 0.08);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => showMoodPickerSheet(context, ref),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: borderColor, width: 1),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.mood_outlined,
+                size: 22,
+                color: _QuickActionColors.mood,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Mood',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Fasting grid action item - shows status or navigates to fasting screen
 class _FastGridActionItem extends ConsumerWidget {
   final bool isDark;
@@ -824,7 +873,7 @@ class _FastGridActionItem extends ConsumerWidget {
     final fastingState = ref.watch(fastingProvider);
     final hasFast = fastingState.hasFast;
 
-    String label = 'Fast';
+    String label = 'Fasting';
     if (hasFast && fastingState.activeFast != null) {
       final elapsed = fastingState.activeFast!.elapsedMinutes;
       final hours = elapsed ~/ 60;
@@ -863,7 +912,7 @@ class _FastGridActionItem extends ConsumerWidget {
                   Icon(
                     hasFast ? Icons.timer : Icons.timer_outlined,
                     size: 22,
-                    color: _QuickActionColors.fast,
+                    color: _QuickActionColors.fasting,
                   ),
                   if (hasFast)
                     Positioned(

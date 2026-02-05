@@ -215,7 +215,7 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
             child: ElevatedButton.icon(
               onPressed: () {
                 HapticService.medium();
-                context.go('/onboarding');
+                context.go('/pre-auth-quiz');
               },
               icon: const Icon(Icons.add, size: 20),
               label: const Text(

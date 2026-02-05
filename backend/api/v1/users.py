@@ -587,6 +587,8 @@ def merge_extended_fields_into_preferences(
     # Duration range for flexible workout generation
     workout_duration_min: Optional[int] = None,
     workout_duration_max: Optional[int] = None,
+    # Exercise consistency preference
+    workout_variety: Optional[str] = None,  # 'consistent' or 'varied'
 ) -> dict:
     """Merge extended onboarding fields into preferences dict."""
     try:
@@ -651,6 +653,9 @@ def merge_extended_fields_into_preferences(
         prefs["wake_time"] = wake_time
     if sleep_time is not None:
         prefs["sleep_time"] = sleep_time
+    # Exercise consistency preference (workout_variety from frontend -> exercise_consistency in backend)
+    if workout_variety is not None:
+        prefs["exercise_consistency"] = workout_variety
 
     return prefs
 
@@ -681,6 +686,7 @@ async def create_user(request: Request, user: UserCreate):
             user.workout_type_preference,
             user.workout_environment,
             user.gym_name,
+            workout_variety=user.workout_variety,
         )
         logger.debug(f"User preferences: {final_preferences}")
 
@@ -952,6 +958,7 @@ class UserPreferencesRequest(BaseModel):
     workout_type: Optional[str] = None
     progression_pace: Optional[str] = None
     workout_environment: Optional[str] = None  # commercial_gym, home_gym, home, outdoors
+    workout_variety: Optional[str] = None  # 'consistent' or 'varied'
 
     # Coach
     coach_id: Optional[str] = None
@@ -1063,6 +1070,8 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest):
             # Duration range for flexible workout generation
             request.workout_duration_min,
             request.workout_duration_max,
+            # Exercise consistency preference
+            workout_variety=request.workout_variety,
         )
         update_data["preferences"] = final_preferences
 
@@ -1149,7 +1158,7 @@ async def update_user(user_id: str, user: UserUpdate):
             user.days_per_week, user.workout_duration, user.training_split,
             user.intensity_preference, user.preferred_time,
             user.progression_pace, user.workout_type_preference,
-            user.workout_environment, user.gym_name
+            user.workout_environment, user.gym_name, user.workout_variety
         ])
 
         if user.preferences is not None or has_extended_fields:
@@ -1165,6 +1174,7 @@ async def update_user(user_id: str, user: UserUpdate):
                 user.workout_type_preference,
                 user.workout_environment,
                 user.gym_name,
+                workout_variety=user.workout_variety,
             )
             update_data["preferences"] = final_preferences
             logger.info(f"🔍 [DEBUG] Final preferences to save: {final_preferences}")

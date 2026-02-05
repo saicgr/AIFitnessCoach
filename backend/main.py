@@ -188,6 +188,18 @@ async def lifespan(app: FastAPI):
 
     logger.info("All services initialized (LangGraph agents ready)")
 
+    # Initialize Gemini Context Cache Manager (auto-manages cache lifecycle)
+    if settings.gemini_cache_enabled:
+        logger.info("Initializing Gemini Context Cache Manager...")
+        try:
+            await GeminiService.initialize_cache_manager()
+            logger.info("✅ Gemini Context Cache Manager ready (auto-refresh enabled)")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to initialize cache manager: {e}")
+            logger.warning("Workout generation will use non-cached mode")
+    else:
+        logger.info("ℹ️ Gemini Context Caching disabled (GEMINI_CACHE_ENABLED=false)")
+
     # Check for pending workout generation jobs and resume them
     logger.info("Checking for pending workout generation jobs...")
     try:
@@ -237,6 +249,11 @@ async def lifespan(app: FastAPI):
 
     # Cleanup on shutdown
     logger.info("Shutting down...")
+
+    # Shutdown cache manager
+    if settings.gemini_cache_enabled:
+        logger.info("Shutting down Gemini Cache Manager...")
+        await GeminiService.shutdown_cache_manager()
 
 
 # Create FastAPI app

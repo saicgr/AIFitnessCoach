@@ -20,6 +20,7 @@ from fastapi.responses import StreamingResponse
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.config import get_settings
 from models.schemas import (
     Workout, GenerateWorkoutRequest, SwapWorkoutsRequest, SwapExerciseRequest,
     AddExerciseRequest, ExtendWorkoutRequest,
@@ -267,6 +268,9 @@ async def generate_workout(request: GenerateWorkoutRequest):
             hormonal_context,
             set_type_prefs,
             injuries,
+            consistency_mode,
+            recently_used_exercises,
+            variation_percentage,
         ) = await asyncio.gather(
             get_user_avoided_exercises(request.user_id),
             get_user_avoided_muscles(request.user_id),
@@ -277,8 +281,12 @@ async def generate_workout(request: GenerateWorkoutRequest):
             get_user_hormonal_context(request.user_id),
             get_user_set_type_preferences(request.user_id, supabase_client=db.client),
             get_active_injuries_with_muscles(request.user_id),
+            get_user_consistency_mode(request.user_id),
+            get_recently_used_exercises(request.user_id),
+            get_user_variation_percentage(request.user_id),
         )
         logger.info(f"✅ [Workout Generation] All user preferences fetched in parallel")
+        logger.info(f"🔄 [Consistency] Mode: {consistency_mode}, Recently used: {len(recently_used_exercises) if recently_used_exercises else 0}, Variation: {variation_percentage}%")
 
         # Log what we found
         if avoided_exercises:
@@ -429,6 +437,11 @@ async def generate_workout(request: GenerateWorkoutRequest):
                 staple_exercises=staple_exercises,
                 avoided_muscles=avoided_muscles if (avoided_muscles.get("avoid") or avoided_muscles.get("reduce")) else None,
                 workout_environment=workout_environment,
+                # Exercise consistency preferences
+                consistency_mode=consistency_mode,
+                recently_used_exercises=recently_used_exercises,
+                variation_percentage=variation_percentage,
+                workout_type_preference=request.workout_type or "strength",
             )
 
             if rag_exercises:
@@ -958,29 +971,57 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 # Use explicit intensity_preference if set, otherwise derive from fitness level
                 intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
 
-            # Fetch user preferences (avoided exercises, avoided muscles, staple exercises)
+            # Fetch user preferences in PARALLEL for faster response
             # This is CRITICAL for respecting user preferences in workout generation
-            avoided_exercises = await get_user_avoided_exercises(body.user_id)
-            avoided_muscles = await get_user_avoided_muscles(body.user_id)
-            staple_exercises = await get_user_staple_exercises(body.user_id)
+            # Using asyncio.gather reduces ~3s of sequential fetches to ~500ms
+            async def fetch_ai_coach_settings():
+                """Helper to fetch AI coach settings with error handling."""
+                try:
+                    ai_result = db.client.table("user_ai_settings").select(
+                        "coaching_style", "communication_tone", "coach_name", "coach_persona_id"
+                    ).eq("user_id", body.user_id).single().execute()
+                    return ai_result.data if ai_result.data else None
+                except Exception as e:
+                    logger.debug(f"[Streaming] No AI coach settings found, using defaults: {e}")
+                    return None
 
+            (
+                avoided_exercises,
+                avoided_muscles,
+                staple_exercises,
+                rep_preferences,
+                progression_context,
+                hormonal_context,
+                ai_coach_settings,
+                strength_history,
+            ) = await asyncio.gather(
+                get_user_avoided_exercises(body.user_id),
+                get_user_avoided_muscles(body.user_id),
+                get_user_staple_exercises(body.user_id),
+                get_user_rep_preferences(body.user_id),
+                get_user_progression_context(body.user_id),
+                get_user_hormonal_context(body.user_id),
+                fetch_ai_coach_settings(),
+                get_user_strength_history(body.user_id),
+            )
+
+            # Log fetched preferences
             if avoided_exercises:
                 logger.info(f"🚫 [Streaming] User has {len(avoided_exercises)} avoided exercises")
             if avoided_muscles.get("avoid") or avoided_muscles.get("reduce"):
                 logger.info(f"🚫 [Streaming] User has avoided muscles")
             if staple_exercises:
                 logger.info(f"⭐ [Streaming] User has {len(staple_exercises)} staple exercises")
+            if ai_coach_settings:
+                logger.info(f"🎨 [Streaming] Coach settings: style={ai_coach_settings.get('coaching_style')}, tone={ai_coach_settings.get('communication_tone')}")
 
-            # Fetch progression context and rep preferences for leverage-based progressions
-            rep_preferences = await get_user_rep_preferences(body.user_id)
-            progression_context = await get_user_progression_context(body.user_id)
+            # Build progression philosophy from fetched data
             progression_philosophy = build_progression_philosophy_prompt(
                 rep_preferences=rep_preferences,
                 progression_context=progression_context,
             )
 
-            # Fetch hormonal health context for gender-specific and cycle-aware workouts
-            hormonal_context = await get_user_hormonal_context(body.user_id)
+            # Process hormonal context
             hormonal_ai_context = hormonal_context.get("ai_context", "")
             if hormonal_context.get("cycle_phase"):
                 logger.info(f"[Streaming] User is in {hormonal_context['cycle_phase']} phase")
@@ -1041,22 +1082,44 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             # Convert staple exercises from dicts to names
             staple_names = get_staple_names(staple_exercises) if staple_exercises else None
 
+            # Check if context caching is enabled (faster generation)
+            settings = get_settings()
+            use_cached = settings.gemini_cache_enabled
+            logger.info(f"[Streaming] Using {'CACHED' if use_cached else 'non-cached'} workout generation")
+
             try:
-                async for chunk in gemini_service.generate_workout_plan_streaming(
-                    fitness_level=fitness_level or "intermediate",
-                    goals=goals if isinstance(goals, list) else [],
-                    equipment=equipment if isinstance(equipment, list) else [],
-                    duration_minutes=body.duration_minutes or 45,
-                    duration_minutes_min=body.duration_minutes_min,
-                    duration_minutes_max=body.duration_minutes_max,
-                    focus_areas=body.focus_areas,
-                    intensity_preference=intensity_preference,
-                    avoided_exercises=avoided_exercises if avoided_exercises else None,
-                    avoided_muscles=avoided_muscles if (avoided_muscles.get("avoid") or avoided_muscles.get("reduce")) else None,
-                    staple_exercises=staple_names,
-                    progression_philosophy=combined_context if combined_context else None,
-                    exercise_count=exercise_count,
-                ):
+                # Use cached streaming if enabled (5-10x faster)
+                generator_func = (
+                    gemini_service.generate_workout_plan_streaming_cached
+                    if use_cached
+                    else gemini_service.generate_workout_plan_streaming
+                )
+
+                # Build kwargs - cached version takes strength_history
+                generator_kwargs = {
+                    "fitness_level": fitness_level or "intermediate",
+                    "goals": goals if isinstance(goals, list) else [],
+                    "equipment": equipment if isinstance(equipment, list) else [],
+                    "duration_minutes": body.duration_minutes or 45,
+                    "duration_minutes_min": body.duration_minutes_min,
+                    "duration_minutes_max": body.duration_minutes_max,
+                    "focus_areas": body.focus_areas,
+                    "intensity_preference": intensity_preference,
+                    "avoided_exercises": avoided_exercises if avoided_exercises else None,
+                    "avoided_muscles": avoided_muscles if (avoided_muscles.get("avoid") or avoided_muscles.get("reduce")) else None,
+                    "staple_exercises": staple_names,
+                    "progression_philosophy": combined_context if combined_context else None,
+                    "exercise_count": exercise_count,
+                    "coach_style": ai_coach_settings.get("coaching_style") if ai_coach_settings else None,
+                    "coach_tone": ai_coach_settings.get("communication_tone") if ai_coach_settings else None,
+                    "scheduled_date": scheduled_date,
+                }
+
+                # Add strength_history for cached version
+                if use_cached:
+                    generator_kwargs["strength_history"] = strength_history
+
+                async for chunk in generator_func(**generator_kwargs):
                     accumulated_text += chunk
                     chunk_count += 1
 
@@ -1724,6 +1787,60 @@ class MoodAnalyticsResponse(BaseModel):
     recommendations: List[str]
 
 
+class MoodDayEntry(BaseModel):
+    """Single mood entry within a day."""
+    mood: str
+    emoji: str
+    color: str
+    time: str
+
+
+class MoodDayData(BaseModel):
+    """Mood data for a single day."""
+    date: str
+    day_name: str
+    moods: List[MoodDayEntry]
+    primary_mood: Optional[str] = None
+    checkin_count: int
+    workout_completed: bool
+
+
+class MoodWeeklySummary(BaseModel):
+    """Summary stats for weekly mood data."""
+    total_checkins: int
+    avg_mood_score: float
+    trend: str  # "improving", "declining", "stable"
+
+
+class MoodWeeklyResponse(BaseModel):
+    """Response model for weekly mood data."""
+    days: List[MoodDayData]
+    summary: MoodWeeklySummary
+
+
+class MoodCalendarDay(BaseModel):
+    """Mood data for a single calendar day."""
+    moods: List[str]
+    primary_mood: str
+    color: str
+    checkin_count: int
+
+
+class MoodCalendarSummary(BaseModel):
+    """Summary stats for calendar mood data."""
+    days_with_checkins: int
+    total_checkins: int
+    most_common_mood: Optional[str] = None
+
+
+class MoodCalendarResponse(BaseModel):
+    """Response model for monthly mood calendar data."""
+    month: int
+    year: int
+    days: Dict[str, Optional[MoodCalendarDay]]
+    summary: MoodCalendarSummary
+
+
 @router.get("/{user_id}/mood-history", response_model=MoodHistoryResponse)
 async def get_mood_history(
     user_id: str,
@@ -2132,6 +2249,273 @@ async def get_today_mood(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get today's mood: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{user_id}/mood-weekly", response_model=MoodWeeklyResponse)
+async def get_mood_weekly(user_id: str):
+    """
+    Get user's mood data for the last 7 days.
+
+    Returns daily mood check-ins with trend analysis for weekly chart visualization.
+    """
+    logger.info(f"Fetching weekly mood data for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Calculate date range (last 7 days)
+        today = datetime.now().date()
+        week_ago = today - timedelta(days=6)  # Include today, so 7 days total
+
+        # Fetch check-ins for the week
+        result = db.client.table("mood_checkins") \
+            .select("*") \
+            .eq("user_id", user_id) \
+            .gte("check_in_time", week_ago.isoformat()) \
+            .lte("check_in_time", (today + timedelta(days=1)).isoformat()) \
+            .order("check_in_time", desc=False) \
+            .execute()
+
+        checkins = result.data or []
+
+        # Mood score mapping for trend calculation
+        mood_scores = {"great": 4, "good": 3, "tired": 2, "stressed": 1}
+
+        # Group check-ins by date
+        days_data = {}
+        for i in range(7):
+            day = week_ago + timedelta(days=i)
+            day_str = day.isoformat()
+            days_data[day_str] = {
+                "date": day_str,
+                "day_name": day.strftime("%A"),
+                "moods": [],
+                "primary_mood": None,
+                "checkin_count": 0,
+                "workout_completed": False,
+            }
+
+        # Process check-ins
+        total_score = 0
+        total_checkins = 0
+        first_half_scores = []
+        second_half_scores = []
+
+        for checkin in checkins:
+            check_time = checkin.get("check_in_time", "")
+            if not check_time:
+                continue
+
+            # Parse date
+            if "T" in check_time:
+                day_str = check_time.split("T")[0]
+            else:
+                day_str = check_time[:10]
+
+            if day_str not in days_data:
+                continue
+
+            mood = checkin.get("mood", "good")
+            config = mood_workout_service.get_mood_config(
+                mood_workout_service.validate_mood(mood)
+            )
+
+            # Parse time for display
+            try:
+                time_part = check_time.split("T")[1][:5] if "T" in check_time else "00:00"
+            except (IndexError, AttributeError):
+                time_part = "00:00"
+
+            days_data[day_str]["moods"].append({
+                "mood": mood,
+                "emoji": config.emoji,
+                "color": config.color_hex,
+                "time": time_part,
+            })
+            days_data[day_str]["checkin_count"] += 1
+
+            if checkin.get("workout_completed"):
+                days_data[day_str]["workout_completed"] = True
+
+            # Track scores for trend
+            score = mood_scores.get(mood, 2)
+            total_score += score
+            total_checkins += 1
+
+            # Determine if first or second half of week
+            day_index = (datetime.fromisoformat(day_str).date() - week_ago).days
+            if day_index < 4:
+                first_half_scores.append(score)
+            else:
+                second_half_scores.append(score)
+
+        # Calculate primary mood for each day (most frequent)
+        for day_str, day_data in days_data.items():
+            if day_data["moods"]:
+                mood_counts = {}
+                for m in day_data["moods"]:
+                    mood_counts[m["mood"]] = mood_counts.get(m["mood"], 0) + 1
+                day_data["primary_mood"] = max(mood_counts, key=mood_counts.get)
+
+        # Calculate trend
+        avg_score = total_score / total_checkins if total_checkins > 0 else 0
+        first_half_avg = sum(first_half_scores) / len(first_half_scores) if first_half_scores else 0
+        second_half_avg = sum(second_half_scores) / len(second_half_scores) if second_half_scores else 0
+
+        if second_half_avg > first_half_avg + 0.3:
+            trend = "improving"
+        elif second_half_avg < first_half_avg - 0.3:
+            trend = "declining"
+        else:
+            trend = "stable"
+
+        # Convert to list sorted by date
+        days_list = [
+            MoodDayData(
+                date=d["date"],
+                day_name=d["day_name"],
+                moods=[MoodDayEntry(**m) for m in d["moods"]],
+                primary_mood=d["primary_mood"],
+                checkin_count=d["checkin_count"],
+                workout_completed=d["workout_completed"],
+            )
+            for d in sorted(days_data.values(), key=lambda x: x["date"])
+        ]
+
+        return MoodWeeklyResponse(
+            days=days_list,
+            summary=MoodWeeklySummary(
+                total_checkins=total_checkins,
+                avg_mood_score=round(avg_score, 2),
+                trend=trend,
+            ),
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to get weekly mood data: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{user_id}/mood-calendar", response_model=MoodCalendarResponse)
+async def get_mood_calendar(user_id: str, month: int, year: int):
+    """
+    Get user's mood data for a specific month.
+
+    Returns mood check-ins organized by day for calendar heatmap visualization.
+    """
+    logger.info(f"Fetching mood calendar for user {user_id}, {year}-{month:02d}")
+
+    try:
+        db = get_supabase_db()
+
+        # Validate month and year
+        if month < 1 or month > 12:
+            raise HTTPException(status_code=400, detail="Month must be between 1 and 12")
+        if year < 2020 or year > 2100:
+            raise HTTPException(status_code=400, detail="Invalid year")
+
+        # Calculate date range for the month
+        import calendar
+        _, last_day = calendar.monthrange(year, month)
+        start_date = f"{year}-{month:02d}-01"
+        end_date = f"{year}-{month:02d}-{last_day}"
+
+        # Fetch check-ins for the month
+        result = db.client.table("mood_checkins") \
+            .select("*") \
+            .eq("user_id", user_id) \
+            .gte("check_in_time", start_date) \
+            .lte("check_in_time", f"{end_date}T23:59:59") \
+            .order("check_in_time", desc=False) \
+            .execute()
+
+        checkins = result.data or []
+
+        # Initialize days dict with all days of the month
+        days_data: Dict[str, Optional[Dict]] = {}
+        for day in range(1, last_day + 1):
+            day_str = f"{year}-{month:02d}-{day:02d}"
+            days_data[day_str] = None
+
+        # Process check-ins
+        day_checkins: Dict[str, List[str]] = {}  # date -> list of moods
+
+        for checkin in checkins:
+            check_time = checkin.get("check_in_time", "")
+            if not check_time:
+                continue
+
+            # Parse date
+            if "T" in check_time:
+                day_str = check_time.split("T")[0]
+            else:
+                day_str = check_time[:10]
+
+            if day_str not in days_data:
+                continue
+
+            mood = checkin.get("mood", "good")
+
+            if day_str not in day_checkins:
+                day_checkins[day_str] = []
+            day_checkins[day_str].append(mood)
+
+        # Calculate stats for each day with check-ins
+        mood_counts_total: Dict[str, int] = {}
+        days_with_checkins = 0
+        total_checkins = 0
+
+        for day_str, moods in day_checkins.items():
+            if moods:
+                days_with_checkins += 1
+                total_checkins += len(moods)
+
+                # Count moods for this day
+                mood_counts = {}
+                for m in moods:
+                    mood_counts[m] = mood_counts.get(m, 0) + 1
+                    mood_counts_total[m] = mood_counts_total.get(m, 0) + 1
+
+                # Get primary mood (most frequent)
+                primary_mood = max(mood_counts, key=mood_counts.get)
+                config = mood_workout_service.get_mood_config(
+                    mood_workout_service.validate_mood(primary_mood)
+                )
+
+                days_data[day_str] = {
+                    "moods": moods,
+                    "primary_mood": primary_mood,
+                    "color": config.color_hex,
+                    "checkin_count": len(moods),
+                }
+
+        # Convert to response format
+        days_response: Dict[str, Optional[MoodCalendarDay]] = {}
+        for day_str, data in days_data.items():
+            if data:
+                days_response[day_str] = MoodCalendarDay(**data)
+            else:
+                days_response[day_str] = None
+
+        # Get most common mood
+        most_common_mood = max(mood_counts_total, key=mood_counts_total.get) if mood_counts_total else None
+
+        return MoodCalendarResponse(
+            month=month,
+            year=year,
+            days=days_response,
+            summary=MoodCalendarSummary(
+                days_with_checkins=days_with_checkins,
+                total_checkins=total_checkins,
+                most_common_mood=most_common_mood,
+            ),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get mood calendar data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

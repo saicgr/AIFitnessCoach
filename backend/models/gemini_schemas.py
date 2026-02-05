@@ -550,3 +550,34 @@ class ParseWorkoutInputV2Response(BaseModel):
         default=[],
         description="Any parsing warnings or issues"
     )
+
+
+# =============================================================================
+# WORKOUT INSIGHTS SCHEMAS
+# =============================================================================
+
+class WorkoutInsightSection(BaseModel):
+    """Schema for a single insight section in workout insights."""
+    icon: str = Field(..., description="Emoji icon for the section (e.g., '💪', '🎯', '🔥', '⚡')")
+    title: str = Field(..., description="Short title (2-3 words max)")
+    content: str = Field(..., description="Brief content (6-10 words max)")
+    color: str = Field(..., description="Color hint: 'cyan', 'purple', 'orange', or 'green'")
+
+
+class WorkoutInsightsResponse(BaseModel):
+    """Schema for structured workout insights with headline and sections.
+
+    Used by the workout insights LangGraph agent to generate motivational
+    and informative summaries for workout cards.
+
+    Example response:
+    {
+        "headline": "Crush Your Goals!",
+        "sections": [
+            {"icon": "💪", "title": "Focus", "content": "Target chest and triceps today", "color": "cyan"},
+            {"icon": "🎯", "title": "Intensity", "content": "Progressive overload for strength", "color": "purple"}
+        ]
+    }
+    """
+    headline: str = Field(..., description="Motivational headline (3-5 words max)")
+    sections: List[WorkoutInsightSection] = Field(..., description="Exactly 2 insight sections")

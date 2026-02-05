@@ -1,167 +1,24 @@
 """
 Node implementations for the Workout Insights LangGraph agent.
 Generates structured, easy-to-read insights with formatting.
+
+Uses google.genai SDK with structured output for guaranteed valid JSON,
+with fallback to the centralized AI response parser.
 """
 import json
-import re
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List
 
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import HumanMessage, SystemMessage
+from google import genai
+from google.genai import types
 
 from .state import WorkoutInsightsState
 from core.config import get_settings
 from core.logger import get_logger
+from core.ai_response_parser import parse_ai_json
+from models.gemini_schemas import WorkoutInsightsResponse
 
 logger = get_logger(__name__)
 settings = get_settings()
-
-
-def repair_json_string(content: str) -> Optional[str]:
-    """
-    Attempt to repair common JSON issues from AI responses.
-    Returns repaired JSON string or None if repair fails.
-    """
-    if not content:
-        return None
-
-    original = content
-
-    try:
-        # First try parsing as-is
-        json.loads(content)
-        return content
-    except json.JSONDecodeError:
-        pass
-
-    # Try simple repairs first
-    repaired = content
-
-    # Fix unescaped control characters in strings (newlines, tabs, etc)
-    # This is a common issue with AI-generated JSON
-    repaired = re.sub(r'(?<!\\)\n', r'\\n', repaired)
-    repaired = re.sub(r'(?<!\\)\t', r'\\t', repaired)
-    repaired = re.sub(r'(?<!\\)\r', r'\\r', repaired)
-
-    # Remove trailing commas before closing brackets/braces
-    repaired = re.sub(r',(\s*[}\]])', r'\1', repaired)
-
-    try:
-        json.loads(repaired)
-        logger.info("[JSON Repair] Fixed control characters and/or trailing commas")
-        return repaired
-    except json.JSONDecodeError:
-        pass
-
-    # Try to find and extract just the JSON object from surrounding text
-    json_match = re.search(r'\{[\s\S]*\}', original)
-    if json_match:
-        extracted = json_match.group(0)
-        # Apply same fixes to extracted
-        extracted = re.sub(r'(?<!\\)\n', r'\\n', extracted)
-        extracted = re.sub(r'(?<!\\)\t', r'\\t', extracted)
-        extracted = re.sub(r',(\s*[}\]])', r'\1', extracted)
-        try:
-            json.loads(extracted)
-            logger.info("[JSON Repair] Extracted and fixed JSON from text")
-            return extracted
-        except json.JSONDecodeError:
-            pass
-
-    # Last resort: try to complete truncated JSON
-    repaired = original
-    # Re-apply control char fixes
-    repaired = re.sub(r'(?<!\\)\n', r'\\n', repaired)
-    repaired = re.sub(r'(?<!\\)\t', r'\\t', repaired)
-    repaired = re.sub(r',(\s*[}\]])', r'\1', repaired)
-
-    # Count braces and brackets
-    open_braces = repaired.count('{') - repaired.count('}')
-    open_brackets = repaired.count('[') - repaired.count(']')
-
-    # Check for unterminated string
-    in_string = False
-    i = 0
-    while i < len(repaired):
-        char = repaired[i]
-        if char == '\\' and i + 1 < len(repaired):
-            i += 2  # Skip escaped character
-            continue
-        if char == '"':
-            in_string = not in_string
-        i += 1
-
-    if in_string:
-        # Try to find a reasonable place to end the string
-        # Remove any incomplete content and close the string
-        repaired = repaired.rstrip()
-        if repaired.endswith(','):
-            repaired = repaired[:-1]
-        repaired += '"'
-
-    # Close any open brackets/braces
-    repaired += ']' * max(0, open_brackets)
-    repaired += '}' * max(0, open_braces)
-
-    try:
-        json.loads(repaired)
-        logger.info("[JSON Repair] Completed truncated JSON")
-        return repaired
-    except json.JSONDecodeError:
-        pass
-
-    # More aggressive repair: try to find the last complete section
-    # This handles cases where truncation happened mid-object
-    try:
-        # Find the last complete array element in sections
-        sections_match = re.search(r'"sections"\s*:\s*\[(.*)', original, re.DOTALL)
-        if sections_match:
-            sections_content = sections_match.group(1)
-            # Find all complete section objects
-            complete_sections = []
-            depth = 0
-            current_obj = ""
-            in_str = False
-            prev_char = ''
-            for char in sections_content:
-                current_obj += char
-                # Track string state to avoid counting braces inside strings
-                if char == '"' and prev_char != '\\':
-                    in_str = not in_str
-                if not in_str:
-                    if char == '{':
-                        depth += 1
-                    elif char == '}':
-                        depth -= 1
-                        if depth == 0:
-                            try:
-                                obj_str = current_obj.strip().rstrip(',')
-                                obj = json.loads(obj_str)
-                                complete_sections.append(obj)
-                                current_obj = ""
-                            except json.JSONDecodeError:
-                                current_obj = ""
-                                depth = 0
-                prev_char = char
-
-            if complete_sections:
-                # Extract headline from original
-                headline_match = re.search(r'"headline"\s*:\s*"([^"]*)"', original)
-                headline = headline_match.group(1) if headline_match else "Let's crush this workout!"
-
-                repaired_obj = {
-                    "headline": headline,
-                    "sections": complete_sections
-                }
-                logger.info(f"[JSON Repair] Recovered {len(complete_sections)} complete sections from truncated response")
-                return json.dumps(repaired_obj)
-    except Exception as repair_error:
-        logger.debug(f"[JSON Repair] Aggressive repair failed: {repair_error}")
-
-    logger.warning(f"[JSON Repair] Could not repair JSON after all attempts")
-    return None
-
-
 
 
 def categorize_muscle_group(muscle: str) -> str:
@@ -259,8 +116,10 @@ async def analyze_workout_node(state: WorkoutInsightsState) -> Dict[str, Any]:
 
 async def generate_structured_insights_node(state: WorkoutInsightsState) -> Dict[str, Any]:
     """
-    Generate structured, easy-to-read insights using AI.
-    Returns JSON with headline and sections for beautiful UI rendering.
+    Generate structured, easy-to-read insights using AI with guaranteed JSON output.
+
+    Uses google.genai SDK with response_schema for structured output.
+    Falls back to the centralized AI response parser if structured output fails.
     """
     logger.info("[Generate Node] Generating structured insights...")
 
@@ -268,51 +127,30 @@ async def generate_structured_insights_node(state: WorkoutInsightsState) -> Dict
     exercises = state.get("exercises", [])
     duration = state.get("duration_minutes", 45)
     workout_focus = state.get("workout_focus", "full body")
-    target_muscles = state.get("target_muscles", [])
-    total_sets = state.get("total_sets", 0)
-    exercise_count = state.get("exercise_count", 0)
-    user_goals = state.get("user_goals", [])
-    fitness_level = state.get("fitness_level", "intermediate")
-
-    # Get top 3 exercises for context
-    exercise_names = [e.get("name", "") for e in exercises[:3]]
-
-    llm = ChatGoogleGenerativeAI(
-        model=settings.gemini_model,
-        temperature=0.7,
-        max_tokens=512,  # Reduced - only need 2 short sections now
-        google_api_key=settings.gemini_api_key,
-    )
 
     # Get up to 5 exercise names for context
     exercise_list = [e.get("name", "") for e in exercises[:5] if e.get("name")]
     exercises_str = ", ".join(exercise_list) if exercise_list else "various exercises"
 
-    system_prompt = """You are a fitness coach. Generate SHORT workout insights as JSON.
+    # Build the prompt (simpler since schema enforces structure)
+    prompt = f"""You are a fitness coach. Generate SHORT workout insights.
 
 RULES:
-1. Headline: 3-5 words max
-2. Each content: 6-10 words max. Be direct.
-3. Only 2 sections total.
+1. Headline: 3-5 words max, motivational
+2. Each section content: 6-10 words max. Be direct.
+3. Generate exactly 2 sections.
+4. Icons to use: 💪 🎯 🔥 ⚡
+5. Colors: cyan, purple, orange, green
 
-Return ONLY valid JSON:
-{
-  "headline": "3-5 word headline",
-  "sections": [
-    {"icon": "💪", "title": "2-3 words", "content": "6-10 words max", "color": "cyan"},
-    {"icon": "🎯", "title": "2-3 words", "content": "6-10 words max", "color": "purple"}
-  ]
-}
-
-Icons to use: 💪 🎯 🔥 ⚡
-Colors: cyan, purple, orange"""
-
-    user_prompt = f"""Workout: {workout_name}
+Workout: {workout_name}
 Focus: {workout_focus}
 Exercises: {exercises_str}
 Duration: {duration} min
 
-Generate 2 short insights."""
+Generate 2 short, motivational insights for this workout."""
+
+    # Initialize google.genai client
+    client = genai.Client(api_key=settings.gemini_api_key)
 
     max_retries = 2
     last_error = None
@@ -322,61 +160,62 @@ Generate 2 short insights."""
             if attempt > 0:
                 logger.info(f"[Generate Node] Retry attempt {attempt}/{max_retries}")
 
-            response = await llm.ainvoke([
-                SystemMessage(content=system_prompt),
-                HumanMessage(content=user_prompt),
-            ])
+            response = await client.aio.models.generate_content(
+                model=settings.gemini_model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=WorkoutInsightsResponse,
+                    temperature=0.7,
+                    max_output_tokens=512,
+                ),
+            )
 
-            content = response.content.strip()
-            logger.debug(f"[Generate Node] Raw AI response (attempt {attempt}): {content[:500]}...")
-
-            # Extract JSON from response (handle markdown code blocks)
-            if "```json" in content:
-                content = content.split("```json")[1].split("```")[0].strip()
-            elif "```" in content:
-                parts = content.split("```")
-                if len(parts) >= 2:
-                    content = parts[1].strip()
-                    # Remove language identifier if present (e.g., "json\n{...")
-                    if content.startswith(("json", "JSON")):
-                        content = content[4:].strip()
-
-            # Try to parse JSON, with repair if needed
+            # Primary: Use structured output (response.parsed)
+            # The SDK automatically parses JSON when response_schema is provided
             insights = None
-            was_repaired = False
-            try:
-                insights = json.loads(content)
-            except json.JSONDecodeError as parse_error:
-                logger.warning(f"[Generate Node] Initial JSON parse failed: {parse_error}")
 
-                # Attempt to repair the JSON
-                repaired = repair_json_string(content)
-                if repaired:
-                    try:
-                        insights = json.loads(repaired)
-                        was_repaired = True
-                        logger.info("[Generate Node] Successfully parsed repaired JSON")
-                    except json.JSONDecodeError:
-                        logger.warning("[Generate Node] Repaired JSON still invalid")
+            if response.parsed:
+                # Structured output succeeded - convert Pydantic model to dict
+                insights = response.parsed.model_dump()
+                logger.debug("[Generate Node] Structured output parsing succeeded")
+            else:
+                # Fallback: Use centralized AI response parser on raw text
+                logger.warning("[Generate Node] Structured output empty, using fallback parser")
+                raw_text = response.text if response.text else ""
 
-            # If parsing failed, retry or raise error
+                parse_result = parse_ai_json(
+                    raw_text,
+                    expected_fields=["headline", "sections"],
+                    context="workout_insights"
+                )
+
+                if parse_result.success:
+                    insights = parse_result.data
+                    if parse_result.was_repaired:
+                        logger.info(f"[Generate Node] JSON repaired using {parse_result.strategy_used.value}: {parse_result.repair_steps}")
+                else:
+                    logger.warning(f"[Generate Node] Fallback parser failed: {parse_result.error}")
+                    last_error = ValueError(f"Failed to parse AI response: {parse_result.error}")
+                    if attempt < max_retries:
+                        continue  # Retry
+                    raise last_error
+
+            # Validate we got the expected structure
             if insights is None:
-                last_error = ValueError("Failed to parse AI response as valid JSON after repair attempts")
+                last_error = ValueError("No insights generated")
                 if attempt < max_retries:
-                    continue  # Retry
+                    continue
                 raise last_error
 
-            # Validate structure
             headline = insights.get("headline", "Let's crush this workout!")
             sections = insights.get("sections", [])
 
-            # If sections are empty/insufficient, this likely means truncation - retry
-            if not sections or len(sections) < 2:
-                last_error = ValueError(f"AI returned invalid structure: expected 2+ sections, got {len(sections)}")
-                if was_repaired:
-                    logger.warning(f"[Generate Node] Repaired JSON had {len(sections)} sections (likely truncated response)")
+            # Validate section count
+            if len(sections) < 2:
+                last_error = ValueError(f"Expected 2 sections, got {len(sections)}")
+                logger.warning(f"[Generate Node] Insufficient sections: {len(sections)}")
                 if attempt < max_retries:
-                    logger.info("[Generate Node] Retrying due to insufficient sections...")
                     continue  # Retry
                 raise last_error
 
@@ -386,7 +225,8 @@ Generate 2 short insights."""
 
             # Truncate section content if too long (max 10 words)
             for section in sections:
-                words = section.get("content", "").split()
+                content = section.get("content", "")
+                words = content.split()
                 if len(words) > 10:
                     section["content"] = " ".join(words[:10])
 

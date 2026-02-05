@@ -259,9 +259,9 @@ class DangerZoneSection extends ConsumerWidget {
         // Reset onboarding state (clear in-memory conversation)
         ref.read(onboardingStateProvider.notifier).reset();
 
-        // Navigate to onboarding
+        // Navigate to pre-auth quiz
         if (context.mounted) {
-          context.go('/onboarding');
+          context.go('/pre-auth-quiz');
         }
       } else {
         throw Exception('Failed to reset program');

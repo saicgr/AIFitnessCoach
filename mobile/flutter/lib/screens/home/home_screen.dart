@@ -2381,30 +2381,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   letterSpacing: 1.2,
                 ),
               ),
-              GestureDetector(
-                onTap: () {
-                  HapticService.light();
-                  context.push('/library?tab=1');
-                },
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'View Programs',
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'View Programs',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'Coming Soon',
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: cyan,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[600],
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_ios,
-                      size: 12,
-                      color: cyan,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),

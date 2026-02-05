@@ -8,7 +8,6 @@ UPCOMING:
 55.5. older person. trying to get moving. it has been helpful. however I progressed too quickly with the running and strained my calf. I should of made the AI make the running more gradual. having said that I've trained with an adapted program removing lower leg activities.
 55.5 Offline mode aka Tracker Only Mode
 56. 
-56. 
 
 ISSUES:
 1. Welcome Screen NEdds changed - 

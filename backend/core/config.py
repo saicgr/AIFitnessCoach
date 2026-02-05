@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     gemini_embedding_model: str = "text-embedding-004"
     gemini_max_tokens: int = 2500
     gemini_temperature: float = 0.7
+    # Context caching for faster workout generation (TTL in seconds, default 1 hour)
+    gemini_cache_ttl_seconds: int = 3600
+    # Enable/disable context caching (set to False to use non-cached generation)
+    gemini_cache_enabled: bool = True
 
     # Server Configuration
     host: str = "0.0.0.0"

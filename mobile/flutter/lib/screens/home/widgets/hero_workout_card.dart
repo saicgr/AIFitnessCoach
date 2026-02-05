@@ -11,6 +11,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/image_url_cache.dart';
 import 'regenerate_workout_sheet.dart';
+import '../../workout/widgets/exercise_add_sheet.dart';
 
 /// Hero workout card - Gravl-inspired design with background image
 /// Features a large background image with gradient overlay and prominent START button
@@ -220,7 +221,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => SafeArea(
+      builder: (sheetContext) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Column(
@@ -235,6 +236,93 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
+              // Glance Workout
+              ListTile(
+                leading: Icon(
+                  Icons.remove_red_eye_outlined,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                ),
+                title: Text(
+                  'Glance Workout',
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _showGlanceWorkout();
+                },
+              ),
+              // View Workout
+              ListTile(
+                leading: Icon(
+                  Icons.visibility_outlined,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                ),
+                title: Text(
+                  'View Workout',
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  context.push('/workout/${widget.workout.id}');
+                },
+              ),
+              // Add Exercises
+              ListTile(
+                leading: Icon(
+                  Icons.add_circle_outline,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                ),
+                title: Text(
+                  'Add Exercises',
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _addExercises();
+                },
+              ),
+              // Ask Coach
+              ListTile(
+                leading: Icon(
+                  Icons.chat_bubble_outline,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                ),
+                title: Text(
+                  'Ask Coach',
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  final workoutName = widget.workout.name ?? 'your workout';
+                  final exerciseCount = widget.workout.exerciseCount;
+                  final duration = widget.workout.formattedDurationShort;
+                  context.push(
+                    '/chat',
+                    extra: {
+                      'initialMessage':
+                          'I have questions about my upcoming workout "$workoutName" ($exerciseCount exercises, $duration). Can you help me prepare for it?',
+                    },
+                  );
+                },
+              ),
+              // Share to Social
+              ListTile(
+                leading: Icon(
+                  Icons.share_outlined,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                ),
+                title: Text(
+                  'Share to Social',
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  context.push('/workout/${widget.workout.id}');
+                },
+              ),
+              // Divider before destructive action
+              const Divider(height: 1),
+              // Skip Workout
               ListTile(
                 leading: const Icon(
                   Icons.skip_next_outlined,
@@ -245,7 +333,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                   style: TextStyle(color: AppColors.textMuted),
                 ),
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.pop(sheetContext);
                   _skipWorkout();
                 },
               ),
@@ -254,6 +342,128 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
         ),
       ),
     );
+  }
+
+  void _showGlanceWorkout() {
+    final workout = widget.workout;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (dialogContext) => Dialog(
+        backgroundColor: isDark ? AppColors.elevated : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      workout.name ?? 'Workout',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.close,
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
+                    onPressed: () => Navigator.pop(dialogContext),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Stats
+              Text(
+                '${workout.formattedDurationShort} • ${workout.exerciseCount} exercises',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Exercise list
+              ...workout.exercises.take(5).map(
+                    (e) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.fitness_center,
+                            size: 16,
+                            color: isDark ? Colors.white54 : Colors.black45,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              e.name,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            '${e.sets ?? 0} sets',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? Colors.white54 : Colors.black45,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              if (workout.exercises.length > 5)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    '+${workout.exercises.length - 5} more exercises',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.white54 : Colors.black45,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _addExercises() async {
+    final workout = widget.workout;
+    final updatedWorkout = await showExerciseAddSheet(
+      context,
+      ref,
+      workoutId: workout.id!,
+      workoutType: workout.type ?? 'strength',
+      currentExerciseNames: workout.exercises.map((e) => e.name).toList(),
+    );
+
+    if (updatedWorkout != null && mounted) {
+      ref.invalidate(todayWorkoutProvider);
+      ref.invalidate(workoutsProvider);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Exercise added!'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
   }
 
   @override
@@ -340,29 +550,63 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                           ),
                         ),
                       ),
-                      // Menu button
-                      GestureDetector(
-                        onTap: _showOptionsMenu,
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.black.withValues(alpha: 0.4)
-                                : Colors.white.withValues(alpha: 0.8),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.1)
-                                  : Colors.black.withValues(alpha: 0.1),
+                      // Right side: Schedule + Menu buttons
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Schedule button
+                          GestureDetector(
+                            onTap: () {
+                              HapticService.light();
+                              context.push('/schedule');
+                            },
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              margin: const EdgeInsets.only(right: 8),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.black.withValues(alpha: 0.4)
+                                    : Colors.white.withValues(alpha: 0.8),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.1)
+                                      : Colors.black.withValues(alpha: 0.1),
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.calendar_today_outlined,
+                                color: isDark ? Colors.white : Colors.black87,
+                                size: 18,
+                              ),
                             ),
                           ),
-                          child: Icon(
-                            Icons.more_horiz,
-                            color: isDark ? Colors.white : Colors.black87,
-                            size: 20,
+                          // Menu button
+                          GestureDetector(
+                            onTap: _showOptionsMenu,
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.black.withValues(alpha: 0.4)
+                                    : Colors.white.withValues(alpha: 0.8),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.1)
+                                      : Colors.black.withValues(alpha: 0.1),
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.more_horiz,
+                                color: isDark ? Colors.white : Colors.black87,
+                                size: 20,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
                   ),

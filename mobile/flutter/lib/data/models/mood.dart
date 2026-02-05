@@ -458,3 +458,249 @@ class MoodAnalyticsResponse {
         .toList();
   }
 }
+
+// ============================================================================
+// WEEKLY MOOD DATA MODELS
+// ============================================================================
+
+/// Single mood entry within a day.
+class MoodDayEntry {
+  final String mood;
+  final String emoji;
+  final String color;
+  final String time;
+
+  const MoodDayEntry({
+    required this.mood,
+    required this.emoji,
+    required this.color,
+    required this.time,
+  });
+
+  factory MoodDayEntry.fromJson(Map<String, dynamic> json) {
+    return MoodDayEntry(
+      mood: json['mood'] as String? ?? 'good',
+      emoji: json['emoji'] as String? ?? '',
+      color: json['color'] as String? ?? '#2196F3',
+      time: json['time'] as String? ?? '00:00',
+    );
+  }
+
+  Color get colorValue {
+    final hex = color.replaceFirst('#', '');
+    return Color(int.parse('FF$hex', radix: 16));
+  }
+
+  Mood get moodEnum => Mood.fromString(mood);
+}
+
+/// Mood data for a single day (weekly view).
+class MoodDayData {
+  final String date;
+  final String dayName;
+  final List<MoodDayEntry> moods;
+  final String? primaryMood;
+  final int checkinCount;
+  final bool workoutCompleted;
+
+  const MoodDayData({
+    required this.date,
+    required this.dayName,
+    required this.moods,
+    this.primaryMood,
+    required this.checkinCount,
+    required this.workoutCompleted,
+  });
+
+  factory MoodDayData.fromJson(Map<String, dynamic> json) {
+    final moodsJson = json['moods'] as List<dynamic>? ?? [];
+    return MoodDayData(
+      date: json['date'] as String? ?? '',
+      dayName: json['day_name'] as String? ?? '',
+      moods: moodsJson
+          .map((m) => MoodDayEntry.fromJson(m as Map<String, dynamic>))
+          .toList(),
+      primaryMood: json['primary_mood'] as String?,
+      checkinCount: json['checkin_count'] as int? ?? 0,
+      workoutCompleted: json['workout_completed'] as bool? ?? false,
+    );
+  }
+
+  /// Get the primary mood as enum.
+  Mood? get primaryMoodEnum =>
+      primaryMood != null ? Mood.fromString(primaryMood!) : null;
+
+  /// Get the color for the primary mood.
+  Color? get primaryMoodColor => primaryMoodEnum?.color;
+
+  /// Check if there were any check-ins this day.
+  bool get hasCheckins => checkinCount > 0;
+}
+
+/// Summary stats for weekly mood data.
+class MoodWeeklySummary {
+  final int totalCheckins;
+  final double avgMoodScore;
+  final String trend;
+
+  const MoodWeeklySummary({
+    required this.totalCheckins,
+    required this.avgMoodScore,
+    required this.trend,
+  });
+
+  factory MoodWeeklySummary.fromJson(Map<String, dynamic> json) {
+    return MoodWeeklySummary(
+      totalCheckins: json['total_checkins'] as int? ?? 0,
+      avgMoodScore: (json['avg_mood_score'] as num?)?.toDouble() ?? 0.0,
+      trend: json['trend'] as String? ?? 'stable',
+    );
+  }
+
+  /// Check if mood is improving.
+  bool get isImproving => trend == 'improving';
+
+  /// Check if mood is declining.
+  bool get isDeclining => trend == 'declining';
+
+  /// Check if mood is stable.
+  bool get isStable => trend == 'stable';
+}
+
+/// Response model for weekly mood data.
+class MoodWeeklyResponse {
+  final List<MoodDayData> days;
+  final MoodWeeklySummary summary;
+
+  const MoodWeeklyResponse({
+    required this.days,
+    required this.summary,
+  });
+
+  factory MoodWeeklyResponse.fromJson(Map<String, dynamic> json) {
+    final daysJson = json['days'] as List<dynamic>? ?? [];
+    return MoodWeeklyResponse(
+      days: daysJson
+          .map((d) => MoodDayData.fromJson(d as Map<String, dynamic>))
+          .toList(),
+      summary: MoodWeeklySummary.fromJson(
+        json['summary'] as Map<String, dynamic>? ?? {},
+      ),
+    );
+  }
+
+  /// Get days with check-ins only.
+  List<MoodDayData> get daysWithCheckins =>
+      days.where((d) => d.hasCheckins).toList();
+}
+
+// ============================================================================
+// CALENDAR MOOD DATA MODELS
+// ============================================================================
+
+/// Mood data for a single calendar day.
+class MoodCalendarDay {
+  final List<String> moods;
+  final String primaryMood;
+  final String color;
+  final int checkinCount;
+
+  const MoodCalendarDay({
+    required this.moods,
+    required this.primaryMood,
+    required this.color,
+    required this.checkinCount,
+  });
+
+  factory MoodCalendarDay.fromJson(Map<String, dynamic> json) {
+    final moodsJson = json['moods'] as List<dynamic>? ?? [];
+    return MoodCalendarDay(
+      moods: moodsJson.map((m) => m.toString()).toList(),
+      primaryMood: json['primary_mood'] as String? ?? 'good',
+      color: json['color'] as String? ?? '#2196F3',
+      checkinCount: json['checkin_count'] as int? ?? 0,
+    );
+  }
+
+  /// Get the primary mood as enum.
+  Mood get primaryMoodEnum => Mood.fromString(primaryMood);
+
+  /// Get the color as a Flutter Color.
+  Color get colorValue {
+    final hex = color.replaceFirst('#', '');
+    return Color(int.parse('FF$hex', radix: 16));
+  }
+}
+
+/// Summary stats for calendar mood data.
+class MoodCalendarSummary {
+  final int daysWithCheckins;
+  final int totalCheckins;
+  final String? mostCommonMood;
+
+  const MoodCalendarSummary({
+    required this.daysWithCheckins,
+    required this.totalCheckins,
+    this.mostCommonMood,
+  });
+
+  factory MoodCalendarSummary.fromJson(Map<String, dynamic> json) {
+    return MoodCalendarSummary(
+      daysWithCheckins: json['days_with_checkins'] as int? ?? 0,
+      totalCheckins: json['total_checkins'] as int? ?? 0,
+      mostCommonMood: json['most_common_mood'] as String?,
+    );
+  }
+
+  /// Get the most common mood as enum.
+  Mood? get mostCommonMoodEnum =>
+      mostCommonMood != null ? Mood.fromString(mostCommonMood!) : null;
+}
+
+/// Response model for monthly mood calendar data.
+class MoodCalendarResponse {
+  final int month;
+  final int year;
+  final Map<String, MoodCalendarDay?> days;
+  final MoodCalendarSummary summary;
+
+  const MoodCalendarResponse({
+    required this.month,
+    required this.year,
+    required this.days,
+    required this.summary,
+  });
+
+  factory MoodCalendarResponse.fromJson(Map<String, dynamic> json) {
+    final daysJson = json['days'] as Map<String, dynamic>? ?? {};
+    final daysMap = <String, MoodCalendarDay?>{};
+
+    for (final entry in daysJson.entries) {
+      if (entry.value != null) {
+        daysMap[entry.key] =
+            MoodCalendarDay.fromJson(entry.value as Map<String, dynamic>);
+      } else {
+        daysMap[entry.key] = null;
+      }
+    }
+
+    return MoodCalendarResponse(
+      month: json['month'] as int? ?? 1,
+      year: json['year'] as int? ?? DateTime.now().year,
+      days: daysMap,
+      summary: MoodCalendarSummary.fromJson(
+        json['summary'] as Map<String, dynamic>? ?? {},
+      ),
+    );
+  }
+
+  /// Get data for a specific date.
+  MoodCalendarDay? getDay(DateTime date) {
+    final dateStr =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    return days[dateStr];
+  }
+
+  /// Check if a date has check-ins.
+  bool hasCheckin(DateTime date) => getDay(date) != null;
+}

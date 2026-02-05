@@ -88,6 +88,10 @@ class GeminiProfilePayloadBuilder {
       payload['progression_pace'] = profile.progressionPace;
     }
 
+    if (profile.workoutVariety != null) {
+      payload['workout_variety'] = profile.workoutVariety;
+    }
+
     if (profile.limitations != null && profile.limitations!.isNotEmpty) {
       payload['limitations'] = profile.limitations;
     }

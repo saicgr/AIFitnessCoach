@@ -113,4 +113,46 @@ class MoodHistoryRepository {
       return false;
     }
   }
+
+  /// Fetch weekly mood data for a user (last 7 days).
+  Future<MoodWeeklyResponse?> getMoodWeekly({required String userId}) async {
+    try {
+      final response = await _apiClient.get('/workouts/$userId/mood-weekly');
+
+      if (response.statusCode == 200 && response.data != null) {
+        return MoodWeeklyResponse.fromJson(response.data);
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint('Error fetching weekly mood data: $e');
+      return null;
+    }
+  }
+
+  /// Fetch monthly mood calendar data for a user.
+  Future<MoodCalendarResponse?> getMoodCalendar({
+    required String userId,
+    required int month,
+    required int year,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/workouts/$userId/mood-calendar',
+        queryParameters: {
+          'month': month,
+          'year': year,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        return MoodCalendarResponse.fromJson(response.data);
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint('Error fetching mood calendar data: $e');
+      return null;
+    }
+  }
 }

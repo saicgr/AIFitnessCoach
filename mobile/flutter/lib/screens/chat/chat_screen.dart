@@ -16,7 +16,12 @@ import '../ai_settings/ai_settings_screen.dart';
 import 'widgets/report_message_sheet.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
-  const ChatScreen({super.key});
+  final String? initialMessage;
+
+  const ChatScreen({
+    super.key,
+    this.initialMessage,
+  });
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
@@ -27,6 +32,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _textController = TextEditingController();
   final _focusNode = FocusNode();
   bool _isLoading = false;
+  bool _initialMessageSent = false;
 
   @override
   void initState() {
@@ -34,6 +40,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     // Load chat history on screen load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(chatMessagesProvider.notifier).loadHistory();
+
+      // If initial message provided, send it automatically after history loads
+      if (widget.initialMessage != null &&
+          widget.initialMessage!.isNotEmpty &&
+          !_initialMessageSent) {
+        _initialMessageSent = true;
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            _textController.text = widget.initialMessage!;
+            _sendMessage();
+          }
+        });
+      }
     });
   }
 
