@@ -31,7 +31,7 @@ from services.mood_workout_service import mood_workout_service, MoodType
 from services.user_context_service import user_context_service
 from services.warmup_stretch_service import get_warmup_stretch_service
 from services.feedback_analysis_service import get_user_difficulty_adjustment
-from core.rate_limiter import limiter
+from core.rate_limiter import limiter, user_limiter
 
 from .utils import (
     row_to_workout,
@@ -859,7 +859,7 @@ async def generate_workout(request: GenerateWorkoutRequest):
 
 
 @router.post("/generate-stream")
-@limiter.limit("5/minute")
+@user_limiter.limit("15/minute")  # User-based rate limit (more reliable than IP behind proxies)
 async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequest):
     """
     Generate a workout with streaming response for faster perceived performance.
@@ -868,17 +868,42 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
     - event: chunk - Partial workout data as it's generated
     - event: done - Final complete workout data
     - event: error - Error message if generation fails
+    - event: already_generating - Workout generation already in progress
 
     Time to first content is typically <500ms vs 3-8s for full generation.
     """
     logger.info(f"🚀 Streaming workout generation for user {body.user_id}")
+
+    # Idempotency check: If a workout is already being generated for this user/date, return early
+    db = get_supabase_db()
+    scheduled_date = body.scheduled_date or datetime.now().strftime("%Y-%m-%d")
+
+    try:
+        existing_generating = db.client.table("workouts").select("id").eq(
+            "user_id", body.user_id
+        ).eq(
+            "scheduled_date", scheduled_date
+        ).eq(
+            "status", "generating"
+        ).execute()
+
+        if existing_generating.data:
+            workout_id = existing_generating.data[0]["id"]
+            logger.info(f"⏳ [Idempotency] Workout already generating for {body.user_id} on {scheduled_date}: {workout_id}")
+
+            async def already_generating_sse():
+                yield f"event: already_generating\ndata: {json.dumps({'status': 'already_generating', 'workout_id': workout_id, 'message': 'Workout generation already in progress'})}\n\n"
+
+            return StreamingResponse(already_generating_sse(), media_type="text/event-stream")
+    except Exception as e:
+        # Log but don't fail - idempotency check is a nice-to-have
+        logger.warning(f"⚠️ [Idempotency] Check failed: {e}")
 
     async def generate_sse() -> AsyncGenerator[str, None]:
         start_time = datetime.now()
         gym_profile_id = None  # Track which profile this workout is generated for
 
         try:
-            db = get_supabase_db()
 
             # Get user data
             if body.fitness_level and body.goals and body.equipment:

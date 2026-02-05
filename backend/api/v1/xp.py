@@ -1067,6 +1067,13 @@ class ClaimDailyCrateRequest(BaseModel):
     crate_type: str  # 'daily', 'streak', or 'activity'
 
 
+class ClaimDailyCrateResponse(BaseModel):
+    success: bool
+    crate_type: Optional[str] = None
+    reward: Optional[dict] = None
+    message: str
+
+
 @router.get("/daily-crates", response_model=DailyCratesResponse)
 async def get_daily_crates(
     current_user=Depends(get_current_user)
@@ -1108,7 +1115,7 @@ async def get_daily_crates(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/claim-daily-crate")
+@router.post("/claim-daily-crate", response_model=ClaimDailyCrateResponse)
 async def claim_daily_crate(
     request: ClaimDailyCrateRequest,
     current_user=Depends(get_current_user)
@@ -1167,6 +1174,34 @@ async def claim_daily_crate(
     except HTTPException:
         raise
     except Exception as e:
+        # Handle Supabase RPC JSON serialization quirk - data is in error message
+        error_str = str(e)
+        if "JSON could not be generated" in error_str and "details" in error_str:
+            import ast
+            import json
+            try:
+                error_dict = ast.literal_eval(error_str)
+                details = error_dict.get('details', '')
+                if details.startswith("b'") and details.endswith("'"):
+                    json_str = details[2:-1]
+                    data = json.loads(json_str)
+                    print(f"✅ [XP] claim-daily-crate extracted data from RPC response")
+                    reward_type = data.get("reward_type", "xp")
+                    reward_amount = data.get("reward_amount", 0)
+                    return ClaimDailyCrateResponse(
+                        success=True,
+                        crate_type=data.get("crate_type"),
+                        reward={
+                            "type": reward_type,
+                            "amount": reward_amount,
+                            "display_name": f"+{reward_amount} XP" if reward_type == "xp"
+                                else f"{reward_amount} {reward_type.replace('_', ' ').title()}"
+                        },
+                        message=data.get("message", "Crate opened!")
+                    )
+            except Exception as parse_error:
+                print(f"❌ [XP] Failed to parse RPC response: {parse_error}")
+
         print(f"❌ [XP] Error claiming daily crate: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
