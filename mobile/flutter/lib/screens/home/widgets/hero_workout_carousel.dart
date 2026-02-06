@@ -87,7 +87,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
     for (final workout in workouts) {
       if (workout.scheduledDate == null) continue;
       try {
-        final workoutDate = DateTime.parse(workout.scheduledDate!);
+        final workoutDate = DateTime.parse(workout.scheduledDate!).toLocal();
         final workoutDateOnly = DateTime(
           workoutDate.year,
           workoutDate.month,

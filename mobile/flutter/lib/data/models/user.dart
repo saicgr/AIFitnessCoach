@@ -278,8 +278,14 @@ class User extends Equatable {
         if (days is List && days.isNotEmpty) {
           // Handle both int indices and string day names
           if (days.first is int || (days.first is String && int.tryParse(days.first) != null)) {
-            // Int indices (e.g., [0, 2, 4])
-            return days.map((e) => e is int ? e : int.parse(e.toString())).toList().cast<int>()..sort();
+            // Int indices - convert from 1-indexed (Flutter onboarding: Mon=1..Sun=7)
+            // to 0-indexed (Mon=0..Sun=6) for use with DateTime.weekday - 1
+            var result = days.map((e) => e is int ? e : int.parse(e.toString())).toList().cast<int>();
+            // Detect 1-indexed values (any value > 6 means 1-indexed, since 0-indexed max is 6)
+            if (result.any((d) => d > 6)) {
+              result = result.map((d) => d - 1).toList();
+            }
+            return result..sort();
           } else if (days.first is String) {
             // String day names (e.g., ["Mon", "Wed", "Fri"])
             const dayMap = {'Mon': 0, 'Tue': 1, 'Wed': 2, 'Thu': 3, 'Fri': 4, 'Sat': 5, 'Sun': 6};

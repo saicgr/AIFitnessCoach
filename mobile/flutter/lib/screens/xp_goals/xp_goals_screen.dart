@@ -4,43 +4,23 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:simple_circular_progress_bar/simple_circular_progress_bar.dart';
-import '../core/constants/app_colors.dart';
-import '../core/theme/accent_color_provider.dart';
-import '../data/providers/xp_provider.dart';
-import '../data/models/xp_event.dart';
-import '../data/models/user_xp.dart';
-import 'main_shell.dart';
-import 'segmented_tab_bar.dart';
+import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
+import '../../data/providers/xp_provider.dart';
+import '../../data/models/xp_event.dart';
+import '../../data/models/user_xp.dart';
+import '../../data/services/haptic_service.dart';
+import '../../widgets/segmented_tab_bar.dart';
 
-/// Shows XP goals sheet from any context
-void showXPGoalsSheet(BuildContext context, WidgetRef ref) {
-  HapticFeedback.lightImpact();
-
-  // Hide nav bar while sheet is open
-  ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-
-  showModalBottomSheet(
-    context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    isScrollControlled: true,
-    useRootNavigator: true,
-    builder: (context) => const XPGoalsSheet(),
-  ).then((_) {
-    // Show nav bar when sheet is closed
-    ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-  });
-}
-
-/// Bottom sheet showing daily, weekly, and monthly XP goals with tabs
-class XPGoalsSheet extends ConsumerStatefulWidget {
-  const XPGoalsSheet({super.key});
+/// Full-screen XP Goals page showing daily, weekly, and monthly XP goals with tabs
+class XPGoalsScreen extends ConsumerStatefulWidget {
+  const XPGoalsScreen({super.key});
 
   @override
-  ConsumerState<XPGoalsSheet> createState() => _XPGoalsSheetState();
+  ConsumerState<XPGoalsScreen> createState() => _XPGoalsScreenState();
 }
 
-class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
+class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
@@ -59,8 +39,10 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.background : AppColorsLight.background;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     // Get dynamic accent color
     final accentEnum = ref.watch(accentColorProvider);
@@ -72,239 +54,240 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
     final xpState = ref.watch(xpProvider);
     final userXp = xpState.userXp;
 
-    // Semi-transparent colors for glassmorphic effect - darker for light mode
-    final cardBg = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.black.withValues(alpha: 0.08);
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : Colors.black.withValues(alpha: 0.15);
-    // Use darker text for light mode
-    final textColorStrong = isDark ? textColor : Colors.black.withValues(alpha: 0.85);
-    final textMutedStrong = isDark ? textMuted : Colors.black.withValues(alpha: 0.55);
+    // Card colors
+    final cardBg = isDark ? AppColors.elevated : Colors.grey.shade100;
+    final borderColor = isDark ? cardBorder : Colors.grey.shade300;
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (context, scrollController) => ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.4)
-                  : Colors.white.withValues(alpha: 0.6),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              border: Border(
-                top: BorderSide(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.black.withValues(alpha: 0.1),
-                  width: 0.5,
-                ),
-              ),
-            ),
-            child: Column(
-              children: [
-                // Drag handle
-                const SizedBox(height: 12),
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: textMuted.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-                // Header with close button
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
-                  child: Row(
-                    children: [
-                      Container(
+    // Tab bar widget used in both the sliver header and for measuring height
+    final tabBar = SegmentedTabBar(
+      controller: _tabController,
+      showIcons: false,
+      tabs: const [
+        SegmentedTabItem(label: 'Daily', icon: Icons.today),
+        SegmentedTabItem(label: 'Weekly', icon: Icons.date_range),
+        SegmentedTabItem(label: 'Monthly', icon: Icons.calendar_month),
+      ],
+    );
+
+    return Scaffold(
+      backgroundColor: bgColor,
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              // Safe area
+              SizedBox(height: MediaQuery.of(context).padding.top),
+
+              // Fixed top bar with back button + title
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        HapticService.light();
+                        context.pop();
+                      },
+                      child: Container(
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: accentColor.withValues(alpha: 0.15),
+                          color: isDark
+                              ? Colors.black.withValues(alpha: 0.6)
+                              : Colors.white.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.bolt,
-                          color: accentColor,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'XP Goals',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: textColorStrong,
-                              ),
+                          border: Border.all(color: borderColor),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
                             ),
-                            if (hasDoubleXP)
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.bolt,
-                                    color: Colors.amber,
-                                    size: 12,
-                                  ),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    '${multiplier.toInt()}x XP Active!',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.amber,
-                                    ),
-                                  ),
-                                ],
-                              ),
                           ],
                         ),
+                        child: Icon(Icons.arrow_back, color: textColor, size: 22),
                       ),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: Icon(Icons.close, color: textMutedStrong, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: accentColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    ],
-                  ),
-                ),
-
-                // Level Progress Section (compact)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _buildLevelProgressSection(
-                    context,
-                    userXp,
-                    textColorStrong,
-                    textMutedStrong,
-                    cardBg,
-                    borderColor,
-                    accentColor,
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // Login Streak Banner
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _buildStreakBanner(
-                    context,
-                    loginStreak,
-                    textColorStrong,
-                    textMutedStrong,
-                    cardBg,
-                    borderColor,
-                    accentColor,
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // Tab bar
-                SegmentedTabBar(
-                  controller: _tabController,
-                  showIcons: false,
-                  tabs: const [
-                    SegmentedTabItem(label: 'Daily', icon: Icons.today),
-                    SegmentedTabItem(label: 'Weekly', icon: Icons.date_range),
-                    SegmentedTabItem(label: 'Monthly', icon: Icons.calendar_month),
+                      child: Icon(
+                        Icons.bolt,
+                        color: accentColor,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'XP Goals',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                          if (hasDoubleXP)
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.bolt,
+                                  color: Colors.amber,
+                                  size: 12,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  '${multiplier.toInt()}x XP Active!',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.amber,
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
+              ),
 
-                // Tab content
-                Expanded(
-                  child: TabBarView(
+              // NestedScrollView: header scrolls away, tabs pin, tab content fills
+              Expanded(
+                child: NestedScrollView(
+                  headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                    // Level Progress (scrolls away)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                        child: _buildLevelProgressSection(
+                          context,
+                          userXp,
+                          textColor,
+                          textMuted,
+                          cardBg,
+                          borderColor,
+                          accentColor,
+                        ),
+                      ),
+                    ),
+                    // Login Streak Banner (scrolls away)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: _buildStreakBanner(
+                          context,
+                          loginStreak,
+                          textColor,
+                          textMuted,
+                          cardBg,
+                          borderColor,
+                          accentColor,
+                        ),
+                      ),
+                    ),
+                    // Pinned tab bar
+                    SliverPersistentHeader(
+                      pinned: true,
+                      delegate: _StickyTabBarDelegate(
+                        child: Container(
+                          color: bgColor,
+                          child: tabBar,
+                        ),
+                      ),
+                    ),
+                  ],
+                  body: TabBarView(
                     controller: _tabController,
                     children: [
-                      // Daily Tab
                       _buildDailyTab(
                         context,
                         ref,
                         loginStreak,
-                        textColorStrong,
-                        textMutedStrong,
+                        textColor,
+                        textMuted,
                         cardBg,
                         borderColor,
                         multiplier,
                         accentColor,
+                        bottomPadding: bottomPadding + 70,
                       ),
-                      // Weekly Tab
                       _buildWeeklyTab(
                         context,
                         ref,
-                        textColorStrong,
-                        textMutedStrong,
+                        textColor,
+                        textMuted,
                         cardBg,
                         borderColor,
                         accentColor,
+                        bottomPadding: bottomPadding + 70,
                       ),
-                      // Monthly Tab
                       _buildMonthlyTab(
                         context,
                         ref,
-                        textColorStrong,
-                        textMutedStrong,
+                        textColor,
+                        textMuted,
                         cardBg,
                         borderColor,
                         accentColor,
+                        bottomPadding: bottomPadding + 70,
                       ),
                     ],
                   ),
                 ),
+              ),
+            ],
+          ),
 
-                // Bottom buttons (always visible)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _buildTrophyRoomButton(
-                          context,
-                          textColorStrong,
-                          textMutedStrong,
-                          cardBg,
-                          borderColor,
-                          accentColor,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildInventoryButton(
-                          context,
-                          ref,
-                          textColorStrong,
-                          textMutedStrong,
-                          cardBg,
-                          borderColor,
-                          accentColor,
-                        ),
-                      ),
-                    ],
+          // Floating bottom buttons
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: bottomPadding + 12,
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildTrophyRoomButton(
+                    context,
+                    textColor,
+                    textMuted,
+                    cardBg,
+                    borderColor,
+                    accentColor,
                   ),
                 ),
-
-                // Bottom safe area padding
-                SizedBox(height: MediaQuery.of(context).padding.bottom + 12),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildInventoryButton(
+                    context,
+                    ref,
+                    textColor,
+                    textMuted,
+                    cardBg,
+                    borderColor,
+                    accentColor,
+                  ),
+                ),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
+
 
   /// Daily tab content
   Widget _buildDailyTab(
@@ -316,46 +299,55 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
     Color cardBg,
     Color borderColor,
     double multiplier,
-    Color accentColor,
-  ) {
+    Color accentColor, {
+    double bottomPadding = 16,
+  }) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.zero,
       physics: const ClampingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
-          // Daily Goals Card
-          _buildDailyGoalsCard(
-            context,
-            ref,
-            loginStreak,
-            textColor,
-            textMuted,
-            cardBg,
-            borderColor,
-            multiplier,
-            accentColor,
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Daily Goals Card
+                _buildDailyGoalsCard(
+                  context,
+                  ref,
+                  loginStreak,
+                  textColor,
+                  textMuted,
+                  cardBg,
+                  borderColor,
+                  multiplier,
+                  accentColor,
+                ),
+                const SizedBox(height: 16),
+                // First-Time Bonuses section
+                _buildSectionHeader(
+                  'First-Time Bonuses',
+                  Icons.star_outline,
+                  textColor,
+                  textMuted,
+                ),
+                const SizedBox(height: 8),
+                _buildFirstTimeBonusesCard(
+                  context,
+                  ref,
+                  textColor,
+                  textMuted,
+                  cardBg,
+                  borderColor,
+                  accentColor,
+                ),
+                SizedBox(height: bottomPadding),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
-          // First-Time Bonuses section
-          _buildSectionHeader(
-            'First-Time Bonuses',
-            Icons.star_outline,
-            textColor,
-            textMuted,
-          ),
-          const SizedBox(height: 8),
-          _buildFirstTimeBonusesCard(
-            context,
-            ref,
-            textColor,
-            textMuted,
-            cardBg,
-            borderColor,
-            accentColor,
-          ),
-          const SizedBox(height: 16),
         ],
       ),
     );
@@ -369,25 +361,34 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
     Color textMuted,
     Color cardBg,
     Color borderColor,
-    Color accentColor,
-  ) {
+    Color accentColor, {
+    double bottomPadding = 16,
+  }) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.zero,
       physics: const ClampingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
-          _buildExtendedWeeklyProgressCard(
-            context,
-            ref,
-            textColor,
-            textMuted,
-            cardBg,
-            borderColor,
-            accentColor,
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildExtendedWeeklyProgressCard(
+                  context,
+                  ref,
+                  textColor,
+                  textMuted,
+                  cardBg,
+                  borderColor,
+                  accentColor,
+                ),
+                SizedBox(height: bottomPadding),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
         ],
       ),
     );
@@ -401,25 +402,34 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
     Color textMuted,
     Color cardBg,
     Color borderColor,
-    Color accentColor,
-  ) {
+    Color accentColor, {
+    double bottomPadding = 16,
+  }) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.zero,
       physics: const ClampingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
-          _buildMonthlyAchievementsCard(
-            context,
-            ref,
-            textColor,
-            textMuted,
-            cardBg,
-            borderColor,
-            accentColor,
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildMonthlyAchievementsCard(
+                  context,
+                  ref,
+                  textColor,
+                  textMuted,
+                  cardBg,
+                  borderColor,
+                  accentColor,
+                ),
+                SizedBox(height: bottomPadding),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
         ],
       ),
     );
@@ -443,13 +453,6 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
     final xpTitle = userXp?.xpTitle ?? XPTitle.novice;
     final titleColor = Color(xpTitle.colorValue);
 
-    // Stronger colors for light mode visibility
-    final cardBackground = isDark
-        ? cardBg
-        : Colors.grey.shade100;
-    final strongBorder = isDark
-        ? borderColor
-        : Colors.grey.shade300;
     final progressBgColor = isDark
         ? textMuted.withValues(alpha: 0.2)
         : Colors.grey.shade300;
@@ -457,9 +460,9 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: cardBackground,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: strongBorder, width: 1.5),
+        border: Border.all(color: borderColor, width: 1.5),
         boxShadow: isDark ? null : [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -629,7 +632,7 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
                       ],
                     ),
                     const SizedBox(height: 10),
-                    // Progress bar with better visibility
+                    // Progress bar
                     Container(
                       height: 10,
                       decoration: BoxDecoration(
@@ -676,7 +679,7 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
 
           const SizedBox(height: 14),
 
-          // View All Levels button - more prominent
+          // View All Levels button
           GestureDetector(
             onTap: () => _showAllLevelsSheet(context, currentLevel, accentColor),
             child: Container(
@@ -855,15 +858,11 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
     // Get actual daily goals state
     final dailyGoalsState = ref.watch(dailyGoalsProvider);
 
-    // Check multiple sources for login status - more robust fallback
+    // Check multiple sources for login status
     final xpState = ref.watch(xpProvider);
     final hasLoggedInToday = streak?.hasLoggedInToday ??
                               dailyGoalsState?.loggedIn ??
                               xpState.lastDailyLoginResult != null;
-
-    // Stronger colors for light mode
-    final cardBackground = isDark ? cardBg : Colors.grey.shade100;
-    final strongBorder = isDark ? borderColor : Colors.grey.shade300;
 
     final dailyGoals = [
       _DailyGoal(
@@ -905,9 +904,9 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
 
     return Container(
       decoration: BoxDecoration(
-        color: cardBackground,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: strongBorder, width: 1.5),
+        border: Border.all(color: borderColor, width: 1.5),
         boxShadow: isDark ? null : [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -1050,143 +1049,6 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
     );
   }
 
-  Widget _buildProgressCard(
-    BuildContext context,
-    CheckpointProgress? progress,
-    int maxXP,
-    Color textColor,
-    Color textMuted,
-    Color cardBg,
-    Color borderColor,
-    Color accentColor,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final earnedXP = progress?.totalXpEarned ?? 0;
-    final percentage = maxXP > 0 ? (earnedXP / maxXP).clamp(0.0, 1.0) : 0.0;
-    final earned = progress?.checkpointsEarned ?? [];
-
-    // Stronger colors for light mode
-    final cardBackground = isDark ? cardBg : Colors.grey.shade100;
-    final strongBorder = isDark ? borderColor : Colors.grey.shade300;
-    final dividerColor = isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade300;
-    final progressBgColor = isDark ? textMuted.withValues(alpha: 0.2) : Colors.grey.shade300;
-
-    final checkpoints = [
-      ('weekly_workouts_3', '3 Workouts', 100),
-      ('weekly_workouts_5', '5 Workouts', 150),
-      ('weekly_protein', 'Protein Goal 5 days', 75),
-      ('weekly_calories', 'Calorie Goal 5 days', 75),
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: strongBorder, width: 1.5),
-        boxShadow: isDark ? null : [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // XP Progress header
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '$earnedXP XP',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? textColor : Colors.black87,
-                      ),
-                    ),
-                    Text(
-                      '/ $maxXP XP',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDark ? textMuted : Colors.black54,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: progressBgColor,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: percentage,
-                      minHeight: 8,
-                      backgroundColor: Colors.transparent,
-                      valueColor: AlwaysStoppedAnimation(accentColor),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Checkpoints list
-          ...checkpoints.map((cp) {
-            final isComplete = earned.contains(cp.$1);
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: dividerColor),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    isComplete ? Icons.check_circle : Icons.radio_button_unchecked,
-                    size: 18,
-                    color: isComplete ? AppColors.green : (isDark ? textMuted : Colors.grey.shade500),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      cp.$2,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isComplete
-                            ? (isDark ? textMuted : Colors.black45)
-                            : (isDark ? textColor : Colors.black87),
-                        decoration: isComplete ? TextDecoration.lineThrough : null,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    '+${cp.$3} XP',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: isComplete ? AppColors.green : accentColor,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
   Widget _buildExtendedWeeklyProgressCard(
     BuildContext context,
     WidgetRef ref,
@@ -1199,9 +1061,6 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final extendedProgress = ref.watch(extendedWeeklyProgressProvider);
 
-    // Stronger colors for light mode
-    final cardBackground = isDark ? cardBg : Colors.grey.shade100;
-    final strongBorder = isDark ? borderColor : Colors.grey.shade300;
     final dividerColor = isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade300;
     final progressBgColor = isDark ? textMuted.withValues(alpha: 0.2) : Colors.grey.shade300;
 
@@ -1209,18 +1068,18 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
       loading: () => Container(
         height: 100,
         decoration: BoxDecoration(
-          color: cardBackground,
+          color: cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: strongBorder, width: 1.5),
+          border: Border.all(color: borderColor, width: 1.5),
         ),
         child: const Center(child: CircularProgressIndicator()),
       ),
       error: (e, _) => Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: cardBackground,
+          color: cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: strongBorder, width: 1.5),
+          border: Border.all(color: borderColor, width: 1.5),
         ),
         child: Text('Error loading weekly progress', style: TextStyle(color: textMuted)),
       ),
@@ -1232,9 +1091,9 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
 
         return Container(
           decoration: BoxDecoration(
-            color: cardBackground,
+            color: cardBg,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: strongBorder, width: 1.5),
+            border: Border.all(color: borderColor, width: 1.5),
             boxShadow: isDark ? null : [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.08),
@@ -1390,9 +1249,6 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final monthlyProgress = ref.watch(monthlyAchievementsProgressProvider);
 
-    // Stronger colors for light mode
-    final cardBackground = isDark ? cardBg : Colors.grey.shade100;
-    final strongBorder = isDark ? borderColor : Colors.grey.shade300;
     final dividerColor = isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade300;
     final progressBgColor = isDark ? textMuted.withValues(alpha: 0.2) : Colors.grey.shade300;
 
@@ -1400,18 +1256,18 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
       loading: () => Container(
         height: 100,
         decoration: BoxDecoration(
-          color: cardBackground,
+          color: cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: strongBorder, width: 1.5),
+          border: Border.all(color: borderColor, width: 1.5),
         ),
         child: const Center(child: CircularProgressIndicator()),
       ),
       error: (e, _) => Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: cardBackground,
+          color: cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: strongBorder, width: 1.5),
+          border: Border.all(color: borderColor, width: 1.5),
         ),
         child: Text('Error loading monthly achievements', style: TextStyle(color: textMuted)),
       ),
@@ -1423,9 +1279,9 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
 
         return Container(
           decoration: BoxDecoration(
-            color: cardBackground,
+            color: cardBg,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: strongBorder, width: 1.5),
+            border: Border.all(color: borderColor, width: 1.5),
             boxShadow: isDark ? null : [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.08),
@@ -1635,8 +1491,6 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Stronger colors for light mode
-    final cardBackground = isDark ? cardBg : Colors.grey.shade100;
     final strongBorder = isDark
         ? accentColor.withValues(alpha: 0.3)
         : accentColor.withValues(alpha: 0.5);
@@ -1644,13 +1498,12 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
-        Navigator.pop(context);
         context.push('/trophy-room');
       },
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: cardBackground,
+          color: cardBg,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: strongBorder, width: 1.5),
           boxShadow: isDark ? null : [
@@ -1709,9 +1562,7 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
         (consumables?.fitnessCrate ?? 0) +
         (consumables?.premiumCrate ?? 0);
 
-    // Stronger colors for light mode
-    final cardBackground = isDark ? cardBg : Colors.grey.shade100;
-    final purpleAccent = const Color(0xFF9C27B0);
+    const purpleAccent = Color(0xFF9C27B0);
     final strongBorder = isDark
         ? purpleAccent.withValues(alpha: 0.3)
         : purpleAccent.withValues(alpha: 0.5);
@@ -1719,13 +1570,12 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
-        Navigator.pop(context);
         context.push('/inventory');
       },
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: cardBackground,
+          color: cardBg,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: strongBorder, width: 1.5),
           boxShadow: isDark ? null : [
@@ -1739,7 +1589,7 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.inventory_2,
               color: purpleAccent,
               size: 18,
@@ -1775,7 +1625,7 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
               ),
             ],
             const SizedBox(width: 4),
-            Icon(
+            const Icon(
               Icons.chevron_right,
               color: purpleAccent,
               size: 16,
@@ -1798,9 +1648,6 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final awardedBonuses = ref.watch(awardedBonusesProvider);
 
-    // Stronger colors for light mode
-    final cardBackground = isDark ? cardBg : Colors.grey.shade100;
-    final strongBorder = isDark ? borderColor : Colors.grey.shade300;
     final dividerColor = isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade300;
 
     // First-time bonuses list
@@ -1858,9 +1705,9 @@ class _XPGoalsSheetState extends ConsumerState<XPGoalsSheet>
 
     return Container(
       decoration: BoxDecoration(
-        color: cardBackground,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: strongBorder, width: 1.5),
+        border: Border.all(color: borderColor, width: 1.5),
         boxShadow: isDark ? null : [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -2157,8 +2004,8 @@ void _showAllLevelsSheet(BuildContext context, int currentLevel, Color accentCol
 class _LevelInfo {
   final int level;
   final int xpRequired;
-  final String title;      // Tier name (Novice, Apprentice, etc.)
-  final String levelName;  // Unique name for each level
+  final String title;
+  final String levelName;
   final String? reward;
   final String? rewardIcon;
   final bool isMilestone;
@@ -2173,122 +2020,34 @@ class _LevelInfo {
     this.isMilestone = false,
   });
 
-  /// Get unique level name for each level
   static String getLevelName(int level) {
     const levelNames = <int, String>{
-      // Novice tier (1-10) - Beginning journey names
-      1: 'First Steps',
-      2: 'Awakening',
-      3: 'Foundation',
-      4: 'Momentum',
-      5: 'Rising Star',
-      6: 'Steadfast',
-      7: 'Determined',
-      8: 'Resilient',
-      9: 'Breakthrough',
-      10: 'Iron Will',
-
-      // Apprentice tier (11-25) - Building strength names
-      11: 'Pathfinder',
-      12: 'Trailblazer',
-      13: 'Forged',
-      14: 'Unyielding',
-      15: 'Disciplined',
-      16: 'Focused',
-      17: 'Driven',
-      18: 'Relentless',
-      19: 'Unstoppable',
-      20: 'Silver Strength',
-      21: 'Tempered',
-      22: 'Hardened',
-      23: 'Unbreakable',
-      24: 'Tenacious',
-      25: 'Dedicated',
-
-      // Athlete tier (26-50) - Athletic achievement names
-      26: 'Competitor',
-      27: 'Challenger',
-      28: 'Fierce',
-      29: 'Powerhouse',
-      30: 'Gold Standard',
-      31: 'Peak Form',
-      32: 'Dynamo',
-      33: 'Juggernaut',
-      34: 'Titan',
-      35: 'Colossus',
-      36: 'Champion',
-      37: 'Conqueror',
-      38: 'Dominator',
-      39: 'Crusher',
-      40: 'Diamond Core',
-      41: 'Invincible',
-      42: 'Supreme',
-      43: 'Almighty',
-      44: 'Transcendent',
-      45: 'Mythic Rise',
-      46: 'Ascended',
-      47: 'Immortal',
-      48: 'Paragon',
-      49: 'Zenith',
-      50: 'Veteran',
-
-      // Elite tier (51-75) - Elite status names
-      51: 'Elite Guard',
-      52: 'Vanguard',
-      53: 'Sentinel',
-      54: 'Warden',
-      55: 'Gladiator',
-      56: 'Spartan',
-      57: 'Berserker',
-      58: 'Valkyrie',
-      59: 'Phoenix',
-      60: 'Elite Force',
-      61: 'Apex',
-      62: 'Sovereign',
-      63: 'Overlord',
-      64: 'Commander',
-      65: 'General',
-      66: 'Warlord',
-      67: 'Conqueror II',
-      68: 'Destroyer',
-      69: 'Annihilator',
-      70: 'Purple Heart',
-      71: 'Harbinger',
-      72: 'Omega',
-      73: 'Absolute',
-      74: 'Supreme II',
-      75: 'Elite',
-
-      // Master tier (76-99) - Mastery names
-      76: 'Grandmaster',
-      77: 'Sage',
-      78: 'Oracle',
-      79: 'Prophet',
-      80: 'Master',
-      81: 'Virtuoso',
-      82: 'Prodigy',
-      83: 'Genius',
-      84: 'Mastermind',
-      85: 'Legendary Rise',
-      86: 'Architect',
-      87: 'Creator',
-      88: 'Worldbreaker',
-      89: 'Godslayer',
-      90: 'Cosmic',
-      91: 'Celestial',
-      92: 'Divine',
-      93: 'Eternal',
-      94: 'Infinite',
-      95: 'Ultimate',
-      96: 'Omega II',
-      97: 'Alpha',
-      98: 'Primordial',
-      99: 'Apex Predator',
-
-      // Legend tier (100)
-      100: 'Legend',
+      1: 'First Steps', 2: 'Awakening', 3: 'Foundation', 4: 'Momentum',
+      5: 'Rising Star', 6: 'Steadfast', 7: 'Determined', 8: 'Resilient',
+      9: 'Breakthrough', 10: 'Iron Will',
+      11: 'Pathfinder', 12: 'Trailblazer', 13: 'Forged', 14: 'Unyielding',
+      15: 'Disciplined', 16: 'Focused', 17: 'Driven', 18: 'Relentless',
+      19: 'Unstoppable', 20: 'Silver Strength', 21: 'Tempered', 22: 'Hardened',
+      23: 'Unbreakable', 24: 'Tenacious', 25: 'Dedicated',
+      26: 'Competitor', 27: 'Challenger', 28: 'Fierce', 29: 'Powerhouse',
+      30: 'Gold Standard', 31: 'Peak Form', 32: 'Dynamo', 33: 'Juggernaut',
+      34: 'Titan', 35: 'Colossus', 36: 'Champion', 37: 'Conqueror',
+      38: 'Dominator', 39: 'Crusher', 40: 'Diamond Core', 41: 'Invincible',
+      42: 'Supreme', 43: 'Almighty', 44: 'Transcendent', 45: 'Mythic Rise',
+      46: 'Ascended', 47: 'Immortal', 48: 'Paragon', 49: 'Zenith', 50: 'Veteran',
+      51: 'Elite Guard', 52: 'Vanguard', 53: 'Sentinel', 54: 'Warden',
+      55: 'Gladiator', 56: 'Spartan', 57: 'Berserker', 58: 'Valkyrie',
+      59: 'Phoenix', 60: 'Elite Force', 61: 'Apex', 62: 'Sovereign',
+      63: 'Overlord', 64: 'Commander', 65: 'General', 66: 'Warlord',
+      67: 'Conqueror II', 68: 'Destroyer', 69: 'Annihilator', 70: 'Purple Heart',
+      71: 'Harbinger', 72: 'Omega', 73: 'Absolute', 74: 'Supreme II', 75: 'Elite',
+      76: 'Grandmaster', 77: 'Sage', 78: 'Oracle', 79: 'Prophet', 80: 'Master',
+      81: 'Virtuoso', 82: 'Prodigy', 83: 'Genius', 84: 'Mastermind',
+      85: 'Legendary Rise', 86: 'Architect', 87: 'Creator', 88: 'Worldbreaker',
+      89: 'Godslayer', 90: 'Cosmic', 91: 'Celestial', 92: 'Divine',
+      93: 'Eternal', 94: 'Infinite', 95: 'Ultimate', 96: 'Omega II',
+      97: 'Alpha', 98: 'Primordial', 99: 'Apex Predator', 100: 'Legend',
     };
-
     return levelNames[level] ?? 'Level $level';
   }
 }
@@ -2303,203 +2062,63 @@ class _AllLevelsSheet extends StatelessWidget {
     required this.accentColor,
   });
 
-  // Get XP required for each level based on the migration
   static List<_LevelInfo> getAllLevels() {
     final levels = <_LevelInfo>[];
 
-    // Levels 1-10 (Novice tier - engagement optimized)
     final noviceLevelXP = [50, 100, 150, 200, 300, 400, 500, 750, 1000];
     for (int i = 0; i < noviceLevelXP.length; i++) {
-      final level = i + 2; // Levels 2-10
+      final level = i + 2;
       String? reward;
       String? rewardIcon;
       bool isMilestone = false;
-
-      if (level == 5) {
-        reward = '+1% XP Bonus';
-        rewardIcon = '⚡';
-        isMilestone = true;
-      } else if (level == 10) {
-        reward = 'Bronze Frame + 2x XP Tokens';
-        rewardIcon = '🎁';
-        isMilestone = true;
-      } else if (level % 2 == 0) {
-        reward = '+1% XP Bonus';
-        rewardIcon = '⚡';
-      } else {
-        reward = 'Streak Shield';
-        rewardIcon = '🛡️';
-      }
-
-      levels.add(_LevelInfo(
-        level: level,
-        xpRequired: noviceLevelXP[i],
-        title: 'Novice',
-        levelName: _LevelInfo.getLevelName(level),
-        reward: reward,
-        rewardIcon: rewardIcon,
-        isMilestone: isMilestone,
-      ));
+      if (level == 5) { reward = '+1% XP Bonus'; rewardIcon = '⚡'; isMilestone = true; }
+      else if (level == 10) { reward = 'Bronze Frame + 2x XP Tokens'; rewardIcon = '🎁'; isMilestone = true; }
+      else if (level % 2 == 0) { reward = '+1% XP Bonus'; rewardIcon = '⚡'; }
+      else { reward = 'Streak Shield'; rewardIcon = '🛡️'; }
+      levels.add(_LevelInfo(level: level, xpRequired: noviceLevelXP[i], title: 'Novice', levelName: _LevelInfo.getLevelName(level), reward: reward, rewardIcon: rewardIcon, isMilestone: isMilestone));
     }
 
-    // Levels 11-25 (Apprentice tier)
     for (int level = 11; level <= 25; level++) {
-      String? reward;
-      String? rewardIcon;
-      bool isMilestone = false;
-
-      if (level == 15) {
-        reward = 'Apprentice Badge + Green Theme';
-        rewardIcon = '🎖️';
-        isMilestone = true;
-      } else if (level == 20) {
-        reward = 'Silver Frame + 3x XP Tokens';
-        rewardIcon = '🎁';
-        isMilestone = true;
-      } else if (level == 25) {
-        reward = 'Dedicated Badge + Blue Theme';
-        rewardIcon = '🏅';
-        isMilestone = true;
-      } else if (level % 2 == 0) {
-        reward = '+1% XP Bonus';
-        rewardIcon = '⚡';
-      } else {
-        reward = 'Streak Shield';
-        rewardIcon = '🛡️';
-      }
-
-      levels.add(_LevelInfo(
-        level: level,
-        xpRequired: 1500,
-        title: 'Apprentice',
-        levelName: _LevelInfo.getLevelName(level),
-        reward: reward,
-        rewardIcon: rewardIcon,
-        isMilestone: isMilestone,
-      ));
+      String? reward; String? rewardIcon; bool isMilestone = false;
+      if (level == 15) { reward = 'Apprentice Badge + Green Theme'; rewardIcon = '🎖️'; isMilestone = true; }
+      else if (level == 20) { reward = 'Silver Frame + 3x XP Tokens'; rewardIcon = '🎁'; isMilestone = true; }
+      else if (level == 25) { reward = 'Dedicated Badge + Blue Theme'; rewardIcon = '🏅'; isMilestone = true; }
+      else if (level % 2 == 0) { reward = '+1% XP Bonus'; rewardIcon = '⚡'; }
+      else { reward = 'Streak Shield'; rewardIcon = '🛡️'; }
+      levels.add(_LevelInfo(level: level, xpRequired: 1500, title: 'Apprentice', levelName: _LevelInfo.getLevelName(level), reward: reward, rewardIcon: rewardIcon, isMilestone: isMilestone));
     }
 
-    // Levels 26-50 (Athlete tier)
     for (int level = 26; level <= 50; level++) {
-      String? reward;
-      String? rewardIcon;
-      bool isMilestone = false;
-
-      if (level == 30) {
-        reward = 'Gold Frame + Animated Border';
-        rewardIcon = '🎁';
-        isMilestone = true;
-      } else if (level == 50) {
-        reward = 'Veteran Badge + FREE T-Shirt!';
-        rewardIcon = '👕';
-        isMilestone = true;
-      } else if (level % 5 == 0) {
-        reward = 'Fitness Crate';
-        rewardIcon = '📦';
-        isMilestone = true;
-      } else if (level % 2 == 0) {
-        reward = '+1% XP Bonus';
-        rewardIcon = '⚡';
-      } else {
-        reward = '2x XP Token';
-        rewardIcon = '✨';
-      }
-
-      levels.add(_LevelInfo(
-        level: level,
-        xpRequired: 5000,
-        title: 'Athlete',
-        levelName: _LevelInfo.getLevelName(level),
-        reward: reward,
-        rewardIcon: rewardIcon,
-        isMilestone: isMilestone,
-      ));
+      String? reward; String? rewardIcon; bool isMilestone = false;
+      if (level == 30) { reward = 'Gold Frame + Animated Border'; rewardIcon = '🎁'; isMilestone = true; }
+      else if (level == 50) { reward = 'Veteran Badge + FREE T-Shirt!'; rewardIcon = '👕'; isMilestone = true; }
+      else if (level % 5 == 0) { reward = 'Fitness Crate'; rewardIcon = '📦'; isMilestone = true; }
+      else if (level % 2 == 0) { reward = '+1% XP Bonus'; rewardIcon = '⚡'; }
+      else { reward = '2x XP Token'; rewardIcon = '✨'; }
+      levels.add(_LevelInfo(level: level, xpRequired: 5000, title: 'Athlete', levelName: _LevelInfo.getLevelName(level), reward: reward, rewardIcon: rewardIcon, isMilestone: isMilestone));
     }
 
-    // Levels 51-75 (Elite tier)
     for (int level = 51; level <= 75; level++) {
-      String? reward;
-      String? rewardIcon;
-      bool isMilestone = false;
-
-      if (level == 60) {
-        reward = 'Elite Badge + Purple Theme';
-        rewardIcon = '🎖️';
-        isMilestone = true;
-      } else if (level == 75) {
-        reward = 'Elite Badge + FREE Shaker!';
-        rewardIcon = '🥤';
-        isMilestone = true;
-      } else if (level % 5 == 0) {
-        reward = 'Diamond Crate';
-        rewardIcon = '💎';
-        isMilestone = true;
-      } else if (level % 2 == 0) {
-        reward = '+1% XP Bonus';
-        rewardIcon = '⚡';
-      } else {
-        reward = '3x XP Token';
-        rewardIcon = '✨';
-      }
-
-      levels.add(_LevelInfo(
-        level: level,
-        xpRequired: 10000,
-        title: 'Elite',
-        levelName: _LevelInfo.getLevelName(level),
-        reward: reward,
-        rewardIcon: rewardIcon,
-        isMilestone: isMilestone,
-      ));
+      String? reward; String? rewardIcon; bool isMilestone = false;
+      if (level == 60) { reward = 'Elite Badge + Purple Theme'; rewardIcon = '🎖️'; isMilestone = true; }
+      else if (level == 75) { reward = 'Elite Badge + FREE Shaker!'; rewardIcon = '🥤'; isMilestone = true; }
+      else if (level % 5 == 0) { reward = 'Diamond Crate'; rewardIcon = '💎'; isMilestone = true; }
+      else if (level % 2 == 0) { reward = '+1% XP Bonus'; rewardIcon = '⚡'; }
+      else { reward = '3x XP Token'; rewardIcon = '✨'; }
+      levels.add(_LevelInfo(level: level, xpRequired: 10000, title: 'Elite', levelName: _LevelInfo.getLevelName(level), reward: reward, rewardIcon: rewardIcon, isMilestone: isMilestone));
     }
 
-    // Levels 76-99 (Master tier)
     for (int level = 76; level <= 99; level++) {
-      String? reward;
-      String? rewardIcon;
-      bool isMilestone = false;
-
-      if (level == 80) {
-        reward = 'Master Badge + Orange Theme';
-        rewardIcon = '🎖️';
-        isMilestone = true;
-      } else if (level == 90) {
-        reward = 'Particle Effects';
-        rewardIcon = '✨';
-        isMilestone = true;
-      } else if (level % 5 == 0) {
-        reward = 'Legendary Crate';
-        rewardIcon = '🎁';
-        isMilestone = true;
-      } else if (level % 2 == 0) {
-        reward = '+1% XP Bonus';
-        rewardIcon = '⚡';
-      } else {
-        reward = '5x Streak Shields';
-        rewardIcon = '🛡️';
-      }
-
-      levels.add(_LevelInfo(
-        level: level,
-        xpRequired: 25000,
-        title: 'Master',
-        levelName: _LevelInfo.getLevelName(level),
-        reward: reward,
-        rewardIcon: rewardIcon,
-        isMilestone: isMilestone,
-      ));
+      String? reward; String? rewardIcon; bool isMilestone = false;
+      if (level == 80) { reward = 'Master Badge + Orange Theme'; rewardIcon = '🎖️'; isMilestone = true; }
+      else if (level == 90) { reward = 'Particle Effects'; rewardIcon = '✨'; isMilestone = true; }
+      else if (level % 5 == 0) { reward = 'Legendary Crate'; rewardIcon = '🎁'; isMilestone = true; }
+      else if (level % 2 == 0) { reward = '+1% XP Bonus'; rewardIcon = '⚡'; }
+      else { reward = '5x Streak Shields'; rewardIcon = '🛡️'; }
+      levels.add(_LevelInfo(level: level, xpRequired: 25000, title: 'Master', levelName: _LevelInfo.getLevelName(level), reward: reward, rewardIcon: rewardIcon, isMilestone: isMilestone));
     }
 
-    // Level 100 (Legend)
-    levels.add(_LevelInfo(
-      level: 100,
-      xpRequired: 75000,
-      title: 'Legend',
-      levelName: _LevelInfo.getLevelName(100),
-      reward: 'LEGEND Badge + Hoodie + Merch Kit!',
-      rewardIcon: '🏆',
-      isMilestone: true,
-    ));
+    levels.add(_LevelInfo(level: 100, xpRequired: 75000, title: 'Legend', levelName: _LevelInfo.getLevelName(100), reward: 'LEGEND Badge + Hoodie + Merch Kit!', rewardIcon: '🏆', isMilestone: true));
 
     return levels;
   }
@@ -2509,15 +2128,10 @@ class _AllLevelsSheet extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    // Darker colors for light mode visibility
     final textColorStrong = isDark ? textColor : Colors.black.withValues(alpha: 0.85);
     final textMutedStrong = isDark ? textMuted : Colors.black.withValues(alpha: 0.55);
-    final cardBg = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.black.withValues(alpha: 0.08);
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : Colors.black.withValues(alpha: 0.15);
+    final cardBg = isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.08);
+    final borderColor = isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.15);
 
     final levels = getAllLevels();
 
@@ -2531,15 +2145,11 @@ class _AllLevelsSheet extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
             decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.4)
-                  : Colors.white.withValues(alpha: 0.6),
+              color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.6),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
               border: Border(
                 top: BorderSide(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.black.withValues(alpha: 0.1),
+                  color: isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.1),
                   width: 0.5,
                 ),
               ),
@@ -2547,17 +2157,10 @@ class _AllLevelsSheet extends StatelessWidget {
             child: Column(
               children: [
                 const SizedBox(height: 12),
-                // Drag handle
                 Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: textMuted.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(color: textMuted.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)),
                 ),
-
-                // Header
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
                   child: Row(
@@ -2568,33 +2171,15 @@ class _AllLevelsSheet extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'All Levels',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: textColorStrong,
-                              ),
-                            ),
-                            Text(
-                              'Level $currentLevel • ${levels.length} levels total',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: textMutedStrong,
-                              ),
-                            ),
+                            Text('All Levels', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColorStrong)),
+                            Text('Level $currentLevel • ${levels.length} levels total', style: TextStyle(fontSize: 12, color: textMutedStrong)),
                           ],
                         ),
                       ),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: Icon(Icons.close, color: textMutedStrong, size: 22),
-                      ),
+                      IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.close, color: textMutedStrong, size: 22)),
                     ],
                   ),
                 ),
-
-                // Legend
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
@@ -2607,10 +2192,7 @@ class _AllLevelsSheet extends StatelessWidget {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
-                // Levels list
                 Expanded(
                   child: ListView.builder(
                     controller: dragScrollController,
@@ -2618,20 +2200,7 @@ class _AllLevelsSheet extends StatelessWidget {
                     itemCount: levels.length,
                     itemBuilder: (context, index) {
                       final level = levels[index];
-                      final isCurrentLevel = level.level == currentLevel;
-                      final isCompleted = level.level < currentLevel;
-
-                      return _buildLevelRow(
-                        level,
-                        isCurrentLevel,
-                        isCompleted,
-                        textColorStrong,
-                        textMutedStrong,
-                        cardBg,
-                        borderColor,
-                        accentColor,
-                        isDark,
-                      );
+                      return _buildLevelRow(level, level.level == currentLevel, level.level < currentLevel, textColorStrong, textMutedStrong, cardBg, borderColor, accentColor, isDark);
                     },
                   ),
                 ),
@@ -2649,28 +2218,14 @@ class _AllLevelsSheet extends StatelessWidget {
       children: [
         Text(icon, style: const TextStyle(fontSize: 12)),
         const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(fontSize: 10, color: textMuted),
-        ),
+        Text(label, style: TextStyle(fontSize: 10, color: textMuted)),
       ],
     );
   }
 
-  Widget _buildLevelRow(
-    _LevelInfo level,
-    bool isCurrentLevel,
-    bool isCompleted,
-    Color textColor,
-    Color textMuted,
-    Color cardBg,
-    Color borderColor,
-    Color accentColor,
-    bool isDark,
-  ) {
+  Widget _buildLevelRow(_LevelInfo level, bool isCurrentLevel, bool isCompleted, Color textColor, Color textMuted, Color cardBg, Color borderColor, Color accentColor, bool isDark) {
     final titleColor = _getTitleColor(level.title);
 
-    // Get reward color based on type - avoid pure yellow for readability
     Color getRewardColor() {
       if (level.reward == null) return Colors.grey;
       if (level.reward!.contains('Crate') || level.reward!.contains('crate')) {
@@ -2679,32 +2234,25 @@ class _AllLevelsSheet extends StatelessWidget {
         if (level.reward!.contains('Fitness')) return const Color(0xFF4CAF50);
         return const Color(0xFF9C27B0);
       }
-      // Use amber/orange instead of pure gold/yellow for better contrast
-      if (level.reward!.contains('Frame')) return const Color(0xFFFF8F00); // Darker amber
+      if (level.reward!.contains('Frame')) return const Color(0xFFFF8F00);
       if (level.reward!.contains('Badge')) return titleColor;
       if (level.reward!.contains('Theme')) return const Color(0xFF9C27B0);
-      if (level.reward!.contains('T-Shirt') || level.reward!.contains('Hoodie') || level.reward!.contains('Shaker')) {
-        return const Color(0xFFE91E63);
-      }
-      if (level.reward!.contains('XP')) return const Color(0xFFFF8F00); // Darker amber instead of yellow
+      if (level.reward!.contains('T-Shirt') || level.reward!.contains('Hoodie') || level.reward!.contains('Shaker')) return const Color(0xFFE91E63);
+      if (level.reward!.contains('XP')) return const Color(0xFFFF8F00);
       if (level.reward!.contains('Shield')) return const Color(0xFF2196F3);
       if (level.reward!.contains('Token')) return const Color(0xFF9C27B0);
       return accentColor;
     }
 
     final rewardColor = getRewardColor();
+    final isBigMilestone = level.level == 10 || level.level == 25 || level.level == 50 || level.level == 75 || level.level == 100;
 
-    // Milestone levels get special treatment
-    final isBigMilestone = level.level == 10 || level.level == 25 || level.level == 50 ||
-                           level.level == 75 || level.level == 100;
-
-    // Use solid backgrounds instead of translucent for better readability
     final cardBackground = isCurrentLevel
-        ? (isDark ? const Color(0xFF1A3A5C) : const Color(0xFFE3F2FD)) // Blue tint
+        ? (isDark ? const Color(0xFF1A3A5C) : const Color(0xFFE3F2FD))
         : isCompleted
-            ? (isDark ? const Color(0xFF1B4332) : const Color(0xFFE8F5E9)) // Green tint
+            ? (isDark ? const Color(0xFF1B4332) : const Color(0xFFE8F5E9))
             : isBigMilestone
-                ? (isDark ? const Color(0xFF3E2723) : const Color(0xFFFFF8E1)) // Warm amber tint
+                ? (isDark ? const Color(0xFF3E2723) : const Color(0xFFFFF8E1))
                 : isDark ? cardBg : Colors.grey.shade100;
     final strongBorder = isCurrentLevel
         ? accentColor.withValues(alpha: isDark ? 0.7 : 0.8)
@@ -2713,11 +2261,7 @@ class _AllLevelsSheet extends StatelessWidget {
             : isBigMilestone
                 ? rewardColor.withValues(alpha: isDark ? 0.6 : 0.7)
                 : isDark ? borderColor : Colors.grey.shade300;
-    final badgeColor = isCompleted || isCurrentLevel
-        ? null
-        : isBigMilestone
-            ? null
-            : (isDark ? textMuted.withValues(alpha: 0.2) : Colors.grey.shade300);
+    final badgeColor = isCompleted || isCurrentLevel ? null : isBigMilestone ? null : (isDark ? textMuted.withValues(alpha: 0.2) : Colors.grey.shade300);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -2725,273 +2269,82 @@ class _AllLevelsSheet extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardBackground,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: strongBorder,
-          width: isCurrentLevel ? 2.5 : isBigMilestone ? 2 : 1.5,
-        ),
-        boxShadow: isBigMilestone ? [
-          BoxShadow(
-            color: rewardColor.withValues(alpha: isDark ? 0.2 : 0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ] : isDark ? null : [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
+        border: Border.all(color: strongBorder, width: isCurrentLevel ? 2.5 : isBigMilestone ? 2 : 1.5),
+        boxShadow: isBigMilestone ? [BoxShadow(color: rewardColor.withValues(alpha: isDark ? 0.2 : 0.15), blurRadius: 8, offset: const Offset(0, 2))]
+            : isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 1))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              // Level number badge
               Container(
-                width: isBigMilestone ? 50 : 44,
-                height: isBigMilestone ? 50 : 44,
+                width: isBigMilestone ? 50 : 44, height: isBigMilestone ? 50 : 44,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: isCompleted || isCurrentLevel || isBigMilestone
-                      ? LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: isCurrentLevel
-                              ? [accentColor, accentColor.withValues(alpha: 0.7)]
-                              : isCompleted
-                                  ? [titleColor, titleColor.withValues(alpha: 0.7)]
-                                  : [rewardColor, rewardColor.withValues(alpha: 0.7)],
-                        )
+                      ? LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
+                          colors: isCurrentLevel ? [accentColor, accentColor.withValues(alpha: 0.7)]
+                              : isCompleted ? [titleColor, titleColor.withValues(alpha: 0.7)]
+                              : [rewardColor, rewardColor.withValues(alpha: 0.7)])
                       : null,
                   color: badgeColor,
-                  boxShadow: isBigMilestone ? [
-                    BoxShadow(
-                      color: rewardColor.withValues(alpha: 0.4),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ] : null,
+                  boxShadow: isBigMilestone ? [BoxShadow(color: rewardColor.withValues(alpha: 0.4), blurRadius: 8, offset: const Offset(0, 2))] : null,
                 ),
                 child: Center(
                   child: isCompleted && !isCurrentLevel
                       ? const Icon(Icons.check, color: Colors.white, size: 22)
-                      : Text(
-                          level.level.toString(),
-                          style: TextStyle(
-                            fontSize: level.level >= 100 ? 14 : isBigMilestone ? 18 : 15,
-                            fontWeight: FontWeight.bold,
-                            color: isCurrentLevel || isCompleted || isBigMilestone
-                                ? Colors.white
-                                : (isDark ? textMuted : Colors.grey.shade600),
-                          ),
-                        ),
+                      : Text(level.level.toString(), style: TextStyle(fontSize: level.level >= 100 ? 14 : isBigMilestone ? 18 : 15, fontWeight: FontWeight.bold, color: isCurrentLevel || isCompleted || isBigMilestone ? Colors.white : (isDark ? textMuted : Colors.grey.shade600))),
                 ),
               ),
               const SizedBox(width: 12),
-
-              // Level info - now showing unique level name
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        // Show unique level name instead of tier
-                        Flexible(
-                          child: Text(
-                            level.levelName,
-                            style: TextStyle(
-                              fontSize: isBigMilestone ? 15 : 14,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? textColor : Colors.black87,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (isCurrentLevel) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: accentColor,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              'YOU',
-                              style: TextStyle(
-                                fontSize: 8,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ],
-                        if (isBigMilestone && !isCurrentLevel) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [Colors.amber.shade600, Colors.orange.shade600],
-                              ),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.star, size: 10, color: Colors.white),
-                                const SizedBox(width: 2),
-                                Text(
-                                  level.level == 100 ? 'LEGENDARY' : 'MILESTONE',
-                                  style: const TextStyle(
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                        Flexible(child: Text(level.levelName, style: TextStyle(fontSize: isBigMilestone ? 15 : 14, fontWeight: FontWeight.w600, color: isDark ? textColor : Colors.black87), overflow: TextOverflow.ellipsis)),
+                        if (isCurrentLevel) ...[const SizedBox(width: 6), Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: accentColor, borderRadius: BorderRadius.circular(4)), child: const Text('YOU', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white)))],
+                        if (isBigMilestone && !isCurrentLevel) ...[const SizedBox(width: 6), Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.amber.shade600, Colors.orange.shade600]), borderRadius: BorderRadius.circular(4)), child: Row(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.star, size: 10, color: Colors.white), const SizedBox(width: 2), Text(level.level == 100 ? 'LEGENDARY' : 'MILESTONE', style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white))]))],
                       ],
                     ),
                     const SizedBox(height: 2),
-                    // Show tier name as subtitle
                     Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: titleColor.withValues(alpha: isDark ? 0.2 : 0.15),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            level.title,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: titleColor,
-                            ),
-                          ),
-                        ),
+                        Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1), decoration: BoxDecoration(color: titleColor.withValues(alpha: isDark ? 0.2 : 0.15), borderRadius: BorderRadius.circular(4)), child: Text(level.title, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: titleColor))),
                         const SizedBox(width: 8),
-                        Text(
-                          '${_formatNumber(level.xpRequired)} XP',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDark ? textMuted : Colors.black54,
-                          ),
-                        ),
+                        Text('${_formatNumber(level.xpRequired)} XP', style: TextStyle(fontSize: 11, color: isDark ? textMuted : Colors.black54)),
                       ],
                     ),
                   ],
                 ),
               ),
-
-              // Reward icon for non-milestone
               if (level.reward != null && !isBigMilestone)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: rewardColor.withValues(alpha: isDark ? 0.2 : 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: rewardColor.withValues(alpha: isDark ? 0.4 : 0.35),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (level.rewardIcon != null)
-                        Text(level.rewardIcon!, style: const TextStyle(fontSize: 14)),
-                    ],
-                  ),
+                  decoration: BoxDecoration(color: rewardColor.withValues(alpha: isDark ? 0.2 : 0.15), borderRadius: BorderRadius.circular(10), border: Border.all(color: rewardColor.withValues(alpha: isDark ? 0.4 : 0.35))),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [if (level.rewardIcon != null) Text(level.rewardIcon!, style: const TextStyle(fontSize: 14))]),
                 ),
             ],
           ),
-
-          // Full reward details for milestone levels
           if (level.reward != null && isBigMilestone) ...[
             const SizedBox(height: 12),
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
+              width: double.infinity, padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isDark
-                    ? rewardColor.withValues(alpha: 0.15)
-                    : Colors.white.withValues(alpha: 0.9),
+                color: isDark ? rewardColor.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: rewardColor.withValues(alpha: isDark ? 0.4 : 0.5),
-                  width: 1.5,
-                ),
-                boxShadow: isDark ? null : [
-                  BoxShadow(
-                    color: rewardColor.withValues(alpha: 0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                border: Border.all(color: rewardColor.withValues(alpha: isDark ? 0.4 : 0.5), width: 1.5),
+                boxShadow: isDark ? null : [BoxShadow(color: rewardColor.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 2))],
               ),
               child: Row(
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: rewardColor.withValues(alpha: isDark ? 0.25 : 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: rewardColor.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        level.rewardIcon ?? '🎁',
-                        style: const TextStyle(fontSize: 22),
-                      ),
-                    ),
-                  ),
+                  Container(width: 40, height: 40, decoration: BoxDecoration(color: rewardColor.withValues(alpha: isDark ? 0.25 : 0.15), borderRadius: BorderRadius.circular(10), border: Border.all(color: rewardColor.withValues(alpha: 0.3))), child: Center(child: Text(level.rewardIcon ?? '🎁', style: const TextStyle(fontSize: 22)))),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'REWARD',
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: rewardColor,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          level.reward!,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? textColor : Colors.black87,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (!isCompleted)
-                    Icon(
-                      Icons.lock_outline,
-                      size: 18,
-                      color: isDark ? textMuted.withValues(alpha: 0.5) : Colors.grey.shade500,
-                    ),
-                  if (isCompleted)
-                    const Icon(
-                      Icons.check_circle,
-                      size: 18,
-                      color: AppColors.green,
-                    ),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('REWARD', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: rewardColor, letterSpacing: 1)), const SizedBox(height: 2), Text(level.reward!, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? textColor : Colors.black87))])),
+                  if (!isCompleted) Icon(Icons.lock_outline, size: 18, color: isDark ? textMuted.withValues(alpha: 0.5) : Colors.grey.shade500),
+                  if (isCompleted) const Icon(Icons.check_circle, size: 18, color: AppColors.green),
                 ],
               ),
             ),
@@ -3003,20 +2356,13 @@ class _AllLevelsSheet extends StatelessWidget {
 
   Color _getTitleColor(String title) {
     switch (title) {
-      case 'Novice':
-        return const Color(0xFF9E9E9E);
-      case 'Apprentice':
-        return const Color(0xFF4CAF50);
-      case 'Athlete':
-        return const Color(0xFF2196F3);
-      case 'Elite':
-        return const Color(0xFF9C27B0);
-      case 'Master':
-        return const Color(0xFFFF9800);
-      case 'Legend':
-        return const Color(0xFFFFD700);
-      default:
-        return const Color(0xFF9E9E9E);
+      case 'Novice': return const Color(0xFF9E9E9E);
+      case 'Apprentice': return const Color(0xFF4CAF50);
+      case 'Athlete': return const Color(0xFF2196F3);
+      case 'Elite': return const Color(0xFF9C27B0);
+      case 'Master': return const Color(0xFFFF9800);
+      case 'Legend': return const Color(0xFFFFD700);
+      default: return const Color(0xFF9E9E9E);
     }
   }
 
@@ -3025,5 +2371,29 @@ class _AllLevelsSheet extends StatelessWidget {
       return '${(number / 1000).toStringAsFixed(number % 1000 == 0 ? 0 : 1)}K';
     }
     return number.toString();
+  }
+}
+
+/// Delegate for pinning the tab bar at the top when scrolled
+class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+
+  _StickyTabBarDelegate({required this.child});
+
+  // SegmentedTabBar height: padding(8+8) + containerPadding(4+4) + buttonPadding(12+12) + text(~16) = ~64
+  // Adding a bit extra to prevent clipping
+  @override
+  double get minExtent => 68;
+  @override
+  double get maxExtent => 68;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(covariant _StickyTabBarDelegate oldDelegate) {
+    return child != oldDelegate.child;
   }
 }

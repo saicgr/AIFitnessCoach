@@ -7,7 +7,6 @@ import '../data/models/home_layout.dart';
 import '../data/models/user_xp.dart';
 import '../data/providers/xp_provider.dart';
 import '../data/services/haptic_service.dart';
-import 'xp_goals_sheet.dart';
 
 /// XP and Level progress card for home screen
 /// Shows current level, XP progress bar, and title
@@ -51,7 +50,7 @@ class XPProgressCard extends ConsumerWidget {
       onTap: () {
         HapticService.light();
         // Open XP Goals Sheet instead of Trophy Room
-        showXPGoalsSheet(context, ref);
+        context.push('/xp-goals');
       },
       onLongPress: () {
         HapticService.medium();
@@ -100,7 +99,7 @@ class XPProgressCard extends ConsumerWidget {
       onTap: () {
         HapticService.light();
         // Open XP Goals Sheet
-        showXPGoalsSheet(context, ref);
+        context.push('/xp-goals');
       },
       onLongPress: () {
         HapticService.medium();

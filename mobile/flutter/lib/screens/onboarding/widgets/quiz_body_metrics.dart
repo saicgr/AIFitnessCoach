@@ -1483,17 +1483,20 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
         ? widget.weightKg!
         : widget.weightKg! * 2.20462;
 
+    // Use rounded current weight so the display math is consistent
+    // (e.g. 100 kg - 5 kg = 95 kg, not 100.5 - 5.0 = 95.5 → 96)
+    final roundedCurrentWeight = currentWeight.roundToDouble();
     double goalWeight;
     String message;
 
     if (widget.weightDirection == 'maintain') {
-      goalWeight = currentWeight;
+      goalWeight = roundedCurrentWeight;
       message = "Let's maintain your current weight!";
     } else if (widget.weightDirection == 'lose') {
-      goalWeight = currentWeight - _weightChangeAmount;
+      goalWeight = roundedCurrentWeight - _weightChangeAmount.roundToDouble();
       message = 'Target: ${goalWeight.round()} $unit';
     } else {
-      goalWeight = currentWeight + _weightChangeAmount;
+      goalWeight = roundedCurrentWeight + _weightChangeAmount.roundToDouble();
       message = 'Target: ${goalWeight.round()} $unit';
     }
 
@@ -1576,17 +1579,19 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
 
     double goalWeightKg;
     if (direction == 'maintain') {
-      goalWeightKg = widget.weightKg!;
+      goalWeightKg = widget.weightKg!.roundToDouble();
     } else {
-      // Convert amount from display unit to kg
+      // Convert amount from display unit to kg, using rounded values
+      // so the stored goal matches the displayed summary
       final amountKg = _weightInMetric
-          ? _weightChangeAmount
-          : _weightChangeAmount / 2.20462;
+          ? _weightChangeAmount.roundToDouble()
+          : _weightChangeAmount.roundToDouble() / 2.20462;
 
+      final currentKgRounded = widget.weightKg!.roundToDouble();
       if (direction == 'lose') {
-        goalWeightKg = widget.weightKg! - amountKg;
+        goalWeightKg = currentKgRounded - amountKg;
       } else {
-        goalWeightKg = widget.weightKg! + amountKg;
+        goalWeightKg = currentKgRounded + amountKg;
       }
     }
 

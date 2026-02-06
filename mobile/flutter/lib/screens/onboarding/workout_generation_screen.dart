@@ -137,11 +137,15 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
 
       // Start streaming single workout generation
       final repository = ref.read(workoutRepositoryProvider);
+      // Pass the client's local date so the workout is scheduled for "today"
+      // in the user's timezone, not the server's UTC date
+      final todayLocal = DateTime.now().toIso8601String().substring(0, 10);
       final stream = repository.generateWorkoutStreaming(
         userId: userId,
         durationMinutes: workoutDuration,
         durationMinutesMin: durationMin,
         durationMinutesMax: durationMax,
+        scheduledDate: todayLocal,
       );
 
       _generationSubscription = stream.listen(

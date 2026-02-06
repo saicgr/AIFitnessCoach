@@ -5,7 +5,7 @@ import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/providers/daily_xp_strip_provider.dart';
 import '../../../../data/providers/xp_provider.dart';
 import '../../../../data/services/haptic_service.dart';
-import '../../../../widgets/xp_goals_sheet.dart';
+import 'package:go_router/go_router.dart';
 
 /// Compact horizontal strip showing today's XP goals progress
 /// Positioned above the hero card on home screen
@@ -100,7 +100,7 @@ class _DailyXPStripState extends ConsumerState<DailyXPStrip>
     return GestureDetector(
       onTap: () {
         HapticService.light();
-        showXPGoalsSheet(context, ref);
+        context.push('/xp-goals');
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16),

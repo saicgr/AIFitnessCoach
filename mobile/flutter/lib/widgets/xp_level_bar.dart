@@ -6,7 +6,7 @@ import '../core/theme/accent_color_provider.dart';
 import '../data/models/user_xp.dart';
 import '../data/providers/xp_provider.dart';
 import '../data/services/haptic_service.dart';
-import 'xp_goals_sheet.dart';
+import 'package:go_router/go_router.dart';
 
 /// Animated XP level bar showing:
 /// Lvl X ----[animated fill bar]---- Lvl X+1
@@ -100,7 +100,7 @@ class _XPLevelBarState extends ConsumerState<XPLevelBar>
     return GestureDetector(
       onTap: widget.onTap ?? () {
         HapticService.light();
-        showXPGoalsSheet(context, ref);
+        context.push('/xp-goals');
       },
       child: Container(
         padding: EdgeInsets.all(widget.compact ? 12 : 16),
@@ -445,7 +445,7 @@ class XPLevelBarCompact extends ConsumerWidget {
     return GestureDetector(
       onTap: onTap ?? () {
         HapticService.light();
-        showXPGoalsSheet(context, ref);
+        context.push('/xp-goals');
       },
       child: SizedBox(
         width: 44,

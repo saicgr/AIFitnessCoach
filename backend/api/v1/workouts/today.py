@@ -151,13 +151,22 @@ def _is_today_a_workout_day(selected_days: List[int]) -> bool:
 
 
 def _get_user_workout_days(user: dict) -> List[int]:
-    """Extract user's workout days from preferences."""
+    """Extract user's workout days from preferences.
+
+    Flutter stores days as 1-indexed (Mon=1..Sun=7).
+    Python's date.weekday() uses 0-indexed (Mon=0..Sun=6).
+    This function normalizes to 0-indexed for Python compatibility.
+    """
     preferences = parse_json_field(user.get("preferences"), {})
     # Try workout_days first (new format), fall back to selected_days (old format)
     selected_days = preferences.get("workout_days") or preferences.get("selected_days") or [0, 2, 4]
 
     if not selected_days or not isinstance(selected_days, list):
         selected_days = [0, 2, 4]  # Default: Mon, Wed, Fri
+
+    # Convert from 1-indexed (Flutter: Mon=1..Sun=7) to 0-indexed (Python: Mon=0..Sun=6)
+    if any(d > 6 for d in selected_days):
+        selected_days = [d - 1 for d in selected_days if d > 0]
 
     return selected_days
 

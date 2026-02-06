@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
 import '../data/models/mood.dart';
 import '../data/providers/mood_workout_provider.dart';
 import '../data/services/context_logging_service.dart';
@@ -20,7 +21,7 @@ void showMoodPickerSheet(BuildContext context, WidgetRef ref) {
     backgroundColor: Colors.transparent,
     useRootNavigator: true,
     isScrollControlled: true,
-    barrierColor: Colors.black.withValues(alpha: 0.5),
+    barrierColor: Colors.black.withValues(alpha: 0.2),
     builder: (context) => const MoodPickerSheet(),
   ).then((_) {
     ref.read(floatingNavBarVisibleProvider.notifier).state = true;
@@ -45,16 +46,28 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final accentEnum = ref.watch(accentColorProvider);
+    final accentColor = accentEnum.getColor(isDark);
+
+    // Glassmorphic card colors (matching XP goals sheet)
+    final cardBg = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.06);
+    final cardBorder = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.black.withValues(alpha: 0.1);
+    final textColorStrong = isDark ? textColor : Colors.black.withValues(alpha: 0.85);
+    final textMutedStrong = isDark ? textMuted : Colors.black.withValues(alpha: 0.55);
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           decoration: BoxDecoration(
             color: isDark
-                ? Colors.black.withValues(alpha: 0.7)
-                : Colors.white.withValues(alpha: 0.85),
+                ? Colors.black.withValues(alpha: 0.4)
+                : Colors.white.withValues(alpha: 0.6),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             border: Border(
               top: BorderSide(
@@ -67,7 +80,7 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -81,144 +94,141 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  // Header
-                  Text(
-                    'How are you feeling?',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Mood buttons
+                  // Header row with icon and title
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: Mood.values.map((mood) {
-                      final isSelected = _selectedMood == mood;
-                      return _MoodButton(
-                        mood: mood,
-                        isSelected: isSelected,
-                        onTap: () {
-                          HapticService.light();
-                          setState(() => _selectedMood = mood);
-                        },
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Just Log Mood button (primary)
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: _selectedMood == null || _isLogging || _isGenerating
-                          ? null
-                          : _logMoodOnly,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: _selectedMood?.color ?? (isDark ? Colors.white : Colors.black),
-                        foregroundColor: isDark ? Colors.black : Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: accentColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        disabledBackgroundColor: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.2),
+                        child: Icon(
+                          Icons.mood,
+                          color: accentColor,
+                          size: 22,
+                        ),
                       ),
-                      child: _isLogging
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: isDark ? Colors.black : Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'Just Log Mood',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'How are you feeling?',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: textColorStrong,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Icon(Icons.close, color: textMutedStrong, size: 22),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Mood buttons in a glass card
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: cardBorder),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Generate Workout button (secondary)
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: _selectedMood == null || _isLogging || _isGenerating
-                          ? null
-                          : _generateWorkout,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _selectedMood?.color ?? textColor,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        side: BorderSide(
-                          color: _selectedMood?.color.withValues(alpha: 0.5) ??
-                              textMuted.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: _isGenerating
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: _selectedMood?.color ?? textColor,
-                              ),
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.fitness_center,
-                                  size: 18,
-                                  color: _selectedMood?.color ?? textMuted,
-                                ),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  'Generate Workout',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: Mood.values.map((mood) {
+                        final isSelected = _selectedMood == mood;
+                        return _MoodButton(
+                          mood: mood,
+                          isSelected: isSelected,
+                          onTap: () {
+                            HapticService.light();
+                            setState(() => _selectedMood = mood);
+                          },
+                        );
+                      }).toList(),
                     ),
                   ),
                   const SizedBox(height: 20),
 
-                  // View History & Analysis link
-                  TextButton(
-                    onPressed: () {
+                  // Action buttons - floating glass style
+                  _buildGlassActionButton(
+                    icon: Icons.check_circle_outline,
+                    label: 'Just Log Mood',
+                    isLoading: _isLogging,
+                    onTap: _selectedMood == null || _isLogging || _isGenerating
+                        ? null
+                        : _logMoodOnly,
+                    isPrimary: true,
+                    isDark: isDark,
+                    accentColor: _selectedMood?.color ?? accentColor,
+                    cardBg: cardBg,
+                    cardBorder: cardBorder,
+                    textColor: textColorStrong,
+                    textMuted: textMutedStrong,
+                  ),
+                  const SizedBox(height: 10),
+                  _buildGlassActionButton(
+                    icon: Icons.fitness_center,
+                    label: 'Generate Workout',
+                    isLoading: _isGenerating,
+                    onTap: _selectedMood == null || _isLogging || _isGenerating
+                        ? null
+                        : _generateWorkout,
+                    isPrimary: false,
+                    isDark: isDark,
+                    accentColor: _selectedMood?.color ?? accentColor,
+                    cardBg: cardBg,
+                    cardBorder: cardBorder,
+                    textColor: textColorStrong,
+                    textMuted: textMutedStrong,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // View History link - glass pill
+                  GestureDetector(
+                    onTap: () {
+                      HapticService.light();
                       Navigator.pop(context);
                       context.push('/mood-history');
                     },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.insights_outlined,
-                          size: 18,
-                          color: textMuted,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'View History & Analysis',
-                          style: TextStyle(
-                            color: textMuted,
-                            fontWeight: FontWeight.w500,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: cardBg,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: cardBorder),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.insights_outlined,
+                            size: 16,
+                            color: textMutedStrong,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Text(
+                            'View History & Analysis',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: textMutedStrong,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.chevron_right,
+                            size: 16,
+                            color: textMutedStrong,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -227,6 +237,85 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildGlassActionButton({
+    required IconData icon,
+    required String label,
+    required bool isLoading,
+    required VoidCallback? onTap,
+    required bool isPrimary,
+    required bool isDark,
+    required Color accentColor,
+    required Color cardBg,
+    required Color cardBorder,
+    required Color textColor,
+    required Color textMuted,
+  }) {
+    final isDisabled = onTap == null;
+
+    // Primary: accent-tinted glass card; Secondary: plain glass card
+    final bgColor = isPrimary
+        ? (isDisabled
+            ? cardBg
+            : accentColor.withValues(alpha: isDark ? 0.2 : 0.12))
+        : cardBg;
+    final borderCol = isPrimary
+        ? (isDisabled
+            ? cardBorder
+            : accentColor.withValues(alpha: isDark ? 0.4 : 0.3))
+        : cardBorder;
+    final iconColor = isDisabled ? textMuted : accentColor;
+    final labelColor = isDisabled ? textMuted : textColor;
+
+    return GestureDetector(
+      onTap: isLoading ? null : onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: borderCol, width: isPrimary ? 1.5 : 1),
+          boxShadow: isPrimary && !isDisabled && !isDark
+              ? [
+                  BoxShadow(
+                    color: accentColor.withValues(alpha: 0.15),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: isLoading
+            ? Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: accentColor,
+                  ),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 18, color: iconColor),
+                  const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: labelColor,
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -368,16 +457,18 @@ class _MoodButton extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        width: 72,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        width: 68,
+        padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? mood.color.withValues(alpha: 0.15)
-              : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05)),
-          borderRadius: BorderRadius.circular(16),
+              ? mood.color.withValues(alpha: isDark ? 0.2 : 0.12)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? mood.color.withValues(alpha: 0.5) : Colors.transparent,
-            width: 2,
+            color: isSelected
+                ? mood.color.withValues(alpha: 0.5)
+                : Colors.transparent,
+            width: 1.5,
           ),
           boxShadow: isSelected
               ? [

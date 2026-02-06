@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     # Gemini Configuration
     gemini_api_key: str
     gemini_model: str = "gemini-3-flash-preview"  # Can be overridden by GEMINI_MODEL env var
-    gemini_embedding_model: str = "text-embedding-004"
+    gemini_embedding_model: str = "gemini-embedding-001"
     gemini_max_tokens: int = 2500
     gemini_temperature: float = 0.7
     # Context caching for faster workout generation (TTL in seconds, default 1 hour)

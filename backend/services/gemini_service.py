@@ -1592,7 +1592,8 @@ INPUT TO PARSE:
         """
         result = client.models.embed_content(
             model=f"models/{self.embedding_model}",
-            contents=text
+            contents=text,
+            config=types.EmbedContentConfig(output_dimensionality=768),
         )
         return result.embeddings[0].values
 
@@ -1608,7 +1609,8 @@ INPUT TO PARSE:
         """
         result = await client.aio.models.embed_content(
             model=f"models/{self.embedding_model}",
-            contents=text
+            contents=text,
+            config=types.EmbedContentConfig(output_dimensionality=768),
         )
         return result.embeddings[0].values
 

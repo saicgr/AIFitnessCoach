@@ -1146,10 +1146,9 @@ async def claim_daily_crate(
         if result.data:
             data = result.data
             if data.get("success"):
-                # RPC returns nested reward object: {"type": "xp", "amount": 64}
-                reward_obj = data.get("reward", {})
-                reward_type = reward_obj.get("type", "xp")
-                reward_amount = reward_obj.get("amount", 0)
+                # RPC returns flat structure (migration 230): reward_type, reward_amount
+                reward_type = data.get("reward_type", "xp")
+                reward_amount = data.get("reward_amount", 0)
 
                 print(f"🎉 [XP] Daily crate reward: {reward_amount} {reward_type}")
 
@@ -1187,10 +1186,9 @@ async def claim_daily_crate(
                     json_str = details[2:-1]
                     data = json.loads(json_str)
                     print(f"✅ [XP] claim-daily-crate extracted data from RPC response")
-                    # RPC returns nested reward object: {"type": "xp", "amount": 64}
-                    reward_obj = data.get("reward", {})
-                    reward_type = reward_obj.get("type", "xp")
-                    reward_amount = reward_obj.get("amount", 0)
+                    # RPC returns flat structure (migration 230): reward_type, reward_amount
+                    reward_type = data.get("reward_type", "xp")
+                    reward_amount = data.get("reward_amount", 0)
                     return ClaimDailyCrateResponse(
                         success=True,
                         crate_type=data.get("crate_type"),

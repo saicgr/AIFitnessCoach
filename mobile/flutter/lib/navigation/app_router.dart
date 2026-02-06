@@ -102,6 +102,7 @@ import '../screens/trophies/trophy_room_screen.dart';
 import '../screens/leaderboard/xp_leaderboard_screen.dart';
 import '../screens/rewards/rewards_screen.dart';
 import '../screens/inventory/inventory_screen.dart';
+import '../screens/xp_goals/xp_goals_screen.dart';
 import '../data/providers/guest_mode_provider.dart';
 import '../data/providers/xp_provider.dart';
 import '../screens/injuries/injuries_list_screen.dart';
@@ -1240,6 +1241,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/inventory',
         builder: (context, state) => const InventoryScreen(),
+      ),
+
+      // XP Goals - Full screen XP goals, daily/weekly/monthly tabs
+      GoRoute(
+        path: '/xp-goals',
+        builder: (context, state) => const XPGoalsScreen(),
       ),
 
       // Feature Voting (Robinhood-style)
