@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/subscription_provider.dart';
 import '../dialogs/export_dialog.dart';
@@ -83,7 +84,7 @@ class DataManagementSection extends ConsumerWidget {
   void _navigateToSubscriptionHistory(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
+      AppPageRoute(
         builder: (context) => const SubscriptionHistoryScreen(),
       ),
     );
@@ -92,7 +93,7 @@ class DataManagementSection extends ConsumerWidget {
   void _navigateToRequestRefund(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
+      AppPageRoute(
         builder: (context) => const RequestRefundScreen(),
       ),
     );

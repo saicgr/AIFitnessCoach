@@ -97,99 +97,101 @@ class _XPLevelBarState extends ConsumerState<XPLevelBar>
     final xpTitle = userXp.xpTitle;
     final levelColor = Color(xpTitle.colorValue);
 
-    return GestureDetector(
-      onTap: widget.onTap ?? () {
-        HapticService.light();
-        context.push('/xp-goals');
-      },
-      child: Container(
-        padding: EdgeInsets.all(widget.compact ? 12 : 16),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: accentColor.withValues(alpha: 0.2),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Level indicators with progress bar
-            Row(
-              children: [
-                // Current Level Badge
-                _buildLevelBadge(
-                  userXp.currentLevel,
-                  levelColor,
-                  isCurrentLevel: true,
-                  compact: widget.compact,
-                ),
-
-                const SizedBox(width: 12),
-
-                // Animated Progress Bar
-                Expanded(
-                  child: _buildAnimatedProgressBar(
-                    userXp,
-                    levelColor,
-                    accentColor,
-                    textSecondary,
-                  ),
-                ),
-
-                const SizedBox(width: 12),
-
-                // Next Level Badge
-                _buildLevelBadge(
-                  userXp.currentLevel + 1,
-                  levelColor.withValues(alpha: 0.4),
-                  isCurrentLevel: false,
-                  compact: widget.compact,
-                ),
-              ],
+    return RepaintBoundary(
+      child: GestureDetector(
+        onTap: widget.onTap ?? () {
+          HapticService.light();
+          context.push('/xp-goals');
+        },
+        child: Container(
+          padding: EdgeInsets.all(widget.compact ? 12 : 16),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: accentColor.withValues(alpha: 0.2),
             ),
-
-            if (widget.showLabels) ...[
-              SizedBox(height: widget.compact ? 8 : 12),
-              // XP text and title
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Level indicators with progress bar
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // XP Progress text
-                  Text(
-                    '${userXp.xpInCurrentLevel} / ${userXp.xpToNextLevel} XP',
-                    style: TextStyle(
-                      fontSize: widget.compact ? 12 : 14,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
+                  // Current Level Badge
+                  _buildLevelBadge(
+                    userXp.currentLevel,
+                    levelColor,
+                    isCurrentLevel: true,
+                    compact: widget.compact,
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  // Animated Progress Bar
+                  Expanded(
+                    child: _buildAnimatedProgressBar(
+                      userXp,
+                      levelColor,
+                      accentColor,
+                      textSecondary,
                     ),
                   ),
-                  // Title badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: levelColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: levelColor.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Text(
-                      xpTitle.displayName,
-                      style: TextStyle(
-                        fontSize: widget.compact ? 10 : 11,
-                        fontWeight: FontWeight.w600,
-                        color: levelColor,
-                      ),
-                    ),
+
+                  const SizedBox(width: 12),
+
+                  // Next Level Badge
+                  _buildLevelBadge(
+                    userXp.currentLevel + 1,
+                    levelColor.withValues(alpha: 0.4),
+                    isCurrentLevel: false,
+                    compact: widget.compact,
                   ),
                 ],
               ),
+
+              if (widget.showLabels) ...[
+                SizedBox(height: widget.compact ? 8 : 12),
+                // XP text and title
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // XP Progress text
+                    Text(
+                      '${userXp.xpInCurrentLevel} / ${userXp.xpToNextLevel} XP',
+                      style: TextStyle(
+                        fontSize: widget.compact ? 12 : 14,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                    // Title badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: levelColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: levelColor.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Text(
+                        xpTitle.displayName,
+                        style: TextStyle(
+                          fontSize: widget.compact ? 10 : 11,
+                          fontWeight: FontWeight.w600,
+                          color: levelColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

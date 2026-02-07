@@ -8,6 +8,7 @@ AWS Lambda deployment:
     Deployed via Terraform with Mangum adapter (see lambda_handler.py)
 """
 from contextlib import asynccontextmanager
+from datetime import datetime
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -15,6 +16,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+import asyncio
 import uvicorn
 import time
 import traceback
@@ -34,6 +36,9 @@ from services.job_queue_service import get_job_queue_service
 
 settings = get_settings()
 logger = get_logger(__name__)
+
+# Lazy-initialized service holders for non-critical services
+_langgraph_service = None
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -126,27 +131,39 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             clear_log_context()
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """
-    Startup and shutdown events.
-    Initializes services on startup, cleans up on shutdown.
-    """
-    logger.info("Starting FitWiz Backend...")
-    logger.info(f"🤖 Gemini Model: {settings.gemini_model}")
-    logger.info(f"📊 Embedding Model: {settings.gemini_embedding_model}")
-
-    # Initialize services
-    logger.info("Initializing Gemini service...")
-    chat_module.gemini_service = GeminiService()
-
+async def _init_rag_service():
+    """Initialize RAG service (depends on Gemini service being ready)."""
     logger.info("Initializing RAG service...")
+    t = time.time()
     chat_module.rag_service = RAGService(chat_module.gemini_service)
+    logger.info(f"RAG service initialized in {time.time() - t:.2f}s")
 
+
+async def _init_langgraph_service():
+    """Initialize LangGraph Coach service."""
     logger.info("Initializing LangGraph Coach service...")
+    t = time.time()
     chat_module.langgraph_coach_service = LangGraphCoachService()
+    logger.info(f"LangGraph Coach service initialized in {time.time() - t:.2f}s")
 
-    # Auto-index exercises for RAG if not already indexed
+
+async def _init_cache_manager():
+    """Initialize Gemini Context Cache Manager."""
+    if settings.gemini_cache_enabled:
+        logger.info("Initializing Gemini Context Cache Manager...")
+        t = time.time()
+        try:
+            await GeminiService.initialize_cache_manager()
+            logger.info(f"Gemini Context Cache Manager ready in {time.time() - t:.2f}s")
+        except Exception as e:
+            logger.warning(f"Failed to initialize cache manager: {e}")
+            logger.warning("Workout generation will use non-cached mode")
+    else:
+        logger.info("Gemini Context Caching disabled (GEMINI_CACHE_ENABLED=false)")
+
+
+async def _check_exercise_rag_index():
+    """Check and auto-index exercises for RAG (can run after server starts)."""
     logger.info("Checking Exercise RAG index (Chroma Cloud)...")
     try:
         exercise_rag = get_exercise_rag_service()
@@ -154,16 +171,18 @@ async def lifespan(app: FastAPI):
         indexed_count = stats.get("total_exercises", 0)
 
         if indexed_count == 0:
-            logger.info("🔄 No exercises indexed in Chroma Cloud. Starting auto-indexing...")
+            logger.info("No exercises indexed in Chroma Cloud. Starting auto-indexing...")
             indexed = await exercise_rag.index_all_exercises()
-            logger.info(f"✅ Auto-indexed {indexed} exercises to Chroma Cloud")
+            logger.info(f"Auto-indexed {indexed} exercises to Chroma Cloud")
         else:
-            logger.info(f"✅ Exercise RAG ready with {indexed_count} exercises in Chroma Cloud")
+            logger.info(f"Exercise RAG ready with {indexed_count} exercises in Chroma Cloud")
     except Exception as e:
-        logger.error(f"⚠️ Failed to initialize Exercise RAG: {e}")
+        logger.error(f"Failed to initialize Exercise RAG: {e}")
         logger.error("Workouts will fall back to AI-generated exercises")
 
-    # Check ChromaDB embedding dimensions for mismatches
+
+async def _check_chromadb_dimensions():
+    """Check ChromaDB embedding dimensions (can run after server starts)."""
     logger.info("Checking ChromaDB embedding dimensions...")
     try:
         from core.chroma_cloud import get_chroma_cloud_client
@@ -171,36 +190,24 @@ async def lifespan(app: FastAPI):
         dim_check = chroma_client.check_embedding_dimensions(expected_dim=768)
 
         if dim_check["healthy"]:
-            logger.info("✅ ChromaDB embedding dimensions OK (768-dim Gemini embeddings)")
+            logger.info("ChromaDB embedding dimensions OK (768-dim Gemini embeddings)")
         else:
             logger.error("=" * 60)
-            logger.error("❌ CHROMADB EMBEDDING DIMENSION MISMATCH DETECTED!")
+            logger.error("CHROMADB EMBEDDING DIMENSION MISMATCH DETECTED!")
             logger.error("   Some collections have wrong embedding dimensions.")
             logger.error("   This will cause 'dimension mismatch' errors.")
             logger.error("")
             for m in dim_check["mismatches"]:
-                logger.error(f"   • {m['name']}: has {m['actual_dim']} dims, expected {m['expected_dim']}")
+                logger.error(f"   - {m['name']}: has {m['actual_dim']} dims, expected {m['expected_dim']}")
             logger.error("")
             logger.error("   FIX: Run 'python scripts/reindex_chromadb.py' to reindex")
             logger.error("=" * 60)
     except Exception as e:
-        logger.warning(f"⚠️ Could not check ChromaDB dimensions: {e}")
+        logger.warning(f"Could not check ChromaDB dimensions: {e}")
 
-    logger.info("All services initialized (LangGraph agents ready)")
 
-    # Initialize Gemini Context Cache Manager (auto-manages cache lifecycle)
-    if settings.gemini_cache_enabled:
-        logger.info("Initializing Gemini Context Cache Manager...")
-        try:
-            await GeminiService.initialize_cache_manager()
-            logger.info("✅ Gemini Context Cache Manager ready (auto-refresh enabled)")
-        except Exception as e:
-            logger.warning(f"⚠️ Failed to initialize cache manager: {e}")
-            logger.warning("Workout generation will use non-cached mode")
-    else:
-        logger.info("ℹ️ Gemini Context Caching disabled (GEMINI_CACHE_ENABLED=false)")
-
-    # Check for pending workout generation jobs and resume them
+async def _resume_pending_jobs():
+    """Resume pending workout generation jobs (can run after server starts)."""
     logger.info("Checking for pending workout generation jobs...")
     try:
         job_queue = get_job_queue_service()
@@ -212,11 +219,10 @@ async def lifespan(app: FastAPI):
         pending_jobs = job_queue.get_pending_jobs()
 
         if pending_jobs:
-            logger.info(f"🔄 Found {len(pending_jobs)} pending workout generation jobs to resume")
+            logger.info(f"Found {len(pending_jobs)} pending workout generation jobs to resume")
 
             # Import the background generation function
             from api.v1.workouts_db import _run_background_generation
-            import asyncio
 
             for job in pending_jobs:
                 job_id = job.get("id")
@@ -236,12 +242,79 @@ async def lifespan(app: FastAPI):
                     )
                 )
         else:
-            logger.info("✅ No pending workout generation jobs")
+            logger.info("No pending workout generation jobs")
 
     except Exception as e:
-        logger.error(f"⚠️ Failed to check/resume pending jobs: {e}")
+        logger.error(f"Failed to check/resume pending jobs: {e}")
         # Don't fail startup if job recovery fails
 
+
+async def get_langgraph_service() -> LangGraphCoachService:
+    """
+    Lazy getter for LangGraph service.
+    Initializes on first access if not already initialized during startup.
+    """
+    global _langgraph_service
+    if chat_module.langgraph_coach_service is not None:
+        return chat_module.langgraph_coach_service
+    if _langgraph_service is None:
+        logger.info("Lazy-initializing LangGraph Coach service on first request...")
+        _langgraph_service = LangGraphCoachService()
+        chat_module.langgraph_coach_service = _langgraph_service
+    return _langgraph_service
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Startup and shutdown events.
+    Initializes services on startup, cleans up on shutdown.
+
+    Startup is split into 3 phases for faster cold starts:
+      Phase 1 (Critical): Gemini service - needed for all AI endpoints
+      Phase 2 (Parallel): RAG, LangGraph, Cache - independent, run concurrently
+      Phase 3 (Background): Index checks, job resume - run after server starts serving
+    """
+    startup_start = time.time()
+    logger.info("Starting FitWiz Backend...")
+    logger.info(f"Gemini Model: {settings.gemini_model}")
+    logger.info(f"Embedding Model: {settings.gemini_embedding_model}")
+
+    # ── Phase 1: Critical initialization (must complete before serving) ──
+    phase1_start = time.time()
+    logger.info("Initializing Gemini service (Phase 1: critical)...")
+    chat_module.gemini_service = GeminiService()
+    logger.info(f"Startup Phase 1 (critical) completed in {time.time() - phase1_start:.2f}s")
+
+    # ── Phase 2: Parallel initialization of independent services ──
+    # RAG depends on Gemini (uses gemini_service for embeddings), but LangGraph
+    # and Cache Manager are independent. Run RAG + LangGraph + Cache in parallel.
+    phase2_start = time.time()
+    logger.info("Starting Phase 2: parallel service initialization...")
+    phase2_results = await asyncio.gather(
+        _init_rag_service(),
+        _init_langgraph_service(),
+        _init_cache_manager(),
+        return_exceptions=True,
+    )
+
+    # Log any Phase 2 failures (non-fatal)
+    phase2_names = ["RAG service", "LangGraph service", "Cache manager"]
+    for name, result in zip(phase2_names, phase2_results):
+        if isinstance(result, Exception):
+            logger.error(f"Phase 2 failure - {name}: {result}")
+
+    logger.info(f"Startup Phase 2 (parallel) completed in {time.time() - phase2_start:.2f}s")
+
+    # ── Phase 3: Background tasks (server starts serving immediately) ──
+    # These can run after the server is already accepting requests.
+    logger.info("Starting Phase 3: background initialization tasks...")
+    asyncio.create_task(_check_exercise_rag_index())
+    asyncio.create_task(_check_chromadb_dimensions())
+    asyncio.create_task(_resume_pending_jobs())
+
+    total_startup = time.time() - startup_start
+    logger.info(f"Startup complete in {total_startup:.2f}s (server ready, background tasks running)")
     logger.info(f"Server running at http://{settings.host}:{settings.port}")
     logger.info(f"API docs at http://{settings.host}:{settings.port}/docs")
 
@@ -318,8 +391,19 @@ async def root():
         "service": "FitWiz Backend",
         "version": "1.0.0",
         "docs": "/docs",
-        "health": "/api/v1/health/",
+        "health": "/health",
     }
+
+
+@app.get("/health", tags=["health"])
+async def health_keep_alive():
+    """
+    Lightweight health/keep-alive endpoint for external monitoring.
+
+    No DB queries, no auth, no heavy computation.
+    Use this for Render keep-alive pings (prevents free-tier sleep after 15 min).
+    """
+    return {"status": "ok", "timestamp": datetime.utcnow().isoformat()}
 
 
 if __name__ == "__main__":

@@ -61,6 +61,7 @@ const _$TileTypeEnumMap = {
   TileType.quickLogMeasurements: 'quickLogMeasurements',
   TileType.habits: 'habits',
   TileType.xpProgress: 'xpProgress',
+  TileType.upNext: 'upNext',
 };
 
 const _$TileSizeEnumMap = {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/consistency_mode_provider.dart';
 import '../../../core/providers/environment_equipment_provider.dart';
@@ -237,7 +238,7 @@ class SettingsCard extends ConsumerWidget {
   void _navigateToEnvironmentScreen(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
+      AppPageRoute(
         builder: (context) => const EnvironmentListScreen(),
       ),
     );
@@ -714,7 +715,7 @@ class SettingsCard extends ConsumerWidget {
   void _navigateToDownloadedVideos(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
+      AppPageRoute(
         builder: (context) => const DownloadedVideosScreen(),
       ),
     );

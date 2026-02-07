@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/animations/app_animations.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -812,7 +813,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
   void _navigateToVolumeHistory({String? muscleGroup}) {
     Navigator.push(
       context,
-      MaterialPageRoute(
+      AppPageRoute(
         builder: (context) =>
             VolumeHistoryScreen(initialMuscleGroup: muscleGroup),
       ),
@@ -822,7 +823,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
   void _navigateToReportStrain() {
     Navigator.push(
       context,
-      MaterialPageRoute(
+      AppPageRoute(
         builder: (context) => const ReportStrainScreen(),
       ),
     );

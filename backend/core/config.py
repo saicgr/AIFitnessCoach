@@ -42,6 +42,12 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://postgres:password@localhost:5432/postgres"
     sqlite_url: Optional[str] = None
 
+    # Database Connection Pool (only applies to PostgreSQL, ignored for SQLite)
+    db_pool_size: int = 10          # Base number of persistent connections
+    db_max_overflow: int = 20       # Extra connections allowed under load
+    db_pool_timeout: int = 30       # Seconds to wait for a connection
+    db_pool_recycle: int = 1800     # Recycle connections every 30 minutes
+
     # RAG Configuration
     chroma_persist_dir: str = "./data/chroma"
     rag_top_k: int = 5  # Number of similar docs to retrieve

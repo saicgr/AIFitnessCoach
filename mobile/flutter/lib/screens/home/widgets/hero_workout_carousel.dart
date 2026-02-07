@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/accent_color_provider.dart';
@@ -13,9 +14,11 @@ import 'generate_workout_placeholder.dart';
 class CarouselItem {
   final Workout? workout;
   final DateTime? placeholderDate;
+  final bool isAutoGenerating;
+  final bool isGenerationFailed;
 
-  CarouselItem.workout(this.workout) : placeholderDate = null;
-  CarouselItem.placeholder(this.placeholderDate) : workout = null;
+  CarouselItem.workout(this.workout) : placeholderDate = null, isAutoGenerating = false, isGenerationFailed = false;
+  CarouselItem.placeholder(this.placeholderDate, {this.isAutoGenerating = false, this.isGenerationFailed = false}) : workout = null;
 
   bool get isWorkout => workout != null;
   bool get isPlaceholder => placeholderDate != null;
@@ -35,6 +38,22 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   late PageController _pageController;
   int _currentPage = 0;
   DateTime? _generatingForDate;
+  bool _autoGenerationTriggered = false;
+
+  /// Tracks generation failure counts per date for retry logic (Fix 4)
+  final Map<String, int> _generationFailures = {};
+
+  /// Max retries before showing permanent error state
+  static const int _maxRetries = 3;
+
+  /// Retry delay schedule: 5s, 15s, 30s
+  static const List<int> _retryDelaySeconds = [5, 15, 30];
+
+  /// Active retry timers per date
+  final Map<String, Timer> _retryTimers = {};
+
+  /// Dates that have permanently failed (exceeded max retries)
+  final Set<String> _permanentlyFailed = {};
 
   @override
   void initState() {
@@ -46,10 +65,24 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   @override
   void dispose() {
     _pageController.dispose();
+    // Cancel all retry timers (Fix 4)
+    for (final timer in _retryTimers.values) {
+      timer.cancel();
+    }
+    _retryTimers.clear();
     super.dispose();
   }
 
+  /// Date key for tracking (YYYY-MM-DD)
+  String _dateKey(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
   Future<void> _handleGenerateWorkout(DateTime date) async {
+    final key = _dateKey(date);
+
+    // Clear permanent failure state if user manually taps retry
+    _permanentlyFailed.remove(key);
+
     setState(() => _generatingForDate = date);
     try {
       // Trigger workout generation for this date
@@ -57,12 +90,57 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
       // Refresh the workouts list
       ref.invalidate(workoutsProvider);
       ref.invalidate(todayWorkoutProvider);
+
+      // Success: clear failure tracking for this date
+      _generationFailures.remove(key);
+      _retryTimers[key]?.cancel();
+      _retryTimers.remove(key);
+    } catch (e) {
+      debugPrint('[HeroCarousel] Generation failed for $key: $e');
+      _handleGenerationFailure(date);
     } finally {
       if (mounted) {
         setState(() => _generatingForDate = null);
       }
     }
   }
+
+  /// Handle a generation failure: track count and schedule retry (Fix 4)
+  void _handleGenerationFailure(DateTime date) {
+    final key = _dateKey(date);
+    final currentFailures = (_generationFailures[key] ?? 0) + 1;
+    _generationFailures[key] = currentFailures;
+
+    debugPrint('[HeroCarousel] Generation failure #$currentFailures for $key');
+
+    if (currentFailures >= _maxRetries) {
+      // Max retries exceeded: show permanent error state
+      debugPrint('[HeroCarousel] Max retries ($currentFailures) reached for $key, showing error state');
+      if (mounted) {
+        setState(() => _permanentlyFailed.add(key));
+      }
+      return;
+    }
+
+    // Schedule retry with increasing delay
+    final delayIndex = currentFailures - 1;
+    final delaySec = delayIndex < _retryDelaySeconds.length
+        ? _retryDelaySeconds[delayIndex]
+        : _retryDelaySeconds.last;
+
+    debugPrint('[HeroCarousel] Scheduling retry #${currentFailures + 1} for $key in ${delaySec}s');
+
+    _retryTimers[key]?.cancel();
+    _retryTimers[key] = Timer(Duration(seconds: delaySec), () {
+      if (mounted && !_permanentlyFailed.contains(key)) {
+        debugPrint('[HeroCarousel] Auto-retrying generation for $key');
+        _handleGenerateWorkout(date);
+      }
+    });
+  }
+
+  /// Whether a date has permanently failed generation
+  bool _isGenerationFailed(DateTime date) => _permanentlyFailed.contains(_dateKey(date));
 
   /// Get dates for this week based on profile workout days (0=Mon, 6=Sun)
   List<DateTime> _getWorkoutDatesForWeek(List<int> workoutDays) {
@@ -128,6 +206,19 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         final todayWorkout = todayWorkoutResponse?.todayWorkout?.toWorkout();
         final nextWorkout = todayWorkoutResponse?.nextWorkout?.toWorkout();
 
+        // Detect if auto-generation is in progress from todayWorkoutProvider
+        final isAutoGenerating = todayWorkoutResponse?.isGenerating == true;
+        final autoGeneratingDateStr = todayWorkoutResponse?.nextWorkoutDate;
+
+        // Parse the auto-generating date for comparison with carousel dates
+        DateTime? autoGeneratingDate;
+        if (autoGeneratingDateStr != null) {
+          try {
+            autoGeneratingDate = DateTime.parse(autoGeneratingDateStr);
+            autoGeneratingDate = DateTime(autoGeneratingDate.year, autoGeneratingDate.month, autoGeneratingDate.day);
+          } catch (_) {}
+        }
+
         return workoutsAsync.when(
           loading: () => _buildLoadingState(isDark, accentColor),
           error: (_, __) => _buildErrorState(isDark),
@@ -152,8 +243,34 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
                 if (workout != null) {
                   carouselItems.add(CarouselItem.workout(workout));
                 } else {
-                  // Add placeholder for this date
-                  carouselItems.add(CarouselItem.placeholder(date));
+                  // Check if this date is being auto-generated by todayWorkoutProvider
+                  final isThisDateAutoGenerating = isAutoGenerating && autoGeneratingDate != null && date == autoGeneratingDate;
+                  final isThisDateFailed = _isGenerationFailed(date);
+                  carouselItems.add(CarouselItem.placeholder(
+                    date,
+                    isAutoGenerating: isThisDateAutoGenerating,
+                    isGenerationFailed: isThisDateFailed,
+                  ));
+                }
+              }
+            }
+
+            // Auto-trigger generation for the first placeholder date on a non-workout day
+            // This ensures the user doesn't have to manually tap "Generate" when they
+            // open the app on a rest day and the next workout hasn't been generated yet
+            if (!_autoGenerationTriggered && carouselItems.isNotEmpty) {
+              final firstItem = carouselItems.first;
+              if (firstItem.isPlaceholder && !firstItem.isAutoGenerating && _generatingForDate == null) {
+                // Only auto-trigger if todayWorkoutProvider isn't already handling it
+                if (!isAutoGenerating) {
+                  _autoGenerationTriggered = true;
+                  debugPrint('🚀 [HeroCarousel] Auto-triggering generation for first placeholder: ${firstItem.placeholderDate}');
+                  // Use post-frame callback to avoid triggering during build
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      _handleGenerateWorkout(firstItem.placeholderDate!);
+                    }
+                  });
                 }
               }
             }
@@ -209,7 +326,8 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
                       : GenerateWorkoutPlaceholder(
                           date: item.placeholderDate!,
                           onGenerate: () => _handleGenerateWorkout(item.placeholderDate!),
-                          isGenerating: _generatingForDate == item.placeholderDate,
+                          isGenerating: _generatingForDate == item.placeholderDate || item.isAutoGenerating,
+                          isGenerationFailed: item.isGenerationFailed,
                         ),
                 ),
               );
@@ -247,7 +365,8 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
                           : GenerateWorkoutPlaceholder(
                               date: item.placeholderDate!,
                               onGenerate: () => _handleGenerateWorkout(item.placeholderDate!),
-                              isGenerating: _generatingForDate == item.placeholderDate,
+                              isGenerating: _generatingForDate == item.placeholderDate || item.isAutoGenerating,
+                              isGenerationFailed: item.isGenerationFailed,
                             ),
                     ),
                   );

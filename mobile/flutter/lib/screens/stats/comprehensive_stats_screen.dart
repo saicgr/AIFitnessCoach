@@ -15,6 +15,7 @@ import '../../data/providers/scores_provider.dart';
 import '../../data/repositories/progress_photos_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../core/animations/app_animations.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/activity_heatmap.dart';
 import '../../widgets/exercise_search_results.dart';
@@ -195,7 +196,7 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
     if (_userId == null) return;
     Navigator.push(
       context,
-      MaterialPageRoute(
+      AppPageRoute(
         builder: (context) => ComparisonView(userId: _userId!),
       ),
     );
@@ -937,7 +938,7 @@ class _PhotosTabState extends ConsumerState<_PhotosTab> {
     // Open photo editor for cropping and logo overlay
     final editedFile = await Navigator.push<File>(
       context,
-      MaterialPageRoute(
+      AppPageRoute(
         builder: (context) => PhotoEditorScreen(
           imageFile: File(pickedFile.path),
           viewTypeName: selectedType!.displayName,

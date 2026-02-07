@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/providers/window_mode_provider.dart';
@@ -45,12 +46,15 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
-    final authState = ref.watch(authStateProvider);
+    // Only watch the status field to avoid unnecessary rebuilds when other
+    // AuthState fields change (e.g., user object reference updates).
+    // Performance fix M5: use .select() to minimize rebuilds.
+    final authStatus = ref.watch(authStateProvider.select((s) => s.status));
 
     // Set up notification preferences sync when user is authenticated
-    if (authState.status == AuthStatus.authenticated && !_syncCallbackSet) {
+    if (authStatus == AuthStatus.authenticated && !_syncCallbackSet) {
       _setupNotificationPreferencesSync();
-    } else if (authState.status == AuthStatus.unauthenticated) {
+    } else if (authStatus == AuthStatus.unauthenticated) {
       _syncCallbackSet = false; // Reset when logged out
     }
 
@@ -72,14 +76,15 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
 
         final mediaQuery = MediaQuery.of(context);
 
-        // Debug logging to diagnose overflow issues
-        debugPrint('📱 [MediaQuery] Size: ${mediaQuery.size.width}x${mediaQuery.size.height}');
-        debugPrint('📱 [MediaQuery] DevicePixelRatio: ${mediaQuery.devicePixelRatio}');
-        debugPrint('📱 [MediaQuery] TextScaler: ${mediaQuery.textScaler}');
-        debugPrint('📱 [MediaQuery] Padding: ${mediaQuery.padding}');
-        debugPrint('📱 [MediaQuery] BoldText: ${mediaQuery.boldText}');
-
-        debugPrint('📱 [MediaQuery] OVERRIDE: Forcing textScaler to 1.0 and boldText to false');
+        // Debug logging to diagnose overflow issues (only in debug mode)
+        if (kDebugMode) {
+          debugPrint('📱 [MediaQuery] Size: ${mediaQuery.size.width}x${mediaQuery.size.height}');
+          debugPrint('📱 [MediaQuery] DevicePixelRatio: ${mediaQuery.devicePixelRatio}');
+          debugPrint('📱 [MediaQuery] TextScaler: ${mediaQuery.textScaler}');
+          debugPrint('📱 [MediaQuery] Padding: ${mediaQuery.padding}');
+          debugPrint('📱 [MediaQuery] BoldText: ${mediaQuery.boldText}');
+          debugPrint('📱 [MediaQuery] OVERRIDE: Forcing textScaler to 1.0 and boldText to false');
+        }
 
         return MediaQuery(
           data: MediaQueryData(

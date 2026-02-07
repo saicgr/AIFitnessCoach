@@ -3,10 +3,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../data/models/schedule_item.dart';
 import '../../data/models/workout.dart';
+import '../../data/providers/schedule_provider.dart';
+import '../../data/repositories/schedule_repository.dart';
 import '../../data/repositories/workout_repository.dart';
+import 'widgets/add_schedule_item_sheet.dart';
+import 'widgets/schedule_item_card.dart';
+import 'widgets/timeline_view.dart';
 
 /// Provider for currently selected week
 final selectedWeekProvider = StateProvider<DateTime>((ref) {
@@ -24,21 +31,16 @@ class ScheduleScreen extends ConsumerStatefulWidget {
 class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   Workout? _draggingWorkout;
   int? _targetDayIndex;
-  bool _showDragHint = true; // Show hint only once per session
+  bool _showDragHint = true;
 
-  // View mode: 'week' for 7-day, 'agenda' for vertical list
-  String _viewMode = 'agenda'; // Default to agenda for better phone UX
+  // View mode: 'agenda', 'week', or 'timeline'
+  String _viewMode = 'agenda';
 
   @override
   Widget build(BuildContext context) {
     final workoutsState = ref.watch(workoutsProvider);
     final selectedWeek = ref.watch(selectedWeekProvider);
-    // Use ref.colors(context) for dynamic accent color
     final colors = ref.colors(context);
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    // Auto-select agenda view on narrow screens
-    final isNarrowScreen = screenWidth < 600;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -48,19 +50,19 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         title: Text('Schedule', style: TextStyle(color: colors.textPrimary)),
         centerTitle: true,
         actions: [
-          // View toggle button
+          // View toggle button - cycles through agenda -> week -> timeline
           IconButton(
             icon: Icon(
-              _viewMode == 'agenda' ? Icons.calendar_view_week : Icons.view_agenda,
+              _viewModeIcon,
               color: colors.textPrimary,
             ),
             onPressed: () {
               HapticFeedback.lightImpact();
               setState(() {
-                _viewMode = _viewMode == 'agenda' ? 'week' : 'agenda';
+                _viewMode = _nextViewMode;
               });
             },
-            tooltip: _viewMode == 'agenda' ? 'Week view' : 'Agenda view',
+            tooltip: _viewModeTooltip,
           ),
           IconButton(
             icon: Icon(Icons.today, color: colors.textPrimary),
@@ -79,7 +81,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             colors: colors,
           ),
 
-          // Week view with drag & drop
+          // Content
           Expanded(
             child: workoutsState.when(
               loading: () => Center(
@@ -100,9 +102,17 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   ],
                 ),
               ),
-              data: (workouts) => _viewMode == 'agenda'
-                  ? _buildAgendaView(context, workouts, selectedWeek, colors)
-                  : _buildWeekView(context, workouts, selectedWeek, colors),
+              data: (workouts) {
+                switch (_viewMode) {
+                  case 'timeline':
+                    return _buildTimelineView(context, selectedWeek, colors);
+                  case 'week':
+                    return _buildWeekView(context, workouts, selectedWeek, colors);
+                  case 'agenda':
+                  default:
+                    return _buildAgendaView(context, workouts, selectedWeek, colors);
+                }
+              },
             ),
           ),
 
@@ -117,9 +127,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      _viewMode == 'agenda'
-                          ? 'Tap a workout to view details'
-                          : 'Long press and drag to reschedule',
+                      _hintText,
                       style: TextStyle(
                         fontSize: 14,
                         color: colors.textMuted,
@@ -135,10 +143,193 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             ),
         ],
       ),
+      // FAB for adding new schedule items
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddItemSheet(context, colors),
+        backgroundColor: colors.isDark ? Colors.white : Colors.black,
+        foregroundColor: colors.isDark ? Colors.black : Colors.white,
+        child: const Icon(Icons.add),
+      ),
     );
   }
 
-  /// Agenda view - vertical scrolling list grouped by day (better for phones)
+  // View mode cycling helpers
+  String get _nextViewMode {
+    switch (_viewMode) {
+      case 'agenda':
+        return 'week';
+      case 'week':
+        return 'timeline';
+      case 'timeline':
+        return 'agenda';
+      default:
+        return 'agenda';
+    }
+  }
+
+  IconData get _viewModeIcon {
+    switch (_viewMode) {
+      case 'agenda':
+        return Icons.calendar_view_week;
+      case 'week':
+        return Icons.schedule;
+      case 'timeline':
+        return Icons.view_agenda;
+      default:
+        return Icons.calendar_view_week;
+    }
+  }
+
+  String get _viewModeTooltip {
+    switch (_viewMode) {
+      case 'agenda':
+        return 'Week view';
+      case 'week':
+        return 'Timeline view';
+      case 'timeline':
+        return 'Agenda view';
+      default:
+        return 'Switch view';
+    }
+  }
+
+  String get _hintText {
+    switch (_viewMode) {
+      case 'agenda':
+        return 'Tap an item to view details';
+      case 'week':
+        return 'Long press and drag to reschedule';
+      case 'timeline':
+        return 'Tap empty space to add, tap an item to edit';
+      default:
+        return '';
+    }
+  }
+
+  void _showAddItemSheet(BuildContext context, ThemeColors colors, {String? prefilledTime}) {
+    final selectedWeek = ref.read(selectedWeekProvider);
+    // Use today if within the selected week, otherwise use Monday of selected week
+    final now = DateTime.now();
+    final weekEnd = selectedWeek.add(const Duration(days: 6));
+    final selectedDate = (now.isAfter(selectedWeek) && now.isBefore(weekEnd.add(const Duration(days: 1))))
+        ? DateTime(now.year, now.month, now.day)
+        : selectedWeek;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => AddScheduleItemSheet(
+        selectedDate: selectedDate,
+        prefilledTime: prefilledTime,
+        onSave: (item) => _createScheduleItem(item, colors),
+      ),
+    );
+  }
+
+  Future<void> _createScheduleItem(ScheduleItemCreate item, ThemeColors colors) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      final repository = ref.read(scheduleRepositoryProvider);
+      await repository.createItem(userId, item);
+      // Refresh the schedule
+      ref.read(scheduleRefreshProvider.notifier).state++;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Added "${item.title}" to schedule'),
+            backgroundColor: colors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add item: $e'),
+            backgroundColor: colors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Timeline view showing a vertical 24-hour timeline for today/selected day
+  Widget _buildTimelineView(BuildContext context, DateTime weekStart, ThemeColors colors) {
+    // Use today if within the selected week
+    final now = DateTime.now();
+    final weekEnd = weekStart.add(const Duration(days: 6));
+    final selectedDate = (now.isAfter(weekStart.subtract(const Duration(days: 1))) &&
+            now.isBefore(weekEnd.add(const Duration(days: 1))))
+        ? DateTime(now.year, now.month, now.day)
+        : weekStart;
+
+    final scheduleAsync = ref.watch(dailyScheduleProvider(selectedDate));
+
+    return Column(
+      children: [
+        // Date label
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              Icon(Icons.schedule, size: 18, color: colors.textMuted),
+              const SizedBox(width: 8),
+              Text(
+                DateFormat('EEEE, MMM d').format(selectedDate),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textPrimary,
+                ),
+              ),
+              if (selectedDate.year == now.year &&
+                  selectedDate.month == now.month &&
+                  selectedDate.day == now.day) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: colors.cyan.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'Today',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: colors.cyan,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        Expanded(
+          child: scheduleAsync.when(
+            loading: () => Center(
+              child: CircularProgressIndicator(color: colors.cyan),
+            ),
+            error: (e, _) => Center(
+              child: Text('Failed to load timeline: $e',
+                  style: TextStyle(color: colors.error)),
+            ),
+            data: (schedule) => TimelineView(
+              items: schedule.items,
+              isDark: colors.isDark,
+              onItemTap: (item) => _showAddItemSheet(context, colors, prefilledTime: item.startTime),
+              onEmptyTap: (time) => _showAddItemSheet(context, colors, prefilledTime: time),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Agenda view - vertical scrolling list grouped by day
   Widget _buildAgendaView(BuildContext context, List<Workout> workouts, DateTime weekStart, ThemeColors colors) {
     final days = List.generate(7, (i) => weekStart.add(Duration(days: i)));
     final today = DateTime.now();
@@ -153,6 +344,10 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             day.day == today.day;
         final isPast = day.isBefore(DateTime(today.year, today.month, today.day));
         final dayWorkouts = _getWorkoutsForDay(workouts, day);
+
+        // Watch schedule items for this day
+        final dayDate = DateTime(day.year, day.month, day.day);
+        final scheduleAsync = ref.watch(dailyScheduleProvider(dayDate));
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -236,36 +431,88 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                 ],
               ),
             ),
-            // Workouts for the day
+
+            // Schedule items for the day
+            scheduleAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+              data: (schedule) {
+                if (schedule.items.isNotEmpty) {
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      left: MediaQuery.of(context).size.width < 380 ? 40.0 : 60.0,
+                    ),
+                    child: Column(
+                      children: schedule.items.map((item) => ScheduleItemCard(
+                        item: item,
+                        isDark: colors.isDark,
+                        onTap: () => _showAddItemSheet(context, colors, prefilledTime: item.startTime),
+                        onComplete: () => _completeItem(item, colors),
+                      )).toList(),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+
+            // Workouts for the day (legacy support)
             if (dayWorkouts.isEmpty)
               Builder(
                 builder: (context) {
                   final screenWidth = MediaQuery.of(context).size.width;
                   final leftMargin = screenWidth < 380 ? 40.0 : 60.0;
-                  return Container(
-                    margin: EdgeInsets.only(left: leftMargin, bottom: 8),
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: colors.elevated,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: colors.cardBorder.withOpacity(0.5)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.event_available, size: 20, color: colors.textMuted),
-                    const SizedBox(width: 12),
-                    Text(
-                      isPast ? 'Rest day' : 'No workout scheduled',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: colors.textMuted,
+                  return scheduleAsync.maybeWhen(
+                    data: (schedule) {
+                      if (schedule.items.isNotEmpty) return const SizedBox.shrink();
+                      return Container(
+                        margin: EdgeInsets.only(left: leftMargin, bottom: 8),
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: colors.elevated,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: colors.cardBorder.withOpacity(0.5)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.event_available, size: 20, color: colors.textMuted),
+                            const SizedBox(width: 12),
+                            Text(
+                              isPast ? 'Rest day' : 'No items scheduled',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: colors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    orElse: () => Container(
+                      margin: EdgeInsets.only(left: leftMargin, bottom: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: colors.elevated,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: colors.cardBorder.withOpacity(0.5)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.event_available, size: 20, color: colors.textMuted),
+                          const SizedBox(width: 12),
+                          Text(
+                            isPast ? 'Rest day' : 'No items scheduled',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: colors.textMuted,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    ],
-                  ),
-                );
-              },
-            )
+                  );
+                },
+              )
             else
               ...dayWorkouts.map((workout) => _AgendaWorkoutCard(
                 workout: workout,
@@ -398,6 +645,34 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     );
   }
 
+  Future<void> _completeItem(ScheduleItem item, ThemeColors colors) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      final repository = ref.read(scheduleRepositoryProvider);
+      await repository.completeItem(userId, item.id);
+      ref.read(scheduleRefreshProvider.notifier).state++;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Completed "${item.title}"'),
+            backgroundColor: colors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to complete: $e'),
+            backgroundColor: colors.error,
+          ),
+        );
+      }
+    }
+  }
+
   List<Workout> _getWorkoutsForDay(List<Workout> workouts, DateTime day) {
     final dayStr = DateFormat('yyyy-MM-dd').format(day);
     return workouts.where((w) {
@@ -409,7 +684,6 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   Future<void> _rescheduleWorkout(Workout workout, DateTime newDate, ThemeColors colors) async {
     final newDateStr = DateFormat('yyyy-MM-dd').format(newDate);
 
-    // Show loading
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -436,7 +710,6 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       final success = await repository.rescheduleWorkout(workout.id!, newDateStr);
 
       if (success) {
-        // Refresh workouts and invalidate to force UI rebuild
         await ref.read(workoutsProvider.notifier).refresh();
         ref.invalidate(workoutsProvider);
 
@@ -517,7 +790,7 @@ class _WeekSelector extends StatelessWidget {
             color: colors.textSecondary,
           ),
           GestureDetector(
-            onTap: () {}, // Could open week picker
+            onTap: () {},
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -831,7 +1104,6 @@ class _AgendaWorkoutCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final typeColor = AppColors.getWorkoutTypeColor(workout.type ?? 'strength');
     final isCompleted = workout.isCompleted ?? false;
-    // Responsive margin: smaller on narrow screens
     final screenWidth = MediaQuery.of(context).size.width;
     final leftMargin = screenWidth < 380 ? 40.0 : 60.0;
 

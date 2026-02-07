@@ -85,6 +85,8 @@ enum TileType {
   habits,
   @JsonValue('xpProgress')
   xpProgress,
+  @JsonValue('upNext')
+  upNext,
 }
 
 /// Extension to provide metadata for tile types
@@ -168,6 +170,8 @@ extension TileTypeExtension on TileType {
         return 'Today\'s Habits';
       case TileType.xpProgress:
         return 'Level & XP';
+      case TileType.upNext:
+        return 'Up Next';
     }
   }
 
@@ -250,6 +254,8 @@ extension TileTypeExtension on TileType {
         return 'Daily habits and goals tracker';
       case TileType.xpProgress:
         return 'Your level and XP progress bar';
+      case TileType.upNext:
+        return 'Your upcoming schedule items';
     }
   }
 
@@ -332,6 +338,8 @@ extension TileTypeExtension on TileType {
         return 'checklist';
       case TileType.xpProgress:
         return 'stars';
+      case TileType.upNext:
+        return 'schedule';
     }
   }
 
@@ -390,6 +398,8 @@ extension TileTypeExtension on TileType {
         return TileCategory.wellness;
       case TileType.xpProgress:
         return TileCategory.progress;
+      case TileType.upNext:
+        return TileCategory.wellness;
     }
   }
 
@@ -448,6 +458,8 @@ extension TileTypeExtension on TileType {
       // Hero section is full only
       case TileType.heroSection:
         return [TileSize.full];
+      case TileType.upNext:
+        return [TileSize.full, TileSize.half];
     }
   }
 

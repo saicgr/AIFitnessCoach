@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/notification_service.dart';
@@ -344,7 +345,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
+                AppPageRoute(
                   builder: (context) => const NotificationTestScreen(),
                 ),
               );

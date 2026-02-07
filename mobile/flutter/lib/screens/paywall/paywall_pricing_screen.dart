@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/animations/app_animations.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/constants/app_colors.dart';
@@ -647,7 +648,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   void _navigateToSubscriptionHistory(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
+      AppPageRoute(
         builder: (context) => const SubscriptionHistoryScreen(),
       ),
     );

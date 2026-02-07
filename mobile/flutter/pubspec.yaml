@@ -56,7 +56,7 @@ dependencies:
 
   # Location & Maps (for gym profile location)
   geolocator: ^13.0.2
-  google_maps_flutter: ^2.9.0
+  # google_maps_flutter: ^2.9.0  # Removed for v1 — re-add when Maps API key is configured
 
   # Firebase / Notifications
   firebase_core: ^3.8.1

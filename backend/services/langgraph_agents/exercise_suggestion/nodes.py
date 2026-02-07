@@ -75,7 +75,7 @@ async def analyze_request_node(state: ExerciseSuggestionState) -> Dict[str, Any]
     llm = ChatGoogleGenerativeAI(
         model=settings.gemini_model,
         temperature=0,
-        google_api_key=settings.gemini_api_key,
+        api_key=settings.gemini_api_key,
     )
 
     system_prompt = """You are an exercise analysis assistant. Analyze the user's request to swap an exercise.
@@ -302,7 +302,7 @@ async def generate_suggestions_node(state: ExerciseSuggestionState) -> Dict[str,
     llm = ChatGoogleGenerativeAI(
         model=settings.gemini_model,
         temperature=0.3,
-        google_api_key=settings.gemini_api_key,
+        api_key=settings.gemini_api_key,
     )
 
     # Format candidates for AI

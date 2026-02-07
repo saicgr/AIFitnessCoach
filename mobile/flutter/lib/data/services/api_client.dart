@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
@@ -18,16 +20,41 @@ final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
 /// API client provider
 final apiClientProvider = Provider<ApiClient>((ref) {
   final storage = ref.watch(secureStorageProvider);
-  return ApiClient(storage);
+  final client = ApiClient(storage);
+  // Start listening for Supabase auth state changes to keep token in sync
+  client.startAuthListener();
+  ref.onDispose(() => client.dispose());
+  return client;
 });
 
 /// HTTP API client with auth interceptor
-class ApiClient {
+class ApiClient with WidgetsBindingObserver {
   final FlutterSecureStorage _storage;
   late final Dio _dio;
+  StreamSubscription<AuthState>? _authSubscription;
+  Timer? _tokenRefreshTimer;
 
   static const _tokenKey = 'auth_token';
   static const _userIdKey = 'user_id';
+
+  /// How many minutes before expiry to proactively refresh the token.
+  static const _refreshBufferMinutes = 5;
+
+  /// Get the current valid access token from the live Supabase session.
+  /// Falls back to the stored token if Supabase session is not available
+  /// (e.g., during initial startup before Supabase is fully initialized).
+  Future<String?> _getCurrentAccessToken() async {
+    try {
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session != null) {
+        return session.accessToken;
+      }
+    } catch (e) {
+      debugPrint('⚠️ [API] Could not read Supabase session: $e');
+    }
+    // Fall back to stored token (may be stale, but better than nothing)
+    return _storage.read(key: _tokenKey);
+  }
 
   ApiClient(this._storage) {
     _dio = Dio(
@@ -45,11 +72,11 @@ class ApiClient {
       ),
     );
 
-    // Auth interceptor
+    // Auth interceptor — always uses the CURRENT Supabase session token
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          final token = await _storage.read(key: _tokenKey);
+          final token = await _getCurrentAccessToken();
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
           }
@@ -57,30 +84,46 @@ class ApiClient {
         },
         onError: (error, handler) async {
           if (error.response?.statusCode == 401) {
-            // Try to refresh Supabase session before clearing auth
-            try {
-              final session = Supabase.instance.client.auth.currentSession;
-              if (session != null) {
-                debugPrint('🔄 [API] 401 received, attempting token refresh...');
+            final retryCount = error.requestOptions.extra['_retryCount'] as int? ?? 0;
+            if (retryCount < 2) {
+              try {
+                debugPrint('🔄 [API] 401 received (attempt ${retryCount + 1}/2), refreshing token...');
                 final refreshed = await Supabase.instance.client.auth.refreshSession();
-                if (refreshed.session != null) {
-                  // Save new token
-                  await _storage.write(key: _tokenKey, value: refreshed.session!.accessToken);
-                  debugPrint('✅ [API] Token refreshed, retrying request...');
-
-                  // Retry the original request with new token
-                  error.requestOptions.headers['Authorization'] = 'Bearer ${refreshed.session!.accessToken}';
+                final newToken = refreshed.session?.accessToken ?? await _getCurrentAccessToken();
+                if (newToken != null) {
+                  // Save new token to storage for consistency
+                  if (refreshed.session != null) {
+                    await _storage.write(key: _tokenKey, value: refreshed.session!.accessToken);
+                    // Re-schedule proactive refresh after successful token refresh
+                    _scheduleProactiveRefresh();
+                  }
+                  debugPrint('✅ [API] Token refreshed, retrying request (attempt ${retryCount + 1})...');
+                  error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
+                  error.requestOptions.extra['_retryCount'] = retryCount + 1;
                   final retryResponse = await _dio.fetch(error.requestOptions);
                   return handler.resolve(retryResponse);
                 }
+              } catch (refreshError) {
+                debugPrint('❌ [API] Retry ${retryCount + 1} refresh failed: $refreshError');
               }
-            } catch (refreshError) {
-              debugPrint('❌ [API] Token refresh failed: $refreshError');
             }
 
-            // Only clear auth if refresh failed
-            debugPrint('🚪 [API] Clearing auth after failed refresh');
-            await clearAuth();
+            // All refresh attempts exhausted -- force sign-out to avoid broken state
+            if (retryCount >= 2) {
+              debugPrint('🚪 [API] All refresh attempts failed, signing out to reset auth state');
+              try {
+                await Supabase.instance.client.auth.signOut();
+                // The onAuthStateChange listener will handle clearing stored tokens
+              } catch (signOutError) {
+                debugPrint('❌ [API] Force sign-out failed: $signOutError');
+                // Still clear local auth as last resort
+                await clearAuth();
+              }
+            } else {
+              // Only clear auth if we didn't even get to retry
+              debugPrint('🚪 [API] Clearing auth after failed refresh');
+              await clearAuth();
+            }
           }
           return handler.next(error);
         },
@@ -103,15 +146,143 @@ class ApiClient {
     }
   }
 
+  /// Start listening to Supabase auth state changes.
+  /// Keeps the stored token in sync whenever Supabase auto-refreshes the JWT.
+  /// Also schedules proactive token refresh and registers lifecycle observer.
+  void startAuthListener() {
+    _authSubscription?.cancel();
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen(
+      (data) async {
+        final event = data.event;
+        final session = data.session;
+
+        if (session != null &&
+            (event == AuthChangeEvent.tokenRefreshed ||
+             event == AuthChangeEvent.signedIn)) {
+          debugPrint('🔄 [API] Auth state changed ($event), updating stored token');
+          await _storage.write(key: _tokenKey, value: session.accessToken);
+          // Re-schedule proactive refresh whenever we get a new token
+          _scheduleProactiveRefresh();
+        } else if (event == AuthChangeEvent.signedOut) {
+          debugPrint('🚪 [API] Auth state: signed out, clearing stored token');
+          _tokenRefreshTimer?.cancel();
+          _tokenRefreshTimer = null;
+          await clearAuth();
+        }
+      },
+      onError: (error) {
+        debugPrint('❌ [API] Auth state listener error: $error');
+      },
+    );
+    debugPrint('✅ [API] Auth state listener started');
+
+    // Schedule proactive refresh for the current session (if any)
+    _scheduleProactiveRefresh();
+
+    // Register lifecycle observer so we can check token on app resume
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  /// Schedule a timer to proactively refresh the Supabase token
+  /// [_refreshBufferMinutes] minutes before it expires.
+  void _scheduleProactiveRefresh() {
+    _tokenRefreshTimer?.cancel();
+    _tokenRefreshTimer = null;
+
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session == null) return;
+
+    final expiresAt = session.expiresAt; // Unix timestamp in seconds
+    if (expiresAt == null) return;
+
+    final expiresAtDate = DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000);
+    final refreshAt = expiresAtDate.subtract(Duration(minutes: _refreshBufferMinutes));
+    final delay = refreshAt.difference(DateTime.now());
+
+    if (delay.isNegative) {
+      // Already past the proactive refresh window -- refresh immediately
+      debugPrint('⚠️ [Auth] Token expires soon or already expired, refreshing now...');
+      Supabase.instance.client.auth.refreshSession().then((_) {
+        debugPrint('✅ [Auth] Immediate proactive refresh succeeded');
+        // The onAuthStateChange listener will re-schedule
+      }).catchError((e) {
+        debugPrint('❌ [Auth] Immediate proactive refresh failed: $e');
+      });
+      return;
+    }
+
+    debugPrint('🔄 [Auth] Proactive refresh scheduled in ${delay.inMinutes}m ${delay.inSeconds % 60}s');
+    _tokenRefreshTimer = Timer(delay, () async {
+      try {
+        await Supabase.instance.client.auth.refreshSession();
+        debugPrint('✅ [Auth] Proactively refreshed token before expiry');
+        // The onAuthStateChange listener will call _scheduleProactiveRefresh again
+      } catch (e) {
+        debugPrint('❌ [Auth] Proactive token refresh failed: $e');
+        // Try again in 30 seconds in case of transient network issue
+        _tokenRefreshTimer = Timer(const Duration(seconds: 30), () {
+          _scheduleProactiveRefresh();
+        });
+      }
+    });
+  }
+
+  /// Called by the system when the app lifecycle state changes.
+  /// Verifies and refreshes the auth token when the app resumes from background.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _verifyAndRefreshTokenOnResume();
+    }
+  }
+
+  /// When the app comes back from the background, check if the token is close
+  /// to expiring (or already expired) and refresh it proactively.
+  Future<void> _verifyAndRefreshTokenOnResume() async {
+    try {
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session == null) return;
+
+      final expiresAt = session.expiresAt;
+      if (expiresAt == null) return;
+
+      final expiresAtDate = DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000);
+      final bufferThreshold = expiresAtDate.subtract(Duration(minutes: _refreshBufferMinutes));
+
+      if (DateTime.now().isAfter(bufferThreshold)) {
+        debugPrint('🔄 [Auth] App resumed, token near/past expiry -- refreshing...');
+        await Supabase.instance.client.auth.refreshSession();
+        debugPrint('✅ [Auth] Token refreshed on app resume');
+      } else {
+        debugPrint('✅ [Auth] App resumed, token still valid');
+      }
+
+      // Re-schedule proactive refresh (timer may have fired/been cancelled while in background)
+      _scheduleProactiveRefresh();
+    } catch (e) {
+      debugPrint('❌ [Auth] Token refresh on resume failed: $e');
+    }
+  }
+
+  /// Dispose resources (auth listener, proactive refresh timer, lifecycle observer)
+  void dispose() {
+    _authSubscription?.cancel();
+    _authSubscription = null;
+    _tokenRefreshTimer?.cancel();
+    _tokenRefreshTimer = null;
+    WidgetsBinding.instance.removeObserver(this);
+  }
+
   /// Get the Dio instance
   Dio get dio => _dio;
 
   /// Get the base URL
   String get baseUrl => ApiConstants.apiBaseUrl;
 
-  /// Get auth headers for manual requests (e.g., streaming)
+  /// Get auth headers for manual requests (e.g., streaming).
+  /// Always uses the CURRENT Supabase session token to avoid stale tokens.
   Future<Map<String, String>> getAuthHeaders() async {
-    final token = await _storage.read(key: _tokenKey);
+    final token = await _getCurrentAccessToken();
     if (token != null) {
       return {'Authorization': 'Bearer $token'};
     }

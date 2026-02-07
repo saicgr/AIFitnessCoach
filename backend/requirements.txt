@@ -4,17 +4,21 @@ uvicorn[standard]==0.27.0
 python-multipart==0.0.6
 
 # Gemini AI (new unified SDK)
-google-genai>=1.0.0
+# google-genai>=1.56.0 required by langchain-google-genai 4.x for Gemini 3 thought_signature support
+google-genai>=1.56.0,<2.0.0
 
 # RAG & Vector Store
 # ChromaDB 1.0.7+ required for Chroma Cloud API v2 (fixes KeyError '_type' bug)
 # See: https://github.com/chroma-core/chroma/issues/4380
 chromadb>=1.0.7,<2.0.0
 langchain>=0.3.0
-langchain-core>=0.3.0
+# langchain-core>=1.2.5 required by langchain-google-genai 4.x
+langchain-core>=1.2.5,<2.0.0
 langchain-community>=0.3.0
 langchain-text-splitters>=0.3.0
-langchain-google-genai==2.1.12
+# langchain-google-genai 4.2.0+ required for Gemini 3 thought_signature support in tool calls
+# Fixes: "400 Function call is missing a thought_signature in functionCall parts"
+langchain-google-genai>=4.2.0,<5.0.0
 langgraph>=0.6.0
 
 # Database

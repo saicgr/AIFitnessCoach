@@ -9,6 +9,7 @@ import '../../../../data/services/api_client.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../widgets/main_shell.dart';
 import '../../../../widgets/mood_picker_sheet.dart';
+import '../../../fasting/widgets/log_weight_sheet.dart';
 import '../../../nutrition/log_meal_sheet.dart';
 
 /// Quick action icon colors (semantic meaning)
@@ -74,16 +75,7 @@ class QuickActionsGrid extends ConsumerWidget {
                 ),
                 const SizedBox(width: 4),
                 Expanded(
-                  child: _GridActionItem(
-                    icon: Icons.monitor_weight_outlined,
-                    label: 'Weight',
-                    iconColor: _QuickActionColors.weight,
-                    onTap: () {
-                      HapticService.light();
-                      context.push('/measurements');
-                    },
-                    isDark: isDark,
-                  ),
+                  child: _WeightGridActionItem(isDark: isDark),
                 ),
               ],
             ),
@@ -844,6 +836,70 @@ class _MoodGridActionItem extends ConsumerWidget {
               const SizedBox(height: 4),
               Text(
                 'Mood',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Weight grid action item - shows weight logging bottom sheet
+class _WeightGridActionItem extends ConsumerWidget {
+  final bool isDark;
+
+  const _WeightGridActionItem({required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
+    final cardBg = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.05);
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.black.withValues(alpha: 0.08);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticService.light();
+          showLogWeightSheet(context, ref);
+        },
+        onLongPress: () {
+          HapticService.light();
+          context.push('/measurements');
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: borderColor, width: 1),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.monitor_weight_outlined,
+                size: 22,
+                color: _QuickActionColors.weight,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Weight',
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,

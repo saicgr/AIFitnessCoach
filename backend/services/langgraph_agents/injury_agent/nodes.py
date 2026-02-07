@@ -178,7 +178,7 @@ async def injury_agent_node(state: InjuryAgentState) -> Dict[str, Any]:
     # Create LLM with injury tools bound
     llm = ChatGoogleGenerativeAI(
         model=settings.gemini_model,
-        google_api_key=settings.gemini_api_key,
+        api_key=settings.gemini_api_key,
         temperature=0.7,
     )
     llm_with_tools = llm.bind_tools(INJURY_TOOLS)
@@ -222,8 +222,20 @@ Be empathetic, caring, and always suggest seeing a doctor for serious injuries!"
 
     messages.append(HumanMessage(content=state["user_message"]))
 
-    # Call LLM
-    response = await llm_with_tools.ainvoke(messages)
+    # Call LLM with thought_signature retry handling
+    try:
+        response = await llm_with_tools.ainvoke(messages)
+    except Exception as e:
+        if "thought_signature" in str(e).lower():
+            logger.warning(f"Thought signature error, retrying: {e}")
+            llm_retry = ChatGoogleGenerativeAI(
+                model=settings.gemini_model,
+                api_key=settings.gemini_api_key,
+                temperature=0.7,
+            )
+            response = await llm_retry.bind_tools(INJURY_TOOLS).ainvoke(messages)
+        else:
+            raise
 
     logger.info(f"[Injury Agent] LLM response type: {type(response)}")
 
@@ -338,7 +350,7 @@ IMPORTANT:
 
     llm = ChatGoogleGenerativeAI(
         model=settings.gemini_model,
-        google_api_key=settings.gemini_api_key,
+        api_key=settings.gemini_api_key,
         temperature=0.7,
     )
 

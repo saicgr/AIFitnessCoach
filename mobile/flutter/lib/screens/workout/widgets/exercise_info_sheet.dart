@@ -12,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
@@ -26,7 +27,7 @@ Future<void> showExerciseInfoSheet({
   HapticFeedback.mediumImpact();
 
   return Navigator.of(context).push(
-    MaterialPageRoute(
+    AppPageRoute(
       builder: (context) => ExerciseInstructionsScreen(
         exercise: exercise,
       ),
@@ -647,7 +648,7 @@ class ExerciseInfoSheet extends StatelessWidget {
       Navigator.pop(context);
       Navigator.push(
         context,
-        MaterialPageRoute(
+        AppPageRoute(
           builder: (context) => ExerciseInstructionsScreen(exercise: exercise),
         ),
       );

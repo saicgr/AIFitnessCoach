@@ -16,6 +16,14 @@ import 'auth_repository.dart';
 
 export '../models/today_workout.dart';
 
+/// Top-level function for parsing workout lists in an isolate via compute().
+/// Must be top-level (not a closure or instance method) for compute() to work.
+List<Workout> _parseWorkoutList(List<dynamic> data) {
+  return data
+      .map((json) => Workout.fromJson(json as Map<String, dynamic>))
+      .toList();
+}
+
 /// Workout repository provider
 final workoutRepositoryProvider = Provider<WorkoutRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);
@@ -91,9 +99,8 @@ class WorkoutRepository {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data as List;
-        final workouts = data
-            .map((json) => Workout.fromJson(json as Map<String, dynamic>))
-            .toList();
+        // Parse workout list in isolate to avoid blocking the UI thread
+        final workouts = await compute(_parseWorkoutList, data);
         debugPrint('✅ [Workout] Fetched ${workouts.length} workouts');
         return workouts;
       }
@@ -120,7 +127,23 @@ class WorkoutRepository {
 
   /// Mark workout as complete
   /// Returns WorkoutCompletionResponse which includes PRs detected during the workout
+  ///
+  /// Uses optimistic UI pattern: marks workout complete in the in-memory cache
+  /// immediately before the API call, then rolls back on error.
   Future<WorkoutCompletionResponse?> completeWorkout(String workoutId) async {
+    // Optimistic update: mark workout as completed in the in-memory cache immediately
+    List<Workout>? previousCache;
+    if (_workoutsInMemoryCache != null) {
+      previousCache = List<Workout>.from(_workoutsInMemoryCache!);
+      _workoutsInMemoryCache = _workoutsInMemoryCache!.map((w) {
+        if (w.id == workoutId) {
+          return w.copyWith(isCompleted: true);
+        }
+        return w;
+      }).toList();
+      debugPrint('⚡ [Workout] Optimistic update: marked $workoutId as complete in cache');
+    }
+
     try {
       debugPrint('🏋️ [Workout] Completing workout: $workoutId');
       final response = await _apiClient.post(
@@ -142,8 +165,18 @@ class WorkoutRepository {
         }
         return completionResponse;
       }
+      // Non-200 response: rollback optimistic update
+      if (previousCache != null) {
+        _workoutsInMemoryCache = previousCache;
+        debugPrint('⚠️ [Workout] Rolled back optimistic update (non-200 response)');
+      }
       return null;
     } catch (e) {
+      // Error: rollback optimistic update
+      if (previousCache != null) {
+        _workoutsInMemoryCache = previousCache;
+        debugPrint('⚠️ [Workout] Rolled back optimistic update after error: $e');
+      }
       debugPrint('❌ [Workout] Error completing workout: $e');
       rethrow;
     }
@@ -948,9 +981,8 @@ class WorkoutRepository {
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
         final List<dynamic> workoutsData = data['workouts'] as List? ?? [];
-        final workouts = workoutsData
-            .map((json) => Workout.fromJson(json as Map<String, dynamic>))
-            .toList();
+        // Parse workout list in isolate to avoid blocking the UI thread
+        final workouts = await compute(_parseWorkoutList, workoutsData);
         debugPrint('✅ [Workout] Generated ${workouts.length} more workouts');
         return workouts;
       }

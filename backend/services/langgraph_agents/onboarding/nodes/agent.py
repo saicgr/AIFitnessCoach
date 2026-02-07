@@ -165,7 +165,7 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     # Use JSON mode to get structured output with explicit field_type
     llm = ChatGoogleGenerativeAI(
         model=settings.gemini_model,
-        google_api_key=settings.gemini_api_key,
+        api_key=settings.gemini_api_key,
         temperature=0.5,
         timeout=60,
         model_kwargs={"response_mime_type": "application/json"},

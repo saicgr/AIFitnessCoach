@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import '../../core/constants/api_constants.dart';
 import '../models/gym_location.dart';
 
 /// Service for Google Places API integration
@@ -18,7 +17,8 @@ class PlacesService {
     ));
   }
 
-  String get _apiKey => ApiConstants.googleMapsApiKey;
+  // Google Maps removed for v1 — hardcode placeholder so isConfigured returns false
+  String get _apiKey => 'YOUR_GOOGLE_MAPS_API_KEY_HERE';
 
   /// Check if API key is configured
   bool get isConfigured =>

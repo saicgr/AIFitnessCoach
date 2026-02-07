@@ -257,7 +257,7 @@ async def agent_node(state: FitnessCoachState) -> Dict[str, Any]:
     # Create LLM with tools bound
     llm = ChatGoogleGenerativeAI(
         model=settings.gemini_model,
-        google_api_key=settings.gemini_api_key,
+        api_key=settings.gemini_api_key,
         temperature=0.7,
     )
     llm_with_tools = llm.bind_tools(ALL_TOOLS)
@@ -359,8 +359,20 @@ Always be helpful, empathetic about injuries, provide encouraging nutrition feed
 
     messages.append(HumanMessage(content=state["user_message"]))
 
-    # Call LLM - it will decide which tools to use
-    response = await llm_with_tools.ainvoke(messages)
+    # Call LLM with thought_signature retry handling
+    try:
+        response = await llm_with_tools.ainvoke(messages)
+    except Exception as e:
+        if "thought_signature" in str(e).lower():
+            logger.warning(f"Thought signature error, retrying: {e}")
+            llm_retry = ChatGoogleGenerativeAI(
+                model=settings.gemini_model,
+                api_key=settings.gemini_api_key,
+                temperature=0.7,
+            )
+            response = await llm_retry.bind_tools(ALL_TOOLS).ainvoke(messages)
+        else:
+            raise
 
     logger.info(f"[Agent Node] LLM response type: {type(response)}")
 
@@ -534,7 +546,7 @@ CRITICAL RESPONSE INSTRUCTIONS:
     # Call LLM to generate natural response
     llm = ChatGoogleGenerativeAI(
         model=settings.gemini_model,
-        google_api_key=settings.gemini_api_key,
+        api_key=settings.gemini_api_key,
         temperature=0.7,
     )
 

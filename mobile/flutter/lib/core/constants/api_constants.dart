@@ -18,14 +18,17 @@ class ApiConstants {
   /// Full API base URL
   static String get apiBaseUrl => '$baseUrl$apiVersion';
 
-  /// Connection timeout (longer for Render cold start)
-  static const Duration connectTimeout = Duration(seconds: 90);
+  /// Connection timeout
+  static const Duration connectTimeout = Duration(seconds: 15);
 
-  /// Read timeout (longer for AI responses)
-  static const Duration receiveTimeout = Duration(seconds: 120);
+  /// Read timeout
+  static const Duration receiveTimeout = Duration(seconds: 30);
 
   /// Write timeout
-  static const Duration sendTimeout = Duration(seconds: 30);
+  static const Duration sendTimeout = Duration(seconds: 15);
+
+  /// AI/Gemini-specific receive timeout (longer for AI responses)
+  static const Duration aiReceiveTimeout = Duration(minutes: 2);
 
   /// Google OAuth Web Client ID
   static const String googleWebClientId =
@@ -41,7 +44,7 @@ class ApiConstants {
   /// 2. Create or select a project
   /// 3. Enable: Maps SDK for Android, Maps SDK for iOS, Places API, Geocoding API
   /// 4. Create API Key and add restrictions for your app
-  static const String googleMapsApiKey = 'YOUR_GOOGLE_MAPS_API_KEY_HERE'; // TODO: Add your API key
+  // static const String googleMapsApiKey = 'YOUR_GOOGLE_MAPS_API_KEY_HERE'; // Removed for v1
 
   // Endpoint paths
   static const String auth = '/users/auth/google';
@@ -60,5 +63,6 @@ class ApiConstants {
   static const String summaries = '/summaries';
   static const String aiSettings = '/ai-settings';
   static const String scheduling = '/scheduling';
+  static const String dailySchedule = '/daily-schedule';
   static const String supersets = '/supersets';
 }

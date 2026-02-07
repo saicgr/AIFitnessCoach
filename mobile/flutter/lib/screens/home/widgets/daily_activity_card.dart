@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/health_service.dart';
+import '../../../widgets/health_connect_sheet.dart';
 
 class DailyActivityCard extends ConsumerStatefulWidget {
   const DailyActivityCard({super.key});
@@ -43,7 +43,7 @@ class _DailyActivityCardState extends ConsumerState<DailyActivityCard> {
         textSecondary: textSecondary,
         textMuted: textMuted,
         cardBorder: cardBorder,
-        onConnect: () => context.push('/settings'),
+        onConnect: () => showHealthConnectSheet(context, ref),
       );
     }
 
@@ -90,7 +90,7 @@ class _DailyActivityCardState extends ConsumerState<DailyActivityCard> {
                         ),
                       ),
                       Text(
-                        Platform.isAndroid ? 'From Samsung Health' : 'From Apple Health',
+                        Platform.isAndroid ? 'From Health Connect' : 'From Apple Health',
                         style: TextStyle(
                           fontSize: 11,
                           color: textMuted,
@@ -344,7 +344,7 @@ class _NotConnectedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final healthName = Platform.isAndroid ? 'Samsung Health' : 'Apple Health';
+    final healthName = Platform.isAndroid ? 'Health Connect' : 'Apple Health';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

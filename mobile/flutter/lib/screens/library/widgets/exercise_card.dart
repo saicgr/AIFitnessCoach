@@ -136,75 +136,78 @@ class ExerciseCard extends ConsumerWidget {
         child: Row(
           children: [
             // Thumbnail with image or icon fallback
-            Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    purple.withOpacity(0.3),
-                    cyan.withOpacity(0.2),
+            Hero(
+              tag: 'exercise-image-${exercise.name}',
+              child: Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      purple.withOpacity(0.3),
+                      cyan.withOpacity(0.2),
+                    ],
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    bottomLeft: Radius.circular(16),
+                  ),
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Exercise image or body part icon fallback
+                    if (exercise.imageUrl != null && exercise.imageUrl!.isNotEmpty)
+                      ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          bottomLeft: Radius.circular(16),
+                        ),
+                        child: CachedNetworkImage(
+                          imageUrl: exercise.imageUrl!,
+                          width: 90,
+                          height: 90,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Icon(
+                            _getBodyPartIcon(exercise.bodyPart),
+                            size: 36,
+                            color: purple.withOpacity(0.8),
+                          ),
+                          errorWidget: (context, url, error) => Icon(
+                            _getBodyPartIcon(exercise.bodyPart),
+                            size: 36,
+                            color: purple.withOpacity(0.8),
+                          ),
+                        ),
+                      )
+                    else
+                      Icon(
+                        _getBodyPartIcon(exercise.bodyPart),
+                        size: 36,
+                        color: purple.withOpacity(0.8),
+                      ),
+                    // Video play indicator
+                    if (hasVideo)
+                      Positioned(
+                        bottom: 6,
+                        right: 6,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: cyan,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Icon(
+                            Icons.play_arrow,
+                            size: 14,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  bottomLeft: Radius.circular(16),
-                ),
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Exercise image or body part icon fallback
-                  if (exercise.imageUrl != null && exercise.imageUrl!.isNotEmpty)
-                    ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        bottomLeft: Radius.circular(16),
-                      ),
-                      child: CachedNetworkImage(
-                        imageUrl: exercise.imageUrl!,
-                        width: 90,
-                        height: 90,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Icon(
-                          _getBodyPartIcon(exercise.bodyPart),
-                          size: 36,
-                          color: purple.withOpacity(0.8),
-                        ),
-                        errorWidget: (context, url, error) => Icon(
-                          _getBodyPartIcon(exercise.bodyPart),
-                          size: 36,
-                          color: purple.withOpacity(0.8),
-                        ),
-                      ),
-                    )
-                  else
-                    Icon(
-                      _getBodyPartIcon(exercise.bodyPart),
-                      size: 36,
-                      color: purple.withOpacity(0.8),
-                    ),
-                  // Video play indicator
-                  if (hasVideo)
-                    Positioned(
-                      bottom: 6,
-                      right: 6,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: cyan,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Icon(
-                          Icons.play_arrow,
-                          size: 14,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                ],
               ),
             ),
 
@@ -305,10 +308,20 @@ class ExerciseCard extends ConsumerWidget {
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(
-                      isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: isFavorite ? AppColors.error : textMuted,
-                      size: 18,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 150),
+                      transitionBuilder: (child, animation) => ScaleTransition(
+                        scale: Tween<double>(begin: 0.5, end: 1.0).animate(
+                          CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
+                        ),
+                        child: child,
+                      ),
+                      child: Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        key: ValueKey(isFavorite),
+                        color: isFavorite ? AppColors.error : textMuted,
+                        size: 18,
+                      ),
                     ),
                   ),
                 ),
@@ -324,10 +337,20 @@ class ExerciseCard extends ConsumerWidget {
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(
-                      isQueued ? Icons.playlist_add_check : Icons.playlist_add,
-                      color: isQueued ? AppColors.cyan : textMuted,
-                      size: 18,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 150),
+                      transitionBuilder: (child, animation) => ScaleTransition(
+                        scale: Tween<double>(begin: 0.5, end: 1.0).animate(
+                          CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
+                        ),
+                        child: child,
+                      ),
+                      child: Icon(
+                        isQueued ? Icons.playlist_add_check : Icons.playlist_add,
+                        key: ValueKey(isQueued),
+                        color: isQueued ? AppColors.cyan : textMuted,
+                        size: 18,
+                      ),
                     ),
                   ),
                 ),
@@ -343,10 +366,20 @@ class ExerciseCard extends ConsumerWidget {
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(
-                      isAvoided ? Icons.block : Icons.block_outlined,
-                      color: isAvoided ? AppColors.orange : textMuted,
-                      size: 18,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 150),
+                      transitionBuilder: (child, animation) => ScaleTransition(
+                        scale: Tween<double>(begin: 0.5, end: 1.0).animate(
+                          CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
+                        ),
+                        child: child,
+                      ),
+                      child: Icon(
+                        isAvoided ? Icons.block : Icons.block_outlined,
+                        key: ValueKey(isAvoided),
+                        color: isAvoided ? AppColors.orange : textMuted,
+                        size: 18,
+                      ),
                     ),
                   ),
                 ),
@@ -362,10 +395,20 @@ class ExerciseCard extends ConsumerWidget {
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(
-                      isStaple ? Icons.push_pin : Icons.push_pin_outlined,
-                      color: isStaple ? purple : textMuted,
-                      size: 18,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 150),
+                      transitionBuilder: (child, animation) => ScaleTransition(
+                        scale: Tween<double>(begin: 0.5, end: 1.0).animate(
+                          CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
+                        ),
+                        child: child,
+                      ),
+                      child: Icon(
+                        isStaple ? Icons.push_pin : Icons.push_pin_outlined,
+                        key: ValueKey(isStaple),
+                        color: isStaple ? purple : textMuted,
+                        size: 18,
+                      ),
                     ),
                   ),
                 ),

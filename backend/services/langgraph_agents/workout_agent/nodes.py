@@ -209,7 +209,7 @@ async def workout_agent_node(state: WorkoutAgentState) -> Dict[str, Any]:
     # Create LLM with workout tools bound
     llm = ChatGoogleGenerativeAI(
         model=settings.gemini_model,
-        google_api_key=settings.gemini_api_key,
+        api_key=settings.gemini_api_key,
         temperature=0.7,
     )
 
@@ -217,7 +217,7 @@ async def workout_agent_node(state: WorkoutAgentState) -> Dict[str, Any]:
     if is_workout_creation:
         llm_with_tools = llm.bind_tools(
             WORKOUT_TOOLS,
-            tool_choice={"type": "function", "function": {"name": "generate_quick_workout"}}
+            tool_choice="generate_quick_workout"
         )
     else:
         llm_with_tools = llm.bind_tools(WORKOUT_TOOLS)
@@ -276,7 +276,21 @@ If they just want information or advice, respond conversationally."""
     messages.append(HumanMessage(content=state["user_message"]))
 
     # Call LLM
-    response = await llm_with_tools.ainvoke(messages)
+    try:
+        response = await llm_with_tools.ainvoke(messages)
+    except Exception as e:
+        if "thought_signature" in str(e).lower():
+            logger.warning(f"[Workout Agent] Thought signature error, retrying without tool_choice: {e}")
+            # Retry with basic tool binding (no forced tool choice)
+            llm_retry = ChatGoogleGenerativeAI(
+                model=settings.gemini_model,
+                api_key=settings.gemini_api_key,
+                temperature=0.7,
+            )
+            llm_with_tools_retry = llm_retry.bind_tools(WORKOUT_TOOLS)
+            response = await llm_with_tools_retry.ainvoke(messages)
+        else:
+            raise
 
     logger.info(f"[Workout Agent] LLM response type: {type(response)}")
 
@@ -418,11 +432,14 @@ IMPORTANT:
     messages = state.get("messages", [])
     tool_messages = state.get("tool_messages", [])
 
+    # Log message types for debugging thought_signature flow
+    logger.debug(f"[Workout Response] Message types: {[type(m).__name__ for m in messages]}")
+
     messages_with_system = [SystemMessage(content=system_prompt)] + messages + tool_messages
 
     llm = ChatGoogleGenerativeAI(
         model=settings.gemini_model,
-        google_api_key=settings.gemini_api_key,
+        api_key=settings.gemini_api_key,
         temperature=0.7,
     )
 

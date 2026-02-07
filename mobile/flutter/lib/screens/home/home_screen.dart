@@ -50,6 +50,7 @@ import '../../widgets/xp_earned_animation.dart';
 import '../../data/models/level_reward.dart';
 import 'widgets/gym_profile_switcher.dart';
 import 'widgets/daily_crate_banner.dart';
+import '../../widgets/health_connect_sheet.dart';
 
 /// Preset layout templates for quick customization
 class LayoutPreset {
@@ -224,7 +225,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   static const String _editModeTooltipKey = 'has_shown_edit_mode_tooltip';
   @Deprecated('Edit mode has been removed')
   late final _wiggleController = _DummyAnimationController();
-  static const Duration _minRefreshInterval = Duration(seconds: 30);
+  // M13: Increased from 30 seconds to 5 minutes to reduce unnecessary refreshes
+  static const Duration _minRefreshInterval = Duration(minutes: 5);
+
+  /// Ensures the Health Connect popup auto-shows at most once per app session.
+  static bool _healthPopupShownThisSession = false;
 
   @override
   void initState() {
@@ -234,10 +239,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Reset nav bar labels to expanded when on Home screen
       ref.read(navBarLabelsExpandedProvider.notifier).state = true;
-      _initializeWorkouts();
-      _checkPendingWidgetAction();
-      _initializeCurrentProgram();
-      _initializeWindowModeTracking();
+      // M4: Run initialization tasks in parallel so one doesn't block another
+      Future.wait([
+        _initializeWorkouts().catchError((e) {
+          debugPrint('❌ [Home] _initializeWorkouts error: $e');
+        }),
+        Future(() => _checkPendingWidgetAction()).catchError((e) {
+          debugPrint('❌ [Home] _checkPendingWidgetAction error: $e');
+        }),
+        Future(() => _initializeCurrentProgram()).catchError((e) {
+          debugPrint('❌ [Home] _initializeCurrentProgram error: $e');
+        }),
+        Future(() => _initializeWindowModeTracking()).catchError((e) {
+          debugPrint('❌ [Home] _initializeWindowModeTracking error: $e');
+        }),
+        _maybeShowHealthConnectPopup().catchError((e) {
+          debugPrint('❌ [Home] _maybeShowHealthConnectPopup error: $e');
+        }),
+      ]);
     });
   }
 
@@ -268,26 +287,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   /// Auto-refresh workouts if enough time has passed since last refresh
+  /// M13: Uses 5-minute interval and sets _lastRefreshTime at start to prevent double-refreshes
+  /// L9: Only invalidates workoutsProvider after a successful refresh (staleness check)
   Future<void> _autoRefreshIfNeeded() async {
     if (!mounted) return;
 
     final now = DateTime.now();
     if (_lastRefreshTime == null ||
         now.difference(_lastRefreshTime!) > _minRefreshInterval) {
-      debugPrint('🔄 [Home] Auto-refreshing workouts...');
+      // M13: Set time at start to prevent concurrent/double-refreshes
       _lastRefreshTime = now;
+      debugPrint('🔄 [Home] Auto-refreshing workouts...');
       final workoutsNotifier = ref.read(workoutsProvider.notifier);
       await workoutsNotifier.refresh();
 
       // Check mounted after async operation
       if (!mounted) return;
 
-      // Force UI rebuild by invalidating the provider
-      ref.invalidate(workoutsProvider);
+      // L9: The refresh() call above already updates provider state internally,
+      // so we avoid a redundant ref.invalidate(workoutsProvider) which would
+      // trigger an unnecessary full re-fetch.
 
       // Refresh Health Connect status - user may have granted permissions externally
       ref.read(healthSyncProvider.notifier).refreshConnectionStatus();
     }
+  }
+
+  /// Auto-show Health Connect popup if not connected and not recently dismissed.
+  Future<void> _maybeShowHealthConnectPopup() async {
+    if (_healthPopupShownThisSession) return;
+
+    // Small delay so the home screen renders first
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
+
+    final syncState = ref.read(healthSyncProvider);
+    if (syncState.isConnected) return;
+
+    final suppressed = await isHealthConnectPopupSuppressed();
+    if (suppressed || !mounted) return;
+
+    _healthPopupShownThisSession = true;
+    showHealthConnectSheet(context, ref);
   }
 
   /// Map XPGoalType from provider to animation widget enum
@@ -3357,6 +3398,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ),
             ),
           ),
+          // Calendar Button
+          CalendarIconButton(isDark: isDark),
           // Notification Bell
           NotificationBellButton(isDark: isDark),
           const SizedBox(width: 4),
@@ -3415,6 +3458,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ),
           SizedBox(width: spacing),
+          // Calendar Button
+          CalendarIconButton(isDark: isDark),
           // Notification Bell
           NotificationBellButton(isDark: isDark),
           const SizedBox(width: 4),

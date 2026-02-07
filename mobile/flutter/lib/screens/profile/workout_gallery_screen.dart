@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
+import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/providers/workout_gallery_provider.dart';
 import '../../data/services/api_client.dart';
@@ -496,7 +497,7 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
   void _showImageDetail(WorkoutGalleryImage image) {
     Navigator.push(
       context,
-      MaterialPageRoute(
+      AppPageRoute(
         builder: (context) => _FullImageScreen(
           image: image,
           userId: _userId!,

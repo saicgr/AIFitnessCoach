@@ -7,6 +7,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/pr_detection_service.dart';
 import '../../achievements/achievements_screen.dart';
@@ -155,7 +156,7 @@ class PRDetailsSheet extends StatelessWidget {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
+                  AppPageRoute(
                     builder: (context) => const AchievementsScreen(),
                   ),
                 );

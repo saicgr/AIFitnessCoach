@@ -12,6 +12,11 @@ import '../models/exercises_state.dart';
 // Re-export exceptions for consumers
 export '../../../core/exceptions/app_exceptions.dart';
 
+// In-memory cache for category exercises (H5: avoid re-fetching 500 exercises)
+CategoryExercisesData? _categoryExercisesCache;
+DateTime? _categoryCacheTime;
+const _categoryCacheDuration = Duration(hours: 24);
+
 // ============================================================================
 // EXERCISE FILTER PROVIDERS (Multi-select)
 // ============================================================================
@@ -175,8 +180,9 @@ final exercisesProvider = Provider<AsyncValue<List<LibraryExercise>>>((ref) {
 });
 
 /// Filter options provider - fetches available filter options from API
+/// M1: Removed autoDispose — this is static reference data that rarely changes
 final filterOptionsProvider =
-    FutureProvider.autoDispose<ExerciseFilterOptions>((ref) async {
+    FutureProvider<ExerciseFilterOptions>((ref) async {
   final apiClient = ref.read(apiClientProvider);
 
   try {
@@ -210,8 +216,9 @@ final filterOptionsProvider =
 // ============================================================================
 
 /// Programs list provider - now uses branded-programs API
+/// M1: Removed autoDispose — program list is stable reference data
 final programsProvider =
-    FutureProvider.autoDispose<List<BrandedProgram>>((ref) async {
+    FutureProvider<List<BrandedProgram>>((ref) async {
   final apiClient = ref.read(apiClientProvider);
 
   try {
@@ -242,8 +249,9 @@ final programsProvider =
 });
 
 /// Program categories provider - now uses branded-programs API
+/// M1: Removed autoDispose — category list is stable reference data
 final programCategoriesProvider =
-    FutureProvider.autoDispose<List<String>>((ref) async {
+    FutureProvider<List<String>>((ref) async {
   final apiClient = ref.read(apiClientProvider);
 
   try {
@@ -343,8 +351,18 @@ class CategoryExercisesData {
 }
 
 /// Fetches exercises grouped by body part for Netflix-style carousel
+/// H5: Uses in-memory cache (valid for 24 hours) to avoid re-fetching 500 exercises
 final categoryExercisesProvider =
     FutureProvider<CategoryExercisesData>((ref) async {
+  // H5: Check in-memory cache first
+  if (_categoryExercisesCache != null && _categoryCacheTime != null) {
+    final elapsed = DateTime.now().difference(_categoryCacheTime!);
+    if (elapsed < _categoryCacheDuration) {
+      debugPrint('✅ [CategoryExercises] Returning cached data (age: ${elapsed.inMinutes}m)');
+      return _categoryExercisesCache!;
+    }
+  }
+
   final apiClient = ref.read(apiClientProvider);
   final preview = <String, List<LibraryExercise>>{};
   final all = <String, List<LibraryExercise>>{};
@@ -421,7 +439,13 @@ final categoryExercisesProvider =
       preview['Core'] = byBodyPart['Core']!.take(20).toList();
     }
 
-    return CategoryExercisesData(preview: preview, all: all);
+    // H5: Store result in cache
+    final result = CategoryExercisesData(preview: preview, all: all);
+    _categoryExercisesCache = result;
+    _categoryCacheTime = DateTime.now();
+    debugPrint('✅ [CategoryExercises] Cached ${all.length} categories');
+
+    return result;
   } catch (e) {
     if (e is AppException) rethrow;
     debugPrint('❌ [CategoryExercises] Error: $e');

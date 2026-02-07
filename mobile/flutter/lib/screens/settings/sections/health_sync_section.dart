@@ -736,7 +736,10 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
                   label: 'Install',
                   textColor: Colors.white,
                   onPressed: () {
-                    // Open Play Store for Health Connect
+                    launchUrl(
+                      Uri.parse('https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata'),
+                      mode: LaunchMode.externalApplication,
+                    );
                   },
                 )
               : null,

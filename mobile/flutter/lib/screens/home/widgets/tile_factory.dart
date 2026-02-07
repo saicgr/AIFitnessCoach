@@ -110,6 +110,8 @@ class TileFactory {
         return const HabitsSection();
       case TileType.xpProgress:
         return XPProgressCard(size: tile.size, isDark: isDark);
+      case TileType.upNext:
+        return UpNextCard(isDark: isDark);
     }
   }
 
@@ -151,10 +153,11 @@ class TileFactory {
     HomeTile tile,
     bool isDark,
   ) {
-    // This would need the workout data passed in
-    // For now return a simplified version
+    // M5: Use Consumer with selective read to avoid full provider rebuilds
     return Consumer(
       builder: (context, ref, child) {
+        // TODO: M5 - Ideally use ref.watch(workoutsProvider.select((s) => s.valueOrNull?.nextWorkout))
+        // but nextWorkout is a getter on the notifier, not on the state value.
         final workoutsNotifier = ref.read(workoutsProvider.notifier);
         final nextWorkout = workoutsNotifier.nextWorkout;
 
@@ -185,6 +188,7 @@ class TileFactory {
   ) {
     return Consumer(
       builder: (context, ref, child) {
+        // TODO: M5 - Ideally use ref.watch(workoutsProvider.select(...)) for weeklyProgress
         final workoutsNotifier = ref.read(workoutsProvider.notifier);
         final weeklyProgress = workoutsNotifier.weeklyProgress;
 
@@ -205,6 +209,7 @@ class TileFactory {
   ) {
     return Consumer(
       builder: (context, ref, child) {
+        // TODO: M5 - Ideally use ref.watch(workoutsProvider.select(...)) for upcomingWorkouts
         final workoutsNotifier = ref.read(workoutsProvider.notifier);
         final upcomingWorkouts = workoutsNotifier.upcomingWorkouts;
 

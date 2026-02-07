@@ -15,11 +15,15 @@ class GenerateWorkoutPlaceholder extends ConsumerStatefulWidget {
   /// Whether generation is currently in progress
   final bool isGenerating;
 
+  /// Whether generation has permanently failed after retries (Fix 4)
+  final bool isGenerationFailed;
+
   const GenerateWorkoutPlaceholder({
     super.key,
     required this.date,
     required this.onGenerate,
     this.isGenerating = false,
+    this.isGenerationFailed = false,
   });
 
   @override
@@ -69,6 +73,11 @@ class _GenerateWorkoutPlaceholderState
 
   String _getDayLabel() {
     final weekdays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    return weekdays[widget.date.weekday - 1];
+  }
+
+  String _getFullDayName() {
+    final weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     return weekdays[widget.date.weekday - 1];
   }
 
@@ -182,33 +191,39 @@ class _GenerateWorkoutPlaceholderState
                   ),
                   const SizedBox(height: 4),
 
-                  // Main message with info icon
+                  // Main message with info icon (Fix 5: contextual messages)
                   Row(
                     children: [
                       Expanded(
                         child: Text(
-                          widget.isGenerating
-                              ? 'Generating workout...'
-                              : 'Ready to train?',
+                          widget.isGenerationFailed
+                              ? 'Generation failed'
+                              : widget.isGenerating
+                                  ? 'Generating your ${_getFullDayName()} workout...'
+                                  : 'Ready to train?',
                           style: TextStyle(
-                            color: isDark ? Colors.white : Colors.black87,
+                            color: widget.isGenerationFailed
+                                ? (isDark ? Colors.redAccent : Colors.red[700])
+                                : (isDark ? Colors.white : Colors.black87),
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                             height: 1.2,
                           ),
                         ),
                       ),
-                      if (!widget.isGenerating)
+                      if (!widget.isGenerating && !widget.isGenerationFailed)
                         _buildInfoIcon(context, isDark, accentColor),
                     ],
                   ),
                   const SizedBox(height: 8),
 
-                  // Subtitle
+                  // Subtitle (Fix 5: contextual date info)
                   Text(
-                    widget.isGenerating
-                        ? 'This may take a moment'
-                        : 'Tap below to generate your personalized workout',
+                    widget.isGenerationFailed
+                        ? 'Tap below to try again'
+                        : widget.isGenerating
+                            ? '${_getDateLabel()} - This may take a moment'
+                            : 'Tap below to generate your personalized workout',
                     style: TextStyle(
                       color: isDark
                           ? Colors.white.withValues(alpha: 0.7)
@@ -218,43 +233,45 @@ class _GenerateWorkoutPlaceholderState
                   ),
                   const SizedBox(height: 12),
 
-                  // Animated down arrow
-                  if (!widget.isGenerating)
+                  // Animated down arrow (hide during generation and failure)
+                  if (!widget.isGenerating && !widget.isGenerationFailed)
                     _buildDownArrow(accentColor),
                   const SizedBox(height: 12),
 
-                  // Generate button
+                  // Generate / Retry / Loading button (Fix 4 + Fix 5)
                   SizedBox(
                     width: double.infinity,
                     child: widget.isGenerating
                         ? _buildLoadingButton(isDark, accentColor)
-                        : ElevatedButton.icon(
-                            onPressed: () {
-                              HapticService.medium();
-                              widget.onGenerate();
-                            },
-                            icon: const Icon(Icons.auto_awesome, size: 20),
-                            label: const Text(
-                              'GENERATE WORKOUT',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                                fontSize: 14,
+                        : widget.isGenerationFailed
+                            ? _buildRetryButton(isDark, accentColor)
+                            : ElevatedButton.icon(
+                                onPressed: () {
+                                  HapticService.medium();
+                                  widget.onGenerate();
+                                },
+                                icon: const Icon(Icons.auto_awesome, size: 20),
+                                label: const Text(
+                                  'GENERATE WORKOUT',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: accentColor,
+                                  foregroundColor: isDark ? Colors.black : Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  elevation: 4,
+                                  shadowColor: accentColor.withValues(alpha: 0.5),
+                                ),
                               ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: accentColor,
-                              foregroundColor: isDark ? Colors.black : Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              elevation: 4,
-                              shadowColor: accentColor.withValues(alpha: 0.5),
-                            ),
-                          ),
                   ),
-                  if (!widget.isGenerating) ...[
+                  if (!widget.isGenerating && !widget.isGenerationFailed) ...[
                     const SizedBox(height: 12),
                     _buildWorkoutHistoryIndicator(isDark, accentColor),
                   ],
@@ -489,6 +506,35 @@ class _GenerateWorkoutPlaceholderState
           ),
         );
       },
+    );
+  }
+
+  /// Retry button shown after generation has permanently failed (Fix 4)
+  Widget _buildRetryButton(bool isDark, Color accentColor) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        HapticService.medium();
+        widget.onGenerate();
+      },
+      icon: const Icon(Icons.refresh, size: 20),
+      label: const Text(
+        'TAP TO RETRY',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+          fontSize: 14,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isDark ? Colors.redAccent.withValues(alpha: 0.8) : Colors.red[600],
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        elevation: 4,
+        shadowColor: Colors.red.withValues(alpha: 0.3),
+      ),
     );
   }
 

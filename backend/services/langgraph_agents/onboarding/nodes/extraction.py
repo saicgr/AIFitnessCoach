@@ -812,7 +812,7 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
 
     llm = ChatGoogleGenerativeAI(
         model=settings.gemini_model,
-        google_api_key=settings.gemini_api_key,
+        api_key=settings.gemini_api_key,
         temperature=0.3,
         timeout=60,
     )

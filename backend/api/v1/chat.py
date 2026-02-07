@@ -15,7 +15,7 @@ RATE LIMITS:
 """
 import json
 import time
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks, Query
 from typing import List, Optional
 from pydantic import BaseModel
 from models.chat import ChatRequest, ChatResponse
@@ -51,11 +51,80 @@ def get_rag_service() -> RAGService:
     return rag_service
 
 
+def _save_chat_to_db(user_id: str, message: str, response_message: str, response_intent, response_agent_type, response_rag_context_used: bool, response_action_data):
+    """Background task: Save chat message to database for persistence."""
+    try:
+        db = get_supabase_db()
+        context_dict = {
+            "intent": response_intent.value if hasattr(response_intent, 'value') else str(response_intent),
+            "agent_type": response_agent_type.value if hasattr(response_agent_type, 'value') else str(response_agent_type),
+            "rag_context_used": response_rag_context_used,
+        }
+        if response_action_data:
+            context_dict["action_data"] = response_action_data
+
+        chat_data = {
+            "user_id": user_id,
+            "user_message": message,
+            "ai_response": response_message,
+            "context_json": json.dumps(context_dict) if response_intent else None,
+        }
+        db.create_chat_message(chat_data)
+        logger.debug(f"[Background] Chat message saved to database for user {user_id}, intent={response_intent}, agent={response_agent_type}")
+    except Exception as db_error:
+        logger.warning(f"[Background] Failed to save chat to database: {db_error}")
+
+
+def _save_chat_analytics(user_id: str, message: str, response_message: str, response_intent, response_agent_type, response_rag_context_used: bool, response_time_ms: int, ai_settings):
+    """Background task: Record chat interaction analytics with AI settings snapshot."""
+    try:
+        supabase = get_supabase().client
+        analytics_data = {
+            "user_id": user_id,
+            "user_message_length": len(message),
+            "ai_response_length": len(response_message),
+            "coaching_style": ai_settings.coaching_style if ai_settings else "motivational",
+            "communication_tone": ai_settings.communication_tone if ai_settings else "encouraging",
+            "encouragement_level": ai_settings.encouragement_level if ai_settings else 0.7,
+            "response_length": ai_settings.response_length if ai_settings else "balanced",
+            "use_emojis": ai_settings.use_emojis if ai_settings else True,
+            "agent_type": response_agent_type.value if hasattr(response_agent_type, 'value') else str(response_agent_type),
+            "intent": response_intent.value if hasattr(response_intent, 'value') else str(response_intent),
+            "rag_context_used": response_rag_context_used or False,
+            "response_time_ms": response_time_ms,
+        }
+        supabase.table("chat_interaction_analytics").insert(analytics_data).execute()
+        logger.debug(f"[Background] Chat analytics recorded for user {user_id}")
+    except Exception as analytics_error:
+        logger.warning(f"[Background] Failed to save chat analytics: {analytics_error}")
+
+
+async def _log_chat_activity(user_id: str, response_intent, response_agent_type, response_rag_context_used: bool, response_time_ms: int):
+    """Background task: Log successful chat activity."""
+    try:
+        await log_user_activity(
+            user_id=user_id,
+            action="chat",
+            endpoint="/api/v1/chat/send",
+            message=f"Chat: {response_intent.value if hasattr(response_intent, 'value') else str(response_intent)}",
+            metadata={
+                "intent": str(response_intent),
+                "agent_type": str(response_agent_type),
+                "rag_used": response_rag_context_used,
+            },
+            duration_ms=response_time_ms,
+            status_code=200
+        )
+    except Exception as activity_error:
+        logger.warning(f"[Background] Failed to log chat activity: {activity_error}")
+
+
 @router.post("/send", response_model=ChatResponse)
 @limiter.limit("10/minute")
 async def send_message(
     request: Request,  # Must be named 'request' for slowapi rate limiter
     chat_request: ChatRequest,
+    background_tasks: BackgroundTasks,
     coach: LangGraphCoachService = Depends(get_coach_service),
 ):
     """
@@ -65,8 +134,8 @@ async def send_message(
     1. Extracts intent from the message
     2. Retrieves similar past conversations (RAG)
     3. Generates an AI response with context
-    4. Stores the Q&A for future RAG
-    5. Records analytics with AI settings snapshot
+    4. Stores the Q&A for future RAG (background)
+    5. Records analytics with AI settings snapshot (background)
     6. Returns action data for workout modifications
     """
     logger.info(f"Chat request from user {chat_request.user_id}: {chat_request.message[:50]}...")
@@ -83,71 +152,38 @@ async def send_message(
         response_time_ms = int((time.time() - start_time) * 1000)
         logger.info(f"Chat response sent: intent={response.intent}, rag_used={response.rag_context_used}, time={response_time_ms}ms")
 
-        # Save chat message to database for persistence
-        # The chat_history table stores user_message + ai_response per row
-        try:
-            db = get_supabase_db()
-            # Build context_json with action_data for "Go to Workout" button
-            context_dict = {
-                "intent": response.intent.value if hasattr(response.intent, 'value') else str(response.intent),
-                "agent_type": response.agent_type.value if hasattr(response.agent_type, 'value') else str(response.agent_type),
-                "rag_context_used": response.rag_context_used,
-            }
-            # Include action_data if present (for workout generation, modifications, etc.)
-            if response.action_data:
-                context_dict["action_data"] = response.action_data
-                logger.debug(f"Saving action_data to context_json: {response.action_data}")
+        # Move DB writes to background tasks - these don't block the response.
+        # Chat history is only read on subsequent requests (GET /history), not in this flow.
+        background_tasks.add_task(
+            _save_chat_to_db,
+            chat_request.user_id,
+            chat_request.message,
+            response.message,
+            response.intent,
+            response.agent_type,
+            response.rag_context_used,
+            response.action_data,
+        )
 
-            chat_data = {
-                "user_id": chat_request.user_id,
-                "user_message": chat_request.message,
-                "ai_response": response.message,
-                "context_json": json.dumps(context_dict) if response.intent else None,
-            }
-            db.create_chat_message(chat_data)
-            logger.debug(f"Chat message saved to database for user {chat_request.user_id}, intent={response.intent}, agent={response.agent_type}")
-        except Exception as db_error:
-            # Log but don't fail the request if DB save fails
-            logger.warning(f"Failed to save chat to database: {db_error}")
+        background_tasks.add_task(
+            _save_chat_analytics,
+            chat_request.user_id,
+            chat_request.message,
+            response.message,
+            response.intent,
+            response.agent_type,
+            response.rag_context_used,
+            response_time_ms,
+            chat_request.ai_settings,
+        )
 
-        # Record chat interaction analytics with AI settings snapshot
-        try:
-            supabase = get_supabase().client
-            ai_settings = chat_request.ai_settings
-
-            analytics_data = {
-                "user_id": chat_request.user_id,
-                "user_message_length": len(chat_request.message),
-                "ai_response_length": len(response.message),
-                "coaching_style": ai_settings.coaching_style if ai_settings else "motivational",
-                "communication_tone": ai_settings.communication_tone if ai_settings else "encouraging",
-                "encouragement_level": ai_settings.encouragement_level if ai_settings else 0.7,
-                "response_length": ai_settings.response_length if ai_settings else "balanced",
-                "use_emojis": ai_settings.use_emojis if ai_settings else True,
-                "agent_type": response.agent_type.value if hasattr(response.agent_type, 'value') else str(response.agent_type),
-                "intent": response.intent.value if hasattr(response.intent, 'value') else str(response.intent),
-                "rag_context_used": response.rag_context_used or False,
-                "response_time_ms": response_time_ms,
-            }
-            supabase.table("chat_interaction_analytics").insert(analytics_data).execute()
-            logger.debug(f"Chat analytics recorded for user {chat_request.user_id}")
-        except Exception as analytics_error:
-            # Log but don't fail the request if analytics save fails
-            logger.warning(f"Failed to save chat analytics: {analytics_error}")
-
-        # Log successful chat activity
-        await log_user_activity(
-            user_id=chat_request.user_id,
-            action="chat",
-            endpoint="/api/v1/chat/send",
-            message=f"Chat: {response.intent.value if hasattr(response.intent, 'value') else str(response.intent)}",
-            metadata={
-                "intent": str(response.intent),
-                "agent_type": str(response.agent_type),
-                "rag_used": response.rag_context_used,
-            },
-            duration_ms=response_time_ms,
-            status_code=200
+        background_tasks.add_task(
+            _log_chat_activity,
+            chat_request.user_id,
+            response.intent,
+            response.agent_type,
+            response.rag_context_used,
+            response_time_ms,
         )
 
         return response
@@ -178,18 +214,33 @@ class ChatHistoryItem(BaseModel):
 
 @router.get("/history/{user_id}", response_model=List[ChatHistoryItem])
 @limiter.limit("30/minute")
-async def get_chat_history(request: Request, user_id: str, limit: int = 100):
+async def get_chat_history(
+    request: Request,
+    user_id: str,
+    limit: int = Query(default=50, ge=1, le=200, description="Maximum number of messages to return"),
+    offset: int = Query(default=0, ge=0, description="Number of messages to skip"),
+):
     """
-    Get chat history for a user.
+    Get chat history for a user with pagination.
 
     Returns messages in chronological order (oldest first).
     Each row in DB contains user_message + ai_response, so we expand to 2 messages.
+
+    Args:
+        user_id: The user's ID
+        limit: Max messages to return (default 50, max 200)
+        offset: Number of messages to skip (default 0)
     """
-    logger.info(f"Fetching chat history for user {user_id}, limit={limit}")
+    logger.info(f"Fetching chat history for user {user_id}, limit={limit}, offset={offset}")
     try:
         db = get_supabase_db()
         # Limit divided by 2 since each row becomes 2 messages
-        result = db.list_chat_history(user_id, limit=(limit + 1) // 2)
+        # Offset also divided by 2 for the same reason
+        db_limit = (limit + 1) // 2
+        db_offset = offset // 2
+        result = db.list_chat_history(user_id, limit=db_limit + db_offset)
+        # Apply offset by slicing: skip the first db_offset rows
+        result = result[db_offset:db_offset + db_limit]
 
         messages: List[ChatHistoryItem] = []
         for row in result:

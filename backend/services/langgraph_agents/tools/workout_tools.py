@@ -8,8 +8,19 @@ modifying intensity, rescheduling, and generating quick workouts.
 from typing import List, Dict, Any
 from datetime import datetime, timezone
 import json
+import re
 
 from langchain_core.tools import tool
+
+_UUID_PATTERN = re.compile(
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+    re.IGNORECASE
+)
+
+
+def _validate_workout_id(workout_id: str) -> bool:
+    """Validate that workout_id is a valid UUID string."""
+    return bool(_UUID_PATTERN.match(str(workout_id)))
 
 from services.workout_modifier import WorkoutModifier
 from core.supabase_db import get_supabase_db
@@ -58,7 +69,7 @@ def _parse_injuries(user_injuries: Any) -> List[str]:
 
 @tool
 def add_exercise_to_workout(
-    workout_id: int,
+    workout_id: str,
     exercise_names: List[str],
     muscle_groups: List[str] = None
 ) -> Dict[str, Any]:
@@ -66,13 +77,21 @@ def add_exercise_to_workout(
     Add exercises to the user's current workout using the Exercise Library from ChromaDB.
 
     Args:
-        workout_id: The ID of the workout to modify
+        workout_id: The UUID of the workout to modify
         exercise_names: List of exercise names to add (e.g., ["Push-ups", "Lunges"])
         muscle_groups: Optional list of target muscle groups
 
     Returns:
         Result dict with success status and message
     """
+    if not _validate_workout_id(workout_id):
+        return {
+            "success": False,
+            "action": "add_exercise",
+            "workout_id": workout_id,
+            "message": f"Invalid workout ID format: {workout_id}. Expected a UUID."
+        }
+
     logger.info(f"Tool: Adding exercises {exercise_names} to workout {workout_id} using RAG")
 
     try:
@@ -189,19 +208,27 @@ def add_exercise_to_workout(
 
 @tool
 def remove_exercise_from_workout(
-    workout_id: int,
+    workout_id: str,
     exercise_names: List[str]
 ) -> Dict[str, Any]:
     """
     Remove exercises from the user's current workout.
 
     Args:
-        workout_id: The ID of the workout to modify
+        workout_id: The UUID of the workout to modify
         exercise_names: List of exercise names to remove
 
     Returns:
         Result dict with success status and message
     """
+    if not _validate_workout_id(workout_id):
+        return {
+            "success": False,
+            "action": "remove_exercise",
+            "workout_id": workout_id,
+            "message": f"Invalid workout ID format: {workout_id}. Expected a UUID."
+        }
+
     logger.info(f"Tool: Removing exercises {exercise_names} from workout {workout_id}")
     modifier = WorkoutModifier()
     success = modifier.remove_exercises_from_workout(
@@ -219,7 +246,7 @@ def remove_exercise_from_workout(
 
 @tool
 def replace_all_exercises(
-    workout_id: int,
+    workout_id: str,
     muscle_group: str,
     num_exercises: int = 5
 ) -> Dict[str, Any]:
@@ -228,13 +255,21 @@ def replace_all_exercises(
     Uses the Exercise Library from ChromaDB for personalized exercise selection.
 
     Args:
-        workout_id: The ID of the workout to modify
+        workout_id: The UUID of the workout to modify
         muscle_group: Target muscle group (e.g., "back", "chest", "legs")
         num_exercises: Number of new exercises to add (default 5)
 
     Returns:
         Result dict with success status, removed exercises, and new exercises
     """
+    if not _validate_workout_id(workout_id):
+        return {
+            "success": False,
+            "action": "replace_all_exercises",
+            "workout_id": workout_id,
+            "message": f"Invalid workout ID format: {workout_id}. Expected a UUID."
+        }
+
     logger.info(f"Tool: Replacing all exercises in workout {workout_id} with {muscle_group} exercises")
 
     try:
@@ -344,19 +379,27 @@ def replace_all_exercises(
 
 @tool
 def modify_workout_intensity(
-    workout_id: int,
+    workout_id: str,
     modification: str
 ) -> Dict[str, Any]:
     """
     Modify the intensity of the user's workout.
 
     Args:
-        workout_id: The ID of the workout to modify
+        workout_id: The UUID of the workout to modify
         modification: Type of modification - "easier", "harder", "shorter", "longer"
 
     Returns:
         Result dict with success status and message
     """
+    if not _validate_workout_id(workout_id):
+        return {
+            "success": False,
+            "action": "modify_intensity",
+            "workout_id": workout_id,
+            "message": f"Invalid workout ID format: {workout_id}. Expected a UUID."
+        }
+
     logger.info(f"Tool: Modifying intensity for workout {workout_id}: {modification}")
     modifier = WorkoutModifier()
     success = modifier.modify_workout_intensity(
@@ -374,7 +417,7 @@ def modify_workout_intensity(
 
 @tool
 def reschedule_workout(
-    workout_id: int,
+    workout_id: str,
     new_date: str,
     reason: str = None
 ) -> Dict[str, Any]:
@@ -382,13 +425,21 @@ def reschedule_workout(
     Move a workout to a different date. If another workout exists on the target date, they will be swapped.
 
     Args:
-        workout_id: The ID of the workout to move
+        workout_id: The UUID of the workout to move
         new_date: New date in YYYY-MM-DD format
         reason: Reason for rescheduling
 
     Returns:
         Result dict with success status and message
     """
+    if not _validate_workout_id(workout_id):
+        return {
+            "success": False,
+            "action": "reschedule",
+            "workout_id": workout_id,
+            "message": f"Invalid workout ID format: {workout_id}. Expected a UUID."
+        }
+
     logger.info(f"Tool: Rescheduling workout {workout_id} to {new_date}")
 
     try:
@@ -467,19 +518,27 @@ def reschedule_workout(
 
 @tool
 def delete_workout(
-    workout_id: int,
+    workout_id: str,
     reason: str = None
 ) -> Dict[str, Any]:
     """
     Delete/cancel a workout from the user's schedule.
 
     Args:
-        workout_id: The ID of the workout to delete
+        workout_id: The UUID of the workout to delete
         reason: Optional reason for deletion
 
     Returns:
         Result dict with success status and workout details
     """
+    if not _validate_workout_id(workout_id):
+        return {
+            "success": False,
+            "action": "delete_workout",
+            "workout_id": workout_id,
+            "message": f"Invalid workout ID format: {workout_id}. Expected a UUID."
+        }
+
     logger.info(f"Tool: Deleting workout {workout_id}")
 
     try:

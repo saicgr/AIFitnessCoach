@@ -215,70 +215,82 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         children: [
           // Messages
           Expanded(
-            child: messagesState.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.cyan),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: child,
               ),
-              error: (e, _) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      color: AppColors.error,
-                      size: 48,
-                    ),
-                    const SizedBox(height: 16),
-                    Text('Failed to load messages: $e'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        HapticService.medium();
-                        ref.read(chatMessagesProvider.notifier).loadHistory();
-                      },
-                      child: const Text('Retry'),
-                    ),
-                  ],
+              child: messagesState.when(
+                loading: () => const Center(
+                  key: ValueKey('loading'),
+                  child: CircularProgressIndicator(color: AppColors.cyan),
                 ),
-              ),
-              data: (messages) {
-                if (messages.isEmpty) {
-                  return _EmptyChat(
-                    coach: coach,
-                    onSuggestionTap: (suggestion) {
-                      _textController.text = suggestion;
-                      _sendMessage();
-                    },
-                  );
-                }
+                error: (e, _) => Center(
+                  key: const ValueKey('error'),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: AppColors.error,
+                        size: 48,
+                      ),
+                      const SizedBox(height: 16),
+                      Text('Failed to load messages: $e'),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          HapticService.medium();
+                          ref.read(chatMessagesProvider.notifier).loadHistory();
+                        },
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+                data: (messages) {
+                  if (messages.isEmpty) {
+                    return _EmptyChat(
+                      key: const ValueKey('empty'),
+                      coach: coach,
+                      onSuggestionTap: (suggestion) {
+                        _textController.text = suggestion;
+                        _sendMessage();
+                      },
+                    );
+                  }
 
-                return ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
-                  itemCount: messages.length + (_isLoading ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == messages.length && _isLoading) {
-                      return const _TypingIndicator();
-                    }
-                    final message = messages[index];
-                    // Find the previous user message for context when reporting
-                    String? previousUserMessage;
-                    if (message.role == 'assistant') {
-                      for (int i = index - 1; i >= 0; i--) {
-                        if (messages[i].role == 'user') {
-                          previousUserMessage = messages[i].content;
-                          break;
+                  return ListView.builder(
+                    key: const ValueKey('content'),
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(16),
+                    itemCount: messages.length + (_isLoading ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == messages.length && _isLoading) {
+                        return const _TypingIndicator();
+                      }
+                      final message = messages[index];
+                      // Find the previous user message for context when reporting
+                      String? previousUserMessage;
+                      if (message.role == 'assistant') {
+                        for (int i = index - 1; i >= 0; i--) {
+                          if (messages[i].role == 'user') {
+                            previousUserMessage = messages[i].content;
+                            break;
+                          }
                         }
                       }
-                    }
-                    return _MessageBubble(
-                      message: message,
-                      previousUserMessage: previousUserMessage,
-                      coach: coach,
-                    ).animate().fadeIn(duration: 200.ms);
-                  },
-                );
-              },
+                      return _MessageBubble(
+                        key: ValueKey(message.id ?? 'msg_$index'),
+                        message: message,
+                        previousUserMessage: previousUserMessage,
+                        coach: coach,
+                      ).animate().fadeIn(duration: 200.ms);
+                    },
+                  );
+                },
+              ),
             ),
           ),
 
@@ -381,269 +393,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   void _showEscalateToHumanDialog() {
-    // Track selected category
-    LiveChatCategory selectedCategory = LiveChatCategory.general;
-    bool isLoading = false;
-
     showDialog(
       context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: AppColors.elevated,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              title: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.cyan,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.support_agent, color: Colors.white, size: 24),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text('Talk to Human Support'),
-                ],
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'You will be connected with a real support agent who can help with your questions.',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Select a category:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Category selection
-                    ...LiveChatCategory.values.map((category) {
-                      return RadioListTile<LiveChatCategory>(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          category.displayName,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        value: category,
-                        groupValue: selectedCategory,
-                        activeColor: AppColors.cyan,
-                        onChanged: (value) {
-                          if (value != null) {
-                            setDialogState(() {
-                              selectedCategory = value;
-                            });
-                          }
-                        },
-                      );
-                    }),
-                    const SizedBox(height: 16),
-                    // Show availability/wait time
-                    Consumer(
-                      builder: (context, ref, child) {
-                        final availabilityAsync = ref.watch(liveChatAvailabilityProvider);
-                        return availabilityAsync.when(
-                          data: (availability) {
-                            return Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: availability.isAvailable
-                                    ? AppColors.success.withOpacity(0.1)
-                                    : AppColors.warning.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: availability.isAvailable
-                                      ? AppColors.success.withOpacity(0.3)
-                                      : AppColors.warning.withOpacity(0.3),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    availability.isAvailable
-                                        ? Icons.check_circle_outline
-                                        : Icons.schedule,
-                                    size: 20,
-                                    color: availability.isAvailable
-                                        ? AppColors.success
-                                        : AppColors.warning,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          availability.formattedWaitTime,
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            color: availability.isAvailable
-                                                ? AppColors.success
-                                                : AppColors.warning,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                        if (availability.currentQueueSize > 0)
-                                          Text(
-                                            '${availability.currentQueueSize} people in queue',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: AppColors.textSecondary,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                          loading: () => const Padding(
-                            padding: EdgeInsets.all(12),
-                            child: Row(
-                              children: [
-                                SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.cyan,
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Checking availability...',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          error: (_, __) => Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppColors.textMuted.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Row(
-                              children: [
-                                Icon(
-                                  Icons.info_outline,
-                                  size: 20,
-                                  color: AppColors.textMuted,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Wait time unavailable',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isLoading ? null : () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: isLoading
-                      ? null
-                      : () async {
-                          setDialogState(() => isLoading = true);
-
-                          try {
-                            // Get last 10 messages from current AI chat as context
-                            final messagesState = ref.read(chatMessagesProvider);
-                            String aiContext = '';
-
-                            messagesState.whenData((messages) {
-                              final recentMessages = messages.length > 10
-                                  ? messages.sublist(messages.length - 10)
-                                  : messages;
-
-                              aiContext = recentMessages.map((m) {
-                                final role = m.role == 'user' ? 'User' : 'AI Coach';
-                                return '$role: ${m.content}';
-                              }).join('\n\n');
-                            });
-
-                            // Start live chat with escalation
-                            await ref.read(liveChatProvider.notifier).startChat(
-                                  category: selectedCategory.value,
-                                  initialMessage:
-                                      'Escalated from AI chat for ${selectedCategory.displayName.toLowerCase()} help.',
-                                  escalatedFromAi: true,
-                                  aiContext: aiContext.isNotEmpty ? aiContext : null,
-                                );
-
-                            // Get the session to retrieve ticket ID
-                            final session = ref.read(liveChatProvider).valueOrNull;
-
-                            if (mounted) {
-                              Navigator.pop(context);
-                              HapticService.success();
-
-                              // Navigate to live chat screen
-                              context.push('/live-chat');
-                            }
-                          } catch (e) {
-                            setDialogState(() => isLoading = false);
-
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Failed to connect: $e'),
-                                  backgroundColor: AppColors.error,
-                                ),
-                              );
-                            }
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cyan,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('Connect'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (_) => const _EscalateToHumanDialog(),
     );
   }
 
@@ -719,7 +471,7 @@ class _EmptyChat extends StatelessWidget {
   final Function(String) onSuggestionTap;
   final CoachPersona coach;
 
-  const _EmptyChat({required this.onSuggestionTap, required this.coach});
+  const _EmptyChat({super.key, required this.onSuggestionTap, required this.coach});
 
   @override
   Widget build(BuildContext context) {
@@ -824,6 +576,7 @@ class _MessageBubble extends StatelessWidget {
   final CoachPersona coach;
 
   const _MessageBubble({
+    super.key,
     required this.message,
     required this.coach,
     this.previousUserMessage,
@@ -1187,6 +940,298 @@ class _GoToWorkoutButton extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Escalate to Human Dialog
+// ─────────────────────────────────────────────────────────────────
+
+class _EscalateToHumanDialog extends ConsumerStatefulWidget {
+  const _EscalateToHumanDialog();
+
+  @override
+  ConsumerState<_EscalateToHumanDialog> createState() => _EscalateToHumanDialogState();
+}
+
+class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> {
+  LiveChatCategory _selectedCategory = LiveChatCategory.general;
+  bool _isLoading = false;
+
+  Widget _buildTitle() {
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: const BoxDecoration(
+            color: AppColors.cyan,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.support_agent, color: Colors.white, size: 24),
+        ),
+        const SizedBox(width: 12),
+        const Text('Talk to Human Support'),
+      ],
+    );
+  }
+
+  Widget _buildCategoryList() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: LiveChatCategory.values.map((category) {
+        return RadioListTile<LiveChatCategory>(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            category.displayName,
+            style: const TextStyle(fontSize: 14),
+          ),
+          value: category,
+          groupValue: _selectedCategory,
+          activeColor: AppColors.cyan,
+          onChanged: (value) {
+            if (value != null) {
+              setState(() {
+                _selectedCategory = value;
+              });
+            }
+          },
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildAvailabilityInfo() {
+    return Consumer(
+      builder: (context, ref, child) {
+        final availabilityAsync = ref.watch(liveChatAvailabilityProvider);
+        return availabilityAsync.when(
+          data: (availability) {
+            return Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: availability.isAvailable
+                    ? AppColors.success.withOpacity(0.1)
+                    : AppColors.warning.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: availability.isAvailable
+                      ? AppColors.success.withOpacity(0.3)
+                      : AppColors.warning.withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    availability.isAvailable
+                        ? Icons.check_circle_outline
+                        : Icons.schedule,
+                    size: 20,
+                    color: availability.isAvailable
+                        ? AppColors.success
+                        : AppColors.warning,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          availability.formattedWaitTime,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: availability.isAvailable
+                                ? AppColors.success
+                                : AppColors.warning,
+                            fontSize: 13,
+                          ),
+                        ),
+                        if (availability.currentQueueSize > 0)
+                          Text(
+                            '${availability.currentQueueSize} people in queue',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+          loading: () => const Padding(
+            padding: EdgeInsets.all(12),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.cyan,
+                  ),
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Checking availability...',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          error: (_, __) => Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.textMuted.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 20,
+                  color: AppColors.textMuted,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Wait time unavailable',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildContent() {
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'You will be connected with a real support agent who can help with your questions.',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Select a category:',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildCategoryList(),
+          const SizedBox(height: 16),
+          _buildAvailabilityInfo(),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleConnect() async {
+    setState(() => _isLoading = true);
+
+    try {
+      // Get last 10 messages from current AI chat as context
+      final messagesState = ref.read(chatMessagesProvider);
+      String aiContext = '';
+
+      messagesState.whenData((messages) {
+        final recentMessages = messages.length > 10
+            ? messages.sublist(messages.length - 10)
+            : messages;
+
+        aiContext = recentMessages.map((m) {
+          final role = m.role == 'user' ? 'User' : 'AI Coach';
+          return '$role: ${m.content}';
+        }).join('\n\n');
+      });
+
+      // Start live chat with escalation
+      await ref.read(liveChatProvider.notifier).startChat(
+            category: _selectedCategory.value,
+            initialMessage:
+                'Escalated from AI chat for ${_selectedCategory.displayName.toLowerCase()} help.',
+            escalatedFromAi: true,
+            aiContext: aiContext.isNotEmpty ? aiContext : null,
+          );
+
+      // Get the session to retrieve ticket ID
+      final session = ref.read(liveChatProvider).valueOrNull;
+
+      if (mounted) {
+        Navigator.pop(context);
+        HapticService.success();
+
+        // Navigate to live chat screen
+        context.push('/live-chat');
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to connect: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  List<Widget> _buildActions() {
+    return [
+      TextButton(
+        onPressed: _isLoading ? null : () => Navigator.pop(context),
+        child: const Text('Cancel'),
+      ),
+      ElevatedButton(
+        onPressed: _isLoading ? null : _handleConnect,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.cyan,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        child: _isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Text('Connect'),
+      ),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.elevated,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      title: _buildTitle(),
+      content: _buildContent(),
+      actions: _buildActions(),
     );
   }
 }

@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/progress_photos.dart';
+import '../../core/animations/app_animations.dart';
 import '../../data/models/scores.dart';
 import '../../data/providers/guest_mode_provider.dart';
 import '../../data/providers/guest_usage_limits_provider.dart';
@@ -1140,7 +1141,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
     // Open photo editor for cropping and logo overlay
     final editedFile = await Navigator.push<File>(
       context,
-      MaterialPageRoute(
+      AppPageRoute(
         builder: (context) => PhotoEditorScreen(
           imageFile: File(pickedFile.path),
           viewTypeName: selectedType!.displayName,
@@ -1435,7 +1436,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
     if (_userId == null) return;
     Navigator.push(
       context,
-      MaterialPageRoute(
+      AppPageRoute(
         builder: (context) => ComparisonView(userId: _userId!),
       ),
     );

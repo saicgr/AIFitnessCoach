@@ -17,6 +17,8 @@ import 'data/services/widget_action_headless_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // --- Critical blocking initializations (must complete before runApp) ---
+
   // Initialize Firebase (with error handling for simulators/missing config)
   try {
     await Firebase.initializeApp();
@@ -25,40 +27,19 @@ void main() async {
     // Continue without Firebase on simulator or if config is missing
   }
 
-  // Initialize notification service
-  final notificationService = NotificationService();
-  try {
-    await notificationService.initialize();
-  } catch (e) {
-    debugPrint('⚠️ Notification service initialization failed: $e');
-  }
-
-  // Initialize SharedPreferences for notification prefs
+  // SharedPreferences is needed for ProviderScope overrides
   final sharedPreferences = await SharedPreferences.getInstance();
 
-  // Initialize Supabase
+  // Supabase must be ready before runApp because AuthRepository uses it
   await Supabase.initialize(
     url: ApiConstants.supabaseUrl,
     anonKey: ApiConstants.supabaseAnonKey,
   );
 
-  // Initialize persistent image URL cache
-  await ImageUrlCache.initialize();
+  // NotificationService instance (constructor is synchronous; initialize() is deferred below)
+  final notificationService = NotificationService();
 
-  // Initialize data cache service for cache-first pattern
-  await DataCacheService.initialize();
-
-  // Initialize haptic service with saved preference
-  await HapticService.initialize();
-
-  // Initialize RevenueCat for in-app purchases
-  try {
-    await SubscriptionNotifier.configureRevenueCat();
-  } catch (e) {
-    debugPrint('⚠️ RevenueCat initialization failed: $e');
-  }
-
-  // Set system UI overlay style for dark theme
+  // Set system UI overlay style for dark theme (synchronous, non-blocking)
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -68,7 +49,7 @@ void main() async {
     ),
   );
 
-  // Enable edge-to-edge
+  // Enable edge-to-edge (synchronous, non-blocking)
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   // Create ProviderContainer for widget actions
@@ -82,6 +63,35 @@ void main() async {
     ],
   );
 
+  // --- Launch the app immediately to start rendering UI ---
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const FitWizApp(),
+    ),
+  );
+
+  // --- Non-critical initializations run in parallel AFTER runApp ---
+  // Performance fix H1: these no longer block first frame rendering.
+  // Each has .catchError() so one failure doesn't affect the others.
+  await Future.wait([
+    notificationService.initialize().catchError((e) {
+      debugPrint('⚠️ Notification service initialization failed: $e');
+    }),
+    ImageUrlCache.initialize().catchError((e) {
+      debugPrint('⚠️ ImageUrlCache initialization failed: $e');
+    }),
+    DataCacheService.initialize().catchError((e) {
+      debugPrint('⚠️ DataCacheService initialization failed: $e');
+    }),
+    HapticService.initialize().catchError((e) {
+      debugPrint('⚠️ HapticService initialization failed: $e');
+    }),
+    SubscriptionNotifier.configureRevenueCat().catchError((e) {
+      debugPrint('⚠️ RevenueCat initialization failed: $e');
+    }),
+  ]);
+
   // Pre-warm headless widget service for native widget actions
   try {
     final headlessService = container.read(widgetActionHeadlessServiceProvider);
@@ -90,11 +100,4 @@ void main() async {
   } catch (e) {
     debugPrint('⚠️ Widget action headless service initialization failed: $e');
   }
-
-  runApp(
-    UncontrolledProviderScope(
-      container: container,
-      child: const FitWizApp(),
-    ),
-  );
 }

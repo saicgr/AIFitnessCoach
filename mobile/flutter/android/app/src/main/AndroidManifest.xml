@@ -25,8 +25,6 @@
     <!-- Location permissions (for gym profile auto-switch) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <!-- Background location for auto-switching gyms when arriving -->
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
     <!-- Health Connect permissions -->
     <uses-permission android:name="android.permission.health.READ_WEIGHT"/>
@@ -49,6 +47,7 @@
     <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION"/>
     <uses-permission android:name="android.permission.health.READ_BLOOD_PRESSURE"/>
     <uses-permission android:name="android.permission.health.READ_SLEEP"/>
+    <uses-permission android:name="android.permission.health.READ_BLOOD_GLUCOSE"/>
     <uses-permission android:name="android.permission.health.READ_EXERCISE"/>
     <uses-permission android:name="android.permission.health.WRITE_EXERCISE"/>
 
@@ -125,11 +124,10 @@
                 <category android:name="android.intent.category.HEALTH_PERMISSIONS"/>
             </intent-filter>
         </activity-alias>
-        <!-- Google Maps API Key (for gym location picker) -->
-        <!-- TODO: Replace with your actual API key from Google Cloud Console -->
+        <!-- Google Maps removed for v1 — re-add when Maps API key is configured
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="YOUR_GOOGLE_MAPS_API_KEY_HERE"/>
+            android:value="YOUR_GOOGLE_MAPS_API_KEY_HERE"/> -->
 
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

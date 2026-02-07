@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/accessibility/accessibility_provider.dart';
@@ -92,7 +93,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
               HapticFeedback.lightImpact();
               Navigator.push(
                 context,
-                MaterialPageRoute(
+                AppPageRoute(
                   builder: (context) => const FriendSearchScreen(),
                 ),
               );
@@ -109,7 +110,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
               HapticFeedback.lightImpact();
               Navigator.push(
                 context,
-                MaterialPageRoute(
+                AppPageRoute(
                   builder: (context) => const _MessagesScreen(),
                 ),
               );

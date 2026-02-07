@@ -20,8 +20,10 @@ from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Request
 from fastapi.responses import StreamingResponse
 from typing import List, Optional, AsyncGenerator
 from datetime import datetime, timedelta
+import hashlib
 import json
 import asyncio
+import threading
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
@@ -45,6 +47,62 @@ from services.warmup_stretch_service import get_warmup_stretch_service
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+
+# =============================================================================
+# In-Memory TTL Cache for Workout Generation
+# =============================================================================
+# Prevents duplicate AI generation calls when a user retries with identical
+# parameters within a short window (e.g., double-tap, network retry).
+# Cache entries expire after 5 minutes.
+
+_generation_cache: dict = {}
+_CACHE_TTL = timedelta(minutes=5)
+_cache_lock = threading.Lock()
+
+
+def _generation_cache_key(user_id: str, params: dict) -> str:
+    """Create a deterministic cache key from user_id and generation parameters."""
+    param_str = json.dumps(params, sort_keys=True, default=str)
+    return hashlib.md5(f"{user_id}:{param_str}".encode()).hexdigest()
+
+
+def _get_cached_generation(key: str):
+    """Get a cached generation result if still valid. Returns None on miss."""
+    with _cache_lock:
+        if key in _generation_cache:
+            cached_at, result = _generation_cache[key]
+            if datetime.now() - cached_at < _CACHE_TTL:
+                logger.info(f"Cache HIT for workout generation key={key[:8]}")
+                return result
+            else:
+                # Expired entry - clean it up
+                del _generation_cache[key]
+                logger.debug(f"Cache EXPIRED for key={key[:8]}")
+    return None
+
+
+def _set_cached_generation(key: str, result):
+    """Store a successful generation result in the cache."""
+    with _cache_lock:
+        _generation_cache[key] = (datetime.now(), result)
+        logger.info(f"Cache SET for workout generation key={key[:8]}")
+        # Periodic cleanup: remove expired entries when cache grows
+        if len(_generation_cache) > 100:
+            _cleanup_expired_cache()
+
+
+def _cleanup_expired_cache():
+    """Remove all expired entries from the generation cache. Must hold _cache_lock."""
+    now = datetime.now()
+    expired_keys = [
+        k for k, (cached_at, _) in _generation_cache.items()
+        if now - cached_at >= _CACHE_TTL
+    ]
+    for k in expired_keys:
+        del _generation_cache[k]
+    if expired_keys:
+        logger.debug(f"Cache cleanup: removed {len(expired_keys)} expired entries")
 
 
 async def get_recently_used_exercises(user_id: str, days: int = 7) -> List[str]:
@@ -454,7 +512,7 @@ async def delete_workout(workout_id: str):
 
 
 @router.post("/{workout_id}/complete", response_model=Workout)
-async def complete_workout(workout_id: str):
+async def complete_workout(workout_id: str, background_tasks: BackgroundTasks):
     """Mark a workout as completed."""
     logger.info(f"Completing workout: id={workout_id}")
     try:
@@ -485,21 +543,27 @@ async def complete_workout(workout_id: str):
             change_source="user"
         )
 
-        # Log workout completion
-        await log_user_activity(
-            user_id=workout.user_id,
-            action="workout_completed",
-            endpoint=f"/api/v1/workouts-db/{workout_id}/complete",
-            message=f"Completed workout: {workout.name}",
-            metadata={
-                "workout_id": workout_id,
-                "workout_name": workout.name,
-                "workout_type": workout.type,
-            },
-            status_code=200
-        )
+        # Move non-critical logging and RAG indexing to background
+        async def _bg_log_completion():
+            try:
+                await log_user_activity(
+                    user_id=workout.user_id,
+                    action="workout_completed",
+                    endpoint=f"/api/v1/workouts-db/{workout_id}/complete",
+                    message=f"Completed workout: {workout.name}",
+                    metadata={
+                        "workout_id": workout_id,
+                        "workout_name": workout.name,
+                        "workout_type": workout.type,
+                    },
+                    status_code=200
+                )
+            except Exception as e:
+                logger.warning(f"Background: Failed to log workout completion: {e}")
 
-        await index_workout_to_rag(workout)
+        background_tasks.add_task(_bg_log_completion)
+        background_tasks.add_task(_background_index_rag, workout)
+
         return workout
 
     except HTTPException:
@@ -509,9 +573,37 @@ async def complete_workout(workout_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+async def _background_log_generation(user_id: str, workout_id: str, workout_name: str, workout_type: str, exercises_count: int, duration_minutes: int):
+    """Background task: Log workout generation analytics (non-critical)."""
+    try:
+        await log_user_activity(
+            user_id=user_id,
+            action="workout_generation",
+            endpoint="/api/v1/workouts-db/generate",
+            message=f"Generated workout: {workout_name}",
+            metadata={
+                "workout_id": workout_id,
+                "workout_type": workout_type,
+                "exercises_count": exercises_count,
+                "duration_minutes": duration_minutes,
+            },
+            status_code=200
+        )
+    except Exception as e:
+        logger.warning(f"Background: Failed to log generation activity: {e}")
+
+
+async def _background_index_rag(workout: Workout):
+    """Background task: Index workout to RAG (non-critical)."""
+    try:
+        await index_workout_to_rag(workout)
+    except Exception as e:
+        logger.warning(f"Background: Failed to index workout to RAG: {e}")
+
+
 @router.post("/generate", response_model=Workout)
 @limiter.limit("5/minute")
-async def generate_workout(http_request: Request, request: GenerateWorkoutRequest):
+async def generate_workout(http_request: Request, request: GenerateWorkoutRequest, background_tasks: BackgroundTasks):
     """Generate a new workout for a user based on their preferences."""
     logger.info(f"Generating workout for user {request.user_id}")
 
@@ -537,30 +629,56 @@ async def generate_workout(http_request: Request, request: GenerateWorkoutReques
             primary_goal = user.get("primary_goal")
             muscle_focus_points = user.get("muscle_focus_points")
 
-        gemini_service = GeminiService()
+        # Check in-memory cache for identical generation parameters
+        cache_params = {
+            "fitness_level": fitness_level,
+            "goals": goals if isinstance(goals, list) else [],
+            "equipment": equipment if isinstance(equipment, list) else [],
+            "duration_minutes": request.duration_minutes or 45,
+            "focus_areas": request.focus_areas,
+            "workout_type": request.workout_type,
+            "primary_goal": primary_goal,
+            "muscle_focus_points": muscle_focus_points,
+        }
+        cache_key = _generation_cache_key(request.user_id, cache_params)
+        cached_workout_data = _get_cached_generation(cache_key)
 
-        try:
-            workout_data = await gemini_service.generate_workout_plan(
-                fitness_level=fitness_level or "intermediate",
-                goals=goals if isinstance(goals, list) else [],
-                equipment=equipment if isinstance(equipment, list) else [],
-                duration_minutes=request.duration_minutes or 45,
-                focus_areas=request.focus_areas,
-                primary_goal=primary_goal,
-                muscle_focus_points=muscle_focus_points,
-            )
+        if cached_workout_data:
+            # Cache hit - reuse previously generated workout data
+            exercises = cached_workout_data.get("exercises", [])
+            workout_name = cached_workout_data.get("name", "Generated Workout")
+            workout_type = cached_workout_data.get("type", request.workout_type or "strength")
+            difficulty = cached_workout_data.get("difficulty", "medium")
+            logger.info(f"Using cached workout generation for user {request.user_id}")
+        else:
+            # Cache miss - generate via AI
+            gemini_service = GeminiService()
 
-            exercises = workout_data.get("exercises", [])
-            workout_name = workout_data.get("name", "Generated Workout")
-            workout_type = workout_data.get("type", request.workout_type or "strength")
-            difficulty = workout_data.get("difficulty", "medium")
+            try:
+                workout_data = await gemini_service.generate_workout_plan(
+                    fitness_level=fitness_level or "intermediate",
+                    goals=goals if isinstance(goals, list) else [],
+                    equipment=equipment if isinstance(equipment, list) else [],
+                    duration_minutes=request.duration_minutes or 45,
+                    focus_areas=request.focus_areas,
+                    primary_goal=primary_goal,
+                    muscle_focus_points=muscle_focus_points,
+                )
 
-        except Exception as ai_error:
-            logger.error(f"AI workout generation failed: {ai_error}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to generate workout: {str(ai_error)}"
-            )
+                exercises = workout_data.get("exercises", [])
+                workout_name = workout_data.get("name", "Generated Workout")
+                workout_type = workout_data.get("type", request.workout_type or "strength")
+                difficulty = workout_data.get("difficulty", "medium")
+
+                # Cache the successful generation result
+                _set_cached_generation(cache_key, workout_data)
+
+            except Exception as ai_error:
+                logger.error(f"AI workout generation failed: {ai_error}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Failed to generate workout: {str(ai_error)}"
+                )
 
         workout_db_data = {
             "user_id": request.user_id,
@@ -577,6 +695,7 @@ async def generate_workout(http_request: Request, request: GenerateWorkoutReques
         created = db.create_workout(workout_db_data)
         logger.info(f"Workout generated: id={created['id']}")
 
+        # Log workout change synchronously (quick local write, important for audit)
         log_workout_change(
             workout_id=created['id'],
             user_id=request.user_id,
@@ -586,21 +705,19 @@ async def generate_workout(http_request: Request, request: GenerateWorkoutReques
         )
 
         generated_workout = row_to_workout(created)
-        await index_workout_to_rag(generated_workout)
 
-        # Log successful workout generation
-        await log_user_activity(
+        # Move non-critical operations to background tasks
+        background_tasks.add_task(
+            _background_index_rag, generated_workout
+        )
+        background_tasks.add_task(
+            _background_log_generation,
             user_id=request.user_id,
-            action="workout_generation",
-            endpoint="/api/v1/workouts-db/generate",
-            message=f"Generated workout: {workout_name}",
-            metadata={
-                "workout_id": created['id'],
-                "workout_type": workout_type,
-                "exercises_count": len(exercises),
-                "duration_minutes": request.duration_minutes or 45,
-            },
-            status_code=200
+            workout_id=created['id'],
+            workout_name=workout_name,
+            workout_type=workout_type,
+            exercises_count=len(exercises),
+            duration_minutes=request.duration_minutes or 45,
         )
 
         return generated_workout
@@ -609,7 +726,7 @@ async def generate_workout(http_request: Request, request: GenerateWorkoutReques
         raise
     except Exception as e:
         logger.error(f"Failed to generate workout: {e}")
-        # Log error
+        # Log error (still inline since we need it for error tracking)
         await log_user_error(
             user_id=request.user_id,
             action="workout_generation",
@@ -917,7 +1034,7 @@ def get_workout_focus(split: str, selected_days: List[int]) -> dict:
 
 @router.post("/regenerate", response_model=Workout)
 @limiter.limit("5/minute")
-async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRequest):
+async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRequest, background_tasks: BackgroundTasks):
     """
     Regenerate a workout with new settings while preserving version history (SCD2).
 
@@ -1111,101 +1228,108 @@ async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRe
         )
 
         regenerated = row_to_workout(new_workout)
-        await index_workout_to_rag(regenerated)
 
-        # Record regeneration analytics for tracking user customization patterns
-        try:
-            # Extract custom inputs (focus area/injury typed in "Other" field)
-            custom_focus_area = None
-            custom_injury = None
+        # Move non-critical operations to background tasks
+        # RAG indexing is not critical for the response
+        background_tasks.add_task(_background_index_rag, regenerated)
 
-            # Check if focus_areas contains a custom entry (not from predefined list)
-            predefined_focus_areas = [
-                "full_body", "upper_body", "lower_body", "core", "back", "chest",
-                "shoulders", "arms", "legs", "glutes", "cardio", "flexibility"
-            ]
-            if focus_areas:
-                for fa in focus_areas:
-                    if fa and fa.lower() not in [p.lower() for p in predefined_focus_areas]:
-                        custom_focus_area = fa
-                        break
+        # Record regeneration analytics in the background (non-critical)
+        async def _bg_record_regeneration_analytics():
+            try:
+                # Extract custom inputs (focus area/injury typed in "Other" field)
+                custom_focus_area = None
+                custom_injury = None
 
-            # Check if injuries contains a custom entry
-            predefined_injuries = [
-                "shoulder", "knee", "back", "wrist", "ankle", "hip", "neck", "elbow"
-            ]
-            if injuries:
-                for inj in injuries:
-                    if inj and inj.lower() not in [p.lower() for p in predefined_injuries]:
-                        custom_injury = inj
-                        break
+                # Check if focus_areas contains a custom entry (not from predefined list)
+                predefined_focus_areas = [
+                    "full_body", "upper_body", "lower_body", "core", "back", "chest",
+                    "shoulders", "arms", "legs", "glutes", "cardio", "flexibility"
+                ]
+                if focus_areas:
+                    for fa in focus_areas:
+                        if fa and fa.lower() not in [p.lower() for p in predefined_focus_areas]:
+                            custom_focus_area = fa
+                            break
 
-            import time
-            generation_end_time = time.time()
-            generation_time_ms = int((generation_end_time - time.time()) * 1000) if 'generation_start_time' not in dir() else None
+                # Check if injuries contains a custom entry
+                predefined_injuries = [
+                    "shoulder", "knee", "back", "wrist", "ankle", "hip", "neck", "elbow"
+                ]
+                if injuries:
+                    for inj in injuries:
+                        if inj and inj.lower() not in [p.lower() for p in predefined_injuries]:
+                            custom_injury = inj
+                            break
 
-            db.record_workout_regeneration(
-                user_id=request.user_id,
-                original_workout_id=request.workout_id,
-                new_workout_id=new_workout["id"],
-                difficulty=user_difficulty,
-                duration_minutes=request.duration_minutes,
-                workout_type=workout_type_override,
-                equipment=equipment if isinstance(equipment, list) else [],
-                focus_areas=focus_areas if focus_areas else [],
-                injuries=injuries if injuries else [],
-                custom_focus_area=custom_focus_area,
-                custom_injury=custom_injury,
-                generation_method="rag_regenerate" if used_rag else "ai_regenerate",
-                used_rag=used_rag,
-                generation_time_ms=generation_time_ms,
-            )
-            logger.info(f"📊 Recorded regeneration analytics for workout {new_workout['id']}")
+                db.record_workout_regeneration(
+                    user_id=request.user_id,
+                    original_workout_id=request.workout_id,
+                    new_workout_id=new_workout["id"],
+                    difficulty=user_difficulty,
+                    duration_minutes=request.duration_minutes,
+                    workout_type=workout_type_override,
+                    equipment=equipment if isinstance(equipment, list) else [],
+                    focus_areas=focus_areas if focus_areas else [],
+                    injuries=injuries if injuries else [],
+                    custom_focus_area=custom_focus_area,
+                    custom_injury=custom_injury,
+                    generation_method="rag_regenerate" if used_rag else "ai_regenerate",
+                    used_rag=used_rag,
+                    generation_time_ms=None,
+                )
+                logger.info(f"Background: Recorded regeneration analytics for workout {new_workout['id']}")
 
-            # Index custom inputs to ChromaDB for AI retrieval (fire-and-forget)
-            if custom_focus_area or custom_injury:
-                try:
-                    from services.custom_inputs_rag_service import get_custom_inputs_rag_service
-                    custom_rag = get_custom_inputs_rag_service()
+                # Index custom inputs to ChromaDB for AI retrieval
+                if custom_focus_area or custom_injury:
+                    try:
+                        from services.custom_inputs_rag_service import get_custom_inputs_rag_service
+                        custom_rag = get_custom_inputs_rag_service()
 
-                    if custom_focus_area:
-                        await custom_rag.index_custom_input(
-                            input_type="focus_area",
-                            input_value=custom_focus_area,
-                            user_id=request.user_id,
-                        )
-                        logger.info(f"🔍 Indexed custom focus area to ChromaDB: {custom_focus_area}")
+                        if custom_focus_area:
+                            await custom_rag.index_custom_input(
+                                input_type="focus_area",
+                                input_value=custom_focus_area,
+                                user_id=request.user_id,
+                            )
+                            logger.info(f"Background: Indexed custom focus area to ChromaDB: {custom_focus_area}")
 
-                    if custom_injury:
-                        await custom_rag.index_custom_input(
-                            input_type="injury",
-                            input_value=custom_injury,
-                            user_id=request.user_id,
-                        )
-                        logger.info(f"🔍 Indexed custom injury to ChromaDB: {custom_injury}")
-                except Exception as chroma_error:
-                    logger.warning(f"⚠️ Failed to index custom inputs to ChromaDB: {chroma_error}")
-        except Exception as analytics_error:
-            # Don't fail the regeneration if analytics recording fails
-            logger.warning(f"⚠️ Failed to record regeneration analytics: {analytics_error}")
+                        if custom_injury:
+                            await custom_rag.index_custom_input(
+                                input_type="injury",
+                                input_value=custom_injury,
+                                user_id=request.user_id,
+                            )
+                            logger.info(f"Background: Indexed custom injury to ChromaDB: {custom_injury}")
+                    except Exception as chroma_error:
+                        logger.warning(f"Background: Failed to index custom inputs to ChromaDB: {chroma_error}")
+            except Exception as analytics_error:
+                logger.warning(f"Background: Failed to record regeneration analytics: {analytics_error}")
 
-        # Log workout regeneration
-        await log_user_activity(
-            user_id=request.user_id,
-            action="workout_regeneration",
-            endpoint="/api/v1/workouts-db/regenerate",
-            message=f"Regenerated workout: {workout_name}",
-            metadata={
-                "original_workout_id": request.workout_id,
-                "new_workout_id": new_workout["id"],
-                "difficulty": user_difficulty,
-                "duration_minutes": request.duration_minutes,
-                "workout_type": workout_type_override,
-                "exercises_count": len(exercises),
-                "used_rag": used_rag,
-            },
-            status_code=200
-        )
+        background_tasks.add_task(_bg_record_regeneration_analytics)
+
+        # Log workout regeneration activity in the background (non-critical)
+        async def _bg_log_regeneration():
+            try:
+                await log_user_activity(
+                    user_id=request.user_id,
+                    action="workout_regeneration",
+                    endpoint="/api/v1/workouts-db/regenerate",
+                    message=f"Regenerated workout: {workout_name}",
+                    metadata={
+                        "original_workout_id": request.workout_id,
+                        "new_workout_id": new_workout["id"],
+                        "difficulty": user_difficulty,
+                        "duration_minutes": request.duration_minutes,
+                        "workout_type": workout_type_override,
+                        "exercises_count": len(exercises),
+                        "used_rag": used_rag,
+                    },
+                    status_code=200
+                )
+            except Exception as e:
+                logger.warning(f"Background: Failed to log regeneration activity: {e}")
+
+        background_tasks.add_task(_bg_log_regeneration)
 
         return regenerated
 

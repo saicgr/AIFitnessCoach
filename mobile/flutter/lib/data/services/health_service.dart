@@ -440,6 +440,15 @@ class AppHealthData {
 /// Health service for interacting with Health Connect (Android) / HealthKit (iOS)
 class HealthService {
   final Health _health = Health();
+  bool _isConfigured = false;
+
+  /// Ensure the health plugin is configured. Only calls configure() once.
+  Future<void> _ensureConfigured() async {
+    if (!_isConfigured) {
+      await _health.configure();
+      _isConfigured = true;
+    }
+  }
 
   // Data types we want to read from Health Connect
   static final List<HealthDataType> _readTypes = [
@@ -485,6 +494,7 @@ class HealthService {
   /// Check if Health Connect is available on the device
   Future<bool> isHealthConnectAvailable() async {
     try {
+      await _ensureConfigured();
       if (Platform.isAndroid) {
         final status = await _health.getHealthConnectSdkStatus();
         return status == HealthConnectSdkStatus.sdkAvailable;
@@ -503,8 +513,7 @@ class HealthService {
   /// This verifies actual permissions by checking authorization status.
   Future<bool> hasHealthPermissions() async {
     try {
-      // Configure the health plugin first
-      await _health.configure();
+      await _ensureConfigured();
 
       // Check permissions for the most basic data type (STEPS)
       // If we can read steps, we likely have permissions
@@ -520,24 +529,17 @@ class HealthService {
         return true;
       }
 
-      // If hasPermissions returns false or null, try to actually read some data
-      // This is a fallback check - if we can read data, we have permissions
-      if (hasAuth == null) {
-        try {
-          final now = DateTime.now();
-          final start = now.subtract(const Duration(hours: 1));
-          final data = await _health.getHealthDataFromTypes(
-            startTime: start,
-            endTime: now,
-            types: types,
-          );
-          // If we get here without error, we have permissions
-          debugPrint('🏥 Health permissions verified via data read: granted (${data.length} points)');
+      // On iOS, hasPermissions often returns null for READ permissions.
+      // Use SharedPreferences to check if we've previously requested and been granted.
+      if (hasAuth == null && Platform.isIOS) {
+        final prefs = await SharedPreferences.getInstance();
+        final previouslyGranted = prefs.getBool('health_permissions_granted') ?? false;
+        if (previouslyGranted) {
+          debugPrint('🏥 iOS: hasPermissions returned null but previously granted flag is set');
           return true;
-        } catch (e) {
-          debugPrint('🏥 Health data read failed, assuming no permissions: $e');
-          return false;
         }
+        debugPrint('🏥 iOS: hasPermissions returned null and no previous grant recorded');
+        return false;
       }
 
       debugPrint('🏥 Health permissions verified: not granted');
@@ -551,8 +553,7 @@ class HealthService {
   /// Request permissions for reading/writing health data
   Future<bool> requestPermissions() async {
     try {
-      // Configure the health plugin
-      await _health.configure();
+      await _ensureConfigured();
 
       // Get available types for this platform
       final availableReadTypes = _getAvailableTypes(_readTypes);
@@ -576,6 +577,13 @@ class HealthService {
       );
 
       debugPrint('🏥 Health permissions granted: $granted');
+
+      // Store permission grant flag for iOS (where hasPermissions returns null)
+      if (granted && Platform.isIOS) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('health_permissions_granted', true);
+      }
+
       return granted;
     } catch (e) {
       debugPrint('❌ Error requesting health permissions: $e');
@@ -583,17 +591,34 @@ class HealthService {
     }
   }
 
+  // Types that are only available on iOS (not supported on Android)
+  static const Set<HealthDataType> _iOSOnlyTypes = {
+    HealthDataType.HEART_RATE_VARIABILITY_SDNN,
+    HealthDataType.SLEEP_IN_BED,
+    HealthDataType.INSULIN_DELIVERY,
+  };
+
+  // Types that are only available on Android (not supported on iOS)
+  static const Set<HealthDataType> _androidOnlyTypes = {
+    HealthDataType.DISTANCE_DELTA,
+    HealthDataType.TOTAL_CALORIES_BURNED,
+  };
+
   /// Get health data types available on current platform
   List<HealthDataType> _getAvailableTypes(List<HealthDataType> types) {
-    // Filter types based on platform availability
     return types.where((type) {
-      try {
-        // This will throw if type is not available
-        return true;
-      } catch (e) {
-        return false;
+      if (Platform.isAndroid) {
+        return !_iOSOnlyTypes.contains(type);
+      } else if (Platform.isIOS) {
+        return !_androidOnlyTypes.contains(type);
       }
+      return true;
     }).toList();
+  }
+
+  /// Install Health Connect app on Android
+  Future<void> installHealthConnect() async {
+    await _health.installHealthConnect();
   }
 
   /// Get all body measurements from Health Connect
@@ -708,7 +733,7 @@ class HealthService {
       final now = DateTime.now();
       final start = now.subtract(Duration(days: days));
 
-      final data = await _health.getHealthDataFromTypes(
+      final rawData = await _health.getHealthDataFromTypes(
         startTime: start,
         endTime: now,
         types: [
@@ -717,6 +742,9 @@ class HealthService {
           HealthDataType.DISTANCE_DELTA,
         ],
       );
+
+      // Remove duplicates before aggregating
+      final data = _health.removeDuplicates(rawData);
 
       int totalSteps = 0;
       double totalCalories = 0;

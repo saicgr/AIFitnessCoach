@@ -442,3 +442,59 @@ class StaggeredListAnimation extends StatelessWidget {
     );
   }
 }
+
+/// Custom page route with smooth slide + fade transition
+class AppPageRoute<T> extends PageRouteBuilder<T> {
+  final WidgetBuilder builder;
+
+  AppPageRoute({required this.builder})
+      : super(
+          pageBuilder: (context, animation, secondaryAnimation) => builder(context),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            final offsetTween = Tween<Offset>(
+              begin: const Offset(1.0, 0.0),
+              end: Offset.zero,
+            );
+            final curvedAnimation = CurvedAnimation(
+              parent: animation,
+              curve: AppAnimations.decelerate,
+            );
+            return SlideTransition(
+              position: offsetTween.animate(curvedAnimation),
+              child: FadeTransition(
+                opacity: animation,
+                child: child,
+              ),
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 300),
+          reverseTransitionDuration: AppAnimations.modal,
+        );
+}
+
+/// Reusable shimmer skeleton placeholder widget
+class CardShimmer extends StatelessWidget {
+  final double height;
+  final double? width;
+  final BorderRadius? borderRadius;
+
+  const CardShimmer({
+    super.key,
+    required this.height,
+    this.width,
+    this.borderRadius,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      height: height,
+      width: width,
+      decoration: BoxDecoration(
+        borderRadius: borderRadius ?? BorderRadius.circular(16),
+        color: isDark ? Colors.grey[850] : Colors.grey[300],
+      ),
+    );
+  }
+}

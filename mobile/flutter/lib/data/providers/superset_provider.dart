@@ -5,7 +5,8 @@ import '../repositories/superset_repository.dart';
 import '../../core/providers/auth_provider.dart';
 
 /// Provider for superset preferences
-final supersetPreferencesProvider = FutureProvider.autoDispose<SupersetPreferences>((ref) async {
+/// M1: Removed autoDispose — preferences are persistent user data
+final supersetPreferencesProvider = FutureProvider<SupersetPreferences>((ref) async {
   final userId = ref.watch(currentUserIdProvider);
   if (userId == null) {
     return const SupersetPreferences();
@@ -16,7 +17,8 @@ final supersetPreferencesProvider = FutureProvider.autoDispose<SupersetPreferenc
 });
 
 /// Provider for favorite superset pairs
-final favoriteSupersetPairsProvider = FutureProvider.autoDispose<List<FavoriteSupersetPair>>((ref) async {
+/// M1: Removed autoDispose — favorites are persistent user data
+final favoriteSupersetPairsProvider = FutureProvider<List<FavoriteSupersetPair>>((ref) async {
   final userId = ref.watch(currentUserIdProvider);
   if (userId == null) {
     return [];
@@ -27,7 +29,8 @@ final favoriteSupersetPairsProvider = FutureProvider.autoDispose<List<FavoriteSu
 });
 
 /// Provider for superset suggestions for a specific workout
-final supersetSuggestionsProvider = FutureProvider.autoDispose.family<List<SupersetSuggestion>, String>((ref, workoutId) async {
+/// M1: Removed autoDispose — suggestions should persist while viewing a workout
+final supersetSuggestionsProvider = FutureProvider.family<List<SupersetSuggestion>, String>((ref, workoutId) async {
   final userId = ref.watch(currentUserIdProvider);
   if (userId == null) {
     return [];
@@ -38,7 +41,8 @@ final supersetSuggestionsProvider = FutureProvider.autoDispose.family<List<Super
 });
 
 /// Provider for superset history
-final supersetHistoryProvider = FutureProvider.autoDispose<List<SupersetHistoryEntry>>((ref) async {
+/// M1: Removed autoDispose — history is persistent user data
+final supersetHistoryProvider = FutureProvider<List<SupersetHistoryEntry>>((ref) async {
   final userId = ref.watch(currentUserIdProvider);
   if (userId == null) {
     return [];

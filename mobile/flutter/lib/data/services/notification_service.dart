@@ -323,6 +323,12 @@ class NotificationService {
       description: 'Messages from support agents',
       color: Color(0xFF00D9FF), // Cyan
     ),
+    'schedule_reminder': _ChannelConfig(
+      id: 'schedule_reminder',
+      name: 'Schedule Reminders',
+      description: 'Reminders for your scheduled activities, meals, and habits',
+      color: Color(0xFF06B6D4), // Cyan
+    ),
   };
 
   /// Default channel for unknown types
@@ -831,6 +837,9 @@ class NotificationService {
   static const int _weeklySummaryId = 5000;
   static const int _movementReminderBaseId = 6000;
 
+  /// Base notification ID for schedule reminders (7000-7999 range)
+  static const int _scheduleReminderBaseId = 7000;
+
   /// Parse time string (e.g. "08:00") to hour and minute
   (int hour, int minute) _parseTime(String time) {
     final parts = time.split(':');
@@ -1275,6 +1284,69 @@ class NotificationService {
   }
 
   // ─────────────────────────────────────────────────────────────────
+  // Schedule Item Reminder Methods
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Schedule a reminder for a schedule item
+  Future<void> scheduleItemReminder({
+    required String itemId,
+    required String title,
+    required String body,
+    required DateTime scheduledTime,
+    int minutesBefore = 15,
+  }) async {
+    final notificationId = _scheduleReminderBaseId + (itemId.hashCode.abs() % 1000);
+    final reminderTime = scheduledTime.subtract(Duration(minutes: minutesBefore));
+
+    // Don't schedule if reminder time is in the past
+    if (reminderTime.isBefore(DateTime.now())) {
+      debugPrint('⚠️ [Notifications] Schedule reminder time is in the past, skipping');
+      return;
+    }
+
+    final scheduledDate = tz.TZDateTime.from(reminderTime, tz.local);
+
+    final channelConfig = _channelConfigs['schedule_reminder']!;
+    final androidDetails = AndroidNotificationDetails(
+      channelConfig.id,
+      channelConfig.name,
+      channelDescription: channelConfig.description,
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      color: channelConfig.color,
+    );
+
+    await _localNotifications.zonedSchedule(
+      notificationId,
+      title,
+      body,
+      scheduledDate,
+      NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      payload: 'schedule_reminder:$itemId',
+    );
+
+    debugPrint('✅ [Notifications] Scheduled reminder for "$title" at $scheduledDate (ID: $notificationId)');
+  }
+
+  /// Cancel a schedule item reminder
+  Future<void> cancelItemReminder(String itemId) async {
+    final notificationId = _scheduleReminderBaseId + (itemId.hashCode.abs() % 1000);
+    await _localNotifications.cancel(notificationId);
+    debugPrint('🔍 [Notifications] Cancelled schedule reminder for item $itemId (ID: $notificationId)');
+  }
+
+  /// Cancel all schedule reminders (IDs 7000-7999)
+  Future<void> cancelAllScheduleReminders() async {
+    for (int id = _scheduleReminderBaseId; id < _scheduleReminderBaseId + 1000; id++) {
+      await _localNotifications.cancel(id);
+    }
+    debugPrint('✅ [Notifications] Cancelled all schedule reminders');
+  }
+
+  // ─────────────────────────────────────────────────────────────────
   // Debug & Testing Methods
   // ─────────────────────────────────────────────────────────────────
 
@@ -1400,6 +1472,8 @@ class NotificationService {
         return '/stats';
       case 'movement_reminder':
         return '/home';
+      case 'schedule_reminder':
+        return '/schedule';
       default:
         return null;
     }

@@ -217,6 +217,10 @@ class _ActiveWorkoutScreenState
   // Reset when all exercises in the superset complete their set for the round
   final Map<int, Set<int>> _supersetRoundProgress = {};
 
+  // Pre-computed superset indices cache (groupId -> sorted exercise indices)
+  // Built once in initState and when exercises change, avoids repeated iteration/sorting
+  Map<int, List<int>> _supersetIndicesCache = {};
+
   @override
   void initState() {
     super.initState();
@@ -242,6 +246,9 @@ class _ActiveWorkoutScreenState
   void _initializeWorkout() {
     // Initialize exercises list
     _exercises = List.from(widget.workout.exercises);
+
+    // Pre-compute superset indices cache for O(1) lookups
+    _precomputeSupersetIndices();
 
     // Guard: If no exercises, we cannot proceed
     // Note: Router should catch this case, but keep as a safety check
@@ -600,9 +607,10 @@ class _ActiveWorkoutScreenState
       rir: _lastSetRir,
     );
 
+    // Update data outside setState - only trigger rebuild for animation
+    _completedSets[_currentExerciseIndex] ??= [];
+    _completedSets[_currentExerciseIndex]!.add(finalSetLog);
     setState(() {
-      _completedSets[_currentExerciseIndex] ??= [];
-      _completedSets[_currentExerciseIndex]!.add(finalSetLog);
       _justCompletedSetIndex = _completedSets[_currentExerciseIndex]!.length - 1;
     });
 
@@ -748,21 +756,30 @@ class _ActiveWorkoutScreenState
   // SUPERSET WORKOUT FLOW
   // ========================================================================
 
-  /// Get all exercise indices in a superset group
-  List<int> _getSupersetIndices(int groupId) {
-    final indices = <int>[];
+  /// Pre-compute superset indices for all groups.
+  /// Called once in initState and whenever _exercises changes.
+  void _precomputeSupersetIndices() {
+    _supersetIndicesCache = {};
     for (int i = 0; i < _exercises.length; i++) {
-      if (_exercises[i].supersetGroup == groupId) {
-        indices.add(i);
+      final groupId = _exercises[i].supersetGroup;
+      if (groupId != null) {
+        _supersetIndicesCache.putIfAbsent(groupId, () => <int>[]);
+        _supersetIndicesCache[groupId]!.add(i);
       }
     }
-    // Sort by superset order
-    indices.sort((a, b) {
-      final orderA = _exercises[a].supersetOrder ?? 0;
-      final orderB = _exercises[b].supersetOrder ?? 0;
-      return orderA.compareTo(orderB);
-    });
-    return indices;
+    // Sort each group by superset order
+    for (final entry in _supersetIndicesCache.entries) {
+      entry.value.sort((a, b) {
+        final orderA = _exercises[a].supersetOrder ?? 0;
+        final orderB = _exercises[b].supersetOrder ?? 0;
+        return orderA.compareTo(orderB);
+      });
+    }
+  }
+
+  /// Get all exercise indices in a superset group (returns from pre-computed cache)
+  List<int> _getSupersetIndices(int groupId) {
+    return _supersetIndicesCache[groupId] ?? [];
   }
 
   /// Get the next exercise index in the superset round
@@ -2292,6 +2309,7 @@ class _ActiveWorkoutScreenState
         setState(() {
           // Update exercises list
           _exercises = List.from(newExercises);
+          _precomputeSupersetIndices();
 
           // Initialize tracking data for new exercises
           for (int i = startIndex; i < _exercises.length; i++) {
@@ -2463,6 +2481,7 @@ class _ActiveWorkoutScreenState
         setState(() {
           // Update exercises list
           _exercises = List.from(newExercises);
+          _precomputeSupersetIndices();
 
           // Initialize tracking data for new exercises
           for (int i = startIndex; i < _exercises.length; i++) {
@@ -2734,48 +2753,51 @@ class _ActiveWorkoutScreenState
 
             // Rest overlay with weight suggestion (only for rest between exercises)
             // Between-sets rest is handled by inline rest row in SetTrackingOverlay
+            // Wrapped in RepaintBoundary to isolate per-second rest timer repaints
             if (_isResting && _isRestingBetweenExercises)
               Positioned.fill(
-                child: RestTimerOverlay(
-                  restSecondsRemaining: _timerController.restSecondsRemaining,
-                  initialRestDuration: _timerController.initialRestDuration,
-                  restMessage: _currentRestMessage,
-                  currentExercise: currentExercise,
-                  completedSetsCount:
-                      _completedSets[_currentExerciseIndex]?.length ?? 0,
-                  totalSets: _totalSetsPerExercise[_currentExerciseIndex] ?? 3,
-                  nextExercise: nextExercise,
-                  isRestBetweenExercises: _isRestingBetweenExercises,
-                  onSkipRest: () => _timerController.skipRest(),
-                  onLog1RM: () => _showLog1RMSheet(currentExercise),
-                  // Weight suggestion props
-                  weightSuggestion: _currentWeightSuggestion,
-                  isLoadingWeightSuggestion: _isLoadingWeightSuggestion,
-                  onAcceptWeightSuggestion: _acceptWeightSuggestion,
-                  onDismissWeightSuggestion: _dismissWeightSuggestion,
-                  // Rest suggestion props (AI-powered)
-                  restSuggestion: _restSuggestion,
-                  isLoadingRestSuggestion: _isLoadingRestSuggestion,
-                  onAcceptRestSuggestion: _acceptRestSuggestion,
-                  onDismissRestSuggestion: _dismissRestSuggestion,
-                  // RPE/RIR input during rest
-                  currentRpe: _lastSetRpe,
-                  currentRir: _lastSetRir,
-                  onRpeChanged: (rpe) => setState(() => _lastSetRpe = rpe),
-                  onRirChanged: (rir) => setState(() => _lastSetRir = rir),
-                  // Last set performance data for display
-                  lastSetReps: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
-                      ? _completedSets[_currentExerciseIndex]!.last.reps
-                      : null,
-                  lastSetTargetReps: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
-                      ? _completedSets[_currentExerciseIndex]!.last.targetReps
-                      : null,
-                  lastSetWeight: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
-                      ? _completedSets[_currentExerciseIndex]!.last.weight
-                      : null,
-                  // Ask AI Coach button with coach persona (reactive to changes)
-                  onAskAICoach: () => _showAICoachSheet(currentExercise),
-                  coachPersona: ref.watch(aiSettingsProvider).getCurrentCoach(),
+                child: RepaintBoundary(
+                  child: RestTimerOverlay(
+                    restSecondsRemaining: _timerController.restSecondsRemaining,
+                    initialRestDuration: _timerController.initialRestDuration,
+                    restMessage: _currentRestMessage,
+                    currentExercise: currentExercise,
+                    completedSetsCount:
+                        _completedSets[_currentExerciseIndex]?.length ?? 0,
+                    totalSets: _totalSetsPerExercise[_currentExerciseIndex] ?? 3,
+                    nextExercise: nextExercise,
+                    isRestBetweenExercises: _isRestingBetweenExercises,
+                    onSkipRest: () => _timerController.skipRest(),
+                    onLog1RM: () => _showLog1RMSheet(currentExercise),
+                    // Weight suggestion props
+                    weightSuggestion: _currentWeightSuggestion,
+                    isLoadingWeightSuggestion: _isLoadingWeightSuggestion,
+                    onAcceptWeightSuggestion: _acceptWeightSuggestion,
+                    onDismissWeightSuggestion: _dismissWeightSuggestion,
+                    // Rest suggestion props (AI-powered)
+                    restSuggestion: _restSuggestion,
+                    isLoadingRestSuggestion: _isLoadingRestSuggestion,
+                    onAcceptRestSuggestion: _acceptRestSuggestion,
+                    onDismissRestSuggestion: _dismissRestSuggestion,
+                    // RPE/RIR input during rest
+                    currentRpe: _lastSetRpe,
+                    currentRir: _lastSetRir,
+                    onRpeChanged: (rpe) => setState(() => _lastSetRpe = rpe),
+                    onRirChanged: (rir) => setState(() => _lastSetRir = rir),
+                    // Last set performance data for display
+                    lastSetReps: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
+                        ? _completedSets[_currentExerciseIndex]!.last.reps
+                        : null,
+                    lastSetTargetReps: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
+                        ? _completedSets[_currentExerciseIndex]!.last.targetReps
+                        : null,
+                    lastSetWeight: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
+                        ? _completedSets[_currentExerciseIndex]!.last.weight
+                        : null,
+                    // Ask AI Coach button with coach persona (reactive to changes)
+                    onAskAICoach: () => _showAICoachSheet(currentExercise),
+                    coachPersona: ref.watch(aiSettingsProvider).getCurrentCoach(),
+                  ),
                 ),
               ),
 
@@ -2793,18 +2815,21 @@ class _ActiveWorkoutScreenState
               ),
 
             // Top overlay (show during active workout OR between-sets rest)
+            // Wrapped in RepaintBoundary to isolate per-second timer repaints
             if (!_isResting || (_isResting && !_isRestingBetweenExercises))
-              WorkoutTopOverlay(
-                workoutSeconds: _timerController.workoutSeconds,
-                isPaused: _isPaused,
-                totalExercises: _exercises.length,
-                currentExerciseIndex: _currentExerciseIndex,
-                totalCompletedSets: _completedSets.values
-                    .fold(0, (sum, sets) => sum + sets.length),
-                onTogglePause: _togglePause,
-                onShowExerciseList: () =>
-                    setState(() => _showExerciseList = true),
-                onQuit: _showQuitDialog,
+              RepaintBoundary(
+                child: WorkoutTopOverlay(
+                  workoutSeconds: _timerController.workoutSeconds,
+                  isPaused: _isPaused,
+                  totalExercises: _exercises.length,
+                  currentExerciseIndex: _currentExerciseIndex,
+                  totalCompletedSets: _completedSets.values
+                      .fold(0, (sum, sets) => sum + sets.length),
+                  onTogglePause: _togglePause,
+                  onShowExerciseList: () =>
+                      setState(() => _showExerciseList = true),
+                  onQuit: _showQuitDialog,
+                ),
               ),
 
             // Set tracking overlay - full screen (no floating card, no minimize)
@@ -3039,32 +3064,34 @@ class _ActiveWorkoutScreenState
             // Main content column
             Column(
               children: [
-                // V2 Top bar
-                Consumer(
-                  builder: (context, ref, _) {
-                    final warmupEnabled = ref.watch(warmupDurationProvider).warmupEnabled;
-                    final favoritesState = ref.watch(favoritesProvider);
-                    final currentExercise = _exercises.isNotEmpty ? _exercises[_currentExerciseIndex] : null;
-                    final isFavorite = currentExercise != null
-                        ? favoritesState.isFavorite(currentExercise.name ?? '')
-                        : false;
+                // V2 Top bar - wrapped in RepaintBoundary to isolate per-second timer repaints
+                RepaintBoundary(
+                  child: Consumer(
+                    builder: (context, ref, _) {
+                      final warmupEnabled = ref.watch(warmupDurationProvider).warmupEnabled;
+                      final favoritesState = ref.watch(favoritesProvider);
+                      final currentExercise = _exercises.isNotEmpty ? _exercises[_currentExerciseIndex] : null;
+                      final isFavorite = currentExercise != null
+                          ? favoritesState.isFavorite(currentExercise.name ?? '')
+                          : false;
 
-                    return WorkoutTopBarV2(
-                      workoutSeconds: _timerController.workoutSeconds,
-                      restSecondsRemaining: _isResting ? _timerController.restSecondsRemaining : null,
-                      totalRestSeconds: _isResting ? _timerController.initialRestDuration : null,
-                      isPaused: _isPaused,
-                      showBackButton: warmupEnabled,
-                      backButtonLabel: warmupEnabled ? 'Warmup' : null,
-                      onMenuTap: _showWorkoutPlanDrawer,
-                      onBackTap: warmupEnabled ? _goBackToWarmup : null,
-                      onCloseTap: _showQuitDialog,
-                      onTimerTap: _togglePause,
-                      onMinimize: _minimizeWorkout,
-                      onFavoriteTap: currentExercise != null ? () => _toggleFavoriteExercise() : null,
-                      isFavorite: isFavorite,
-                    );
-                  },
+                      return WorkoutTopBarV2(
+                        workoutSeconds: _timerController.workoutSeconds,
+                        restSecondsRemaining: _isResting ? _timerController.restSecondsRemaining : null,
+                        totalRestSeconds: _isResting ? _timerController.initialRestDuration : null,
+                        isPaused: _isPaused,
+                        showBackButton: warmupEnabled,
+                        backButtonLabel: warmupEnabled ? 'Warmup' : null,
+                        onMenuTap: _showWorkoutPlanDrawer,
+                        onBackTap: warmupEnabled ? _goBackToWarmup : null,
+                        onCloseTap: _showQuitDialog,
+                        onTimerTap: _togglePause,
+                        onMinimize: _minimizeWorkout,
+                        onFavoriteTap: currentExercise != null ? () => _toggleFavoriteExercise() : null,
+                        isFavorite: isFavorite,
+                      );
+                    },
+                  ),
                 ),
 
                 // Swipeable exercise content area
@@ -3295,42 +3322,45 @@ class _ActiveWorkoutScreenState
 
             // Rest overlay (shows on top) - only for rest between exercises
             // Between-sets rest is handled by inline rest row
+            // Wrapped in RepaintBoundary to isolate per-second rest timer repaints
             if (_isResting && _isRestingBetweenExercises)
               Positioned.fill(
-                child: RestTimerOverlay(
-                  restSecondsRemaining: _timerController.restSecondsRemaining,
-                  initialRestDuration: _timerController.initialRestDuration,
-                  restMessage: _currentRestMessage,
-                  currentExercise: currentExercise,
-                  completedSetsCount: _completedSets[_currentExerciseIndex]?.length ?? 0,
-                  totalSets: _totalSetsPerExercise[_currentExerciseIndex] ?? 3,
-                  nextExercise: nextExercise,
-                  isRestBetweenExercises: _isRestingBetweenExercises,
-                  onSkipRest: () => _timerController.skipRest(),
-                  onLog1RM: () => _showLog1RMSheet(currentExercise),
-                  weightSuggestion: _currentWeightSuggestion,
-                  isLoadingWeightSuggestion: _isLoadingWeightSuggestion,
-                  onAcceptWeightSuggestion: _acceptWeightSuggestion,
-                  onDismissWeightSuggestion: _dismissWeightSuggestion,
-                  restSuggestion: _restSuggestion,
-                  isLoadingRestSuggestion: _isLoadingRestSuggestion,
-                  onAcceptRestSuggestion: _acceptRestSuggestion,
-                  onDismissRestSuggestion: _dismissRestSuggestion,
-                  currentRpe: _lastSetRpe,
-                  currentRir: _lastSetRir,
-                  onRpeChanged: (rpe) => setState(() => _lastSetRpe = rpe),
-                  onRirChanged: (rir) => setState(() => _lastSetRir = rir),
-                  lastSetReps: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
-                      ? _completedSets[_currentExerciseIndex]!.last.reps
-                      : null,
-                  lastSetTargetReps: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
-                      ? _completedSets[_currentExerciseIndex]!.last.targetReps
-                      : null,
-                  lastSetWeight: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
-                      ? _completedSets[_currentExerciseIndex]!.last.weight
-                      : null,
-                  onAskAICoach: () => _showAICoachSheet(currentExercise),
-                  coachPersona: ref.watch(aiSettingsProvider).getCurrentCoach(),
+                child: RepaintBoundary(
+                  child: RestTimerOverlay(
+                    restSecondsRemaining: _timerController.restSecondsRemaining,
+                    initialRestDuration: _timerController.initialRestDuration,
+                    restMessage: _currentRestMessage,
+                    currentExercise: currentExercise,
+                    completedSetsCount: _completedSets[_currentExerciseIndex]?.length ?? 0,
+                    totalSets: _totalSetsPerExercise[_currentExerciseIndex] ?? 3,
+                    nextExercise: nextExercise,
+                    isRestBetweenExercises: _isRestingBetweenExercises,
+                    onSkipRest: () => _timerController.skipRest(),
+                    onLog1RM: () => _showLog1RMSheet(currentExercise),
+                    weightSuggestion: _currentWeightSuggestion,
+                    isLoadingWeightSuggestion: _isLoadingWeightSuggestion,
+                    onAcceptWeightSuggestion: _acceptWeightSuggestion,
+                    onDismissWeightSuggestion: _dismissWeightSuggestion,
+                    restSuggestion: _restSuggestion,
+                    isLoadingRestSuggestion: _isLoadingRestSuggestion,
+                    onAcceptRestSuggestion: _acceptRestSuggestion,
+                    onDismissRestSuggestion: _dismissRestSuggestion,
+                    currentRpe: _lastSetRpe,
+                    currentRir: _lastSetRir,
+                    onRpeChanged: (rpe) => setState(() => _lastSetRpe = rpe),
+                    onRirChanged: (rir) => setState(() => _lastSetRir = rir),
+                    lastSetReps: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
+                        ? _completedSets[_currentExerciseIndex]!.last.reps
+                        : null,
+                    lastSetTargetReps: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
+                        ? _completedSets[_currentExerciseIndex]!.last.targetReps
+                        : null,
+                    lastSetWeight: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
+                        ? _completedSets[_currentExerciseIndex]!.last.weight
+                        : null,
+                    onAskAICoach: () => _showAICoachSheet(currentExercise),
+                    coachPersona: ref.watch(aiSettingsProvider).getCurrentCoach(),
+                  ),
                 ),
               ),
 
@@ -3462,31 +3492,34 @@ class _ActiveWorkoutScreenState
             ),
 
             // Rest overlay (shows on top) - for rest between exercises
+            // Wrapped in RepaintBoundary to isolate per-second rest timer repaints
             if (_isResting && _isRestingBetweenExercises)
               Positioned.fill(
-                child: RestTimerOverlay(
-                  restSecondsRemaining: _timerController.restSecondsRemaining,
-                  initialRestDuration: _timerController.initialRestDuration,
-                  restMessage: _currentRestMessage,
-                  currentExercise: currentExercise,
-                  completedSetsCount: _completedSets[_currentExerciseIndex]?.length ?? 0,
-                  totalSets: _totalSetsPerExercise[_currentExerciseIndex] ?? 3,
-                  nextExercise: nextExercise,
-                  isRestBetweenExercises: _isRestingBetweenExercises,
-                  onSkipRest: () => _timerController.skipRest(),
-                  onLog1RM: () => _showLog1RMSheet(currentExercise),
-                  weightSuggestion: _currentWeightSuggestion,
-                  isLoadingWeightSuggestion: _isLoadingWeightSuggestion,
-                  onAcceptWeightSuggestion: _acceptWeightSuggestion,
-                  onDismissWeightSuggestion: _dismissWeightSuggestion,
-                  restSuggestion: _restSuggestion,
-                  isLoadingRestSuggestion: _isLoadingRestSuggestion,
-                  onAcceptRestSuggestion: _acceptRestSuggestion,
-                  onDismissRestSuggestion: _dismissRestSuggestion,
-                  currentRpe: _lastSetRpe,
-                  currentRir: _lastSetRir,
-                  onRpeChanged: (rpe) => setState(() => _lastSetRpe = rpe),
-                  onRirChanged: (rir) => setState(() => _lastSetRir = rir),
+                child: RepaintBoundary(
+                  child: RestTimerOverlay(
+                    restSecondsRemaining: _timerController.restSecondsRemaining,
+                    initialRestDuration: _timerController.initialRestDuration,
+                    restMessage: _currentRestMessage,
+                    currentExercise: currentExercise,
+                    completedSetsCount: _completedSets[_currentExerciseIndex]?.length ?? 0,
+                    totalSets: _totalSetsPerExercise[_currentExerciseIndex] ?? 3,
+                    nextExercise: nextExercise,
+                    isRestBetweenExercises: _isRestingBetweenExercises,
+                    onSkipRest: () => _timerController.skipRest(),
+                    onLog1RM: () => _showLog1RMSheet(currentExercise),
+                    weightSuggestion: _currentWeightSuggestion,
+                    isLoadingWeightSuggestion: _isLoadingWeightSuggestion,
+                    onAcceptWeightSuggestion: _acceptWeightSuggestion,
+                    onDismissWeightSuggestion: _dismissWeightSuggestion,
+                    restSuggestion: _restSuggestion,
+                    isLoadingRestSuggestion: _isLoadingRestSuggestion,
+                    onAcceptRestSuggestion: _acceptRestSuggestion,
+                    onDismissRestSuggestion: _dismissRestSuggestion,
+                    currentRpe: _lastSetRpe,
+                    currentRir: _lastSetRir,
+                    onRpeChanged: (rpe) => setState(() => _lastSetRpe = rpe),
+                    onRirChanged: (rir) => setState(() => _lastSetRir = rir),
+                  ),
                 ),
               ),
           ],
@@ -3703,13 +3736,16 @@ class _ActiveWorkoutScreenState
           ),
 
           // Timer (uses direct getter, UI rebuilds via setState from timer callback)
-          Text(
-            _formatDuration(_timerController.workoutSeconds),
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-              fontFeatures: const [FontFeature.tabularFigures()],
+          // Wrapped in RepaintBoundary to isolate per-second timer repaints
+          RepaintBoundary(
+            child: Text(
+              _formatDuration(_timerController.workoutSeconds),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
           ),
 
@@ -5190,67 +5226,68 @@ class _ActiveWorkoutScreenState
 
   /// Quick complete or uncomplete a set by tapping its number
   void _quickCompleteSet(int setIndex, bool complete) {
-    setState(() {
-      if (complete) {
-        // Complete the set - use target/last values or current inputs
-        final exercise = _exercises[_viewingExerciseIndex];
-        final previousSets = _previousSets[_viewingExerciseIndex] ?? [];
+    if (complete) {
+      // Complete the set - use target/last values or current inputs
+      final exercise = _exercises[_viewingExerciseIndex];
+      final previousSets = _previousSets[_viewingExerciseIndex] ?? [];
 
-        // Get weight: try input fields first, then target, then previous
-        double weight = double.tryParse(_weightController.text) ?? 0;
-        if (weight == 0 && exercise.weight != null) {
-          weight = exercise.weight!;
-        }
-        if (weight == 0 && setIndex < previousSets.length) {
-          weight = (previousSets[setIndex]['weight'] as double?) ?? 0;
-        }
-
-        // Get reps: try input fields first, then target, then previous
-        int reps = int.tryParse(_repsController.text) ?? 0;
-        if (reps == 0 && exercise.reps != null) {
-          reps = exercise.reps!;
-        }
-        if (reps == 0 && setIndex < previousSets.length) {
-          reps = (previousSets[setIndex]['reps'] as int?) ?? 0;
-        }
-
-        // Default fallback values if still zero
-        if (weight == 0) weight = 20;
-        if (reps == 0) reps = 10;
-
-        // Create set log
-        final setLog = SetLog(
-          weight: weight,
-          reps: reps,
-          completedAt: DateTime.now(),
-          setType: 'working',
-          targetReps: exercise.reps ?? reps,
-        );
-
-        // Insert at correct position
-        _completedSets[_viewingExerciseIndex] ??= [];
-        if (setIndex >= _completedSets[_viewingExerciseIndex]!.length) {
-          // Append at end
-          _completedSets[_viewingExerciseIndex]!.add(setLog);
-        } else {
-          // Insert at position
-          _completedSets[_viewingExerciseIndex]!.insert(setIndex, setLog);
-        }
-
-        // Trigger completion animation
-        _justCompletedSetIndex = setIndex;
-        Future.delayed(const Duration(milliseconds: 600), () {
-          if (mounted) setState(() => _justCompletedSetIndex = null);
-        });
-      } else {
-        // Uncomplete the set - remove it
-        if (_completedSets[_viewingExerciseIndex] != null &&
-            setIndex >= 0 &&
-            setIndex < _completedSets[_viewingExerciseIndex]!.length) {
-          _completedSets[_viewingExerciseIndex]!.removeAt(setIndex);
-        }
+      // Get weight: try input fields first, then target, then previous
+      double weight = double.tryParse(_weightController.text) ?? 0;
+      if (weight == 0 && exercise.weight != null) {
+        weight = exercise.weight!;
       }
-    });
+      if (weight == 0 && setIndex < previousSets.length) {
+        weight = (previousSets[setIndex]['weight'] as double?) ?? 0;
+      }
+
+      // Get reps: try input fields first, then target, then previous
+      int reps = int.tryParse(_repsController.text) ?? 0;
+      if (reps == 0 && exercise.reps != null) {
+        reps = exercise.reps!;
+      }
+      if (reps == 0 && setIndex < previousSets.length) {
+        reps = (previousSets[setIndex]['reps'] as int?) ?? 0;
+      }
+
+      // Default fallback values if still zero
+      if (weight == 0) weight = 20;
+      if (reps == 0) reps = 10;
+
+      // Create set log
+      final setLog = SetLog(
+        weight: weight,
+        reps: reps,
+        completedAt: DateTime.now(),
+        setType: 'working',
+        targetReps: exercise.reps ?? reps,
+      );
+
+      // Update data outside setState - insert at correct position
+      _completedSets[_viewingExerciseIndex] ??= [];
+      if (setIndex >= _completedSets[_viewingExerciseIndex]!.length) {
+        // Append at end
+        _completedSets[_viewingExerciseIndex]!.add(setLog);
+      } else {
+        // Insert at position
+        _completedSets[_viewingExerciseIndex]!.insert(setIndex, setLog);
+      }
+
+      // Only call setState for the animation trigger variable
+      setState(() {
+        _justCompletedSetIndex = setIndex;
+      });
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (mounted) setState(() => _justCompletedSetIndex = null);
+      });
+    } else {
+      // Uncomplete the set - remove it
+      if (_completedSets[_viewingExerciseIndex] != null &&
+          setIndex >= 0 &&
+          setIndex < _completedSets[_viewingExerciseIndex]!.length) {
+        _completedSets[_viewingExerciseIndex]!.removeAt(setIndex);
+      }
+      setState(() {}); // Trigger rebuild for uncomplete
+    }
   }
 
   // ========================================================================
@@ -5505,6 +5542,7 @@ class _ActiveWorkoutScreenState
     setState(() {
       // Replace entire exercises list
       _exercises = reorderedList;
+      _precomputeSupersetIndices();
 
       _completedSets
         ..clear()
@@ -5719,6 +5757,7 @@ class _ActiveWorkoutScreenState
       // Insert after target if from was after, before if from was before
       final insertAt = fromIndex > toIndex ? toIndex + 1 : toIndex;
       _exercises.insert(insertAt, exercise);
+      _precomputeSupersetIndices();
 
       // Remap indices for the move
       final oldIdx = fromIndex;
@@ -5780,6 +5819,7 @@ class _ActiveWorkoutScreenState
           // Rebuild the exercise list with new order
           _exercises.clear();
           _exercises.addAll(reorderedExercises);
+          _precomputeSupersetIndices();
         });
       },
       onSwapExercise: (index) {
@@ -5795,6 +5835,7 @@ class _ActiveWorkoutScreenState
         setState(() {
           // Remove exercise and shift data
           _exercises.removeAt(index);
+          _precomputeSupersetIndices();
 
           // Clean up the maps for the deleted exercise
           _completedSets.remove(index);
@@ -6094,6 +6135,7 @@ class _ActiveWorkoutScreenState
       setState(() {
         _exercises.clear();
         _exercises.addAll(updatedWorkout.exercises);
+        _precomputeSupersetIndices();
         // Reinitialize tracking for all exercises
         _completedSets.clear();
         _totalSetsPerExercise.clear();
@@ -6223,6 +6265,7 @@ class _ActiveWorkoutScreenState
     setState(() {
       // Remove exercise and shift data
       _exercises.removeAt(index);
+      _precomputeSupersetIndices();
 
       // Clean up the maps for the deleted exercise
       _completedSets.remove(index);
@@ -6302,6 +6345,7 @@ class _ActiveWorkoutScreenState
             setState(() {
               // Re-add the exercise at the same index
               _exercises.insert(index, removedExercise);
+              _precomputeSupersetIndices();
               // Shift maps back
               // Note: This is a simplified undo - full undo would restore completed sets too
             });

@@ -8,6 +8,7 @@ import '../../screens/ai_settings/ai_settings_screen.dart';
 import '../models/chat_message.dart';
 import '../models/user.dart';
 import '../services/api_client.dart';
+import '../services/data_cache_service.dart';
 import '../providers/unified_state_provider.dart';
 import 'workout_repository.dart';
 import 'auth_repository.dart';
@@ -203,7 +204,36 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
   bool get isLoading => _isLoading;
 
-  /// Load chat history
+  /// Build the cache key for chat history for a given user
+  static String _cacheKey(String userId) => 'cache_chat_history_$userId';
+
+  /// Load cached chat messages from DataCacheService
+  Future<List<ChatMessage>> _loadFromCache(String userId) async {
+    try {
+      final cached = await DataCacheService.instance.getCachedList(_cacheKey(userId));
+      if (cached != null && cached.isNotEmpty) {
+        final messages = cached.map((json) => ChatMessage.fromJson(json)).toList();
+        debugPrint('💾 [Chat] Loaded ${messages.length} messages from cache');
+        return messages;
+      }
+    } catch (e) {
+      debugPrint('❌ [Chat] Error loading from cache: $e');
+    }
+    return [];
+  }
+
+  /// Save chat messages to DataCacheService
+  Future<void> _saveToCache(String userId, List<ChatMessage> messages) async {
+    try {
+      final jsonList = messages.map((m) => m.toJson()).toList();
+      await DataCacheService.instance.cacheList(_cacheKey(userId), jsonList);
+      debugPrint('💾 [Chat] Saved ${messages.length} messages to cache');
+    } catch (e) {
+      debugPrint('❌ [Chat] Error saving to cache: $e');
+    }
+  }
+
+  /// Load chat history with cache-first pattern
   /// If force is false, only loads if there are no messages yet
   Future<void> loadHistory({bool force = false}) async {
     // Skip loading if we already have messages and not forcing
@@ -216,12 +246,28 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     final userId = await _apiClient.getUserId();
     if (userId == null) return;
 
-    state = const AsyncValue.loading();
+    // 1. Load from cache first and show immediately
+    final cachedMessages = await _loadFromCache(userId);
+    if (cachedMessages.isNotEmpty) {
+      state = AsyncValue.data(cachedMessages);
+      debugPrint('🔍 [Chat] Showing ${cachedMessages.length} cached messages while fetching fresh data');
+    } else {
+      state = const AsyncValue.loading();
+    }
+
+    // 2. Fetch fresh data from API in background
     try {
       final messages = await _repository.getChatHistory(userId);
       state = AsyncValue.data(messages);
+      // 3. Update cache with fresh data
+      await _saveToCache(userId, messages);
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      // If we have cached data, keep showing it instead of error
+      if (cachedMessages.isNotEmpty) {
+        debugPrint('⚠️ [Chat] API fetch failed, keeping cached data: $e');
+      } else {
+        state = AsyncValue.error(e, st);
+      }
     }
   }
 
@@ -254,7 +300,11 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       content: message,
       createdAt: DateTime.now().toIso8601String(),
     );
-    state = AsyncValue.data([...currentMessages, userMessage]);
+    final messagesWithUser = [...currentMessages, userMessage];
+    state = AsyncValue.data(messagesWithUser);
+
+    // Incrementally append user message to cache
+    _saveToCache(userId, messagesWithUser);
 
     _isLoading = true;
 
@@ -386,7 +436,11 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       }
 
       final updatedMessages = state.valueOrNull ?? [];
-      state = AsyncValue.data([...updatedMessages, assistantMessage]);
+      final newMessages = [...updatedMessages, assistantMessage];
+      state = AsyncValue.data(newMessages);
+
+      // Incrementally update cache with new messages (append, don't re-fetch)
+      await _saveToCache(userId, newMessages);
     } catch (e, stackTrace) {
       debugPrint('❌ [Chat] Error sending message: $e');
       debugPrint('❌ [Chat] Stack trace: $stackTrace');
@@ -421,14 +475,18 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     }
   }
 
-  /// Clear messages
-  void clear() {
+  /// Clear messages and invalidate cache
+  Future<void> clear() async {
     state = const AsyncValue.data([]);
+    final userId = await _apiClient.getUserId();
+    if (userId != null) {
+      await DataCacheService.instance.invalidate(_cacheKey(userId));
+    }
   }
 
   /// Clear history (alias for clear)
-  void clearHistory() {
-    clear();
+  Future<void> clearHistory() async {
+    await clear();
   }
 
   /// Add a system notification message (e.g., coach changed)

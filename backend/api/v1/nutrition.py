@@ -43,7 +43,7 @@ import json
 import time
 import asyncio
 import boto3
-from fastapi import APIRouter, HTTPException, Query, UploadFile, File, Form, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, UploadFile, File, Form, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, validator
 
@@ -1069,6 +1069,7 @@ async def search_whole_foods(
 
 @router.post("/log-image", response_model=LogFoodResponse)
 async def log_food_from_image(
+    background_tasks: BackgroundTasks,
     user_id: str = Form(...),
     meal_type: str = Form(...),
     image: UploadFile = File(...),
@@ -1170,8 +1171,9 @@ async def log_food_from_image(
         food_log_id = created_log.get('id') if created_log else "unknown"
         logger.info(f"Successfully logged food from image as {food_log_id}")
 
-        # Log successful image food logging
-        await log_user_activity(
+        # Background: Log activity analytics (non-critical, don't block response)
+        background_tasks.add_task(
+            log_user_activity,
             user_id=user_id,
             action="food_log_image",
             endpoint="/api/v1/nutrition/log-image",
@@ -1182,7 +1184,7 @@ async def log_food_from_image(
                 "total_calories": total_calories,
                 "food_items_count": len(food_items),
             },
-            status_code=200
+            status_code=200,
         )
 
         # Calculate confidence based on image analysis factors
@@ -1213,20 +1215,21 @@ async def log_food_from_image(
         raise
     except Exception as e:
         logger.error(f"Failed to log food from image: {e}")
-        # Log error
-        await log_user_error(
+        # Background: Log error analytics (non-critical)
+        background_tasks.add_task(
+            log_user_error,
             user_id=user_id,
             action="food_log_image",
             error=e,
             endpoint="/api/v1/nutrition/log-image",
             metadata={"meal_type": meal_type},
-            status_code=500
+            status_code=500,
         )
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/log-text", response_model=LogFoodResponse)
-async def log_food_from_text(request: LogTextRequest):
+async def log_food_from_text(request: LogTextRequest, background_tasks: BackgroundTasks):
     """
     Log food from a text description using Gemini with goal-based analysis.
 
@@ -1361,8 +1364,9 @@ async def log_food_from_text(request: LogTextRequest):
 
         logger.info(f"Successfully logged food from text as {food_log_id}")
 
-        # Log successful text food logging
-        await log_user_activity(
+        # Background: Log activity analytics (non-critical, don't block response)
+        background_tasks.add_task(
+            log_user_activity,
             user_id=request.user_id,
             action="food_log_text",
             endpoint="/api/v1/nutrition/log-text",
@@ -1374,7 +1378,7 @@ async def log_food_from_text(request: LogTextRequest):
                 "food_items_count": len(food_items),
                 "health_score": health_score,
             },
-            status_code=200
+            status_code=200,
         )
 
         # Text descriptions are generally more accurate than images
@@ -1411,8 +1415,9 @@ async def log_food_from_text(request: LogTextRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to log food from text: {e}")
-        # Log error
-        await log_user_error(
+        # Background: Log error analytics (non-critical)
+        background_tasks.add_task(
+            log_user_error,
             user_id=request.user_id,
             action="food_log_text",
             error=e,
@@ -1421,7 +1426,7 @@ async def log_food_from_text(request: LogTextRequest):
                 "meal_type": request.meal_type,
                 "description": request.description[:100] if request.description else None,
             },
-            status_code=500
+            status_code=500,
         )
         raise HTTPException(status_code=500, detail=str(e))
 

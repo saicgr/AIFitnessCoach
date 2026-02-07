@@ -16,7 +16,7 @@ import json
 from datetime import date, datetime, time, timedelta
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from core.supabase_db import get_supabase_db
@@ -112,9 +112,28 @@ class MealSuggestionsResponse(BaseModel):
 # API Endpoints
 # =============================================================================
 
+async def _log_weekly_plan_event(user_id: str, week_start_iso: str, workout_days: List[int], fasting_protocol: Optional[str], nutrition_strategy: str):
+    """Background task: Log the weekly plan generation event (non-critical)."""
+    try:
+        await user_context_service.log_event(
+            user_id=user_id,
+            event_type=EventType.FEATURE_INTERACTION,
+            metadata={
+                "feature": "weekly_plan_generated",
+                "week_start": week_start_iso,
+                "workout_days": workout_days,
+                "fasting_protocol": fasting_protocol,
+                "nutrition_strategy": nutrition_strategy,
+            },
+        )
+        logger.debug(f"Background: Logged weekly plan event for user {user_id}")
+    except Exception as e:
+        logger.warning(f"Background: Failed to log weekly plan event: {e}")
+
+
 @router.post("/generate", response_model=WeeklyPlanResponse)
 @limiter.limit("5/minute")
-async def generate_weekly_plan(request: GenerateWeeklyPlanRequest, http_request: Request):
+async def generate_weekly_plan(request: GenerateWeeklyPlanRequest, http_request: Request, background_tasks: BackgroundTasks):
     """
     Generate a new weekly holistic plan.
 
@@ -158,17 +177,14 @@ async def generate_weekly_plan(request: GenerateWeeklyPlanRequest, http_request:
         plan_id = await service.save_weekly_plan(plan)
         plan.id = plan_id
 
-        # Log the event
-        await user_context_service.log_event(
+        # Log the event in background (non-critical, don't block the response)
+        background_tasks.add_task(
+            _log_weekly_plan_event,
             user_id=request.user_id,
-            event_type=EventType.FEATURE_INTERACTION,
-            metadata={
-                "feature": "weekly_plan_generated",
-                "week_start": week_start.isoformat(),
-                "workout_days": request.workout_days,
-                "fasting_protocol": request.fasting_protocol,
-                "nutrition_strategy": request.nutrition_strategy,
-            },
+            week_start_iso=week_start.isoformat(),
+            workout_days=request.workout_days,
+            fasting_protocol=request.fasting_protocol,
+            nutrition_strategy=request.nutrition_strategy,
         )
 
         logger.info(f"Generated weekly plan {plan_id} for user {request.user_id}")
@@ -193,8 +209,20 @@ async def generate_weekly_plan(request: GenerateWeeklyPlanRequest, http_request:
         raise HTTPException(status_code=500, detail="Failed to generate weekly plan")
 
 
+async def _log_screen_view_event(user_id: str, screen: str, metadata: dict):
+    """Background task: Log screen view event (non-critical)."""
+    try:
+        await user_context_service.log_event(
+            user_id=user_id,
+            event_type=EventType.SCREEN_VIEW,
+            metadata=metadata,
+        )
+    except Exception as e:
+        logger.warning(f"Background: Failed to log screen view event: {e}")
+
+
 @router.get("/current")
-async def get_current_week_plan(user_id: str):
+async def get_current_week_plan(user_id: str, background_tasks: BackgroundTasks):
     """
     Get the current week's plan for a user.
 
@@ -209,10 +237,11 @@ async def get_current_week_plan(user_id: str):
         if not plan:
             return {"message": "No plan found for current week", "plan": None}
 
-        # Log view event
-        await user_context_service.log_event(
+        # Log view event in background (non-critical, don't block the response)
+        background_tasks.add_task(
+            _log_screen_view_event,
             user_id=user_id,
-            event_type=EventType.SCREEN_VIEW,
+            screen="weekly_plan",
             metadata={"screen": "weekly_plan", "week_start": plan.week_start_date.isoformat()},
         )
 
@@ -342,7 +371,7 @@ async def archive_weekly_plan(plan_id: str, user_id: str):
 
 
 @router.get("/{plan_id}/daily/{plan_date}")
-async def get_daily_entry(plan_id: str, plan_date: str, user_id: str):
+async def get_daily_entry(plan_id: str, plan_date: str, user_id: str, background_tasks: BackgroundTasks):
     """
     Get a specific daily entry from a weekly plan.
     """
@@ -368,10 +397,11 @@ async def get_daily_entry(plan_id: str, plan_date: str, user_id: str):
 
         entry = result.data[0]
 
-        # Log view event
-        await user_context_service.log_event(
+        # Log view event in background (non-critical, don't block the response)
+        background_tasks.add_task(
+            _log_screen_view_event,
             user_id=user_id,
-            event_type=EventType.SCREEN_VIEW,
+            screen="daily_plan",
             metadata={"screen": "daily_plan", "date": plan_date, "day_type": entry.get("day_type")},
         )
 
@@ -544,17 +574,25 @@ Return JSON only:
 
             data = json.loads(content.strip())
 
-            # Log success
-            await user_context_service.log_event(
-                user_id=request.user_id,
-                event_type=EventType.FEATURE_INTERACTION,
-                metadata={
-                    "feature": "meal_suggestions_generated",
-                    "date": request.plan_date,
-                    "day_type": request.day_type,
-                    "meal_count": len(data.get("meals", [])),
-                },
-            )
+            # Log success in background (non-critical, don't block the response)
+            # Note: http_request is available from the endpoint parameter
+            async def _log_meal_event():
+                try:
+                    await user_context_service.log_event(
+                        user_id=request.user_id,
+                        event_type=EventType.FEATURE_INTERACTION,
+                        metadata={
+                            "feature": "meal_suggestions_generated",
+                            "date": request.plan_date,
+                            "day_type": request.day_type,
+                            "meal_count": len(data.get("meals", [])),
+                        },
+                    )
+                except Exception as log_err:
+                    logger.warning(f"Background: Failed to log meal suggestions event: {log_err}")
+
+            import asyncio
+            asyncio.create_task(_log_meal_event())
 
             return MealSuggestionsResponse(
                 meals=data.get("meals", []),

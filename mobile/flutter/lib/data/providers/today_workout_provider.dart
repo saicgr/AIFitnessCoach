@@ -46,6 +46,8 @@ final todayWorkoutProvider =
 class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse?>> {
   final Ref _ref;
   Timer? _pollingTimer;
+  Timer? _backgroundGenPollTimer;
+  Timer? _backgroundGenTimeout;
   bool _isRefreshing = false;
   bool _disposed = false;
 
@@ -169,6 +171,10 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
         debugPrint('🚀 [Auto-Gen] Backend signaled needs_generation=true, date=${response!.nextWorkoutDate}');
         _triggerAutoGeneration(response.nextWorkoutDate!);
 
+        // Start polling for the backend-generated workout (Fix 2)
+        // The backend also generates in the background, so poll until it appears
+        _startBackgroundGenerationPolling();
+
         response = TodayWorkoutResponse(
           hasWorkoutToday: response.hasWorkoutToday,
           todayWorkout: response.todayWorkout,
@@ -257,6 +263,59 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     });
   }
 
+  /// Start polling for background-generated workout (Fix 2)
+  ///
+  /// When the backend signals needs_generation=true, it also starts generating
+  /// the workout in a background task. This method polls every 5 seconds until
+  /// the workout appears, with a 2-minute safety timeout.
+  void _startBackgroundGenerationPolling() {
+    if (_disposed) return;
+
+    // Cancel any existing poll timers
+    _backgroundGenPollTimer?.cancel();
+    _backgroundGenTimeout?.cancel();
+
+    debugPrint('[TodayWorkout] Starting background generation polling (every 5s, 2min timeout)');
+
+    _backgroundGenPollTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
+      if (_disposed) {
+        _backgroundGenPollTimer?.cancel();
+        return;
+      }
+
+      debugPrint('[TodayWorkout] Background gen poll: checking for generated workout...');
+      await _fetchFromApi(showLoading: false);
+
+      // Check if the workout is now available (needs_generation is no longer true)
+      final currentState = state.valueOrNull;
+      if (currentState != null && !currentState.needsGeneration && !currentState.isGenerating) {
+        // Either a workout was generated, or the situation resolved
+        if (currentState.todayWorkout != null || currentState.nextWorkout != null) {
+          debugPrint('[TodayWorkout] Background generation complete, stopping poll');
+        } else {
+          debugPrint('[TodayWorkout] Generation state resolved, stopping poll');
+        }
+        _stopBackgroundGenerationPolling();
+      }
+    });
+
+    // Safety timeout: stop polling after 2 minutes
+    _backgroundGenTimeout = Timer(const Duration(minutes: 2), () {
+      if (!_disposed) {
+        debugPrint('[TodayWorkout] Background generation poll timeout (2 min), stopping');
+        _stopBackgroundGenerationPolling();
+      }
+    });
+  }
+
+  /// Stop background generation polling
+  void _stopBackgroundGenerationPolling() {
+    _backgroundGenPollTimer?.cancel();
+    _backgroundGenPollTimer = null;
+    _backgroundGenTimeout?.cancel();
+    _backgroundGenTimeout = null;
+  }
+
   /// Public method to force refresh from API
   Future<void> refresh() async {
     await _fetchFromApi(showLoading: false);
@@ -280,6 +339,7 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
   void dispose() {
     _disposed = true;
     _cancelPolling();
+    _stopBackgroundGenerationPolling();
     super.dispose();
   }
 

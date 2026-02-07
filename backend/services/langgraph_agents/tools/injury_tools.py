@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 
 @tool
 def report_injury(
-    user_id: int,
+    user_id: str,
     body_part: str,
     severity: str = "moderate",
     duration_weeks: int = None,
@@ -35,7 +35,7 @@ def report_injury(
     3. Add appropriate rehab exercises based on recovery phase
 
     Args:
-        user_id: The user's ID
+        user_id: The user's ID (UUID string)
         body_part: The injured body part (e.g., "back", "shoulder", "knee")
         severity: Injury severity - "mild" (2 weeks), "moderate" (3 weeks), or "severe" (5 weeks)
         duration_weeks: Optional custom recovery duration in weeks
@@ -204,18 +204,18 @@ def report_injury(
 
 @tool
 def clear_injury(
-    user_id: int,
+    user_id: str,
     body_part: str = None,
-    injury_id: int = None,
+    injury_id: str = None,
     user_feedback: str = None
 ) -> Dict[str, Any]:
     """
     Clear/resolve an injury for the user.
 
     Args:
-        user_id: The user's ID
+        user_id: The user's ID (UUID string)
         body_part: The body part to clear (use this OR injury_id)
-        injury_id: Specific injury ID to clear (use this OR body_part)
+        injury_id: Specific injury UUID to clear (use this OR body_part)
         user_feedback: Optional feedback about the recovery
 
     Returns:
@@ -330,12 +330,12 @@ def clear_injury(
 
 
 @tool
-def get_active_injuries(user_id: int) -> Dict[str, Any]:
+def get_active_injuries(user_id: str) -> Dict[str, Any]:
     """
     Get all active injuries for a user with their current recovery status.
 
     Args:
-        user_id: The user's ID
+        user_id: The user's ID (UUID string)
 
     Returns:
         Result dict with list of active injuries and their recovery progress
@@ -427,8 +427,8 @@ def get_active_injuries(user_id: int) -> Dict[str, Any]:
 
 @tool
 def update_injury_status(
-    user_id: int,
-    injury_id: int = None,
+    user_id: str,
+    injury_id: str = None,
     body_part: str = None,
     pain_level: int = None,
     improvement_notes: str = None
@@ -437,8 +437,8 @@ def update_injury_status(
     Update the status of an active injury.
 
     Args:
-        user_id: The user's ID
-        injury_id: Specific injury ID to update (use this OR body_part)
+        user_id: The user's ID (UUID string)
+        injury_id: Specific injury UUID to update (use this OR body_part)
         body_part: Body part to update (use this OR injury_id)
         pain_level: New pain level (1-10)
         improvement_notes: Notes about improvement

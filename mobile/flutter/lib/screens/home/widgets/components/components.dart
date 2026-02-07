@@ -7,6 +7,7 @@ export 'quantity_selector.dart';
 export 'section_title.dart';
 export 'stat_badge.dart';
 export 'notification_bell_button.dart';
+export 'calendar_icon_button.dart';
 export 'program_menu_button.dart';
 export 'equipment_selector.dart';
 export 'focus_areas_selector.dart';

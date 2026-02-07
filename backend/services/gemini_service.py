@@ -33,7 +33,8 @@ from models.gemini_schemas import (
     ParseWorkoutInputV2Response,
 )
 import re as regex_module  # For weight parsing
-from datetime import datetime
+import hashlib
+from datetime import datetime, timedelta
 
 # Import split descriptions for rich AI context
 from services.split_descriptions import SPLIT_DESCRIPTIONS, get_split_context
@@ -43,6 +44,51 @@ from core.ai_response_parser import parse_ai_json
 
 settings = get_settings()
 logger = logging.getLogger("gemini")
+
+
+# ===========================================================================
+# In-Memory Response Cache for Repeated Gemini API Queries
+# ===========================================================================
+
+class ResponseCache:
+    """Simple TTL cache for Gemini API responses to avoid redundant calls."""
+
+    def __init__(self, ttl_seconds: int = 300, max_size: int = 200):
+        self._cache: dict = {}
+        self._ttl = timedelta(seconds=ttl_seconds)
+        self._max_size = max_size
+
+    def get(self, key: str):
+        """Get a cached value if it exists and hasn't expired."""
+        if key in self._cache:
+            cached_at, value = self._cache[key]
+            if datetime.now() - cached_at < self._ttl:
+                return value
+            # Expired - remove it
+            del self._cache[key]
+        return None
+
+    def set(self, key: str, value):
+        """Store a value in the cache, evicting oldest if at capacity."""
+        # Evict oldest entry if at capacity
+        if len(self._cache) >= self._max_size:
+            oldest_key = min(self._cache, key=lambda k: self._cache[k][0])
+            del self._cache[oldest_key]
+        self._cache[key] = (datetime.now(), value)
+
+    @staticmethod
+    def make_key(*args) -> str:
+        """Create a deterministic cache key from arguments."""
+        return hashlib.md5(
+            json.dumps(args, sort_keys=True, default=str).encode()
+        ).hexdigest()
+
+
+# Module-level caches with purpose-tuned TTLs and sizes
+_summary_cache = ResponseCache(ttl_seconds=3600, max_size=100)   # 1hr for workout summaries
+_intent_cache = ResponseCache(ttl_seconds=600, max_size=200)     # 10min for intent extraction
+_food_text_cache = ResponseCache(ttl_seconds=1800, max_size=150) # 30min for food text analysis
+_embedding_cache = ResponseCache(ttl_seconds=3600, max_size=500) # 1hr for embedding vectors
 
 
 def safe_join_list(items, default: str = "") -> str:
@@ -975,15 +1021,22 @@ Create engaging, creative names that:
         # Add current message
         contents.append(types.Content(role="user", parts=[types.Part.from_text(text=user_message)]))
 
-        response = await client.aio.models.generate_content(
-            model=self.model,
-            contents=contents,
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
-                max_output_tokens=settings.gemini_max_tokens,
-                temperature=settings.gemini_temperature,
-            ),
-        )
+        try:
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(
+                    model=self.model,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_prompt,
+                        max_output_tokens=settings.gemini_max_tokens,
+                        temperature=settings.gemini_temperature,
+                    ),
+                ),
+                timeout=60,  # 60s for chat responses
+            )
+        except asyncio.TimeoutError:
+            logger.error("[Chat] Gemini API timed out after 60s")
+            raise Exception("AI response timed out. Please try again.")
 
         return response.text
 
@@ -1050,16 +1103,29 @@ HYDRATION EXTRACTION:
 
 User message: "''' + user_message + '"'
 
+        # Check intent cache first (common intents like greetings hit this often)
         try:
-            response = await client.aio.models.generate_content(
-                model=self.model,
-                contents=extraction_prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=IntentExtractionResponse,
-                    max_output_tokens=2000,  # Increased for thinking models
-                    temperature=0.1,  # Low temp for consistent extraction
+            cache_key = _intent_cache.make_key("intent", user_message.strip().lower())
+            cached_result = _intent_cache.get(cache_key)
+            if cached_result is not None:
+                logger.info(f"[IntentCache] Cache HIT for message: '{user_message[:50]}...'")
+                return cached_result
+        except Exception as cache_err:
+            logger.warning(f"[IntentCache] Cache lookup error (falling through): {cache_err}")
+
+        try:
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(
+                    model=self.model,
+                    contents=extraction_prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=IntentExtractionResponse,
+                        max_output_tokens=2000,  # Increased for thinking models
+                        temperature=0.1,  # Low temp for consistent extraction
+                    ),
                 ),
+                timeout=15,  # Intent extraction should be fast
             )
 
             # Use response.parsed for structured output - SDK handles JSON parsing
@@ -1067,7 +1133,7 @@ User message: "''' + user_message + '"'
             if not data:
                 raise ValueError("Gemini returned empty intent extraction response")
 
-            return IntentExtraction(
+            result = IntentExtraction(
                 intent=CoachIntent(data.intent or "question"),
                 exercises=[e.lower() for e in (data.exercises or [])],
                 muscle_groups=[m.lower() for m in (data.muscle_groups or [])],
@@ -1079,6 +1145,18 @@ User message: "''' + user_message + '"'
                 hydration_amount=data.hydration_amount,
             )
 
+            # Cache the result
+            try:
+                _intent_cache.set(cache_key, result)
+                logger.info(f"[IntentCache] Cache MISS - stored result for: '{user_message[:50]}...'")
+            except Exception as cache_err:
+                logger.warning(f"[IntentCache] Failed to store result: {cache_err}")
+
+            return result
+
+        except asyncio.TimeoutError:
+            logger.error(f"[Intent] Gemini API timed out after 15s for intent extraction")
+            return IntentExtraction(intent=CoachIntent.QUESTION)
         except Exception as e:
             print(f"Intent extraction failed: {e}")
             return IntentExtraction(intent=CoachIntent.QUESTION)
@@ -1103,15 +1181,18 @@ IMPORTANT:
 - If no exercises are mentioned, return: {{"exercises": []}}'''
 
         try:
-            response = await client.aio.models.generate_content(
-                model=self.model,
-                contents=extraction_prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=ExerciseListResponse,
-                    max_output_tokens=2000,  # Increased for thinking models
-                    temperature=0.1,
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(
+                    model=self.model,
+                    contents=extraction_prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=ExerciseListResponse,
+                        max_output_tokens=2000,  # Increased for thinking models
+                        temperature=0.1,
+                    ),
                 ),
+                timeout=15,  # 15s for simple extraction
             )
 
             # Use response.parsed for structured output - SDK handles JSON parsing
@@ -1124,6 +1205,9 @@ IMPORTANT:
                 return exercises
             return None
 
+        except asyncio.TimeoutError:
+            logger.error("[ExerciseExtraction] Gemini API timed out after 15s")
+            return None
         except Exception as e:
             print(f"Exercise extraction from response failed: {e}")
             return None
@@ -1213,15 +1297,18 @@ Return a summary describing what was found and any warnings about unclear parsin
                     mime_type="image/jpeg"
                 ))
 
-            response = await client.aio.models.generate_content(
-                model=self.model,
-                contents=contents,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=ParseWorkoutInputResponse,
-                    max_output_tokens=4000,
-                    temperature=0.2,  # Low for consistent parsing
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(
+                    model=self.model,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=ParseWorkoutInputResponse,
+                        max_output_tokens=4000,
+                        temperature=0.2,  # Low for consistent parsing
+                    ),
                 ),
+                timeout=30,  # 30s for workout input parsing
             )
 
             data = response.parsed
@@ -1514,15 +1601,18 @@ INPUT TO PARSE:
                     mime_type="image/jpeg"
                 ))
 
-            response = await client.aio.models.generate_content(
-                model=self.model,
-                contents=contents,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=ParseWorkoutInputV2Response,
-                    max_output_tokens=4000,
-                    temperature=0.2,  # Low for consistent parsing
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(
+                    model=self.model,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=ParseWorkoutInputV2Response,
+                        max_output_tokens=4000,
+                        temperature=0.2,  # Low for consistent parsing
+                    ),
                 ),
+                timeout=30,  # 30s for workout input parsing
             )
 
             data = response.parsed
@@ -1583,6 +1673,7 @@ INPUT TO PARSE:
     def get_embedding(self, text: str) -> List[float]:
         """
         Get embedding vector for text (used for RAG).
+        Uses local cache to avoid redundant embedding API calls.
 
         Args:
             text: Text to embed
@@ -1590,16 +1681,36 @@ INPUT TO PARSE:
         Returns:
             Embedding vector as list of floats
         """
+        # Check embedding cache first
+        try:
+            cache_key = _embedding_cache.make_key("emb", text.strip().lower())
+            cached = _embedding_cache.get(cache_key)
+            if cached is not None:
+                logger.debug(f"[EmbeddingCache] Cache HIT for: '{text[:40]}...'")
+                return cached
+        except Exception as cache_err:
+            logger.warning(f"[EmbeddingCache] Cache lookup error (falling through): {cache_err}")
+
         result = client.models.embed_content(
             model=f"models/{self.embedding_model}",
             contents=text,
             config=types.EmbedContentConfig(output_dimensionality=768),
         )
-        return result.embeddings[0].values
+        embedding = result.embeddings[0].values
+
+        # Cache the result
+        try:
+            _embedding_cache.set(cache_key, embedding)
+            logger.debug(f"[EmbeddingCache] Cache MISS - stored embedding for: '{text[:40]}...'")
+        except Exception as cache_err:
+            logger.warning(f"[EmbeddingCache] Failed to store embedding: {cache_err}")
+
+        return embedding
 
     async def get_embedding_async(self, text: str) -> List[float]:
         """
         Get embedding vector for text asynchronously.
+        Uses local cache to avoid redundant embedding API calls.
 
         Args:
             text: Text to embed
@@ -1607,12 +1718,31 @@ INPUT TO PARSE:
         Returns:
             Embedding vector as list of floats
         """
+        # Check embedding cache first
+        try:
+            cache_key = _embedding_cache.make_key("emb", text.strip().lower())
+            cached = _embedding_cache.get(cache_key)
+            if cached is not None:
+                logger.debug(f"[EmbeddingCache] Cache HIT (async) for: '{text[:40]}...'")
+                return cached
+        except Exception as cache_err:
+            logger.warning(f"[EmbeddingCache] Cache lookup error (falling through): {cache_err}")
+
         result = await client.aio.models.embed_content(
             model=f"models/{self.embedding_model}",
             contents=text,
             config=types.EmbedContentConfig(output_dimensionality=768),
         )
-        return result.embeddings[0].values
+        embedding = result.embeddings[0].values
+
+        # Cache the result
+        try:
+            _embedding_cache.set(cache_key, embedding)
+            logger.debug(f"[EmbeddingCache] Cache MISS (async) - stored embedding for: '{text[:40]}...'")
+        except Exception as cache_err:
+            logger.warning(f"[EmbeddingCache] Failed to store embedding: {cache_err}")
+
+        return embedding
 
     def get_embeddings_batch(self, texts: List[str]) -> List[List[float]]:
         """Get embeddings for multiple texts."""
@@ -1906,6 +2036,18 @@ WEIGHT/COUNT FIELDS (required for portion editing):
         Returns:
             Dictionary with food_items (with rankings), total_calories, macros, ai_suggestion, etc.
         """
+        # Check food text cache first (same food description returns same analysis)
+        try:
+            cache_key = _food_text_cache.make_key(
+                "food_text", description.strip().lower(), user_goals, nutrition_targets
+            )
+            cached_result = _food_text_cache.get(cache_key)
+            if cached_result is not None:
+                logger.info(f"[FoodTextCache] Cache HIT for: '{description[:60]}...'")
+                return cached_result
+        except Exception as cache_err:
+            logger.warning(f"[FoodTextCache] Cache lookup error (falling through): {cache_err}")
+
         # Build user context section for goal-based scoring
         user_context = ""
         if user_goals or nutrition_targets:
@@ -2132,6 +2274,13 @@ IMPORTANT - ALWAYS identify foods:
                         logger.warning(f"USDA enhancement failed, using AI estimates: {e}")
                         # Continue with original AI estimates if enhancement fails
 
+                    # Cache the successful result
+                    try:
+                        _food_text_cache.set(cache_key, result)
+                        logger.info(f"[FoodTextCache] Cache MISS - stored result for: '{description[:60]}...'")
+                    except Exception as cache_err:
+                        logger.warning(f"[FoodTextCache] Failed to store result: {cache_err}")
+
                     return result
                 else:
                     print(f"⚠️ [Gemini] Failed to extract valid JSON with food_items (attempt {attempt + 1})")
@@ -2177,6 +2326,13 @@ IMPORTANT - ALWAYS identify foods:
                         result['fiber_g'] = round(sum(item.get('fiber_g', 0) or 0 for item in enhanced_items), 1)
                     except Exception as e:
                         logger.warning(f"USDA enhancement failed in fallback: {e}")
+
+                    # Cache the fallback result too
+                    try:
+                        _food_text_cache.set(cache_key, result)
+                        logger.info(f"[FoodTextCache] Cache MISS (fallback) - stored result for: '{description[:60]}...'")
+                    except Exception as cache_err:
+                        logger.warning(f"[FoodTextCache] Failed to store fallback result: {cache_err}")
 
                     return result
         except Exception as e:
@@ -2431,16 +2587,23 @@ IMPORTANT RULES:
 
         try:
             print(f"🔍 [Gemini] Analyzing ingredient inflammation for: {product_name or 'Unknown product'}")
-            response = await client.aio.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=InflammationAnalysisGeminiResponse,
-                    max_output_tokens=4000,
-                    temperature=0.2,  # Low temperature for consistent classification
-                ),
-            )
+            try:
+                response = await asyncio.wait_for(
+                    client.aio.models.generate_content(
+                        model=self.model,
+                        contents=prompt,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                            response_schema=InflammationAnalysisGeminiResponse,
+                            max_output_tokens=4000,
+                            temperature=0.2,  # Low temperature for consistent classification
+                        ),
+                    ),
+                    timeout=30,  # 30s for inflammation analysis
+                )
+            except asyncio.TimeoutError:
+                logger.error("[Inflammation] Gemini API timed out after 30s")
+                return None
 
             # Use response.parsed for structured output - SDK handles JSON parsing
             parsed = response.parsed
@@ -3683,15 +3846,18 @@ If user has gym equipment - most exercises MUST use that equipment!"""
         logger.info("=" * 80)
 
         try:
-            response = await client.aio.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=GeneratedWorkoutResponse,
-                    temperature=0.7,  # Higher creativity for unique workout names
-                    max_output_tokens=8000  # Increased for detailed workout plans with set_targets
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(
+                    model=self.model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=GeneratedWorkoutResponse,
+                        temperature=0.7,  # Higher creativity for unique workout names
+                        max_output_tokens=8000  # Increased for detailed workout plans with set_targets
+                    ),
                 ),
+                timeout=90,  # 90s for full workout generation (large prompt + response)
             )
 
             # Use response.parsed for structured output - SDK handles JSON parsing
@@ -4440,16 +4606,19 @@ Return a JSON object with:
         logger.info("=" * 80)
 
         try:
-            response = await client.aio.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction="You are a creative fitness coach. Generate motivating workout names. Return ONLY valid JSON.",
-                    response_mime_type="application/json",
-                    response_schema=WorkoutNamingResponse,
-                    temperature=0.8,
-                    max_output_tokens=2000  # Increased for thinking models
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(
+                    model=self.model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction="You are a creative fitness coach. Generate motivating workout names. Return ONLY valid JSON.",
+                        response_mime_type="application/json",
+                        response_schema=WorkoutNamingResponse,
+                        temperature=0.8,
+                        max_output_tokens=2000  # Increased for thinking models
+                    ),
                 ),
+                timeout=30,  # 30s for workout naming (small response)
             )
 
             # Use response.parsed for structured output - SDK handles JSON parsing
@@ -4501,6 +4670,21 @@ Return a JSON object with:
         Returns:
             Plain-text workout summary (2-3 sentences, no markdown)
         """
+        # Check summary cache first (same workout data should return same summary)
+        try:
+            # Build cache key from workout content (exercises define the workout)
+            exercise_names = [ex.get("name", "") for ex in exercises] if exercises else []
+            cache_key = _summary_cache.make_key(
+                "summary", workout_name, exercise_names, target_muscles,
+                user_goals, fitness_level, duration_minutes, workout_type, difficulty
+            )
+            cached_result = _summary_cache.get(cache_key)
+            if cached_result is not None:
+                logger.info(f"[SummaryCache] Cache HIT for workout: '{workout_name}'")
+                return cached_result
+        except Exception as cache_err:
+            logger.warning(f"[SummaryCache] Cache lookup error (falling through): {cache_err}")
+
         try:
             # Use the Workout Insights LangGraph agent
             from services.langgraph_agents.workout_insights.graph import generate_workout_insights
@@ -4515,6 +4699,13 @@ Return a JSON object with:
                 user_goals=user_goals,
                 fitness_level=fitness_level,
             )
+
+            # Cache the result
+            try:
+                _summary_cache.set(cache_key, summary)
+                logger.info(f"[SummaryCache] Cache MISS - stored summary for: '{workout_name}'")
+            except Exception as cache_err:
+                logger.warning(f"[SummaryCache] Failed to store result: {cache_err}")
 
             return summary
 
@@ -4612,15 +4803,18 @@ RULES:
 
             for attempt in range(max_retries + 1):
                 try:
-                    response = await client.aio.models.generate_content(
-                        model=self.model,
-                        contents=prompt,
-                        config=types.GenerateContentConfig(
-                            response_mime_type="application/json",
-                            response_schema=ExerciseReasoningResponse,
-                            temperature=0.7,
-                            max_output_tokens=4000,  # Increased to prevent truncation
+                    response = await asyncio.wait_for(
+                        client.aio.models.generate_content(
+                            model=self.model,
+                            contents=prompt,
+                            config=types.GenerateContentConfig(
+                                response_mime_type="application/json",
+                                response_schema=ExerciseReasoningResponse,
+                                temperature=0.7,
+                                max_output_tokens=4000,  # Increased to prevent truncation
+                            ),
                         ),
+                        timeout=30,  # 30s for exercise reasoning
                     )
 
                     # Use response.parsed for structured output - SDK handles JSON parsing
@@ -4812,14 +5006,17 @@ Add coordination_notes array with warnings if any conflicts exist (e.g., workout
 '''
 
         try:
-            response = await client.aio.models.generate_content(
-                model=self.model,
-                contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
-                config=types.GenerateContentConfig(
-                    system_instruction="You are a fitness and nutrition planning AI. Return only valid JSON.",
-                    max_output_tokens=8000,
-                    temperature=0.7,
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(
+                    model=self.model,
+                    contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
+                    config=types.GenerateContentConfig(
+                        system_instruction="You are a fitness and nutrition planning AI. Return only valid JSON.",
+                        max_output_tokens=8000,
+                        temperature=0.7,
+                    ),
                 ),
+                timeout=90,  # 90s for large weekly plan generation
             )
 
             # Extract JSON from response
@@ -4833,6 +5030,9 @@ Add coordination_notes array with warnings if any conflicts exist (e.g., workout
 
             return json.loads(text.strip())
 
+        except asyncio.TimeoutError:
+            logger.error("[WeeklyPlan] Gemini API timed out after 90s")
+            raise Exception("Weekly plan generation timed out. Please try again.")
         except Exception as e:
             logger.error(f"Error generating weekly holistic plan: {e}")
             raise
@@ -4922,14 +5122,17 @@ Return ONLY valid JSON (no markdown) as an array:
 '''
 
         try:
-            response = await client.aio.models.generate_content(
-                model=self.model,
-                contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
-                config=types.GenerateContentConfig(
-                    system_instruction="You are a nutrition planning AI. Generate practical, healthy meal suggestions. Return only valid JSON.",
-                    max_output_tokens=4000,
-                    temperature=0.7,
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(
+                    model=self.model,
+                    contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
+                    config=types.GenerateContentConfig(
+                        system_instruction="You are a nutrition planning AI. Generate practical, healthy meal suggestions. Return only valid JSON.",
+                        max_output_tokens=4000,
+                        temperature=0.7,
+                    ),
                 ),
+                timeout=60,  # 60s for daily meal plan
             )
 
             # Extract JSON from response
@@ -4943,6 +5146,9 @@ Return ONLY valid JSON (no markdown) as an array:
 
             return json.loads(text.strip())
 
+        except asyncio.TimeoutError:
+            logger.error("[MealPlan] Gemini API timed out after 60s")
+            raise Exception("Meal plan generation timed out. Please try again.")
         except Exception as e:
             logger.error(f"Error generating daily meal plan: {e}")
             raise
@@ -5006,14 +5212,17 @@ Return ONLY valid JSON (no markdown):
 '''
 
         try:
-            response = await client.aio.models.generate_content(
-                model=self.model,
-                contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
-                config=types.GenerateContentConfig(
-                    system_instruction="You are a nutrition planning AI. Return only valid JSON.",
-                    max_output_tokens=2000,
-                    temperature=0.8,
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(
+                    model=self.model,
+                    contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
+                    config=types.GenerateContentConfig(
+                        system_instruction="You are a nutrition planning AI. Return only valid JSON.",
+                        max_output_tokens=2000,
+                        temperature=0.8,
+                    ),
                 ),
+                timeout=30,  # 30s for single meal regeneration
             )
 
             text = response.text.strip()
@@ -5026,6 +5235,9 @@ Return ONLY valid JSON (no markdown):
 
             return json.loads(text.strip())
 
+        except asyncio.TimeoutError:
+            logger.error("[MealRegenerate] Gemini API timed out after 30s")
+            raise Exception("Meal regeneration timed out. Please try again.")
         except Exception as e:
             logger.error(f"Error regenerating meal: {e}")
             raise

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
 import '../../data/models/nutrition_preferences.dart';
@@ -239,7 +240,7 @@ class _NutritionSettingsScreenState
                       HapticService.light();
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
+                        AppPageRoute(
                           builder: (context) => const FoodLibraryScreen(),
                         ),
                       );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/animations/app_animations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/flexibility_assessment.dart';
 import '../../data/providers/flexibility_provider.dart';
@@ -469,7 +470,7 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
   void _openTestDetail(FlexibilityTest test) {
     Navigator.push(
       context,
-      MaterialPageRoute(
+      AppPageRoute(
         builder: (context) => FlexibilityTestDetailScreen(
           test: test,
           userId: widget.userId,
@@ -493,7 +494,7 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
   void _openHistory(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
+      AppPageRoute(
         builder: (context) => FlexibilityHistoryScreen(userId: widget.userId),
       ),
     );

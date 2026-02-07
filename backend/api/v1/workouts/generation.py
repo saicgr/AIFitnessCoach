@@ -10,12 +10,14 @@ This module handles AI-powered workout generation:
 - POST /add-exercise - Add an exercise to a workout
 - POST /extend - Extend a workout with more exercises
 """
+import hashlib
 import json
 import asyncio
+import threading
 from datetime import datetime, timedelta
 from typing import List, AsyncGenerator, Dict, Any, Optional
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from core.supabase_db import get_supabase_db
@@ -106,6 +108,60 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
+# =============================================================================
+# In-Memory TTL Cache for Workout Generation
+# =============================================================================
+# Prevents duplicate AI generation calls when a user retries with identical
+# parameters within a short window (e.g., double-tap, network retry).
+# Cache entries expire after 5 minutes.
+
+_generation_cache: dict = {}
+_CACHE_TTL = timedelta(minutes=5)
+_cache_lock = threading.Lock()
+
+
+def _generation_cache_key(user_id: str, params: dict) -> str:
+    """Create a deterministic cache key from user_id and generation parameters."""
+    param_str = json.dumps(params, sort_keys=True, default=str)
+    return hashlib.md5(f"{user_id}:{param_str}".encode()).hexdigest()
+
+
+def _get_cached_generation(key: str):
+    """Get a cached generation result if still valid. Returns None on miss."""
+    with _cache_lock:
+        if key in _generation_cache:
+            cached_at, result = _generation_cache[key]
+            if datetime.now() - cached_at < _CACHE_TTL:
+                logger.info(f"Cache HIT for workout generation key={key[:8]}")
+                return result
+            else:
+                del _generation_cache[key]
+                logger.debug(f"Cache EXPIRED for key={key[:8]}")
+    return None
+
+
+def _set_cached_generation(key: str, result):
+    """Store a successful generation result in the cache."""
+    with _cache_lock:
+        _generation_cache[key] = (datetime.now(), result)
+        logger.info(f"Cache SET for workout generation key={key[:8]}")
+        if len(_generation_cache) > 100:
+            _cleanup_expired_cache()
+
+
+def _cleanup_expired_cache():
+    """Remove all expired entries from the generation cache. Must hold _cache_lock."""
+    now = datetime.now()
+    expired_keys = [
+        k for k, (cached_at, _) in _generation_cache.items()
+        if now - cached_at >= _CACHE_TTL
+    ]
+    for k in expired_keys:
+        del _generation_cache[k]
+    if expired_keys:
+        logger.debug(f"Cache cleanup: removed {len(expired_keys)} expired entries")
+
+
 def normalize_exercise_numeric_fields(exercises: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Convert float values to integers for exercise fields.
@@ -138,7 +194,7 @@ def normalize_exercise_numeric_fields(exercises: List[Dict[str, Any]]) -> List[D
 
 
 @router.post("/generate", response_model=Workout)
-async def generate_workout(request: GenerateWorkoutRequest):
+async def generate_workout(request: GenerateWorkoutRequest, background_tasks: BackgroundTasks):
     """Generate a new workout for a user based on their preferences."""
     logger.info(f"Generating workout for user {request.user_id}")
 
@@ -851,6 +907,7 @@ async def generate_workout(request: GenerateWorkoutRequest):
         created = db.create_workout(workout_db_data)
         logger.info(f"Workout generated: id={created['id']}, gym_profile_id={gym_profile_id}")
 
+        # Log workout change synchronously (quick, important for audit trail)
         log_workout_change(
             workout_id=created['id'],
             user_id=request.user_id,
@@ -860,7 +917,15 @@ async def generate_workout(request: GenerateWorkoutRequest):
         )
 
         generated_workout = row_to_workout(created)
-        await index_workout_to_rag(generated_workout)
+
+        # Move RAG indexing to background (non-critical, don't block response)
+        async def _bg_index_rag():
+            try:
+                await index_workout_to_rag(generated_workout)
+            except Exception as e:
+                logger.warning(f"Background: Failed to index workout to RAG: {e}")
+
+        background_tasks.add_task(_bg_index_rag)
 
         return generated_workout
 
@@ -2554,7 +2619,7 @@ async def swap_workout_date(request: SwapWorkoutsRequest):
 
 
 @router.post("/swap-exercise", response_model=Workout)
-async def swap_exercise_in_workout(request: SwapExerciseRequest):
+async def swap_exercise_in_workout(request: SwapExerciseRequest, background_tasks: BackgroundTasks):
     """
     Swap an exercise within a workout with a new exercise from the library.
 
@@ -2690,8 +2755,14 @@ async def swap_exercise_in_workout(request: SwapExerciseRequest):
         else:
             logger.info(f"Exercise swapped successfully in workout {request.workout_id}")
 
-        # Re-index to RAG
-        await index_workout_to_rag(updated_workout)
+        # Re-index to RAG in background (non-critical, don't block response)
+        async def _bg_index():
+            try:
+                await index_workout_to_rag(updated_workout)
+            except Exception as e:
+                logger.warning(f"Background: Failed to index swapped workout to RAG: {e}")
+
+        background_tasks.add_task(_bg_index)
 
         return updated_workout
 
@@ -2703,7 +2774,7 @@ async def swap_exercise_in_workout(request: SwapExerciseRequest):
 
 
 @router.post("/add-exercise", response_model=Workout)
-async def add_exercise_to_workout(request: AddExerciseRequest):
+async def add_exercise_to_workout(request: AddExerciseRequest, background_tasks: BackgroundTasks):
     """Add a new exercise to an existing workout."""
     logger.info(f"Adding exercise '{request.exercise_name}' to workout {request.workout_id}")
     try:
@@ -2775,8 +2846,14 @@ async def add_exercise_to_workout(request: AddExerciseRequest):
         updated_workout = row_to_workout(updated)
         logger.info(f"Exercise '{request.exercise_name}' added successfully to workout {request.workout_id}")
 
-        # Re-index to RAG
-        await index_workout_to_rag(updated_workout)
+        # Re-index to RAG in background (non-critical, don't block response)
+        async def _bg_index():
+            try:
+                await index_workout_to_rag(updated_workout)
+            except Exception as e:
+                logger.warning(f"Background: Failed to index workout to RAG after exercise add: {e}")
+
+        background_tasks.add_task(_bg_index)
 
         return updated_workout
 
@@ -2842,10 +2919,12 @@ async def extend_workout(request: ExtendWorkoutRequest):
         equipment = user.get("equipment", [])
         goals = user.get("goals", [])
 
-        # Get user preferences
-        avoided_exercises = await get_user_avoided_exercises(request.user_id)
-        avoided_muscles = await get_user_avoided_muscles(request.user_id)
-        staple_exercises = await get_user_staple_exercises(request.user_id)
+        # Get user preferences in PARALLEL for faster response
+        avoided_exercises, avoided_muscles, staple_exercises = await asyncio.gather(
+            get_user_avoided_exercises(request.user_id),
+            get_user_avoided_muscles(request.user_id),
+            get_user_staple_exercises(request.user_id),
+        )
         staple_names = get_staple_names(staple_exercises) if staple_exercises else []
 
         # Determine intensity for new exercises

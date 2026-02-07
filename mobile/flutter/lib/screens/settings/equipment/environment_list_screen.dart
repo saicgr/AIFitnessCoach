@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/environment_equipment_provider.dart';
 import 'environment_detail_screen.dart';
@@ -107,7 +108,7 @@ class _EnvironmentListScreenState extends ConsumerState<EnvironmentListScreen> {
 
     Navigator.push(
       context,
-      MaterialPageRoute(
+      AppPageRoute(
         builder: (context) => EnvironmentDetailScreen(
           environment: env,
           equipment: isCurrentEnv ? envEquipState.equipment : env.defaultEquipment,

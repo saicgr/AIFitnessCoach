@@ -24,6 +24,8 @@ class StreakCounterCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // M5: TODO - Ideally use ref.watch(workoutsProvider.select((s) => s.valueOrNull?.currentStreak))
+    // but currentStreak is a getter on the notifier, not on the state value.
     final workoutsNotifier = ref.read(workoutsProvider.notifier);
     final currentStreak = workoutsNotifier.currentStreak;
 
@@ -43,6 +45,7 @@ class StreakCounterCard extends ConsumerWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // M6: orangeColor is from AppColors (not const-constructable with dynamic color)
             Icon(Icons.local_fire_department, color: orangeColor, size: 20),
             const SizedBox(width: 6),
             Text(
@@ -1492,7 +1495,8 @@ class MyJourneyCard extends ConsumerWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accentColor = ref.colors(context).accent;
 
-    // Get workout data
+    // M5: TODO - Ideally use ref.watch(workoutsProvider.select(...)) for these fields
+    // but they are getters on the notifier, not on the state value.
     final workoutsNotifier = ref.read(workoutsProvider.notifier);
     final currentStreak = workoutsNotifier.currentStreak;
     final totalCompleted = workoutsNotifier.completedCount;
