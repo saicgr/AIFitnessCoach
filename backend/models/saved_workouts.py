@@ -9,7 +9,7 @@ Features:
 
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
-from datetime import datetime, date, time
+from datetime import datetime, date as date_type, time as time_type
 from enum import Enum
 
 
@@ -110,8 +110,8 @@ class SavedWorkoutsResponse(BaseModel):
 
 class ScheduledWorkoutBase(BaseModel):
     """Base model for scheduled workouts."""
-    scheduled_date: date
-    scheduled_time: Optional[time] = None
+    scheduled_date: date_type
+    scheduled_time: Optional[time_type] = None
     workout_name: str = Field(..., max_length=200)
     exercises: List[ExerciseTemplate] = Field(..., max_length=50)
     reminder_enabled: bool = True
@@ -142,8 +142,8 @@ class ScheduledWorkout(ScheduledWorkoutBase):
 
 class ScheduledWorkoutUpdate(BaseModel):
     """Update a scheduled workout."""
-    scheduled_date: Optional[date] = None
-    scheduled_time: Optional[time] = None
+    scheduled_date: Optional[date_type] = None
+    scheduled_time: Optional[time_type] = None
     status: Optional[ScheduledWorkoutStatus] = None
     reminder_enabled: Optional[bool] = None
     reminder_minutes_before: Optional[int] = Field(default=None, ge=0, le=1440)
@@ -215,8 +215,8 @@ class ScheduleWorkoutRequest(BaseModel):
     """Request to schedule a workout."""
     saved_workout_id: Optional[str] = Field(default=None, max_length=100)
     activity_id: Optional[str] = Field(default=None, max_length=100)  # Can schedule directly from activity
-    scheduled_date: date
-    scheduled_time: Optional[time] = None
+    scheduled_date: date_type
+    scheduled_time: Optional[time_type] = None
     reminder_enabled: bool = True
     reminder_minutes_before: int = Field(default=60, ge=0, le=1440)
     notes: Optional[str] = Field(default=None, max_length=2000)
@@ -229,8 +229,8 @@ class ScheduleWorkoutRequest(BaseModel):
 class CalendarWorkout(BaseModel):
     """Simplified workout for calendar view."""
     id: str
-    date: date
-    time: Optional[time] = None
+    date: date_type
+    time: Optional[time_type] = None
     name: str
     status: ScheduledWorkoutStatus
     exercise_count: int

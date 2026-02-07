@@ -3,7 +3,7 @@ Stats Gallery Models
 
 Pydantic models for shareable stats images.
 """
-from datetime import date, datetime
+from datetime import date as date_type, datetime
 from enum import Enum
 from typing import Any, Optional
 from pydantic import BaseModel, Field
@@ -34,8 +34,8 @@ class UploadStatsImageRequest(BaseModel):
     template_type: StatsTemplateType = Field(..., description="Type of template used")
     image_base64: str = Field(..., description="Base64 encoded PNG image")
     stats_snapshot: StatsSnapshot = Field(..., description="Stats data snapshot")
-    date_range_start: Optional[date] = Field(None, description="Start of date range shown")
-    date_range_end: Optional[date] = Field(None, description="End of date range shown")
+    date_range_start: Optional[date_type] = Field(None, description="Start of date range shown")
+    date_range_end: Optional[date_type] = Field(None, description="End of date range shown")
     prs_data: list[dict[str, Any]] = Field(default_factory=list, description="PRs for PRs template")
     achievements_data: list[dict[str, Any]] = Field(default_factory=list, description="Achievements for achievements template")
 
@@ -48,8 +48,8 @@ class StatsGalleryImage(BaseModel):
     thumbnail_url: Optional[str] = None
     template_type: StatsTemplateType
     stats_snapshot: Optional[dict[str, Any]] = None
-    date_range_start: Optional[date] = None
-    date_range_end: Optional[date] = None
+    date_range_start: Optional[date_type] = None
+    date_range_end: Optional[date_type] = None
     prs_data: list[dict[str, Any]] = Field(default_factory=list)
     achievements_data: list[dict[str, Any]] = Field(default_factory=list)
     shared_to_feed: bool = False

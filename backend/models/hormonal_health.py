@@ -3,7 +3,7 @@ Hormonal Health Models
 Pydantic models for hormonal health tracking, cycle management, and kegel preferences.
 """
 
-from datetime import date, time, datetime
+from datetime import date as date_type, time as time_type, datetime
 from typing import Optional, List
 from pydantic import BaseModel, Field, validator
 from enum import Enum
@@ -154,7 +154,7 @@ class HormonalProfileBase(BaseModel):
     # Menstrual Tracking
     menstrual_tracking_enabled: bool = False
     cycle_length_days: Optional[int] = Field(None, ge=21, le=45)
-    last_period_start_date: Optional[date] = None
+    last_period_start_date: Optional[date_type] = None
     typical_period_duration_days: Optional[int] = Field(None, ge=2, le=10)
     cycle_regularity: Optional[CycleRegularity] = None
 
@@ -191,7 +191,7 @@ class HormonalProfileUpdate(BaseModel):
     hormone_goals: Optional[List[HormoneGoal]] = None
     menstrual_tracking_enabled: Optional[bool] = None
     cycle_length_days: Optional[int] = Field(None, ge=21, le=45)
-    last_period_start_date: Optional[date] = None
+    last_period_start_date: Optional[date_type] = None
     typical_period_duration_days: Optional[int] = Field(None, ge=2, le=10)
     cycle_regularity: Optional[CycleRegularity] = None
     menopause_status: Optional[MenopauseStatus] = None
@@ -227,7 +227,7 @@ class HormonalProfile(HormonalProfileBase):
 
 class HormoneLogBase(BaseModel):
     """Base model for hormone log data."""
-    log_date: date
+    log_date: date_type
 
     # Cycle Information
     cycle_day: Optional[int] = Field(None, ge=1, le=45)
@@ -287,7 +287,7 @@ class CyclePhaseInfo(BaseModel):
     days_until_next_phase: Optional[int] = None
     next_phase: Optional[CyclePhase] = None
     cycle_length_days: Optional[int] = None
-    last_period_start_date: Optional[date] = None
+    last_period_start_date: Optional[date_type] = None
 
     # Phase-specific recommendations
     recommended_intensity: Optional[str] = None
@@ -357,7 +357,7 @@ class KegelPreferencesBase(BaseModel):
     include_in_daily_routine: bool = False
 
     daily_reminder_enabled: bool = False
-    daily_reminder_time: Optional[time] = None
+    daily_reminder_time: Optional[time_type] = None
     reminder_frequency: ReminderFrequency = ReminderFrequency.TWICE
 
     target_sessions_per_day: int = Field(3, ge=1, le=10)
@@ -380,7 +380,7 @@ class KegelPreferencesUpdate(BaseModel):
     include_as_standalone: Optional[bool] = None
     include_in_daily_routine: Optional[bool] = None
     daily_reminder_enabled: Optional[bool] = None
-    daily_reminder_time: Optional[time] = None
+    daily_reminder_time: Optional[time_type] = None
     reminder_frequency: Optional[ReminderFrequency] = None
     target_sessions_per_day: Optional[int] = Field(None, ge=1, le=10)
     target_duration_seconds: Optional[int] = Field(None, ge=30, le=1800)
@@ -401,7 +401,7 @@ class KegelPreferences(KegelPreferencesBase):
 
 class KegelSessionBase(BaseModel):
     """Base model for kegel session."""
-    session_date: date = Field(default_factory=date.today)
+    session_date: date_type = Field(default_factory=date_type.today)
     duration_seconds: int = Field(..., gt=0)
     reps_completed: Optional[int] = Field(None, ge=0)
     hold_duration_seconds: Optional[int] = Field(None, ge=0)
@@ -422,7 +422,7 @@ class KegelSession(KegelSessionBase):
     """Full kegel session model with database fields."""
     id: str
     user_id: str
-    session_time: Optional[time] = None
+    session_time: Optional[time_type] = None
     created_at: datetime
 
     class Config:
@@ -470,7 +470,7 @@ class KegelExercise(BaseModel):
 class KegelDailyGoal(BaseModel):
     """Daily kegel goal status."""
     user_id: str
-    date: date
+    date: date_type
     goal_met: bool
     sessions_completed: int
     target_sessions: int

@@ -8,7 +8,7 @@ Enables users to set personal weekly fitness goals:
 
 from pydantic import BaseModel, Field
 from typing import Optional, List
-from datetime import datetime, date
+from datetime import datetime, date as date_type
 from enum import Enum
 
 
@@ -34,7 +34,7 @@ class CreateGoalRequest(BaseModel):
     exercise_name: str = Field(..., max_length=255, description="Exercise name (e.g., 'Push-ups')")
     goal_type: GoalType = Field(..., description="Type of goal: single_max or weekly_volume")
     target_value: int = Field(..., gt=0, le=10000, description="Target reps/volume")
-    week_start: Optional[date] = Field(None, description="Week start date (defaults to current week Monday)")
+    week_start: Optional[date_type] = Field(None, description="Week start date (defaults to current week Monday)")
 
 
 class RecordAttemptRequest(BaseModel):
@@ -75,8 +75,8 @@ class WeeklyPersonalGoal(BaseModel):
     exercise_name: str
     goal_type: GoalType
     target_value: int
-    week_start: date
-    week_end: date
+    week_start: date_type
+    week_end: date_type
     current_value: int = 0
     personal_best: Optional[int] = None
     is_pr_beaten: bool = False

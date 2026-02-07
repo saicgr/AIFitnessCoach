@@ -14,7 +14,7 @@ Supports:
 
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
-from datetime import date, datetime
+from datetime import date as date_type, datetime
 from enum import Enum
 from uuid import UUID
 
@@ -57,7 +57,7 @@ class ScheduleItemCreate(BaseModel):
     """Request to create a new schedule item."""
     title: str = Field(..., min_length=1, max_length=255, description="Title of the schedule item")
     item_type: ScheduleItemType = Field(..., description="Type of schedule item")
-    scheduled_date: date = Field(..., description="Date the item is scheduled for")
+    scheduled_date: date_type = Field(..., description="Date the item is scheduled for")
     start_time: str = Field(..., max_length=5, description="Start time in HH:MM format")
     end_time: Optional[str] = Field(None, max_length=5, description="End time in HH:MM format")
     duration_minutes: Optional[int] = Field(None, ge=1, le=1440, description="Duration in minutes")
@@ -83,7 +83,7 @@ class ScheduleItemUpdate(BaseModel):
     """Request to update an existing schedule item. All fields optional."""
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     item_type: Optional[ScheduleItemType] = None
-    scheduled_date: Optional[date] = None
+    scheduled_date: Optional[date_type] = None
     start_time: Optional[str] = Field(None, max_length=5)
     end_time: Optional[str] = Field(None, max_length=5)
     duration_minutes: Optional[int] = Field(None, ge=1, le=1440)
@@ -108,7 +108,7 @@ class ScheduleItemUpdate(BaseModel):
 
 class AutoPopulateRequest(BaseModel):
     """Request to auto-populate schedule items from existing data."""
-    date: date = Field(..., description="Date to populate items for")
+    date: date_type = Field(..., description="Date to populate items for")
     include_workouts: bool = Field(default=True, description="Include scheduled workouts")
     include_habits: bool = Field(default=True, description="Include active habits")
     include_fasting: bool = Field(default=True, description="Include active fasting schedules")
@@ -136,7 +136,7 @@ class ScheduleItemResponse(BaseModel):
     user_id: str
     title: str
     item_type: ScheduleItemType
-    scheduled_date: date
+    scheduled_date: date_type
     start_time: str
     end_time: Optional[str] = None
     duration_minutes: Optional[int] = None
@@ -166,7 +166,7 @@ class ScheduleItemResponse(BaseModel):
 
 class DailyScheduleResponse(BaseModel):
     """Full daily schedule with items and summary."""
-    date: date
+    date: date_type
     items: List[ScheduleItemResponse] = Field(default_factory=list)
     summary: Dict[str, int] = Field(
         default_factory=lambda: {"total_items": 0, "completed": 0, "upcoming": 0},

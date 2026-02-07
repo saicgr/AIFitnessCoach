@@ -14,7 +14,7 @@ These models support:
 
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
-from datetime import date, time, datetime
+from datetime import date as date_type, time as time_type, datetime
 from enum import Enum
 from uuid import UUID
 
@@ -64,7 +64,7 @@ class HabitCreate(BaseModel):
     unit: Optional[str] = Field(None, max_length=50, description="Unit of measurement (e.g., 'glasses', 'minutes')")
     icon: str = Field(default="check_circle", max_length=100, description="Icon name for display")
     color: str = Field(default="#4CAF50", max_length=20, description="Hex color code for display")
-    reminder_time: Optional[time] = Field(None, description="Time for daily reminder")
+    reminder_time: Optional[time_type] = Field(None, description="Time for daily reminder")
     reminder_enabled: bool = Field(default=False, description="Whether reminders are enabled")
 
     class Config:
@@ -83,7 +83,7 @@ class HabitUpdate(BaseModel):
     unit: Optional[str] = Field(None, max_length=50)
     icon: Optional[str] = Field(None, max_length=100)
     color: Optional[str] = Field(None, max_length=20)
-    reminder_time: Optional[time] = None
+    reminder_time: Optional[time_type] = None
     reminder_enabled: Optional[bool] = None
     is_active: Optional[bool] = None
 
@@ -109,7 +109,7 @@ class Habit(BaseModel):
     unit: Optional[str] = None
     icon: str
     color: str
-    reminder_time: Optional[time] = None
+    reminder_time: Optional[time_type] = None
     reminder_enabled: bool
     is_active: bool
     is_suggested: bool
@@ -128,7 +128,7 @@ class Habit(BaseModel):
 class HabitLogCreate(BaseModel):
     """Request to log a habit completion for a specific date."""
     habit_id: UUID = Field(..., description="ID of the habit to log")
-    log_date: date = Field(..., description="Date of the log entry")
+    log_date: date_type = Field(..., description="Date of the log entry")
     completed: bool = Field(default=False, description="Whether the habit was completed")
     value: Optional[float] = Field(None, ge=0, description="Numeric value if tracking quantity")
     notes: Optional[str] = Field(None, max_length=500, description="Optional notes about the log")
@@ -154,7 +154,7 @@ class HabitLog(BaseModel):
     id: UUID
     habit_id: UUID
     user_id: UUID
-    log_date: date
+    log_date: date_type
     completed: bool
     value: Optional[float] = None
     notes: Optional[str] = None
@@ -178,8 +178,8 @@ class HabitStreak(BaseModel):
     user_id: UUID
     current_streak: int = Field(default=0, ge=0, description="Current consecutive days completed")
     longest_streak: int = Field(default=0, ge=0, description="All-time longest streak")
-    last_completed_date: Optional[date] = Field(None, description="Last date habit was completed")
-    streak_start_date: Optional[date] = Field(None, description="Start date of current streak")
+    last_completed_date: Optional[date_type] = Field(None, description="Last date habit was completed")
+    streak_start_date: Optional[date_type] = Field(None, description="Start date of current streak")
     updated_at: datetime
 
     class Config:
@@ -239,7 +239,7 @@ class HabitWeeklySummary(BaseModel):
     """Weekly summary for a specific habit."""
     habit_id: UUID
     habit_name: str
-    week_start: date
+    week_start: date_type
     days_completed: int = Field(default=0, ge=0, le=7)
     days_scheduled: int = Field(default=0, ge=0, le=7)
     completion_rate: float = Field(default=0.0, ge=0.0, le=100.0)
@@ -336,13 +336,13 @@ class BulkHabitLogResponse(BaseModel):
 class HabitHistoryRequest(BaseModel):
     """Request for habit history data."""
     habit_id: UUID
-    start_date: date
-    end_date: date
+    start_date: date_type
+    end_date: date_type
 
 
 class HabitHistoryEntry(BaseModel):
     """Single entry in habit history."""
-    log_date: date
+    log_date: date_type
     completed: bool
     value: Optional[float] = None
     skipped: bool = False
@@ -361,7 +361,7 @@ class HabitHistoryResponse(BaseModel):
 
 class HabitCalendarData(BaseModel):
     """Data for calendar view of habit completion."""
-    date: date
+    date: date_type
     status: str  # "completed", "missed", "skipped", "not_scheduled", "future"
     value: Optional[float] = None
 
@@ -370,8 +370,8 @@ class HabitCalendarResponse(BaseModel):
     """Response containing calendar data for a habit."""
     habit_id: UUID
     habit_name: str
-    start_date: date
-    end_date: date
+    start_date: date_type
+    end_date: date_type
     data: List[HabitCalendarData] = Field(default_factory=list)
     streak_info: Optional[HabitStreak] = None
 
@@ -382,7 +382,7 @@ class HabitCalendarResponse(BaseModel):
 
 class HabitReminderUpdate(BaseModel):
     """Request to update habit reminder settings."""
-    reminder_time: Optional[time] = None
+    reminder_time: Optional[time_type] = None
     reminder_enabled: Optional[bool] = None
 
 
@@ -391,7 +391,7 @@ class PendingHabitReminder(BaseModel):
     habit_id: UUID
     habit_name: str
     user_id: UUID
-    reminder_time: time
+    reminder_time: time_type
     category: HabitCategory
     icon: str
 

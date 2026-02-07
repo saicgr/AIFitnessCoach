@@ -4,7 +4,7 @@ Consistency Analytics Models
 Pydantic models for consistency tracking, streak analysis, and workout patterns.
 """
 
-from datetime import datetime, date
+from datetime import datetime, date as date_type
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
 from enum import Enum
@@ -205,7 +205,7 @@ class DailyConsistencyMetric(BaseModel):
     """Daily consistency metrics record."""
     id: Optional[str] = None
     user_id: str
-    metric_date: date
+    metric_date: date_type
     workouts_scheduled: int = Field(default=0, ge=0)
     workouts_completed: int = Field(default=0, ge=0)
     workouts_skipped: int = Field(default=0, ge=0)
@@ -224,8 +224,8 @@ class DailyConsistencyMetric(BaseModel):
 
 class WeeklyConsistencyMetric(BaseModel):
     """Aggregated weekly consistency metrics."""
-    week_start: date
-    week_end: date
+    week_start: date_type
+    week_end: date_type
     workouts_scheduled: int = 0
     workouts_completed: int = 0
     workouts_skipped: int = 0
@@ -273,7 +273,7 @@ class ConsistencyInsights(BaseModel):
     days_since_last_workout: int = 0
 
     # Computed timestamps
-    last_workout_date: Optional[date] = None
+    last_workout_date: Optional[date_type] = None
     calculated_at: datetime = Field(default_factory=datetime.now)
 
 
@@ -332,7 +332,7 @@ class RecordWorkoutPatternRequest(BaseModel):
 
 class CalendarHeatmapData(BaseModel):
     """Data for the weekly calendar heatmap visualization."""
-    date: date
+    date: date_type
     day_of_week: int
     status: str  # "completed", "missed", "rest", "future"
     workout_name: Optional[str] = None
@@ -341,8 +341,8 @@ class CalendarHeatmapData(BaseModel):
 class CalendarHeatmapResponse(BaseModel):
     """Response containing calendar heatmap data."""
     user_id: str
-    start_date: date
-    end_date: date
+    start_date: date_type
+    end_date: date_type
     data: List[CalendarHeatmapData] = Field(default_factory=list)
     total_completed: int = 0
     total_missed: int = 0

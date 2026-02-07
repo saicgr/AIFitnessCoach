@@ -17,7 +17,7 @@ These models support:
 
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
-from datetime import datetime, date, time
+from datetime import datetime, date as date_type, time as time_type
 from enum import Enum
 
 
@@ -93,7 +93,7 @@ class NEATGoal(BaseModel):
     min_steps_per_hour: int = Field(default=250, ge=50, le=1000, description="Minimum steps per active hour")
     is_progressive: bool = Field(default=True, description="Whether goal auto-adjusts")
     adjustment_strategy: GoalAdjustmentStrategy = GoalAdjustmentStrategy.MODERATE
-    last_adjustment_date: Optional[date] = None
+    last_adjustment_date: Optional[date_type] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -161,7 +161,7 @@ class UpdateGoalRequest(BaseModel):
 class HourlyActivityInput(BaseModel):
     """Input for recording hourly activity from health sync."""
     user_id: str
-    activity_date: date
+    activity_date: date_type
     hour: int = Field(..., ge=0, le=23)
     steps: int = Field(default=0, ge=0)
     active_minutes: int = Field(default=0, ge=0, le=60)
@@ -175,7 +175,7 @@ class HourlyActivityRecord(BaseModel):
     """Recorded hourly activity data."""
     id: str
     user_id: str
-    activity_date: date
+    activity_date: date_type
     hour: int
     steps: int
     active_minutes: int
@@ -190,7 +190,7 @@ class HourlyActivityRecord(BaseModel):
 class HourlyBreakdown(BaseModel):
     """Hourly breakdown for a single day."""
     user_id: str
-    activity_date: date
+    activity_date: date_type
     hours: List[HourlyActivityRecord]
     total_steps: int
     total_active_minutes: int
@@ -230,7 +230,7 @@ class NEATScore(BaseModel):
     """Daily NEAT score with breakdown."""
     id: Optional[str] = None
     user_id: str
-    score_date: date
+    score_date: date_type
     total_score: float = Field(ge=0, le=100)
     components: NEATScoreComponents
     total_steps: int
@@ -273,8 +273,8 @@ class NEATStreak(BaseModel):
     streak_type: StreakType
     current_length: int = 0
     longest_length: int = 0
-    last_achieved_date: Optional[date] = None
-    started_at: Optional[date] = None
+    last_achieved_date: Optional[date_type] = None
+    started_at: Optional[date_type] = None
     is_active: bool = True
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -379,8 +379,8 @@ class ReminderPreferences(BaseModel):
     user_id: str
     enabled: bool = True
     frequency: ReminderFrequency = ReminderFrequency.EVERY_60_MIN
-    start_time: time = Field(default_factory=lambda: time(8, 0))  # 8 AM
-    end_time: time = Field(default_factory=lambda: time(20, 0))  # 8 PM
+    start_time: time_type = Field(default_factory=lambda: time_type(8, 0))  # 8 AM
+    end_time: time_type = Field(default_factory=lambda: time_type(20, 0))  # 8 PM
     active_days: List[DayOfWeek] = Field(
         default_factory=lambda: [
             DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
@@ -402,8 +402,8 @@ class UpdateReminderPreferencesRequest(BaseModel):
     """Request to update reminder preferences."""
     enabled: Optional[bool] = None
     frequency: Optional[ReminderFrequency] = None
-    start_time: Optional[time] = None
-    end_time: Optional[time] = None
+    start_time: Optional[time_type] = None
+    end_time: Optional[time_type] = None
     active_days: Optional[List[DayOfWeek]] = None
     skip_if_active: Optional[bool] = None
     active_threshold_minutes: Optional[int] = Field(None, ge=1, le=30)
@@ -474,13 +474,13 @@ class SendRemindersResponse(BaseModel):
 
 class CalculateDailyScoresRequest(BaseModel):
     """Request to calculate end-of-day scores for users."""
-    target_date: Optional[date] = None  # Defaults to yesterday
+    target_date: Optional[date_type] = None  # Defaults to yesterday
     max_users: int = Field(default=10000, ge=1, le=100000)
 
 
 class CalculateDailyScoresResponse(BaseModel):
     """Response from calculating daily scores."""
-    target_date: date
+    target_date: date_type
     users_processed: int
     scores_calculated: int
     streaks_updated: int
