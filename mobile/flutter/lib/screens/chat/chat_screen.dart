@@ -12,6 +12,7 @@ import '../../data/repositories/chat_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/coach_avatar.dart';
 import '../../widgets/floating_chat/floating_chat_overlay.dart';
+import '../../widgets/medical_disclaimer_banner.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import 'widgets/report_message_sheet.dart';
 
@@ -293,6 +294,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
             ),
           ),
+
+          // Medical disclaimer
+          const MedicalDisclaimerBanner(),
 
           // Input bar
           _InputBar(

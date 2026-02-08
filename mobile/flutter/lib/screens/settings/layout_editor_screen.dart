@@ -686,6 +686,8 @@ class _TogglesTabState extends ConsumerState<_TogglesTab> {
         return Icons.checklist;
       case TileType.xpProgress:
         return Icons.bolt;
+      case TileType.upNext:
+        return Icons.schedule;
     }
   }
 }

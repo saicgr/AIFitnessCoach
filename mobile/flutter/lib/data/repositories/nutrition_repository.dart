@@ -370,7 +370,7 @@ class NutritionRepository {
     }
   }
 
-  /// Log food from image using Gemini Vision
+  /// Log food from image using AI Vision
   Future<LogFoodResponse> logFoodFromImage({
     required String userId,
     required String mealType,
@@ -397,7 +397,7 @@ class NutritionRepository {
     }
   }
 
-  /// Log food from text description using Gemini
+  /// Log food from text description using AI
   Future<LogFoodResponse> logFoodFromText({
     required String userId,
     required String description,

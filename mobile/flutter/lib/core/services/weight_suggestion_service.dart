@@ -11,7 +11,7 @@
 ///
 /// Supports both:
 /// - Rule-based suggestions (fast, local)
-/// - AI-powered suggestions via Gemini (smart, uses history)
+/// - AI-powered suggestions via backend (smart, uses history)
 library;
 
 import 'package:dio/dio.dart';
@@ -283,7 +283,7 @@ class WeightSuggestionService {
 
   /// Get AI-powered weight suggestion from the backend
   ///
-  /// This method calls the Gemini-powered API endpoint for intelligent
+  /// This method calls the AI-powered API endpoint for intelligent
   /// weight suggestions that consider:
   /// - Current set performance
   /// - Historical workout data for this exercise
@@ -627,7 +627,7 @@ class WeightSuggestionService {
 
   /// Get AI-powered rest time suggestion from the backend
   ///
-  /// This method calls the Gemini-powered API endpoint for intelligent
+  /// This method calls the AI-powered API endpoint for intelligent
   /// rest time suggestions that consider:
   /// - Exercise type (compound vs isolation)
   /// - Current RPE (Rate of Perceived Exertion)

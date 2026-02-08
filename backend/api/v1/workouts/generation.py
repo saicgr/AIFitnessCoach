@@ -162,6 +162,96 @@ def _cleanup_expired_cache():
         logger.debug(f"Cache cleanup: removed {len(expired_keys)} expired entries")
 
 
+def ensure_parsed_dict(value) -> Dict[str, Any]:
+    """
+    Ensure a value is a dict, parsing it from JSON string if needed.
+
+    Gemini sometimes returns JSON strings instead of objects, or nested values
+    may be stringified. This handles all those cases robustly.
+
+    Args:
+        value: A dict, JSON string, or other value
+
+    Returns:
+        A dict (or empty dict if parsing fails)
+    """
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            if isinstance(parsed, dict):
+                return parsed
+        except (json.JSONDecodeError, ValueError):
+            pass
+    return {}
+
+
+def ensure_exercises_are_dicts(exercises) -> List[Dict[str, Any]]:
+    """
+    Ensure all exercises and their set_targets are proper dicts.
+
+    Gemini responses can sometimes contain stringified JSON at various nesting
+    levels. This function normalizes the entire exercises list so that every
+    exercise and every set_target entry is a dict, not a string.
+
+    Args:
+        exercises: A list of exercise dicts (or strings that should be dicts)
+
+    Returns:
+        List of properly-typed exercise dicts with dict set_targets
+    """
+    if not exercises:
+        return []
+
+    # If exercises itself is a string, try to parse it
+    if isinstance(exercises, str):
+        try:
+            exercises = json.loads(exercises)
+        except (json.JSONDecodeError, ValueError):
+            logger.error(f"Failed to parse exercises string: {exercises[:200]}")
+            return []
+
+    if not isinstance(exercises, list):
+        return []
+
+    normalized = []
+    for ex in exercises:
+        # Ensure each exercise is a dict
+        if isinstance(ex, str):
+            try:
+                ex = json.loads(ex)
+            except (json.JSONDecodeError, ValueError):
+                logger.warning(f"Skipping unparseable exercise string: {ex[:100]}")
+                continue
+        if not isinstance(ex, dict):
+            continue
+
+        # Ensure set_targets entries are dicts, not strings
+        if 'set_targets' in ex and ex['set_targets']:
+            if isinstance(ex['set_targets'], str):
+                try:
+                    ex['set_targets'] = json.loads(ex['set_targets'])
+                except (json.JSONDecodeError, ValueError):
+                    ex['set_targets'] = []
+
+            if isinstance(ex['set_targets'], list):
+                parsed_targets = []
+                for st in ex['set_targets']:
+                    if isinstance(st, str):
+                        try:
+                            st = json.loads(st)
+                        except (json.JSONDecodeError, ValueError):
+                            continue
+                    if isinstance(st, dict):
+                        parsed_targets.append(st)
+                ex['set_targets'] = parsed_targets
+
+        normalized.append(ex)
+
+    return normalized
+
+
 def normalize_exercise_numeric_fields(exercises: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Convert float values to integers for exercise fields.
@@ -169,6 +259,9 @@ def normalize_exercise_numeric_fields(exercises: List[Dict[str, Any]]) -> List[D
     Gemini often returns floats like 3.0, 12.0 instead of 3, 12 which causes
     type cast errors in Flutter when parsing JSON.
     """
+    # First ensure all exercises and set_targets are proper dicts
+    exercises = ensure_exercises_are_dicts(exercises)
+
     for exercise in exercises:
         # Core numeric fields
         for field in ['sets', 'reps', 'rest_seconds', 'duration_seconds', 'hold_seconds',
@@ -183,6 +276,8 @@ def normalize_exercise_numeric_fields(exercises: List[Dict[str, Any]]) -> List[D
         # Convert set_targets if present
         if 'set_targets' in exercise and exercise['set_targets']:
             for target in exercise['set_targets']:
+                if not isinstance(target, dict):
+                    continue
                 for field in ['set_number', 'target_reps', 'target_rpe', 'target_rir']:
                     if field in target and target[field] is not None:
                         try:
@@ -541,6 +636,17 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
                     squat_capacity=squat_capacity,
                     cardio_capacity=cardio_capacity,
                 )
+
+            # Ensure workout_data is a dict (guard against Gemini returning a string)
+            if isinstance(workout_data, str):
+                try:
+                    workout_data = json.loads(workout_data)
+                except (json.JSONDecodeError, ValueError):
+                    logger.error(f"workout_data is an unparseable string: {str(workout_data)[:200]}")
+                    workout_data = {}
+            if not isinstance(workout_data, dict):
+                logger.error(f"workout_data is not a dict: type={type(workout_data).__name__}")
+                workout_data = {}
 
             exercises = workout_data.get("exercises", [])
             exercises = normalize_exercise_numeric_fields(exercises)
@@ -1220,6 +1326,19 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     logger.error(f"🚨 [Streaming Parse] Content too short, full content: {content}")
 
                 workout_data = json.loads(content)
+
+                # Ensure workout_data is a dict - Gemini may return a string
+                if isinstance(workout_data, str):
+                    try:
+                        workout_data = json.loads(workout_data)
+                    except (json.JSONDecodeError, ValueError):
+                        logger.error(f"workout_data is a string that cannot be parsed: {workout_data[:200]}")
+                        workout_data = {}
+
+                if not isinstance(workout_data, dict):
+                    logger.error(f"workout_data is not a dict: type={type(workout_data).__name__}")
+                    workout_data = {}
+
                 exercises = workout_data.get("exercises", [])
                 exercises = normalize_exercise_numeric_fields(exercises)
 
@@ -1627,6 +1746,15 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
                     raise ValueError("Empty response from Gemini")
 
                 workout_data = json.loads(content)
+
+                # Ensure workout_data is a dict (guard against Gemini returning a string)
+                if isinstance(workout_data, str):
+                    try:
+                        workout_data = json.loads(workout_data)
+                    except (json.JSONDecodeError, ValueError):
+                        workout_data = {}
+                if not isinstance(workout_data, dict):
+                    workout_data = {}
             except Exception as gemini_error:
                 logger.error(f"❌ [Mood Workout] Gemini error: {gemini_error}")
                 yield f"event: error\ndata: {json.dumps({'error': f'Failed to generate workout: {str(gemini_error)}'})}\n\n"

@@ -18,23 +18,20 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // --- Critical blocking initializations (must complete before runApp) ---
+  // Run all three in parallel since they're independent of each other.
+  // This saves ~500-1000ms vs sequential awaits on slow devices/emulators.
 
-  // Initialize Firebase (with error handling for simulators/missing config)
-  try {
-    await Firebase.initializeApp();
-  } catch (e) {
-    debugPrint('⚠️ Firebase initialization failed: $e');
-    // Continue without Firebase on simulator or if config is missing
-  }
-
-  // SharedPreferences is needed for ProviderScope overrides
-  final sharedPreferences = await SharedPreferences.getInstance();
-
-  // Supabase must be ready before runApp because AuthRepository uses it
-  await Supabase.initialize(
-    url: ApiConstants.supabaseUrl,
-    anonKey: ApiConstants.supabaseAnonKey,
-  );
+  late final SharedPreferences sharedPreferences;
+  await Future.wait([
+    Firebase.initializeApp().catchError((e) {
+      debugPrint('⚠️ Firebase initialization failed: $e');
+    }),
+    SharedPreferences.getInstance().then((prefs) => sharedPreferences = prefs),
+    Supabase.initialize(
+      url: ApiConstants.supabaseUrl,
+      anonKey: ApiConstants.supabaseAnonKey,
+    ),
+  ]);
 
   // NotificationService instance (constructor is synchronous; initialize() is deferred below)
   final notificationService = NotificationService();

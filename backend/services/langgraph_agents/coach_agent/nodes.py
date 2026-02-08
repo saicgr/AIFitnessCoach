@@ -190,8 +190,6 @@ async def coach_action_node(state: CoachAgentState) -> Dict[str, Any]:
 
     if state.get("user_profile"):
         profile = state["user_profile"]
-        context_parts.append(f"User: {profile.get('name', 'User')}")
-
     if action_context:
         context_parts.append(f"\nACTION: {action_context}")
 
@@ -248,7 +246,6 @@ async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:
     if state.get("user_profile"):
         profile = state["user_profile"]
         context_parts.append(f"\nUSER PROFILE:")
-        context_parts.append(f"- Name: {profile.get('name', 'User')}")
         context_parts.append(f"- Fitness Level: {profile.get('fitness_level', 'beginner')}")
         context_parts.append(f"- Goals: {', '.join(profile.get('goals', []))}")
 

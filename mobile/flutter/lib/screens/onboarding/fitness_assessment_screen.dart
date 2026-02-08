@@ -9,7 +9,7 @@ import 'pre_auth_quiz_screen.dart';
 /// Fitness Assessment Screen
 /// Single scrollable screen with 6 questions (~2 min)
 /// Appears after coach selection, before paywall
-/// Data is sent to Gemini AI for personalized workout generation
+/// Data is sent to the AI for personalized workout generation
 class FitnessAssessmentScreen extends ConsumerStatefulWidget {
   const FitnessAssessmentScreen({super.key});
 

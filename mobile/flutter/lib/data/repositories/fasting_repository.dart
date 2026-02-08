@@ -431,7 +431,7 @@ class FastingRepository {
 
   /// Get AI-generated fasting insight
   ///
-  /// Returns Gemini AI-generated insight about how fasting impacts the user's goals.
+  /// Returns AI-generated insight about how fasting impacts the user's goals.
   /// Results are cached for 24 hours on the backend.
   Future<AIFastingInsight> getAIFastingInsight({
     required String userId,
@@ -921,7 +921,7 @@ class FastingImpactAnalysis {
 // AI Fasting Insight Model
 // ============================================
 
-/// AI-generated fasting insight from Gemini
+/// AI-generated fasting insight
 class AIFastingInsight {
   final String id;
   final String userId;

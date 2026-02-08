@@ -4,6 +4,7 @@
 library;
 
 export 'accessibility_section.dart';
+export 'ai_privacy_section.dart';
 export 'app_info_section.dart';
 export 'audio_settings_section.dart';
 export 'custom_content_section.dart';

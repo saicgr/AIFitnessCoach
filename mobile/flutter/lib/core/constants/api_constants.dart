@@ -27,7 +27,7 @@ class ApiConstants {
   /// Write timeout
   static const Duration sendTimeout = Duration(seconds: 15);
 
-  /// AI/Gemini-specific receive timeout (longer for AI responses)
+  /// AI-specific receive timeout (longer for AI responses)
   static const Duration aiReceiveTimeout = Duration(minutes: 2);
 
   /// Google OAuth Web Client ID

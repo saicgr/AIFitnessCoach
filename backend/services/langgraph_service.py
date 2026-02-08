@@ -27,6 +27,7 @@ from services.langgraph_agents.hydration_agent import build_hydration_agent_grap
 from services.langgraph_agents.coach_agent import build_coach_agent_graph
 
 from core.logger import get_logger
+from core.anonymize import anonymize_user_data
 
 logger = get_logger(__name__)
 
@@ -338,7 +339,7 @@ class LangGraphCoachService:
         base_state = {
             "user_message": cleaned_message,
             "user_id": request.user_id,
-            "user_profile": request.user_profile.model_dump() if request.user_profile else None,
+            "user_profile": anonymize_user_data(request.user_profile.model_dump()) if request.user_profile else None,
             "conversation_history": request.conversation_history,
             "intent": intent,
             "rag_documents": [],

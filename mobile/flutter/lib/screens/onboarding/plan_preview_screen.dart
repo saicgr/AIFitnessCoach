@@ -9,7 +9,7 @@ import 'pre_auth_quiz_screen.dart';
 ///
 /// Displays:
 /// - Summary card with user's selections
-/// - AI-generated workout preview (actual exercises from Gemini)
+/// - AI-generated workout preview (actual exercises from AI)
 /// - Two action buttons:
 ///   1. "Start Workout" → Skip to Screen 10 (Nutrition Gate, then coach selection)
 ///   2. "Personalize (2 min)" → Navigate to Screen 6 (Personalization Gate)

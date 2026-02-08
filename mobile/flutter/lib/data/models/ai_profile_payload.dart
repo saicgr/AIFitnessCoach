@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../../screens/onboarding/pre_auth_quiz_screen.dart';
 
-/// Builder for creating Gemini-ready profile payloads with conditional fields.
+/// Builder for creating AI-ready profile payloads with conditional fields.
 ///
 /// This class constructs payloads based on the progressive profiling onboarding flow:
 /// - Phase 1 (Required): Core workout parameters
@@ -10,10 +10,10 @@ import '../../screens/onboarding/pre_auth_quiz_screen.dart';
 /// - Phase 3 (Optional): Nutrition fields
 ///
 /// Fields are conditionally included based on whether they were provided by the user.
-class GeminiProfilePayloadBuilder {
+class AIProfilePayloadBuilder {
   /// Builds a payload from PreAuthQuizData with conditional field inclusion.
   ///
-  /// Returns a Map suitable for sending to the Gemini API or backend workout generation.
+  /// Returns a Map suitable for sending to the AI API or backend workout generation.
   static Map<String, dynamic> buildPayload(PreAuthQuizData profile) {
     final payload = <String, dynamic>{};
 
@@ -32,7 +32,7 @@ class GeminiProfilePayloadBuilder {
       payload['days_per_week'] = profile.daysPerWeek;  // Backend expects this field name
     }
 
-    // Duration range - send both min and max for Gemini to generate varied workouts
+    // Duration range - send both min and max for AI to generate varied workouts
     if (profile.workoutDurationMin != null) {
       payload['workout_duration_min'] = profile.workoutDurationMin;
     }
@@ -97,7 +97,7 @@ class GeminiProfilePayloadBuilder {
     }
 
     // ===== FITNESS ASSESSMENT (For AI workout personalization) =====
-    // These fields help Gemini create workouts matched to user's actual capabilities
+    // These fields help the AI create workouts matched to user's actual capabilities
 
     if (profile.pushupCapacity != null) {
       payload['pushup_capacity'] = profile.pushupCapacity;
@@ -176,7 +176,7 @@ class GeminiProfilePayloadBuilder {
   /// Remove debug prints in production builds.
   static String toReadableString(Map<String, dynamic> payload) {
     final buffer = StringBuffer();
-    buffer.writeln('=== Gemini Profile Payload ===');
+    buffer.writeln('=== AI Profile Payload ===');
 
     // Core Profile (Phase 1)
     buffer.writeln('\n[Core Profile]');

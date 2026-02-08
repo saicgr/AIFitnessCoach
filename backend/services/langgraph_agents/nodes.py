@@ -495,7 +495,6 @@ async def response_after_tools_node(state: FitnessCoachState) -> Dict[str, Any]:
     if state.get("user_profile"):
         profile = state["user_profile"]
         context_parts.append("USER PROFILE:")
-        context_parts.append(f"- Name: {profile.get('name', 'User')}")
         context_parts.append(f"- Fitness Level: {profile.get('fitness_level', 'beginner')}")
 
     if state.get("current_workout"):

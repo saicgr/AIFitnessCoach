@@ -27,6 +27,7 @@ import '../screens/onboarding/coach_selection_screen.dart';
 import '../screens/onboarding/fitness_assessment_screen.dart';
 import '../screens/onboarding/how_it_works_screen.dart';
 import '../screens/onboarding/personal_info_screen.dart';
+import '../screens/onboarding/ai_consent_screen.dart';
 import '../screens/onboarding/weight_projection_screen.dart';
 import '../screens/onboarding/workout_generation_screen.dart';
 import '../screens/profile/profile_screen.dart';
@@ -41,6 +42,8 @@ import '../screens/workout/exercise_detail_screen.dart';
 import '../screens/workout/custom_workout_builder_screen.dart';
 import '../screens/schedule/schedule_screen.dart';
 import '../screens/settings/settings_screen.dart';
+import '../screens/settings/ai_data_usage_screen.dart';
+import '../screens/settings/medical_disclaimer_screen.dart';
 import '../screens/settings/help_screen.dart';
 import '../screens/settings/exercise_preferences/favorite_exercises_screen.dart';
 import '../screens/settings/exercise_preferences/exercise_queue_screen.dart';
@@ -271,6 +274,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           return '/personal-info';
         }
 
+        // Step 1.5: AI consent (after personal info, before coach selection)
+        // Skip if user already selected a coach (existing users before this feature)
+        if (!user.isCoachSelected) {
+          final hasAiConsent = ref.read(aiConsentProvider);
+          if (!hasAiConsent) {
+            return '/ai-consent';
+          }
+        }
+
         // Step 2: Coach selection
         if (!user.isCoachSelected) {
           return '/coach-selection';
@@ -391,6 +403,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (isOnWeightProjection) {
         if (isLoggedIn) {
           return null; // Allow - user is viewing weight projection
+        }
+        return '/stats-welcome'; // Not logged in, go to start
+      }
+
+      // AI consent screen - allow for logged-in users during onboarding
+      if (state.matchedLocation == '/ai-consent') {
+        if (isLoggedIn) {
+          return null; // Allow - user is reviewing AI consent
         }
         return '/stats-welcome'; // Not logged in, go to start
       }
@@ -752,6 +772,32 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const WeightProjectionScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
+      // AI Consent - privacy and data usage consent before coach selection
+      GoRoute(
+        path: '/ai-consent',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const AiConsentScreen(),
           transitionDuration: const Duration(milliseconds: 400),
           reverseTransitionDuration: const Duration(milliseconds: 300),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -1335,6 +1381,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+
+      // AI Data Usage (Settings sub-screen)
+      GoRoute(
+        path: '/settings/ai-data-usage',
+        builder: (context, state) => const AIDataUsageScreen(),
+      ),
+
+      // Medical Disclaimer (Settings sub-screen)
+      GoRoute(
+        path: '/settings/medical-disclaimer',
+        builder: (context, state) => const MedicalDisclaimerScreen(),
       ),
 
       // Favorite Exercises (Settings sub-screen)

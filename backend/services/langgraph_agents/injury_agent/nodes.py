@@ -316,8 +316,6 @@ async def injury_response_node(state: InjuryAgentState) -> Dict[str, Any]:
 
     if state.get("user_profile"):
         profile = state["user_profile"]
-        context_parts.append(f"User: {profile.get('name', 'User')}")
-
     if state.get("tool_results"):
         context_parts.append("\nACTIONS COMPLETED:")
         for result in state.get("tool_results", []):

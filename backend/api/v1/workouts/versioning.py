@@ -169,6 +169,16 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
                 logger.error("RAG returned no exercises for regeneration")
                 raise ValueError(f"RAG returned no exercises for focus_area={focus_area}")
 
+            # Ensure workout_data is a dict (guard against Gemini returning a string)
+            if isinstance(workout_data, str):
+                import json as _json
+                try:
+                    workout_data = _json.loads(workout_data)
+                except (ValueError, _json.JSONDecodeError):
+                    workout_data = {}
+            if not isinstance(workout_data, dict):
+                workout_data = {}
+
             exercises = workout_data.get("exercises", [])
             # Use provided workout_name if specified, otherwise use AI-generated name
             workout_name = request.workout_name or workout_data.get("name", "Regenerated Workout")
@@ -443,6 +453,16 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                 age=user_age,
                 activity_level=user_activity_level
             )
+
+            # Ensure workout_data is a dict (guard against Gemini returning a string)
+            if isinstance(workout_data, str):
+                import json as _json
+                try:
+                    workout_data = _json.loads(workout_data)
+                except (ValueError, _json.JSONDecodeError):
+                    workout_data = {}
+            if not isinstance(workout_data, dict):
+                workout_data = {}
 
             exercises = workout_data.get("exercises", [])
 

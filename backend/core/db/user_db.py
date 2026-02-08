@@ -133,10 +133,13 @@ class UserDB(BaseDB):
         Returns:
             List of injury records
         """
-        query = self.client.table("injuries").select("*").eq("user_id", user_id)
+        query = self.client.table("user_injuries").select("*").eq("user_id", user_id)
 
         if is_active is not None:
-            query = query.eq("is_active", is_active)
+            if is_active:
+                query = query.in_("status", ["active", "recovering"])
+            else:
+                query = query.in_("status", ["healed"])
 
         result = query.order("created_at", desc=True).execute()
         return result.data or []
@@ -151,7 +154,7 @@ class UserDB(BaseDB):
         Returns:
             Created injury record or None
         """
-        result = self.client.table("injuries").insert(data).execute()
+        result = self.client.table("user_injuries").insert(data).execute()
         return result.data[0] if result.data else None
 
     def update_injury(
@@ -167,7 +170,7 @@ class UserDB(BaseDB):
         Returns:
             Updated injury record or None
         """
-        result = self.client.table("injuries").update(data).eq("id", injury_id).execute()
+        result = self.client.table("user_injuries").update(data).eq("id", injury_id).execute()
         return result.data[0] if result.data else None
 
     def delete_injuries_by_user(self, user_id: str) -> bool:
@@ -180,7 +183,7 @@ class UserDB(BaseDB):
         Returns:
             True on success
         """
-        self.client.table("injuries").delete().eq("user_id", user_id).execute()
+        self.client.table("user_injuries").delete().eq("user_id", user_id).execute()
         return True
 
     # ==================== INJURY HISTORY ====================

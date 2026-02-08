@@ -259,7 +259,21 @@ async def generate_quick_workout(request: QuickWorkoutRequest):
             # Parse the response - structured output guarantees valid JSON
             workout_data = json.loads(content)
 
+            # Ensure workout_data is a dict (guard against Gemini returning a string)
+            if isinstance(workout_data, str):
+                try:
+                    workout_data = json.loads(workout_data)
+                except (json.JSONDecodeError, ValueError):
+                    workout_data = {}
+            if not isinstance(workout_data, dict):
+                workout_data = {}
+
             exercises = workout_data.get("exercises", [])
+            # Normalize exercises to ensure all items and set_targets are dicts
+            from api.v1.workouts.generation import ensure_exercises_are_dicts, normalize_exercise_numeric_fields
+            exercises = ensure_exercises_are_dicts(exercises)
+            exercises = normalize_exercise_numeric_fields(exercises)
+
             workout_name = workout_data.get("name", f"Quick {request.duration}min Workout")
             workout_type = workout_data.get("type", request.focus or "quick")
             difficulty = workout_data.get("difficulty", fitness_level)

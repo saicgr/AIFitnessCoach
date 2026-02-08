@@ -67,6 +67,8 @@ class ProfileScreen extends ConsumerWidget {
           _buildNutritionFastingSection(),
           const SizedBox(height: 32),
           _buildAccountSection(context, ref),
+          const SizedBox(height: 24),
+          _buildAIPrivacyCard(context),
           const SizedBox(height: 32),
           _buildReferencesSection(context, ref),
           const SizedBox(height: 100),
@@ -279,6 +281,67 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildAIPrivacyCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        context.push('/settings/ai-data-usage');
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: cardBorder),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.info.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.shield_outlined,
+                color: AppColors.info,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'AI Privacy',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: textPrimary,
+                    ),
+                  ),
+                  Text(
+                    'Your data is anonymized before AI processing',
+                    style: TextStyle(fontSize: 12, color: textMuted),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: textMuted),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(delay: 260.ms);
   }
 
   Widget _buildReferencesSection(BuildContext context, WidgetRef ref) {

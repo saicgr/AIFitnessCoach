@@ -231,7 +231,8 @@ class _ScheduleItemCardState extends State<ScheduleItemCard>
         break;
       case ScheduleItemStatus.scheduled:
         label = 'Scheduled';
-        badgeColor = isDark ? Colors.white38 : Colors.black26;
+        final brightness = Theme.of(context).brightness;
+        badgeColor = brightness == Brightness.dark ? Colors.white38 : Colors.black26;
         break;
     }
 

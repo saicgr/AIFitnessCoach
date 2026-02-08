@@ -13,10 +13,6 @@ NC='\033[0m' # No Color
 
 echo -e "${GREEN}=== FitWiz Android Build Script ===${NC}"
 
-# Update Flutter
-echo -e "${YELLOW}Updating Flutter...${NC}"
-flutter upgrade --force
-
 # Set paths
 FLUTTER_PATH="/opt/homebrew/bin/flutter"
 ADB_PATH="$HOME/Library/Android/sdk/platform-tools/adb"
@@ -62,10 +58,6 @@ fi
 # Flutter clean
 echo -e "${YELLOW}Running flutter clean...${NC}"
 $FLUTTER_PATH clean
-
-# Upgrade packages
-echo -e "${YELLOW}Upgrading Flutter packages...${NC}"
-$FLUTTER_PATH pub upgrade
 
 # Get dependencies
 echo -e "${YELLOW}Getting dependencies...${NC}"

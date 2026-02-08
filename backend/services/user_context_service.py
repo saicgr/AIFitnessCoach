@@ -6990,7 +6990,7 @@ class UserContextService:
             cutoff = (now - timedelta(days=days)).isoformat()
 
             logs_response = db.client.table("hormone_logs").select(
-                "symptoms, symptom_severity, energy_level"
+                "symptoms, energy_level"
             ).eq("user_id", user_id).gte(
                 "log_date", cutoff
             ).order("log_date", desc=True).limit(7).execute()
@@ -7008,9 +7008,17 @@ class UserContextService:
                 symptom_counts = Counter(all_symptoms)
                 context.recent_symptoms = [s for s, _ in symptom_counts.most_common(5)]
 
-                # Get latest severity and energy
+                # Derive severity from latest log's symptom count
                 latest_log = logs_response.data[0]
-                context.symptom_severity = latest_log.get("symptom_severity")
+                latest_symptoms = latest_log.get("symptoms", [])
+                if latest_symptoms:
+                    symptom_count = len(latest_symptoms)
+                    if symptom_count >= 4:
+                        context.symptom_severity = "severe"
+                    elif symptom_count >= 2:
+                        context.symptom_severity = "moderate"
+                    else:
+                        context.symptom_severity = "mild"
                 context.energy_level_today = latest_log.get("energy_level")
 
             # Get kegel preferences

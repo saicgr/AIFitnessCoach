@@ -1429,6 +1429,9 @@ def apply_1rm_weights_to_exercises(
                 # Also update setTargets weights if present (for per-set AI targets)
                 if "set_targets" in exercise_copy and exercise_copy["set_targets"]:
                     for set_target in exercise_copy["set_targets"]:
+                        # Guard: skip if set_target is not a dict (e.g., Gemini returned a string)
+                        if not isinstance(set_target, dict):
+                            continue
                         set_type = set_target.get("set_type", "working")
                         if set_type == "warmup":
                             # Warmup sets at 50% of working weight
@@ -2085,9 +2088,9 @@ async def get_active_injuries_with_muscles(user_id: str) -> dict:
     try:
         db = get_supabase_db()
 
-        # Get active injuries from injuries table
-        injuries_result = db.client.table("injuries") \
-            .select("affected_area, severity, status") \
+        # Get active injuries from user_injuries table
+        injuries_result = db.client.table("user_injuries") \
+            .select("body_part, severity, status") \
             .eq("user_id", user_id) \
             .eq("status", "active") \
             .execute()
@@ -2095,9 +2098,9 @@ async def get_active_injuries_with_muscles(user_id: str) -> dict:
         active_injuries = []
         if injuries_result.data:
             for injury in injuries_result.data:
-                affected_area = injury.get("affected_area", "")
-                if affected_area:
-                    active_injuries.append(affected_area)
+                body_part = injury.get("body_part", "")
+                if body_part:
+                    active_injuries.append(body_part)
 
         # Also check user's active_injuries field (could be stored there too)
         user = db.get_user(user_id)
@@ -2112,7 +2115,7 @@ async def get_active_injuries_with_muscles(user_id: str) -> dict:
             # Add any injuries from user profile
             for inj in user_injuries:
                 if isinstance(inj, dict):
-                    body_part = inj.get("body_part", "") or inj.get("affected_area", "")
+                    body_part = inj.get("body_part", "")
                 elif isinstance(inj, str):
                     body_part = inj
                 else:
@@ -3826,7 +3829,7 @@ async def get_user_hormonal_context(user_id: str) -> dict:
 
         cutoff = (datetime.now() - timedelta(days=3)).date().isoformat()
         logs_response = db.client.table("hormone_logs").select(
-            "symptoms, symptom_severity, energy_level"
+            "symptoms, energy_level"
         ).eq("user_id", user_id).gte("log_date", cutoff).order("log_date", desc=True).limit(3).execute()
 
         if logs_response and logs_response.data:
@@ -3839,8 +3842,16 @@ async def get_user_hormonal_context(user_id: str) -> dict:
             # Deduplicate
             context["recent_symptoms"] = list(set(all_symptoms))[:5]
 
-            # Get latest severity
-            context["symptom_severity"] = logs_response.data[0].get("symptom_severity")
+            # Derive severity from latest log's symptom count
+            latest_symptoms = logs_response.data[0].get("symptoms", [])
+            if latest_symptoms:
+                symptom_count = len(latest_symptoms)
+                if symptom_count >= 4:
+                    context["symptom_severity"] = "severe"
+                elif symptom_count >= 2:
+                    context["symptom_severity"] = "moderate"
+                else:
+                    context["symptom_severity"] = "mild"
 
         # Get kegel preferences (use maybe_single to handle 0 rows gracefully)
         kegel_response = db.client.table("kegel_preferences").select("*").eq("user_id", user_id).maybe_single().execute()

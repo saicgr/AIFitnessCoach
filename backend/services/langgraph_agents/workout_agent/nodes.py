@@ -393,7 +393,6 @@ async def workout_response_node(state: WorkoutAgentState) -> Dict[str, Any]:
 
     if state.get("user_profile"):
         profile = state["user_profile"]
-        context_parts.append(f"User: {profile.get('name', 'User')}")
         context_parts.append(f"Fitness Level: {profile.get('fitness_level', 'beginner')}")
 
     if state.get("current_workout"):

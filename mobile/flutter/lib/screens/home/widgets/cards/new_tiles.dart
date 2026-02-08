@@ -235,7 +235,7 @@ class PersonalRecordsCard extends ConsumerWidget {
 
 /// ============================================================
 /// AI COACH TIP CARD
-/// Daily tip from AI coach (powered by Gemini)
+/// Daily tip from AI coach
 /// ============================================================
 class AICoachTipCard extends ConsumerWidget {
   final TileSize size;

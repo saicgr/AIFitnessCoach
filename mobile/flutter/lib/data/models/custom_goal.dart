@@ -2,7 +2,7 @@
 ///
 /// Custom goals allow users to specify specific skills or objectives
 /// (e.g., "Improve box jump height", "Train for a marathon").
-/// Gemini AI generates search keywords that are used to find relevant exercises.
+/// AI generates search keywords that are used to find relevant exercises.
 class CustomGoal {
   /// Unique identifier
   final String id;

@@ -18,7 +18,7 @@ import '../ai_settings/ai_settings_screen.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/coach_profile_card.dart';
 import 'widgets/custom_coach_form.dart';
-import '../../data/models/gemini_profile_payload.dart';
+import '../../data/models/ai_profile_payload.dart';
 
 /// Coach Selection Screen - Choose your AI coach persona before onboarding
 /// Also used for changing coach from AI settings (with fromSettings=true)
@@ -166,21 +166,21 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
         final userId = await apiClient.getUserId();
         if (userId == null) return;
 
-        // Build Gemini-ready payload using the new payload builder
-        final geminiPayload = GeminiProfilePayloadBuilder.buildPayload(quizData);
+        // Build AI-ready payload using the payload builder
+        final aiPayload = AIProfilePayloadBuilder.buildPayload(quizData);
 
         // Log payload for debugging (remove in production)
         if (kDebugMode) {
-          print(GeminiProfilePayloadBuilder.toReadableString(geminiPayload));
+          print(AIProfilePayloadBuilder.toReadableString(aiPayload));
 
           // Validate required fields
-          final isValid = GeminiProfilePayloadBuilder.validateRequiredFields(geminiPayload);
+          final isValid = AIProfilePayloadBuilder.validateRequiredFields(aiPayload);
           print('🔍 [Payload] Validation: ${isValid ? '✅ Valid' : '❌ Invalid'}');
         }
 
         // Build full preferences payload (includes personal info + coach)
         final preferencesPayload = <String, dynamic>{
-          ...geminiPayload, // Spread Gemini payload (workout-related fields)
+          ...aiPayload, // Spread AI payload (workout-related fields)
 
           // Personal Info (not needed for workout generation but stored in DB)
           if (quizData.name != null) 'name': quizData.name,
@@ -199,7 +199,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
           // Activity level
           if (quizData.activityLevel != null) 'activity_level': quizData.activityLevel,
 
-          // Lifestyle (stored but not sent to Gemini)
+          // Lifestyle (stored but not sent to AI)
           if (quizData.sleepQuality != null) 'sleep_quality': quizData.sleepQuality,
           if (quizData.obstacles != null) 'obstacles': quizData.obstacles,
           if (quizData.motivations != null) 'motivations': quizData.motivations,

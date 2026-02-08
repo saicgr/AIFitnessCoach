@@ -99,7 +99,7 @@ class AnalyticsService {
 
   /// Logs successful workout generation.
   ///
-  /// Call this when a workout is successfully generated from Gemini API.
+  /// Call this when a workout is successfully generated from the AI API.
   ///
   /// Parameters:
   /// - [primaryGoal]: The user's selected primary goal (e.g., "muscle_hypertrophy")

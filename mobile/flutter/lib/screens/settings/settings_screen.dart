@@ -170,6 +170,18 @@ const Map<String, List<String>> _settingsSearchIndex = {
     'exit', 'leave', 'switch account', 'change account',
     'sign off', 'log off',
   ],
+  // AI Privacy - data usage, AI processing, medical disclaimer
+  'ai_privacy': [
+    // Direct keywords
+    'ai privacy', 'privacy', 'data usage', 'ai data', 'data processing',
+    'medical disclaimer', 'disclaimer', 'anonymized', 'anonymize',
+    'personal data', 'data protection',
+    // Natural language
+    'how ai uses data', 'what data', 'my data', 'data safety',
+    'ai sees', 'data collection', 'privacy settings', 'medical',
+    'health disclaimer', 'not medical advice',
+    'privacy policy', 'terms of service',
+  ],
   // AI Coach specific - this is what the user asked about!
   'ai_coach': [
     // Direct keywords
@@ -317,6 +329,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         subtitle: 'Voice, personality, coaching style',
         color: iconColor,
         sectionKeys: ['ai_coach'],
+      ),
+      _SettingsGroup(
+        id: 'ai_privacy',
+        icon: Icons.shield_outlined,
+        title: 'Privacy & AI Data',
+        subtitle: 'Data usage, AI processing, medical disclaimer',
+        color: iconColor,
+        sectionKeys: ['ai_privacy'],
       ),
       _SettingsGroup(
         id: 'appearance',
@@ -645,6 +665,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _buildEdgeHandleToggle(),
           ],
         );
+      case 'ai_privacy':
+        return const AIPrivacySection();
       case 'appearance':
         return const Column(
           children: [

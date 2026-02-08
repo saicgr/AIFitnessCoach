@@ -38,6 +38,7 @@ from datetime import datetime, timedelta
 
 # Import split descriptions for rich AI context
 from services.split_descriptions import SPLIT_DESCRIPTIONS, get_split_context
+from core.anonymize import age_to_bracket
 
 # Import centralized AI response parser
 from core.ai_response_parser import parse_ai_json
@@ -204,17 +205,55 @@ def validate_set_targets_strict(exercises: List[Dict], user_context: Dict = None
     total_sets = 0
 
     for exercise in exercises:
+        # Ensure exercise is a dict (could be a string from malformed Gemini response)
+        if isinstance(exercise, str):
+            try:
+                exercise = json.loads(exercise)
+            except (json.JSONDecodeError, ValueError):
+                logger.error(f"❌ [set_targets] Exercise is an unparseable string: {exercise[:100]}")
+                continue
+        if not isinstance(exercise, dict):
+            logger.error(f"❌ [set_targets] Exercise is not a dict: type={type(exercise).__name__}")
+            continue
+
         ex_name = exercise.get('name', 'Unknown')
         set_targets = exercise.get("set_targets")
+
+        # Handle set_targets being a JSON string instead of a list
+        if isinstance(set_targets, str):
+            try:
+                set_targets = json.loads(set_targets)
+                exercise["set_targets"] = set_targets
+            except (json.JSONDecodeError, ValueError):
+                logger.error(f"❌ [set_targets] set_targets is an unparseable string for '{ex_name}'")
+                set_targets = None
 
         if not set_targets:
             missing_targets.append(ex_name)
             logger.error(f"❌ [set_targets] MISSING for '{ex_name}' - Gemini FAILED to generate!")
             continue
 
+        # Ensure set_targets is a list
+        if not isinstance(set_targets, list):
+            missing_targets.append(ex_name)
+            logger.error(f"❌ [set_targets] set_targets is not a list for '{ex_name}': type={type(set_targets).__name__}")
+            continue
+
         # Validate each set target has proper set_type (W, D, F, A indicators)
         logger.info(f"✅ [set_targets] '{ex_name}' has {len(set_targets)} targets:")
         for idx, st in enumerate(set_targets):
+            # Ensure each set target is a dict (could be a string)
+            if isinstance(st, str):
+                try:
+                    st = json.loads(st)
+                    set_targets[idx] = st
+                except (json.JSONDecodeError, ValueError):
+                    logger.warning(f"⚠️ [set_targets] Skipping unparseable set_target string for '{ex_name}' set {idx + 1}")
+                    continue
+            if not isinstance(st, dict):
+                logger.warning(f"⚠️ [set_targets] Skipping non-dict set_target for '{ex_name}' set {idx + 1}: type={type(st).__name__}")
+                continue
+
             total_sets += 1
             set_num = st.get('set_number', idx + 1)
             set_type = st.get('set_type')
@@ -2901,17 +2940,18 @@ IMPORTANT RULES:
         age_activity_context = ""
         senior_critical_instruction = ""  # For seniors 60+, this adds critical limits
         if age:
+            bracket = age_to_bracket(age)
             if age < 30:
-                age_activity_context += f"\n- Age: {age} (young adult - can handle higher intensity, explosive movements, max 25 reps/exercise)"
+                age_activity_context += f"\n- Age group: {bracket} (can handle higher intensity, explosive movements, max 25 reps/exercise)"
             elif age < 45:
-                age_activity_context += f"\n- Age: {age} (adult - balanced approach to intensity, max 20 reps/exercise)"
+                age_activity_context += f"\n- Age group: {bracket} (balanced approach to intensity, max 20 reps/exercise)"
             elif age < 60:
-                age_activity_context += f"\n- Age: {age} (middle-aged - focus on joint-friendly exercises, longer warm-ups, max 16 reps/exercise)"
+                age_activity_context += f"\n- Age group: {bracket} (focus on joint-friendly exercises, longer warm-ups, max 16 reps/exercise)"
             else:
                 # Senior users (60+) - get detailed safety instructions
                 senior_prompt_data = get_senior_workout_prompt_additions(age)
                 if senior_prompt_data:
-                    age_activity_context += f"\n- Age: {age} ({senior_prompt_data['age_bracket']} - REDUCED INTENSITY REQUIRED)"
+                    age_activity_context += f"\n- Age group: {bracket} ({senior_prompt_data['age_bracket']} - REDUCED INTENSITY REQUIRED)"
                     # Add critical senior instructions to the prompt
                     senior_critical_instruction = senior_prompt_data["critical_instructions"]
                     # Also append movement guidance
@@ -2920,7 +2960,7 @@ IMPORTANT RULES:
                     senior_critical_instruction += f"\n- PRIORITIZE: {movement_priorities}"
                     senior_critical_instruction += f"\n- AVOID: {movements_to_avoid}"
                 else:
-                    age_activity_context += f"\n- Age: {age} (senior - prioritize low-impact, balance exercises, max 12 reps/exercise)"
+                    age_activity_context += f"\n- Age group: {bracket} (prioritize low-impact, balance exercises, max 12 reps/exercise)"
 
         if activity_level:
             activity_descriptions = {
@@ -3873,7 +3913,22 @@ If user has gym equipment - most exercises MUST use that equipment!"""
                         logger.error(f"[DEBUG] candidate {i} finish_reason: {cand.finish_reason}")
                 raise ValueError("Gemini returned empty workout response")
 
-            workout_data = parsed.model_dump()
+            # Handle case where parsed may be a Pydantic model or raw data
+            if hasattr(parsed, 'model_dump'):
+                workout_data = parsed.model_dump()
+            elif isinstance(parsed, dict):
+                workout_data = parsed
+            elif isinstance(parsed, str):
+                # SDK sometimes returns raw string instead of parsed model
+                try:
+                    workout_data = json.loads(parsed)
+                except (json.JSONDecodeError, ValueError):
+                    raise ValueError(f"Gemini returned unparseable string response: {parsed[:200]}")
+            else:
+                raise ValueError(f"Unexpected parsed type from Gemini: {type(parsed).__name__}")
+
+            if not isinstance(workout_data, dict):
+                raise ValueError(f"workout_data is not a dict after parsing: type={type(workout_data).__name__}")
 
             # Validate required fields
             if "exercises" not in workout_data or not workout_data["exercises"]:
@@ -4889,7 +4944,7 @@ USER PROFILE:
 - Fitness Level: {user_profile.get('fitness_level', 'intermediate')}
 - Goals: {', '.join(user_profile.get('goals', ['general fitness']))}
 - Equipment: {', '.join(user_profile.get('equipment', ['dumbbells', 'bodyweight']))}
-- Age: {user_profile.get('age', 30)}
+- Age group: {age_to_bracket(user_profile['age']) if isinstance(user_profile.get('age'), (int, float)) else user_profile.get('age_bracket', 'adult')}
 - Dietary Restrictions: {', '.join(user_profile.get('dietary_restrictions', []))}
 
 WORKOUT SCHEDULE:

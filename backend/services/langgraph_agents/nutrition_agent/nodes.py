@@ -316,7 +316,6 @@ async def nutrition_response_node(state: NutritionAgentState) -> Dict[str, Any]:
 
     if state.get("user_profile"):
         profile = state["user_profile"]
-        context_parts.append(f"User: {profile.get('name', 'User')}")
         context_parts.append(f"Goals: {', '.join(profile.get('goals', []))}")
 
     if state.get("tool_results"):
