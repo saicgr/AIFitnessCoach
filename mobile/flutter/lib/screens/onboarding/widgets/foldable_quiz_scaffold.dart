@@ -49,7 +49,18 @@ class FoldableQuizScaffold extends ConsumerWidget {
   }
 
   /// Whether the current window state should use a foldable side-by-side layout.
+  ///
+  /// Uses [isFoldable] + [hingeBounds] as primary detection, since the
+  /// posture enum can report `none` on devices where the hinge IS present
+  /// but the Android API reports an unknown posture state (e.g. Pixel Fold).
   static bool shouldUseFoldableLayout(WindowModeState windowState) {
+    // Primary: if the device has a detected hinge/fold with bounds, use it.
+    // hingeBounds is only non-null when the app window spans the hinge
+    // (i.e. device is open), so this won't trigger on the cover screen.
+    if (windowState.isFoldable && windowState.hingeBounds != null) {
+      return isVerticalHinge(windowState.hingeBounds);
+    }
+    // Fallback: posture-based check
     final posture = windowState.foldablePosture;
     if (posture == FoldablePosture.none) return false;
     return isVerticalHinge(windowState.hingeBounds);

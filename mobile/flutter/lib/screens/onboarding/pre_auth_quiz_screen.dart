@@ -2752,9 +2752,171 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   /// Extra widget shown in the scaffold's left pane (foldable only).
   /// Used for info buttons that belong near the question title.
   Widget? _getStepHeaderExtra(BuildContext context, int step) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    Widget buildTip({
+      required IconData icon,
+      required Color color,
+      required String title,
+      required String body,
+      List<({IconData icon, String text})>? bullets,
+    }) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: color.withValues(alpha: 0.15)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(icon, size: 16, color: color),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: color,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  body,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (bullets != null) ...[
+            const SizedBox(height: 12),
+            ...bullets.map((b) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    children: [
+                      Icon(b.icon, size: 15, color: color.withValues(alpha: 0.7)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          b.text,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+          ],
+        ],
+      );
+    }
+
     switch (step) {
-      case 5: // Primary Goal — has an info button explaining how AI uses this
+      case 0:
+        return buildTip(
+          icon: Icons.flag_rounded,
+          color: AppColors.orange,
+          title: 'Your goals shape everything',
+          body: 'We use your goals to determine training split, exercise selection, and how fast you progress.',
+          bullets: [
+            (icon: Icons.fitness_center, text: 'Exercise type & volume'),
+            (icon: Icons.speed, text: 'Intensity & rest periods'),
+            (icon: Icons.trending_up, text: 'Weekly progression rate'),
+          ],
+        );
+      case 1:
+        return buildTip(
+          icon: Icons.person_outline,
+          color: const Color(0xFF3B82F6),
+          title: 'Calibrating your baseline',
+          body: 'Fitness level helps set the right starting point — proper weights, rep ranges, and exercise complexity.',
+        );
+      case 2:
+        return buildTip(
+          icon: Icons.calendar_today_rounded,
+          color: AppColors.green,
+          title: 'Consistency beats intensity',
+          body: 'We\'ll build the optimal training split for your schedule. More days isn\'t always better — recovery matters.',
+          bullets: [
+            (icon: Icons.looks_two, text: '2-3 days → Full Body'),
+            (icon: Icons.looks_4, text: '4 days → Upper/Lower'),
+            (icon: Icons.looks_5, text: '5-6 days → Push/Pull/Legs'),
+          ],
+        );
+      case 3:
+        return buildTip(
+          icon: Icons.event_available,
+          color: const Color(0xFFA855F7),
+          title: 'Smart scheduling',
+          body: 'Your chosen days help us space workouts optimally for muscle recovery between sessions.',
+        );
+      case 4:
+        return buildTip(
+          icon: Icons.home_rounded,
+          color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+          title: 'Matched to your setup',
+          body: 'Every exercise will be chosen based on what equipment you actually have. No substitutions needed.',
+          bullets: [
+            (icon: Icons.check_circle_outline, text: 'Only exercises you can do'),
+            (icon: Icons.swap_horiz, text: 'Smart alternatives when needed'),
+          ],
+        );
+      case 5:
         return QuizPrimaryGoal.buildInfoButton(context);
+      case 6:
+        return buildTip(
+          icon: Icons.tune_rounded,
+          color: AppColors.orange,
+          title: 'Fine-tuning your plan',
+          body: 'These optional details make your workouts even more personalized. Skip if you prefer AI defaults.',
+        );
+      case 7:
+        return buildTip(
+          icon: Icons.accessibility_new,
+          color: const Color(0xFFEF4444),
+          title: 'Target weak points',
+          body: 'Selected muscles get extra volume and priority placement in your workouts.',
+        );
+      case 8:
+        return buildTip(
+          icon: Icons.view_week_rounded,
+          color: const Color(0xFF3B82F6),
+          title: 'Training philosophy',
+          body: 'Each style structures your week differently. Let AI decide if you\'re unsure — it adapts to your schedule.',
+        );
+      case 9:
+        return buildTip(
+          icon: Icons.shield_outlined,
+          color: AppColors.green,
+          title: 'Safety first',
+          body: 'Progression pace and injury info ensure your workouts challenge you without risking setbacks.',
+        );
+      case 10:
+      case 11:
+        return buildTip(
+          icon: Icons.restaurant_rounded,
+          color: AppColors.orange,
+          title: 'Fuel your training',
+          body: 'Nutrition tracking is optional but powerful. AI calculates macros based on your goals and activity level.',
+        );
       default:
         return null;
     }

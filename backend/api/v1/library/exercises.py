@@ -292,7 +292,7 @@ async def list_exercises(
                 if difficulty:
                     query = query.eq("difficulty_level", difficulty)
                 if search:
-                    query = query.or_(f"name.ilike.%{search}%,original_name.ilike.%{search}%")
+                    query = query.or_(f"name.ilike.%{search}%,original_name.ilike.%{search}%,equipment.ilike.%{search}%")
 
                 # Calculate how many rows we still need
                 rows_needed = min(page_size, limit - len(all_rows))

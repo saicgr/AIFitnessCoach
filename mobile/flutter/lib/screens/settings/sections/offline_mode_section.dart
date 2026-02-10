@@ -9,6 +9,7 @@ import '../../../data/services/sync_engine.dart';
 import '../../../services/model_download_service.dart';
 import '../../../data/services/food_database_service.dart';
 import '../../../widgets/sync_status_widget.dart';
+import '../ai_model_download_screen.dart';
 import '../sync_details_screen.dart';
 import '../widgets/widgets.dart';
 
@@ -182,9 +183,18 @@ class _GenerationModeSelector extends ConsumerWidget {
             subtitle: 'Runs a small AI model on your phone.\nWorks offline after model download.',
             value: WorkoutGenerationMode.onDeviceAI,
             groupValue: currentMode,
-            onChanged: (mode) =>
-                ref.read(generationModeProvider.notifier).setMode(mode),
+            onChanged: (mode) {
+              ref.read(generationModeProvider.notifier).setMode(mode);
+              final downloadStatus = ref.read(modelDownloadProvider).status;
+              if (downloadStatus != DownloadStatus.downloaded) {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (_) => const AiModelDownloadScreen()),
+                );
+              }
+            },
             trailing: _OnDeviceAIChip(),
+            bottom: _OnDeviceSetupAction(),
           ),
           Divider(height: 1, indent: 56, color: Colors.white.withOpacity(0.06)),
           _GenerationModeRadioTile(
@@ -211,6 +221,7 @@ class _GenerationModeRadioTile extends StatelessWidget {
   final WorkoutGenerationMode groupValue;
   final ValueChanged<WorkoutGenerationMode> onChanged;
   final Widget? trailing;
+  final Widget? bottom;
   final bool isFirst;
   final bool isLast;
 
@@ -222,6 +233,7 @@ class _GenerationModeRadioTile extends StatelessWidget {
     required this.groupValue,
     required this.onChanged,
     this.trailing,
+    this.bottom,
     this.isFirst = false,
     this.isLast = false,
   });
@@ -241,46 +253,114 @@ class _GenerationModeRadioTile extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
+        child: Column(
           children: [
-            Icon(icon, color: isSelected ? AppColors.orange : textMuted, size: 24),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+            Row(
+              children: [
+                Icon(icon, color: isSelected ? AppColors.orange : textMuted, size: 24),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary,
+                            ),
+                          ),
+                          if (trailing != null) ...[
+                            const SizedBox(width: 8),
+                            trailing!,
+                          ],
+                        ],
                       ),
-                      if (trailing != null) ...[
-                        const SizedBox(width: 8),
-                        trailing!,
-                      ],
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: TextStyle(fontSize: 12, color: textMuted, height: 1.3),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(fontSize: 12, color: textMuted, height: 1.3),
-                  ),
-                ],
+                ),
+                Radio<WorkoutGenerationMode>(
+                  value: value,
+                  groupValue: groupValue,
+                  onChanged: (v) {
+                    if (v != null) onChanged(v);
+                  },
+                  activeColor: AppColors.orange,
+                ),
+              ],
+            ),
+            if (bottom != null && isSelected) ...[
+              const SizedBox(height: 8),
+              bottom!,
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Action row shown below On-Device AI when selected and model not ready.
+class _OnDeviceSetupAction extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final downloadState = ref.watch(modelDownloadProvider);
+
+    if (downloadState.status == DownloadStatus.downloaded) {
+      return const SizedBox.shrink();
+    }
+
+    final String label;
+    final IconData icon;
+
+    switch (downloadState.status) {
+      case DownloadStatus.downloading:
+        label = 'Downloading... ${(downloadState.progress * 100).toInt()}%';
+        icon = Icons.sync_rounded;
+      case DownloadStatus.failed:
+        label = 'Download failed. Tap to retry';
+        icon = Icons.refresh_rounded;
+      default:
+        label = 'Download model to get started';
+        icon = Icons.download_rounded;
+    }
+
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const AiModelDownloadScreen()),
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(left: 40),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.orange.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.orange.withOpacity(0.25)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.orange, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.orange,
+                ),
               ),
             ),
-            Radio<WorkoutGenerationMode>(
-              value: value,
-              groupValue: groupValue,
-              onChanged: (v) {
-                if (v != null) onChanged(v);
-              },
-              activeColor: AppColors.orange,
-            ),
+            const Icon(Icons.chevron_right_rounded,
+                color: AppColors.orange, size: 20),
           ],
         ),
       ),
@@ -296,38 +376,48 @@ class _OnDeviceAIChip extends ConsumerWidget {
 
     final String label;
     final Color bgColor;
+    final Color textColor;
 
     switch (downloadState.status) {
       case DownloadStatus.downloaded:
         label = 'Ready';
         bgColor = Colors.green.withOpacity(0.2);
+        textColor = Colors.green;
       case DownloadStatus.downloading:
         label = '${(downloadState.progress * 100).toInt()}%';
         bgColor = Colors.blue.withOpacity(0.2);
+        textColor = Colors.blue;
       case DownloadStatus.notDownloaded:
         label = 'Setup needed';
         bgColor = Colors.orange.withOpacity(0.2);
+        textColor = Colors.orange;
       case DownloadStatus.failed:
         label = 'Error';
         bgColor = Colors.red.withOpacity(0.2);
+        textColor = Colors.red;
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
-            color: bgColor == Colors.green.withOpacity(0.2)
-                ? Colors.green
-                : bgColor == Colors.orange.withOpacity(0.2)
-                    ? Colors.orange
-                    : bgColor == Colors.red.withOpacity(0.2)
-                        ? Colors.red
-                        : Colors.blue),
+    return GestureDetector(
+      onTap: downloadState.status != DownloadStatus.downloaded
+          ? () => Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (_) => const AiModelDownloadScreen()),
+              )
+          : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: textColor,
+          ),
+        ),
       ),
     );
   }

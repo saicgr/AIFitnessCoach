@@ -29,7 +29,7 @@ class PaywallPricingScreen extends ConsumerStatefulWidget {
 }
 
 class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
-  String _selectedPlan = 'premium_plus_yearly';
+  String _selectedPlan = 'premium_yearly';
   String _selectedBillingCycle = 'yearly'; // 'yearly' or 'monthly'
   bool _hasShownDiscount = false;
 
@@ -47,8 +47,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       backgroundColor: colors.background,
       body: SafeArea(
         child: FoldableQuizScaffold(
-          headerTitle: isSubscribed ? 'Change Plan' : 'Start your fitness journey',
-          headerSubtitle: isSubscribed ? 'Upgrade or downgrade your subscription' : '7-day free trial · Cancel anytime',
+          headerTitle: '',
+          headerExtra: _buildPricingLeftPane(colors, isSubscribed),
           content: SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: hPad),
             child: Column(
@@ -126,7 +126,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                         isSelected: _selectedBillingCycle == 'yearly',
                         onTap: () => setState(() {
                           _selectedBillingCycle = 'yearly';
-                          _selectedPlan = 'premium_plus_yearly';
+                          _selectedPlan = 'premium_yearly';
                         }),
                         colors: colors,
                       ),
@@ -136,7 +136,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                         isSelected: _selectedBillingCycle == 'monthly',
                         onTap: () => setState(() {
                           _selectedBillingCycle = 'monthly';
-                          _selectedPlan = 'premium_plus_monthly';
+                          _selectedPlan = 'premium_monthly';
                         }),
                         colors: colors,
                       ),
@@ -146,61 +146,31 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
                 SizedBox(height: isFoldable ? 10 : 14),
 
-                // Plan options
-                Column(
-                  children: [
-                    if (_selectedBillingCycle == 'yearly')
-                      _AccentBorderCard(
-                        isSelected: _selectedPlan == 'premium_plus_yearly',
-                        colors: colors,
-                        child: _TierPlanCard(
-                          planId: 'premium_plus_yearly',
-                          tierName: 'Premium Plus',
-                          badge: 'BEST VALUE',
-                          badgeColor: colors.accent,
-                          accentColor: colors.accent,
-                          price: '\$6.67',
-                          period: '/mo',
-                          billedAs: '\$79.99/year',
-                          features: const ['∞ Unlimited workouts', '📸 Food photo scanning', '🍎 Full nutrition tracking', '📊 Advanced analytics'],
-                          isSelected: _selectedPlan == 'premium_plus_yearly',
-                          onTap: () => setState(() => _selectedPlan = 'premium_plus_yearly'),
-                          colors: colors,
-                        ),
-                      )
-                    else
-                      _TierPlanCard(
-                        planId: 'premium_plus_monthly',
-                        tierName: 'Premium Plus',
-                        badge: 'MOST POPULAR',
-                        badgeColor: colors.accent,
-                        accentColor: colors.accent,
-                        price: '\$9.99',
-                        period: '/mo',
-                        billedAs: 'Billed monthly',
-                        features: const ['∞ Unlimited workouts', '📸 Food photo scanning', '🍎 Full nutrition tracking', '📊 Advanced analytics'],
-                        isSelected: _selectedPlan == 'premium_plus_monthly',
-                        onTap: () => setState(() => _selectedPlan = 'premium_plus_monthly'),
-                        colors: colors,
-                      ),
-
-                    const SizedBox(height: 10),
-
-                    _TierPlanCard(
-                      planId: _selectedBillingCycle == 'yearly' ? 'premium_yearly' : 'premium_monthly',
-                      tierName: 'Premium',
-                      badge: _selectedBillingCycle == 'yearly' ? 'SAVE 33%' : '',
-                      badgeColor: colors.accent,
-                      accentColor: colors.accent,
-                      price: _selectedBillingCycle == 'yearly' ? '\$4.00' : '\$5.99',
-                      period: '/mo',
-                      billedAs: _selectedBillingCycle == 'yearly' ? '\$47.99/year' : 'Billed monthly',
-                      features: const ['Daily workouts', '5 food scans/day', 'Full macro tracking'],
-                      isSelected: _selectedPlan == (_selectedBillingCycle == 'yearly' ? 'premium_yearly' : 'premium_monthly'),
-                      onTap: () => setState(() => _selectedPlan = _selectedBillingCycle == 'yearly' ? 'premium_yearly' : 'premium_monthly'),
-                      colors: colors,
-                    ),
-                  ],
+                // Single Premium plan
+                _AccentBorderCard(
+                  isSelected: true,
+                  colors: colors,
+                  child: _TierPlanCard(
+                    planId: _selectedBillingCycle == 'yearly' ? 'premium_yearly' : 'premium_monthly',
+                    tierName: 'Premium',
+                    badge: _selectedBillingCycle == 'yearly' ? 'BEST VALUE' : '',
+                    badgeColor: colors.accent,
+                    accentColor: colors.accent,
+                    price: _selectedBillingCycle == 'yearly' ? '\$5.83' : '\$6.99',
+                    period: '/mo',
+                    billedAs: _selectedBillingCycle == 'yearly' ? '\$69.99/year' : 'Billed monthly',
+                    features: const [
+                      '∞ Unlimited AI workouts',
+                      '📸 Food photo scanning',
+                      '🍎 Full nutrition tracking',
+                      '📊 Advanced analytics',
+                      '🏋️ Supersets & advanced sets',
+                      '🔥 Hell Mode',
+                    ],
+                    isSelected: true,
+                    onTap: () {},
+                    colors: colors,
+                  ),
                 ),
 
                 SizedBox(height: isFoldable ? 12 : 16),
@@ -389,7 +359,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       final accepted = await _showDiscountPopup(context);
       if (accepted == true) {
         // User accepted the discount - purchase yearly at discounted price
-        final success = await ref.read(subscriptionProvider.notifier).purchase('premium_plus_yearly_discount');
+        final success = await ref.read(subscriptionProvider.notifier).purchase('premium_yearly_discount');
         if (success && context.mounted) {
           await _markPaywallComplete(ref);
           await _navigateAfterPaywall(context, ref);
@@ -469,40 +439,26 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   /// Get plan details by plan ID
   Map<String, dynamic> _getPlanDetails(String planId) {
     switch (planId) {
-      case 'premium_plus_yearly':
+      case 'premium_yearly':
         return {
-          'name': 'Premium Plus Yearly',
-          'price': 79.99,
+          'name': 'Premium Yearly',
+          'price': 69.99,
           'period': 'year',
-          'monthlyPrice': 6.67,
+          'monthlyPrice': 5.83,
         };
-      case 'premium_plus_yearly_discount':
+      case 'premium_yearly_discount':
         return {
-          'name': 'Premium Plus Yearly (Discounted)',
+          'name': 'Premium Yearly (Discounted)',
           'price': 49.99,
           'period': 'year',
           'monthlyPrice': 4.17,
         };
-      case 'premium_plus_monthly':
-        return {
-          'name': 'Premium Plus Monthly',
-          'price': 9.99,
-          'period': 'month',
-          'monthlyPrice': 9.99,
-        };
-      case 'premium_yearly':
-        return {
-          'name': 'Premium Yearly',
-          'price': 47.99,
-          'period': 'year',
-          'monthlyPrice': 4.00,
-        };
       case 'premium_monthly':
         return {
           'name': 'Premium Monthly',
-          'price': 5.99,
+          'price': 6.99,
           'period': 'month',
-          'monthlyPrice': 5.99,
+          'monthlyPrice': 6.99,
         };
       default:
         return {
@@ -518,12 +474,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   String _getCurrentPlanId(SubscriptionTier tier, SubscriptionState state) {
     // Estimate based on tier - in real app this would come from backend
     switch (tier) {
-      case SubscriptionTier.premiumPlus:
-        return state.subscriptionEndDate != null &&
-                state.subscriptionEndDate!.difference(DateTime.now()).inDays > 60
-            ? 'premium_plus_yearly'
-            : 'premium_plus_monthly';
       case SubscriptionTier.premium:
+      case SubscriptionTier.premiumPlus: // Legacy — treat as premium
         return state.subscriptionEndDate != null &&
                 state.subscriptionEndDate!.difference(DateTime.now()).inDays > 60
             ? 'premium_yearly'
@@ -622,6 +574,123 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     }
+  }
+
+  Widget _buildPricingLeftPane(ThemeColors colors, bool isSubscribed) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Title
+        Text(
+          isSubscribed ? 'Change Plan' : 'Start your fitness',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: colors.textPrimary,
+            height: 1.3,
+          ),
+        ),
+        if (!isSubscribed)
+          Text(
+            'journey',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: colors.accent,
+              height: 1.3,
+            ),
+          ),
+        const SizedBox(height: 16),
+
+        // Trial badge
+        if (!isSubscribed)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  colors.accent.withValues(alpha: 0.1),
+                  colors.accent.withValues(alpha: 0.04),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: colors.accent.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.card_giftcard, size: 18, color: colors.accent),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '7-day free trial\nCancel anytime, no questions asked',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 14),
+
+        // What you get
+        Text(
+          'What you get',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: colors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 10),
+        _LeftPaneFeature(icon: Icons.auto_fix_high, text: 'Unlimited AI workouts', colors: colors),
+        const SizedBox(height: 6),
+        _LeftPaneFeature(icon: Icons.camera_alt_outlined, text: 'Food photo scanning', colors: colors),
+        const SizedBox(height: 6),
+        _LeftPaneFeature(icon: Icons.restaurant_menu, text: 'Full nutrition tracking', colors: colors),
+        const SizedBox(height: 6),
+        _LeftPaneFeature(icon: Icons.local_fire_department, text: 'Hell Mode & supersets', colors: colors),
+        const SizedBox(height: 6),
+        _LeftPaneFeature(icon: Icons.healing_outlined, text: 'Injury-aware workouts', colors: colors),
+        const SizedBox(height: 6),
+        _LeftPaneFeature(icon: Icons.fitness_center, text: '52 skill progressions', colors: colors),
+        const SizedBox(height: 14),
+
+        // Free tier note
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: colors.textSecondary.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: colors.textSecondary.withValues(alpha: 0.1),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.check_circle_outline, size: 18, color: colors.success),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Even without premium, you can track workouts, log sets & reps, and monitor progress completely free.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colors.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
 }
@@ -997,7 +1066,6 @@ class _CurrentPlanCard extends StatelessWidget {
   String _getTierName() {
     switch (tier) {
       case SubscriptionTier.premiumPlus:
-        return 'Premium Plus';
       case SubscriptionTier.premium:
         return 'Premium';
       case SubscriptionTier.lifetime:
@@ -1106,7 +1174,7 @@ class _DiscountPopup extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'PREMIUM PLUS YEARLY',
+                    'PREMIUM YEARLY',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -1121,7 +1189,7 @@ class _DiscountPopup extends StatelessWidget {
                     children: [
                       // Original price crossed out
                       Text(
-                        '\$79.99',
+                        '\$69.99',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w500,
@@ -1174,7 +1242,7 @@ class _DiscountPopup extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      'SAVE \$30 (38% OFF)',
+                      'SAVE \$20 (29% OFF)',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -1563,6 +1631,39 @@ class _PlanComparisonRow extends StatelessWidget {
               fontSize: 14,
               fontWeight: FontWeight.bold,
               color: isHighlighted ? (highlightColor ?? colors.cyan) : colors.textSecondary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Left pane feature row for foldable layout
+class _LeftPaneFeature extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final ThemeColors colors;
+
+  const _LeftPaneFeature({
+    required this.icon,
+    required this.text,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: colors.accent),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: colors.textSecondary,
             ),
           ),
         ),

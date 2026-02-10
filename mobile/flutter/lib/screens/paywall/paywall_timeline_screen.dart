@@ -24,28 +24,106 @@ class PaywallTimelineScreen extends ConsumerWidget {
       backgroundColor: colors.background,
       body: SafeArea(
         child: FoldableQuizScaffold(
-          headerTitle: 'How your free',
-          headerSubtitle: 'trial works',
-          headerExtra: Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              gradient: colors.accentGradient,
-              shape: BoxShape.circle,
-            ),
-            child: ClipOval(
-              child: Image.asset(
-                'assets/images/app_icon.png',
-                width: 64,
-                height: 64,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Icon(
-                  Icons.fitness_center,
-                  size: 32,
-                  color: colors.accentContrast,
+          headerTitle: '',
+          headerExtra: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
+              Text(
+                'How your free trial works',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: colors.textPrimary,
+                  height: 1.3,
                 ),
               ),
-            ),
+              const SizedBox(height: 16),
+
+              // Trust badges
+              _TrustItem(
+                icon: Icons.lock_outline,
+                text: 'Cancel anytime from settings',
+                colors: colors,
+              ),
+              const SizedBox(height: 8),
+              _TrustItem(
+                icon: Icons.notifications_none,
+                text: 'Reminder before you\'re charged',
+                colors: colors,
+              ),
+              const SizedBox(height: 8),
+              _TrustItem(
+                icon: Icons.credit_card_off_outlined,
+                text: 'No charge during trial',
+                colors: colors,
+              ),
+              const SizedBox(height: 8),
+              _TrustItem(
+                icon: Icons.support_agent,
+                text: 'Full support during trial',
+                colors: colors,
+              ),
+              const SizedBox(height: 14),
+
+              // Charge date callout
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colors.accent.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: colors.accent.withValues(alpha: 0.15),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.event, size: 18, color: colors.accent),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'First charge: ${dateFormat.format(chargeDate)}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: colors.accent,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Free tier note
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colors.textSecondary.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: colors.textSecondary.withValues(alpha: 0.1),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.check_circle_outline, size: 18, color: colors.success),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Even without premium, you can use FitWiz completely free for workout tracking, logging sets & reps, and monitoring your progress.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           content: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -254,6 +332,38 @@ class _TimelineItem extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _TrustItem extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final ThemeColors colors;
+
+  const _TrustItem({
+    required this.icon,
+    required this.text,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: colors.accent),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: colors.textSecondary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

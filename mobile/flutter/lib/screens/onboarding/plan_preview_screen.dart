@@ -56,15 +56,17 @@ class PlanPreviewScreen extends ConsumerWidget {
             headerTitle: 'Your Personalized Plan',
             headerSubtitle: 'AI-generated \u2022 Adjusts as you progress',
             headerExtra: _buildSummaryCard(isDark, textPrimary, textSecondary),
-            headerOverlay: Positioned(
-              top: 16,
-              left: 16,
-              child: _FloatingBackButton(
-                isDark: isDark,
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  Navigator.of(context).pop();
-                },
+            headerOverlay: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _FloatingBackButton(
+                  isDark: isDark,
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    Navigator.of(context).pop();
+                  },
+                ),
               ),
             ),
             content: ListView(

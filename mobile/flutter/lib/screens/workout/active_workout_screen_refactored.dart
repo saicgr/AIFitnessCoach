@@ -91,6 +91,10 @@ import '../../core/providers/heart_rate_provider.dart';
 import '../../core/providers/ble_heart_rate_provider.dart';
 import '../../data/services/ble_heart_rate_service.dart';
 import '../../widgets/heart_rate_display.dart';
+import '../../core/providers/window_mode_provider.dart';
+import '../../screens/onboarding/widgets/foldable_quiz_scaffold.dart';
+import 'foldable/foldable_workout_layout.dart';
+import 'foldable/foldable_warmup_layout.dart';
 
 /// Active workout screen with modular composition
 class ActiveWorkoutScreen extends ConsumerStatefulWidget {
@@ -2718,9 +2722,23 @@ class _ActiveWorkoutScreenState
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
+    // Foldable detection
+    final windowState = ref.watch(windowModeProvider);
+    final isFoldableOpen = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
+
     // Route to appropriate phase screen
     switch (_currentPhase) {
       case WorkoutPhase.warmup:
+        if (isFoldableOpen) {
+          return FoldableWarmupLayout(
+            windowState: windowState,
+            workoutSeconds: _timerController.workoutSeconds,
+            exercises: _warmupExercises ?? defaultWarmupExercises,
+            onSkipWarmup: _handleSkipWarmup,
+            onWarmupComplete: _handleWarmupComplete,
+            onQuitRequested: _showQuitDialog,
+          );
+        }
         // Use personalized warmups from API if available, otherwise defaults
         return WarmupPhaseScreen(
           workoutSeconds: _timerController.workoutSeconds,
@@ -2743,12 +2761,108 @@ class _ActiveWorkoutScreenState
         return _buildCompletionScreen(isDark, backgroundColor);
 
       case WorkoutPhase.active:
+        if (isFoldableOpen) {
+          return _buildFoldableActiveWorkout(windowState);
+        }
         // Use V2 MacroFactor-style design
         if (_useV2Design) {
           return _buildActiveWorkoutScreenV2(isDark, backgroundColor);
         }
         return _buildActiveWorkoutScreen(isDark, backgroundColor);
     }
+  }
+
+  /// Build foldable-optimized active workout layout.
+  Widget _buildFoldableActiveWorkout(WindowModeState windowState) {
+    final setRows = _buildSetRowsForExercise(_viewingExerciseIndex);
+    final completedExerciseIndices = _getCompletedExerciseIndices();
+    final currentExercise = _exercises[_currentExerciseIndex];
+
+    return FoldableWorkoutLayout(
+      windowState: windowState,
+      exercises: _exercises,
+      currentExerciseIndex: _currentExerciseIndex,
+      viewingExerciseIndex: _viewingExerciseIndex,
+      completedExerciseIndices: completedExerciseIndices,
+      completedSets: _completedSets,
+      totalSetsPerExercise: _totalSetsPerExercise,
+      videoController: _videoController,
+      isVideoInitialized: _isVideoInitialized,
+      imageUrl: _imageUrl,
+      workoutSeconds: _timerController.workoutSeconds,
+      restSecondsRemaining: _timerController.restSecondsRemaining,
+      initialRestDuration: _timerController.initialRestDuration,
+      isPaused: _isPaused,
+      isResting: _isResting,
+      isRestingBetweenExercises: _isRestingBetweenExercises,
+      currentRestMessage: _currentRestMessage,
+      setRows: setRows,
+      useKg: _useKg,
+      weightController: _weightController,
+      repsController: _repsController,
+      repsRightController: _isLeftRightMode ? _repsRightController : null,
+      isLeftRightMode: _isLeftRightMode,
+      isExerciseCompleted: _isExerciseCompleted(_viewingExerciseIndex),
+      showInlineRest: _showInlineRest,
+      inlineRestRowWidget: _buildInlineRestRowV2(),
+      lastSetRpe: _lastSetRpe,
+      lastSetRir: _lastSetRir,
+      currentWeightSuggestion: _currentWeightSuggestion,
+      isLoadingWeightSuggestion: _isLoadingWeightSuggestion,
+      restSuggestion: _restSuggestion,
+      isLoadingRestSuggestion: _isLoadingRestSuggestion,
+      fatigueAlertData: _fatigueAlertData,
+      showFatigueAlert: _showFatigueAlert,
+      coachPersona: ref.watch(aiSettingsProvider).getCurrentCoach(),
+      workoutId: widget.workout.id ?? '',
+      actionChips: _buildActionChipsForCurrentExercise()
+          .where((chip) => chip.label != 'Video' && chip.label != 'Info')
+          .toList(),
+      hideAICoachForSession: _hideAICoachForSession,
+      onExerciseTap: (index) {
+        HapticFeedback.selectionClick();
+        setState(() {
+          _viewingExerciseIndex = index;
+          _currentExerciseIndex = index;
+        });
+      },
+      onAddExercise: _showExerciseAddSheet,
+      onQuitRequested: _showQuitDialog,
+      onReorder: _onExercisesReordered,
+      onCreateSuperset: _onSupersetFromDrag,
+      onVideoTap: _toggleVideoPlayPause,
+      onInfoTap: () => _showExerciseDetailsSheet(_exercises[_viewingExerciseIndex]),
+      onSetCompleted: _handleSetCompletedV2,
+      onSetUpdated: _updateCompletedSet,
+      onAddSet: () => setState(() {
+        _totalSetsPerExercise[_viewingExerciseIndex] =
+            (_totalSetsPerExercise[_viewingExerciseIndex] ?? 3) + 1;
+      }),
+      onSetDeleted: (index) => _deleteCompletedSet(index),
+      onToggleUnit: _toggleUnit,
+      onRirTapped: (setIndex, currentRir) => _showRirPicker(setIndex, currentRir),
+      onActiveRirChanged: (rir) => setState(() => _lastSetRir = rir),
+      onSelectAllTapped: () {
+        if (_isExerciseCompleted(_viewingExerciseIndex)) {
+          HapticFeedback.lightImpact();
+        }
+      },
+      onChipTapped: _handleChipTapped,
+      onAiChipTapped: () => _showAICoachSheet(currentExercise),
+      onSkipRest: () => _timerController.skipRest(),
+      onLog1RM: () => _showLog1RMSheet(currentExercise),
+      onAcceptWeightSuggestion: _acceptWeightSuggestion,
+      onDismissWeightSuggestion: _dismissWeightSuggestion,
+      onAcceptRestSuggestion: _acceptRestSuggestion,
+      onDismissRestSuggestion: _dismissRestSuggestion,
+      onRpeChanged: (rpe) => setState(() => _lastSetRpe = rpe),
+      onRirChanged: (rir) => setState(() => _lastSetRir = rir),
+      onAcceptFatigueSuggestion: _handleAcceptFatigueSuggestion,
+      onDismissFatigueAlert: _handleDismissFatigueAlert,
+      onStopExercise: _skipExercise,
+      onExercisesParsed: (exercises) => _handleParsedExercises(exercises),
+      onV2Parsed: (response) => _handleV2Parsed(response),
+    );
   }
 
   Widget _buildActiveWorkoutScreen(bool isDark, Color backgroundColor) {

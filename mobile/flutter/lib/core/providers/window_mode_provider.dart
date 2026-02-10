@@ -213,7 +213,9 @@ class WindowModeNotifier extends StateNotifier<WindowModeState> {
             foldablePosture = FoldablePosture.flat;
             break;
           default:
-            foldablePosture = FoldablePosture.none;
+            // Hinge detected but posture unknown — treat as flat
+            // (Pixel Fold and some devices report unknown state when open)
+            foldablePosture = FoldablePosture.flat;
         }
         break; // use the first hinge/fold found
       }

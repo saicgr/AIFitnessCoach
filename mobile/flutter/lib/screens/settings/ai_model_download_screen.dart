@@ -95,6 +95,38 @@ class AiModelDownloadScreen extends ConsumerWidget {
 
           const SizedBox(height: 16),
 
+          // --- Battery / Performance Warning ---
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.amber.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.amber.withOpacity(0.3)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.battery_alert_rounded,
+                    color: Colors.amber, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'On-device AI models run intensive computations on your phone. '
+                    'This may increase battery drain and cause the device to warm up '
+                    'during workout generation. Larger models use more resources.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textMuted,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
           // --- Model Options ---
           Container(
             padding: const EdgeInsets.all(16),
@@ -281,6 +313,7 @@ class AiModelDownloadScreen extends ConsumerWidget {
       name: info.displayName,
       description: info.description,
       size: info.formattedSize,
+      minRamGB: info.minRamGB,
       badges: badges,
       isMultimodal: info.isMultimodal,
       isSelected: isSelected,
@@ -341,6 +374,7 @@ class _ModelOptionTile extends StatelessWidget {
   final String name;
   final String description;
   final String size;
+  final double minRamGB;
   final List<String> badges;
   final bool isMultimodal;
   final bool isSelected;
@@ -352,6 +386,7 @@ class _ModelOptionTile extends StatelessWidget {
     required this.name,
     required this.description,
     required this.size,
+    required this.minRamGB,
     this.badges = const [],
     this.isMultimodal = false,
     required this.isSelected,
@@ -366,6 +401,10 @@ class _ModelOptionTile extends StatelessWidget {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final opacity = isEnabled ? 1.0 : 0.45;
+
+    final ramLabel = minRamGB == minRamGB.roundToDouble()
+        ? '${minRamGB.toInt()} GB'
+        : '${minRamGB.toStringAsFixed(1)} GB';
 
     return Opacity(
       opacity: opacity,
@@ -419,11 +458,42 @@ class _ModelOptionTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(description,
                         style: TextStyle(fontSize: 12, color: textMuted)),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.memory_rounded,
+                            size: 12,
+                            color: isEnabled ? textMuted : Colors.orange.shade700),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Requires $ramLabel RAM',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isEnabled ? textMuted : Colors.orange.shade700,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Icon(Icons.storage_rounded,
+                            size: 12,
+                            color: isEnabled ? textMuted : Colors.orange.shade700),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$size storage',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isEnabled ? textMuted : Colors.orange.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
                     if (!isEnabled)
                       Padding(
-                        padding: const EdgeInsets.only(top: 2),
+                        padding: const EdgeInsets.only(top: 4),
                         child: Text('Not supported on this device',
-                            style: TextStyle(fontSize: 11, color: Colors.orange.shade700)),
+                            style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.orange.shade700)),
                       ),
                   ],
                 ),

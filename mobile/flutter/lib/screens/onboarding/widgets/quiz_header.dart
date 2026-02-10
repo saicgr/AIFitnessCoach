@@ -43,10 +43,8 @@ class QuizHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Positioned(
-      top: 16,
-      left: 16,
-      right: 16,
+    return Padding(
+      padding: const EdgeInsets.all(16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -67,7 +65,7 @@ class QuizHeader extends StatelessWidget {
           // Floating question counter with phase-aware text
           _FloatingCounter(
             isDark: isDark,
-            text: _getProgressText(),  // ← UPDATED to use phase-aware text
+            text: _getProgressText(),
           ),
         ],
       ),

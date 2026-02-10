@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,10 +8,13 @@ enum ConnectivityStatus { online, offline, unknown }
 
 /// Service that monitors network connectivity using connectivity_plus.
 ///
+/// Trusts the OS-level connectivity result (wifi, mobile, ethernet, vpn)
+/// for immediate status. No HTTP ping is required — this avoids false
+/// "offline" states on app startup due to DNS delays, cold backends, or
+/// transient network issues.
+///
 /// Features:
 /// - 1.5s debounce on rapid connectivity changes
-/// - HTTP ping verification to confirm actual internet access
-/// - 30-second ping cache to avoid excessive network calls
 /// - Stream-based status updates
 /// - Auto-triggers sync on offline -> online transition
 class ConnectivityService {
@@ -24,34 +26,29 @@ class ConnectivityService {
   Timer? _debounceTimer;
   StreamSubscription<List<ConnectivityResult>>? _subscription;
 
-  /// Cached ping result to avoid excessive pinging.
-  bool? _lastPingResult;
-  DateTime? _lastPingTime;
-  static const _pingCacheDuration = Duration(seconds: 30);
-  static const _pingTimeout = Duration(seconds: 3);
-  static const _healthUrl = 'https://aifitnesscoach-zqi3.onrender.com/api/v1/health';
-
   ConnectivityStatus get currentStatus => _currentStatus;
   Stream<ConnectivityStatus> get statusStream => _statusController.stream;
 
   /// Initialize and start monitoring connectivity.
-  Future<void> initialize() async {
-    // Check initial status
-    try {
-      final results = await _connectivity.checkConnectivity();
-      _currentStatus = await _mapResultsWithPing(results);
-      _statusController.add(_currentStatus);
-      debugPrint('📡 [Connectivity] Initial status: $_currentStatus');
-    } catch (e) {
+  void initialize() {
+    // Check initial status synchronously from the OS
+    _connectivity.checkConnectivity().then((results) {
+      final status = _mapResults(results);
+      _currentStatus = status;
+      _statusController.add(status);
+      debugPrint('📡 [Connectivity] Initial status: $status');
+    }).catchError((e) {
       debugPrint('❌ [Connectivity] Error checking initial status: $e');
-      _currentStatus = ConnectivityStatus.unknown;
-    }
+      // Assume online on error — better UX than falsely showing offline
+      _currentStatus = ConnectivityStatus.online;
+      _statusController.add(_currentStatus);
+    });
 
     // Listen for changes with debounce
     _subscription = _connectivity.onConnectivityChanged.listen((results) {
       _debounceTimer?.cancel();
-      _debounceTimer = Timer(const Duration(milliseconds: 1500), () async {
-        final newStatus = await _mapResultsWithPing(results);
+      _debounceTimer = Timer(const Duration(milliseconds: 1500), () {
+        final newStatus = _mapResults(results);
         if (newStatus != _currentStatus) {
           final previousStatus = _currentStatus;
           _currentStatus = newStatus;
@@ -69,19 +66,9 @@ class ConnectivityService {
     });
   }
 
-  /// Map connectivity results to status, with HTTP ping verification when online.
-  Future<ConnectivityStatus> _mapResultsWithPing(
-      List<ConnectivityResult> results) async {
-    final basicStatus = _mapResults(results);
-    if (basicStatus != ConnectivityStatus.online) {
-      return basicStatus;
-    }
-    // Verify actual internet access with a ping
-    final reallyOnline = await verifyOnline();
-    return reallyOnline ? ConnectivityStatus.online : ConnectivityStatus.offline;
-  }
-
-  /// Map connectivity results to our simplified status (no ping).
+  /// Map connectivity results to our simplified status.
+  ///
+  /// Trusts the OS — if wifi/mobile/ethernet/vpn is reported, we're online.
   ConnectivityStatus _mapResults(List<ConnectivityResult> results) {
     if (results.isEmpty || results.contains(ConnectivityResult.none)) {
       return ConnectivityStatus.offline;
@@ -95,41 +82,6 @@ class ConnectivityService {
       return ConnectivityStatus.online;
     }
     return ConnectivityStatus.unknown;
-  }
-
-  /// Verify actual internet connectivity by pinging the backend health endpoint.
-  /// Results are cached for 30 seconds to avoid excessive pinging.
-  Future<bool> verifyOnline() async {
-    // Return cached result if fresh enough
-    if (_lastPingResult != null && _lastPingTime != null) {
-      final elapsed = DateTime.now().difference(_lastPingTime!);
-      if (elapsed < _pingCacheDuration) {
-        return _lastPingResult!;
-      }
-    }
-
-    try {
-      final dio = Dio(BaseOptions(
-        connectTimeout: _pingTimeout,
-        receiveTimeout: _pingTimeout,
-      ));
-      final response = await dio.head(_healthUrl);
-      final isOnline = response.statusCode != null && response.statusCode! < 500;
-      _lastPingResult = isOnline;
-      _lastPingTime = DateTime.now();
-      return isOnline;
-    } catch (e) {
-      debugPrint('📡 [Connectivity] Ping failed: $e');
-      _lastPingResult = false;
-      _lastPingTime = DateTime.now();
-      return false;
-    }
-  }
-
-  /// Invalidate ping cache (e.g., after a network change).
-  void invalidatePingCache() {
-    _lastPingResult = null;
-    _lastPingTime = null;
   }
 
   /// Clean up resources.
@@ -156,7 +108,7 @@ final connectivityServiceProvider = Provider<ConnectivityService>((ref) {
 final connectivityStatusProvider =
     StreamProvider<ConnectivityStatus>((ref) {
   final service = ref.watch(connectivityServiceProvider);
-  // Emit current status first, then stream
+  // Emit current status first, then stream future changes
   return Stream.value(service.currentStatus)
       .followedBy(service.statusStream);
 });

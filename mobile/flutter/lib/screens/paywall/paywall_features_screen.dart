@@ -20,29 +20,8 @@ class PaywallFeaturesScreen extends ConsumerWidget {
       backgroundColor: colors.background,
       body: SafeArea(
         child: FoldableQuizScaffold(
-          headerTitle: 'Unlock the full',
-          headerSubtitle: 'AI Coach experience',
-          headerExtra: Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              gradient: colors.accentGradient,
-              shape: BoxShape.circle,
-            ),
-            child: ClipOval(
-              child: Image.asset(
-                'assets/images/app_icon.png',
-                width: 64,
-                height: 64,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Icon(
-                  Icons.fitness_center,
-                  size: 32,
-                  color: colors.accentContrast,
-                ),
-              ),
-            ),
-          ),
+          headerTitle: '',
+          headerExtra: _buildPremiumSummary(colors),
           content: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
@@ -153,6 +132,139 @@ class PaywallFeaturesScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPremiumSummary(ThemeColors colors) {
+    final categories = [
+      (icon: Icons.fitness_center, label: 'AI Workouts', count: '14+ features'),
+      (icon: Icons.restaurant_rounded, label: 'Nutrition', count: '3 tools'),
+      (icon: Icons.healing_outlined, label: 'Safety', count: 'Injury-aware'),
+      (icon: Icons.trending_up, label: 'Progress', count: '52 skills'),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Centered app icon
+        Center(
+          child: Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              gradient: colors.accentGradient,
+              shape: BoxShape.circle,
+            ),
+            child: ClipOval(
+              child: Image.asset(
+                'assets/images/app_icon.png',
+                width: 64,
+                height: 64,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Icon(
+                  Icons.fitness_center,
+                  size: 32,
+                  color: colors.accentContrast,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Title
+        Text(
+          'Unlock the full',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: colors.textPrimary,
+          ),
+        ),
+        Text(
+          'AI Coach experience',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: colors.accent,
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // Feature category cards
+        ...categories.map((cat) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: colors.accent.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: colors.accent.withValues(alpha: 0.12),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(cat.icon, size: 18, color: colors.accent),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        cat.label,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      cat.count,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: colors.accent,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )),
+        const SizedBox(height: 8),
+
+        // Trial callout
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                colors.accent.withValues(alpha: 0.1),
+                colors.accent.withValues(alpha: 0.04),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: colors.accent.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.card_giftcard, size: 18, color: colors.accent),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '7-day free trial\nCancel anytime, no questions asked',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: colors.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

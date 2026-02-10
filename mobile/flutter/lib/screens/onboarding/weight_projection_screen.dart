@@ -132,6 +132,157 @@ class _WeightProjectionScreenState
     super.dispose();
   }
 
+  Widget _buildWeightSummary(
+    bool isDark, Color textPrimary, Color textSecondary, {
+    required double currentWeight,
+    required double goalWeight,
+    required bool useMetric,
+    required bool isLosingWeight,
+    required int workoutDays,
+  }) {
+    final unit = useMetric ? 'kg' : 'lbs';
+    final displayCurrent = useMetric ? currentWeight : currentWeight * 2.205;
+    final displayGoal = useMetric ? goalWeight : goalWeight * 2.205;
+    final diff = (displayCurrent - displayGoal).abs();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Weight stats row
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                label: 'Current',
+                value: '${displayCurrent.round()} $unit',
+                icon: Icons.monitor_weight_outlined,
+                color: textSecondary,
+                isDark: isDark,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildStatCard(
+                label: 'Goal',
+                value: '${displayGoal.round()} $unit',
+                icon: Icons.flag_outlined,
+                color: AppColors.green,
+                isDark: isDark,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                label: isLosingWeight ? 'To lose' : 'To gain',
+                value: '${diff.round()} $unit',
+                icon: isLosingWeight ? Icons.trending_down : Icons.trending_up,
+                color: AppColors.orange,
+                isDark: isDark,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildStatCard(
+                label: 'Training',
+                value: '$workoutDays days/wk',
+                icon: Icons.calendar_today_rounded,
+                color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                isDark: isDark,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Tip
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AppColors.green.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: AppColors.green.withValues(alpha: 0.15),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.eco_rounded, size: 16, color: AppColors.green),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  isLosingWeight
+                      ? 'Safe rate: 0.5–1 kg/week. Your plan follows evidence-based guidelines.'
+                      : 'Lean gain: 0.25–0.5 kg/week. Slow and steady builds quality muscle.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.black.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.black.withValues(alpha: 0.06),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -194,14 +345,27 @@ class _WeightProjectionScreenState
             height: 44,
             decoration: BoxDecoration(
               color: isDark
-                  ? AppColors.glassSurface
-                  : AppColorsLight.glassSurface,
+                  ? Colors.white.withValues(alpha: 0.15)
+                  : Colors.white.withValues(alpha: 0.85),
               shape: BoxShape.circle,
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : Colors.black.withValues(alpha: 0.1),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Icon(
-              Icons.arrow_back,
-              color: textPrimary,
-              size: 20,
+              Icons.arrow_back_ios_rounded,
+              color: isDark ? Colors.white : const Color(0xFF0A0A0A),
+              size: 18,
             ),
           ),
         ),
@@ -216,6 +380,14 @@ class _WeightProjectionScreenState
           headerSubtitle: isLosingWeight
               ? 'Your personalized plan is ready to help you reach your goal weight safely.'
               : 'Your personalized plan is designed to help you build muscle.',
+          headerExtra: _buildWeightSummary(
+            isDark, textPrimary, textSecondary,
+            currentWeight: currentWeight,
+            goalWeight: goalWeight,
+            useMetric: useMetric,
+            isLosingWeight: isLosingWeight,
+            workoutDays: workoutDays,
+          ),
           headerOverlay: backButton,
           content: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -632,14 +804,27 @@ class _WeightProjectionScreenState
             height: 44,
             decoration: BoxDecoration(
               color: isDark
-                  ? AppColors.glassSurface
-                  : AppColorsLight.glassSurface,
+                  ? Colors.white.withValues(alpha: 0.15)
+                  : Colors.white.withValues(alpha: 0.85),
               shape: BoxShape.circle,
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : Colors.black.withValues(alpha: 0.1),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Icon(
-              Icons.arrow_back,
-              color: textPrimary,
-              size: 20,
+              Icons.arrow_back_ios_rounded,
+              color: isDark ? Colors.white : const Color(0xFF0A0A0A),
+              size: 18,
             ),
           ),
         ),

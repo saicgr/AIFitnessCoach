@@ -341,9 +341,224 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     _submitUserPreferencesAndFlags();
   }
 
+  Widget _buildCoachSummary(bool isDark, Color textPrimary, Color textSecondary) {
+    final coach = _selectedCoach!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Coach avatar + name row
+        Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: coach.primaryColor.withValues(alpha: 0.15),
+                border: Border.all(
+                  color: coach.primaryColor.withValues(alpha: 0.3),
+                  width: 2,
+                ),
+              ),
+              child: ClipOval(
+                child: coach.imagePath != null
+                    ? Image.asset(
+                        coach.imagePath!,
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          coach.icon,
+                          color: coach.primaryColor,
+                          size: 24,
+                        ),
+                      )
+                    : Icon(
+                        coach.icon,
+                        color: coach.primaryColor,
+                        size: 24,
+                      ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    coach.name,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: coach.primaryColor,
+                    ),
+                  ),
+                  Text(
+                    coach.tagline,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Specialization
+        Row(
+          children: [
+            Icon(Icons.star_rounded, size: 16, color: coach.primaryColor),
+            const SizedBox(width: 6),
+            Text(
+              coach.specialization,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+
+        // Personality badge
+        Row(
+          children: [
+            Icon(Icons.psychology_rounded, size: 16, color: coach.primaryColor),
+            const SizedBox(width: 6),
+            Text(
+              coach.personalityBadge,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: textSecondary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Personality traits as chips
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: coach.personalityTraits.map((trait) {
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: coach.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: coach.primaryColor.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Text(
+                trait,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: coach.primaryColor,
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 14),
+
+        // Encouragement level bar
+        Row(
+          children: [
+            Text(
+              'Energy',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: textSecondary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: coach.encouragementLevel,
+                  minHeight: 6,
+                  backgroundColor: isDark
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Colors.black.withValues(alpha: 0.06),
+                  valueColor: AlwaysStoppedAnimation(coach.primaryColor),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '${(coach.encouragementLevel * 100).round()}%',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: coach.primaryColor,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+
+        // Sample message
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.black.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.06),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.chat_bubble_outline_rounded,
+                      size: 13, color: textSecondary),
+                  const SizedBox(width: 5),
+                  Text(
+                    'How they talk',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                coach.sampleMessage,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: textPrimary,
+                  fontStyle: FontStyle.italic,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildHeaderOverlay(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -358,16 +573,31 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
               }
             },
             child: Container(
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : Colors.white.withValues(alpha: 0.85),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : Colors.black.withValues(alpha: 0.1),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Icon(
-                Icons.arrow_back,
-                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                size: 20,
+                Icons.arrow_back_ios_rounded,
+                color: isDark ? Colors.white : const Color(0xFF0A0A0A),
+                size: 18,
               ),
             ),
           ),
@@ -377,17 +607,32 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
             GestureDetector(
               onTap: _skip,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : Colors.white.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : Colors.black.withValues(alpha: 0.1),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Text(
                   'Skip',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                    color: isDark ? Colors.white : const Color(0xFF0A0A0A),
                   ),
                 ),
               ),
@@ -432,14 +677,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                 ? 'Select a new AI coach persona'
                 : 'You can always change this later',
             headerExtra: _selectedCoach != null
-                ? Text(
-                    _selectedCoach!.name,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: _selectedCoach!.primaryColor,
-                    ),
-                  )
+                ? _buildCoachSummary(isDark, textPrimary, textSecondary)
                 : null,
             headerOverlay: _buildHeaderOverlay(isDark),
             content: Column(

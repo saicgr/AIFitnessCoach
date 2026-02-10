@@ -116,7 +116,7 @@ async def fetch_fuzzy_search_results(
         logger.warning(f"Fuzzy search RPC failed, falling back to ILIKE: {e}")
         # Fallback to regular ILIKE search if fuzzy function not available
         query = db.client.table("exercise_library_cleaned").select("*")
-        query = query.or_(f"name.ilike.%{search_term}%,original_name.ilike.%{search_term}%")
+        query = query.or_(f"name.ilike.%{search_term}%,original_name.ilike.%{search_term}%,equipment.ilike.%{search_term}%")
         if equipment_filter:
             query = query.ilike("equipment", f"%{equipment_filter}%")
         result = query.limit(limit).execute()

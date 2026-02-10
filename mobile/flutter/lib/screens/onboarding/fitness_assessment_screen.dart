@@ -148,9 +148,115 @@ class _FitnessAssessmentScreenState
     }
   }
 
+  Widget _buildAssessmentInfo(bool isDark, Color textPrimary, Color textSecondary) {
+    final items = [
+      {'icon': Icons.fitness_center, 'label': 'Exercise difficulty'},
+      {'icon': Icons.repeat, 'label': 'Sets & rep ranges'},
+      {'icon': Icons.timer_outlined, 'label': 'Rest periods'},
+      {'icon': Icons.trending_up, 'label': 'Progression pace'},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Why section
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.orange.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.orange.withValues(alpha: 0.15),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.auto_awesome, size: 16, color: AppColors.orange),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Why this matters',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.orange,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Your answers help the AI calibrate workouts to your exact fitness level — no guessing.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: textSecondary,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // What gets customized
+        Text(
+          'What gets personalized',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...items.map((item) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  Icon(
+                    item['icon'] as IconData,
+                    size: 16,
+                    color: AppColors.orange,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    item['label'] as String,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            )),
+        const SizedBox(height: 12),
+
+        // Reassurance
+        Row(
+          children: [
+            Icon(Icons.info_outline, size: 14, color: textSecondary.withValues(alpha: 0.6)),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                'No wrong answers — just be honest!',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: textSecondary.withValues(alpha: 0.7),
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildHeaderOverlay(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -161,16 +267,31 @@ class _FitnessAssessmentScreenState
               context.go('/coach-selection');
             },
             child: Container(
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : Colors.white.withValues(alpha: 0.85),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : Colors.black.withValues(alpha: 0.1),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Icon(
-                Icons.arrow_back,
-                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                size: 20,
+                Icons.arrow_back_ios_rounded,
+                color: isDark ? Colors.white : const Color(0xFF0A0A0A),
+                size: 18,
               ),
             ),
           ),
@@ -179,17 +300,32 @@ class _FitnessAssessmentScreenState
           GestureDetector(
             onTap: _skip,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : Colors.white.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : Colors.black.withValues(alpha: 0.1),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Text(
                 'Skip',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  color: isDark ? Colors.white : const Color(0xFF0A0A0A),
                 ),
               ),
             ),
@@ -220,18 +356,7 @@ class _FitnessAssessmentScreenState
         child: FoldableQuizScaffold(
           headerTitle: 'Quick Fitness Check',
           headerSubtitle: 'Help us personalize your workouts (~2 min)',
-          headerExtra: Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppColors.orange,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(Icons.assessment, color: Colors.white, size: 26),
-            ),
-          ),
+          headerExtra: _buildAssessmentInfo(isDark, textPrimary, textSecondary),
           headerOverlay: _buildHeaderOverlay(isDark),
           content: SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: hPad),
