@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/window_mode_provider.dart';
 import '../../data/models/workout.dart';
 import 'pre_auth_quiz_screen.dart';
+import 'widgets/foldable_quiz_scaffold.dart';
 
 /// Plan preview screen shown after user selects primary goal and clicks "Generate My First Workout"
 ///
@@ -13,7 +16,7 @@ import 'pre_auth_quiz_screen.dart';
 /// - Two action buttons:
 ///   1. "Start Workout" → Skip to Screen 10 (Nutrition Gate, then coach selection)
 ///   2. "Personalize (2 min)" → Navigate to Screen 6 (Personalization Gate)
-class PlanPreviewScreen extends StatelessWidget {
+class PlanPreviewScreen extends ConsumerWidget {
   final PreAuthQuizData quizData;
   final Workout? generatedWorkout;  // ← ADDED: Actual generated workout
   final VoidCallback onContinue;
@@ -28,7 +31,7 @@ class PlanPreviewScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
     final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
@@ -49,200 +52,11 @@ class PlanPreviewScreen extends StatelessWidget {
                 ),
         ),
         child: SafeArea(
-          child: Stack(
-            children: [
-              // Main content column
-              Column(
-                children: [
-                  // Header
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 68, 20, 12),  // Increased top padding to avoid back button overlap
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                    Text(
-                      'Your Personalized Plan',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
-                      ),
-                    ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.1),
-                    const SizedBox(height: 6),
-                    // ← ADDED: Trust badge with info button
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.auto_awesome_rounded,
-                          size: 14,
-                          color: AppColors.orange,
-                        ).animate()
-                          .fadeIn(delay: 200.ms)
-                          .then()
-                          .shimmer(duration: 1500.ms, delay: 500.ms),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'AI-generated • Adjusts as you progress',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: textSecondary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        InkWell(
-                          onTap: () => _showAIInfoBottomSheet(context, isDark),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(
-                              Icons.info_outline_rounded,
-                              size: 16,
-                              color: textSecondary.withOpacity(0.6),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ).animate().fadeIn(delay: 200.ms),
-                  ],
-                ),
-              ),
-
-              // Content
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  children: [
-                    // Summary Card
-                    _buildSummaryCard(isDark, textPrimary, textSecondary),
-                    const SizedBox(height: 24),
-
-                    // Sample Workout Preview
-                    _buildWorkoutPreview(isDark, textPrimary, textSecondary),
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
-
-              // Action buttons - ← UPDATED: Better CTA labels
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    // Primary: Start Workout
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          HapticFeedback.mediumImpact();
-                          onStartNow();  // ← Swapped: Primary is "Start Workout"
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.orange,
-                          foregroundColor: Colors.white,
-                          elevation: 4,
-                          shadowColor: AppColors.orange.withValues(alpha: 0.4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'Start Workout',  // ← UPDATED: More action-oriented
-                              style: TextStyle(
-                                fontSize: 17,  // ← Slightly larger
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Icon(Icons.fitness_center_rounded, size: 20),  // ← Changed icon
-                          ],
-                        ),
-                      ),
-                    ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.1),
-                    const SizedBox(height: 12),
-
-                    // Secondary: Personalize (optional but prominent)
-                    Column(
-                      children: [
-                        SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: OutlinedButton(
-                            onPressed: () {
-                              HapticFeedback.selectionClick();
-                              onContinue();  // ← Swapped: Secondary is personalization
-                            },
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.orange,
-                              side: BorderSide(
-                                color: AppColors.orange,
-                                width: 2,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              backgroundColor: AppColors.orange.withValues(alpha: 0.08),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Text(
-                                  'Personalize (2 min)',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                const Icon(Icons.tune_rounded, size: 18),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        // Info text explaining what personalization includes
-                        InkWell(
-                          onTap: () => _showPersonalizeInfoBottomSheet(context, isDark),
-                          borderRadius: BorderRadius.circular(8),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.info_outline_rounded,
-                                  size: 14,
-                                  color: textSecondary.withOpacity(0.6),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Includes injury accommodations',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: textSecondary.withOpacity(0.8),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ).animate().fadeIn(delay: 900.ms).slideY(begin: 0.1),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-            // Floating back button (top-left)
-            Positioned(
+          child: FoldableQuizScaffold(
+            headerTitle: 'Your Personalized Plan',
+            headerSubtitle: 'AI-generated \u2022 Adjusts as you progress',
+            headerExtra: _buildSummaryCard(isDark, textPrimary, textSecondary),
+            headerOverlay: Positioned(
               top: 16,
               left: 16,
               child: _FloatingBackButton(
@@ -253,12 +67,201 @@ class PlanPreviewScreen extends StatelessWidget {
                 },
               ),
             ),
-          ],
+            content: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              children: [
+                // Show header inline only on phone
+                Consumer(builder: (context, ref, _) {
+                  final windowState = ref.watch(windowModeProvider);
+                  if (FoldableQuizScaffold.shouldUseFoldableLayout(windowState)) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12, top: 48),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Your Personalized Plan',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: textPrimary,
+                          ),
+                        ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.1),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.auto_awesome_rounded,
+                              size: 14,
+                              color: AppColors.orange,
+                            ).animate()
+                              .fadeIn(delay: 200.ms)
+                              .then()
+                              .shimmer(duration: 1500.ms, delay: 500.ms),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'AI-generated \u2022 Adjusts as you progress',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: textSecondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            InkWell(
+                              onTap: () => _showAIInfoBottomSheet(context, isDark),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: Icon(
+                                  Icons.info_outline_rounded,
+                                  size: 16,
+                                  color: textSecondary.withOpacity(0.6),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ).animate().fadeIn(delay: 200.ms),
+                      ],
+                    ),
+                  );
+                }),
+                // Summary Card (on phone, shown inline; on foldable, in headerExtra)
+                Consumer(builder: (context, ref, _) {
+                  final windowState = ref.watch(windowModeProvider);
+                  if (FoldableQuizScaffold.shouldUseFoldableLayout(windowState)) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: _buildSummaryCard(isDark, textPrimary, textSecondary),
+                  );
+                }),
+                // Workout Preview
+                _buildWorkoutPreview(isDark, textPrimary, textSecondary),
+                const SizedBox(height: 24),
+              ],
+            ),
+            button: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Primary: Start Workout
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        onStartNow();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.orange,
+                        foregroundColor: Colors.white,
+                        elevation: 4,
+                        shadowColor: AppColors.orange.withValues(alpha: 0.4),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Start Workout',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.fitness_center_rounded, size: 20),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Secondary: Personalize
+                  Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            onContinue();
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.orange,
+                            side: BorderSide(
+                              color: AppColors.orange,
+                              width: 2,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            backgroundColor: AppColors.orange.withValues(alpha: 0.08),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                'Personalize (2 min)',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.tune_rounded, size: 18),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: () => _showPersonalizeInfoBottomSheet(context, isDark),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded,
+                                size: 14,
+                                color: textSecondary.withOpacity(0.6),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Includes injury accommodations',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: textSecondary.withOpacity(0.8),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildSummaryCard(bool isDark, Color textPrimary, Color textSecondary) {
     return Container(

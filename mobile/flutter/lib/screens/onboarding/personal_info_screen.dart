@@ -4,10 +4,12 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/window_mode_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import 'pre_auth_quiz_screen.dart';
+import 'widgets/foldable_quiz_scaffold.dart';
 import 'widgets/quiz_body_metrics.dart';
 
 /// Personal Info Screen - Collects name, DOB, gender, height, weight, goal weight
@@ -242,41 +244,52 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              _buildHeader(isDark, textPrimary, textSecondary),
+          child: FoldableQuizScaffold(
+            headerTitle: 'Tell us about yourself',
+            headerSubtitle: 'This helps personalize your plan',
+            headerExtra: _buildProgressIndicator(isDark),
+            content: Column(
+              children: [
+                // Show header + progress inline only on phone
+                Consumer(builder: (context, ref, _) {
+                  final windowState = ref.watch(windowModeProvider);
+                  if (FoldableQuizScaffold.shouldUseFoldableLayout(windowState)) {
+                    return const SizedBox.shrink();
+                  }
+                  return Column(
+                    children: [
+                      _buildHeader(isDark, textPrimary, textSecondary),
+                      _buildProgressIndicator(isDark),
+                    ],
+                  );
+                }),
 
-              // Progress indicator
-              _buildProgressIndicator(isDark),
-
-              // Body metrics form
-              Expanded(
-                child: QuizBodyMetrics(
-                  name: _name,
-                  dateOfBirth: _dateOfBirth,
-                  gender: _gender,
-                  heightCm: _heightCm,
-                  weightKg: _weightKg,
-                  goalWeightKg: _goalWeightKg,
-                  useMetric: _useMetric,
-                  weightDirection: _weightDirection,
-                  weightChangeAmount: _weightChangeAmount,
-                  onNameChanged: (name) => setState(() => _name = name),
-                  onDateOfBirthChanged: (dob) => setState(() => _dateOfBirth = dob),
-                  onGenderChanged: (gender) => setState(() => _gender = gender),
-                  onHeightChanged: (height) => setState(() => _heightCm = height),
-                  onWeightChanged: (weight) => setState(() => _weightKg = weight),
-                  onGoalWeightChanged: (goal) => setState(() => _goalWeightKg = goal),
-                  onUnitChanged: (useMetric) => setState(() => _useMetric = useMetric),
-                  onWeightDirectionChanged: (direction) => setState(() => _weightDirection = direction),
-                  onWeightChangeAmountChanged: (amount) => setState(() => _weightChangeAmount = amount),
+                // Body metrics form
+                Expanded(
+                  child: QuizBodyMetrics(
+                    name: _name,
+                    dateOfBirth: _dateOfBirth,
+                    gender: _gender,
+                    heightCm: _heightCm,
+                    weightKg: _weightKg,
+                    goalWeightKg: _goalWeightKg,
+                    useMetric: _useMetric,
+                    weightDirection: _weightDirection,
+                    weightChangeAmount: _weightChangeAmount,
+                    onNameChanged: (name) => setState(() => _name = name),
+                    onDateOfBirthChanged: (dob) => setState(() => _dateOfBirth = dob),
+                    onGenderChanged: (gender) => setState(() => _gender = gender),
+                    onHeightChanged: (height) => setState(() => _heightCm = height),
+                    onWeightChanged: (weight) => setState(() => _weightKg = weight),
+                    onGoalWeightChanged: (goal) => setState(() => _goalWeightKg = goal),
+                    onUnitChanged: (useMetric) => setState(() => _useMetric = useMetric),
+                    onWeightDirectionChanged: (direction) => setState(() => _weightDirection = direction),
+                    onWeightChangeAmountChanged: (amount) => setState(() => _weightChangeAmount = amount),
+                  ),
                 ),
-              ),
-
-              // Continue button
-              _buildContinueButton(isDark),
-            ],
+              ],
+            ),
+            button: _buildContinueButton(isDark),
           ),
         ),
       ),

@@ -1299,8 +1299,8 @@ class WorkoutRepository {
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
         return {
-          'warmup': List<Map<String, dynamic>>.from(data['warmup']?['exercises'] ?? []),
-          'stretches': List<Map<String, dynamic>>.from(data['stretches']?['exercises'] ?? []),
+          'warmup': List<Map<String, dynamic>>.from(data['warmup']?['exercises_json'] ?? data['warmup']?['exercises'] ?? []),
+          'stretches': List<Map<String, dynamic>>.from(data['stretches']?['exercises_json'] ?? data['stretches']?['exercises'] ?? []),
         };
       }
       return {'warmup': [], 'stretches': []};

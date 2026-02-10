@@ -29,6 +29,17 @@ class DailyActivityInput(BaseModel):
     avg_heart_rate: Optional[int] = Field(None, ge=30, le=250)
     max_heart_rate: Optional[int] = Field(None, ge=30, le=250)
     sleep_minutes: Optional[int] = Field(None, ge=0, le=1440)
+    hrv: Optional[float] = Field(None, ge=0, le=500)
+    blood_oxygen: Optional[float] = Field(None, ge=0, le=100)
+    body_temperature: Optional[float] = Field(None, ge=30, le=45)
+    respiratory_rate: Optional[int] = Field(None, ge=5, le=60)
+    flights_climbed: int = Field(default=0, ge=0)
+    basal_calories: float = Field(default=0, ge=0)
+    deep_sleep_minutes: Optional[int] = Field(None, ge=0, le=1440)
+    light_sleep_minutes: Optional[int] = Field(None, ge=0, le=1440)
+    awake_sleep_minutes: Optional[int] = Field(None, ge=0, le=1440)
+    rem_sleep_minutes: Optional[int] = Field(None, ge=0, le=1440)
+    water_ml: int = Field(default=0, ge=0)
     source: str = Field(default="health_connect", description="health_connect or apple_health")
 
 
@@ -47,6 +58,17 @@ class DailyActivityResponse(BaseModel):
     max_heart_rate: Optional[int]
     sleep_minutes: Optional[int]
     sleep_hours: Optional[float]
+    hrv: Optional[float]
+    blood_oxygen: Optional[float]
+    body_temperature: Optional[float]
+    respiratory_rate: Optional[int]
+    flights_climbed: int
+    basal_calories: float
+    deep_sleep_minutes: Optional[int]
+    light_sleep_minutes: Optional[int]
+    awake_sleep_minutes: Optional[int]
+    rem_sleep_minutes: Optional[int]
+    water_ml: int
     source: str
     synced_at: datetime
 
@@ -82,6 +104,17 @@ def row_to_activity_response(row: dict) -> DailyActivityResponse:
         max_heart_rate=row.get("max_heart_rate"),
         sleep_minutes=sleep_min,
         sleep_hours=round(sleep_min / 60, 1) if sleep_min else None,
+        hrv=row.get("hrv"),
+        blood_oxygen=row.get("blood_oxygen"),
+        body_temperature=row.get("body_temperature"),
+        respiratory_rate=row.get("respiratory_rate"),
+        flights_climbed=row.get("flights_climbed") or 0,
+        basal_calories=row.get("basal_calories") or 0,
+        deep_sleep_minutes=row.get("deep_sleep_minutes"),
+        light_sleep_minutes=row.get("light_sleep_minutes"),
+        awake_sleep_minutes=row.get("awake_sleep_minutes"),
+        rem_sleep_minutes=row.get("rem_sleep_minutes"),
+        water_ml=row.get("water_ml") or 0,
         source=row.get("source") or "health_connect",
         synced_at=row.get("synced_at"),
     )
@@ -109,6 +142,17 @@ async def sync_daily_activity(input: DailyActivityInput):
         "avg_heart_rate": input.avg_heart_rate,
         "max_heart_rate": input.max_heart_rate,
         "sleep_minutes": input.sleep_minutes,
+        "hrv": input.hrv,
+        "blood_oxygen": input.blood_oxygen,
+        "body_temperature": input.body_temperature,
+        "respiratory_rate": input.respiratory_rate,
+        "flights_climbed": input.flights_climbed,
+        "basal_calories": input.basal_calories,
+        "deep_sleep_minutes": input.deep_sleep_minutes,
+        "light_sleep_minutes": input.light_sleep_minutes,
+        "awake_sleep_minutes": input.awake_sleep_minutes,
+        "rem_sleep_minutes": input.rem_sleep_minutes,
+        "water_ml": input.water_ml,
         "source": input.source,
     }
 
@@ -268,6 +312,17 @@ async def sync_batch_activity(activities: List[DailyActivityInput]):
                 "avg_heart_rate": activity.avg_heart_rate,
                 "max_heart_rate": activity.max_heart_rate,
                 "sleep_minutes": activity.sleep_minutes,
+                "hrv": activity.hrv,
+                "blood_oxygen": activity.blood_oxygen,
+                "body_temperature": activity.body_temperature,
+                "respiratory_rate": activity.respiratory_rate,
+                "flights_climbed": activity.flights_climbed,
+                "basal_calories": activity.basal_calories,
+                "deep_sleep_minutes": activity.deep_sleep_minutes,
+                "light_sleep_minutes": activity.light_sleep_minutes,
+                "awake_sleep_minutes": activity.awake_sleep_minutes,
+                "rem_sleep_minutes": activity.rem_sleep_minutes,
+                "water_ml": activity.water_ml,
                 "source": activity.source,
             }
 

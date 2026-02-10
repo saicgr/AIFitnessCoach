@@ -13,6 +13,9 @@ import 'data/services/haptic_service.dart';
 import 'data/services/image_url_cache.dart';
 import 'data/services/notification_service.dart';
 import 'data/services/widget_action_headless_service.dart';
+import 'data/services/background_sync_service.dart';
+import 'data/local/database_provider.dart';
+import 'package:flutter_gemma/flutter_gemma.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -87,7 +90,21 @@ void main() async {
     SubscriptionNotifier.configureRevenueCat().catchError((e) {
       debugPrint('⚠️ RevenueCat initialization failed: $e');
     }),
+    BackgroundSyncService.initialize().catchError((e) {
+      debugPrint('⚠️ BackgroundSyncService initialization failed: $e');
+    }),
+    FlutterGemma.initialize().catchError((e) {
+      debugPrint('⚠️ FlutterGemma initialization failed: $e');
+    }),
   ]);
+
+  // Warm the Drift database (non-blocking, lazy open in background)
+  try {
+    container.read(appDatabaseProvider);
+    debugPrint('✅ Drift database provider warmed');
+  } catch (e) {
+    debugPrint('⚠️ Drift database warm-up failed: $e');
+  }
 
   // Pre-warm headless widget service for native widget actions
   try {

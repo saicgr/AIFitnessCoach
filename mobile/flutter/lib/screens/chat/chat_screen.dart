@@ -8,6 +8,7 @@ import '../../data/models/coach_persona.dart';
 import '../../data/models/live_chat_session.dart';
 import '../../data/providers/live_chat_provider.dart';
 import '../../data/providers/xp_provider.dart';
+import '../../data/providers/offline_coach_provider.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/coach_avatar.dart';
@@ -125,6 +126,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final messagesState = ref.watch(chatMessagesProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final offlineChatState = ref.watch(offlineChatStateProvider);
 
     // Get coach persona from AI settings
     final aiSettings = ref.watch(aiSettingsProvider);
@@ -164,21 +166,32 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Green dot for online, orange for typing
                     Container(
                       width: 8,
                       height: 8,
                       margin: const EdgeInsets.only(right: 6),
                       decoration: BoxDecoration(
-                        color: _isLoading ? AppColors.orange : AppColors.success,
+                        color: _isLoading
+                            ? AppColors.orange
+                            : offlineChatState.isAvailable
+                                ? Colors.amber
+                                : AppColors.success,
                         shape: BoxShape.circle,
                       ),
                     ),
                     Text(
-                      _isLoading ? 'Typing...' : 'Online',
+                      _isLoading
+                          ? 'Typing...'
+                          : offlineChatState.isAvailable
+                              ? 'Offline (${offlineChatState.modelName ?? "Local AI"})'
+                              : 'Online',
                       style: TextStyle(
                         fontSize: 12,
-                        color: _isLoading ? AppColors.orange : AppColors.success,
+                        color: _isLoading
+                            ? AppColors.orange
+                            : offlineChatState.isAvailable
+                                ? Colors.amber
+                                : AppColors.success,
                       ),
                     ),
                   ],
@@ -304,6 +317,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             focusNode: _focusNode,
             isLoading: _isLoading,
             onSend: _sendMessage,
+            isOffline: offlineChatState.isAvailable,
+            modelName: offlineChatState.modelName,
           ),
         ],
       ),
@@ -669,6 +684,21 @@ class _MessageBubble extends StatelessWidget {
               ),
             ),
           ),
+          // Show offline model badge if message was generated offline
+          if (!isUser && message.actionData?['offline'] == true)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                'Generated offline by ${message.actionData?['model'] ?? 'Local AI'}',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontStyle: FontStyle.italic,
+                  color: isUser
+                      ? AppColors.pureBlack.withOpacity(0.4)
+                      : AppColors.textMuted.withOpacity(0.6),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -801,12 +831,16 @@ class _InputBar extends StatelessWidget {
   final FocusNode focusNode;
   final bool isLoading;
   final VoidCallback onSend;
+  final bool isOffline;
+  final String? modelName;
 
   const _InputBar({
     required this.controller,
     required this.focusNode,
     required this.isLoading,
     required this.onSend,
+    this.isOffline = false,
+    this.modelName,
   });
 
   @override
@@ -824,59 +858,78 @@ class _InputBar extends StatelessWidget {
           top: BorderSide(color: AppColors.cardBorder.withOpacity(0.5)),
         ),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              // Always enabled so user can type while AI is responding
-              enabled: true,
-              textCapitalization: TextCapitalization.sentences,
-              maxLines: 4,
-              minLines: 1,
-              decoration: InputDecoration(
-                hintText: isLoading ? 'Type your next message...' : 'Ask your AI coach...',
-                filled: true,
-                fillColor: AppColors.glassSurface,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
+          if (isOffline)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: [
+                  const Icon(Icons.phone_android, size: 12, color: Colors.amber),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Offline AI${modelName != null ? ' \u00b7 $modelName' : ''}',
+                    style: const TextStyle(fontSize: 11, color: Colors.amber),
+                  ),
+                ],
               ),
-              onSubmitted: (_) => onSend(),
             ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isLoading
-                    ? [AppColors.textMuted, AppColors.textMuted]
-                    : [AppColors.cyan, AppColors.purple],
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              onPressed: isLoading ? null : onSend,
-              icon: isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(
-                      Icons.send_rounded,
-                      color: Colors.white,
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  // Always enabled so user can type while AI is responding
+                  enabled: true,
+                  textCapitalization: TextCapitalization.sentences,
+                  maxLines: 4,
+                  minLines: 1,
+                  decoration: InputDecoration(
+                    hintText: isLoading ? 'Type your next message...' : 'Ask your AI coach...',
+                    filled: true,
+                    fillColor: AppColors.glassSurface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
                     ),
-            ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                  ),
+                  onSubmitted: (_) => onSend(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isLoading
+                        ? [AppColors.textMuted, AppColors.textMuted]
+                        : [AppColors.cyan, AppColors.purple],
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  onPressed: isLoading ? null : onSend,
+                  icon: isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.send_rounded,
+                          color: Colors.white,
+                        ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

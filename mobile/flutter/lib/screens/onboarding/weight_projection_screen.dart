@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/window_mode_provider.dart';
 import 'pre_auth_quiz_screen.dart';
+import 'widgets/foldable_quiz_scaffold.dart';
 
 /// Data point for weight projection chart
 class WeightDataPoint {
@@ -178,98 +180,104 @@ class _WeightProjectionScreenState
     final formattedGoalDate = DateFormat('MMM, yyyy').format(goalDate);
     final isLosingWeight = goalWeight < currentWeight;
 
+    final backButton = Padding(
+      padding: const EdgeInsets.all(16),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: GestureDetector(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            context.go('/personal-info');
+          },
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.glassSurface
+                  : AppColorsLight.glassSurface,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.arrow_back,
+              color: textPrimary,
+              size: 20,
+            ),
+          ),
+        ),
+      ),
+    );
+
     return Scaffold(
       backgroundColor: background,
       body: SafeArea(
-        child: Column(
-          children: [
-            // Back button
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    context.go('/personal-info');
-                  },
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.glassSurface
-                          : AppColorsLight.glassSurface,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.arrow_back,
-                      color: textPrimary,
-                      size: 20,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title
-                    RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
-                          height: 1.3,
-                        ),
-                        children: [
-                          const TextSpan(text: "At this rate you'll reach your goal by "),
-                          TextSpan(
-                            text: formattedGoalDate,
-                            style: const TextStyle(
-                              color: AppColors.orange,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
+        child: FoldableQuizScaffold(
+          headerTitle: "At this rate you'll reach your goal by $formattedGoalDate",
+          headerSubtitle: isLosingWeight
+              ? 'Your personalized plan is ready to help you reach your goal weight safely.'
+              : 'Your personalized plan is designed to help you build muscle.',
+          headerOverlay: backButton,
+          content: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Show title inline only on phone
+                Consumer(builder: (context, ref, _) {
+                  final windowState = ref.watch(windowModeProvider);
+                  if (FoldableQuizScaffold.shouldUseFoldableLayout(windowState)) {
+                    return const SizedBox.shrink();
+                  }
+                  return RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                        height: 1.3,
                       ),
-                    ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.1),
-
-                    const SizedBox(height: 40),
-
-                    // Chart
-                    _buildChart(
-                      projectionData,
-                      currentWeight,
-                      goalWeight,
-                      useMetric,
-                      isDark,
-                      textPrimary,
-                      textSecondary,
-                      isLosingWeight,
+                      children: [
+                        const TextSpan(text: "At this rate you'll reach your goal by "),
+                        TextSpan(
+                          text: formattedGoalDate,
+                          style: const TextStyle(
+                            color: AppColors.orange,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
                     ),
+                  ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.1);
+                }),
 
-                    const SizedBox(height: 60),
+                const SizedBox(height: 40),
 
-                    // CTA Section
-                    _buildCtaSection(
-                      isDark,
-                      textPrimary,
-                      textSecondary,
-                      isLosingWeight,
-                    ),
-
-                    const SizedBox(height: 40),
-                  ],
+                // Chart
+                _buildChart(
+                  projectionData,
+                  currentWeight,
+                  goalWeight,
+                  useMetric,
+                  isDark,
+                  textPrimary,
+                  textSecondary,
+                  isLosingWeight,
                 ),
-              ),
+
+                const SizedBox(height: 60),
+
+                // CTA Section
+                _buildCtaSection(
+                  isDark,
+                  textPrimary,
+                  textSecondary,
+                  isLosingWeight,
+                ),
+
+                const SizedBox(height: 40),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -610,217 +618,255 @@ class _WeightProjectionScreenState
     final displayWeight = useMetric ? currentWeight : currentWeight * 2.20462;
     final unit = useMetric ? 'kg' : 'lbs';
 
+    final maintainBackButton = Padding(
+      padding: const EdgeInsets.all(16),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: GestureDetector(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            context.go('/personal-info');
+          },
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.glassSurface
+                  : AppColorsLight.glassSurface,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.arrow_back,
+              color: textPrimary,
+              size: 20,
+            ),
+          ),
+        ),
+      ),
+    );
+
     return Scaffold(
       backgroundColor: background,
       body: SafeArea(
-        child: Column(
-          children: [
-            // Back button
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    context.go('/personal-info');
-                  },
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.glassSurface
-                          : AppColorsLight.glassSurface,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.arrow_back,
-                      color: textPrimary,
-                      size: 20,
-                    ),
-                  ),
-                ),
+        child: FoldableQuizScaffold(
+          headerTitle: "You're at Your Ideal Weight!",
+          headerSubtitle: "Let's keep you there! We'll focus on maintaining your current physique while improving your fitness.",
+          headerExtra: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColors.green.withValues(alpha: 0.3),
               ),
             ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.check_circle,
+                  color: AppColors.green,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  '${displayWeight.round()} $unit',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          headerOverlay: maintainBackButton,
+          content: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Show title/celebration inline only on phone
+                Consumer(builder: (context, ref, _) {
+                  final windowState = ref.watch(windowModeProvider);
+                  if (FoldableQuizScaffold.shouldUseFoldableLayout(windowState)) {
+                    return const SizedBox.shrink();
+                  }
+                  return Column(
+                    children: [
+                      const SizedBox(height: 40),
 
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 40),
-
-                    // Celebration emoji
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            AppColors.green.withValues(alpha: 0.2),
-                            AppColors.orange.withValues(alpha: 0.2),
-                          ],
-                        ),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Text(
-                          '✨',
-                          style: TextStyle(fontSize: 48),
-                        ),
-                      ),
-                    ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.8, 0.8)),
-
-                    const SizedBox(height: 32),
-
-                    // Title
-                    Text(
-                      "You're at Your Ideal Weight!",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
-                        height: 1.3,
-                      ),
-                    ).animate().fadeIn(delay: 300.ms).slideY(begin: -0.1),
-
-                    const SizedBox(height: 16),
-
-                    // Current weight display
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.green.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.check_circle,
-                            color: AppColors.green,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            '${displayWeight.round()} $unit',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ).animate().fadeIn(delay: 400.ms).scale(begin: const Offset(0.95, 0.95)),
-
-                    const SizedBox(height: 32),
-
-                    // Subtitle
-                    Text(
-                      "Let's keep you there! We'll focus on maintaining your current physique while improving your overall fitness, strength, and energy levels.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: textSecondary,
-                        height: 1.5,
-                      ),
-                    ).animate().fadeIn(delay: 500.ms),
-
-                    const SizedBox(height: 40),
-
-                    // Benefits cards
-                    _buildMaintainBenefitCard(
-                      isDark,
-                      textPrimary,
-                      textSecondary,
-                      Icons.fitness_center,
-                      'Build Strength',
-                      'Gain muscle while maintaining weight',
-                      AppColors.purple,
-                      600,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildMaintainBenefitCard(
-                      isDark,
-                      textPrimary,
-                      textSecondary,
-                      Icons.bolt,
-                      'Boost Energy',
-                      'Optimize nutrition for peak performance',
-                      AppColors.orange,
-                      700,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildMaintainBenefitCard(
-                      isDark,
-                      textPrimary,
-                      textSecondary,
-                      Icons.favorite,
-                      'Stay Healthy',
-                      'Balanced lifestyle for long-term wellness',
-                      AppColors.coral,
-                      800,
-                    ),
-
-                    const SizedBox(height: 48),
-
-                    // CTA Button
-                    GestureDetector(
-                      onTap: () {
-                        HapticFeedback.mediumImpact();
-                        context.go('/coach-selection');
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 18),
+                      // Celebration emoji
+                      Container(
+                        width: 100,
+                        height: 100,
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [AppColors.orange, Color(0xFFEA580C)],
+                          gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
+                            colors: [
+                              AppColors.green.withValues(alpha: 0.2),
+                              AppColors.orange.withValues(alpha: 0.2),
+                            ],
                           ),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.orange.withValues(alpha: 0.4),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
+                          shape: BoxShape.circle,
                         ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        child: const Center(
+                          child: Text(
+                            '✨',
+                            style: TextStyle(fontSize: 48),
+                          ),
+                        ),
+                      ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.8, 0.8)),
+
+                      const SizedBox(height: 32),
+
+                      // Title
+                      Text(
+                        "You're at Your Ideal Weight!",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: textPrimary,
+                          height: 1.3,
+                        ),
+                      ).animate().fadeIn(delay: 300.ms).slideY(begin: -0.1),
+
+                      const SizedBox(height: 16),
+
+                      // Current weight display
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: AppColors.green.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.rocket_launch, color: Colors.white, size: 20),
-                            SizedBox(width: 10),
+                            const Icon(
+                              Icons.check_circle,
+                              color: AppColors.green,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 12),
                             Text(
-                              'Continue to Your Plan',
+                              '${displayWeight.round()} $unit',
                               style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: textPrimary,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ).animate().fadeIn(delay: 900.ms).slideY(begin: 0.2),
+                      ).animate().fadeIn(delay: 400.ms).scale(begin: const Offset(0.95, 0.95)),
 
-                    const SizedBox(height: 40),
-                  ],
+                      const SizedBox(height: 32),
+
+                      // Subtitle
+                      Text(
+                        "Let's keep you there! We'll focus on maintaining your current physique while improving your overall fitness, strength, and energy levels.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: textSecondary,
+                          height: 1.5,
+                        ),
+                      ).animate().fadeIn(delay: 500.ms),
+                    ],
+                  );
+                }),
+
+                const SizedBox(height: 40),
+
+                // Benefits cards
+                _buildMaintainBenefitCard(
+                  isDark,
+                  textPrimary,
+                  textSecondary,
+                  Icons.fitness_center,
+                  'Build Strength',
+                  'Gain muscle while maintaining weight',
+                  AppColors.purple,
+                  600,
                 ),
-              ),
+                const SizedBox(height: 12),
+                _buildMaintainBenefitCard(
+                  isDark,
+                  textPrimary,
+                  textSecondary,
+                  Icons.bolt,
+                  'Boost Energy',
+                  'Optimize nutrition for peak performance',
+                  AppColors.orange,
+                  700,
+                ),
+                const SizedBox(height: 12),
+                _buildMaintainBenefitCard(
+                  isDark,
+                  textPrimary,
+                  textSecondary,
+                  Icons.favorite,
+                  'Stay Healthy',
+                  'Balanced lifestyle for long-term wellness',
+                  AppColors.coral,
+                  800,
+                ),
+
+                const SizedBox(height: 48),
+
+                // CTA Button
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.mediumImpact();
+                    context.go('/coach-selection');
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.orange, Color(0xFFEA580C)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.orange.withValues(alpha: 0.4),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.rocket_launch, color: Colors.white, size: 20),
+                        SizedBox(width: 10),
+                        Text(
+                          'Continue to Your Plan',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ).animate().fadeIn(delay: 900.ms).slideY(begin: 0.2),
+
+                const SizedBox(height: 40),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

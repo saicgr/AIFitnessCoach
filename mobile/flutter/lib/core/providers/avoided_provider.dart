@@ -105,6 +105,7 @@ class AvoidedNotifier extends StateNotifier<AvoidedState> {
     String? reason,
     bool isTemporary = false,
     DateTime? endDate,
+    bool regenerateNow = true,
   }) async {
     // Optimistic update
     final optimisticAvoided = AvoidedExercise(
@@ -151,10 +152,12 @@ class AvoidedNotifier extends StateNotifier<AvoidedState> {
         ],
       );
 
-      debugPrint('🚫 [AvoidedProvider] Added avoided: $exerciseName - regenerating today\'s workout');
+      debugPrint('🚫 [AvoidedProvider] Added avoided: $exerciseName (regenerateNow=$regenerateNow)');
 
       // Regenerate today's workout to remove the avoided exercise
-      await _regenerateTodayWorkout(userId);
+      if (regenerateNow) {
+        await _regenerateTodayWorkout(userId);
+      }
 
       // Invalidate workout providers to trigger UI refresh
       _ref.invalidate(todayWorkoutProvider);

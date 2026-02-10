@@ -33,6 +33,7 @@ class QuizEquipment extends StatelessWidget {
   final Set<String> otherSelectedEquipment;
   final String? selectedEnvironment;
   final ValueChanged<String>? onEnvironmentChanged;
+  final bool showHeader;
 
   const QuizEquipment({
     super.key,
@@ -47,6 +48,7 @@ class QuizEquipment extends StatelessWidget {
     this.otherSelectedEquipment = const {},
     this.selectedEnvironment,
     this.onEnvironmentChanged,
+    this.showHeader = true,
   });
 
   static const _environments = [
@@ -120,10 +122,12 @@ class QuizEquipment extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTitle(textPrimary),
-          const SizedBox(height: 6),
-          _buildSubtitle(textSecondary),
-          const SizedBox(height: 12),
+          if (showHeader) ...[
+            _buildTitle(textPrimary),
+            const SizedBox(height: 6),
+            _buildSubtitle(textSecondary),
+            const SizedBox(height: 12),
+          ],
           // Environment quick selection chips
           if (onEnvironmentChanged != null) ...[
             _buildEnvironmentSection(context, isDark, textPrimary, textSecondary),

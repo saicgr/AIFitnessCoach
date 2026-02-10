@@ -88,6 +88,8 @@ import '../../core/services/exercise_info_service.dart';
 import '../../core/providers/workout_mini_player_provider.dart';
 import '../../core/providers/favorites_provider.dart';
 import '../../core/providers/heart_rate_provider.dart';
+import '../../core/providers/ble_heart_rate_provider.dart';
+import '../../data/services/ble_heart_rate_service.dart';
 import '../../widgets/heart_rate_display.dart';
 
 /// Active workout screen with modular composition
@@ -173,7 +175,7 @@ class _ActiveWorkoutScreenState
 
   // RPE/RIR and weight suggestion state
   int? _lastSetRpe;
-  int? _lastSetRir;
+  int? _lastSetRir = 3; // Default RIR 3 (moderate) for quick-select bar
   WeightSuggestion? _currentWeightSuggestion;
   final bool _showRpeSelector = false;
   bool _isLoadingWeightSuggestion = false; // Loading state for AI suggestion
@@ -227,6 +229,18 @@ class _ActiveWorkoutScreenState
     _initializeWorkout();
     _loadWarmupAndStretches();
     _checkWarmupEnabled();
+    _initBleHrAutoReconnect();
+  }
+
+  /// Attempt BLE HR auto-reconnect if enabled.
+  void _initBleHrAutoReconnect() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final bleEnabled = ref.read(bleHrEnabledProvider);
+      if (bleEnabled) {
+        BleHeartRateService.instance.autoReconnect();
+      }
+    });
   }
 
   /// Check if warmup is enabled and skip to active phase if not
@@ -386,6 +400,12 @@ class _ActiveWorkoutScreenState
             name: e['name']?.toString() ?? 'Exercise',
             duration: (e['duration_seconds'] as num?)?.toInt() ?? 30,
             icon: _getIconForExercise(e['name']?.toString() ?? ''),
+            inclinePercent: (e['incline_percent'] as num?)?.toDouble(),
+            speedMph: (e['speed_mph'] as num?)?.toDouble(),
+            rpm: (e['rpm'] as num?)?.toInt(),
+            resistanceLevel: (e['resistance_level'] as num?)?.toInt(),
+            strokeRateSpm: (e['stroke_rate_spm'] as num?)?.toInt(),
+            equipment: e['equipment']?.toString(),
           )).toList();
         }
 
@@ -394,6 +414,12 @@ class _ActiveWorkoutScreenState
             name: e['name']?.toString() ?? 'Stretch',
             duration: (e['duration_seconds'] as num?)?.toInt() ?? 30,
             icon: _getIconForStretch(e['name']?.toString() ?? ''),
+            inclinePercent: (e['incline_percent'] as num?)?.toDouble(),
+            speedMph: (e['speed_mph'] as num?)?.toDouble(),
+            rpm: (e['rpm'] as num?)?.toInt(),
+            resistanceLevel: (e['resistance_level'] as num?)?.toInt(),
+            strokeRateSpm: (e['stroke_rate_spm'] as num?)?.toInt(),
+            equipment: e['equipment']?.toString(),
           )).toList();
         }
 
@@ -3148,11 +3174,35 @@ class _ActiveWorkoutScreenState
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              // Live heart rate display from Health Connect
-                              HeartRateDisplay(
-                                iconSize: 24,
-                                fontSize: 18,
-                                showZoneLabel: false,
+                              // Live heart rate display (merged WearOS + BLE)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  HeartRateDisplay(
+                                    iconSize: 24,
+                                    fontSize: 18,
+                                    showZoneLabel: false,
+                                  ),
+                                  // BLE connection indicator
+                                  Consumer(builder: (context, ref, _) {
+                                    final connAsync = ref.watch(bleHrConnectionStateProvider);
+                                    final connState = connAsync.whenOrNull(data: (s) => s);
+                                    if (connState == null || connState == BleHrConnectionState.disconnected) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    final color = connState == BleHrConnectionState.connected
+                                        ? Colors.green
+                                        : Colors.orange;
+                                    return Padding(
+                                      padding: const EdgeInsets.only(left: 4),
+                                      child: Icon(
+                                        Icons.bluetooth_connected,
+                                        size: 14,
+                                        color: color,
+                                      ),
+                                    );
+                                  }),
+                                ],
                               ),
                               const SizedBox(width: 12),
                               // Info magic pill (styled like Video chip)
@@ -3243,6 +3293,8 @@ class _ActiveWorkoutScreenState
                                   onSetDeleted: (index) => _deleteCompletedSet(index),
                                   onToggleUnit: _toggleUnit,
                                   onRirTapped: (setIndex, currentRir) => _showRirPicker(setIndex, currentRir),
+                                  activeRir: _lastSetRir,
+                                  onActiveRirChanged: (rir) => setState(() => _lastSetRir = rir),
                                   // Inline rest row - shows between completed and active sets
                                   showInlineRest: _showInlineRest &&
                                       _viewingExerciseIndex == _currentExerciseIndex &&
@@ -3475,6 +3527,8 @@ class _ActiveWorkoutScreenState
                             onSetDeleted: (index) => _deleteCompletedSet(index),
                             onToggleUnit: _toggleUnit,
                             onRirTapped: (setIndex, currentRir) => _showRirPicker(setIndex, currentRir),
+                            activeRir: _lastSetRir,
+                            onActiveRirChanged: (rir) => setState(() => _lastSetRir = rir),
                             showInlineRest: _showInlineRest &&
                                 _viewingExerciseIndex == _currentExerciseIndex &&
                                 !_isRestingBetweenExercises,
@@ -4006,6 +4060,12 @@ class _ActiveWorkoutScreenState
       final calculatedRir = setTarget?.targetRir ??
           _calculateRir(setTarget?.setType, currentWorkingIndex, totalWorkingSets);
 
+      // Get actual RIR from completed set log
+      int? actualRir;
+      if (isCompleted) {
+        actualRir = completedSets[i].rir;
+      }
+
       rows.add(SetRowData(
         setNumber: i + 1,
         isWarmup: setTarget?.isWarmup ?? false,
@@ -4016,6 +4076,7 @@ class _ActiveWorkoutScreenState
         targetRir: calculatedRir,
         actualWeight: actualWeight,
         actualReps: actualReps,
+        actualRir: actualRir,
         previousWeight: prevWeight,
         previousReps: prevReps,
         previousRir: prevRir,

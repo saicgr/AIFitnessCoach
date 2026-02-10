@@ -10,6 +10,7 @@ class QuizMuscleFocus extends StatelessWidget {
   final String subtitle;
   final Map<String, int> focusPoints;
   final ValueChanged<Map<String, int>> onPointsChanged;
+  final bool showHeader;
 
   const QuizMuscleFocus({
     super.key,
@@ -17,6 +18,7 @@ class QuizMuscleFocus extends StatelessWidget {
     required this.subtitle,
     required this.focusPoints,
     required this.onPointsChanged,
+    this.showHeader = true,
   });
 
   static const int maxTotalPoints = 5;
@@ -36,24 +38,26 @@ class QuizMuscleFocus extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            question,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
-              height: 1.3,
-            ),
-          ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 14,
-              color: textSecondary,
-            ),
-          ).animate().fadeIn(delay: 200.ms),
-          const SizedBox(height: 16),
+          if (showHeader) ...[
+            Text(
+              question,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: textPrimary,
+                height: 1.3,
+              ),
+            ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 14,
+                color: textSecondary,
+              ),
+            ).animate().fadeIn(delay: 200.ms),
+            const SizedBox(height: 16),
+          ],
           // Focus points indicator
           _FocusPointsIndicator(
             usedPoints: totalPointsUsed,

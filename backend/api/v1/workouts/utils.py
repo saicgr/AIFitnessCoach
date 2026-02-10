@@ -1106,23 +1106,30 @@ async def mark_queued_exercises_used(user_id: str, exercise_names: List[str]):
         logger.warning(f"Could not mark queued exercises as used: {e}")
 
 
-async def get_user_staple_exercises(user_id: str) -> List[dict]:
+async def get_user_staple_exercises(user_id: str, gym_profile_id: Optional[str] = None) -> List[dict]:
     """
     Get user's staple exercises with reasons from the database.
 
-    Staple exercises are core lifts that should NEVER be rotated out during
-    weekly workout variation. Examples: Squat, Bench Press, Deadlift.
+    When gym_profile_id is provided, returns staples for that profile AND "All Profiles" staples.
+    Also returns equipment and gym_profile_id fields for equipment guard filtering.
 
     Returns:
-        List of dicts with exercise_name, reason, and muscle_group.
+        List of dicts with name, reason, muscle_group, gym_profile_id, and equipment.
         Reason can be: 'core_compound', 'favorite', 'rehab', 'strength_focus', 'other'
     """
     try:
         db = get_supabase_db()
 
-        result = db.client.table("staple_exercises").select(
-            "exercise_name, reason, muscle_group"
-        ).eq("user_id", user_id).execute()
+        # Use the view that joins exercise_library to get equipment info
+        query = db.client.table("user_staples_with_details").select(
+            "exercise_name, reason, muscle_group, gym_profile_id, equipment"
+        ).eq("user_id", user_id)
+
+        if gym_profile_id:
+            # Get staples for this specific profile OR all-profiles staples
+            query = query.or_(f"gym_profile_id.eq.{gym_profile_id},gym_profile_id.is.null")
+
+        result = query.execute()
 
         if not result.data:
             return []
@@ -1132,14 +1139,15 @@ async def get_user_staple_exercises(user_id: str) -> List[dict]:
                 "name": row["exercise_name"],
                 "reason": row.get("reason", "favorite"),
                 "muscle_group": row.get("muscle_group"),
+                "gym_profile_id": row.get("gym_profile_id"),
+                "equipment": row.get("equipment"),
             }
             for row in result.data
         ]
-        logger.info(f"Found {len(staples)} staple exercises for user {user_id}: {[s['name'] for s in staples]}")
+        logger.info(f"Found {len(staples)} staple exercises for user {user_id} (profile: {gym_profile_id or 'all'}): {[s['name'] for s in staples]}")
         return staples
 
     except Exception as e:
-        # Table might not exist yet - this is fine
         logger.debug(f"Could not get staple exercises (table may not exist): {e}")
         return []
 

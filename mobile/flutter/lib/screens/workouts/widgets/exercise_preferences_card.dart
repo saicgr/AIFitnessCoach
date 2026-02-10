@@ -147,14 +147,42 @@ class _ExercisePreferencesCardState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'EXERCISE PREFERENCES',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                          color: textMuted,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'EXERCISE PREFERENCES',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                                color: textMuted,
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => _showExercisePrefsHelp(context),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.help_outline_rounded,
+                                  size: 16,
+                                  color: accentColor,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  "What's this?",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: accentColor,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -297,6 +325,176 @@ class _ExercisePreferencesCardState
             duration: const Duration(milliseconds: 200),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showExercisePrefsHelp(BuildContext context) {
+    HapticFeedback.lightImpact();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    const helpItems = <Map<String, dynamic>>[
+      {
+        'icon': Icons.favorite,
+        'title': 'Favorite Exercises',
+        'description': 'Exercises you enjoy. The AI gives these a priority boost (2.5x) so they appear more often in your workouts — but they can still be rotated out for variety.',
+        'color': AppColors.error,
+      },
+      {
+        'icon': Icons.lock,
+        'title': 'Staple Exercises',
+        'description': 'Core lifts that are GUARANTEED in every workout for their muscle group. They never rotate out regardless of your variety setting. Scoped to specific gym profiles for equipment compatibility.',
+        'color': AppColors.purple,
+      },
+      {
+        'icon': Icons.playlist_add,
+        'title': 'Exercise Queue',
+        'description': 'One-time requests. Queued exercises are included in your next workout, then automatically removed from the queue. Great for trying a new exercise.',
+        'color': AppColors.cyan,
+      },
+      {
+        'icon': Icons.block,
+        'title': 'Exercises to Avoid',
+        'description': 'Blacklisted exercises the AI will NEVER include in any workout. Use for exercises that cause pain, discomfort, or you simply dislike.',
+        'color': AppColors.error,
+      },
+      {
+        'icon': Icons.accessibility_new,
+        'title': 'Muscles to Avoid',
+        'description': 'Muscle groups to skip entirely ("avoid") or reduce volume for ("reduce"). Useful for injuries or letting a muscle group recover.',
+        'color': AppColors.orange,
+      },
+      {
+        'icon': Icons.tune,
+        'title': 'Weight Increments',
+        'description': 'Customize the +/- weight step for each equipment type. For example, set barbell increments to 2.5 kg or dumbbell increments to 1 kg.',
+        'color': AppColors.cyan,
+      },
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: elevatedColor,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.55,
+        minChildSize: 0.3,
+        maxChildSize: 0.85,
+        expand: false,
+        builder: (context, scrollController) => Column(
+          children: [
+            // Handle
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Title
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.cyan.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.lightbulb_outline_rounded,
+                      color: AppColors.cyan,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Exercise Preferences Explained',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.close, color: textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            // Help items
+            Expanded(
+              child: ListView.builder(
+                controller: scrollController,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: helpItems.length,
+                itemBuilder: (context, index) {
+                  final item = helpItems[index];
+                  final icon = item['icon'] as IconData;
+                  final title = item['title'] as String;
+                  final description = item['description'] as String;
+                  final color = item['color'] as Color;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(icon, color: color, size: 22),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                description,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: textSecondary,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }

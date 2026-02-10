@@ -4,11 +4,17 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/window_mode_provider.dart';
 
 /// How It Works Screen - Explains the onboarding journey before the quiz
 ///
 /// Displayed after Stats Welcome and before Pre-Auth Quiz.
 /// Shows a 3-step visual journey to set expectations.
+///
+/// Adapts layout for foldable devices:
+///   - Closed / normal phone: single-column vertical scroll
+///   - Half-opened (tabletop): header on top pane, steps + button on bottom pane
+///   - Fully opened (flat): side-by-side — header left, steps right
 class HowItWorksScreen extends ConsumerStatefulWidget {
   const HowItWorksScreen({super.key});
 
@@ -71,8 +77,14 @@ class _HowItWorksScreenState extends ConsumerState<HowItWorksScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    final windowState = ref.watch(windowModeProvider);
+    final posture = windowState.foldablePosture;
+    final hingeBounds = windowState.hingeBounds;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
@@ -82,77 +94,258 @@ class _HowItWorksScreenState extends ConsumerState<HowItWorksScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: isDark
-                ? [
-                    AppColors.pureBlack,
-                    const Color(0xFF0A0A1A),
-                  ]
-                : [
-                    AppColorsLight.pureWhite,
-                    const Color(0xFFF5F5FA),
-                  ],
+                ? [AppColors.pureBlack, const Color(0xFF0A0A1A)]
+                : [AppColorsLight.pureWhite, const Color(0xFFF5F5FA)],
           ),
         ),
         child: SafeArea(
+          child: _buildLayoutForPosture(
+            posture: posture,
+            hingeBounds: hingeBounds,
+            isDark: isDark,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── Layout router ──────────────────────────────────────────────
+
+  /// Determine hinge orientation: true = vertical hinge (book-fold like
+  /// Pixel Fold, Galaxy Fold), false = horizontal hinge (flip phone).
+  bool _isVerticalHinge(Rect? hingeBounds) {
+    if (hingeBounds == null) return true; // default to book-fold
+    return hingeBounds.height > hingeBounds.width;
+  }
+
+  Widget _buildLayoutForPosture({
+    required FoldablePosture posture,
+    required Rect? hingeBounds,
+    required bool isDark,
+    required Color textPrimary,
+    required Color textSecondary,
+  }) {
+    if (posture == FoldablePosture.none) {
+      return _buildPhoneLayout(
+        isDark: isDark,
+        textPrimary: textPrimary,
+        textSecondary: textSecondary,
+      );
+    }
+
+    // Foldable is at least partially open — pick layout by hinge orientation.
+    final isVertical = _isVerticalHinge(hingeBounds);
+
+    if (isVertical) {
+      // Book-fold (Pixel Fold, Galaxy Fold): split left / right
+      return _buildSideBySideLayout(
+        hingeBounds: hingeBounds,
+        isDark: isDark,
+        textPrimary: textPrimary,
+        textSecondary: textSecondary,
+      );
+    } else {
+      // Flip phone (Galaxy Flip): split top / bottom
+      return _buildTopBottomLayout(
+        hingeBounds: hingeBounds,
+        isDark: isDark,
+        textPrimary: textPrimary,
+        textSecondary: textSecondary,
+      );
+    }
+  }
+
+  // ─── Phone / closed layout (original) ───────────────────────────
+
+  Widget _buildPhoneLayout({
+    required bool isDark,
+    required Color textPrimary,
+    required Color textSecondary,
+  }) {
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                const SizedBox(height: 40),
+                _buildHeader(textPrimary, textSecondary, isDark),
+                const SizedBox(height: 48),
+                ..._buildStepCards(isDark),
+                const SizedBox(height: 32),
+                _buildSocialProof(textSecondary, isDark),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
+        _buildContinueButton(isDark),
+      ],
+    );
+  }
+
+  // ─── Side-by-side layout (vertical hinge — book-fold) ───────────
+  //  Left pane: header + social proof
+  //  Right pane: step cards + CTA button
+  //  Used for both half-opened and flat on Pixel Fold / Galaxy Fold.
+
+  Widget _buildSideBySideLayout({
+    required Rect? hingeBounds,
+    required bool isDark,
+    required Color textPrimary,
+    required Color textSecondary,
+  }) {
+    final safeLeft = MediaQuery.of(context).padding.left;
+    final rawHingeLeft =
+        hingeBounds?.left ?? MediaQuery.of(context).size.width / 2;
+    final hingeLeft = (rawHingeLeft - safeLeft).clamp(100.0, double.infinity);
+    final hingeWidth = hingeBounds?.width ?? 0;
+
+    return Row(
+      children: [
+        // ── Left pane (header side) ──
+        SizedBox(
+          width: hingeLeft,
+          child: Center(
+            child: SingleChildScrollView(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 32),
+                  _buildHeader(textPrimary, textSecondary, isDark),
+                  const SizedBox(height: 40),
+                  _buildSocialProof(textSecondary, isDark),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // ── Hinge gap ──
+        SizedBox(width: hingeWidth),
+
+        // ── Right pane (steps side) ──
+        Expanded(
           child: Column(
             children: [
-              // Scrollable content
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 32, vertical: 24),
                   child: Column(
                     children: [
-                      const SizedBox(height: 40),
-
-                      // Header
-                      _buildHeader(textPrimary, textSecondary, isDark),
-
-                      const SizedBox(height: 48),
-
-                      // Steps
-                      ..._steps.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final step = entry.value;
-                        final isLast = index == _steps.length - 1;
-
-                        return Column(
-                          children: [
-                            _StepCard(
-                              step: step,
-                              isDark: isDark,
-                              pulseController: _pulseController,
-                            )
-                                .animate(delay: (300 + index * 200).ms)
-                                .fadeIn(duration: 400.ms)
-                                .slideY(begin: 0.1, curve: Curves.easeOutCubic),
-
-                            // Connector line (except for last step)
-                            if (!isLast)
-                              _buildConnector(isDark, step.color)
-                                  .animate(delay: (500 + index * 200).ms)
-                                  .fadeIn(duration: 300.ms)
-                                  .scaleY(begin: 0, alignment: Alignment.topCenter),
-                          ],
-                        );
-                      }),
-
-                      const SizedBox(height: 32),
-
-                      // Social proof
-                      _buildSocialProof(textSecondary, isDark),
-
+                      const SizedBox(height: 16),
+                      ..._buildStepCards(isDark),
                       const SizedBox(height: 24),
                     ],
                   ),
                 ),
               ),
-
-              // Continue button (fixed at bottom)
               _buildContinueButton(isDark),
             ],
           ),
         ),
-      ),
+      ],
     );
+  }
+
+  // ─── Top-bottom layout (horizontal hinge — flip phone) ──────────
+  //  Top pane: header + social proof (above hinge)
+  //  Bottom pane: step cards + CTA button (below hinge)
+
+  Widget _buildTopBottomLayout({
+    required Rect? hingeBounds,
+    required bool isDark,
+    required Color textPrimary,
+    required Color textSecondary,
+  }) {
+    final safeTop = MediaQuery.of(context).padding.top;
+    final rawHingeTop =
+        hingeBounds?.top ?? MediaQuery.of(context).size.height / 2;
+    final hingeTop = (rawHingeTop - safeTop).clamp(100.0, double.infinity);
+    final hingeHeight = hingeBounds?.height ?? 0;
+
+    return Column(
+      children: [
+        // ── Top pane (above hinge) ──
+        SizedBox(
+          height: hingeTop,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 24),
+                _buildHeader(textPrimary, textSecondary, isDark),
+                const SizedBox(height: 24),
+                _buildSocialProof(textSecondary, isDark),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
+
+        // ── Hinge gap ──
+        SizedBox(height: hingeHeight),
+
+        // ── Bottom pane (below hinge) ──
+        Expanded(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 16),
+                      ..._buildStepCards(isDark),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+              _buildContinueButton(isDark),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─── Shared building blocks ─────────────────────────────────────
+
+  List<Widget> _buildStepCards(bool isDark) {
+    final cards = <Widget>[];
+    for (int index = 0; index < _steps.length; index++) {
+      final step = _steps[index];
+      final isLast = index == _steps.length - 1;
+
+      cards.add(
+        _StepCard(
+          step: step,
+          isDark: isDark,
+          pulseController: _pulseController,
+        )
+            .animate(delay: (300 + index * 200).ms)
+            .fadeIn(duration: 400.ms)
+            .slideY(begin: 0.1, curve: Curves.easeOutCubic),
+      );
+
+      if (!isLast) {
+        cards.add(
+          _buildConnector(isDark, step.color)
+              .animate(delay: (500 + index * 200).ms)
+              .fadeIn(duration: 300.ms)
+              .scaleY(begin: 0, alignment: Alignment.topCenter),
+        );
+      }
+    }
+    return cards;
   }
 
   Widget _buildHeader(Color textPrimary, Color textSecondary, bool isDark) {
@@ -174,7 +367,8 @@ class _HowItWorksScreenState extends ConsumerState<HowItWorksScreen>
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.orange.withValues(alpha: 0.3 + (_pulseController.value * 0.15)),
+                    color: AppColors.orange.withValues(
+                        alpha: 0.3 + (_pulseController.value * 0.15)),
                     blurRadius: 20 + (_pulseController.value * 8),
                     offset: const Offset(0, 8),
                   ),
@@ -291,7 +485,8 @@ class _HowItWorksScreenState extends ConsumerState<HowItWorksScreen>
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.orange.withValues(alpha: 0.3 + (_pulseController.value * 0.15)),
+                    color: AppColors.orange.withValues(
+                        alpha: 0.3 + (_pulseController.value * 0.15)),
                     blurRadius: 16 + (_pulseController.value * 8),
                     offset: const Offset(0, 6),
                   ),
@@ -317,7 +512,8 @@ class _HowItWorksScreenState extends ConsumerState<HowItWorksScreen>
                       size: 22,
                     )
                         .animate(
-                          onPlay: (controller) => controller.repeat(reverse: true),
+                          onPlay: (controller) =>
+                              controller.repeat(reverse: true),
                         )
                         .moveX(begin: 0, end: 4, duration: 600.ms),
                   ],
@@ -364,8 +560,10 @@ class _StepCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -403,7 +601,8 @@ class _StepCard extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: step.color.withValues(alpha: 0.2 + (pulseController.value * 0.1)),
+                      color: step.color.withValues(
+                          alpha: 0.2 + (pulseController.value * 0.1)),
                       blurRadius: 12 + (pulseController.value * 4),
                       spreadRadius: 1,
                     ),
@@ -429,7 +628,9 @@ class _StepCard extends StatelessWidget {
                           color: step.color,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+                            color: isDark
+                                ? AppColors.elevated
+                                : AppColorsLight.elevated,
                             width: 2,
                           ),
                         ),

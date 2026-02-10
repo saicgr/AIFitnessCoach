@@ -11,6 +11,7 @@ class QuizMultiSelect extends StatelessWidget {
   final Set<String> selectedValues;
   final ValueChanged<String> onToggle;
   final bool showDescriptions;
+  final bool showHeader;
 
   const QuizMultiSelect({
     super.key,
@@ -20,6 +21,7 @@ class QuizMultiSelect extends StatelessWidget {
     required this.selectedValues,
     required this.onToggle,
     this.showDescriptions = false,
+    this.showHeader = true,
   });
 
   @override
@@ -34,26 +36,28 @@ class QuizMultiSelect extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            question,
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
-              color: textPrimary,
-              height: 1.3,
-              letterSpacing: -0.5,
+          if (showHeader) ...[
+            Text(
+              question,
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                color: textPrimary,
+                height: 1.3,
+                letterSpacing: -0.5,
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 15,
-              color: textSecondary,
-              fontWeight: FontWeight.w500,
+            const SizedBox(height: 10),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 15,
+                color: textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
+            const SizedBox(height: 24),
+          ],
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.only(bottom: 16),

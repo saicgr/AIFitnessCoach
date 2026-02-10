@@ -5,6 +5,7 @@ import '../../../data/models/nutrition.dart';
 import '../../../data/models/nutrition_preferences.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/repositories/nutrition_preferences_repository.dart';
+import '../../../data/services/health_service.dart';
 
 /// Dedicated card showing nutrition goals with edit/recalculate options
 class NutritionGoalsCard extends ConsumerWidget {
@@ -51,6 +52,11 @@ class NutritionGoalsCard extends ConsumerWidget {
     final consumedProtein = (summary?.totalProteinG ?? 0).toDouble();
     final consumedCarbs = (summary?.totalCarbsG ?? 0).toDouble();
     final consumedFat = (summary?.totalFatG ?? 0).toDouble();
+
+    // Calories burned from Health Connect / Watch
+    final activityState = ref.watch(dailyActivityProvider);
+    final caloriesBurned = activityState.today?.caloriesBurned ?? 0;
+    final isFromWatch = activityState.today?.isFromWatch ?? false;
 
     final green = isDark ? AppColors.green : AppColorsLight.green;
 
@@ -215,6 +221,70 @@ class NutritionGoalsCard extends ConsumerWidget {
               ),
             ],
           ),
+
+          // Calories burned from Health Connect / Watch
+          if (caloriesBurned > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: green.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.local_fire_department, size: 16, color: green),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Burned',
+                        style: TextStyle(fontSize: 12, color: textMuted),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '+${caloriesBurned.toInt()}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: green,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        isFromWatch ? 'from Watch' : 'from Health Connect',
+                        style: TextStyle(fontSize: 10, color: textMuted),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.balance, size: 16, color: teal),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Net',
+                        style: TextStyle(fontSize: 12, color: textMuted),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${(consumedCalories - caloriesBurned).toInt()}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: teal,
+                        ),
+                      ),
+                      Text(
+                        ' / ${effectiveCalories.toInt()} kcal',
+                        style: TextStyle(fontSize: 12, color: textMuted),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
 
           // Adjustment reason - only show if it's NOT the default "base_targets"
           // (i.e., only show when there's an actual adjustment like "training_day" or "rest_day")

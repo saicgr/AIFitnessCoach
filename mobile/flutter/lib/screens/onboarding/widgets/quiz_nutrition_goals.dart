@@ -28,6 +28,7 @@ class QuizNutritionGoals extends StatefulWidget {
   final String? weightChangeRate;
   final double? goalWeightKg;
   final int? workoutDaysPerWeek;
+  final bool showHeader;
 
   const QuizNutritionGoals({
     super.key,
@@ -48,6 +49,7 @@ class QuizNutritionGoals extends StatefulWidget {
     this.weightChangeRate,
     this.goalWeightKg,
     this.workoutDaysPerWeek,
+    this.showHeader = true,
   });
 
   @override
@@ -156,24 +158,26 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'What are your nutrition goals?',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                    height: 1.3,
-                  ),
-                ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
-                const SizedBox(height: 8),
-                Text(
-                  'Select all that apply',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: textSecondary,
-                  ),
-                ).animate().fadeIn(delay: 200.ms),
-                const SizedBox(height: 16),
+                if (widget.showHeader) ...[
+                  Text(
+                    'What are your nutrition goals?',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                      height: 1.3,
+                    ),
+                  ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Select all that apply',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: textSecondary,
+                    ),
+                  ).animate().fadeIn(delay: 200.ms),
+                  const SizedBox(height: 16),
+                ],
 
                 // Nutrition goals as Wrap for better small screen support
                 Wrap(

@@ -6,6 +6,7 @@ import '../../core/theme/theme_colors.dart';
 import '../../data/models/home_layout.dart';
 import '../../data/providers/local_layout_provider.dart';
 import '../../data/services/haptic_service.dart';
+import 'widgets/preview_tile_mock.dart';
 
 /// Screen for editing home screen layout with tabs for Toggles and Discover
 class LayoutEditorScreen extends ConsumerStatefulWidget {
@@ -749,8 +750,8 @@ class _DiscoverTab extends ConsumerWidget {
             crossAxisCount: 2,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: 1.1,
-            children: LayoutPreset.values
+            childAspectRatio: 0.85,
+            children: layoutPresets
                 .map((preset) => _buildPresetCard(context, ref, preset))
                 .toList(),
           ),
@@ -874,120 +875,267 @@ class _DiscoverTab extends ConsumerWidget {
 
   Widget _buildPresetCard(
       BuildContext context, WidgetRef ref, LayoutPreset preset) {
-    final presetColor = _getPresetColor(preset);
-    final color = isDark ? presetColor : _darkenColor(presetColor);
+    final color = isDark ? preset.color : _darkenColor(preset.color);
 
-    return GestureDetector(
-      onTap: () {
-        HapticService.medium();
-        ref.read(localLayoutProvider.notifier).applyPreset(preset);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Applied ${preset.displayName}'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: elevatedColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                _getPresetIcon(preset),
-                color: color,
-                size: 20,
-              ),
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: elevatedColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(10),
             ),
-            const SizedBox(height: 10),
-            Text(
-              preset.displayName,
+            child: Icon(preset.icon, color: color, size: 20),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            preset.name,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '${preset.tiles.length} tiles',
+            style: TextStyle(fontSize: 11, color: textMuted),
+          ),
+          const SizedBox(height: 2),
+          Expanded(
+            child: Text(
+              preset.description,
               style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: textColor,
+                fontSize: 11,
+                color: textMuted,
+                height: 1.3,
               ),
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 2),
-            Expanded(
-              child: Text(
-                preset.description,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: textMuted,
-                  height: 1.3,
+          ),
+          const SizedBox(height: 8),
+          // Preview and Apply buttons
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _showPreviewSheet(context, ref, preset),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Preview',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: color,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                'Apply',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: color,
+              const SizedBox(width: 8),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    HapticService.medium();
+                    ref.read(localLayoutProvider.notifier).applyPreset(preset);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Applied ${preset.name}'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Apply',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.black : Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPreviewSheet(
+      BuildContext context, WidgetRef ref, LayoutPreset preset) {
+    final color = isDark ? preset.color : _darkenColor(preset.color);
+    final sheetBg = isDark ? const Color(0xFF0A0A0A) : const Color(0xFFFFFFFF);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (_, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: sheetBg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Drag handle
+              Container(
+                margin: const EdgeInsets.only(top: 10, bottom: 6),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: textMuted.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(preset.icon, color: color, size: 22),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            preset.name,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                          Text(
+                            '${preset.tiles.length} tiles',
+                            style: TextStyle(fontSize: 13, color: textMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Consumer(
+                      builder: (context, ref, _) => GestureDetector(
+                        onTap: () {
+                          HapticService.medium();
+                          ref
+                              .read(localLayoutProvider.notifier)
+                              .applyPreset(preset);
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Applied ${preset.name}'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'Apply',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.black : Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(color: textMuted.withOpacity(0.2), height: 1),
+              // Preview tiles
+              Expanded(
+                child: IgnorePointer(
+                  child: ListView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.all(16),
+                    children: _buildPreviewTiles(preset.tiles),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  IconData _getPresetIcon(LayoutPreset preset) {
-    switch (preset) {
-      case LayoutPreset.fatLossFocus:
-        return Icons.trending_down;
-      case LayoutPreset.gymFocused:
-        return Icons.fitness_center;
-      case LayoutPreset.nutritionFocused:
-        return Icons.restaurant;
-      case LayoutPreset.trackerOnly:
-        return Icons.insights;
-      case LayoutPreset.fastingFocused:
-        return Icons.timer;
-      case LayoutPreset.minimal:
-        return Icons.view_agenda;
-    }
-  }
+  /// Build preview tiles, pairing consecutive half-width tiles side by side
+  List<Widget> _buildPreviewTiles(List<TileType> tiles) {
+    final widgets = <Widget>[];
+    int i = 0;
+    while (i < tiles.length) {
+      final tile = tiles[i];
+      final isHalf = tile.defaultSize == TileSize.half;
 
-  Color _getPresetColor(LayoutPreset preset) {
-    switch (preset) {
-      case LayoutPreset.fatLossFocus:
-        return AppColors.orange;
-      case LayoutPreset.gymFocused:
-        return AppColors.cyan;
-      case LayoutPreset.nutritionFocused:
-        return AppColors.green;
-      case LayoutPreset.trackerOnly:
-        return AppColors.purple;
-      case LayoutPreset.fastingFocused:
-        return AppColors.yellow;
-      case LayoutPreset.minimal:
-        return AppColors.cyan;
+      if (isHalf && i + 1 < tiles.length && tiles[i + 1].defaultSize == TileSize.half) {
+        // Pair two half-width tiles side by side
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Expanded(child: PreviewTileMock(tileType: tiles[i])),
+                const SizedBox(width: 8),
+                Expanded(child: PreviewTileMock(tileType: tiles[i + 1])),
+              ],
+            ),
+          ),
+        );
+        i += 2;
+      } else {
+        widgets.add(PreviewTileMock(tileType: tile));
+        i++;
+      }
     }
+    return widgets;
   }
 }

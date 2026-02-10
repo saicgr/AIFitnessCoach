@@ -25,6 +25,7 @@ class QuizBodyMetrics extends StatefulWidget {
   final ValueChanged<bool> onUnitChanged;
   final ValueChanged<String>? onWeightDirectionChanged;
   final ValueChanged<double>? onWeightChangeAmountChanged;
+  final bool showHeader;
 
   const QuizBodyMetrics({
     super.key,
@@ -46,6 +47,7 @@ class QuizBodyMetrics extends StatefulWidget {
     required this.onUnitChanged,
     this.onWeightDirectionChanged,
     this.onWeightChangeAmountChanged,
+    this.showHeader = true,
   });
 
   /// Calculate age from date of birth
@@ -231,10 +233,12 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildTitle(textPrimary),
-                const SizedBox(height: 6),
-                _buildSubtitle(textSecondary),
-                const SizedBox(height: 24),
+                if (widget.showHeader) ...[
+                  _buildTitle(textPrimary),
+                  const SizedBox(height: 6),
+                  _buildSubtitle(textSecondary),
+                  const SizedBox(height: 24),
+                ],
 
                 // Name input (NEW)
                 _buildNameInput(isDark, textPrimary, textSecondary, cardBg, cardBorder),

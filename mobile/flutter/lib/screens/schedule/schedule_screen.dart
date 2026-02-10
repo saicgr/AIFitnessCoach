@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/user_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/schedule_item.dart';
 import '../../data/models/workout.dart';
@@ -15,10 +16,18 @@ import 'widgets/add_schedule_item_sheet.dart';
 import 'widgets/schedule_item_card.dart';
 import 'widgets/timeline_view.dart';
 
-/// Provider for currently selected week
+/// Helper: compute start of week for a given date, using weekStartDay (1=Mon, 7=Sun)
+DateTime _weekStartFor(DateTime date, int weekStartDay) {
+  // DateTime.weekday: 1=Mon..7=Sun
+  final diff = (date.weekday - weekStartDay + 7) % 7;
+  return DateTime(date.year, date.month, date.day).subtract(Duration(days: diff));
+}
+
+/// Provider for currently selected week (respects week start day preference)
 final selectedWeekProvider = StateProvider<DateTime>((ref) {
+  final weekStartDay = ref.watch(weekStartDayProvider);
   final now = DateTime.now();
-  return now.subtract(Duration(days: now.weekday - 1)); // Monday of current week
+  return _weekStartFor(now, weekStartDay);
 });
 
 class ScheduleScreen extends ConsumerStatefulWidget {
@@ -35,6 +44,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
   // View mode: 'agenda', 'week', or 'timeline'
   String _viewMode = 'agenda';
+
+  // Generate week state
+  bool _isGeneratingWeek = false;
+  int _generatedCount = 0;
+  int _totalToGenerate = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -73,13 +87,25 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       ),
       body: Column(
         children: [
-          // Week selector
+          // Week selector with Sun/Mon toggle
           _WeekSelector(
             selectedWeek: selectedWeek,
             onPreviousWeek: () => _changeWeek(ref, -1),
             onNextWeek: () => _changeWeek(ref, 1),
             colors: colors,
+            weekStartDay: ref.watch(weekStartDayProvider),
+            onToggleWeekStart: () {
+              ref.read(weekStartDayProvider.notifier).toggle();
+              // Re-compute selected week with new start day
+              final now = DateTime.now();
+              final newStartDay = ref.read(weekStartDayProvider);
+              ref.read(selectedWeekProvider.notifier).state =
+                  _weekStartFor(now, newStartDay);
+            },
           ),
+
+          // Generate This Week banner
+          _buildGenerateWeekBanner(workoutsState, selectedWeek, colors),
 
           // Content
           Expanded(
@@ -743,9 +769,237 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   }
 
   void _goToToday(WidgetRef ref) {
+    final weekStartDay = ref.read(weekStartDayProvider);
     final now = DateTime.now();
     ref.read(selectedWeekProvider.notifier).state =
-        now.subtract(Duration(days: now.weekday - 1));
+        _weekStartFor(now, weekStartDay);
+  }
+
+  /// Compute which training dates in this week still need workouts
+  List<DateTime> _getMissingTrainingDates(
+    List<Workout> workouts,
+    DateTime weekStart,
+    List<int> userWorkoutDays,
+  ) {
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    final missing = <DateTime>[];
+
+    for (int i = 0; i < 7; i++) {
+      final day = weekStart.add(Duration(days: i));
+      // Convert day to 0-indexed (Mon=0..Sun=6)
+      final dayIndex = (day.weekday - 1) % 7; // weekday 1=Mon → 0, 7=Sun → 6
+
+      // Skip if not a training day
+      if (!userWorkoutDays.contains(dayIndex)) continue;
+
+      // Skip past days
+      if (day.isBefore(todayDate)) continue;
+
+      // Skip if day already has a workout
+      final hasWorkout = _getWorkoutsForDay(workouts, day).isNotEmpty;
+      if (hasWorkout) continue;
+
+      missing.add(day);
+    }
+    return missing;
+  }
+
+  Widget _buildGenerateWeekBanner(
+    AsyncValue<List<Workout>> workoutsState,
+    DateTime selectedWeek,
+    ThemeColors colors,
+  ) {
+    // Get user's workout days
+    final userState = ref.watch(currentUserProvider);
+    final user = userState.valueOrNull;
+    final workoutDays = user?.workoutDays ?? [];
+
+    // Don't show if no training days configured
+    if (workoutDays.isEmpty) return const SizedBox.shrink();
+
+    return workoutsState.maybeWhen(
+      data: (workouts) {
+        final missingDates = _getMissingTrainingDates(
+          workouts,
+          selectedWeek,
+          workoutDays,
+        );
+
+        // Don't show if all training days filled
+        if (missingDates.isEmpty && !_isGeneratingWeek) {
+          return const SizedBox.shrink();
+        }
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                colors.cyan.withOpacity(0.15),
+                colors.cyan.withOpacity(0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: colors.cyan.withOpacity(0.3)),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: _isGeneratingWeek
+                  ? null
+                  : () => _generateThisWeek(missingDates, colors),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: _isGeneratingWeek
+                    ? _buildGeneratingProgress(colors)
+                    : Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: colors.cyan.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.auto_awesome,
+                              color: colors.cyan,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Generate This Week',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: colors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${missingDates.length} workout${missingDates.length == 1 ? '' : 's'} to generate',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: colors.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: colors.cyan,
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+          ),
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildGeneratingProgress(ThemeColors colors) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: colors.cyan,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Generating $_generatedCount/$_totalToGenerate...',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: _totalToGenerate > 0
+                ? _generatedCount / _totalToGenerate
+                : 0,
+            backgroundColor: colors.cyan.withOpacity(0.1),
+            color: colors.cyan,
+            minHeight: 4,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _generateThisWeek(
+    List<DateTime> missingDates,
+    ThemeColors colors,
+  ) async {
+    if (missingDates.isEmpty) return;
+
+    setState(() {
+      _isGeneratingWeek = true;
+      _generatedCount = 0;
+      _totalToGenerate = missingDates.length;
+    });
+
+    int successCount = 0;
+
+    for (final date in missingDates) {
+      try {
+        final workout = await ref
+            .read(workoutsProvider.notifier)
+            .generateWorkoutForDate(date);
+
+        if (workout != null) {
+          successCount++;
+        }
+      } catch (e) {
+        debugPrint('❌ [Schedule] Error generating for $date: $e');
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _generatedCount++;
+      });
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _isGeneratingWeek = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          successCount == missingDates.length
+              ? 'Generated $successCount workout${successCount == 1 ? '' : 's'} for this week'
+              : 'Generated $successCount of ${missingDates.length} workouts',
+        ),
+        backgroundColor:
+            successCount == missingDates.length ? colors.success : colors.warning,
+      ),
+    );
   }
 }
 
@@ -758,12 +1012,16 @@ class _WeekSelector extends StatelessWidget {
   final VoidCallback onPreviousWeek;
   final VoidCallback onNextWeek;
   final ThemeColors colors;
+  final int weekStartDay; // 1=Mon, 7=Sun
+  final VoidCallback onToggleWeekStart;
 
   const _WeekSelector({
     required this.selectedWeek,
     required this.onPreviousWeek,
     required this.onNextWeek,
     required this.colors,
+    required this.weekStartDay,
+    required this.onToggleWeekStart,
   });
 
   @override
@@ -789,37 +1047,66 @@ class _WeekSelector extends StatelessWidget {
             icon: const Icon(Icons.chevron_left),
             color: colors.textSecondary,
           ),
-          GestureDetector(
-            onTap: () {},
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '${formatter.format(selectedWeek)} - ${formatter.format(weekEnd)}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                if (_isCurrentWeek(selectedWeek))
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: colors.cyan.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () {},
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
                     child: Text(
-                      'This Week',
+                      '${formatter.format(selectedWeek)} - ${formatter.format(weekEnd)}',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: colors.cyan,
+                        color: colors.textPrimary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  if (_isCurrentWeek(selectedWeek))
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: colors.cyan.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        'This Week',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: colors.cyan,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: 6),
+                  // Sun/Mon toggle chip
+                  GestureDetector(
+                    onTap: onToggleWeekStart,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: colors.textMuted.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: colors.textMuted.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Text(
+                        weekStartDay == 1 ? 'Mon' : 'Sun',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: colors.textMuted,
+                        ),
                       ),
                     ),
                   ),
-              ],
+                ],
+              ),
             ),
           ),
           IconButton(
@@ -834,7 +1121,7 @@ class _WeekSelector extends StatelessWidget {
 
   bool _isCurrentWeek(DateTime weekStart) {
     final now = DateTime.now();
-    final currentWeekStart = now.subtract(Duration(days: now.weekday - 1));
+    final currentWeekStart = _weekStartFor(now, weekStartDay);
     return weekStart.year == currentWeekStart.year &&
         weekStart.month == currentWeekStart.month &&
         weekStart.day == currentWeekStart.day;

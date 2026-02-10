@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/models/scores.dart';
+import '../../../../data/providers/recovery_provider.dart';
 import '../../../../data/providers/scores_provider.dart';
+import '../../../../data/providers/sleep_provider.dart';
 import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 
@@ -62,6 +64,9 @@ class _HomeReadinessCardState extends ConsumerState<HomeReadinessCard> {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    final sleep = ref.watch(sleepProvider).valueOrNull;
+    final recovery = ref.watch(recoveryProvider).valueOrNull;
 
     return Material(
       color: elevatedColor,
@@ -155,6 +160,27 @@ class _HomeReadinessCardState extends ConsumerState<HomeReadinessCard> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                    if (sleep != null || recovery?.restingHR != null) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          if (sleep != null)
+                            _buildBadge(
+                              icon: Icons.bedtime_outlined,
+                              text: _formatSleepDuration(sleep.totalMinutes),
+                              color: _sleepQualityColor(sleep.quality),
+                            ),
+                          if (sleep != null && recovery?.restingHR != null)
+                            const SizedBox(width: 8),
+                          if (recovery?.restingHR != null)
+                            _buildBadge(
+                              icon: Icons.favorite_outline,
+                              text: '${recovery!.restingHR} bpm',
+                              color: _restingHRColor(recovery.score),
+                            ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -175,6 +201,10 @@ class _HomeReadinessCardState extends ConsumerState<HomeReadinessCard> {
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accentColor = AppColors.cyan;
+
+    final recovery = ref.watch(recoveryProvider).valueOrNull;
+    final sleep = ref.watch(sleepProvider).valueOrNull;
+    final hasObjectiveData = recovery != null;
 
     return Material(
       color: elevatedColor,
@@ -232,12 +262,36 @@ class _HomeReadinessCardState extends ConsumerState<HomeReadinessCard> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Check in to optimize your workout',
+                      hasObjectiveData
+                          ? 'Estimated: ${recovery.label}'
+                          : 'Check in to optimize your workout',
                       style: TextStyle(
                         fontSize: 12,
                         color: textMuted,
                       ),
                     ),
+                    if (hasObjectiveData &&
+                        (sleep != null || recovery.restingHR != null)) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          if (sleep != null)
+                            _buildBadge(
+                              icon: Icons.bedtime_outlined,
+                              text: _formatSleepDuration(sleep.totalMinutes),
+                              color: _sleepQualityColor(sleep.quality),
+                            ),
+                          if (sleep != null && recovery.restingHR != null)
+                            const SizedBox(width: 8),
+                          if (recovery.restingHR != null)
+                            _buildBadge(
+                              icon: Icons.favorite_outline,
+                              text: '${recovery.restingHR} bpm',
+                              color: _restingHRColor(recovery.score),
+                            ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -264,5 +318,58 @@ class _HomeReadinessCardState extends ConsumerState<HomeReadinessCard> {
         ),
       ),
     );
+  }
+
+  Widget _buildBadge({
+    required IconData icon,
+    required String text,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatSleepDuration(int totalMinutes) {
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    return '${hours}h ${minutes}m';
+  }
+
+  Color _sleepQualityColor(String quality) {
+    switch (quality) {
+      case 'excellent':
+      case 'good':
+        return const Color(0xFF4CAF50);
+      case 'fair':
+        return const Color(0xFFFF9800);
+      default:
+        return const Color(0xFFF44336);
+    }
+  }
+
+  Color _restingHRColor(int recoveryScore) {
+    if (recoveryScore >= 60) return const Color(0xFF4CAF50);
+    if (recoveryScore >= 40) return const Color(0xFFFF9800);
+    return const Color(0xFFF44336);
   }
 }

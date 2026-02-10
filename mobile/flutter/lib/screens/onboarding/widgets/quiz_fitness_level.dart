@@ -11,6 +11,7 @@ class QuizFitnessLevel extends StatelessWidget {
   final ValueChanged<String> onLevelChanged;
   final ValueChanged<String> onExperienceChanged;
   final ValueChanged<String>? onActivityLevelChanged;
+  final bool showHeader;
 
   const QuizFitnessLevel({
     super.key,
@@ -20,6 +21,7 @@ class QuizFitnessLevel extends StatelessWidget {
     required this.onLevelChanged,
     required this.onExperienceChanged,
     this.onActivityLevelChanged,
+    this.showHeader = true,
   });
 
   static const _levels = [
@@ -74,10 +76,12 @@ class QuizFitnessLevel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTitle(textPrimary),
-            const SizedBox(height: 6),
-            _buildSubtitle(textSecondary),
-            const SizedBox(height: 16),
+            if (showHeader) ...[
+              _buildTitle(textPrimary),
+              const SizedBox(height: 6),
+              _buildSubtitle(textSecondary),
+              const SizedBox(height: 16),
+            ],
             ..._buildLevelCards(isDark, textPrimary, textSecondary),
             if (selectedLevel != null) ...[
               const SizedBox(height: 20),

@@ -331,6 +331,8 @@ class TilePickerSheet extends StatelessWidget {
         return Icons.check_circle_outline;
       case TileType.xpProgress:
         return Icons.bolt;
+      case TileType.upNext:
+        return Icons.schedule;
     }
   }
 

@@ -1,32 +1,65 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/services/ble_heart_rate_service.dart';
 import '../../data/services/wearable_service.dart';
 
-/// Provides real-time heart rate data during workouts from WearOS watch.
-/// Listens to both 'live_heart_rate' and 'health_data_received' events.
+/// Source of a heart rate reading.
+enum HeartRateSource { wearOs, bleMonitor }
+
+/// Merged live heart rate provider.
+///
+/// Streams [HeartRateReading] from both WearOS Data Layer and BLE HR monitor.
+/// **BLE takes priority**: when both sources are active, WearOS readings are
+/// suppressed while BLE readings arrive within the last 10 seconds.
 final liveHeartRateProvider = StreamProvider.autoDispose<HeartRateReading?>((ref) {
-  return WearableService.instance.events
+  final controller = StreamController<HeartRateReading?>();
+  DateTime? lastBleReading;
+
+  // --- BLE Heart Rate stream ---
+  final bleSub = BleHeartRateService.instance.heartRateStream.listen((bleReading) {
+    lastBleReading = DateTime.now();
+    controller.add(HeartRateReading(
+      bpm: bleReading.bpm,
+      timestamp: bleReading.timestamp,
+      source: HeartRateSource.bleMonitor,
+    ));
+  });
+
+  // --- WearOS stream (existing logic, lower priority) ---
+  final wearSub = WearableService.instance.events
       .where((e) =>
           e.type == WearableEventTypes.liveHeartRate ||
           e.type == WearableEventTypes.healthDataReceived)
-      .map((event) {
-        final data = event.data;
-        // Handle both formats: 'bpm' from live_heart_rate and 'heartRateBpm' from health_data
-        final bpm = data['bpm'] ?? data['heartRateBpm'] ?? data['value'];
-        if (bpm != null) {
-          final bpmInt = bpm is int ? bpm : (bpm as num).toInt();
-          return HeartRateReading(
-            bpm: bpmInt,
-            timestamp: DateTime.fromMillisecondsSinceEpoch(
-              data['timestamp'] as int? ??
-                  data['startTime'] as int? ??
-                  DateTime.now().millisecondsSinceEpoch,
-            ),
-          );
-        }
-        return null;
-      })
-      .where((reading) => reading != null);
+      .listen((event) {
+    // Suppress WearOS if BLE reading was received in last 10 seconds
+    if (lastBleReading != null &&
+        DateTime.now().difference(lastBleReading!).inSeconds < 10) {
+      return;
+    }
+
+    final data = event.data;
+    final bpm = data['bpm'] ?? data['heartRateBpm'] ?? data['value'];
+    if (bpm != null) {
+      final bpmInt = bpm is int ? bpm : (bpm as num).toInt();
+      controller.add(HeartRateReading(
+        bpm: bpmInt,
+        timestamp: DateTime.fromMillisecondsSinceEpoch(
+          data['timestamp'] as int? ??
+              data['startTime'] as int? ??
+              DateTime.now().millisecondsSinceEpoch,
+        ),
+        source: HeartRateSource.wearOs,
+      ));
+    }
+  });
+
+  ref.onDispose(() {
+    bleSub.cancel();
+    wearSub.cancel();
+    controller.close();
+  });
+
+  return controller.stream;
 });
 
 /// Accumulates heart rate readings during a workout session.
@@ -37,17 +70,35 @@ final workoutHeartRateHistoryProvider = StateNotifierProvider.autoDispose<
 });
 
 /// State notifier that accumulates heart rate readings during a workout.
+/// Listens to both WearOS and BLE streams with BLE priority.
 class WorkoutHeartRateHistoryNotifier extends StateNotifier<List<HeartRateReading>> {
   final Ref ref;
-  StreamSubscription? _subscription;
+  StreamSubscription? _wearSubscription;
+  StreamSubscription? _bleSubscription;
+  DateTime? _lastBleReading;
 
   WorkoutHeartRateHistoryNotifier(this.ref) : super([]) {
-    // Listen to live heart rate updates and accumulate them
-    _subscription = WearableService.instance.events
+    // BLE HR stream
+    _bleSubscription = BleHeartRateService.instance.heartRateStream.listen((bleReading) {
+      _lastBleReading = DateTime.now();
+      final reading = HeartRateReading(
+        bpm: bleReading.bpm,
+        timestamp: bleReading.timestamp,
+        source: HeartRateSource.bleMonitor,
+      );
+      state = [...state, reading];
+    });
+
+    // WearOS stream (lower priority)
+    _wearSubscription = WearableService.instance.events
         .where((e) =>
             e.type == WearableEventTypes.liveHeartRate ||
             e.type == WearableEventTypes.healthDataReceived)
         .listen((event) {
+      if (_lastBleReading != null &&
+          DateTime.now().difference(_lastBleReading!).inSeconds < 10) {
+        return;
+      }
       final data = event.data;
       final bpm = data['bpm'] ?? data['heartRateBpm'] ?? data['value'];
       if (bpm != null) {
@@ -59,6 +110,7 @@ class WorkoutHeartRateHistoryNotifier extends StateNotifier<List<HeartRateReadin
                 data['startTime'] as int? ??
                 DateTime.now().millisecondsSinceEpoch,
           ),
+          source: HeartRateSource.wearOs,
         );
         state = [...state, reading];
       }
@@ -82,7 +134,8 @@ class WorkoutHeartRateHistoryNotifier extends StateNotifier<List<HeartRateReadin
 
   @override
   void dispose() {
-    _subscription?.cancel();
+    _wearSubscription?.cancel();
+    _bleSubscription?.cancel();
     super.dispose();
   }
 }
@@ -91,11 +144,12 @@ class WorkoutHeartRateHistoryNotifier extends StateNotifier<List<HeartRateReadin
 class HeartRateReading {
   final int bpm;
   final DateTime timestamp;
+  final HeartRateSource? source;
 
-  HeartRateReading({required this.bpm, required this.timestamp});
+  HeartRateReading({required this.bpm, required this.timestamp, this.source});
 
   @override
-  String toString() => 'HeartRateReading(bpm: $bpm, timestamp: $timestamp)';
+  String toString() => 'HeartRateReading(bpm: $bpm, timestamp: $timestamp, source: $source)';
 }
 
 /// Heart rate statistics for a workout session.

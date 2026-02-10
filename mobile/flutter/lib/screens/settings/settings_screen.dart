@@ -300,6 +300,15 @@ const Map<String, List<String>> _settingsSearchIndex = {
     'fasting window', 'feeding window', 'fast schedule',
     'change wake time', 'change sleep time', 'when i sleep', 'when i wake',
   ],
+  'offline_mode': [
+    'offline', 'offline mode', 'download', 'sync', 'no internet',
+    'airplane mode', 'on device', 'on-device', 'local ai', 'local model',
+    'rule based', 'cache', 'pre-cache', 'background sync',
+    'work without internet', 'no wifi', 'no connection', 'offline workouts',
+    'download model', 'ai model', 'llm', 'device storage',
+    'download videos', 'offline videos', 'sync status',
+    'gemma', 'on device ai', 'rule-based', 'cloud ai',
+  ],
 };
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
@@ -361,6 +370,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         subtitle: 'Progression, intensity, splits, schedule',
         color: iconColor,
         sectionKeys: ['training'],
+      ),
+      _SettingsGroup(
+        id: 'offline_mode',
+        icon: Icons.cloud_off_outlined,
+        title: 'Offline Mode',
+        subtitle: 'Workout generation, downloads, sync',
+        color: iconColor,
+        sectionKeys: ['offline_mode'],
       ),
       _SettingsGroup(
         id: 'nutrition_fasting',
@@ -689,6 +706,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         );
       case 'workout_settings':
         return const _WorkoutSettingsContent();
+      case 'offline_mode':
+        return const OfflineModeSection();
       case 'nutrition_fasting':
         return const NutritionFastingSection();
       case 'exercise_preferences':
@@ -709,6 +728,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return const Column(
           children: [
             HealthSyncSection(),
+            SizedBox(height: 16),
+            BleHeartRateSection(),
             SizedBox(height: 16),
             WearOSSection(),
             SizedBox(height: 16),

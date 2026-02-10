@@ -18,6 +18,7 @@ class QuizTrainingPreferences extends StatefulWidget {
   final ValueChanged<String> onProgressionPaceChanged;
   final ValueChanged<String>? onSleepQualityChanged;
   final ValueChanged<String>? onObstacleToggle;
+  final bool showHeader;
 
   const QuizTrainingPreferences({
     super.key,
@@ -31,6 +32,7 @@ class QuizTrainingPreferences extends StatefulWidget {
     required this.onProgressionPaceChanged,
     this.onSleepQualityChanged,
     this.onObstacleToggle,
+    this.showHeader = true,
   });
 
   @override
@@ -251,43 +253,45 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title
-          Text(
-            "Training Preferences",
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
-              height: 1.2,
-            ),
-          ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
-          const SizedBox(height: 2),
-          // Subtitle with learn more
-          Row(
-            children: [
-              Text(
-                'All optional',
-                style: TextStyle(fontSize: 12, color: textSecondary),
+          if (widget.showHeader) ...[
+            // Title
+            Text(
+              "Training Preferences",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: textPrimary,
+                height: 1.2,
               ),
-              const SizedBox(width: 6),
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  _showExplanationSheet(context);
-                },
-                child: Text(
-                  'Not sure? Tap to learn more',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.accent,
-                    fontWeight: FontWeight.w500,
+            ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
+            const SizedBox(height: 2),
+            // Subtitle with learn more
+            Row(
+              children: [
+                Text(
+                  'All optional',
+                  style: TextStyle(fontSize: 12, color: textSecondary),
+                ),
+                const SizedBox(width: 6),
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    _showExplanationSheet(context);
+                  },
+                  child: Text(
+                    'Not sure? Tap to learn more',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.accent,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ).animate().fadeIn(delay: 150.ms),
+              ],
+            ).animate().fadeIn(delay: 150.ms),
 
-          const SizedBox(height: 6),
+            const SizedBox(height: 6),
+          ],
 
           // Progressive overload & RIR badge
           Container(

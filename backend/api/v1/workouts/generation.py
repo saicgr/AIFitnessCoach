@@ -14,6 +14,7 @@ import hashlib
 import json
 import asyncio
 import threading
+import uuid
 from datetime import datetime, timedelta
 from typing import List, AsyncGenerator, Dict, Any, Optional
 
@@ -422,10 +423,12 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
             consistency_mode,
             recently_used_exercises,
             variation_percentage,
+            favorite_exercises,
+            exercise_queue,
         ) = await asyncio.gather(
             get_user_avoided_exercises(request.user_id),
             get_user_avoided_muscles(request.user_id),
-            get_user_staple_exercises(request.user_id),
+            get_user_staple_exercises(request.user_id, gym_profile_id=gym_profile_id),
             get_user_rep_preferences(request.user_id),
             get_user_progression_context(request.user_id),
             get_user_workout_patterns(request.user_id),
@@ -435,6 +438,8 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
             get_user_consistency_mode(request.user_id),
             get_recently_used_exercises(request.user_id),
             get_user_variation_percentage(request.user_id),
+            get_user_favorite_exercises(request.user_id),
+            get_user_exercise_queue(request.user_id),
         )
         logger.info(f"✅ [Workout Generation] All user preferences fetched in parallel")
         logger.info(f"🔄 [Consistency] Mode: {consistency_mode}, Recently used: {len(recently_used_exercises) if recently_used_exercises else 0}, Variation: {variation_percentage}%")
@@ -446,6 +451,10 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
             logger.info(f"🚫 [Workout Generation] User has avoided muscles: avoid={avoided_muscles.get('avoid')}, reduce={avoided_muscles.get('reduce')}")
         if staple_exercises:
             logger.info(f"⭐ [Workout Generation] User has {len(staple_exercises)} staple exercises")
+        if favorite_exercises:
+            logger.info(f"❤️ [Workout Generation] User has {len(favorite_exercises)} favorite exercises: {favorite_exercises[:5]}")
+        if exercise_queue:
+            logger.info(f"📋 [Workout Generation] User has {len(exercise_queue)} queued exercises")
 
         # Build progression philosophy prompt
         progression_philosophy = build_progression_philosophy_prompt(
@@ -491,6 +500,19 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
             combined_context = progression_philosophy or ""
             if hormonal_ai_context:
                 combined_context = f"{combined_context}\n\nHORMONAL HEALTH CONTEXT:\n{hormonal_ai_context}" if combined_context else f"HORMONAL HEALTH CONTEXT:\n{hormonal_ai_context}"
+
+            # Equipment guard: filter out "All Profiles" staples whose equipment isn't available
+            if equipment and staple_exercises:
+                filtered = []
+                equipment_lower = [e.lower() for e in equipment]
+                for s in staple_exercises:
+                    if s.get("gym_profile_id") is not None:
+                        filtered.append(s)  # Profile-specific: always include
+                    elif not s.get("equipment") or s["equipment"].lower() in equipment_lower:
+                        filtered.append(s)  # All-profiles: include if equipment matches or bodyweight
+                    else:
+                        logger.info(f"Skipping all-profiles staple '{s['name']}' - requires '{s.get('equipment')}' not in profile equipment")
+                staple_exercises = filtered
 
             # Convert staple exercises from dicts to names
             staple_names = get_staple_names(staple_exercises) if staple_exercises else None
@@ -572,7 +594,17 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
             logger.info(f"📊 [Exercise Count] Level: {level}, Duration: {effective_duration}min, Hell: {is_hell_mode}, Cap: {max_exercises}, Final: {exercise_count}")
 
             # Extract injury names (injuries already fetched in parallel above)
-            injury_names = [i.get("name") for i in injuries] if injuries else None
+            # get_active_injuries_with_muscles returns {"injuries": [...], "avoided_muscles": [...]}
+            injury_names = injuries.get("injuries", []) if isinstance(injuries, dict) else (injuries if isinstance(injuries, list) else None)
+
+            # Merge injury-based avoided muscles into the main avoided_muscles dict
+            if isinstance(injuries, dict) and injuries.get("avoided_muscles"):
+                injury_avoided = injuries["avoided_muscles"]
+                existing_avoid = avoided_muscles.get("avoid", [])
+                merged_avoid = list(set(existing_avoid + [m for m in injury_avoided if m not in existing_avoid]))
+                avoided_muscles["avoid"] = merged_avoid
+                if injury_avoided:
+                    logger.info(f"🩹 [Injuries] Merged {len(injury_avoided)} injury-based avoided muscles: {injury_avoided}")
 
             # Use Exercise RAG to select exercises from the database
             # This ensures all exercise names match exercise_library_cleaned
@@ -593,6 +625,8 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
                 recently_used_exercises=recently_used_exercises,
                 variation_percentage=variation_percentage,
                 workout_type_preference=request.workout_type or "strength",
+                favorite_exercises=favorite_exercises if favorite_exercises else None,
+                queued_exercises=exercise_queue if exercise_queue else None,
             )
 
             if rag_exercises:
@@ -1165,15 +1199,19 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 hormonal_context,
                 ai_coach_settings,
                 strength_history,
+                favorite_exercises,
+                exercise_queue,
             ) = await asyncio.gather(
                 get_user_avoided_exercises(body.user_id),
                 get_user_avoided_muscles(body.user_id),
-                get_user_staple_exercises(body.user_id),
+                get_user_staple_exercises(body.user_id, gym_profile_id=gym_profile_id),
                 get_user_rep_preferences(body.user_id),
                 get_user_progression_context(body.user_id),
                 get_user_hormonal_context(body.user_id),
                 fetch_ai_coach_settings(),
                 get_user_strength_history(body.user_id),
+                get_user_favorite_exercises(body.user_id),
+                get_user_exercise_queue(body.user_id),
             )
 
             # Log fetched preferences
@@ -1183,6 +1221,10 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 logger.info(f"🚫 [Streaming] User has avoided muscles")
             if staple_exercises:
                 logger.info(f"⭐ [Streaming] User has {len(staple_exercises)} staple exercises")
+            if favorite_exercises:
+                logger.info(f"❤️ [Streaming] User has {len(favorite_exercises)} favorite exercises: {favorite_exercises[:5]}")
+            if exercise_queue:
+                logger.info(f"📋 [Streaming] User has {len(exercise_queue)} queued exercises")
             if ai_coach_settings:
                 logger.info(f"🎨 [Streaming] Coach settings: style={ai_coach_settings.get('coaching_style')}, tone={ai_coach_settings.get('communication_tone')}")
 
@@ -1249,6 +1291,19 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             # Stream the workout generation
             accumulated_text = ""
             chunk_count = 0
+
+            # Equipment guard: filter out "All Profiles" staples whose equipment isn't available
+            if equipment and staple_exercises:
+                filtered = []
+                equipment_lower = [e.lower() for e in equipment]
+                for s in staple_exercises:
+                    if s.get("gym_profile_id") is not None:
+                        filtered.append(s)  # Profile-specific: always include
+                    elif not s.get("equipment") or s["equipment"].lower() in equipment_lower:
+                        filtered.append(s)  # All-profiles: include if equipment matches or bodyweight
+                    else:
+                        logger.info(f"Skipping all-profiles staple '{s['name']}' - requires '{s.get('equipment')}' not in profile equipment")
+                staple_exercises = filtered
 
             # Convert staple exercises from dicts to names
             staple_names = get_staple_names(staple_exercises) if staple_exercises else None
@@ -2904,86 +2959,194 @@ async def swap_exercise_in_workout(request: SwapExerciseRequest, background_task
 @router.post("/add-exercise", response_model=Workout)
 async def add_exercise_to_workout(request: AddExerciseRequest, background_tasks: BackgroundTasks):
     """Add a new exercise to an existing workout."""
-    logger.info(f"Adding exercise '{request.exercise_name}' to workout {request.workout_id}")
+    section = request.section or "main"
+    logger.info(f"Adding exercise '{request.exercise_name}' to workout {request.workout_id} (section: {section})")
     try:
         db = get_supabase_db()
 
-        # Get the workout
+        # Get the workout (always needed for response)
         workout = db.get_workout(request.workout_id)
         if not workout:
             raise HTTPException(status_code=404, detail="Workout not found")
 
-        # Parse existing exercises
-        exercises_json = workout.get("exercises_json", "[]")
-        if isinstance(exercises_json, str):
-            exercises = json.loads(exercises_json)
-        else:
-            exercises = exercises_json
-
-        # Get exercise details from library
+        # Get exercise details from library (shared for all sections)
         exercise_lib = get_exercise_library_service()
         exercise_data = exercise_lib.search_exercises(request.exercise_name, limit=1)
 
+        exercise_name = request.exercise_name
+        muscle_group = None
         if exercise_data:
-            new_ex = exercise_data[0]
-            new_exercise = {
-                "name": new_ex.get("name", request.exercise_name),
-                "sets": request.sets,
-                "reps": request.reps,
-                "rest_seconds": request.rest_seconds,
-                "muscle_group": new_ex.get("target_muscle") or new_ex.get("body_part"),
-                "equipment": new_ex.get("equipment"),
-                "notes": new_ex.get("instructions", ""),
-                "gif_url": new_ex.get("gif_url") or new_ex.get("video_url"),
-                "video_url": new_ex.get("video_url") or new_ex.get("gif_url"),
-                "library_id": new_ex.get("id"),
+            ex_info = exercise_data[0]
+            exercise_name = ex_info.get("name", request.exercise_name)
+            muscle_group = ex_info.get("target_muscle") or ex_info.get("body_part")
+
+        if section == "main":
+            # Existing behavior: add to main workout exercises
+            exercises_json = workout.get("exercises_json", "[]")
+            if isinstance(exercises_json, str):
+                exercises = json.loads(exercises_json)
+            else:
+                exercises = exercises_json
+
+            if exercise_data:
+                new_ex = exercise_data[0]
+                new_exercise = {
+                    "name": new_ex.get("name", request.exercise_name),
+                    "sets": request.sets,
+                    "reps": request.reps,
+                    "rest_seconds": request.rest_seconds,
+                    "muscle_group": new_ex.get("target_muscle") or new_ex.get("body_part"),
+                    "equipment": new_ex.get("equipment"),
+                    "notes": new_ex.get("instructions", ""),
+                    "gif_url": new_ex.get("gif_url") or new_ex.get("video_url"),
+                    "video_url": new_ex.get("video_url") or new_ex.get("gif_url"),
+                    "library_id": new_ex.get("id"),
+                }
+            else:
+                new_exercise = {
+                    "name": request.exercise_name,
+                    "sets": request.sets,
+                    "reps": request.reps,
+                    "rest_seconds": request.rest_seconds,
+                }
+
+            exercises.append(new_exercise)
+
+            update_data = {
+                "exercises_json": json.dumps(exercises),
+                "last_modified_at": datetime.now().isoformat(),
+                "last_modified_method": "exercise_add"
             }
-        else:
-            # Create basic exercise entry if not found in library
-            new_exercise = {
-                "name": request.exercise_name,
-                "sets": request.sets,
-                "reps": request.reps,
-                "rest_seconds": request.rest_seconds,
+
+            updated = db.update_workout(request.workout_id, update_data)
+            if not updated:
+                raise HTTPException(status_code=500, detail="Failed to update workout")
+
+            log_workout_change(
+                request.workout_id,
+                workout.get("user_id"),
+                "exercise_add",
+                "exercises_json",
+                None,
+                request.exercise_name
+            )
+
+            updated_workout = row_to_workout(updated)
+            logger.info(f"Exercise '{request.exercise_name}' added successfully to workout {request.workout_id} (main)")
+
+            async def _bg_index():
+                try:
+                    await index_workout_to_rag(updated_workout)
+                except Exception as e:
+                    logger.warning(f"Background: Failed to index workout to RAG after exercise add: {e}")
+
+            background_tasks.add_task(_bg_index)
+
+            return updated_workout
+
+        elif section == "warmup":
+            new_warmup_exercise = {
+                "name": exercise_name,
+                "sets": 1,
+                "reps": None,
+                "duration_seconds": 30,
+                "rest_seconds": 10,
+                "equipment": "none",
+                "muscle_group": muscle_group or "general",
+                "notes": None
             }
 
-        # Append the new exercise
-        exercises.append(new_exercise)
+            # Query existing warmup for this workout
+            warmup_result = db.client.table("warmups").select("*").eq(
+                "workout_id", request.workout_id
+            ).eq("is_current", True).execute()
 
-        # Update the workout
-        update_data = {
-            "exercises_json": json.dumps(exercises),
-            "last_modified_at": datetime.now().isoformat(),
-            "last_modified_method": "exercise_add"
-        }
+            if warmup_result.data:
+                warmup_row = warmup_result.data[0]
+                existing_exercises = warmup_row.get("exercises_json", "[]")
+                if isinstance(existing_exercises, str):
+                    warmup_exercises = json.loads(existing_exercises)
+                else:
+                    warmup_exercises = existing_exercises or []
 
-        updated = db.update_workout(request.workout_id, update_data)
-        if not updated:
-            raise HTTPException(status_code=500, detail="Failed to update workout")
+                warmup_exercises.append(new_warmup_exercise)
 
-        # Log the change
-        log_workout_change(
-            request.workout_id,
-            workout.get("user_id"),
-            "exercise_add",
-            "exercises_json",
-            None,
-            request.exercise_name
-        )
+                db.client.table("warmups").update({
+                    "exercises_json": json.dumps(warmup_exercises),
+                    "updated_at": datetime.now().isoformat(),
+                }).eq("id", warmup_row["id"]).execute()
 
-        updated_workout = row_to_workout(updated)
-        logger.info(f"Exercise '{request.exercise_name}' added successfully to workout {request.workout_id}")
+                logger.info(f"Exercise '{exercise_name}' added to existing warmup for workout {request.workout_id}")
+            else:
+                # Insert a new warmup row
+                new_warmup_id = str(uuid.uuid4())
+                db.client.table("warmups").insert({
+                    "id": new_warmup_id,
+                    "workout_id": request.workout_id,
+                    "exercises_json": json.dumps([new_warmup_exercise]),
+                    "duration_minutes": 5,
+                    "is_current": True,
+                    "version_number": 1,
+                    "created_at": datetime.now().isoformat(),
+                    "updated_at": datetime.now().isoformat(),
+                }).execute()
 
-        # Re-index to RAG in background (non-critical, don't block response)
-        async def _bg_index():
-            try:
-                await index_workout_to_rag(updated_workout)
-            except Exception as e:
-                logger.warning(f"Background: Failed to index workout to RAG after exercise add: {e}")
+                logger.info(f"Exercise '{exercise_name}' added with new warmup for workout {request.workout_id}")
 
-        background_tasks.add_task(_bg_index)
+            # Return the main workout (unchanged) as expected by response_model
+            return row_to_workout(workout)
 
-        return updated_workout
+        elif section == "stretches":
+            new_stretch_exercise = {
+                "name": exercise_name,
+                "sets": 1,
+                "reps": 1,
+                "duration_seconds": 30,
+                "rest_seconds": 0,
+                "equipment": "none",
+                "muscle_group": muscle_group or "general",
+                "notes": None
+            }
+
+            # Query existing stretch for this workout
+            stretch_result = db.client.table("stretches").select("*").eq(
+                "workout_id", request.workout_id
+            ).eq("is_current", True).execute()
+
+            if stretch_result.data:
+                stretch_row = stretch_result.data[0]
+                existing_exercises = stretch_row.get("exercises_json", "[]")
+                if isinstance(existing_exercises, str):
+                    stretch_exercises = json.loads(existing_exercises)
+                else:
+                    stretch_exercises = existing_exercises or []
+
+                stretch_exercises.append(new_stretch_exercise)
+
+                db.client.table("stretches").update({
+                    "exercises_json": json.dumps(stretch_exercises),
+                    "updated_at": datetime.now().isoformat(),
+                }).eq("id", stretch_row["id"]).execute()
+
+                logger.info(f"Exercise '{exercise_name}' added to existing stretches for workout {request.workout_id}")
+            else:
+                # Insert a new stretch row
+                new_stretch_id = str(uuid.uuid4())
+                db.client.table("stretches").insert({
+                    "id": new_stretch_id,
+                    "workout_id": request.workout_id,
+                    "exercises_json": json.dumps([new_stretch_exercise]),
+                    "duration_minutes": 5,
+                    "is_current": True,
+                    "version_number": 1,
+                    "created_at": datetime.now().isoformat(),
+                    "updated_at": datetime.now().isoformat(),
+                }).execute()
+
+                logger.info(f"Exercise '{exercise_name}' added with new stretches for workout {request.workout_id}")
+
+            # Return the main workout (unchanged) as expected by response_model
+            return row_to_workout(workout)
 
     except HTTPException:
         raise

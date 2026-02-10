@@ -5,9 +5,11 @@ import '../../core/constants/api_constants.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../navigation/app_router.dart';
 import '../../screens/ai_settings/ai_settings_screen.dart';
+import '../../services/offline_coach_service.dart';
 import '../models/chat_message.dart';
 import '../models/user.dart';
 import '../services/api_client.dart';
+import '../services/connectivity_service.dart';
 import '../services/data_cache_service.dart';
 import '../providers/unified_state_provider.dart';
 import 'workout_repository.dart';
@@ -38,7 +40,10 @@ final chatMessagesProvider =
   void setAIGenerating(bool value) => ref.read(aiGeneratingWorkoutProvider.notifier).state = value;
   // Pass a callback to get the unified fasting/nutrition/workout context
   String getUnifiedContext() => ref.read(aiCoachContextProvider);
-  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, authState.user, themeNotifier, router, hydrationNotifier, getAISettings, setAIGenerating, getUnifiedContext);
+  // Offline coach dependencies
+  final offlineCoach = ref.watch(offlineCoachServiceProvider);
+  bool isOnline() => ref.read(isOnlineProvider);
+  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, authState.user, themeNotifier, router, hydrationNotifier, getAISettings, setAIGenerating, getUnifiedContext, offlineCoach, isOnline);
 });
 
 /// Chat repository for API calls
@@ -168,6 +173,8 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   final AISettings Function() _getAISettings; // Callback to get fresh settings
   final void Function(bool) _setAIGenerating; // Callback to set AI generating state
   final String Function() _getUnifiedContext; // Callback to get unified fasting/nutrition/workout context
+  final OfflineCoachService _offlineCoach;
+  final bool Function() _isOnline;
   bool _isLoading = false;
 
   /// Keywords that indicate user wants a quick workout (mirrors backend)
@@ -199,7 +206,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     'train like a fighter', 'want to fight',
   ];
 
-  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._getAISettings, this._setAIGenerating, this._getUnifiedContext)
+  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._getAISettings, this._setAIGenerating, this._getUnifiedContext, this._offlineCoach, this._isOnline)
       : super(const AsyncValue.data([]));
 
   bool get isLoading => _isLoading;
@@ -305,6 +312,36 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
     // Incrementally append user message to cache
     _saveToCache(userId, messagesWithUser);
+
+    // --- OFFLINE ROUTING ---
+    if (!_isOnline()) {
+      if (_offlineCoach.isAvailable) {
+        // Inject system notification on first offline message
+        final hasOfflineNotification = currentMessages.any((m) =>
+            m.role == 'system' && m.content.contains('Offline Mode'));
+        if (!hasOfflineNotification) {
+          final offlineNotification = ChatMessage(
+            role: 'system',
+            content: 'Offline Mode — Using local AI. Features like workout generation, nutrition logging, and exercise library lookup are not available. Send a message to get started.',
+            createdAt: DateTime.now().toIso8601String(),
+          );
+          final withNotification = [...messagesWithUser, offlineNotification];
+          state = AsyncValue.data(withNotification);
+        }
+        await _sendOfflineMessage(message, userId);
+        return;
+      } else {
+        // No model loaded, show error
+        final errorMessage = ChatMessage(
+          role: 'assistant',
+          content: 'AI Coach needs an internet connection or a downloaded AI model to respond. Go to Settings \u2192 Offline Mode to download a model.',
+          createdAt: DateTime.now().toIso8601String(),
+        );
+        state = AsyncValue.data([...messagesWithUser, errorMessage]);
+        return;
+      }
+    }
+    // --- END OFFLINE ROUTING ---
 
     _isLoading = true;
 
@@ -499,6 +536,63 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     final currentMessages = state.valueOrNull ?? [];
     state = AsyncValue.data([...currentMessages, notificationMessage]);
     debugPrint('📢 [Chat] System notification added: $message');
+  }
+
+  /// Send a message through the offline AI coach (local Gemma model).
+  Future<void> _sendOfflineMessage(String message, String userId) async {
+    _isLoading = true;
+
+    try {
+      // Build conversation history from existing messages
+      final currentMessages = state.valueOrNull ?? [];
+      final history = currentMessages
+          .where((m) => m.role == 'user' || m.role == 'assistant')
+          .map((m) => {'role': m.role, 'content': m.content})
+          .toList();
+
+      // Build user profile context
+      Map<String, dynamic>? userProfile;
+      if (_user != null) {
+        userProfile = {
+          'fitness_level': _user.fitnessLevel ?? 'beginner',
+          'goals': _user.goalsList,
+          'active_injuries': _user.injuriesList,
+        };
+      }
+
+      // Get current workout context string
+      String? workoutContext;
+      final nextWorkout = _workoutsNotifier.nextWorkout;
+      if (nextWorkout != null) {
+        workoutContext = 'Today\'s workout: ${nextWorkout.name ?? "Workout"} '
+            'with ${nextWorkout.exercises.length} exercises';
+      }
+
+      final response = await _offlineCoach.sendMessage(
+        userMessage: message,
+        conversationHistory: history,
+        userProfile: userProfile,
+        currentWorkoutContext: workoutContext,
+      );
+
+      final updatedMessages = state.valueOrNull ?? [];
+      final newMessages = [...updatedMessages, response];
+      state = AsyncValue.data(newMessages);
+
+      // Cache offline messages too
+      await _saveToCache(userId, newMessages);
+    } catch (e) {
+      debugPrint('❌ [Chat] Offline error: $e');
+      final errorMessage = ChatMessage(
+        role: 'assistant',
+        content: 'The offline AI encountered an error: ${e.toString().replaceAll('Exception: ', '')}',
+        createdAt: DateTime.now().toIso8601String(),
+      );
+      final updatedMessages = state.valueOrNull ?? [];
+      state = AsyncValue.data([...updatedMessages, errorMessage]);
+    } finally {
+      _isLoading = false;
+    }
   }
 
   /// Process action_data from AI response

@@ -7,11 +7,13 @@ import '../../../core/constants/app_colors.dart';
 class QuizMotivation extends StatelessWidget {
   final Set<String> selectedMotivations;
   final ValueChanged<String> onToggle;
+  final bool showHeader;
 
   const QuizMotivation({
     super.key,
     required this.selectedMotivations,
     required this.onToggle,
+    this.showHeader = true,
   });
 
   static const _motivations = [
@@ -37,10 +39,12 @@ class QuizMotivation extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTitle(textPrimary),
-          const SizedBox(height: 8),
-          _buildSubtitle(textSecondary),
-          const SizedBox(height: 24),
+          if (showHeader) ...[
+            _buildTitle(textPrimary),
+            const SizedBox(height: 8),
+            _buildSubtitle(textSecondary),
+            const SizedBox(height: 24),
+          ],
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.only(bottom: 16),

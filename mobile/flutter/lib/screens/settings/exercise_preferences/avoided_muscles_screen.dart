@@ -457,8 +457,252 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
     );
   }
 
+  /// Shows a bottom sheet asking the user whether to update the current workout
+  /// or apply the avoided muscles to future workouts only.
+  /// Returns `true` (update current), `false` (future only), or `null` (cancelled).
+  Future<bool?> _showMuscleAvoidChoiceSheet(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor =
+        isDark ? AppColors.background : AppColorsLight.background;
+    final textColor =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return showModalBottomSheet<bool?>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isDismissible: false,
+      enableDrag: false,
+      useRootNavigator: true,
+      builder: (sheetContext) => Container(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: textMuted.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'When should this apply?',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Option 1: Update current workout
+            GestureDetector(
+              onTap: () => Navigator.pop(sheetContext, true),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.cyan.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.cyan.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.cyan.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.update,
+                        color: AppColors.cyan,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Update current workout',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: textColor,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Regenerate today\'s workout without these muscles',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right,
+                      color: AppColors.cyan,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Option 2: Apply to future workouts only
+            GestureDetector(
+              onTap: () => Navigator.pop(sheetContext, false),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.08),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : Colors.black.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.skip_next,
+                        color: textMuted,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Apply to future workouts only',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: textColor,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Current workout stays unchanged',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right,
+                      color: textMuted,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Cancel button
+            TextButton(
+              onPressed: () {
+                // Show discard confirmation dialog
+                showDialog(
+                  context: sheetContext,
+                  builder: (dialogContext) => AlertDialog(
+                    backgroundColor: backgroundColor,
+                    title: Text(
+                      'Discard selection?',
+                      style: TextStyle(color: textColor),
+                    ),
+                    content: Text(
+                      'Selected muscles won\'t be added to the avoid list.',
+                      style: TextStyle(color: textMuted),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: Text(
+                          'Go Back',
+                          style: TextStyle(color: textMuted),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(dialogContext); // close dialog
+                          Navigator.pop(sheetContext, null); // close sheet
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.error,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Discard'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: textMuted,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _addMuscles(String userId, String severity) async {
     if (_isProcessing || _pendingMuscles.isEmpty) return;
+
+    // Show choice sheet before saving
+    final shouldRegenerate = await _showMuscleAvoidChoiceSheet(context);
+    if (shouldRegenerate == null) {
+      // User cancelled - clear pending muscles
+      setState(() {
+        _pendingMuscles.clear();
+        _bodySelectorKey++;
+      });
+      return;
+    }
+
     setState(() => _isProcessing = true);
     HapticService.medium();
 
@@ -472,27 +716,29 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
 
       ref.invalidate(avoidedMusclesProvider(userId));
 
-      // Regenerate today's workout to apply muscle avoidance
-      final response = ref.read(todayWorkoutProvider).valueOrNull;
-      final workoutToRegenerate = response?.todayWorkout ?? response?.nextWorkout;
-      if (workoutToRegenerate != null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Updating workout to ${severity == 'avoid' ? 'avoid' : 'reduce'} selected muscles...'),
-              backgroundColor: AppColors.cyan,
-              duration: const Duration(seconds: 1),
-            ),
-          );
-        }
+      // Only regenerate if user chose to update current workout
+      if (shouldRegenerate) {
+        final response = ref.read(todayWorkoutProvider).valueOrNull;
+        final workoutToRegenerate = response?.todayWorkout ?? response?.nextWorkout;
+        if (workoutToRegenerate != null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Updating workout to ${severity == 'avoid' ? 'avoid' : 'reduce'} selected muscles...'),
+                backgroundColor: AppColors.cyan,
+                duration: const Duration(seconds: 1),
+              ),
+            );
+          }
 
-        final workoutRepo = ref.read(workoutRepositoryProvider);
-        await for (final progress in workoutRepo.regenerateWorkoutStreaming(
-          workoutId: workoutToRegenerate.id,
-          userId: userId,
-        )) {
-          debugPrint('🏋️ Muscle avoid regeneration: ${progress.message}');
-          if (progress.isCompleted || progress.hasError) break;
+          final workoutRepo = ref.read(workoutRepositoryProvider);
+          await for (final progress in workoutRepo.regenerateWorkoutStreaming(
+            workoutId: workoutToRegenerate.id,
+            userId: userId,
+          )) {
+            debugPrint('Muscle avoid regeneration: ${progress.message}');
+            if (progress.isCompleted || progress.hasError) break;
+          }
         }
       }
 
@@ -506,9 +752,13 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              count == 1
-                  ? 'Workout updated - muscle will be ${severity == 'avoid' ? 'avoided' : 'reduced'}'
-                  : 'Workout updated - $count muscles will be ${severity == 'avoid' ? 'avoided' : 'reduced'}',
+              shouldRegenerate
+                  ? (count == 1
+                      ? 'Workout updated - muscle will be ${severity == 'avoid' ? 'avoided' : 'reduced'}'
+                      : 'Workout updated - $count muscles will be ${severity == 'avoid' ? 'avoided' : 'reduced'}')
+                  : (count == 1
+                      ? 'Muscle will be ${severity == 'avoid' ? 'avoided' : 'reduced'} in future workouts'
+                      : '$count muscles will be ${severity == 'avoid' ? 'avoided' : 'reduced'} in future workouts'),
             ),
             backgroundColor: AppColors.success,
           ),

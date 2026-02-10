@@ -70,11 +70,14 @@
 	<string>FitWiz uses background location to automatically switch to your gym profile when you arrive at a saved gym location.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>FitWiz uses background location to automatically switch to your gym profile when you arrive at a saved gym location.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>FitWiz uses Bluetooth to connect to your heart rate monitor and display live heart rate during workouts.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
 		<string>fetch</string>
 		<string>remote-notification</string>
+		<string>bluetooth-central</string>
 	</array>
 	<key>CFBundleURLTypes</key>
 	<array>

@@ -50,6 +50,168 @@ EXERCISE_TIMING = {
     "calf stretch with hands against wall": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
     "kneeling hip flexor stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
     "overhead triceps stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each arm"},
+
+    # === TREADMILL VARIATIONS ===
+    "treadmill steep incline walk": {"type": "duration", "default": 300, "unit": "seconds"},
+    "treadmill backward walk": {"type": "duration", "default": 120, "unit": "seconds"},
+    "treadmill side shuffle left": {"type": "duration", "default": 120, "unit": "seconds"},
+    "treadmill side shuffle right": {"type": "duration", "default": 120, "unit": "seconds"},
+    "treadmill power walk": {"type": "duration", "default": 300, "unit": "seconds"},
+    "treadmill high knee walk": {"type": "duration", "default": 120, "unit": "seconds"},
+    "treadmill incline jog": {"type": "duration", "default": 300, "unit": "seconds"},
+    "treadmill walking lunge": {"type": "duration", "default": 120, "unit": "seconds"},
+    "treadmill tempo run": {"type": "duration", "default": 300, "unit": "seconds"},
+    "treadmill gradient pyramid": {"type": "duration", "default": 300, "unit": "seconds"},
+
+    # === STEPPER / STAIRMASTER ===
+    "stairmaster skip step": {"type": "duration", "default": 300, "unit": "seconds"},
+    "stairmaster crossover step": {"type": "duration", "default": 300, "unit": "seconds"},
+    "stairmaster lateral step left": {"type": "duration", "default": 120, "unit": "seconds"},
+    "stairmaster lateral step right": {"type": "duration", "default": 120, "unit": "seconds"},
+    "stairmaster calf raise step": {"type": "duration", "default": 300, "unit": "seconds"},
+    "stairmaster double step sprint": {"type": "duration", "default": 300, "unit": "seconds"},
+    "stairmaster slow deep step": {"type": "duration", "default": 300, "unit": "seconds"},
+
+    # === STATIONARY BIKE ===
+    "stationary bike light spin": {"type": "duration", "default": 300, "unit": "seconds"},
+    "stationary bike standing climb": {"type": "duration", "default": 300, "unit": "seconds"},
+    "stationary bike single leg drill": {"type": "duration", "default": 120, "unit": "seconds", "notes": "each leg"},
+    "stationary bike high cadence spin": {"type": "duration", "default": 300, "unit": "seconds"},
+    "recumbent bike easy": {"type": "duration", "default": 300, "unit": "seconds"},
+    "stationary bike tabata sprint": {"type": "duration", "default": 240, "unit": "seconds"},
+
+    # === ELLIPTICAL ===
+    "elliptical reverse stride": {"type": "duration", "default": 300, "unit": "seconds"},
+    "elliptical high incline forward": {"type": "duration", "default": 300, "unit": "seconds"},
+    "elliptical no hands": {"type": "duration", "default": 300, "unit": "seconds"},
+    "elliptical interval bursts": {"type": "duration", "default": 300, "unit": "seconds"},
+
+    # === ROWING MACHINE ===
+    "rowing machine legs only": {"type": "duration", "default": 120, "unit": "seconds"},
+    "rowing machine arms only": {"type": "duration", "default": 120, "unit": "seconds"},
+    "rowing machine pick drill": {"type": "duration", "default": 120, "unit": "seconds"},
+
+    # === BAR HANGS ===
+    "dead hang": {"type": "duration", "default": 30, "unit": "seconds"},
+    "active hang": {"type": "duration", "default": 30, "unit": "seconds"},
+    "scapular pull-up": {"type": "duration", "default": 30, "unit": "seconds"},
+    "mixed grip hang": {"type": "duration", "default": 30, "unit": "seconds"},
+    "wide grip hang": {"type": "duration", "default": 30, "unit": "seconds"},
+    "chin-up grip hang": {"type": "duration", "default": 30, "unit": "seconds"},
+    "towel hang": {"type": "duration", "default": 30, "unit": "seconds"},
+
+    # === JUMP ROPE ===
+    "jump rope basic bounce": {"type": "duration", "default": 60, "unit": "seconds"},
+    "jump rope alternate foot step": {"type": "duration", "default": 60, "unit": "seconds"},
+    "jump rope boxer step": {"type": "duration", "default": 60, "unit": "seconds"},
+    "jump rope high knees": {"type": "duration", "default": 60, "unit": "seconds"},
+    "jump rope criss-cross": {"type": "duration", "default": 60, "unit": "seconds"},
+    "jump rope double under": {"type": "duration", "default": 60, "unit": "seconds"},
+
+    # === DYNAMIC WARMUPS ===
+    "a-skip": {"type": "duration", "default": 30, "unit": "seconds"},
+    "b-skip": {"type": "duration", "default": 30, "unit": "seconds"},
+    "carioca drill": {"type": "duration", "default": 30, "unit": "seconds"},
+    "lateral shuffle": {"type": "duration", "default": 30, "unit": "seconds"},
+    "bear crawl": {"type": "duration", "default": 30, "unit": "seconds"},
+    "world's greatest stretch": {"type": "duration", "default": 45, "unit": "seconds", "notes": "each side"},
+    "hip 90/90 switch": {"type": "duration", "default": 30, "unit": "seconds"},
+    "inchworm": {"type": "duration", "default": 30, "unit": "seconds"},
+    "leg swing forward-backward": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each leg"},
+    "leg swing lateral": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each leg"},
+    "walking knee hug": {"type": "duration", "default": 30, "unit": "seconds"},
+    "walking quad pull": {"type": "duration", "default": 30, "unit": "seconds"},
+    "butt kick run": {"type": "duration", "default": 30, "unit": "seconds"},
+    "high knee run": {"type": "duration", "default": 30, "unit": "seconds"},
+    "frankenstein walk": {"type": "duration", "default": 30, "unit": "seconds"},
+    "walking lunge with rotation": {"type": "duration", "default": 30, "unit": "seconds"},
+    "lateral lunge": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "reverse lunge with overhead reach": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "spiderman lunge": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "mountain climber": {"type": "duration", "default": 30, "unit": "seconds"},
+    "jumping jack": {"type": "duration", "default": 30, "unit": "seconds"},
+    "squat to stand": {"type": "duration", "default": 30, "unit": "seconds"},
+    "arm circle forward": {"type": "duration", "default": 30, "unit": "seconds"},
+    "arm circle backward": {"type": "duration", "default": 30, "unit": "seconds"},
+    "torso twist": {"type": "duration", "default": 30, "unit": "seconds"},
+    "hip circle": {"type": "duration", "default": 30, "unit": "seconds"},
+    "bodyweight good morning": {"type": "duration", "default": 30, "unit": "seconds"},
+    "seal jack": {"type": "duration", "default": 30, "unit": "seconds"},
+
+    # === STATIC STRETCHES ===
+    "standing hamstring stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "seated hamstring stretch": {"type": "duration", "default": 30, "unit": "seconds"},
+    "single leg hamstring stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "standing quad stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "prone quad stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "pigeon stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "figure four stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "standing calf stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "soleus stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "chest doorway stretch": {"type": "duration", "default": 30, "unit": "seconds"},
+    "cross-body shoulder stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each arm"},
+    "overhead triceps stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each arm"},
+    "neck side bend stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "butterfly stretch": {"type": "duration", "default": 30, "unit": "seconds"},
+    "seated straddle stretch": {"type": "duration", "default": 30, "unit": "seconds"},
+    "child's pose": {"type": "duration", "default": 30, "unit": "seconds"},
+    "cat-cow stretch": {"type": "duration", "default": 30, "unit": "seconds"},
+    "supine spinal twist": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "cobra stretch": {"type": "duration", "default": 30, "unit": "seconds"},
+    "lying glute stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "seated forward fold": {"type": "duration", "default": 30, "unit": "seconds"},
+    "standing side bend": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "lat stretch wall": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "wrist flexor stretch": {"type": "duration", "default": 30, "unit": "seconds"},
+    "wrist extensor stretch": {"type": "duration", "default": 30, "unit": "seconds"},
+    "ankle dorsiflexion stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "it band stretch standing": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "doorway pec stretch high": {"type": "duration", "default": 30, "unit": "seconds"},
+    "supine hamstring stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "seated neck rotation stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "shoulder sleeper stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "hip flexor couch stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "frog stretch": {"type": "duration", "default": 30, "unit": "seconds"},
+    "scorpion stretch": {"type": "duration", "default": 30, "unit": "seconds"},
+
+    # === FOAM ROLLER ===
+    "foam roll it band": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "foam roll quadriceps": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "foam roll hamstrings": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "foam roll calves": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "foam roll glutes": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "foam roll thoracic spine": {"type": "duration", "default": 30, "unit": "seconds"},
+    "foam roll lats": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "foam roll adductors": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "foam roll hip flexors": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "foam roll upper back": {"type": "duration", "default": 30, "unit": "seconds"},
+    "foam roll peroneals": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "foam roll pecs": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+
+    # === MOBILITY DRILLS ===
+    "thread the needle": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "thoracic rotation quadruped": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "open book stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "wall slide": {"type": "duration", "default": 30, "unit": "seconds"},
+    "ankle cars": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "hip cars": {"type": "duration", "default": 45, "unit": "seconds", "notes": "each side"},
+    "shoulder cars": {"type": "duration", "default": 45, "unit": "seconds", "notes": "each side"},
+    "prone scorpion": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "bretzel stretch": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "shinbox get-up": {"type": "duration", "default": 30, "unit": "seconds"},
+    "deep squat hold": {"type": "duration", "default": 45, "unit": "seconds"},
+
+    # === YOGA-BASED ===
+    "sun salutation a": {"type": "duration", "default": 60, "unit": "seconds"},
+    "downward facing dog": {"type": "duration", "default": 30, "unit": "seconds"},
+    "warrior i": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "warrior ii": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "pigeon pose": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "cobra pose": {"type": "duration", "default": 30, "unit": "seconds"},
+    "upward facing dog": {"type": "duration", "default": 30, "unit": "seconds"},
+    "low lunge (anjaneyasana)": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "triangle pose (trikonasana)": {"type": "duration", "default": 30, "unit": "seconds", "notes": "each side"},
+    "standing forward fold (uttanasana)": {"type": "duration", "default": 30, "unit": "seconds"},
 }
 
 # Default timing by exercise type
@@ -67,26 +229,32 @@ DEFAULT_TIMING = {
 
 WARMUP_BY_SPLIT = {
     "push": {
-        "base": ["Jumping jack", "Arm circle", "Circle elbow arm"],
+        "base": ["Jumping jack", "Arm circle", "Circle elbow arm", "Seal Jack", "Arm Circle Forward", "Arm Circle Backward"],
         "chest_shoulders": ["Air punches march", "Bouncing circle draw"],
     },
     "pull": {
-        "base": ["Jumping jack", "Arm circle", "Dynamic Leg Swing"],
+        "base": ["Jumping jack", "Arm circle", "Dynamic Leg Swing", "Bear Crawl", "Inchworm"],
         "back": ["Butt kick with row", "Air Swing Side To Side Swing"],
     },
     "legs": {
-        "base": ["Jumping jack", "High knees", "Butt kicks", "Ankle circles", "Dynamic Leg Swing"],
+        "base": ["Jumping jack", "High knees", "Butt kicks", "Ankle circles", "Dynamic Leg Swing",
+                 "A-Skip", "B-Skip", "Carioca Drill", "Lateral Shuffle", "Walking Knee Hug",
+                 "Walking Quad Pull", "Lateral Lunge", "Squat to Stand"],
         "quads": ["Bodyweight knee thrust", "Double knee drive"],
         "glutes_hams": ["Butt kicks slow", "Criss cross jump"],
     },
     "upper": {
-        "base": ["Jumping jack", "Arm circle", "Circle elbow arm", "Air punches march"],
+        "base": ["Jumping jack", "Arm circle", "Circle elbow arm", "Air punches march",
+                 "Arm Circle Forward", "Arm Circle Backward", "Seal Jack"],
     },
     "lower": {
-        "base": ["Jumping jack", "High knees", "Butt kicks", "Ankle circles", "Dynamic Leg Swing", "Skipping"],
+        "base": ["Jumping jack", "High knees", "Butt kicks", "Ankle circles", "Dynamic Leg Swing", "Skipping",
+                 "A-Skip", "B-Skip", "Carioca Drill", "Lateral Shuffle", "Hip 90/90 Switch",
+                 "Walking Lunge with Rotation"],
     },
     "full_body": {
-        "base": ["Jumping jack", "High knees", "Butt kicks", "Arm circle", "Ankle circles"],
+        "base": ["Jumping jack", "High knees", "Butt kicks", "Arm circle", "Ankle circles",
+                 "World's Greatest Stretch", "Inchworm", "Bear Crawl", "Torso Twist"],
     },
     # Aliases for common split names
     "chest": {"base": ["Jumping jack", "Arm circle", "Circle elbow arm", "Air punches march"]},
@@ -96,7 +264,53 @@ WARMUP_BY_SPLIT = {
 }
 
 # Cardio warmups for higher intensity workouts
-CARDIO_WARMUPS = ["Jogging", "Skipping", "Jump Rope basic jump", "Star jump", "180 Jump Turns"]
+CARDIO_WARMUPS = [
+    "Jogging", "Skipping", "Jump Rope basic jump", "Star jump", "180 Jump Turns",
+    "Jump Rope Basic Bounce", "Jump Rope Alternate Foot Step", "Jump Rope High Knees",
+    "Lateral Shuffle", "High Knee Run", "Butt Kick Run", "Bear Crawl", "Seal Jack",
+    "A-Skip", "B-Skip", "Carioca Drill", "Mountain Climber",
+]
+
+# Equipment-based warmups (keyed by equipment type)
+EQUIPMENT_WARMUPS = {
+    "treadmill": [
+        "Treadmill Steep Incline Walk", "Treadmill Power Walk", "Treadmill High Knee Walk",
+        "Treadmill Backward Walk", "Treadmill Side Shuffle Left", "Treadmill Side Shuffle Right",
+        "Treadmill Incline Jog", "Treadmill Walking Lunge", "Treadmill Tempo Run",
+        "Treadmill Gradient Pyramid",
+    ],
+    "stationary_bike": [
+        "Stationary Bike Light Spin", "Stationary Bike High Cadence Spin",
+        "Stationary Bike Standing Climb", "Stationary Bike Single Leg Drill",
+        "Recumbent Bike Easy", "Stationary Bike Tabata Sprint",
+    ],
+    "stair_climber": [
+        "StairMaster Skip Step", "StairMaster Slow Deep Step", "StairMaster Crossover Step",
+        "StairMaster Lateral Step Left", "StairMaster Lateral Step Right",
+        "StairMaster Calf Raise Step", "StairMaster Double Step Sprint",
+    ],
+    "elliptical": [
+        "Elliptical Reverse Stride", "Elliptical No Hands",
+        "Elliptical High Incline Forward", "Elliptical Interval Bursts",
+    ],
+    "rowing_machine": [
+        "Rowing Machine Legs Only", "Rowing Machine Pick Drill", "Rowing Machine Arms Only",
+    ],
+    "pull_up_bar": [
+        "Dead Hang", "Active Hang", "Scapular Pull-Up", "Mixed Grip Hang",
+        "Wide Grip Hang", "Chin-Up Grip Hang", "Towel Hang",
+    ],
+    "jump_rope": [
+        "Jump Rope Basic Bounce", "Jump Rope Alternate Foot Step", "Jump Rope Boxer Step",
+        "Jump Rope High Knees", "Jump Rope Criss-Cross", "Jump Rope Double Under",
+    ],
+    "foam_roller": [
+        "Foam Roll IT Band", "Foam Roll Quadriceps", "Foam Roll Thoracic Spine",
+        "Foam Roll Hamstrings", "Foam Roll Calves", "Foam Roll Glutes",
+        "Foam Roll Lats", "Foam Roll Adductors", "Foam Roll Hip Flexors",
+        "Foam Roll Upper Back", "Foam Roll Peroneals", "Foam Roll Pecs",
+    ],
+}
 
 
 # ============================================
@@ -106,7 +320,8 @@ CARDIO_WARMUPS = ["Jogging", "Skipping", "Jump Rope basic jump", "Star jump", "1
 STRETCH_BY_MUSCLE = {
     "chest": [
         "Back pec stretch", "Above head chest stretch", "Arms Behind Back Chest Stretch",
-        "Bent arm chest stretch", "Corner wall chest stretch", "Side Chest Stretch On Wall"
+        "Bent arm chest stretch", "Corner wall chest stretch", "Side Chest Stretch On Wall",
+        "Chest Doorway Stretch", "Doorway Pec Stretch High",
     ],
     "pectorals": [
         "Back pec stretch", "Above head chest stretch", "Arms Behind Back Chest Stretch"
@@ -116,69 +331,84 @@ STRETCH_BY_MUSCLE = {
         "Middle back rotation stretch", "Pretzel stretch", "Dead hang stretch"
     ],
     "lats": [
-        "Kneeling lat floor stretch", "Dead hang stretch", "Dynamic Back Stretch"
+        "Kneeling lat floor stretch", "Dead hang stretch", "Dynamic Back Stretch",
+        "Lat Stretch Wall",
     ],
     "shoulders": [
         "Cross Body Shoulder Stretch_Female", "Rear deltoid stretch",
-        "back and shoulder stretch", "Extension Of Arms In Vertical Stretch"
+        "back and shoulder stretch", "Extension Of Arms In Vertical Stretch",
+        "Cross-Body Shoulder Stretch", "Shoulder Sleeper Stretch",
     ],
     "delts": [
         "Cross Body Shoulder Stretch_Female", "Rear deltoid stretch"
     ],
     "hamstrings": [
         "Standing hamstring calf stretch with Resistance band", "Runner stretch",
-        "Lying Single Leg Extended On Wall Hamstrings Stretch", "Standing Straight-Leg Hamstring Stretch"
+        "Lying Single Leg Extended On Wall Hamstrings Stretch", "Standing Straight-Leg Hamstring Stretch",
+        "Standing Hamstring Stretch", "Seated Hamstring Stretch", "Supine Hamstring Stretch",
+        "Seated Forward Fold",
     ],
     "quadriceps": [
         "Standing quadriceps stretch", "Lying quadriceps stretch",
-        "All fours quad stretch", "Lying side quadriceps stretch"
+        "All fours quad stretch", "Lying side quadriceps stretch",
+        "Standing Quad Stretch", "Prone Quad Stretch",
     ],
     "quads": [
         "Standing quadriceps stretch", "Lying quadriceps stretch"
     ],
     "glutes": [
         "Lying glute stretch", "Lying Knee Pull Glutes Stretch",
-        "Seated Figure Four With Twist Glute Stretch"
+        "Seated Figure Four With Twist Glute Stretch",
+        "Pigeon Stretch", "Figure Four Stretch",
     ],
     "calves": [
         "Calf stretch with hands against wall", "Standing gastrocnemius stretch",
-        "Seated calf stretch", "Calves stretch on stairs"
+        "Seated calf stretch", "Calves stretch on stairs",
+        "Standing Calf Stretch", "Soleus Stretch", "Ankle Dorsiflexion Stretch",
     ],
     "hip_flexors": [
         "Kneeling hip flexor stretch", "Lying hip flexor stretch",
-        "Exercise ball hip flexor stretch", "Crossover kneeling hip flexor stretch"
+        "Exercise ball hip flexor stretch", "Crossover kneeling hip flexor stretch",
+        "Kneeling Hip Flexor Stretch", "Hip Flexor Couch Stretch", "Scorpion Stretch",
     ],
     "hips": [
         "Kneeling hip flexor stretch", "Lying hip flexor stretch", "Adductor stretch"
     ],
     "triceps": [
         "Overhead triceps stretch side angle", "Triceps light stretch",
-        "Overhand tricep stretching single arm"
+        "Overhand tricep stretching single arm",
+        "Overhead Triceps Stretch",
     ],
     "biceps": ["Biceps stretch behind the back"],
     "core": [
         "Abdominal stretch", "Lying (prone) abdominal stretch",
-        "Standing lateral stretch", "Knee to chest stretch"
+        "Standing lateral stretch", "Knee to chest stretch",
+        "Cobra Stretch", "Standing Side Bend", "Supine Spinal Twist",
     ],
     "abs": [
         "Abdominal stretch", "Lying (prone) abdominal stretch"
     ],
     "lower_back": [
         "Knee to chest stretch", "Lying crossover stretch", "Iron cross stretch",
-        "Exercise ball lower back prone stretch"
+        "Exercise ball lower back prone stretch",
+        "Child's Pose", "Cat-Cow Stretch",
     ],
     "adductors": [
-        "Adductor stretch", "Adductor stretch side standing", "Butterfly yoga flaps"
+        "Adductor stretch", "Adductor stretch side standing", "Butterfly yoga flaps",
+        "Butterfly Stretch", "Seated Straddle Stretch", "Frog Stretch",
     ],
     "forearms": [
-        "Forearms Stretch On Wall", "Kneeling wrist flexor stretch", "Side wrist pull stretch"
+        "Forearms Stretch On Wall", "Kneeling wrist flexor stretch", "Side wrist pull stretch",
+        "Wrist Flexor Stretch", "Wrist Extensor Stretch",
     ],
     "neck": [
-        "Half Neck Rolls", "Backward Forward Turn to Side Neck Stretch"
+        "Half Neck Rolls", "Backward Forward Turn to Side Neck Stretch",
+        "Neck Side Bend Stretch", "Seated Neck Rotation Stretch",
     ],
     "full body": [
         "Standing quadriceps stretch", "Lying glute stretch", "Back pec stretch",
-        "Calf stretch with hands against wall", "Dynamic Back Stretch"
+        "Calf stretch with hands against wall", "Dynamic Back Stretch",
+        "World's Greatest Stretch", "Sun Salutation A",
     ],
 }
 
@@ -188,22 +418,62 @@ STRETCH_BY_MUSCLE = {
 # ============================================
 
 INJURY_AVOID_WARMUPS = {
-    "knee": ["Jumping jack", "High knees", "Star jump", "Criss cross jump", "180 Jump Turns", "Jump Rope basic jump", "Skipping"],
-    "shoulder": ["Arm circle", "Circle elbow arm", "Air punches march", "Bouncing circle draw"],
-    "back": ["Butt kick with row", "Kettlebell swing"],
-    "ankle": ["Jumping jack", "High knees", "Skipping", "Jump Rope basic jump", "Star jump"],
-    "hip": ["High knees", "Dynamic Leg Swing", "Criss cross jump", "Double knee drive"],
-    "wrist": ["Air punches march", "Bouncing circle draw"],
+    "knee": [
+        "Jumping jack", "High knees", "Star jump", "Criss cross jump", "180 Jump Turns",
+        "Jump Rope basic jump", "Skipping",
+        "A-Skip", "B-Skip", "Lateral Shuffle", "Carioca Drill", "Jump Rope Basic Bounce",
+        "Jump Rope Double Under", "Mountain Climber", "Walking Lunge with Rotation",
+    ],
+    "shoulder": [
+        "Arm circle", "Circle elbow arm", "Air punches march", "Bouncing circle draw",
+        "Seal Jack", "Bear Crawl", "Arm Circle Forward", "Arm Circle Backward",
+    ],
+    "back": [
+        "Butt kick with row", "Kettlebell swing",
+        "Bodyweight Good Morning", "Walking Lunge with Rotation",
+    ],
+    "ankle": [
+        "Jumping jack", "High knees", "Skipping", "Jump Rope basic jump", "Star jump",
+        "Jump Rope Basic Bounce", "Jump Rope Alternate Foot Step", "A-Skip", "B-Skip",
+        "Carioca Drill", "Lateral Shuffle",
+    ],
+    "hip": [
+        "High knees", "Dynamic Leg Swing", "Criss cross jump", "Double knee drive",
+        "Hip 90/90 Switch", "Spiderman Lunge", "Lateral Lunge",
+    ],
+    "wrist": [
+        "Air punches march", "Bouncing circle draw",
+        "Bear Crawl", "Inchworm",
+    ],
     "lower_back": ["Butt kick with row", "Criss cross jump"],
 }
 
 INJURY_AVOID_STRETCHES = {
-    "knee": ["All fours quad stretch", "Kneeling hip flexor stretch", "Kneeling lat floor stretch", "Kneeling wrist flexor stretch"],
-    "shoulder": ["Above head chest stretch", "Dead hang stretch", "Extension Of Arms In Vertical Stretch"],
-    "back": ["Lying crossover stretch", "Iron cross stretch", "Middle back rotation stretch"],
-    "hip": ["Lying hip flexor stretch", "Kneeling hip flexor stretch", "Adductor stretch"],
-    "lower_back": ["Lying crossover stretch", "Iron cross stretch"],
-    "neck": ["Half Neck Rolls", "Backward Forward Turn to Side Neck Stretch"],
+    "knee": [
+        "All fours quad stretch", "Kneeling hip flexor stretch", "Kneeling lat floor stretch",
+        "Kneeling wrist flexor stretch",
+        "Prone Quad Stretch", "Deep Squat Hold", "Shinbox Get-Up", "Frog Stretch",
+    ],
+    "shoulder": [
+        "Above head chest stretch", "Dead hang stretch", "Extension Of Arms In Vertical Stretch",
+        "Chest Doorway Stretch", "Doorway Pec Stretch High", "Lat Stretch Wall",
+    ],
+    "back": [
+        "Lying crossover stretch", "Iron cross stretch", "Middle back rotation stretch",
+        "Cobra Stretch", "Scorpion Stretch", "Supine Spinal Twist",
+    ],
+    "hip": [
+        "Lying hip flexor stretch", "Kneeling hip flexor stretch", "Adductor stretch",
+        "Pigeon Stretch", "Frog Stretch", "Hip Flexor Couch Stretch", "Butterfly Stretch",
+    ],
+    "lower_back": [
+        "Lying crossover stretch", "Iron cross stretch",
+        "Cobra Stretch", "Scorpion Stretch", "Seated Forward Fold",
+    ],
+    "neck": [
+        "Half Neck Rolls", "Backward Forward Turn to Side Neck Stretch",
+        "Neck Side Bend Stretch", "Seated Neck Rotation Stretch",
+    ],
 }
 
 
@@ -371,6 +641,16 @@ class WarmupStretchAlgorithm:
         # Add cardio warmup for high intensity
         if intensity.lower() in ["high", "hard", "intense"]:
             selected.extend(random.sample(CARDIO_WARMUPS, min(1, len(CARDIO_WARMUPS))))
+
+        # Add equipment-based warmup if available
+        if equipment:
+            for equip in equipment:
+                equip_options = EQUIPMENT_WARMUPS.get(equip.lower(), [])
+                if equip_options:
+                    equip_pick = random.choice(equip_options)
+                    if equip_pick not in selected:
+                        selected.insert(0, equip_pick)
+                    break  # Only add one equipment warmup
 
         # Filter by injuries
         if injuries:

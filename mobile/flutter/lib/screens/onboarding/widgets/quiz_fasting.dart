@@ -28,6 +28,7 @@ class QuizFasting extends StatefulWidget {
   // Meals per day (for validation and distribution display)
   final int? mealsPerDay;
   final ValueChanged<int>? onMealsPerDayChanged;
+  final bool showHeader;
 
   const QuizFasting({
     super.key,
@@ -44,6 +45,7 @@ class QuizFasting extends StatefulWidget {
     this.onSleepTimeChanged,
     this.mealsPerDay,
     this.onMealsPerDayChanged,
+    this.showHeader = true,
   });
 
   @override
@@ -338,16 +340,18 @@ class _QuizFastingState extends State<QuizFasting> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Intermittent fasting can help you reach your goals faster',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
-                  height: 1.3,
-                ),
-              ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
-              const SizedBox(height: 12),
+              if (widget.showHeader) ...[
+                Text(
+                  'Intermittent fasting can help you reach your goals faster',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: textPrimary,
+                    height: 1.3,
+                  ),
+                ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
+                const SizedBox(height: 12),
+              ],
 
               // Benefits container
               Container(

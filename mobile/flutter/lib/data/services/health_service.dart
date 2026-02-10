@@ -17,18 +17,46 @@ class DailyActivity {
   final double caloriesBurned;
   final double distanceMeters;
   final int? restingHeartRate;
+  final int? sleepMinutes;
+  final int? deepSleepMinutes;
+  final int? remSleepMinutes;
   final DateTime date;
   final bool isFromHealthConnect;
   final bool isFromWatch;
+  final int? avgHeartRate;
+  final int? maxHeartRate;
+  final double? hrv;              // RMSSD (Android) or SDNN (iOS)
+  final double? bloodOxygen;      // SpO2 %
+  final double? bodyTemperature;  // Celsius
+  final int? respiratoryRate;     // breaths/min
+  final int? flightsClimbed;
+  final double? basalCalories;    // BMR calories
+  final int? lightSleepMinutes;
+  final int? awakeSleepMinutes;   // time awake during sleep
+  final int? waterMl;             // hydration in ml
 
   const DailyActivity({
     this.steps = 0,
     this.caloriesBurned = 0,
     this.distanceMeters = 0,
     this.restingHeartRate,
+    this.sleepMinutes,
+    this.deepSleepMinutes,
+    this.remSleepMinutes,
     required this.date,
     this.isFromHealthConnect = false,
     this.isFromWatch = false,
+    this.avgHeartRate,
+    this.maxHeartRate,
+    this.hrv,
+    this.bloodOxygen,
+    this.bodyTemperature,
+    this.respiratoryRate,
+    this.flightsClimbed,
+    this.basalCalories,
+    this.lightSleepMinutes,
+    this.awakeSleepMinutes,
+    this.waterMl,
   });
 
   /// Distance in kilometers
@@ -36,6 +64,69 @@ class DailyActivity {
 
   /// Distance in miles
   double get distanceMiles => distanceMeters / 1609.344;
+}
+
+/// Sleep data summary
+class SleepSummary {
+  final int totalMinutes;
+  final int deepMinutes;
+  final int remMinutes;
+  final int lightMinutes;
+  final int awakeMinutes;
+  final DateTime? bedTime;
+  final DateTime? wakeTime;
+
+  const SleepSummary({
+    this.totalMinutes = 0,
+    this.deepMinutes = 0,
+    this.remMinutes = 0,
+    this.lightMinutes = 0,
+    this.awakeMinutes = 0,
+    this.bedTime,
+    this.wakeTime,
+  });
+
+  /// Sleep quality based on duration and composition
+  /// <6h = poor, 6-7h = fair, 7-8h = good, 8+ = excellent
+  /// Bonus tier if >20% deep sleep
+  String get quality {
+    final hours = totalMinutes / 60.0;
+    String base;
+    if (hours < 6) {
+      base = 'poor';
+    } else if (hours < 7) {
+      base = 'fair';
+    } else if (hours < 8) {
+      base = 'good';
+    } else {
+      base = 'excellent';
+    }
+
+    // Bonus for deep sleep composition
+    if (totalMinutes > 0 && deepMinutes / totalMinutes > 0.20) {
+      if (base == 'poor') return 'fair';
+      if (base == 'fair') return 'good';
+      if (base == 'good') return 'excellent';
+    }
+    return base;
+  }
+
+  bool get hasData => totalMinutes > 0;
+}
+
+/// Recovery metrics from Health Connect
+class RecoveryMetrics {
+  final int? restingHR;
+  final double? hrv;
+  final double? bloodOxygen;
+
+  const RecoveryMetrics({
+    this.restingHR,
+    this.hrv,
+    this.bloodOxygen,
+  });
+
+  bool get hasData => restingHR != null || hrv != null || bloodOxygen != null;
 }
 
 /// Daily activity state
@@ -111,6 +202,8 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
       final steps = await _healthService.getTodaySteps();
       final activityData = await _healthService.getActivitySummary(days: 1);
       final heartRateData = await _healthService.getHeartRateData(days: 1);
+      final sleepData = await _healthService.getSleepData(days: 1);
+      final vitalsData = await _healthService.getTodayVitals();
 
       // Get resting heart rate if available
       int? restingHR;
@@ -126,8 +219,22 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
         caloriesBurned: (activityData['calories'] as num?)?.toDouble() ?? 0,
         distanceMeters: (activityData['distance'] as num?)?.toDouble() ?? 0,
         restingHeartRate: restingHR,
+        sleepMinutes: sleepData.hasData ? sleepData.totalMinutes : null,
+        deepSleepMinutes: sleepData.hasData ? sleepData.deepMinutes : null,
+        remSleepMinutes: sleepData.hasData ? sleepData.remMinutes : null,
         date: DateTime.now(),
         isFromHealthConnect: true,
+        avgHeartRate: vitalsData['avgHeartRate'] as int?,
+        maxHeartRate: vitalsData['maxHeartRate'] as int?,
+        hrv: vitalsData['hrv'] as double?,
+        bloodOxygen: vitalsData['bloodOxygen'] as double?,
+        bodyTemperature: vitalsData['bodyTemperature'] as double?,
+        respiratoryRate: vitalsData['respiratoryRate'] as int?,
+        flightsClimbed: vitalsData['flightsClimbed'] as int?,
+        basalCalories: vitalsData['basalCalories'] as double?,
+        lightSleepMinutes: sleepData.hasData ? sleepData.lightMinutes : null,
+        awakeSleepMinutes: sleepData.hasData && sleepData.awakeMinutes > 0 ? sleepData.awakeMinutes : null,
+        waterMl: vitalsData['waterMl'] as int?,
       );
 
       state = state.copyWith(isLoading: false, today: today);
@@ -204,9 +311,23 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
       caloriesBurned: caloriesBurned?.toDouble() ?? current?.caloriesBurned ?? 0,
       distanceMeters: current?.distanceMeters ?? 0, // Keep existing, watch doesn't send this
       restingHeartRate: heartRate ?? current?.restingHeartRate,
+      sleepMinutes: current?.sleepMinutes,
+      deepSleepMinutes: current?.deepSleepMinutes,
+      remSleepMinutes: current?.remSleepMinutes,
       date: DateTime.now(),
       isFromHealthConnect: current?.isFromHealthConnect ?? false,
       isFromWatch: true, // Mark that we have watch data
+      avgHeartRate: current?.avgHeartRate,
+      maxHeartRate: current?.maxHeartRate,
+      hrv: current?.hrv,
+      bloodOxygen: current?.bloodOxygen,
+      bodyTemperature: current?.bodyTemperature,
+      respiratoryRate: current?.respiratoryRate,
+      flightsClimbed: current?.flightsClimbed,
+      basalCalories: current?.basalCalories,
+      lightSleepMinutes: current?.lightSleepMinutes,
+      awakeSleepMinutes: current?.awakeSleepMinutes,
+      waterMl: current?.waterMl,
     );
 
     state = state.copyWith(today: updated);
@@ -457,26 +578,45 @@ class HealthService {
     HealthDataType.BODY_FAT_PERCENTAGE,
     HealthDataType.HEIGHT,
     HealthDataType.BODY_MASS_INDEX,
+    HealthDataType.BODY_TEMPERATURE,
+    HealthDataType.BODY_WATER_MASS,
 
     // Heart
     HealthDataType.HEART_RATE,
     HealthDataType.RESTING_HEART_RATE,
     HealthDataType.HEART_RATE_VARIABILITY_SDNN,
+    HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
 
     // Activity
     HealthDataType.STEPS,
     HealthDataType.DISTANCE_DELTA,
     HealthDataType.ACTIVE_ENERGY_BURNED,
     HealthDataType.TOTAL_CALORIES_BURNED,
+    HealthDataType.BASAL_ENERGY_BURNED,
+    HealthDataType.FLIGHTS_CLIMBED,
+
+    // Workout
+    HealthDataType.WORKOUT,
 
     // Vitals
     HealthDataType.BLOOD_OXYGEN,
     HealthDataType.BLOOD_PRESSURE_SYSTOLIC,
     HealthDataType.BLOOD_PRESSURE_DIASTOLIC,
+    HealthDataType.RESPIRATORY_RATE,
 
     // Sleep
     HealthDataType.SLEEP_ASLEEP,
     HealthDataType.SLEEP_IN_BED,
+    HealthDataType.SLEEP_DEEP,
+    HealthDataType.SLEEP_LIGHT,
+    HealthDataType.SLEEP_REM,
+    HealthDataType.SLEEP_AWAKE,
+    HealthDataType.SLEEP_AWAKE_IN_BED,
+    HealthDataType.SLEEP_OUT_OF_BED,
+    HealthDataType.SLEEP_SESSION,
+
+    // Hydration
+    HealthDataType.WATER,
 
     // Diabetic metrics (Blood glucose & insulin)
     HealthDataType.BLOOD_GLUCOSE,
@@ -602,6 +742,15 @@ class HealthService {
   static const Set<HealthDataType> _androidOnlyTypes = {
     HealthDataType.DISTANCE_DELTA,
     HealthDataType.TOTAL_CALORIES_BURNED,
+    HealthDataType.SLEEP_DEEP,
+    HealthDataType.SLEEP_LIGHT,
+    HealthDataType.SLEEP_REM,
+    HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
+    HealthDataType.BODY_WATER_MASS,
+    HealthDataType.SLEEP_AWAKE,
+    HealthDataType.SLEEP_AWAKE_IN_BED,
+    HealthDataType.SLEEP_OUT_OF_BED,
+    HealthDataType.SLEEP_SESSION,
   };
 
   /// Get health data types available on current platform
@@ -904,6 +1053,215 @@ class HealthService {
   }
 
   // ============================================
+  // Workout Sessions
+  // ============================================
+
+  /// Get workout sessions from Health Connect
+  Future<List<HealthDataPoint>> getWorkoutSessions({int days = 7}) async {
+    try {
+      await _ensureConfigured();
+      final now = DateTime.now();
+      final start = now.subtract(Duration(days: days));
+
+      final data = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: now,
+        types: [HealthDataType.WORKOUT],
+      );
+
+      final uniqueData = _health.removeDuplicates(data);
+      debugPrint('🏋️ Fetched ${uniqueData.length} workout sessions (last $days days)');
+      return uniqueData;
+    } catch (e) {
+      debugPrint('❌ Error getting workout sessions: $e');
+      return [];
+    }
+  }
+
+  // ============================================
+  // Sleep Data
+  // ============================================
+
+  /// Get sleep data summary for recent nights
+  Future<SleepSummary> getSleepData({int days = 1}) async {
+    try {
+      await _ensureConfigured();
+      final now = DateTime.now();
+      final start = now.subtract(Duration(days: days));
+
+      // Fetch all sleep-related types
+      final sleepTypes = _getAvailableTypes([
+        HealthDataType.SLEEP_ASLEEP,
+        HealthDataType.SLEEP_DEEP,
+        HealthDataType.SLEEP_LIGHT,
+        HealthDataType.SLEEP_REM,
+        HealthDataType.SLEEP_AWAKE,
+        HealthDataType.SLEEP_AWAKE_IN_BED,
+      ]);
+
+      final data = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: now,
+        types: sleepTypes,
+      );
+
+      final uniqueData = _health.removeDuplicates(data);
+
+      int totalMinutes = 0;
+      int deepMinutes = 0;
+      int remMinutes = 0;
+      int lightMinutes = 0;
+      int awakeMinutes = 0;
+      DateTime? earliestBed;
+      DateTime? latestWake;
+
+      for (final point in uniqueData) {
+        final durationMin = point.dateTo.difference(point.dateFrom).inMinutes;
+        switch (point.type) {
+          case HealthDataType.SLEEP_ASLEEP:
+            totalMinutes += durationMin;
+            break;
+          case HealthDataType.SLEEP_DEEP:
+            deepMinutes += durationMin;
+            break;
+          case HealthDataType.SLEEP_REM:
+            remMinutes += durationMin;
+            break;
+          case HealthDataType.SLEEP_LIGHT:
+            lightMinutes += durationMin;
+            break;
+          case HealthDataType.SLEEP_AWAKE:
+          case HealthDataType.SLEEP_AWAKE_IN_BED:
+            awakeMinutes += durationMin;
+            break;
+          default:
+            break;
+        }
+
+        // Track bed/wake times
+        if (earliestBed == null || point.dateFrom.isBefore(earliestBed)) {
+          earliestBed = point.dateFrom;
+        }
+        if (latestWake == null || point.dateTo.isAfter(latestWake)) {
+          latestWake = point.dateTo;
+        }
+      }
+
+      // If we only have stage breakdown but no SLEEP_ASLEEP total, sum the stages
+      if (totalMinutes == 0 && (deepMinutes > 0 || remMinutes > 0 || lightMinutes > 0)) {
+        totalMinutes = deepMinutes + remMinutes + lightMinutes;
+      }
+
+      // Include awake minutes in total if SLEEP_ASLEEP was 0 (some devices report only stages)
+      if (totalMinutes == 0 && awakeMinutes > 0) {
+        totalMinutes = awakeMinutes;
+      }
+
+      debugPrint('😴 Sleep data: ${totalMinutes}min total, ${deepMinutes}min deep, ${remMinutes}min REM, ${lightMinutes}min light, ${awakeMinutes}min awake');
+      return SleepSummary(
+        totalMinutes: totalMinutes,
+        deepMinutes: deepMinutes,
+        remMinutes: remMinutes,
+        lightMinutes: lightMinutes,
+        awakeMinutes: awakeMinutes,
+        bedTime: earliestBed,
+        wakeTime: latestWake,
+      );
+    } catch (e) {
+      debugPrint('❌ Error getting sleep data: $e');
+      return const SleepSummary();
+    }
+  }
+
+  // ============================================
+  // Recovery Metrics
+  // ============================================
+
+  /// Get recovery metrics (resting HR, HRV, SpO2) in parallel
+  Future<RecoveryMetrics> getRecoveryMetrics() async {
+    try {
+      await _ensureConfigured();
+      final now = DateTime.now();
+      final start = now.subtract(const Duration(days: 1));
+
+      final types = _getAvailableTypes([
+        HealthDataType.RESTING_HEART_RATE,
+        HealthDataType.HEART_RATE_VARIABILITY_SDNN,
+        HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
+        HealthDataType.BLOOD_OXYGEN,
+      ]);
+
+      final data = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: now,
+        types: types,
+      );
+
+      final uniqueData = _health.removeDuplicates(data);
+
+      int? restingHR;
+      double? hrv;
+      double? bloodOxygen;
+
+      // Get the most recent value for each type
+      for (final point in uniqueData) {
+        final value = (point.value as NumericHealthValue).numericValue.toDouble();
+        switch (point.type) {
+          case HealthDataType.RESTING_HEART_RATE:
+            restingHR ??= value.toInt();
+            break;
+          case HealthDataType.HEART_RATE_VARIABILITY_SDNN:
+          case HealthDataType.HEART_RATE_VARIABILITY_RMSSD:
+            hrv ??= value;
+            break;
+          case HealthDataType.BLOOD_OXYGEN:
+            bloodOxygen ??= value;
+            break;
+          default:
+            break;
+        }
+      }
+
+      debugPrint('💚 Recovery: HR=$restingHR, HRV=$hrv, SpO2=$bloodOxygen');
+      return RecoveryMetrics(
+        restingHR: restingHR,
+        hrv: hrv,
+        bloodOxygen: bloodOxygen,
+      );
+    } catch (e) {
+      debugPrint('❌ Error getting recovery metrics: $e');
+      return const RecoveryMetrics();
+    }
+  }
+
+  // ============================================
+  // Heart Rate for Time Range
+  // ============================================
+
+  /// Get heart rate data for a specific time range
+  Future<List<HealthDataPoint>> getHeartRateForTimeRange(
+    DateTime start,
+    DateTime end,
+  ) async {
+    try {
+      await _ensureConfigured();
+
+      final data = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: end,
+        types: [HealthDataType.HEART_RATE],
+      );
+
+      final uniqueData = _health.removeDuplicates(data);
+      debugPrint('❤️ Heart rate: ${uniqueData.length} data points for range');
+      return uniqueData;
+    } catch (e) {
+      debugPrint('❌ Error getting heart rate for time range: $e');
+      return [];
+    }
+  }
+
+  // ============================================
   // Diabetic Health Metrics (Blood Glucose & Insulin)
   // ============================================
 
@@ -1019,6 +1377,96 @@ class HealthService {
     } catch (e) {
       debugPrint('❌ Error getting daily glucose summary: $e');
       return BloodGlucoseSummary.empty(date: targetDate);
+    }
+  }
+
+  /// Get today's vitals data (HRV, SpO2, body temp, respiratory rate, basal cal, flights, water)
+  Future<Map<String, dynamic>> getTodayVitals() async {
+    try {
+      await _ensureConfigured();
+      final now = DateTime.now();
+      final midnight = DateTime(now.year, now.month, now.day);
+
+      final types = _getAvailableTypes([
+        HealthDataType.HEART_RATE,
+        HealthDataType.HEART_RATE_VARIABILITY_SDNN,
+        HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
+        HealthDataType.BLOOD_OXYGEN,
+        HealthDataType.BODY_TEMPERATURE,
+        HealthDataType.RESPIRATORY_RATE,
+        HealthDataType.BASAL_ENERGY_BURNED,
+        HealthDataType.FLIGHTS_CLIMBED,
+        HealthDataType.WATER,
+      ]);
+
+      final data = await _health.getHealthDataFromTypes(
+        startTime: midnight,
+        endTime: now,
+        types: types,
+      );
+
+      final uniqueData = _health.removeDuplicates(data);
+
+      int heartRateSum = 0;
+      int heartRateCount = 0;
+      int maxHeartRate = 0;
+      double? hrv;
+      double? bloodOxygen;
+      double? bodyTemperature;
+      int? respiratoryRate;
+      double basalCalories = 0;
+      int flightsClimbed = 0;
+      double waterMl = 0;
+
+      for (final point in uniqueData) {
+        final value = (point.value as NumericHealthValue).numericValue.toDouble();
+        switch (point.type) {
+          case HealthDataType.HEART_RATE:
+            heartRateSum += value.toInt();
+            heartRateCount++;
+            if (value.toInt() > maxHeartRate) maxHeartRate = value.toInt();
+            break;
+          case HealthDataType.HEART_RATE_VARIABILITY_SDNN:
+          case HealthDataType.HEART_RATE_VARIABILITY_RMSSD:
+            hrv ??= value;
+            break;
+          case HealthDataType.BLOOD_OXYGEN:
+            bloodOxygen ??= value;
+            break;
+          case HealthDataType.BODY_TEMPERATURE:
+            bodyTemperature ??= value;
+            break;
+          case HealthDataType.RESPIRATORY_RATE:
+            respiratoryRate ??= value.toInt();
+            break;
+          case HealthDataType.BASAL_ENERGY_BURNED:
+            basalCalories += value;
+            break;
+          case HealthDataType.FLIGHTS_CLIMBED:
+            flightsClimbed += value.toInt();
+            break;
+          case HealthDataType.WATER:
+            waterMl += value;
+            break;
+          default:
+            break;
+        }
+      }
+
+      return {
+        'avgHeartRate': heartRateCount > 0 ? heartRateSum ~/ heartRateCount : null,
+        'maxHeartRate': maxHeartRate > 0 ? maxHeartRate : null,
+        'hrv': hrv,
+        'bloodOxygen': bloodOxygen,
+        'bodyTemperature': bodyTemperature,
+        'respiratoryRate': respiratoryRate,
+        'basalCalories': basalCalories > 0 ? basalCalories : null,
+        'flightsClimbed': flightsClimbed > 0 ? flightsClimbed : null,
+        'waterMl': waterMl > 0 ? waterMl.toInt() : null,
+      };
+    } catch (e) {
+      debugPrint('❌ Error getting today vitals: $e');
+      return {};
     }
   }
 

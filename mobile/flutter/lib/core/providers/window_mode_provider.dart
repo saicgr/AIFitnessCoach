@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/services/api_client.dart';
@@ -13,6 +14,18 @@ enum WindowSizeClass {
 
   /// Expanded: width >= 840dp (large tablets, desktop)
   expanded,
+}
+
+/// Foldable device posture state
+enum FoldablePosture {
+  /// No fold/hinge detected — single flat screen (or closed front screen)
+  none,
+
+  /// Device is partially folded (tabletop / tent mode, ~90-170 degrees)
+  halfOpened,
+
+  /// Device is fully opened flat (tablet-like surface)
+  flat,
 }
 
 /// Window mode indicating how the app is currently displayed
@@ -45,6 +58,11 @@ class WindowModeState {
   final double splitRatio;
   final DateTime lastChanged;
 
+  /// Foldable device state
+  final FoldablePosture foldablePosture;
+  final Rect? hingeBounds;
+  final bool isFoldable;
+
   const WindowModeState({
     this.mode = WindowMode.fullScreen,
     this.sizeClass = WindowSizeClass.compact,
@@ -57,6 +75,9 @@ class WindowModeState {
     this.isCompactMode = true,
     this.isNarrowLayout = false,
     this.splitRatio = 1.0,
+    this.foldablePosture = FoldablePosture.none,
+    this.hingeBounds,
+    this.isFoldable = false,
     DateTime? lastChanged,
   }) : lastChanged = lastChanged ?? const _DefaultDateTime();
 
@@ -72,6 +93,9 @@ class WindowModeState {
     bool? isCompactMode,
     bool? isNarrowLayout,
     double? splitRatio,
+    FoldablePosture? foldablePosture,
+    Rect? hingeBounds,
+    bool? isFoldable,
     DateTime? lastChanged,
   }) {
     return WindowModeState(
@@ -86,6 +110,9 @@ class WindowModeState {
       isCompactMode: isCompactMode ?? this.isCompactMode,
       isNarrowLayout: isNarrowLayout ?? this.isNarrowLayout,
       splitRatio: splitRatio ?? this.splitRatio,
+      foldablePosture: foldablePosture ?? this.foldablePosture,
+      hingeBounds: hingeBounds ?? this.hingeBounds,
+      isFoldable: isFoldable ?? this.isFoldable,
       lastChanged: lastChanged ?? DateTime.now(),
     );
   }
@@ -168,6 +195,30 @@ class WindowModeNotifier extends StateNotifier<WindowModeState> {
     final windowWidth = windowSize.width;
     final windowHeight = windowSize.height;
 
+    // --- Foldable detection from displayFeatures ---
+    FoldablePosture foldablePosture = FoldablePosture.none;
+    Rect? hingeBounds;
+    bool isFoldable = false;
+
+    for (final feature in mediaQuery.displayFeatures) {
+      if (feature.type == ui.DisplayFeatureType.hinge ||
+          feature.type == ui.DisplayFeatureType.fold) {
+        isFoldable = true;
+        hingeBounds = feature.bounds;
+        switch (feature.state) {
+          case ui.DisplayFeatureState.postureHalfOpened:
+            foldablePosture = FoldablePosture.halfOpened;
+            break;
+          case ui.DisplayFeatureState.postureFlat:
+            foldablePosture = FoldablePosture.flat;
+            break;
+          default:
+            foldablePosture = FoldablePosture.none;
+        }
+        break; // use the first hinge/fold found
+      }
+    }
+
     // Estimate screen dimensions based on typical aspect ratios
     // In split screen, window width will be much smaller than expected full screen
     double screenWidth = windowWidth;
@@ -244,6 +295,9 @@ class WindowModeNotifier extends StateNotifier<WindowModeState> {
         isCompactMode: isCompactMode,
         isNarrowLayout: isNarrowLayout,
         splitRatio: splitRatio,
+        foldablePosture: foldablePosture,
+        hingeBounds: hingeBounds,
+        isFoldable: isFoldable,
         lastChanged: DateTime.now(),
       );
 
@@ -392,4 +446,13 @@ extension WindowModeExtension on WidgetRef {
 
   /// Get suggested column count for grids
   int get windowColumns => watch(windowModeProvider).suggestedColumns;
+
+  /// Foldable posture (none, halfOpened, flat)
+  FoldablePosture get foldablePosture => watch(windowModeProvider).foldablePosture;
+
+  /// Whether this device has a hinge/fold
+  bool get isFoldable => watch(windowModeProvider).isFoldable;
+
+  /// Hinge bounds (null if no hinge)
+  Rect? get hingeBounds => watch(windowModeProvider).hingeBounds;
 }

@@ -1,5 +1,4 @@
-import 'dart:ui';
-
+import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'home_layout.g.dart';
@@ -833,134 +832,141 @@ List<HomeTile> createDefaultTiles() {
   return tiles;
 }
 
-/// Layout preset types
-enum LayoutPreset {
-  fatLossFocus,
-  gymFocused,
-  nutritionFocused,
-  trackerOnly,
-  fastingFocused,
-  minimal,
-}
+/// A preset layout template with icon, color, and tile configuration
+class LayoutPreset {
+  final String id;
+  final String name;
+  final String description;
+  final IconData icon;
+  final Color color;
+  final List<TileType> tiles;
 
-extension LayoutPresetExtension on LayoutPreset {
-  String get displayName {
-    switch (this) {
-      case LayoutPreset.fatLossFocus:
-        return 'Fat Loss Focus';
-      case LayoutPreset.gymFocused:
-        return 'Gym Focused';
-      case LayoutPreset.nutritionFocused:
-        return 'Nutrition Focused';
-      case LayoutPreset.trackerOnly:
-        return 'Tracker Only';
-      case LayoutPreset.fastingFocused:
-        return 'Fasting Focused';
-      case LayoutPreset.minimal:
-        return 'Minimal';
-    }
-  }
+  const LayoutPreset({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.icon,
+    required this.color,
+    required this.tiles,
+  });
 
-  String get description {
-    switch (this) {
-      case LayoutPreset.fatLossFocus:
-        return 'Weight trends, daily stats, streak tracking';
-      case LayoutPreset.gymFocused:
-        return 'Workout-centric with personal records';
-      case LayoutPreset.nutritionFocused:
-        return 'Calories, macros, and meal logging';
-      case LayoutPreset.trackerOnly:
-        return 'Simple progress tracking';
-      case LayoutPreset.fastingFocused:
-        return 'Intermittent fasting with weight trends';
-      case LayoutPreset.minimal:
-        return 'Just the essentials';
-    }
-  }
-
-  String get icon {
-    switch (this) {
-      case LayoutPreset.fatLossFocus:
-        return 'trending_down';
-      case LayoutPreset.gymFocused:
-        return 'fitness_center';
-      case LayoutPreset.nutritionFocused:
-        return 'restaurant';
-      case LayoutPreset.trackerOnly:
-        return 'insights';
-      case LayoutPreset.fastingFocused:
-        return 'timer';
-      case LayoutPreset.minimal:
-        return 'view_agenda';
-    }
-  }
-
-  /// Get tile order for this preset
-  List<TileType> get tileOrder {
-    switch (this) {
-      case LayoutPreset.fatLossFocus:
-        return [
-          TileType.weightTrend,
-          TileType.heroSection,
-          TileType.dailyStats,
-          TileType.quickActions,
-          TileType.streakCounter,
-          TileType.weeklyProgress,
-          TileType.habits,
-        ];
-      case LayoutPreset.gymFocused:
-        return [
-          TileType.heroSection,
-          TileType.streakCounter,
-          TileType.personalRecords,
-          TileType.weeklyProgress,
-          TileType.quickActions,
-          TileType.roiSummary,
-        ];
-      case LayoutPreset.nutritionFocused:
-        return [
-          TileType.heroSection,
-          TileType.caloriesSummary,
-          TileType.macroRings,
-          TileType.weightTrend,
-          TileType.quickActions,
-          TileType.fasting,
-        ];
-      case LayoutPreset.trackerOnly:
-        return [
-          TileType.weightTrend,
-          TileType.dailyStats,
-          TileType.streakCounter,
-          TileType.achievements,
-          TileType.weeklyProgress,
-          TileType.habits,
-        ];
-      case LayoutPreset.fastingFocused:
-        return [
-          TileType.heroSection,
-          TileType.fasting,
-          TileType.weightTrend,
-          TileType.streakCounter,
-          TileType.quickActions,
-        ];
-      case LayoutPreset.minimal:
-        return [
-          TileType.heroSection,
-          TileType.quickActions,
-        ];
-    }
+  /// Convert to HomeTile list
+  List<HomeTile> toHomeTiles() {
+    return tiles.asMap().entries.map((entry) {
+      return HomeTile(
+        id: 'tile_${DateTime.now().millisecondsSinceEpoch}_${entry.key}',
+        type: entry.value,
+        size: entry.value.defaultSize,
+        order: entry.key,
+        isVisible: true,
+      );
+    }).toList();
   }
 }
 
-/// Create tiles for a specific preset
-List<HomeTile> createPresetTiles(LayoutPreset preset) {
-  return preset.tileOrder.asMap().entries.map((entry) {
-    return HomeTile(
-      id: 'tile_${entry.key}',
-      type: entry.value,
-      size: entry.value.defaultSize,
-      order: entry.key,
-      isVisible: true,
-    );
-  }).toList();
-}
+/// Available preset layouts (all use non-deprecated tile types only)
+const List<LayoutPreset> layoutPresets = [
+  LayoutPreset(
+    id: 'gym_focused',
+    name: 'Gym Focused',
+    description: 'Workout-centric with personal records',
+    icon: Icons.fitness_center,
+    color: Color(0xFF00BCD4),
+    tiles: [
+      TileType.nextWorkout,
+      TileType.personalRecords,
+      TileType.muscleHeatmap,
+      TileType.weekChanges,
+      TileType.challengeProgress,
+      TileType.aiCoachTip,
+    ],
+  ),
+  LayoutPreset(
+    id: 'fat_loss',
+    name: 'Fat Loss Focus',
+    description: 'Weight trends, daily stats, habits',
+    icon: Icons.trending_down,
+    color: Color(0xFFF97316),
+    tiles: [
+      TileType.nextWorkout,
+      TileType.dailyStats,
+      TileType.quickLogWeight,
+      TileType.habits,
+      TileType.bodyWeight,
+      TileType.achievements,
+    ],
+  ),
+  LayoutPreset(
+    id: 'nutrition_focused',
+    name: 'Nutrition Focused',
+    description: 'Calories, macros, and meal logging',
+    icon: Icons.restaurant,
+    color: Color(0xFF22C55E),
+    tiles: [
+      TileType.caloriesSummary,
+      TileType.macroRings,
+      TileType.bodyWeight,
+      TileType.fasting,
+      TileType.nextWorkout,
+      TileType.moodPicker,
+      TileType.aiCoachTip,
+    ],
+  ),
+  LayoutPreset(
+    id: 'tracker_only',
+    name: 'Tracker Only',
+    description: 'Simple progress tracking',
+    icon: Icons.insights,
+    color: Color(0xFFA855F7),
+    tiles: [
+      TileType.nextWorkout,
+      TileType.dailyStats,
+      TileType.quickLogWeight,
+      TileType.habits,
+      TileType.achievements,
+    ],
+  ),
+  LayoutPreset(
+    id: 'fasting_focused',
+    name: 'Fasting Focused',
+    description: 'Intermittent fasting with weight trends',
+    icon: Icons.timer,
+    color: Color(0xFFEAB308),
+    tiles: [
+      TileType.nextWorkout,
+      TileType.fasting,
+      TileType.quickLogWeight,
+      TileType.bodyWeight,
+      TileType.moodPicker,
+    ],
+  ),
+  LayoutPreset(
+    id: 'minimal',
+    name: 'Minimal',
+    description: 'Just the essentials',
+    icon: Icons.view_agenda,
+    color: Color(0xFF00BCD4),
+    tiles: [
+      TileType.nextWorkout,
+      TileType.quickActions,
+    ],
+  ),
+  LayoutPreset(
+    id: 'metrics',
+    name: 'Metrics',
+    description: 'Body metrics, scores, and progress charts',
+    icon: Icons.analytics,
+    color: Color(0xFF3B82F6),
+    tiles: [
+      TileType.fitnessScore,
+      TileType.bodyWeight,
+      TileType.quickLogWeight,
+      TileType.quickLogMeasurements,
+      TileType.dailyStats,
+      TileType.progressCharts,
+      TileType.roiSummary,
+      TileType.dailyActivity,
+      TileType.achievements,
+    ],
+  ),
+];

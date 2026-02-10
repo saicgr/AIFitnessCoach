@@ -4,6 +4,7 @@ import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/exercise_preferences_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
+import '../constants/api_constants.dart';
 
 /// State for staple exercises
 class StaplesState {
@@ -47,6 +48,25 @@ class StaplesState {
   /// Get the set of staple exercise names for quick lookup
   Set<String> get stapleNames =>
       staples.map((s) => s.exerciseName.toLowerCase()).toSet();
+
+  /// Get staples matching a specific profile or "All Profiles"
+  List<StapleExercise> staplesForProfile(String? profileId) {
+    return staples.where((s) =>
+        s.gymProfileId == profileId || s.gymProfileId == null
+    ).toList();
+  }
+
+  /// Get warmup staples only
+  List<StapleExercise> get warmupStaples =>
+      staples.where((s) => s.section == 'warmup').toList();
+
+  /// Get stretch staples only
+  List<StapleExercise> get stretchStaples =>
+      staples.where((s) => s.section == 'stretches').toList();
+
+  /// Get main staples only
+  List<StapleExercise> get mainStaples =>
+      staples.where((s) => s.section == 'main').toList();
 }
 
 /// Provider for managing staple exercises
@@ -89,6 +109,9 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
     String? libraryId,
     String? muscleGroup,
     String? reason,
+    bool addToCurrentWorkout = false,
+    String section = 'main',
+    String? gymProfileId,
   }) async {
     try {
       final apiClient = _ref.read(apiClientProvider);
@@ -102,16 +125,19 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
         libraryId: libraryId,
         muscleGroup: muscleGroup,
         reason: reason,
+        gymProfileId: gymProfileId,
+        section: section,
       );
 
       state = state.copyWith(
         staples: [...state.staples, staple],
       );
 
-      debugPrint('⭐ Staple added: $exerciseName - regenerating today\'s workout');
+      debugPrint('⭐ Staple added: $exerciseName');
 
-      // Regenerate today's workout to include the new staple
-      await _regenerateTodayWorkout(userId);
+      if (addToCurrentWorkout) {
+        await _injectIntoCurrentWorkout(exerciseName, section);
+      }
 
       // Invalidate providers to refresh UI with new workouts
       _ref.invalidate(todayWorkoutProvider);
@@ -122,6 +148,35 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
       debugPrint('Error adding staple: $e');
       state = state.copyWith(isRegenerating: false, regenerationMessage: null);
       return false;
+    }
+  }
+
+  /// Inject an exercise directly into the current/today's workout
+  Future<void> _injectIntoCurrentWorkout(String exerciseName, String section) async {
+    try {
+      final todayWorkoutAsync = _ref.read(todayWorkoutProvider);
+      final response = todayWorkoutAsync.valueOrNull;
+      final workout = response?.todayWorkout ?? response?.nextWorkout;
+
+      if (workout == null) {
+        debugPrint('⭐ No workout today - staple will apply to next generation');
+        return;
+      }
+
+      final apiClient = _ref.read(apiClientProvider);
+      await apiClient.post(
+        '${ApiConstants.workouts}/add-exercise',
+        data: {
+          'workout_id': workout.id,
+          'exercise_name': exerciseName,
+          'section': section,
+        },
+      );
+
+      debugPrint('✅ Injected "$exerciseName" into workout ${workout.id} (section: $section)');
+    } catch (e) {
+      debugPrint('❌ Failed to inject exercise into workout: $e');
+      // Don't fail the staple addition if injection fails
     }
   }
 

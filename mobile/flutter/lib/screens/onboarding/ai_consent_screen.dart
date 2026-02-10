@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/window_mode_provider.dart';
+import 'widgets/foldable_quiz_scaffold.dart';
 
 /// Key used to store AI consent acceptance in SharedPreferences
 const String kAiConsentAcceptedKey = 'ai_consent_accepted';
@@ -101,77 +103,86 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              _buildHeader(isDark, textPrimary, textSecondary),
-
-              // Progress indicator
-              _buildProgressIndicator(isDark),
-
-              // Privacy bullet points
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 24),
-                      _buildPrivacyPoint(
-                        icon: Icons.shield_outlined,
-                        title: 'Your data is anonymized before AI processing',
-                        description: 'Personal identifiers are removed before any data reaches the AI.',
-                        delay: 0,
-                        isDark: isDark,
-                        textPrimary: textPrimary,
-                        textSecondary: textSecondary,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildPrivacyPoint(
-                        icon: Icons.visibility_off_outlined,
-                        title: 'AI only sees fitness data, never personal details',
-                        description: 'Your name, email, and identity stay private at all times.',
-                        delay: 100,
-                        isDark: isDark,
-                        textPrimary: textPrimary,
-                        textSecondary: textSecondary,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildPrivacyPoint(
-                        icon: Icons.toggle_on_outlined,
-                        title: "You're always in control of your data",
-                        description: 'Review, export, or delete your data anytime from Settings.',
-                        delay: 200,
-                        isDark: isDark,
-                        textPrimary: textPrimary,
-                        textSecondary: textSecondary,
-                      ),
-                      const SizedBox(height: 32),
-                      // Learn More link
-                      GestureDetector(
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          context.push('/settings/ai-data-usage');
-                        },
-                        child: Text(
-                          'Learn More',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: isDark ? AppColors.cyan : AppColorsLight.cyan,
-                            decoration: TextDecoration.underline,
-                            decorationColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
-                          ),
-                        ),
-                      ).animate().fadeIn(delay: 400.ms),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
+          child: FoldableQuizScaffold(
+            headerTitle: 'Your Privacy Matters',
+            headerSubtitle: 'How we protect your data',
+            headerExtra: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                borderRadius: BorderRadius.circular(14),
               ),
-
-              // Continue button
-              _buildContinueButton(isDark),
-            ],
+              child: const Icon(Icons.shield_outlined, color: Colors.white, size: 26),
+            ),
+            progressBar: _buildProgressIndicator(isDark),
+            content: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  // Show header inline only on phone
+                  Consumer(builder: (context, ref, _) {
+                    final windowState = ref.watch(windowModeProvider);
+                    if (FoldableQuizScaffold.shouldUseFoldableLayout(windowState)) {
+                      return const SizedBox.shrink();
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _buildHeader(isDark, textPrimary, textSecondary),
+                    );
+                  }),
+                  const SizedBox(height: 24),
+                  _buildPrivacyPoint(
+                    icon: Icons.shield_outlined,
+                    title: 'Your data is anonymized before AI processing',
+                    description: 'Personal identifiers are removed before any data reaches the AI.',
+                    delay: 0,
+                    isDark: isDark,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildPrivacyPoint(
+                    icon: Icons.visibility_off_outlined,
+                    title: 'AI only sees fitness data, never personal details',
+                    description: 'Your name, email, and identity stay private at all times.',
+                    delay: 100,
+                    isDark: isDark,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildPrivacyPoint(
+                    icon: Icons.toggle_on_outlined,
+                    title: "You're always in control of your data",
+                    description: 'Review, export, or delete your data anytime from Settings.',
+                    delay: 200,
+                    isDark: isDark,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                  ),
+                  const SizedBox(height: 32),
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      context.push('/settings/ai-data-usage');
+                    },
+                    child: Text(
+                      'Learn More',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                        decoration: TextDecoration.underline,
+                        decorationColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                      ),
+                    ),
+                  ).animate().fadeIn(delay: 400.ms),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+            button: _buildContinueButton(isDark),
           ),
         ),
       ),

@@ -21,13 +21,17 @@ settings = get_settings()
 # This addresses user feedback: "warm-ups should have static holds early, not intermixed with kinetic moves"
 STATIC_EXERCISE_KEYWORDS = [
     "hold", "plank", "wall sit", "dead hang", "isometric", "static",
-    "l-sit", "hollow", "bridge hold", "superman hold", "glute bridge hold"
+    "l-sit", "hollow", "bridge hold", "superman hold", "glute bridge hold",
+    "hang", "foam roll", "yoga", "pose", "child's pose", "downward dog",
+    "warrior", "cobra", "pigeon", "deep squat hold",
 ]
 
 DYNAMIC_EXERCISE_KEYWORDS = [
     "jumping", "circles", "swings", "jacks", "high knees", "butt kicks",
     "skips", "march", "rotation", "twist", "lunge walk", "inchworm",
-    "mountain climber", "bear crawl", "carioca", "shuffle"
+    "mountain climber", "bear crawl", "carioca", "shuffle",
+    "a-skip", "b-skip", "grapevine", "lateral shuffle", "seal jack",
+    "frankenstein", "spiderman", "jump rope", "skip step",
 ]
 
 
@@ -92,38 +96,38 @@ MUSCLE_KEYWORDS = {
 
 # Muscle group to warm-up mapping (fallback)
 WARMUP_BY_MUSCLE = {
-    "chest": ["Arm Circles", "Chest Opener Stretch", "Push-up Plus"],
-    "back": ["Cat-Cow Stretch", "Arm Swings", "Thoracic Rotation"],
-    "shoulders": ["Arm Circles", "Shoulder Rolls", "Band Pull-Aparts"],
-    "legs": ["Leg Swings", "Walking Lunges", "High Knees"],
-    "quadriceps": ["Leg Swings", "Walking Lunges", "High Knees"],
-    "hamstrings": ["Leg Swings", "Inchworms", "Good Mornings"],
-    "calves": ["Ankle Circles", "Calf Raises", "Jump Rope"],
-    "arms": ["Arm Circles", "Wrist Rotations", "Arm Swings"],
-    "biceps": ["Arm Circles", "Wrist Rotations", "Light Curls"],
-    "triceps": ["Arm Circles", "Tricep Stretches", "Arm Swings"],
-    "core": ["Torso Twists", "Cat-Cow", "Dead Bug"],
-    "abs": ["Torso Twists", "Cat-Cow", "Dead Bug"],
-    "glutes": ["Hip Circles", "Glute Bridges", "Fire Hydrants"],
-    "full body": ["Jumping Jacks", "Arm Circles", "Leg Swings", "Torso Twists"],
+    "chest": ["Arm Circle Forward", "Arm Circle Backward", "Seal Jack", "Chest Doorway Stretch"],
+    "back": ["Bear Crawl", "Inchworm", "Torso Twist", "Thoracic Rotation Quadruped"],
+    "shoulders": ["Arm Circle Forward", "Arm Circle Backward", "Shoulder CARs", "Wall Slide"],
+    "legs": ["A-Skip", "B-Skip", "Walking Knee Hug", "Walking Quad Pull", "Squat to Stand"],
+    "quadriceps": ["Walking Quad Pull", "A-Skip", "High Knee Run", "Lateral Lunge"],
+    "hamstrings": ["B-Skip", "Frankenstein Walk", "Bodyweight Good Morning", "Leg Swing Forward-Backward"],
+    "calves": ["Ankle CARs", "Jump Rope Basic Bounce", "A-Skip"],
+    "arms": ["Arm Circle Forward", "Arm Circle Backward", "Seal Jack"],
+    "biceps": ["Arm Circle Forward", "Arm Circle Backward"],
+    "triceps": ["Arm Circle Forward", "Arm Circle Backward", "Seal Jack"],
+    "core": ["Torso Twist", "Mountain Climber", "Bear Crawl", "Inchworm"],
+    "abs": ["Torso Twist", "Mountain Climber", "Bear Crawl"],
+    "glutes": ["Hip Circle", "Walking Knee Hug", "Hip 90/90 Switch", "Lateral Lunge"],
+    "full body": ["World's Greatest Stretch", "Inchworm", "Bear Crawl", "Torso Twist", "A-Skip"],
 }
 
 # Muscle group to stretch mapping (fallback)
 STRETCH_BY_MUSCLE = {
-    "chest": ["Doorway Chest Stretch", "Chest Opener", "Supine Chest Stretch"],
-    "back": ["Child's Pose", "Cat-Cow Stretch", "Seated Spinal Twist"],
-    "shoulders": ["Cross-Body Shoulder Stretch", "Overhead Tricep Stretch", "Thread The Needle"],
-    "legs": ["Quad Stretch", "Hamstring Stretch", "Calf Stretch"],
-    "quadriceps": ["Standing Quad Stretch", "Lying Quad Stretch", "Kneeling Hip Flexor Stretch"],
-    "hamstrings": ["Standing Hamstring Stretch", "Seated Hamstring Stretch", "Lying Hamstring Stretch"],
-    "calves": ["Standing Calf Stretch", "Downward Dog", "Wall Calf Stretch"],
-    "arms": ["Bicep Wall Stretch", "Tricep Stretch", "Wrist Flexor Stretch"],
-    "biceps": ["Bicep Wall Stretch", "Doorway Bicep Stretch", "Behind Back Clasp"],
-    "triceps": ["Overhead Tricep Stretch", "Cross-Body Tricep Stretch", "Behind Head Stretch"],
-    "core": ["Cobra Stretch", "Supine Twist", "Seated Side Bend"],
-    "abs": ["Cobra Stretch", "Supine Twist", "Standing Side Bend"],
-    "glutes": ["Pigeon Pose", "Figure-4 Stretch", "Seated Glute Stretch"],
-    "full body": ["Child's Pose", "Standing Forward Fold", "Supine Twist", "Quad Stretch"],
+    "chest": ["Chest Doorway Stretch", "Doorway Pec Stretch High"],
+    "back": ["Child's Pose", "Cat-Cow Stretch", "Thread the Needle", "Lat Stretch Wall"],
+    "shoulders": ["Cross-Body Shoulder Stretch", "Shoulder Sleeper Stretch", "Wall Slide"],
+    "legs": ["Standing Quad Stretch", "Standing Hamstring Stretch", "Standing Calf Stretch"],
+    "quadriceps": ["Standing Quad Stretch", "Prone Quad Stretch", "Walking Quad Pull"],
+    "hamstrings": ["Standing Hamstring Stretch", "Seated Hamstring Stretch", "Supine Hamstring Stretch"],
+    "calves": ["Standing Calf Stretch", "Soleus Stretch", "Ankle Dorsiflexion Stretch"],
+    "arms": ["Overhead Triceps Stretch", "Wrist Flexor Stretch", "Wrist Extensor Stretch"],
+    "biceps": ["Cross-Body Shoulder Stretch", "Chest Doorway Stretch"],
+    "triceps": ["Overhead Triceps Stretch"],
+    "core": ["Cobra Stretch", "Supine Spinal Twist", "Standing Side Bend"],
+    "abs": ["Cobra Stretch", "Supine Spinal Twist"],
+    "glutes": ["Pigeon Stretch", "Figure Four Stretch", "Lying Glute Stretch"],
+    "full body": ["Child's Pose", "World's Greatest Stretch", "Supine Spinal Twist", "Standing Quad Stretch"],
 }
 
 
@@ -402,6 +406,7 @@ class WarmupStretchService:
         use_library: bool = True,
         user_id: Optional[str] = None,
         training_split: str = "full_body",
+        equipment: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """Generate dynamic warm-up using dictionary-based algorithm (instant, no Gemini).
 
@@ -413,6 +418,7 @@ class WarmupStretchService:
             use_library: If True, try to get video URLs from library
             user_id: User ID for fetching preferences
             training_split: Training split (push, pull, legs, etc.)
+            equipment: List of available equipment for equipment-based warmups
         """
         muscles = self.get_target_muscles(exercises)
         logger.info(f"🔥 [Algorithm] Generating warmup for muscles: {muscles}, split: {training_split}")
@@ -422,16 +428,49 @@ class WarmupStretchService:
         result = await algorithm.select_warmups(
             target_muscles=muscles,
             training_split=training_split,
-            equipment=None,  # TODO: Get from user preferences
+            equipment=equipment,
             injuries=injuries,
             intensity="medium",
             user_id=user_id,
         )
 
+        # Inject user's warmup staple exercises
+        warmup_staples = []
+        if user_id:
+            try:
+                from api.v1.exercise_preferences import get_user_staples_by_section
+                staple_rows = await get_user_staples_by_section(user_id, "warmup")
+                for row in staple_rows:
+                    duration = row.get("default_duration_seconds") or 300  # Default 5 min
+                    warmup_staples.append({
+                        "name": row.get("exercise_name"),
+                        "sets": 1,
+                        "reps": None,
+                        "duration_seconds": duration,
+                        "rest_seconds": 0,
+                        "equipment": row.get("equipment") or "none",
+                        "muscle_group": row.get("muscle_group") or "cardio",
+                        "notes": "Staple warmup exercise",
+                        "is_pre_workout": True,
+                        "is_staple": True,
+                        "incline_percent": row.get("default_incline_percent"),
+                        "speed_mph": row.get("default_speed_mph"),
+                        "rpm": row.get("default_rpm"),
+                        "resistance_level": row.get("default_resistance_level"),
+                        "stroke_rate_spm": row.get("stroke_rate_spm"),
+                    })
+                if warmup_staples:
+                    logger.info(f"⭐ Injected {len(warmup_staples)} warmup staples for user {user_id}")
+            except Exception as e:
+                logger.warning(f"⚠️ Could not inject warmup staples: {e}")
+
         # Combine pre-workout and dynamic warmups
         all_warmups = []
 
-        # Add pre-workout routine (e.g., treadmill walk)
+        # First: user's warmup staple exercises (always first)
+        all_warmups.extend(warmup_staples)
+
+        # Second: pre-workout routine from preferences (e.g., treadmill walk)
         if result.get("pre_workout"):
             for ex in result["pre_workout"]:
                 all_warmups.append({
@@ -486,6 +525,33 @@ class WarmupStretchService:
                     ex["gif_url"] = lib_ex.get("gif_url")
                     ex["image_url"] = lib_ex.get("image_url")
 
+            # Also fetch cardio metadata from exercise_library
+            try:
+                exercise_names = [ex.get("name", "") for ex in exercises if not ex.get("is_staple")]
+                if exercise_names:
+                    metadata_response = self.supabase.table("exercise_library").select(
+                        "exercise_name, default_incline_percent, default_speed_mph, default_rpm, "
+                        "default_resistance_level, stroke_rate_spm, default_duration_seconds, equipment"
+                    ).in_("exercise_name", exercise_names).execute()
+
+                    if metadata_response.data:
+                        metadata_map = {r["exercise_name"].lower(): r for r in metadata_response.data}
+                        for ex in exercises:
+                            if ex.get("is_staple"):
+                                continue  # Staples already have metadata
+                            name_lower = ex.get("name", "").lower()
+                            if name_lower in metadata_map:
+                                meta = metadata_map[name_lower]
+                                ex["incline_percent"] = meta.get("default_incline_percent")
+                                ex["speed_mph"] = meta.get("default_speed_mph")
+                                ex["rpm"] = meta.get("default_rpm")
+                                ex["resistance_level"] = meta.get("default_resistance_level")
+                                ex["stroke_rate_spm"] = meta.get("stroke_rate_spm")
+                                if not ex.get("equipment") or ex["equipment"] == "none":
+                                    ex["equipment"] = meta.get("equipment") or "none"
+            except Exception as e:
+                logger.warning(f"⚠️ Could not enrich with cardio metadata: {e}")
+
             return exercises
         except Exception as e:
             logger.warning(f"⚠️ Could not enrich exercises with library data: {e}")
@@ -524,10 +590,43 @@ class WarmupStretchService:
             user_id=user_id,
         )
 
+        # Inject user's stretch staple exercises
+        stretch_staples = []
+        if user_id:
+            try:
+                from api.v1.exercise_preferences import get_user_staples_by_section
+                staple_rows = await get_user_staples_by_section(user_id, "stretches")
+                for row in staple_rows:
+                    duration = row.get("default_duration_seconds") or 300
+                    stretch_staples.append({
+                        "name": row.get("exercise_name"),
+                        "sets": 1,
+                        "reps": None,
+                        "duration_seconds": duration,
+                        "rest_seconds": 0,
+                        "equipment": row.get("equipment") or "none",
+                        "muscle_group": row.get("muscle_group") or "cardio",
+                        "notes": "Staple stretch/cool-down exercise",
+                        "is_post_exercise": True,
+                        "is_staple": True,
+                        "incline_percent": row.get("default_incline_percent"),
+                        "speed_mph": row.get("default_speed_mph"),
+                        "rpm": row.get("default_rpm"),
+                        "resistance_level": row.get("default_resistance_level"),
+                        "stroke_rate_spm": row.get("stroke_rate_spm"),
+                    })
+                if stretch_staples:
+                    logger.info(f"⭐ Injected {len(stretch_staples)} stretch staples for user {user_id}")
+            except Exception as e:
+                logger.warning(f"⚠️ Could not inject stretch staples: {e}")
+
         # Combine post-exercise and stretches
         all_stretches = []
 
-        # Add post-exercise routine (e.g., cooldown walk)
+        # First: user's stretch staple exercises
+        all_stretches.extend(stretch_staples)
+
+        # Second: post-exercise routine (e.g., cooldown walk)
         if result.get("post_exercise"):
             for ex in result["post_exercise"]:
                 all_stretches.append({
@@ -571,7 +670,8 @@ class WarmupStretchService:
             avoid_exercises = await self.get_recently_used_warmups(user_id, days=30)
 
         warmup_exercises = await self.generate_warmup(
-            exercises, duration_minutes, injuries, avoid_exercises
+            exercises, duration_minutes, injuries, avoid_exercises,
+            user_id=user_id,
         )
         now = datetime.utcnow().isoformat()
 
@@ -614,7 +714,8 @@ class WarmupStretchService:
             avoid_exercises = await self.get_recently_used_stretches(user_id, days=30)
 
         stretch_exercises = await self.generate_stretches(
-            exercises, duration_minutes, injuries, avoid_exercises
+            exercises, duration_minutes, injuries, avoid_exercises,
+            user_id=user_id,
         )
         now = datetime.utcnow().isoformat()
 
@@ -691,7 +792,8 @@ class WarmupStretchService:
         warmup_id: str,
         workout_id: str,
         exercises: List[Dict],
-        duration_minutes: int = 5
+        duration_minutes: int = 5,
+        user_id: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
         """Regenerate warmup with SCD2 versioning (creates new version, marks old as superseded)."""
         now = datetime.utcnow().isoformat()
@@ -714,7 +816,9 @@ class WarmupStretchService:
             return None
 
         # Generate new warmup exercises
-        warmup_exercises = await self.generate_warmup(exercises, duration_minutes)
+        warmup_exercises = await self.generate_warmup(
+            exercises, duration_minutes, user_id=user_id,
+        )
 
         try:
             # Create new version
@@ -754,7 +858,8 @@ class WarmupStretchService:
         stretch_id: str,
         workout_id: str,
         exercises: List[Dict],
-        duration_minutes: int = 5
+        duration_minutes: int = 5,
+        user_id: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
         """Regenerate stretches with SCD2 versioning (creates new version, marks old as superseded)."""
         now = datetime.utcnow().isoformat()
@@ -777,7 +882,9 @@ class WarmupStretchService:
             return None
 
         # Generate new stretch exercises
-        stretch_exercises = await self.generate_stretches(exercises, duration_minutes)
+        stretch_exercises = await self.generate_stretches(
+            exercises, duration_minutes, user_id=user_id,
+        )
 
         try:
             # Create new version

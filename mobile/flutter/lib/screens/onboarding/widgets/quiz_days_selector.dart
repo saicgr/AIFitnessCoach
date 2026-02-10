@@ -15,6 +15,7 @@ class QuizDaysSelector extends StatelessWidget {
   final ValueChanged<int> onDaysChanged;
   final ValueChanged<int> onWorkoutDayToggled;
   final DurationRangeCallback? onDurationChanged;
+  final bool showHeader;
 
   const QuizDaysSelector({
     super.key,
@@ -25,6 +26,7 @@ class QuizDaysSelector extends StatelessWidget {
     required this.onDaysChanged,
     required this.onWorkoutDayToggled,
     this.onDurationChanged,
+    this.showHeader = true,
   });
 
   static const _dayInfo = [
@@ -61,10 +63,12 @@ class QuizDaysSelector extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTitle(textPrimary),
-            const SizedBox(height: 8),
-            _buildSubtitle(textSecondary),
-            const SizedBox(height: 24),
+            if (showHeader) ...[
+              _buildTitle(textPrimary),
+              const SizedBox(height: 8),
+              _buildSubtitle(textSecondary),
+              const SizedBox(height: 24),
+            ],
             _buildDaysPerWeekSelector(isDark, textPrimary, textSecondary),
             const SizedBox(height: 28),
             if (selectedDays != null) ...[

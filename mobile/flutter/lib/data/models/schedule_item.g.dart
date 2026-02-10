@@ -7,41 +7,40 @@ part of 'schedule_item.dart';
 // **************************************************************************
 
 ScheduleItem _$ScheduleItemFromJson(Map<String, dynamic> json) => ScheduleItem(
-      id: json['id'] as String,
-      userId: json['user_id'] as String,
-      itemType: $enumDecode(_$ScheduleItemTypeEnumMap, json['item_type']),
-      title: json['title'] as String,
-      description: json['description'] as String?,
-      scheduledDate: DateTime.parse(json['scheduled_date'] as String),
-      startTime: json['start_time'] as String,
-      endTime: json['end_time'] as String?,
-      durationMinutes: (json['duration_minutes'] as num?)?.toInt(),
-      status: $enumDecodeNullable(_$ScheduleItemStatusEnumMap, json['status']) ??
-          ScheduleItemStatus.scheduled,
-      workoutId: json['workout_id'] as String?,
-      habitId: json['habit_id'] as String?,
-      fastingRecordId: json['fasting_record_id'] as String?,
-      activityType: json['activity_type'] as String?,
-      activityTarget: json['activity_target'] as String?,
-      activityIcon: json['activity_icon'] as String?,
-      activityColor: json['activity_color'] as String?,
-      mealType: $enumDecodeNullable(_$MealTypeEnumMap, json['meal_type']),
-      isRecurring: json['is_recurring'] as bool? ?? false,
-      recurrenceRule: json['recurrence_rule'] as String?,
-      notifyBeforeMinutes:
-          (json['notify_before_minutes'] as num?)?.toInt() ?? 15,
-      googleCalendarEventId:
-          json['google_calendar_event_id'] as String?,
-      googleCalendarSyncedAt: json['google_calendar_synced_at'] == null
-          ? null
-          : DateTime.parse(json['google_calendar_synced_at'] as String),
-      createdAt: json['created_at'] == null
-          ? null
-          : DateTime.parse(json['created_at'] as String),
-      updatedAt: json['updated_at'] == null
-          ? null
-          : DateTime.parse(json['updated_at'] as String),
-    );
+  id: json['id'] as String,
+  userId: json['user_id'] as String,
+  itemType: $enumDecode(_$ScheduleItemTypeEnumMap, json['item_type']),
+  title: json['title'] as String,
+  description: json['description'] as String?,
+  scheduledDate: DateTime.parse(json['scheduled_date'] as String),
+  startTime: json['start_time'] as String,
+  endTime: json['end_time'] as String?,
+  durationMinutes: (json['duration_minutes'] as num?)?.toInt(),
+  status:
+      $enumDecodeNullable(_$ScheduleItemStatusEnumMap, json['status']) ??
+      ScheduleItemStatus.scheduled,
+  workoutId: json['workout_id'] as String?,
+  habitId: json['habit_id'] as String?,
+  fastingRecordId: json['fasting_record_id'] as String?,
+  activityType: json['activity_type'] as String?,
+  activityTarget: json['activity_target'] as String?,
+  activityIcon: json['activity_icon'] as String?,
+  activityColor: json['activity_color'] as String?,
+  mealType: $enumDecodeNullable(_$MealTypeEnumMap, json['meal_type']),
+  isRecurring: json['is_recurring'] as bool? ?? false,
+  recurrenceRule: json['recurrence_rule'] as String?,
+  notifyBeforeMinutes: (json['notify_before_minutes'] as num?)?.toInt() ?? 15,
+  googleCalendarEventId: json['google_calendar_event_id'] as String?,
+  googleCalendarSyncedAt: json['google_calendar_synced_at'] == null
+      ? null
+      : DateTime.parse(json['google_calendar_synced_at'] as String),
+  createdAt: json['created_at'] == null
+      ? null
+      : DateTime.parse(json['created_at'] as String),
+  updatedAt: json['updated_at'] == null
+      ? null
+      : DateTime.parse(json['updated_at'] as String),
+);
 
 Map<String, dynamic> _$ScheduleItemToJson(ScheduleItem instance) =>
     <String, dynamic>{
@@ -67,8 +66,8 @@ Map<String, dynamic> _$ScheduleItemToJson(ScheduleItem instance) =>
       'recurrence_rule': instance.recurrenceRule,
       'notify_before_minutes': instance.notifyBeforeMinutes,
       'google_calendar_event_id': instance.googleCalendarEventId,
-      'google_calendar_synced_at':
-          instance.googleCalendarSyncedAt?.toIso8601String(),
+      'google_calendar_synced_at': instance.googleCalendarSyncedAt
+          ?.toIso8601String(),
       'created_at': instance.createdAt?.toIso8601String(),
       'updated_at': instance.updatedAt?.toIso8601String(),
     };
@@ -97,27 +96,29 @@ const _$MealTypeEnumMap = {
 };
 
 DailyScheduleResponse _$DailyScheduleResponseFromJson(
-        Map<String, dynamic> json) =>
-    DailyScheduleResponse(
-      date: DateTime.parse(json['date'] as String),
-      items: (json['items'] as List<dynamic>?)
-              ?.map((e) => ScheduleItem.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          const [],
-      summary: json['summary'] as Map<String, dynamic>? ?? const {},
-    );
+  Map<String, dynamic> json,
+) => DailyScheduleResponse(
+  date: DateTime.parse(json['date'] as String),
+  items:
+      (json['items'] as List<dynamic>?)
+          ?.map((e) => ScheduleItem.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
+  summary: json['summary'] as Map<String, dynamic>? ?? const {},
+);
 
 Map<String, dynamic> _$DailyScheduleResponseToJson(
-        DailyScheduleResponse instance) =>
-    <String, dynamic>{
-      'date': instance.date.toIso8601String(),
-      'items': instance.items.map((e) => e.toJson()).toList(),
-      'summary': instance.summary,
-    };
+  DailyScheduleResponse instance,
+) => <String, dynamic>{
+  'date': instance.date.toIso8601String(),
+  'items': instance.items,
+  'summary': instance.summary,
+};
 
 UpNextResponse _$UpNextResponseFromJson(Map<String, dynamic> json) =>
     UpNextResponse(
-      items: (json['items'] as List<dynamic>?)
+      items:
+          (json['items'] as List<dynamic>?)
               ?.map((e) => ScheduleItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
@@ -126,6 +127,6 @@ UpNextResponse _$UpNextResponseFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$UpNextResponseToJson(UpNextResponse instance) =>
     <String, dynamic>{
-      'items': instance.items.map((e) => e.toJson()).toList(),
+      'items': instance.items,
       'as_of': instance.asOf.toIso8601String(),
     };

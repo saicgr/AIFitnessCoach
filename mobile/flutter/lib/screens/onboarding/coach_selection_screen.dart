@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/window_mode_provider.dart';
 import '../../data/models/coach_persona.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/onboarding_repository.dart';
@@ -18,6 +19,7 @@ import '../ai_settings/ai_settings_screen.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/coach_profile_card.dart';
 import 'widgets/custom_coach_form.dart';
+import 'widgets/foldable_quiz_scaffold.dart';
 import '../../data/models/ai_profile_payload.dart';
 
 /// Coach Selection Screen - Choose your AI coach persona before onboarding
@@ -348,116 +350,129 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-                child: _buildHeader(textPrimary, textSecondary),
-              ),
-
-              // Content
-              Expanded(
-                child: Column(
-                  children: [
-                    // PageView for swipeable coach cards
-                    Expanded(
-                      child: PageView.builder(
-                        controller: _pageController,
-                        onPageChanged: (index) {
-                          HapticFeedback.selectionClick();
-                          setState(() {
-                            _currentPageIndex = index;
-                            _selectedCoach = CoachPersona.predefinedCoaches[index];
-                            _isCustomMode = false;
-                          });
-                        },
-                        itemCount: CoachPersona.predefinedCoaches.length,
-                        itemBuilder: (context, index) {
-                          final coach = CoachPersona.predefinedCoaches[index];
-                          return AnimatedScale(
-                            duration: const Duration(milliseconds: 200),
-                            scale: index == _currentPageIndex ? 1.0 : 0.9,
-                            child: CoachProfileCard(
-                              coach: coach,
-                              isSelected: !_isCustomMode && _selectedCoach?.id == coach.id,
-                              onTap: () => _selectCoach(coach),
-                            ),
-                          ).animate(delay: (100 + index * 50).ms).fadeIn();
-                        },
-                      ),
+          child: FoldableQuizScaffold(
+            headerTitle: widget.fromSettings ? 'Change Coach' : 'Meet Your Coach',
+            headerSubtitle: widget.fromSettings
+                ? 'Select a new AI coach persona'
+                : 'You can always change this later',
+            headerExtra: _selectedCoach != null
+                ? Text(
+                    _selectedCoach!.name,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: _selectedCoach!.primaryColor,
                     ),
+                  )
+                : null,
+            content: Column(
+              children: [
+                // Show header inline only on phone
+                Consumer(builder: (context, ref, _) {
+                  final windowState = ref.watch(windowModeProvider);
+                  if (FoldableQuizScaffold.shouldUseFoldableLayout(windowState)) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                    child: _buildHeader(textPrimary, textSecondary),
+                  );
+                }),
 
-                    // Page indicator dots - use each coach's color
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          CoachPersona.predefinedCoaches.length,
-                          (index) {
-                            final coachColor = CoachPersona.predefinedCoaches[index].primaryColor;
-                            return GestureDetector(
-                              onTap: () {
-                                _pageController.animateToPage(
-                                  index,
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeOutCubic,
-                                );
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                margin: const EdgeInsets.symmetric(horizontal: 4),
-                                width: index == _currentPageIndex ? 24 : 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: index == _currentPageIndex
-                                      ? coachColor
-                                      : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(
-                                    color: index == _currentPageIndex
-                                        ? coachColor
-                                        : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-                                  ),
-                                ),
-                              ),
+                // PageView for swipeable coach cards
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      HapticFeedback.selectionClick();
+                      setState(() {
+                        _currentPageIndex = index;
+                        _selectedCoach = CoachPersona.predefinedCoaches[index];
+                        _isCustomMode = false;
+                      });
+                    },
+                    itemCount: CoachPersona.predefinedCoaches.length,
+                    itemBuilder: (context, index) {
+                      final coach = CoachPersona.predefinedCoaches[index];
+                      return AnimatedScale(
+                        duration: const Duration(milliseconds: 200),
+                        scale: index == _currentPageIndex ? 1.0 : 0.9,
+                        child: CoachProfileCard(
+                          coach: coach,
+                          isSelected: !_isCustomMode && _selectedCoach?.id == coach.id,
+                          onTap: () => _selectCoach(coach),
+                        ),
+                      ).animate(delay: (100 + index * 50).ms).fadeIn();
+                    },
+                  ),
+                ),
+
+                // Page indicator dots - use each coach's color
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      CoachPersona.predefinedCoaches.length,
+                      (index) {
+                        final coachColor = CoachPersona.predefinedCoaches[index].primaryColor;
+                        return GestureDetector(
+                          onTap: () {
+                            _pageController.animateToPage(
+                              index,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeOutCubic,
                             );
                           },
-                        ),
-                      ).animate().fadeIn(delay: 300.ms),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            width: index == _currentPageIndex ? 24 : 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: index == _currentPageIndex
+                                  ? coachColor
+                                  : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: index == _currentPageIndex
+                                    ? coachColor
+                                    : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-
-                    // Custom Coach toggle (compact)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: _buildCompactCustomToggle(isDark, textPrimary, textSecondary),
-                    ),
-
-                    // Custom Coach Form (if enabled)
-                    if (_isCustomMode)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: CustomCoachForm(
-                          name: _customName,
-                          coachingStyle: _customStyle,
-                          communicationTone: _customTone,
-                          encouragementLevel: _customEncouragement,
-                          onNameChanged: (name) => _updateCustomCoach(name: name),
-                          onStyleChanged: (style) => _updateCustomCoach(style: style),
-                          onToneChanged: (tone) => _updateCustomCoach(tone: tone),
-                          onEncouragementChanged: (level) => _updateCustomCoach(encouragement: level),
-                        ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.05),
-                      ),
-
-                    const SizedBox(height: 8),
-                  ],
+                  ).animate().fadeIn(delay: 300.ms),
                 ),
-              ),
 
-              // Continue Button
-              _buildContinueButton(isDark, canContinue),
-            ],
+                // Custom Coach toggle (compact)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: _buildCompactCustomToggle(isDark, textPrimary, textSecondary),
+                ),
+
+                // Custom Coach Form (if enabled)
+                if (_isCustomMode)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: CustomCoachForm(
+                      name: _customName,
+                      coachingStyle: _customStyle,
+                      communicationTone: _customTone,
+                      encouragementLevel: _customEncouragement,
+                      onNameChanged: (name) => _updateCustomCoach(name: name),
+                      onStyleChanged: (style) => _updateCustomCoach(style: style),
+                      onToneChanged: (tone) => _updateCustomCoach(tone: tone),
+                      onEncouragementChanged: (level) => _updateCustomCoach(encouragement: level),
+                    ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.05),
+                  ),
+
+                const SizedBox(height: 8),
+              ],
+            ),
+            button: _buildContinueButton(isDark, canContinue),
           ),
         ),
       ),

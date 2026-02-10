@@ -298,10 +298,10 @@ class LocalLayoutNotifier extends StateNotifier<AsyncValue<HomeLayout?>> {
     final currentLayout = state.value;
     if (currentLayout == null) return;
 
-    final presetTiles = createPresetTiles(preset);
+    final presetTiles = preset.toHomeTiles();
     final updatedLayout = currentLayout.copyWith(
       tiles: presetTiles,
-      name: preset.displayName,
+      name: preset.name,
       updatedAt: DateTime.now(),
     );
 
@@ -313,7 +313,7 @@ class LocalLayoutNotifier extends StateNotifier<AsyncValue<HomeLayout?>> {
     }
 
     state = AsyncValue.data(updatedLayout);
-    debugPrint('✅ [LocalLayout] Applied preset: ${preset.displayName}');
+    debugPrint('✅ [LocalLayout] Applied preset: ${preset.name}');
   }
 
   HomeTile? getTileByType(TileType type) {

@@ -51,141 +51,8 @@ import '../../data/models/level_reward.dart';
 import 'widgets/gym_profile_switcher.dart';
 import 'widgets/daily_crate_banner.dart';
 import '../../widgets/health_connect_sheet.dart';
-
-/// Preset layout templates for quick customization
-class LayoutPreset {
-  final String id;
-  final String name;
-  final String description;
-  final String emoji;
-  final List<TileType> tiles;
-
-  const LayoutPreset({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.emoji,
-    required this.tiles,
-  });
-
-  /// Convert to HomeTile list
-  List<HomeTile> toHomeTiles() {
-    return tiles.asMap().entries.map((entry) {
-      return HomeTile(
-        id: 'tile_${DateTime.now().millisecondsSinceEpoch}_${entry.key}',
-        type: entry.value,
-        size: entry.value.defaultSize,
-        order: entry.key,
-        isVisible: true,
-      );
-    }).toList();
-  }
-}
-
-/// Available preset layouts
-const List<LayoutPreset> layoutPresets = [
-  LayoutPreset(
-    id: 'gym_focused',
-    name: 'Gym Focused',
-    description: 'Workout-first layout for gym enthusiasts',
-    emoji: '🏋️',
-    tiles: [
-      TileType.nextWorkout,
-      TileType.streakCounter,
-      TileType.personalRecords,
-      TileType.weeklyProgress,
-      TileType.muscleHeatmap,
-      TileType.weekChanges,
-      TileType.challengeProgress,
-      TileType.upcomingWorkouts,
-      // Quick actions removed - now accessible via + button in nav bar
-      TileType.aiCoachTip,
-    ],
-  ),
-  LayoutPreset(
-    id: 'nutrition_focused',
-    name: 'Nutrition Focused',
-    description: 'Diet-first layout for tracking macros & meals',
-    emoji: '🥗',
-    tiles: [
-      TileType.caloriesSummary,
-      TileType.macroRings,
-      // Quick actions removed - now accessible via + button in nav bar
-      TileType.bodyWeight,
-      TileType.fasting,
-      TileType.nextWorkout,
-      TileType.weeklyProgress,
-      TileType.moodPicker,
-      TileType.sleepScore,
-      TileType.aiCoachTip,
-    ],
-  ),
-  LayoutPreset(
-    id: 'balanced',
-    name: 'Balanced',
-    description: 'Best of both worlds - workouts & nutrition',
-    emoji: '⚖️',
-    tiles: [
-      TileType.nextWorkout,
-      TileType.fitnessScore,
-      TileType.caloriesSummary,
-      TileType.macroRings,
-      TileType.weeklyProgress,
-      TileType.streakCounter,
-      TileType.bodyWeight,
-      // Quick actions removed - now accessible via + button in nav bar
-      TileType.weeklyGoals,
-      TileType.upcomingWorkouts,
-    ],
-  ),
-  LayoutPreset(
-    id: 'minimal',
-    name: 'Minimal',
-    description: 'Clean, distraction-free essentials only',
-    emoji: '✨',
-    tiles: [
-      TileType.nextWorkout,
-      TileType.weeklyProgress,
-      TileType.streakCounter,
-      // Quick actions removed - now accessible via + button in nav bar
-      TileType.aiCoachTip,
-    ],
-  ),
-  LayoutPreset(
-    id: 'wellness',
-    name: 'Wellness',
-    description: 'Focus on recovery, mood, and overall health',
-    emoji: '🧘',
-    tiles: [
-      TileType.moodPicker,
-      TileType.sleepScore,
-      TileType.dailyActivity,
-      TileType.restDayTip,
-      TileType.nextWorkout,
-      TileType.streakCounter,
-      TileType.bodyWeight,
-      TileType.weeklyGoals,
-      TileType.aiCoachTip,
-      // Quick actions removed - now accessible via + button in nav bar
-    ],
-  ),
-  LayoutPreset(
-    id: 'social',
-    name: 'Social',
-    description: 'Stay motivated with community features',
-    emoji: '👥',
-    tiles: [
-      TileType.nextWorkout,
-      TileType.leaderboardRank,
-      TileType.socialFeed,
-      TileType.challengeProgress,
-      TileType.streakCounter,
-      TileType.personalRecords,
-      TileType.weeklyProgress,
-      // Quick actions removed - now accessible via + button in nav bar
-    ],
-  ),
-];
+import '../../data/providers/health_import_provider.dart';
+import 'widgets/workout_import_screen.dart';
 
 /// The main home screen displaying workouts, progress, and quick actions
 class HomeScreen extends ConsumerStatefulWidget {
@@ -256,6 +123,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         _maybeShowHealthConnectPopup().catchError((e) {
           debugPrint('❌ [Home] _maybeShowHealthConnectPopup error: $e');
         }),
+        _checkForWorkoutImports().catchError((e) {
+          debugPrint('❌ [Home] _checkForWorkoutImports error: $e');
+        }),
       ]);
     });
   }
@@ -310,6 +180,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
       // Refresh Health Connect status - user may have granted permissions externally
       ref.read(healthSyncProvider.notifier).refreshConnectionStatus();
+
+      // Check for new workout imports from Health Connect on resume
+      _checkForWorkoutImports();
     }
   }
 
@@ -329,6 +202,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     _healthPopupShownThisSession = true;
     showHealthConnectSheet(context, ref);
+  }
+
+  /// Check Health Connect for unimported workout sessions.
+  /// Delayed 800ms to let the UI render first. Skips if HC not connected.
+  Future<void> _checkForWorkoutImports() async {
+    await Future.delayed(const Duration(milliseconds: 800));
+    if (!mounted) return;
+
+    final syncState = ref.read(healthSyncProvider);
+    if (!syncState.isConnected) return;
+
+    await ref.read(healthImportProvider.notifier).checkForUnimportedWorkouts();
+    if (!mounted) return;
+
+    final importState = ref.read(healthImportProvider);
+    if (importState.pendingImports.isNotEmpty) {
+      _showNextImportPrompt();
+    }
+  }
+
+  /// Show the workout import sheet for pending Health Connect imports.
+  void _showNextImportPrompt() {
+    if (!mounted) return;
+
+    final importState = ref.read(healthImportProvider);
+    if (importState.pendingImports.isEmpty) return;
+
+    showWorkoutImportSheet(context, ref);
   }
 
   /// Map XPGoalType from provider to animation widget enum
@@ -1061,11 +962,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         color: AppColors.purple.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Center(
-                        child: Text(
-                          preset.emoji,
-                          style: const TextStyle(fontSize: 24),
-                        ),
+                      child: Icon(
+                        preset.icon,
+                        color: preset.color,
+                        size: 24,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -1165,7 +1065,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         backgroundColor: elevatedColor,
         title: Row(
           children: [
-            Text(preset.emoji, style: const TextStyle(fontSize: 24)),
+            Icon(preset.icon, color: preset.color, size: 24),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -1203,7 +1103,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               HapticService.success();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('${preset.emoji} ${preset.name} layout applied!'),
+                  content: Text('${preset.name} layout applied!'),
                   backgroundColor: AppColors.success,
                   behavior: SnackBarBehavior.floating,
                 ),

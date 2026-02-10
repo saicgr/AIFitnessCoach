@@ -1,11 +1,39 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/schedule_item.dart';
 import '../repositories/schedule_repository.dart';
 
 /// Simple refresh trigger -- increment to invalidate schedule providers
 final scheduleRefreshProvider = StateProvider<int>((ref) => 0);
+
+/// Week start day preference: 1 = Monday (default), 7 = Sunday
+/// Persisted to SharedPreferences
+final weekStartDayProvider =
+    StateNotifierProvider<WeekStartDayNotifier, int>((ref) {
+  return WeekStartDayNotifier();
+});
+
+class WeekStartDayNotifier extends StateNotifier<int> {
+  static const _key = 'week_start_day';
+
+  WeekStartDayNotifier() : super(1) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getInt(_key) ?? 1; // default Monday
+  }
+
+  Future<void> toggle() async {
+    final newValue = state == 1 ? 7 : 1;
+    state = newValue;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_key, newValue);
+  }
+}
 
 /// Fetches the up-next schedule items for the current user
 final upNextScheduleProvider =

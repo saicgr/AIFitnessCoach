@@ -251,6 +251,14 @@ class AddExerciseRequest(BaseModel):
     sets: Optional[int] = Field(default=3, ge=1, le=10)
     reps: Optional[str] = Field(default="8-12", max_length=20)
     rest_seconds: Optional[int] = Field(default=60, ge=0, le=300)
+    section: Optional[str] = Field(default="main", description="Section to add exercise to: main, warmup, or stretches")
+
+    @field_validator('section')
+    @classmethod
+    def validate_section(cls, v):
+        if v and v not in ('main', 'warmup', 'stretches'):
+            raise ValueError("section must be 'main', 'warmup', or 'stretches'")
+        return v or 'main'
 
 
 class ExtendWorkoutRequest(BaseModel):
@@ -508,6 +516,11 @@ class WarmupExercise(BaseModel):
     equipment: str = Field(default="none", max_length=100)
     muscle_group: str = Field(..., max_length=50)
     notes: Optional[str] = Field(default=None, max_length=500)
+    incline_percent: Optional[float] = Field(default=None, ge=0, le=30)
+    speed_mph: Optional[float] = Field(default=None, ge=0, le=15)
+    rpm: Optional[int] = Field(default=None, ge=0, le=200)
+    resistance_level: Optional[int] = Field(default=None, ge=0, le=30)
+    stroke_rate_spm: Optional[int] = Field(default=None, ge=0, le=60)
 
 
 class WarmupCreate(BaseModel):
@@ -549,6 +562,11 @@ class StretchExercise(BaseModel):
     equipment: str = Field(default="none", max_length=100)
     muscle_group: str = Field(..., max_length=50)
     notes: Optional[str] = Field(default=None, max_length=500)
+    incline_percent: Optional[float] = Field(default=None, ge=0, le=30)
+    speed_mph: Optional[float] = Field(default=None, ge=0, le=15)
+    rpm: Optional[int] = Field(default=None, ge=0, le=200)
+    resistance_level: Optional[int] = Field(default=None, ge=0, le=30)
+    stroke_rate_spm: Optional[int] = Field(default=None, ge=0, le=60)
 
 
 class StretchCreate(BaseModel):

@@ -1,123 +1,26 @@
 """
-Tests for workout insights node functions, specifically JSON repair logic.
+Tests for workout insights node functions.
+
+Covers:
+- categorize_muscle_group / determine_workout_focus pure logic
+- analyze_workout_node async behavior
+- generate_structured_insights_node fallback behavior (the fix for
+  "Expected 2 sections, got 0" production error)
+- Streaming truncation detection logic from generation.py
 """
 import pytest
 import json
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from services.langgraph_agents.workout_insights.nodes import (
-    repair_json_string,
     categorize_muscle_group,
     determine_workout_focus,
+    generate_structured_insights_node,
+    analyze_workout_node,
 )
 
 
-class TestRepairJsonString:
-    """Tests for the repair_json_string function."""
-
-    def test_valid_json_returns_unchanged(self):
-        """Valid JSON should be returned as-is."""
-        valid = '{"headline": "Test", "sections": []}'
-        result = repair_json_string(valid)
-        assert result == valid
-        assert json.loads(result) == {"headline": "Test", "sections": []}
-
-    def test_empty_string_returns_none(self):
-        """Empty string should return None."""
-        assert repair_json_string("") is None
-        assert repair_json_string(None) is None
-
-    def test_trailing_comma_removed(self):
-        """Trailing commas before closing brackets should be removed."""
-        malformed = '{"headline": "Test", "sections": [],}'
-        result = repair_json_string(malformed)
-        assert result is not None
-        parsed = json.loads(result)
-        assert parsed["headline"] == "Test"
-
-    def test_trailing_comma_in_array(self):
-        """Trailing commas in arrays should be removed."""
-        malformed = '{"items": [1, 2, 3,]}'
-        result = repair_json_string(malformed)
-        assert result is not None
-        parsed = json.loads(result)
-        assert parsed["items"] == [1, 2, 3]
-
-    def test_unclosed_braces_completed(self):
-        """Unclosed braces should be completed."""
-        malformed = '{"headline": "Test"'
-        result = repair_json_string(malformed)
-        assert result is not None
-        parsed = json.loads(result)
-        assert parsed["headline"] == "Test"
-
-    def test_unclosed_brackets_completed(self):
-        """Unclosed brackets should be completed."""
-        malformed = '{"items": [1, 2, 3'
-        result = repair_json_string(malformed)
-        assert result is not None
-        parsed = json.loads(result)
-        assert parsed["items"] == [1, 2, 3]
-
-    def test_nested_unclosed_structures(self):
-        """Nested unclosed structures should be completed."""
-        malformed = '{"outer": {"inner": [1, 2'
-        result = repair_json_string(malformed)
-        assert result is not None
-        parsed = json.loads(result)
-        assert "outer" in parsed
-
-    def test_extract_json_from_text(self):
-        """JSON embedded in text should be extracted."""
-        with_text = 'Here is the JSON: {"headline": "Test", "sections": []} some trailing text'
-        result = repair_json_string(with_text)
-        assert result is not None
-        parsed = json.loads(result)
-        assert parsed["headline"] == "Test"
-
-    def test_completely_invalid_returns_none(self):
-        """Completely invalid content should return None."""
-        invalid = "This is not JSON at all and has no braces"
-        result = repair_json_string(invalid)
-        assert result is None
-
-    def test_unterminated_string_completed(self):
-        """Unterminated strings should be completed when possible."""
-        # Simple case with unterminated string
-        malformed = '{"headline": "Test workout'
-        result = repair_json_string(malformed)
-        assert result is not None
-        parsed = json.loads(result)
-        assert "headline" in parsed
-
-    def test_real_world_unterminated_string_error(self):
-        """Test the actual error case from production logs."""
-        # Simulating: Unterminated string starting at: line 2 column 15 (char 16)
-        malformed = '''{
-  "headline": "Power'''
-        result = repair_json_string(malformed)
-        assert result is not None
-        parsed = json.loads(result)
-        assert "headline" in parsed
-
-    def test_complex_insights_structure_truncated(self):
-        """Test with a truncated but recoverable insights structure."""
-        # This JSON is truncated mid-value but can be recovered
-        malformed = '{"headline": "Leg Day Power!", "sections": []'
-        result = repair_json_string(malformed)
-        assert result is not None
-        parsed = json.loads(result)
-        assert parsed["headline"] == "Leg Day Power!"
-        assert "sections" in parsed
-
-    def test_multiple_trailing_commas(self):
-        """Multiple trailing commas should all be fixed."""
-        malformed = '{"a": 1, "b": [1, 2,], "c": 3,}'
-        result = repair_json_string(malformed)
-        assert result is not None
-        parsed = json.loads(result)
-        assert parsed["a"] == 1
-        assert parsed["b"] == [1, 2]
-        assert parsed["c"] == 3
+# ============ Pure function tests ============
 
 
 class TestCategorizeMuscleGroup:
@@ -179,229 +82,442 @@ class TestDetermineWorkoutFocus:
     def test_balanced_is_full_body(self):
         muscles = ["chest", "back", "quadriceps", "hamstrings", "core"]
         result = determine_workout_focus(muscles)
-        assert result in ["full body", "upper body"]  # Could be either depending on distribution
+        assert result in ["full body", "upper body"]
 
 
-class TestInsightsValidation:
+# ============ Helpers for async tests ============
+
+
+def _make_state(**overrides):
+    """Build a minimal WorkoutInsightsState dict for testing."""
+    state = {
+        "workout_id": "test-123",
+        "workout_name": "Upper Body Strength",
+        "exercises": [
+            {"name": "Bench Press", "sets": 4, "reps": 8, "primary_muscle": "chest"},
+            {"name": "Barbell Rows", "sets": 4, "reps": 8, "primary_muscle": "back"},
+            {"name": "Overhead Press", "sets": 3, "reps": 10, "primary_muscle": "shoulder"},
+        ],
+        "duration_minutes": 45,
+        "workout_type": "strength",
+        "difficulty": "medium",
+        "user_goals": ["build muscle"],
+        "fitness_level": "intermediate",
+        "target_muscles": ["chest", "back", "shoulder"],
+        "exercise_count": 3,
+        "total_sets": 11,
+        "workout_focus": "upper body",
+        "headline": "",
+        "sections": [],
+        "summary": "",
+        "error": None,
+    }
+    state.update(overrides)
+    return state
+
+
+def _mock_gemini_response(parsed_data=None, raw_text=None):
+    """Create a mock Gemini response object."""
+    response = MagicMock()
+    if parsed_data is not None:
+        mock_parsed = MagicMock()
+        mock_parsed.model_dump.return_value = parsed_data
+        response.parsed = mock_parsed
+    else:
+        response.parsed = None
+    response.text = raw_text or (json.dumps(parsed_data) if parsed_data else None)
+    response.candidates = []
+    return response
+
+
+# ============ analyze_workout_node tests ============
+
+
+class TestAnalyzeWorkoutNode:
+    """Tests for the analyze_workout_node function."""
+
+    async def test_determines_focus_and_counts(self):
+        state = _make_state()
+        result = await analyze_workout_node(state)
+
+        assert result["exercise_count"] == 3
+        assert result["total_sets"] == 11
+        assert len(result["target_muscles"]) == 3
+
+    async def test_empty_exercises(self):
+        state = _make_state(exercises=[])
+        result = await analyze_workout_node(state)
+
+        assert result["exercise_count"] == 0
+        assert result["total_sets"] == 0
+        assert result["workout_focus"] == "full body"
+
+
+# ============ generate_structured_insights_node tests ============
+
+
+class TestGenerateInsightsNodeFallback:
     """
-    Tests for workout insights validation logic.
+    Tests that generate_structured_insights_node returns fallback data
+    instead of raising when Gemini fails.
 
-    These tests verify that the validation correctly fails when:
-    - AI returns empty sections
-    - AI returns fewer than 2 sections
-    - JSON parsing fails completely
-    """
-
-    def test_empty_sections_should_raise_error(self):
-        """An empty sections array should raise ValueError."""
-        # This simulates what happens when AI returns {"headline": "...", "sections": []}
-        insights = {"headline": "Test Workout!", "sections": []}
-        sections = insights.get("sections", [])
-
-        # Verify validation logic catches this
-        if not sections or len(sections) < 2:
-            with pytest.raises(ValueError) as exc_info:
-                raise ValueError(f"AI returned invalid structure: expected 2+ sections, got {len(sections)}")
-            assert "expected 2+ sections, got 0" in str(exc_info.value)
-
-    def test_single_section_should_raise_error(self):
-        """A single section (< 2) should raise ValueError."""
-        insights = {
-            "headline": "Test Workout!",
-            "sections": [
-                {"icon": "🎯", "title": "Focus", "content": "Test content", "color": "cyan"}
-            ]
-        }
-        sections = insights.get("sections", [])
-
-        if not sections or len(sections) < 2:
-            with pytest.raises(ValueError) as exc_info:
-                raise ValueError(f"AI returned invalid structure: expected 2+ sections, got {len(sections)}")
-            assert "expected 2+ sections, got 1" in str(exc_info.value)
-
-    def test_two_sections_is_valid(self):
-        """Two sections should be valid (no error raised)."""
-        insights = {
-            "headline": "Test Workout!",
-            "sections": [
-                {"icon": "🎯", "title": "Focus", "content": "Test content 1", "color": "cyan"},
-                {"icon": "💪", "title": "Volume", "content": "Test content 2", "color": "purple"}
-            ]
-        }
-        sections = insights.get("sections", [])
-
-        # Should NOT raise
-        assert len(sections) >= 2
-
-    def test_three_sections_is_valid(self):
-        """Three sections should be valid."""
-        insights = {
-            "headline": "Test Workout!",
-            "sections": [
-                {"icon": "🎯", "title": "Focus", "content": "Test content 1", "color": "cyan"},
-                {"icon": "💪", "title": "Volume", "content": "Test content 2", "color": "purple"},
-                {"icon": "⚡", "title": "Tip", "content": "Test content 3", "color": "orange"}
-            ]
-        }
-        sections = insights.get("sections", [])
-
-        assert len(sections) >= 2
-
-    def test_headline_truncation_7_words(self):
-        """Headlines longer than 7 words should be truncated."""
-        long_headline = "This is a very long headline that exceeds seven words limit"
-        words = long_headline.split()
-
-        if len(words) > 7:
-            headline = " ".join(words[:7])
-            if not headline.endswith(("!", "?")):
-                headline += "!"
-
-        assert len(headline.split()) <= 8  # 7 words + potential punctuation
-        assert headline.endswith("!")
-
-    def test_section_content_truncation_20_words(self):
-        """Section content longer than 20 words should be truncated."""
-        long_content = "This is a very long content that exceeds twenty words and should be truncated to keep the UI clean and readable for users viewing on mobile devices"
-        words = long_content.split()
-
-        if len(words) > 20:
-            truncated = " ".join(words[:20]) + "..."
-
-        assert truncated.endswith("...")
-        assert len(truncated.split()) <= 21  # 20 words + "..."
-
-
-class TestJsonExtractionFromMarkdown:
-    """Tests for extracting JSON from markdown code blocks."""
-
-    def test_extract_from_json_code_block(self):
-        """JSON wrapped in ```json``` should be extracted."""
-        content = '''Here is the workout insight:
-```json
-{"headline": "Leg Day Power!", "sections": [{"icon": "🎯", "title": "Focus", "content": "Test", "color": "cyan"}]}
-```
-That's the workout summary.'''
-
-        if "```json" in content:
-            extracted = content.split("```json")[1].split("```")[0].strip()
-
-        parsed = json.loads(extracted)
-        assert parsed["headline"] == "Leg Day Power!"
-
-    def test_extract_from_generic_code_block(self):
-        """JSON wrapped in generic ``` should be extracted."""
-        content = '''Here is the result:
-```
-{"headline": "Push Day!", "sections": []}
-```
-Done.'''
-
-        if "```json" not in content and "```" in content:
-            parts = content.split("```")
-            if len(parts) >= 2:
-                extracted = parts[1].strip()
-
-        parsed = json.loads(extracted)
-        assert parsed["headline"] == "Push Day!"
-
-    def test_extract_from_code_block_with_language_identifier(self):
-        """Code block with 'json' language identifier should have it removed."""
-        # Sometimes AI returns ```\njson\n{...}
-        content = '''```
-json
-{"headline": "Test", "sections": []}
-```'''
-
-        parts = content.split("```")
-        if len(parts) >= 2:
-            extracted = parts[1].strip()
-            if extracted.startswith(("json", "JSON")):
-                extracted = extracted[4:].strip()
-
-        parsed = json.loads(extracted)
-        assert parsed["headline"] == "Test"
-
-
-class TestRealWorldFailureCases:
-    """
-    Tests based on real production errors.
-
-    These test cases are derived from actual error logs to ensure
-    the same issues don't recur.
+    These verify the fix for the "Expected 2 sections, got 0" production error.
     """
 
-    def test_production_error_unterminated_string(self):
+    @patch("services.langgraph_agents.workout_insights.nodes.genai")
+    @patch("services.langgraph_agents.workout_insights.nodes.settings")
+    async def test_empty_sections_returns_fallback(self, mock_settings, mock_genai):
+        """When Gemini returns empty sections array, node should return fallback."""
+        mock_settings.gemini_api_key = "test-key"
+        mock_settings.gemini_model = "test-model"
+
+        response = _mock_gemini_response(
+            parsed_data={"headline": "Great Workout!", "sections": []}
+        )
+        mock_client = MagicMock()
+        mock_client.aio.models.generate_content = AsyncMock(return_value=response)
+        mock_genai.Client.return_value = mock_client
+
+        state = _make_state()
+        result = await generate_structured_insights_node(state)
+
+        assert "headline" in result
+        assert "sections" in result
+        assert "summary" in result
+        assert len(result["sections"]) == 2
+        # Headline preserved from AI response
+        assert result["headline"] == "Great Workout!"
+
+    @patch("services.langgraph_agents.workout_insights.nodes.genai")
+    @patch("services.langgraph_agents.workout_insights.nodes.settings")
+    async def test_single_section_returns_fallback(self, mock_settings, mock_genai):
+        """When Gemini returns only 1 section, node should return fallback."""
+        mock_settings.gemini_api_key = "test-key"
+        mock_settings.gemini_model = "test-model"
+
+        response = _mock_gemini_response(
+            parsed_data={
+                "headline": "Push It!",
+                "sections": [
+                    {"icon": "🎯", "title": "Focus", "content": "Test", "color": "cyan"}
+                ],
+            }
+        )
+        mock_client = MagicMock()
+        mock_client.aio.models.generate_content = AsyncMock(return_value=response)
+        mock_genai.Client.return_value = mock_client
+
+        state = _make_state()
+        result = await generate_structured_insights_node(state)
+
+        assert len(result["sections"]) == 2
+        assert result["headline"] == "Push It!"
+
+    @patch("services.langgraph_agents.workout_insights.nodes.genai")
+    @patch("services.langgraph_agents.workout_insights.nodes.settings")
+    async def test_none_response_returns_fallback(self, mock_settings, mock_genai):
+        """When Gemini returns None parsed and empty text, node should return fallback."""
+        mock_settings.gemini_api_key = "test-key"
+        mock_settings.gemini_model = "test-model"
+
+        response = MagicMock()
+        response.parsed = None
+        response.text = ""
+        response.candidates = []
+
+        mock_client = MagicMock()
+        mock_client.aio.models.generate_content = AsyncMock(return_value=response)
+        mock_genai.Client.return_value = mock_client
+
+        state = _make_state()
+        result = await generate_structured_insights_node(state)
+
+        assert "headline" in result
+        assert len(result["sections"]) == 2
+        assert result["headline"] == "Let's crush this workout!"
+
+    @patch("services.langgraph_agents.workout_insights.nodes.genai")
+    @patch("services.langgraph_agents.workout_insights.nodes.settings")
+    async def test_gemini_exception_returns_fallback(self, mock_settings, mock_genai):
+        """When Gemini throws, node should return fallback after retries."""
+        mock_settings.gemini_api_key = "test-key"
+        mock_settings.gemini_model = "test-model"
+
+        mock_client = MagicMock()
+        mock_client.aio.models.generate_content = AsyncMock(
+            side_effect=Exception("API quota exceeded")
+        )
+        mock_genai.Client.return_value = mock_client
+
+        state = _make_state()
+        result = await generate_structured_insights_node(state)
+
+        assert "headline" in result
+        assert len(result["sections"]) == 2
+        assert result["headline"] == "Let's crush this workout!"
+
+    @patch("services.langgraph_agents.workout_insights.nodes.genai")
+    @patch("services.langgraph_agents.workout_insights.nodes.settings")
+    async def test_retries_before_fallback(self, mock_settings, mock_genai):
+        """Should retry max_retries times before falling back."""
+        mock_settings.gemini_api_key = "test-key"
+        mock_settings.gemini_model = "test-model"
+
+        response = _mock_gemini_response(
+            parsed_data={"headline": "Test!", "sections": []}
+        )
+        mock_client = MagicMock()
+        mock_client.aio.models.generate_content = AsyncMock(return_value=response)
+        mock_genai.Client.return_value = mock_client
+
+        state = _make_state()
+        result = await generate_structured_insights_node(state)
+
+        # initial + 2 retries = 3 calls
+        assert mock_client.aio.models.generate_content.call_count == 3
+        assert len(result["sections"]) == 2
+
+    @patch("services.langgraph_agents.workout_insights.nodes.genai")
+    @patch("services.langgraph_agents.workout_insights.nodes.settings")
+    async def test_success_on_first_try(self, mock_settings, mock_genai):
+        """Valid response on first try should return immediately with no retries."""
+        mock_settings.gemini_api_key = "test-key"
+        mock_settings.gemini_model = "test-model"
+
+        response = _mock_gemini_response(
+            parsed_data={
+                "headline": "Crush It!",
+                "sections": [
+                    {"icon": "🎯", "title": "Focus", "content": "Upper body power", "color": "cyan"},
+                    {"icon": "💪", "title": "Volume", "content": "Heavy compound lifts", "color": "purple"},
+                ],
+            }
+        )
+        mock_client = MagicMock()
+        mock_client.aio.models.generate_content = AsyncMock(return_value=response)
+        mock_genai.Client.return_value = mock_client
+
+        state = _make_state()
+        result = await generate_structured_insights_node(state)
+
+        assert result["headline"] == "Crush It!"
+        assert len(result["sections"]) == 2
+        assert result["sections"][0]["title"] == "Focus"
+        assert mock_client.aio.models.generate_content.call_count == 1
+
+    @patch("services.langgraph_agents.workout_insights.nodes.genai")
+    @patch("services.langgraph_agents.workout_insights.nodes.settings")
+    async def test_headline_truncated_to_5_words(self, mock_settings, mock_genai):
+        """Headlines longer than 5 words should be truncated."""
+        mock_settings.gemini_api_key = "test-key"
+        mock_settings.gemini_model = "test-model"
+
+        response = _mock_gemini_response(
+            parsed_data={
+                "headline": "This Is A Very Long Headline That Exceeds",
+                "sections": [
+                    {"icon": "🎯", "title": "Focus", "content": "Test", "color": "cyan"},
+                    {"icon": "💪", "title": "Volume", "content": "Test", "color": "purple"},
+                ],
+            }
+        )
+        mock_client = MagicMock()
+        mock_client.aio.models.generate_content = AsyncMock(return_value=response)
+        mock_genai.Client.return_value = mock_client
+
+        state = _make_state()
+        result = await generate_structured_insights_node(state)
+
+        assert len(result["headline"].split()) <= 5
+
+    @patch("services.langgraph_agents.workout_insights.nodes.genai")
+    @patch("services.langgraph_agents.workout_insights.nodes.settings")
+    async def test_section_content_truncated_to_10_words(self, mock_settings, mock_genai):
+        """Section content longer than 10 words should be truncated."""
+        mock_settings.gemini_api_key = "test-key"
+        mock_settings.gemini_model = "test-model"
+
+        response = _mock_gemini_response(
+            parsed_data={
+                "headline": "Go!",
+                "sections": [
+                    {"icon": "🎯", "title": "Focus",
+                     "content": "One two three four five six seven eight nine ten eleven twelve",
+                     "color": "cyan"},
+                    {"icon": "💪", "title": "Volume", "content": "Short", "color": "purple"},
+                ],
+            }
+        )
+        mock_client = MagicMock()
+        mock_client.aio.models.generate_content = AsyncMock(return_value=response)
+        mock_genai.Client.return_value = mock_client
+
+        state = _make_state()
+        result = await generate_structured_insights_node(state)
+
+        assert len(result["sections"][0]["content"].split()) <= 10
+        assert result["sections"][1]["content"] == "Short"
+
+    @patch("services.langgraph_agents.workout_insights.nodes.genai")
+    @patch("services.langgraph_agents.workout_insights.nodes.settings")
+    async def test_fallback_uses_workout_context(self, mock_settings, mock_genai):
+        """Fallback sections should reference the workout's focus and duration."""
+        mock_settings.gemini_api_key = "test-key"
+        mock_settings.gemini_model = "test-model"
+
+        mock_client = MagicMock()
+        mock_client.aio.models.generate_content = AsyncMock(
+            side_effect=Exception("timeout")
+        )
+        mock_genai.Client.return_value = mock_client
+
+        state = _make_state(workout_focus="leg day", duration_minutes=60)
+        result = await generate_structured_insights_node(state)
+
+        all_content = " ".join(s["content"] for s in result["sections"])
+        assert "leg day" in all_content or "60" in all_content
+
+    @patch("services.langgraph_agents.workout_insights.nodes.genai")
+    @patch("services.langgraph_agents.workout_insights.nodes.settings")
+    async def test_summary_is_valid_json(self, mock_settings, mock_genai):
+        """The summary field should be valid JSON matching headline/sections."""
+        mock_settings.gemini_api_key = "test-key"
+        mock_settings.gemini_model = "test-model"
+
+        response = _mock_gemini_response(
+            parsed_data={
+                "headline": "Go Hard!",
+                "sections": [
+                    {"icon": "🎯", "title": "Focus", "content": "Push it", "color": "cyan"},
+                    {"icon": "💪", "title": "Volume", "content": "Max reps", "color": "purple"},
+                ],
+            }
+        )
+        mock_client = MagicMock()
+        mock_client.aio.models.generate_content = AsyncMock(return_value=response)
+        mock_genai.Client.return_value = mock_client
+
+        state = _make_state()
+        result = await generate_structured_insights_node(state)
+
+        summary = json.loads(result["summary"])
+        assert summary["headline"] == result["headline"]
+        assert len(summary["sections"]) == len(result["sections"])
+
+
+# ============ Streaming truncation detection tests ============
+
+
+class TestStreamingTruncationDetection:
+    """
+    Tests for the streaming response truncation detection logic
+    used in generation.py (lines 1530-1531).
+
+    This verifies the logic that detects when a Gemini streaming response
+    was cut off mid-JSON (e.g., due to max_output_tokens being too low).
+    """
+
+    @staticmethod
+    def _is_truncated(content: str) -> bool:
+        """Replicate the truncation detection logic from generation.py."""
+        if not content:
+            return False
+        stripped = content.rstrip()
+        return (
+            stripped.endswith((',', '{', '[', ':'))
+            or not stripped.endswith(('}', ']'))
+        )
+
+    def test_complete_json_not_truncated(self):
+        assert not self._is_truncated('{"name": "Workout", "exercises": []}')
+
+    def test_complete_array_not_truncated(self):
+        assert not self._is_truncated('[{"name": "Workout"}]')
+
+    def test_trailing_comma_is_truncated(self):
+        assert self._is_truncated('{"name": "Workout",')
+
+    def test_trailing_open_brace_is_truncated(self):
+        assert self._is_truncated('{"name": "Workout", "set_targets": [{')
+
+    def test_trailing_open_bracket_is_truncated(self):
+        assert self._is_truncated('{"exercises": [')
+
+    def test_trailing_colon_is_truncated(self):
+        assert self._is_truncated('{"name":')
+
+    def test_mid_string_is_truncated(self):
+        assert self._is_truncated('{"name": "Cupid\'s Leg Press')
+
+    def test_real_production_truncation(self):
         """
-        Production error: Unterminated string starting at: line 2 column 15 (char 16)
-
-        This happens when the AI response is cut off mid-string.
-        """
-        # Simulated truncated response
-        malformed = '''{
-  "headline": "Power'''
-
-        result = repair_json_string(malformed)
-        assert result is not None
-        # Should be able to parse after repair
-        parsed = json.loads(result)
-        assert "headline" in parsed
-
-    def test_production_error_empty_sections(self):
-        """
-        Production error: AI returned invalid structure: expected 2+ sections, got 0
-
-        This happens when AI returns valid JSON but with empty sections array.
-        """
-        # Valid JSON but empty sections
-        valid_but_empty = '{"headline": "Great Workout!", "sections": []}'
-        parsed = json.loads(valid_but_empty)
-
-        # Validation should catch this
-        sections = parsed.get("sections", [])
-        assert len(sections) == 0
-
-        # This should raise an error in production
-        with pytest.raises(ValueError) as exc_info:
-            if not sections or len(sections) < 2:
-                raise ValueError(f"AI returned invalid structure: expected 2+ sections, got {len(sections)}")
-
-        assert "expected 2+ sections, got 0" in str(exc_info.value)
-
-    def test_production_recovery_truncated_json(self):
-        """
-        Test that truncated but recoverable JSON can be repaired.
-
-        Common when API times out mid-response.
+        Reproduces the actual production error: 3983 chars of JSON cut off
+        mid-way through set_targets due to max_output_tokens=4000 in cached streaming.
         """
         truncated = '''{
-  "headline": "Leg Day Power!",
-  "sections": [
-    {"icon": "🎯", "title": "Focus", "content": "This workout targets", "color": "cyan"}'''
+  "name": "Cupid's Unstoppable Heart Surge",
+  "exercises": [
+    {
+      "name": "Cupid's Leg Press Surge",
+      "set_targets": [
+        {
+          "set_number": 1,
+          "set_type": "warmup",
+          "target_reps": 12
+        },
+        {'''
+        assert self._is_truncated(truncated)
 
-        result = repair_json_string(truncated)
-        assert result is not None
+    def test_empty_content_not_truncated(self):
+        assert not self._is_truncated("")
 
-        parsed = json.loads(result)
-        assert parsed["headline"] == "Leg Day Power!"
-        assert len(parsed["sections"]) == 1
 
-    def test_production_recovery_missing_closing_braces(self):
+class TestCachedStreamingTokenLimit:
+    """
+    Verify the cached streaming function uses a sufficient max_output_tokens
+    to prevent truncation of workouts with set_targets.
+    """
+
+    def test_cached_streaming_token_limit_matches_non_cached(self):
         """
-        Test recovery when closing braces are missing.
+        The cached streaming max_output_tokens must be >= 16384
+        to prevent truncation of detailed workouts with set_targets.
 
-        Common with streaming responses that get interrupted.
+        This was the root cause of the production JSON parse error.
         """
-        missing_braces = '''{
-  "headline": "Upper Body Day!",
-  "sections": [
-    {"icon": "💪", "title": "Volume", "content": "Heavy sets today", "color": "purple"},
-    {"icon": "⚡", "title": "Tip", "content": "Focus on form", "color": "orange"}
-  ]'''
+        import ast
+        import os
 
-        result = repair_json_string(missing_braces)
-        assert result is not None
+        # Read the source file and find max_output_tokens in the cached function
+        source_path = os.path.join(
+            os.path.dirname(__file__),
+            "..", "..", "..",
+            "services", "gemini_service.py"
+        )
+        source_path = os.path.normpath(source_path)
 
-        parsed = json.loads(result)
-        assert parsed["headline"] == "Upper Body Day!"
-        assert len(parsed["sections"]) == 2
+        with open(source_path, "r") as f:
+            source = f.read()
+
+        # Find the cached streaming function and its max_output_tokens
+        # Look for the pattern within generate_workout_plan_streaming_cached
+        in_cached_func = False
+        cached_token_limit = None
+        non_cached_token_limit = None
+
+        for line in source.splitlines():
+            if "async def generate_workout_plan_streaming_cached" in line:
+                in_cached_func = True
+            elif "async def " in line and in_cached_func:
+                break  # Hit next function
+            if in_cached_func and "max_output_tokens=" in line and "cached_content" not in line:
+                # Extract the numeric value
+                token_val = line.split("max_output_tokens=")[1].split(",")[0].split("#")[0].strip()
+                cached_token_limit = int(token_val)
+                break
+
+        assert cached_token_limit is not None, "Could not find max_output_tokens in cached streaming function"
+        assert cached_token_limit >= 16384, (
+            f"Cached streaming max_output_tokens={cached_token_limit} is too low. "
+            f"Must be >= 16384 to prevent truncation of workouts with set_targets."
+        )

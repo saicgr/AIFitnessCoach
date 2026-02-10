@@ -62,13 +62,13 @@ class TrainingPreferencesSection extends StatelessWidget {
     {
       'icon': Icons.favorite,
       'title': 'Favorite Exercises',
-      'description': 'Exercises you enjoy that the AI will include more often in your workouts.',
+      'description': 'Exercises you enjoy. The AI gives these a priority boost so they appear more often — but they can still be rotated out for variety.',
       'color': AppColors.error,
     },
     {
       'icon': Icons.lock,
       'title': 'Staple Exercises',
-      'description': 'Core lifts like squats, bench press, or deadlifts that always stay in your program and never rotate out.',
+      'description': 'Core lifts that are GUARANTEED in every workout for their muscle group. They never rotate out and can be scoped to specific gym profiles.',
       'color': AppColors.purple,
     },
     {
@@ -156,13 +156,13 @@ class TrainingPreferencesSection extends StatelessWidget {
             SettingItemData(
               icon: Icons.favorite,
               title: 'Favorite Exercises',
-              subtitle: 'AI will prioritize these',
+              subtitle: 'Boosted in selection, can rotate',
               isFavoriteExercisesManager: true,
             ),
             SettingItemData(
               icon: Icons.lock,
               title: 'Staple Exercises',
-              subtitle: 'Core lifts that never rotate',
+              subtitle: 'Guaranteed, never rotate out',
               isStapleExercisesManager: true,
             ),
             SettingItemData(

@@ -1174,8 +1174,116 @@ export default function MarketingLanding() {
         </div>
       </section>
 
-      {/* Pricing Preview */}
+      {/* Why FitWiz Section */}
       <section className="py-20 sm:py-28 px-6 bg-[#0a0a0a]">
+        <div className="max-w-[980px] mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={stagger}
+            className="text-center mb-16"
+          >
+            <motion.h2 variants={fadeUp} className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-4">
+              <span className="bg-gradient-to-r from-emerald-400 via-green-400 to-lime-400 bg-clip-text text-transparent">
+                Why FitWiz?
+              </span>
+            </motion.h2>
+            <motion.p variants={fadeUp} className="text-[17px] sm:text-[21px] text-[#86868b] max-w-[560px] mx-auto">
+              The only fitness app you'll ever need.
+            </motion.p>
+          </motion.div>
+
+          {/* Comparison Rows */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={stagger}
+            className="space-y-4 mb-12"
+          >
+            {[
+              { category: 'AI Workout Generation', apps: { FitWiz: true, Hevy: false, MFP: false, Gravl: true } },
+              { category: 'Nutrition + Food Scanning', apps: { FitWiz: true, Hevy: false, MFP: true, Gravl: false } },
+              { category: 'Intermittent Fasting', apps: { FitWiz: true, Hevy: false, MFP: false, Gravl: false } },
+              { category: 'AI Coach (5 agents)', apps: { FitWiz: true, Hevy: false, MFP: false, Gravl: false } },
+              { category: 'All-in-One Platform', apps: { FitWiz: true, Hevy: false, MFP: false, Gravl: false } },
+            ].map((row, i) => (
+              <motion.div
+                key={i}
+                variants={fadeUp}
+                className="flex items-center gap-4 p-4 rounded-2xl bg-[#1d1d1f] border border-white/[0.05]"
+              >
+                <span className="text-[15px] text-white font-medium w-[200px] flex-shrink-0">{row.category}</span>
+                <div className="flex-1 flex items-center justify-around">
+                  {Object.entries(row.apps).map(([app, has]) => (
+                    <div key={app} className="flex flex-col items-center gap-1 min-w-[60px]">
+                      {has ? (
+                        <svg className="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                      <span className={`text-[11px] ${app === 'FitWiz' ? 'text-emerald-400 font-medium' : 'text-[#86868b]'}`}>
+                        {app}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Price Comparison Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="p-6 rounded-3xl bg-gradient-to-r from-emerald-900/40 to-green-900/20 border border-emerald-500/20 mb-8"
+          >
+            <h3 className="text-[17px] font-semibold text-center mb-4 text-white/80">Monthly premium pricing</h3>
+            <div className="flex items-end justify-center gap-4 sm:gap-8">
+              {[
+                { name: 'FitWiz', price: '$5.99', height: 'h-16', highlight: true },
+                { name: 'Gravl', price: '$10.99', height: 'h-28', highlight: false },
+                { name: 'MacroFactor', price: '$11.99', height: 'h-32', highlight: false },
+                { name: 'MFP', price: '$19.99', height: 'h-48', highlight: false },
+              ].map((app) => (
+                <div key={app.name} className="flex flex-col items-center gap-2">
+                  <span className={`text-[13px] font-bold ${app.highlight ? 'text-emerald-400' : 'text-white/60'}`}>
+                    {app.price}
+                  </span>
+                  <div
+                    className={`w-12 sm:w-16 ${app.height} rounded-t-xl ${
+                      app.highlight
+                        ? 'bg-gradient-to-t from-emerald-600 to-emerald-400'
+                        : 'bg-white/10'
+                    }`}
+                  />
+                  <span className={`text-[11px] ${app.highlight ? 'text-emerald-400 font-medium' : 'text-[#86868b]'}`}>
+                    {app.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center text-[15px] text-[#86868b]"
+          >
+            <span className="text-emerald-400 font-medium">FitWiz</span> gives you workouts + nutrition + fasting + AI coaching for less than others charge for just one.
+          </motion.p>
+        </div>
+      </section>
+
+      {/* Pricing Preview */}
+      <section className="py-20 sm:py-28 px-6">
         <div className="max-w-[980px] mx-auto">
           <motion.div
             initial="hidden"
@@ -1197,12 +1305,11 @@ export default function MarketingLanding() {
             whileInView="visible"
             viewport={{ once: true }}
             variants={stagger}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-[700px] mx-auto"
           >
             {[
-              { name: 'Free', price: '$0', period: 'forever', features: ['5 AI messages/day', '1 workout/week', 'Basic stats'], highlight: false },
-              { name: 'Premium', price: '$5.99', period: '/month', features: ['30 AI messages/day', 'Daily workouts', 'Full analytics', 'No ads'], highlight: true },
-              { name: 'Lifetime', price: '$99.99', period: 'one-time', features: ['100+ AI messages/day', 'Unlimited workouts', 'All features forever'], highlight: false },
+              { name: 'Free', price: '$0', period: 'forever', features: ['1,722 exercises with videos', 'Unlimited workout logging', 'Barcode scanner & food logging', '5 AI chat messages/day', 'No ads, ever'], highlight: false },
+              { name: 'Premium', price: '$5.99', period: '/month', features: ['Unlimited AI chat (5 agents)', 'AI workout generation', 'AI photo food scanning', 'Advanced analytics & heatmaps', 'All 10 fasting protocols'], highlight: true },
             ].map((plan, i) => (
               <motion.div
                 key={i}
@@ -1236,7 +1343,7 @@ export default function MarketingLanding() {
                       : 'bg-[#2d2d2f] text-white hover:bg-[#3d3d3f]'
                   }`}
                 >
-                  {plan.name === 'Free' ? 'Get Started' : 'Learn More'}
+                  {plan.name === 'Free' ? 'Get Started' : 'Start Free Trial'}
                 </Link>
               </motion.div>
             ))}

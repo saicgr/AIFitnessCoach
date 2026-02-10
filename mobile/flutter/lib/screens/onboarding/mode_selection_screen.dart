@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/accessibility/accessibility_provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/window_mode_provider.dart';
 import '../../widgets/senior/senior_button.dart';
+import 'widgets/foldable_quiz_scaffold.dart';
 
 /// Mode selection screen shown during onboarding
 /// After user provides name/age, AI asks them to choose Normal or Senior mode
@@ -67,105 +69,119 @@ class _ModeSelectionScreenState extends ConsumerState<ModeSelectionScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Spacer(flex: 1),
+        child: FoldableQuizScaffold(
+          headerTitle: 'Choose Your Experience',
+          headerSubtitle: 'Select the mode that works best for you',
+          content: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Spacer(flex: 1),
 
-              // Title
-              Text(
-                'Choose Your Experience',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF1A1A1A),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Select the mode that works best for you',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w400,
-                  color: isDark
-                      ? const Color(0xFFAAAAAA)
-                      : const Color(0xFF666666),
-                ),
-              ),
-
-              const SizedBox(height: 40),
-
-              // Normal Mode Option
-              SeniorModeSelectionButton(
-                title: 'Normal Mode',
-                subtitle: 'Full features, standard design',
-                icon: Icons.apps,
-                isSelected: _selectedMode == AccessibilityMode.standard,
-                isRecommended: !_recommendSenior,
-                onPressed: () => _selectMode(AccessibilityMode.standard),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Senior Mode Option
-              SeniorModeSelectionButton(
-                title: 'Senior Mode',
-                subtitle: 'Larger text, simpler navigation',
-                icon: Icons.accessibility_new,
-                isSelected: _selectedMode == AccessibilityMode.senior,
-                isRecommended: _recommendSenior,
-                onPressed: () => _selectMode(AccessibilityMode.senior),
-              ),
-
-              const Spacer(flex: 2),
-
-              // Help text
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF1A1A1A)
-                      : const Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isDark
-                        ? const Color(0xFF333333)
-                        : const Color(0xFFDDDDDD),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      color: AppColors.accent,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Text(
-                        'You can always change this later in Settings',
+                // Show header inline only on phone
+                Consumer(builder: (context, ref, _) {
+                  final windowState = ref.watch(windowModeProvider);
+                  if (FoldableQuizScaffold.shouldUseFoldableLayout(windowState)) {
+                    return const SizedBox.shrink();
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Choose Your Experience',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Select the mode that works best for you',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w400,
                           color: isDark
                               ? const Color(0xFFAAAAAA)
                               : const Color(0xFF666666),
                         ),
                       ),
+                      const SizedBox(height: 40),
+                    ],
+                  );
+                }),
+
+                // Normal Mode Option
+                SeniorModeSelectionButton(
+                  title: 'Normal Mode',
+                  subtitle: 'Full features, standard design',
+                  icon: Icons.apps,
+                  isSelected: _selectedMode == AccessibilityMode.standard,
+                  isRecommended: !_recommendSenior,
+                  onPressed: () => _selectMode(AccessibilityMode.standard),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Senior Mode Option
+                SeniorModeSelectionButton(
+                  title: 'Senior Mode',
+                  subtitle: 'Larger text, simpler navigation',
+                  icon: Icons.accessibility_new,
+                  isSelected: _selectedMode == AccessibilityMode.senior,
+                  isRecommended: _recommendSenior,
+                  onPressed: () => _selectMode(AccessibilityMode.senior),
+                ),
+
+                const Spacer(flex: 2),
+
+                // Help text
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF1A1A1A)
+                        : const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isDark
+                          ? const Color(0xFF333333)
+                          : const Color(0xFFDDDDDD),
                     ),
-                  ],
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: AppColors.accent,
+                        size: 28,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          'You can always change this later in Settings',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: isDark
+                                ? const Color(0xFFAAAAAA)
+                                : const Color(0xFF666666),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              // Loading indicator
-              if (_isSaving)
-                const Center(
-                  child: CircularProgressIndicator(color: AppColors.accent),
-                ),
-            ],
+                // Loading indicator
+                if (_isSaving)
+                  const Center(
+                    child: CircularProgressIndicator(color: AppColors.accent),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

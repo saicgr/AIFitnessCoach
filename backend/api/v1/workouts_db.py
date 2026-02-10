@@ -49,6 +49,31 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
+def ensure_workout_data_dict(data, context: str = "") -> dict:
+    """
+    Ensure workout_data is a dict. Handles string, double-stringified, or non-dict inputs.
+
+    Gemini sometimes returns a JSON string instead of a parsed dict, or even a
+    double-stringified JSON string. This normalizes all cases to a dict.
+    """
+    if isinstance(data, dict):
+        return data
+    if isinstance(data, str) and data:
+        # Try up to 3 rounds of json.loads for multi-stringified JSON
+        for _ in range(3):
+            try:
+                data = json.loads(data)
+                if isinstance(data, dict):
+                    return data
+                if not isinstance(data, str):
+                    break  # Parsed to non-dict, non-string (e.g., list) — give up
+            except (json.JSONDecodeError, ValueError, TypeError):
+                break
+    prefix = f"[{context}] " if context else ""
+    logger.error(f"{prefix}workout_data is not a dict: type={type(data).__name__}, preview={str(data)[:200]}")
+    return {}
+
+
 # =============================================================================
 # In-Memory TTL Cache for Workout Generation
 # =============================================================================
@@ -665,6 +690,9 @@ async def generate_workout(http_request: Request, request: GenerateWorkoutReques
                     muscle_focus_points=muscle_focus_points,
                 )
 
+                # Guard against Gemini returning a string instead of dict
+                workout_data = ensure_workout_data_dict(workout_data, context="generate")
+
                 exercises = workout_data.get("exercises", [])
                 workout_name = workout_data.get("name", "Generated Workout")
                 workout_type = workout_data.get("type", request.workout_type or "strength")
@@ -798,6 +826,12 @@ async def generate_workout_streaming(http_request: Request, request: GenerateWor
                 content = content[:-3]
 
             workout_data = json.loads(content.strip())
+
+            # Guard against Gemini returning a string instead of dict
+            workout_data = ensure_workout_data_dict(workout_data, context="streaming")
+            if not workout_data:
+                yield f"event: error\ndata: {json.dumps({'error': 'AI response was not valid JSON'})}\n\n"
+                return
 
             if "exercises" not in workout_data or not workout_data["exercises"]:
                 yield f"event: error\ndata: {json.dumps({'error': 'AI response missing exercises'})}\n\n"

@@ -19,6 +19,7 @@ class QuizTrainingStyle extends StatefulWidget {
   final ValueChanged<String> onWorkoutTypeChanged;
   final ValueChanged<String>? onWorkoutVarietyChanged;
   final ValueChanged<int>? onDaysPerWeekChanged;  // ← ADDED: Allow adjusting days/week
+  final bool showHeader;
 
   const QuizTrainingStyle({
     super.key,
@@ -30,6 +31,7 @@ class QuizTrainingStyle extends StatefulWidget {
     required this.onWorkoutTypeChanged,
     this.onWorkoutVarietyChanged,
     this.onDaysPerWeekChanged,  // ← ADDED: Optional callback
+    this.showHeader = true,
   });
 
   @override
@@ -172,24 +174,26 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Title
-              Text(
-                'Training Style',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
-                ),
-              ).animate().fadeIn(delay: 100.ms),
-              const SizedBox(height: 6),
-              Text(
-                'Choose how you want to structure your workouts',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: textSecondary,
-                ),
-              ).animate().fadeIn(delay: 200.ms),
-              const SizedBox(height: 24),
+              if (widget.showHeader) ...[
+                // Title
+                Text(
+                  'Training Style',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: textPrimary,
+                  ),
+                ).animate().fadeIn(delay: 100.ms),
+                const SizedBox(height: 6),
+                Text(
+                  'Choose how you want to structure your workouts',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: textSecondary,
+                  ),
+                ).animate().fadeIn(delay: 200.ms),
+                const SizedBox(height: 24),
+              ],
 
               // Section A: Training Split
               Expanded(

@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../data/models/exercise.dart';
 import '../../../../data/repositories/library_repository.dart';
 import '../../../../widgets/exercise_image.dart';
+import '../../../library/components/exercise_detail_sheet.dart';
 
 /// The type of exercise preference being selected
 enum ExercisePickerType {
@@ -212,6 +214,29 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
         targetMuscleGroup: exercise.targetMuscle ?? exercise.bodyPart,
         reason: widget.type == ExercisePickerType.staple ? 'staple' : null,
       ),
+    );
+  }
+
+  void _openDetailSheet(LibraryExerciseItem exercise) {
+    final libraryExercise = LibraryExercise(
+      id: exercise.id,
+      nameValue: exercise.name,
+      bodyPart: exercise.bodyPart,
+      equipmentValue: exercise.equipment,
+      targetMuscle: exercise.targetMuscle,
+      gifUrl: exercise.gifUrl,
+      videoUrl: exercise.videoUrl,
+      imageUrl: exercise.imageUrl,
+      difficultyLevelValue: exercise.difficulty,
+      instructionsValue: exercise.instructions,
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ExerciseDetailSheet(exercise: libraryExercise),
     );
   }
 
@@ -510,7 +535,8 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                                 actionIcon: _actionIcon,
                                 textPrimary: textPrimary,
                                 textMuted: textMuted,
-                                onTap: () => _selectExercise(exercise),
+                                onDetailTap: () => _openDetailSheet(exercise),
+                                onAddTap: () => _selectExercise(exercise),
                               );
                             },
                           ),
@@ -560,7 +586,8 @@ class _ExerciseCard extends StatelessWidget {
   final IconData actionIcon;
   final Color textPrimary;
   final Color textMuted;
-  final VoidCallback onTap;
+  final VoidCallback onDetailTap;
+  final VoidCallback onAddTap;
 
   const _ExerciseCard({
     required this.exercise,
@@ -568,7 +595,8 @@ class _ExerciseCard extends StatelessWidget {
     required this.actionIcon,
     required this.textPrimary,
     required this.textMuted,
-    required this.onTap,
+    required this.onDetailTap,
+    required this.onAddTap,
   });
 
   @override
@@ -583,20 +611,43 @@ class _ExerciseCard extends StatelessWidget {
         color: cardBackground,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
-          onTap: onTap,
+          onTap: onDetailTap,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                // Exercise image (fetches presigned URL from API)
-                ExerciseImage(
-                  exerciseName: exercise.name,
-                  width: 60,
-                  height: 60,
-                  borderRadius: 8,
-                  backgroundColor: glassSurface,
-                  iconColor: textMuted,
+                // Exercise image with play overlay - tapping opens detail sheet
+                GestureDetector(
+                  onTap: onDetailTap,
+                  child: Stack(
+                    children: [
+                      ExerciseImage(
+                        exerciseName: exercise.name,
+                        width: 60,
+                        height: 60,
+                        borderRadius: 8,
+                        backgroundColor: glassSurface,
+                        iconColor: textMuted,
+                      ),
+                      // Play icon overlay
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.play_circle_outline,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(width: 12),
 
@@ -631,17 +682,21 @@ class _ExerciseCard extends StatelessWidget {
                   ),
                 ),
 
-                // Add icon
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    actionIcon,
-                    color: accentColor,
-                    size: 20,
+                // Add/lock action button - the ONLY way to add as staple
+                Material(
+                  color: accentColor.withValues(alpha: 0.2),
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    onTap: onAddTap,
+                    customBorder: const CircleBorder(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Icon(
+                        actionIcon,
+                        color: accentColor,
+                        size: 22,
+                      ),
+                    ),
                   ),
                 ),
               ],

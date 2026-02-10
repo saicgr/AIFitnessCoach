@@ -17,6 +17,7 @@ class QuizProgressionConstraints extends StatefulWidget {
   final ValueChanged<String> onPaceChanged;
   final ValueChanged<List<String>> onLimitationsChanged;
   final ValueChanged<String?>? onCustomLimitationChanged;  // ← ADDED: Callback for custom text
+  final bool showHeader;
 
   const QuizProgressionConstraints({
     super.key,
@@ -27,6 +28,7 @@ class QuizProgressionConstraints extends StatefulWidget {
     required this.onPaceChanged,
     required this.onLimitationsChanged,
     this.onCustomLimitationChanged,
+    this.showHeader = true,
   });
 
   @override
@@ -71,24 +73,26 @@ class _QuizProgressionConstraintsState extends State<QuizProgressionConstraints>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title
-          Text(
-            'Progression & Safety',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
-            ),
-          ).animate().fadeIn(delay: 100.ms),
-          const SizedBox(height: 6),
-          Text(
-            'Set your pace and tell us about any limitations',
-            style: TextStyle(
-              fontSize: 15,
-              color: textSecondary,
-            ),
-          ).animate().fadeIn(delay: 200.ms),
-          const SizedBox(height: 24),
+          if (widget.showHeader) ...[
+            // Title
+            Text(
+              'Progression & Safety',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: textPrimary,
+              ),
+            ).animate().fadeIn(delay: 100.ms),
+            const SizedBox(height: 6),
+            Text(
+              'Set your pace and tell us about any limitations',
+              style: TextStyle(
+                fontSize: 15,
+                color: textSecondary,
+              ),
+            ).animate().fadeIn(delay: 200.ms),
+            const SizedBox(height: 24),
+          ],
 
           Expanded(
             child: ListView(

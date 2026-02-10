@@ -50,6 +50,22 @@ class StapleExercise {
   final String? bodyPart;
   final String? equipment;
   final String? gifUrl;
+  final String? gymProfileId;
+  final String? gymProfileName;
+  final String? gymProfileColor;
+  final String section; // 'main', 'warmup', or 'stretches'
+  // Cardio metadata from exercise_library
+  final double? defaultInclinePercent;
+  final double? defaultSpeedMph;
+  final int? defaultRpm;
+  final int? defaultResistanceLevel;
+  final int? strokeRateSpm;
+  final int? defaultDurationSeconds;
+  // Movement classification
+  final String? movementPattern;
+  final String? energySystem;
+  final String? impactLevel;
+  final String? category;
 
   const StapleExercise({
     required this.id,
@@ -61,6 +77,20 @@ class StapleExercise {
     this.bodyPart,
     this.equipment,
     this.gifUrl,
+    this.gymProfileId,
+    this.gymProfileName,
+    this.gymProfileColor,
+    this.section = 'main',
+    this.defaultInclinePercent,
+    this.defaultSpeedMph,
+    this.defaultRpm,
+    this.defaultResistanceLevel,
+    this.strokeRateSpm,
+    this.defaultDurationSeconds,
+    this.movementPattern,
+    this.energySystem,
+    this.impactLevel,
+    this.category,
   });
 
   factory StapleExercise.fromJson(Map<String, dynamic> json) {
@@ -74,6 +104,20 @@ class StapleExercise {
       bodyPart: json['body_part'] as String?,
       equipment: json['equipment'] as String?,
       gifUrl: json['gif_url'] as String?,
+      gymProfileId: json['gym_profile_id'] as String?,
+      gymProfileName: json['gym_profile_name'] as String?,
+      gymProfileColor: json['gym_profile_color'] as String?,
+      section: json['section'] as String? ?? 'main',
+      defaultInclinePercent: (json['default_incline_percent'] as num?)?.toDouble(),
+      defaultSpeedMph: (json['default_speed_mph'] as num?)?.toDouble(),
+      defaultRpm: (json['default_rpm'] as num?)?.toInt(),
+      defaultResistanceLevel: (json['default_resistance_level'] as num?)?.toInt(),
+      strokeRateSpm: (json['stroke_rate_spm'] as num?)?.toInt(),
+      defaultDurationSeconds: (json['default_duration_seconds'] as num?)?.toInt(),
+      movementPattern: json['movement_pattern'] as String?,
+      energySystem: json['energy_system'] as String?,
+      impactLevel: json['impact_level'] as String?,
+      category: json['category'] as String?,
     );
   }
 
@@ -84,7 +128,31 @@ class StapleExercise {
     'muscle_group': muscleGroup,
     'reason': reason,
     'created_at': createdAt.toIso8601String(),
+    'section': section,
   };
+
+  /// Whether this staple has cardio equipment metadata
+  bool get isCardioEquipment =>
+      defaultInclinePercent != null ||
+      defaultSpeedMph != null ||
+      defaultRpm != null ||
+      defaultResistanceLevel != null ||
+      strokeRateSpm != null;
+
+  /// Formatted cardio params for display
+  String get cardioParamsDisplay {
+    final parts = <String>[];
+    if (defaultDurationSeconds != null) {
+      final mins = defaultDurationSeconds! ~/ 60;
+      parts.add('$mins min');
+    }
+    if (defaultSpeedMph != null) parts.add('${defaultSpeedMph!.toStringAsFixed(1)} mph');
+    if (defaultInclinePercent != null) parts.add('${defaultInclinePercent!.toStringAsFixed(0)}% incline');
+    if (defaultRpm != null) parts.add('$defaultRpm RPM');
+    if (defaultResistanceLevel != null) parts.add('Resistance $defaultResistanceLevel');
+    if (strokeRateSpm != null) parts.add('$strokeRateSpm spm');
+    return parts.join(' | ');
+  }
 }
 
 /// Model for variation preference
@@ -735,6 +803,8 @@ class ExercisePreferencesRepository {
     String? libraryId,
     String? muscleGroup,
     String? reason,
+    String? gymProfileId,
+    String section = 'main',
   }) async {
     debugPrint('🔒 [ExercisePrefs] Adding staple: $exerciseName for user: $userId');
 
@@ -747,6 +817,8 @@ class ExercisePreferencesRepository {
           if (libraryId != null) 'library_id': libraryId,
           if (muscleGroup != null) 'muscle_group': muscleGroup,
           if (reason != null) 'reason': reason,
+          if (gymProfileId != null) 'gym_profile_id': gymProfileId,
+          'section': section,
         },
       );
 

@@ -10,6 +10,7 @@ class QuizPrimaryGoal extends StatelessWidget {
   final List<Map<String, dynamic>> options;
   final String? selectedValue;
   final ValueChanged<String> onSelect;
+  final bool showHeader;
 
   const QuizPrimaryGoal({
     super.key,
@@ -18,6 +19,7 @@ class QuizPrimaryGoal extends StatelessWidget {
     required this.options,
     required this.selectedValue,
     required this.onSelect,
+    this.showHeader = true,
   });
 
   void _showInfoSheet(BuildContext context, bool isDark, Color textPrimary, Color textSecondary) {
@@ -210,52 +212,54 @@ class QuizPrimaryGoal extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  question,
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
-                    height: 1.3,
-                    letterSpacing: -0.5,
+          if (showHeader) ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    question,
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                      height: 1.3,
+                      letterSpacing: -0.5,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  _showInfoSheet(context, isDark, textPrimary, textSecondary);
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppColors.orange.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.info_outline,
-                    size: 20,
-                    color: AppColors.orange,
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    _showInfoSheet(context, isDark, textPrimary, textSecondary);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.orange.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.info_outline,
+                      size: 20,
+                      color: AppColors.orange,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 15,
-              color: textSecondary,
-              fontWeight: FontWeight.w500,
+              ],
             ),
-          ),
-          const SizedBox(height: 24),
+            const SizedBox(height: 10),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 15,
+                color: textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.only(bottom: 16),

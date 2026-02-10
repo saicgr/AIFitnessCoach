@@ -115,6 +115,8 @@ class ReadinessCheckInRequest(BaseModel):
     muscle_soreness: int = Field(..., ge=1, le=7, description="1=none, 7=severe")
     mood: Optional[int] = Field(None, ge=1, le=7)
     energy_level: Optional[int] = Field(None, ge=1, le=7)
+    sleep_minutes: Optional[int] = Field(None, ge=0, description="Objective sleep duration in minutes from wearable")
+    objective_recovery_score: Optional[int] = Field(None, ge=0, le=100, description="Objective recovery score from wearable (0-100)")
 
 
 class ReadinessResponse(BaseModel):
@@ -355,8 +357,12 @@ async def submit_readiness_checkin(
         energy_level=request.energy_level,
     )
 
-    # Calculate readiness
-    result = readiness_service.calculate_readiness(check_in)
+    # Calculate readiness (with optional objective data blending)
+    result = readiness_service.calculate_readiness(
+        check_in,
+        objective_sleep_minutes=request.sleep_minutes,
+        objective_recovery_score=request.objective_recovery_score,
+    )
 
     # Prepare data for database
     record_data = {

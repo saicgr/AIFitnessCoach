@@ -54,6 +54,9 @@ class ReadinessResult:
     ai_workout_recommendation: Optional[str]
     ai_insight: Optional[str]
     component_analysis: Dict[str, str]
+    objective_sleep_minutes: Optional[int] = None
+    objective_recovery_score: Optional[int] = None
+    blended: bool = False       # True if any objective data was used
 
 
 class ReadinessService:
@@ -86,9 +89,33 @@ class ReadinessService:
         ReadinessLevel.LOW: WorkoutIntensity.REST,
     }
 
+    # Sleep minutes -> 1-7 scale (matching Hooper: 1=excellent, 7=very poor)
+    SLEEP_MINUTES_SCALE = [
+        (480, 1),   # >= 8h = excellent
+        (420, 2),   # 7-8h = very good
+        (360, 3),   # 6-7h = adequate
+        (300, 5),   # 5-6h = poor
+        (0,   6),   # < 5h = very poor
+    ]
+
     # -------------------------------------------------------------------------
     # Core Calculations
     # -------------------------------------------------------------------------
+
+    def sleep_minutes_to_scale(self, minutes: int) -> int:
+        """
+        Convert objective sleep minutes to the 1-7 Hooper scale.
+
+        Args:
+            minutes: Total sleep duration in minutes
+
+        Returns:
+            Score on 1-7 scale (1=excellent, 7=very poor)
+        """
+        for threshold, score in self.SLEEP_MINUTES_SCALE:
+            if minutes >= threshold:
+                return score
+        return 6
 
     def calculate_hooper_index(self, check_in: ReadinessCheckIn) -> int:
         """
@@ -181,6 +208,8 @@ class ReadinessService:
         scheduled_workout_type: Optional[str] = None,
         recent_workouts: Optional[List[Dict]] = None,
         user_fitness_level: str = "intermediate",
+        objective_sleep_minutes: Optional[int] = None,
+        objective_recovery_score: Optional[int] = None,
     ) -> ReadinessResult:
         """
         Calculate complete readiness from check-in data.
@@ -190,13 +219,42 @@ class ReadinessService:
             scheduled_workout_type: Type of workout scheduled today
             recent_workouts: Recent workout history for context
             user_fitness_level: User's fitness level
+            objective_sleep_minutes: Objective sleep duration from wearable (minutes)
+            objective_recovery_score: Objective recovery score from wearable (0-100)
 
         Returns:
             Complete ReadinessResult with scores and recommendations
         """
+        blended = False
+
+        # If objective sleep data is provided, blend with subjective sleep
+        effective_check_in = check_in
+        if objective_sleep_minutes is not None:
+            objective_sleep_score = self.sleep_minutes_to_scale(objective_sleep_minutes)
+            blended_sleep = round(0.6 * check_in.sleep_quality + 0.4 * objective_sleep_score)
+            # Clamp to 1-7
+            blended_sleep = max(1, min(7, blended_sleep))
+            # Create a new check-in with blended sleep for Hooper calculation
+            effective_check_in = ReadinessCheckIn(
+                sleep_quality=blended_sleep,
+                fatigue_level=check_in.fatigue_level,
+                stress_level=check_in.stress_level,
+                muscle_soreness=check_in.muscle_soreness,
+                mood=check_in.mood,
+                energy_level=check_in.energy_level,
+            )
+            blended = True
+
         # Calculate core metrics
-        hooper_index = self.calculate_hooper_index(check_in)
+        hooper_index = self.calculate_hooper_index(effective_check_in)
         readiness_score = self.hooper_to_readiness_score(hooper_index)
+
+        # If objective recovery score is provided, blend with subjective readiness
+        if objective_recovery_score is not None:
+            readiness_score = round(0.6 * readiness_score + 0.4 * objective_recovery_score)
+            readiness_score = max(0, min(100, readiness_score))
+            blended = True
+
         readiness_level = self.classify_readiness_level(readiness_score)
 
         # Get intensity recommendation
@@ -204,8 +262,18 @@ class ReadinessService:
             readiness_level, scheduled_workout_type
         )
 
-        # Analyze individual components
+        # Analyze individual components (use original check_in for display)
         component_analysis = self._analyze_components(check_in)
+
+        # Add blend info to component analysis
+        if objective_sleep_minutes is not None:
+            component_analysis["sleep_blend"] = (
+                f"Blended: 60% subjective + 40% objective ({objective_sleep_minutes}min sleep)"
+            )
+        if objective_recovery_score is not None:
+            component_analysis["recovery_blend"] = (
+                "Blended: 60% Hooper + 40% objective recovery"
+            )
 
         # Generate AI recommendations (placeholder - will be filled by AI service)
         ai_recommendation, ai_insight = self._generate_basic_recommendations(
@@ -220,6 +288,9 @@ class ReadinessService:
             ai_workout_recommendation=ai_recommendation,
             ai_insight=ai_insight,
             component_analysis=component_analysis,
+            objective_sleep_minutes=objective_sleep_minutes,
+            objective_recovery_score=objective_recovery_score,
+            blended=blended,
         )
 
     # -------------------------------------------------------------------------

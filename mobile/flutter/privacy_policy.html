@@ -393,12 +393,13 @@
         <h3>Data We Read</h3>
         <ul>
             <li>Weight, height, body fat percentage, lean body mass, body water mass, bone mass</li>
-            <li>Heart rate, resting heart rate, heart rate variability</li>
-            <li>Steps, distance, active and total calories burned</li>
-            <li>Oxygen saturation, blood pressure</li>
-            <li>Sleep data</li>
+            <li>Heart rate, resting heart rate, heart rate variability (SDNN and RMSSD)</li>
+            <li>Steps, distance, active and total calories burned, basal energy burned, floors climbed</li>
+            <li>Oxygen saturation, blood pressure, respiratory rate, body temperature</li>
+            <li>Sleep data (total, deep, light, REM, awake phases, session data)</li>
             <li>Exercise sessions</li>
             <li>Basal metabolic rate</li>
+            <li>Water/hydration intake</li>
         </ul>
 
         <h3>Data We Write</h3>
@@ -410,7 +411,7 @@
         </ul>
 
         <div class="highlight-box">
-            <p><strong>Health Connect/HealthKit Data Policy:</strong> Health data accessed through Health Connect or HealthKit is used solely for the purpose of providing fitness coaching and tracking within the FitWiz app. This data is never sold to third parties, used for advertising, or shared outside the services necessary to provide app functionality. You can revoke Health Connect or HealthKit permissions at any time through your device settings.</p>
+            <p><strong>Health Connect/HealthKit Data Policy:</strong> Health data accessed through Health Connect or HealthKit is synced to our secure cloud database (Supabase) to enable cross-device access, AI-powered coaching, and historical trend tracking. Data is encrypted in transit (TLS) and at rest. This data is never sold to third parties, used for advertising, or shared outside the services necessary to provide app functionality. You can revoke Health Connect or HealthKit permissions at any time through your device settings.</p>
         </div>
 
         <!-- Section 5 -->

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
+import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
 /// Provider for avoided exercises list
@@ -405,7 +407,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
   }
 
   Future<void> _addExercise(
-    BuildContext context,
+    BuildContext sheetContext,
     String userId,
     String exerciseName,
     String? reason,
@@ -416,6 +418,18 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
     HapticService.light();
 
     try {
+      // Pop the add sheet first
+      if (mounted) Navigator.pop(sheetContext);
+
+      // Show the choice sheet using the scaffold context (not the popped sheet context)
+      final regenerateNow = await _showAvoidChoiceSheet(context);
+
+      // User dismissed or cancelled -> show discard confirmation
+      if (regenerateNow == null) {
+        return;
+      }
+
+      // Save the exercise
       final repo = ref.read(exercisePreferencesRepositoryProvider);
       await repo.addAvoidedExercise(
         userId,
@@ -427,8 +441,11 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
 
       ref.invalidate(avoidedExercisesProvider(userId));
 
+      if (regenerateNow) {
+        await _regenerateCurrentWorkout(userId);
+      }
+
       if (mounted) {
-        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Added "$exerciseName" to avoid list'),
@@ -448,6 +465,149 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
     } finally {
       if (mounted) setState(() => _isAdding = false);
     }
+  }
+
+  /// Shows the choice sheet: "Update current workout" vs "Apply to future only".
+  /// Returns `true` for regenerate now, `false` for future only, `null` if cancelled/discarded.
+  Future<bool?> _showAvoidChoiceSheet(BuildContext context) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.background : AppColorsLight.background;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Container(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: textMuted.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'When should this apply?',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Option 1: Update current workout
+                _ChoiceOptionCard(
+                  icon: Icons.update,
+                  title: 'Update current workout',
+                  subtitle: 'Regenerate today\'s workout without this exercise',
+                  accentColor: AppColors.cyan,
+                  elevatedColor: elevatedColor,
+                  textColor: textColor,
+                  textMuted: textMuted,
+                  onTap: () => Navigator.pop(sheetContext, true),
+                ),
+                const SizedBox(height: 12),
+                // Option 2: Apply to future only
+                _ChoiceOptionCard(
+                  icon: Icons.skip_next,
+                  title: 'Apply to future workouts only',
+                  subtitle: 'Current workout stays unchanged',
+                  accentColor: textMuted,
+                  elevatedColor: elevatedColor,
+                  textColor: textColor,
+                  textMuted: textMuted,
+                  onTap: () => Navigator.pop(sheetContext, false),
+                ),
+                const SizedBox(height: 16),
+                // Cancel button
+                TextButton(
+                  onPressed: () async {
+                    final discard = await _showDiscardConfirmation(sheetContext);
+                    if (discard == true && sheetContext.mounted) {
+                      Navigator.pop(sheetContext, null);
+                    }
+                  },
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: textMuted, fontSize: 15),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    return result;
+  }
+
+  /// Shows a discard confirmation dialog.
+  /// Returns `true` if user confirms discard, `false` if they go back.
+  Future<bool?> _showDiscardConfirmation(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Discard selection?'),
+        content: const Text('Your exercise won\'t be added to the avoid list.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Go Back'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text('Discard', style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Regenerates the current workout via streaming API.
+  Future<void> _regenerateCurrentWorkout(String userId) async {
+    final response = ref.read(todayWorkoutProvider).valueOrNull;
+    final workoutToRegenerate = response?.todayWorkout ?? response?.nextWorkout;
+    if (workoutToRegenerate == null) return;
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Updating workout...'),
+          backgroundColor: AppColors.cyan,
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+
+    final workoutRepo = ref.read(workoutRepositoryProvider);
+    await for (final progress in workoutRepo.regenerateWorkoutStreaming(
+      workoutId: workoutToRegenerate.id,
+      userId: userId,
+    )) {
+      debugPrint('Avoided regeneration: ${progress.message}');
+      if (progress.isCompleted || progress.hasError) break;
+    }
+
+    ref.invalidate(todayWorkoutProvider);
+    ref.invalidate(workoutsProvider);
   }
 
   Future<void> _removeExercise(String userId, AvoidedExercise exercise) async {
@@ -496,6 +656,82 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
         }
       }
     }
+  }
+}
+
+/// Option card used in the avoid choice sheet
+class _ChoiceOptionCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color accentColor;
+  final Color elevatedColor;
+  final Color textColor;
+  final Color textMuted;
+  final VoidCallback onTap;
+
+  const _ChoiceOptionCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.accentColor,
+    required this.elevatedColor,
+    required this.textColor,
+    required this.textMuted,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: elevatedColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: accentColor, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: textMuted, size: 20),
+          ],
+        ),
+      ),
+    );
   }
 }
 

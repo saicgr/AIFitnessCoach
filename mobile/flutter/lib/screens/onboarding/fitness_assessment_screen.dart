@@ -4,7 +4,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/window_mode_provider.dart';
 import 'pre_auth_quiz_screen.dart';
+import 'widgets/foldable_quiz_scaffold.dart';
 
 /// Fitness Assessment Screen
 /// Single scrollable screen with 6 questions (~2 min)
@@ -151,126 +153,139 @@ class _FitnessAssessmentScreenState
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-              child: _buildHeader(textPrimary, textSecondary),
-            ),
-
-            // Scrollable content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 8),
-
-                    // Question 1: Push-ups
-                    _buildQuestionCard(
-                      index: 0,
-                      icon: Icons.fitness_center,
-                      iconColor: AppColors.orange,
-                      title: 'Push-ups',
-                      subtitle: 'How many consecutive push-ups with good form?',
-                      options: _pushupOptions,
-                      selectedValue: _pushupCapacity,
-                      onChanged: (value) =>
-                          setState(() => _pushupCapacity = value),
-                      isDark: isDark,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Question 2: Pull-ups
-                    _buildQuestionCard(
-                      index: 1,
-                      icon: Icons.sports_gymnastics,
-                      iconColor: AppColors.cyan,
-                      title: 'Pull-ups',
-                      subtitle: 'How many pull-ups can you do?',
-                      options: _pullupOptions,
-                      selectedValue: _pullupCapacity,
-                      onChanged: (value) =>
-                          setState(() => _pullupCapacity = value),
-                      isDark: isDark,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Question 3: Plank
-                    _buildQuestionCard(
-                      index: 2,
-                      icon: Icons.accessibility_new,
-                      iconColor: AppColors.purple,
-                      title: 'Plank Hold',
-                      subtitle: 'How long can you hold a plank?',
-                      options: _plankOptions,
-                      selectedValue: _plankCapacity,
-                      onChanged: (value) =>
-                          setState(() => _plankCapacity = value),
-                      isDark: isDark,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Question 4: Squats
-                    _buildQuestionCard(
-                      index: 3,
-                      icon: Icons.airline_seat_legroom_extra,
-                      iconColor: AppColors.success,
-                      title: 'Bodyweight Squats',
-                      subtitle: 'How many can you do continuously?',
-                      options: _squatOptions,
-                      selectedValue: _squatCapacity,
-                      onChanged: (value) =>
-                          setState(() => _squatCapacity = value),
-                      isDark: isDark,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Question 5: Experience
-                    _buildQuestionCard(
-                      index: 4,
-                      icon: Icons.history,
-                      iconColor: AppColors.warning,
-                      title: 'Training Experience',
-                      subtitle: 'How long have you been lifting weights?',
-                      options: _experienceOptions,
-                      selectedValue: _trainingExperience,
-                      onChanged: (value) =>
-                          setState(() => _trainingExperience = value),
-                      isDark: isDark,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Question 6: Cardio
-                    _buildQuestionCard(
-                      index: 5,
-                      icon: Icons.directions_run,
-                      iconColor: AppColors.error,
-                      title: 'Cardio Capacity',
-                      subtitle: 'How long can you do continuous cardio?',
-                      options: _cardioOptions,
-                      selectedValue: _cardioCapacity,
-                      onChanged: (value) =>
-                          setState(() => _cardioCapacity = value),
-                      isDark: isDark,
-                    ),
-
-                    const SizedBox(height: 100), // Space for button
-                  ],
-                ),
+        child: FoldableQuizScaffold(
+          headerTitle: 'Quick Fitness Check',
+          headerSubtitle: 'Help us personalize your workouts (~2 min)',
+          headerExtra: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.orange,
+                borderRadius: BorderRadius.circular(14),
               ),
+              child: const Icon(Icons.assessment, color: Colors.white, size: 26),
             ),
+          ),
+          content: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Show header inline only on phone (foldable shows it in the left pane)
+                Consumer(builder: (context, ref, _) {
+                  final windowState = ref.watch(windowModeProvider);
+                  if (FoldableQuizScaffold.shouldUseFoldableLayout(windowState)) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _buildHeader(textPrimary, textSecondary),
+                  );
+                }),
 
-            // Continue Button
-            _buildContinueButton(isDark),
-          ],
+                const SizedBox(height: 8),
+
+                // Question 1: Push-ups
+                _buildQuestionCard(
+                  index: 0,
+                  icon: Icons.fitness_center,
+                  iconColor: AppColors.orange,
+                  title: 'Push-ups',
+                  subtitle: 'How many consecutive push-ups with good form?',
+                  options: _pushupOptions,
+                  selectedValue: _pushupCapacity,
+                  onChanged: (value) =>
+                      setState(() => _pushupCapacity = value),
+                  isDark: isDark,
+                ),
+
+                const SizedBox(height: 16),
+
+                // Question 2: Pull-ups
+                _buildQuestionCard(
+                  index: 1,
+                  icon: Icons.sports_gymnastics,
+                  iconColor: AppColors.cyan,
+                  title: 'Pull-ups',
+                  subtitle: 'How many pull-ups can you do?',
+                  options: _pullupOptions,
+                  selectedValue: _pullupCapacity,
+                  onChanged: (value) =>
+                      setState(() => _pullupCapacity = value),
+                  isDark: isDark,
+                ),
+
+                const SizedBox(height: 16),
+
+                // Question 3: Plank
+                _buildQuestionCard(
+                  index: 2,
+                  icon: Icons.accessibility_new,
+                  iconColor: AppColors.purple,
+                  title: 'Plank Hold',
+                  subtitle: 'How long can you hold a plank?',
+                  options: _plankOptions,
+                  selectedValue: _plankCapacity,
+                  onChanged: (value) =>
+                      setState(() => _plankCapacity = value),
+                  isDark: isDark,
+                ),
+
+                const SizedBox(height: 16),
+
+                // Question 4: Squats
+                _buildQuestionCard(
+                  index: 3,
+                  icon: Icons.airline_seat_legroom_extra,
+                  iconColor: AppColors.success,
+                  title: 'Bodyweight Squats',
+                  subtitle: 'How many can you do continuously?',
+                  options: _squatOptions,
+                  selectedValue: _squatCapacity,
+                  onChanged: (value) =>
+                      setState(() => _squatCapacity = value),
+                  isDark: isDark,
+                ),
+
+                const SizedBox(height: 16),
+
+                // Question 5: Experience
+                _buildQuestionCard(
+                  index: 4,
+                  icon: Icons.history,
+                  iconColor: AppColors.warning,
+                  title: 'Training Experience',
+                  subtitle: 'How long have you been lifting weights?',
+                  options: _experienceOptions,
+                  selectedValue: _trainingExperience,
+                  onChanged: (value) =>
+                      setState(() => _trainingExperience = value),
+                  isDark: isDark,
+                ),
+
+                const SizedBox(height: 16),
+
+                // Question 6: Cardio
+                _buildQuestionCard(
+                  index: 5,
+                  icon: Icons.directions_run,
+                  iconColor: AppColors.error,
+                  title: 'Cardio Capacity',
+                  subtitle: 'How long can you do continuous cardio?',
+                  options: _cardioOptions,
+                  selectedValue: _cardioCapacity,
+                  onChanged: (value) =>
+                      setState(() => _cardioCapacity = value),
+                  isDark: isDark,
+                ),
+
+                const SizedBox(height: 100), // Space for button
+              ],
+            ),
+          ),
+          button: _buildContinueButton(isDark),
         ),
       ),
     );

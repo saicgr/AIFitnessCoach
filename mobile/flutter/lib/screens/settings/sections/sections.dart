@@ -4,6 +4,7 @@
 library;
 
 export 'accessibility_section.dart';
+export 'ble_heart_rate_section.dart';
 export 'ai_privacy_section.dart';
 export 'app_info_section.dart';
 export 'audio_settings_section.dart';
@@ -27,3 +28,4 @@ export 'subscription_section.dart';
 export 'superset_settings_section.dart';
 export 'kegel_settings_section.dart';
 export 'wear_os_section.dart';
+export 'offline_mode_section.dart';

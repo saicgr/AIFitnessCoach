@@ -72,6 +72,7 @@ from api.v1 import xp  # XP events, daily login, streaks, double XP
 from api.v1 import warmup_preferences  # Custom warmup/stretch preferences and pre/post workout routines
 from api.v1 import custom_exercises  # User-defined custom exercises with media upload
 from api.v1 import daily_schedule  # Daily schedule planner
+from api.v1 import sync  # Offline sync bulk upload and import
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -329,3 +330,6 @@ router.include_router(custom_exercises.router, tags=["Custom Exercises"])
 
 # Daily schedule planner (workouts, activities, meals, habits in one timeline)
 router.include_router(daily_schedule.router, prefix="/daily-schedule", tags=["Daily Schedule"])
+
+# Offline sync bulk upload and import (dead letter recovery, data export/import)
+router.include_router(sync.router, tags=["Sync"])

@@ -12,6 +12,7 @@ class QuizWeightRate extends StatelessWidget {
   final double? goalWeight;
   final bool useMetric;
   final ValueChanged<String> onRateChanged;
+  final bool showHeader;
 
   const QuizWeightRate({
     super.key,
@@ -21,6 +22,7 @@ class QuizWeightRate extends StatelessWidget {
     required this.goalWeight,
     required this.useMetric,
     required this.onRateChanged,
+    this.showHeader = true,
   });
 
   @override
@@ -123,26 +125,28 @@ class QuizWeightRate extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            isLosing
-                ? 'How fast do you want to lose weight?'
-                : 'How fast do you want to gain weight?',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
-              height: 1.3,
-            ),
-          ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
-          const SizedBox(height: 6),
-          Text(
-            'Choose a pace that fits your lifestyle',
-            style: TextStyle(
-              fontSize: 14,
-              color: textSecondary,
-            ),
-          ).animate().fadeIn(delay: 200.ms),
-          const SizedBox(height: 20),
+          if (showHeader) ...[
+            Text(
+              isLosing
+                  ? 'How fast do you want to lose weight?'
+                  : 'How fast do you want to gain weight?',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: textPrimary,
+                height: 1.3,
+              ),
+            ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
+            const SizedBox(height: 6),
+            Text(
+              'Choose a pace that fits your lifestyle',
+              style: TextStyle(
+                fontSize: 14,
+                color: textSecondary,
+              ),
+            ).animate().fadeIn(delay: 200.ms),
+            const SizedBox(height: 20),
+          ],
 
           // Scrollable rate options
           Expanded(

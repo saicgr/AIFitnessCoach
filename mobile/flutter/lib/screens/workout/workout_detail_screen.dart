@@ -65,6 +65,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   List<WorkoutExercise>? _originalExercises;  // Snapshot before equipment changes
   bool _hasEquipmentModifications = false;  // Track if equipment was modified
 
+  // Warmup/stretch exercises loaded from API
+  List<Map<String, dynamic>>? _warmupData;
+  List<Map<String, dynamic>>? _stretchData;
+
   // Auto-save state for exercise modifications
   Timer? _autoSaveTimer;
   bool _isSaving = false;
@@ -130,10 +134,11 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
         _workout = workout;
         _isLoading = false;
       });
-      // Load workout summary, training split, and generation params after workout loads
+      // Load workout summary, training split, generation params, and warmup/stretches
       _loadWorkoutSummary();
       _loadTrainingSplit();
       _loadGenerationParams();
+      _loadWarmupAndStretches();
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -209,6 +214,23 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       if (mounted) {
         setState(() => _isLoadingSummary = false);
       }
+    }
+  }
+
+  /// Load warmup and stretch exercises from API
+  Future<void> _loadWarmupAndStretches() async {
+    if (_workout?.id == null) return;
+    try {
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final data = await workoutRepo.generateWarmupAndStretches(_workout!.id!);
+      if (mounted) {
+        setState(() {
+          _warmupData = data['warmup'] ?? [];
+          _stretchData = data['stretches'] ?? [];
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ [WorkoutDetail] Failed to load warmup/stretches: $e');
     }
   }
 
@@ -3302,8 +3324,21 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     );
   }
 
-  /// Build warmup exercises (static list for now)
+  /// Build warmup exercises from API data or fallback to defaults
   List<Map<String, String>> _getWarmupExercises() {
+    if (_warmupData != null && _warmupData!.isNotEmpty) {
+      return _warmupData!.map((e) {
+        final name = e['name']?.toString() ?? 'Exercise';
+        final durationSec = (e['duration_seconds'] as num?)?.toInt() ?? 30;
+        final parts = <String>[_formatDuration(durationSec)];
+        if (e['speed_mph'] != null) parts.add('${(e['speed_mph'] as num).toStringAsFixed(1)} mph');
+        if (e['incline_percent'] != null) parts.add('${(e['incline_percent'] as num).toStringAsFixed(0)}% incline');
+        if (e['rpm'] != null) parts.add('${e['rpm']} RPM');
+        if (e['resistance_level'] != null) parts.add('Resistance ${e['resistance_level']}');
+        if (e['stroke_rate_spm'] != null) parts.add('${e['stroke_rate_spm']} spm');
+        return {'name': name, 'duration': parts.join(' | ')};
+      }).toList();
+    }
     return [
       {'name': 'Jumping Jacks', 'duration': '60 sec'},
       {'name': 'Arm Circles', 'duration': '30 sec'},
@@ -3313,8 +3348,21 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     ];
   }
 
-  /// Build stretch exercises (static list for now)
+  /// Build stretch exercises from API data or fallback to defaults
   List<Map<String, String>> _getStretchExercises() {
+    if (_stretchData != null && _stretchData!.isNotEmpty) {
+      return _stretchData!.map((e) {
+        final name = e['name']?.toString() ?? 'Stretch';
+        final durationSec = (e['duration_seconds'] as num?)?.toInt() ?? 30;
+        final parts = <String>[_formatDuration(durationSec)];
+        if (e['speed_mph'] != null) parts.add('${(e['speed_mph'] as num).toStringAsFixed(1)} mph');
+        if (e['incline_percent'] != null) parts.add('${(e['incline_percent'] as num).toStringAsFixed(0)}% incline');
+        if (e['rpm'] != null) parts.add('${e['rpm']} RPM');
+        if (e['resistance_level'] != null) parts.add('Resistance ${e['resistance_level']}');
+        if (e['stroke_rate_spm'] != null) parts.add('${e['stroke_rate_spm']} spm');
+        return {'name': name, 'duration': parts.join(' | ')};
+      }).toList();
+    }
     return [
       {'name': 'Quad Stretch', 'duration': '30 sec each'},
       {'name': 'Hamstring Stretch', 'duration': '30 sec each'},
@@ -3322,6 +3370,15 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       {'name': 'Chest Opener', 'duration': '30 sec'},
       {'name': 'Cat-Cow Stretch', 'duration': '60 sec'},
     ];
+  }
+
+  String _formatDuration(int seconds) {
+    if (seconds >= 60) {
+      final mins = seconds ~/ 60;
+      final secs = seconds % 60;
+      return secs > 0 ? '$mins min $secs sec' : '$mins min';
+    }
+    return '$seconds sec';
   }
 
   /// Build warmup/stretch item

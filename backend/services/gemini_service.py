@@ -4163,7 +4163,9 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                     candidate = chunk.candidates[0]
                     if hasattr(candidate, 'finish_reason') and candidate.finish_reason:
                         finish_reason = str(candidate.finish_reason)
-                        if finish_reason not in ['STOP', 'MAX_TOKENS', 'FinishReason.STOP', 'FinishReason.MAX_TOKENS', '1', '2']:
+                        if finish_reason in ['MAX_TOKENS', 'FinishReason.MAX_TOKENS', '2']:
+                            logger.warning(f"⚠️ [Streaming] Response truncated (MAX_TOKENS) at {total_chars} chars - increase max_output_tokens")
+                        elif finish_reason not in ['STOP', 'FinishReason.STOP', '1']:
                             logger.warning(f"⚠️ [Streaming] Unexpected finish reason: {finish_reason}")
                     if hasattr(candidate, 'safety_ratings') and candidate.safety_ratings:
                         for rating in candidate.safety_ratings:
@@ -4298,7 +4300,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                     response_mime_type="application/json",
                     response_schema=GeneratedWorkoutResponse,
                     temperature=0.7,
-                    max_output_tokens=4000,  # Reduced from 16384 - typical workout is ~2000 tokens
+                    max_output_tokens=16384,  # Must match non-cached - workouts with set_targets can exceed 4000 tokens
                 ),
             )
 
@@ -4316,7 +4318,9 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                     candidate = chunk.candidates[0]
                     if hasattr(candidate, 'finish_reason') and candidate.finish_reason:
                         finish_reason = str(candidate.finish_reason)
-                        if finish_reason not in ['STOP', 'MAX_TOKENS', 'FinishReason.STOP', 'FinishReason.MAX_TOKENS', '1', '2']:
+                        if finish_reason in ['MAX_TOKENS', 'FinishReason.MAX_TOKENS', '2']:
+                            logger.warning(f"⚠️ [CachedStreaming] Response truncated (MAX_TOKENS) at {total_chars} chars - increase max_output_tokens")
+                        elif finish_reason not in ['STOP', 'FinishReason.STOP', '1']:
                             logger.warning(f"⚠️ [CachedStreaming] Unexpected finish reason: {finish_reason}")
 
                 if chunk.text:

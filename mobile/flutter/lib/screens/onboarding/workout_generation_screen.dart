@@ -282,11 +282,16 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
                 ),
               ),
 
-            // Main content
+            // Main content - centered with max width for wide/foldable displays
             Expanded(
-              child: _errorMessage != null
-                  ? _buildErrorState(isDark, textPrimary, textSecondary)
-                  : _buildGeneratingState(isDark, textPrimary, textSecondary),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: _errorMessage != null
+                      ? _buildErrorState(isDark, textPrimary, textSecondary)
+                      : _buildGeneratingState(isDark, textPrimary, textSecondary),
+                ),
+              ),
             ),
           ],
         ),

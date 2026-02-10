@@ -16,6 +16,7 @@ import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/nutrition/quick_log_overlay.dart';
 import 'coach_avatar.dart';
 import 'floating_chat/floating_chat_overlay.dart';
+import 'offline_banner.dart';
 
 /// Provider to control floating nav bar visibility
 final floatingNavBarVisibleProvider = StateProvider<bool>((ref) => true);
@@ -185,13 +186,15 @@ class MainShell extends ConsumerWidget {
       color: backgroundColor,
       child: Stack(
         children: [
-          // Main content with guest banner if needed
+          // Main content with guest/offline banners
           Positioned.fill(
             child: Column(
               children: [
                 // Guest mode banner at top
                 if (isGuestMode)
                   _GuestModeBanner(isDark: isDark),
+                // Offline banner (auto-shows/hides based on connectivity)
+                const OfflineBanner(),
                 // Main content fills remaining space
                 Expanded(child: child),
               ],
@@ -330,15 +333,24 @@ class _EdgePanelHandleState extends ConsumerState<_EdgePanelHandle> {
           alignment: Alignment.centerRight,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
-            width: _isDragging ? 12 : 6,
-            height: 60,
+            width: _isDragging ? 16 : 10,
+            height: 44,
             decoration: BoxDecoration(
               color: isDark
                   ? Colors.white.withValues(alpha: _isDragging ? 0.4 : 0.2)
                   : Colors.black.withValues(alpha: _isDragging ? 0.3 : 0.15),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(4),
-                bottomLeft: Radius.circular(4),
+                topLeft: Radius.circular(6),
+                bottomLeft: Radius.circular(6),
+              ),
+            ),
+            child: Center(
+              child: Icon(
+                Icons.chevron_left,
+                size: _isDragging ? 14 : 10,
+                color: isDark
+                    ? Colors.white.withValues(alpha: _isDragging ? 0.7 : 0.5)
+                    : Colors.black.withValues(alpha: _isDragging ? 0.5 : 0.3),
               ),
             ),
           ),

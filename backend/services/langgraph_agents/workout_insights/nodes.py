@@ -152,6 +152,19 @@ Generate 2 short, motivational insights for this workout."""
     # Initialize google.genai client
     client = genai.Client(api_key=settings.gemini_api_key)
 
+    # Deterministic fallback based on workout data (no AI needed)
+    def _build_fallback(headline_text: str = None):
+        fb_headline = headline_text or "Let's crush this workout!"
+        fb_sections = [
+            {"icon": "🎯", "title": "Focus", "content": f"Target {workout_focus} with intensity", "color": "cyan"},
+            {"icon": "💪", "title": "Duration", "content": f"{duration} min of focused training", "color": "purple"},
+        ]
+        return {
+            "headline": fb_headline,
+            "sections": fb_sections,
+            "summary": json.dumps({"headline": fb_headline, "sections": fb_sections}),
+        }
+
     max_retries = 2
     last_error = None
 
@@ -167,7 +180,7 @@ Generate 2 short, motivational insights for this workout."""
                     response_mime_type="application/json",
                     response_schema=WorkoutInsightsResponse,
                     temperature=0.7,
-                    max_output_tokens=512,
+                    max_output_tokens=1024,
                 ),
             )
 
@@ -180,44 +193,69 @@ Generate 2 short, motivational insights for this workout."""
                 insights = response.parsed.model_dump()
                 logger.debug("[Generate Node] Structured output parsing succeeded")
             else:
-                # Fallback: Use centralized AI response parser on raw text
-                logger.warning("[Generate Node] Structured output empty, using fallback parser")
+                # Log diagnostic info to understand why structured output failed
+                finish_reason = None
+                if hasattr(response, 'candidates') and response.candidates:
+                    finish_reason = response.candidates[0].finish_reason
                 raw_text = response.text if response.text else ""
-
-                parse_result = parse_ai_json(
-                    raw_text,
-                    expected_fields=["headline", "sections"],
-                    context="workout_insights"
+                logger.warning(
+                    f"[Generate Node] Structured output empty. "
+                    f"finish_reason={finish_reason}, "
+                    f"raw_text_len={len(raw_text)}, "
+                    f"raw_text_preview={raw_text[:200] if raw_text else 'None'}"
                 )
 
-                if parse_result.success:
-                    insights = parse_result.data
-                    if parse_result.was_repaired:
-                        logger.info(f"[Generate Node] JSON repaired using {parse_result.strategy_used.value}: {parse_result.repair_steps}")
-                else:
-                    logger.warning(f"[Generate Node] Fallback parser failed: {parse_result.error}")
-                    last_error = ValueError(f"Failed to parse AI response: {parse_result.error}")
-                    if attempt < max_retries:
-                        continue  # Retry
-                    raise last_error
+                # Fallback 1: Try direct json.loads on raw text (SDK parse can fail even with valid JSON)
+                if raw_text:
+                    try:
+                        insights = json.loads(raw_text)
+                        if isinstance(insights, str):
+                            insights = json.loads(insights)
+                        if isinstance(insights, dict):
+                            logger.info("[Generate Node] Direct json.loads succeeded on raw text")
+                        else:
+                            insights = None
+                    except (json.JSONDecodeError, ValueError):
+                        pass
+
+                # Fallback 2: Use centralized AI response parser
+                if insights is None and raw_text:
+                    parse_result = parse_ai_json(
+                        raw_text,
+                        expected_fields=["headline", "sections"],
+                        context="workout_insights"
+                    )
+
+                    if parse_result.success:
+                        insights = parse_result.data
+                        if parse_result.was_repaired:
+                            logger.info(f"[Generate Node] JSON repaired using {parse_result.strategy_used.value}: {parse_result.repair_steps}")
+                    else:
+                        logger.warning(f"[Generate Node] Fallback parser failed: {parse_result.error}")
+                        last_error = ValueError(f"Failed to parse AI response: {parse_result.error}")
+                        if attempt < max_retries:
+                            continue  # Retry
 
             # Validate we got the expected structure
             if insights is None:
                 last_error = ValueError("No insights generated")
                 if attempt < max_retries:
                     continue
-                raise last_error
+                # All retries exhausted - use deterministic fallback
+                logger.warning(f"[Generate Node] All {max_retries + 1} attempts failed to produce insights, using fallback")
+                return _build_fallback()
 
             headline = insights.get("headline", "Let's crush this workout!")
             sections = insights.get("sections", [])
 
             # Validate section count
             if len(sections) < 2:
-                last_error = ValueError(f"Expected 2 sections, got {len(sections)}")
                 logger.warning(f"[Generate Node] Insufficient sections: {len(sections)}")
                 if attempt < max_retries:
                     continue  # Retry
-                raise last_error
+                # All retries exhausted - use deterministic fallback sections
+                logger.warning(f"[Generate Node] Using fallback sections after {max_retries + 1} attempts")
+                return _build_fallback(headline)
 
             # Truncate headline if too long (max 5 words)
             if len(headline.split()) > 5:
@@ -244,10 +282,5 @@ Generate 2 short, motivational insights for this workout."""
             if attempt < max_retries:
                 logger.warning(f"[Generate Node] Attempt {attempt} failed: {e}, retrying...")
                 continue
-            logger.error(f"[Generate Node] Error generating insights after {max_retries + 1} attempts: {e}")
-            raise  # Fail fast - propagate error rather than show incorrect content
-
-    # Should not reach here, but just in case
-    if last_error:
-        raise last_error
-    raise ValueError("Unknown error in insight generation")
+            logger.error(f"[Generate Node] All {max_retries + 1} attempts failed: {e}, using fallback")
+            return _build_fallback()

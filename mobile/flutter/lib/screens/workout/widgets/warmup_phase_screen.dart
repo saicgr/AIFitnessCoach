@@ -351,6 +351,27 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
                 color: textSecondary,
               ),
             ),
+
+          // Cardio params display
+          if (exercise.isCardioEquipment) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.orange.withOpacity(0.3)),
+              ),
+              child: Text(
+                exercise.cardioParamsDisplay,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: textPrimary,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -397,12 +418,26 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
                       color: textSecondary,
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      exercise.name,
-                      style: TextStyle(
-                        color: textSecondary,
-                        fontSize: 14,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          exercise.name,
+                          style: TextStyle(
+                            color: textSecondary,
+                            fontSize: 14,
+                          ),
+                        ),
+                        if (exercise.isCardioEquipment)
+                          Text(
+                            exercise.cardioParamsDisplay,
+                            style: TextStyle(
+                              color: textSecondary.withOpacity(0.7),
+                              fontSize: 11,
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),

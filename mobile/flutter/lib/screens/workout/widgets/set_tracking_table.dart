@@ -32,6 +32,7 @@ class SetRowData {
   // Actual values (logged)
   final double? actualWeight;
   final int? actualReps;
+  final int? actualRir; // Logged RIR for completed sets
 
   // Previous session values
   final double? previousWeight;
@@ -48,6 +49,7 @@ class SetRowData {
     this.targetRir,
     this.actualWeight,
     this.actualReps,
+    this.actualRir,
     this.previousWeight,
     this.previousReps,
     this.previousRir,
@@ -104,6 +106,12 @@ class SetTrackingTable extends StatefulWidget {
   /// Callback when RIR badge is tapped for editing (setIndex, currentRir)
   final void Function(int setIndex, int? currentRir)? onRirTapped;
 
+  /// Current RIR selection for the active set
+  final int? activeRir;
+
+  /// Callback when user taps an RIR button on the quick-select bar
+  final ValueChanged<int>? onActiveRirChanged;
+
   // ========== Inline Rest Row Props ==========
 
   /// Whether to show inline rest row (between last completed and active set)
@@ -130,6 +138,8 @@ class SetTrackingTable extends StatefulWidget {
     this.onSetDeleted,
     this.onToggleUnit,
     this.onRirTapped,
+    this.activeRir,
+    this.onActiveRirChanged,
     this.showInlineRest = false,
     this.inlineRestRowWidget,
   });
@@ -271,6 +281,16 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
       }
 
       setRows.add(row);
+
+      // Insert RIR quick-select bar below the active set row
+      if (set.isActive && !set.isCompleted && widget.onActiveRirChanged != null) {
+        setRows.add(_RirQuickSelectBar(
+          key: const ValueKey('rir_quick_select'),
+          selectedRir: widget.activeRir,
+          onRirSelected: widget.onActiveRirChanged!,
+          isDark: isDark,
+        ));
+      }
 
       // Insert inline rest row after the last completed set
       if (inlineRestInsertIndex != null && index == inlineRestInsertIndex) {
@@ -420,7 +440,22 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
               ),
             ),
 
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
+
+          // RIR column header
+          SizedBox(
+            width: 26,
+            child: Text(
+              'RIR',
+              style: WorkoutDesign.tableHeaderStyle.copyWith(
+                color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
+                fontSize: 9,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+
+          const SizedBox(width: 4),
 
           // Checkbox column
           SizedBox(
@@ -603,7 +638,23 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                           ),
               ),
 
-            const SizedBox(width: 8),
+            const SizedBox(width: 4),
+
+            // RIR badge for completed sets
+            if (set.isCompleted && set.actualRir != null && !isEditing)
+              GestureDetector(
+                onTap: widget.onRirTapped != null
+                    ? () {
+                        HapticFeedback.lightImpact();
+                        widget.onRirTapped!(index, set.actualRir);
+                      }
+                    : null,
+                child: _RirBadge(rir: set.actualRir!, isDark: isDark),
+              )
+            else
+              const SizedBox(width: 26),
+
+            const SizedBox(width: 4),
 
             // Completion checkbox
             SizedBox(
@@ -1457,6 +1508,119 @@ class _CompletionCheckbox extends StatelessWidget {
                 color: Colors.white,
               )
             : null,
+      ),
+    );
+  }
+}
+
+/// Small colored RIR badge shown on completed set rows
+class _RirBadge extends StatelessWidget {
+  final int rir;
+  final bool isDark;
+
+  const _RirBadge({
+    required this.rir,
+    this.isDark = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = WorkoutDesign.getRirColor(rir);
+    final textColor = WorkoutDesign.getRirTextColor(rir);
+
+    return Container(
+      width: 26,
+      height: 26,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          '$rir',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: textColor,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// RIR quick-select bar shown below the active set row
+class _RirQuickSelectBar extends StatelessWidget {
+  final int? selectedRir;
+  final ValueChanged<int> onRirSelected;
+  final bool isDark;
+
+  const _RirQuickSelectBar({
+    super.key,
+    this.selectedRir,
+    required this.onRirSelected,
+    this.isDark = true,
+  });
+
+  static const _rirOptions = [0, 1, 2, 3, 4, 5];
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'RIR',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade500,
+            ),
+          ),
+          const SizedBox(width: 8),
+          ..._rirOptions.map((rir) {
+            final isSelected = selectedRir == rir;
+            final color = WorkoutDesign.getRirColor(rir);
+            final label = rir == 5 ? '5+' : '$rir';
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onRirSelected(rir);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  width: 36,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: isSelected ? color : color.withOpacity(isDark ? 0.15 : 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isSelected ? color : color.withOpacity(0.3),
+                      width: isSelected ? 2 : 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: isSelected
+                            ? WorkoutDesign.getRirTextColor(rir)
+                            : color,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }

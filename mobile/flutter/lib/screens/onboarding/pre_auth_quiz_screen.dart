@@ -32,6 +32,8 @@ import 'widgets/quiz_personalization_gate.dart';
 import 'widgets/quiz_training_style.dart';
 import 'widgets/quiz_progression_constraints.dart';
 import 'widgets/quiz_nutrition_gate.dart';
+import 'widgets/foldable_quiz_scaffold.dart';
+import '../../core/providers/window_mode_provider.dart';
 import 'plan_preview_screen.dart';
 import 'workout_generation_screen.dart';
 
@@ -2687,9 +2689,71 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     }
   }
 
+  /// Get the title for a given quiz step (used by FoldableQuizScaffold left pane).
+  String _getStepTitle(int step) {
+    switch (step) {
+      case 0:
+        return 'What are your fitness goals?';
+      case 1:
+        return "What's your current fitness level?";
+      case 2:
+        return 'How many days per week can you train?';
+      case 3:
+        return 'Which days work best?';
+      case 4:
+        return 'What equipment do you have access to?';
+      case 5:
+        return 'What is your primary training focus?';
+      case 6:
+        return 'Personalize Your Plan';
+      case 7:
+        return 'Would you like to give extra focus to any muscles?';
+      case 8:
+        return 'Training Style';
+      case 9:
+        return 'Progression & Safety';
+      case 10:
+        return 'Nutrition Setup';
+      case 11:
+        return 'What are your nutrition goals?';
+      default:
+        return '';
+    }
+  }
+
+  /// Get the subtitle for a given quiz step.
+  String? _getStepSubtitle(int step) {
+    switch (step) {
+      case 0:
+        return 'Select all that apply';
+      case 1:
+        return "Be honest - we'll adjust as you progress";
+      case 2:
+        return 'Consistency beats intensity - pick what you can maintain';
+      case 3:
+        return 'Select ${_selectedDays ?? 0} days for your workouts';
+      case 4:
+        return "Select all that apply - we'll design workouts around what you have";
+      case 5:
+        return 'This helps us customize your workout intensity and rep ranges';
+      case 7:
+        return 'Allocate up to 5 focus points to prioritize specific muscle groups';
+      case 8:
+        return 'Choose how you want to structure your workouts';
+      case 9:
+        return 'Set your pace and tell us about any limitations';
+      case 11:
+        return 'Select all that apply';
+      default:
+        return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final windowState = ref.watch(windowModeProvider);
+    final isFoldableOpen = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
 
     return Scaffold(
       body: Container(
@@ -2707,107 +2771,103 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
                 ),
         ),
         child: SafeArea(
-          child: Stack(
-            children: [
-              // Main content
-              Column(
-                children: [
-                  const SizedBox(height: 72), // Space for floating header
-                  QuizProgressBar(progress: _progress),
-                  const SizedBox(height: 32),
-                  Expanded(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      transitionBuilder: (child, animation) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(0.1, 0),
-                              end: Offset.zero,
-                            ).animate(CurvedAnimation(
-                              parent: animation,
-                              curve: Curves.easeOutCubic,
-                            )),
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: _buildCurrentQuestion(),
-                    ),
+          child: FoldableQuizScaffold(
+            headerTitle: _getStepTitle(_currentQuestion),
+            headerSubtitle: _getStepSubtitle(_currentQuestion),
+            progressBar: QuizProgressBar(progress: _progress),
+            headerOverlay: QuizHeader(
+              currentQuestion: _currentQuestion,
+              totalQuestions: _totalQuestions,
+              canGoBack: _currentQuestion > 0,
+              onBack: _previousQuestion,
+              onBackToWelcome: () {
+                HapticFeedback.lightImpact();
+                context.go('/stats-welcome');
+              },
+            ),
+            content: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0.1, 0),
+                      end: Offset.zero,
+                    ).animate(CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeOutCubic,
+                    )),
+                    child: child,
                   ),
-                  const SizedBox(height: 8),
-                  // Case 5 gets special "Generate" button
-                  if (_currentQuestion == 5)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _canProceed ? _generateAndShowPreview : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _canProceed
-                                ? AppColors.orange
-                                : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                            foregroundColor: _canProceed
-                                ? Colors.white
-                                : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
-                            elevation: _canProceed ? 4 : 0,
-                            shadowColor: _canProceed ? AppColors.orange.withValues(alpha: 0.4) : Colors.transparent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text(
-                                'Generate My First Workout',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              if (_canProceed) ...[
-                                const SizedBox(width: 8),
-                                const Icon(Icons.auto_awesome_rounded, size: 20),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ),
-                    ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1)
-                  // Cases 6 and 10 have their own action buttons (gate screens)
-                  else if (_currentQuestion != 6 && _currentQuestion != 10)
-                    QuizContinueButton(
-                      canProceed: _canProceed,
-                      isLastQuestion: _currentQuestion == _totalQuestions - 1,
-                      onPressed: _nextQuestion,
-                    ),
-                  const SizedBox(height: 16),
-                ],
-              ),
-
-              // Floating header overlay
-              QuizHeader(
-                currentQuestion: _currentQuestion,
-                totalQuestions: _totalQuestions,
-                canGoBack: _currentQuestion > 0,
-                onBack: _previousQuestion,
-                onBackToWelcome: () {
-                  HapticFeedback.lightImpact();
-                  context.go('/stats-welcome');
-                },
-              ),
-            ],
+                );
+              },
+              child: _buildCurrentQuestion(showHeader: !isFoldableOpen),
+            ),
+            button: _buildActionButton(isDark),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildCurrentQuestion() {
+  /// Build the action button for the current question step.
+  Widget? _buildActionButton(bool isDark) {
+    // Case 5 gets special "Generate" button
+    if (_currentQuestion == 5) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton(
+            onPressed: _canProceed ? _generateAndShowPreview : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _canProceed
+                  ? AppColors.orange
+                  : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+              foregroundColor: _canProceed
+                  ? Colors.white
+                  : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+              elevation: _canProceed ? 4 : 0,
+              shadowColor: _canProceed ? AppColors.orange.withValues(alpha: 0.4) : Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Generate My First Workout',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (_canProceed) ...[
+                  const SizedBox(width: 8),
+                  const Icon(Icons.auto_awesome_rounded, size: 20),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1);
+    }
+    // Cases 6 and 10 have their own action buttons (gate screens)
+    if (_currentQuestion == 6 || _currentQuestion == 10) {
+      return null;
+    }
+    // All other cases: standard continue button
+    return QuizContinueButton(
+      canProceed: _canProceed,
+      isLastQuestion: _currentQuestion == _totalQuestions - 1,
+      onPressed: _nextQuestion,
+    );
+  }
+
+  Widget _buildCurrentQuestion({bool showHeader = true}) {
     // NEW 12-SCREEN FLOW (Progressive Profiling)
     // Phase 1 (Required): 0-Goals, 1-Fitness+Experience, 2-Schedule, 3-WorkoutDays[COND], 4-Equipment, 5-PrimaryGoal+Generate
     // Phase 2 (Optional): 6-PersonalizationGate, 7-MuscleFocus, 8-TrainingStyle, 9-Progression+Constraints
@@ -2816,7 +2876,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     switch (_currentQuestion) {
       // PHASE 1: REQUIRED (Screens 0-5)
       case 0: // Goals (multi-select) - NO CHANGES
-        return _buildGoalQuestion();
+        return _buildGoalQuestion(showHeader: showHeader);
 
       case 1: // Fitness Level + Training Experience (combined, experience optional)
         return QuizFitnessLevel(
@@ -2827,23 +2887,24 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           onLevelChanged: (level) => setState(() => _selectedLevel = level),
           onExperienceChanged: (exp) => setState(() => _selectedTrainingExperience = exp),
           onActivityLevelChanged: (level) => setState(() => _selectedActivityLevel = level),
+          showHeader: showHeader,
         );
 
       case 2: // Schedule (days/week + duration combined)
-        return _buildDaysSelector(); // Already shows both days + duration
+        return _buildDaysSelector(showHeader: showHeader);
 
       case 3: // Workout Days [CONDITIONAL - only if feature flag enabled]
         if (_featureFlagWorkoutDays) {
-          return _buildWorkoutDaysSelector();
+          return _buildWorkoutDaysSelector(showHeader: showHeader);
         }
         // If feature disabled, this case shouldn't be reached due to skip logic
         return const SizedBox.shrink();
 
       case 4: // Equipment (2-step: environment + equipment list)
-        return _buildEquipmentSelector();
+        return _buildEquipmentSelector(showHeader: showHeader);
 
       case 5: // Training Focus (Primary Goal) + Generate Preview
-        return _buildPrimaryGoal();
+        return _buildPrimaryGoal(showHeader: showHeader);
         // Note: Generate button in _buildPrimaryGoal should call _generateAndShowPreview()
 
       // PHASE 2: OPTIONAL PERSONALIZATION (Screens 6-9, shown AFTER preview)
@@ -2867,7 +2928,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         );
 
       case 7: // Muscle Focus Points (existing widget, repositioned)
-        return _buildMuscleFocus();
+        return _buildMuscleFocus(showHeader: showHeader);
 
       case 8: // Training Style (split + workout type)
         return QuizTrainingStyle(
@@ -2885,6 +2946,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             // Save to SharedPreferences via state notifier
             await ref.read(preAuthQuizProvider.notifier).setDaysPerWeek(newDays);
           },
+          showHeader: showHeader,
         );
 
       case 9: // Progression + Constraints
@@ -2902,6 +2964,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           onCustomLimitationChanged: (customText) => setState(() {  // ← ADDED: Handle custom text changes
             _customLimitation = customText;
           }),
+          showHeader: showHeader,
         );
 
       // PHASE 3: OPTIONAL NUTRITION (Screens 10-11)
@@ -2926,20 +2989,21 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         );
 
       case 11: // Nutrition Details (merged nutrition + fasting)
-        return _buildNutritionGoals(); // TODO: Should be merged widget with fasting
+        return _buildNutritionGoals(showHeader: showHeader);
 
       default:
         return const SizedBox.shrink();
     }
   }
 
-  Widget _buildDaysSelector() {
+  Widget _buildDaysSelector({bool showHeader = true}) {
     return QuizDaysSelector(
       key: const ValueKey('days_selector'),
       selectedDays: _selectedDays,
       selectedWorkoutDays: _selectedWorkoutDays,
       workoutDurationMin: _workoutDurationMin,
       workoutDurationMax: _workoutDurationMax,
+      showHeader: showHeader,
       onDaysChanged: (days) {
         setState(() {
           _selectedDays = days;
@@ -2968,34 +3032,36 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     );
   }
 
-  Widget _buildWorkoutDaysSelector() {
+  Widget _buildWorkoutDaysSelector({bool showHeader = true}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title
-          Text(
-            'Which days work best?',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white
-                  : const Color(0xFF0A0A0A),
-            ),
-          ).animate().fadeIn(delay: 100.ms),
-          const SizedBox(height: 6),
-          Text(
-            'Select ${_selectedDays ?? 0} days for your workouts',
-            style: TextStyle(
-              fontSize: 15,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFFD4D4D8)
-                  : const Color(0xFF52525B),
-            ),
-          ).animate().fadeIn(delay: 200.ms),
-          const SizedBox(height: 24),
+          if (showHeader) ...[
+            // Title
+            Text(
+              'Which days work best?',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : const Color(0xFF0A0A0A),
+              ),
+            ).animate().fadeIn(delay: 100.ms),
+            const SizedBox(height: 6),
+            Text(
+              'Select ${_selectedDays ?? 0} days for your workouts',
+              style: TextStyle(
+                fontSize: 15,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFD4D4D8)
+                    : const Color(0xFF52525B),
+              ),
+            ).animate().fadeIn(delay: 200.ms),
+            const SizedBox(height: 24),
+          ],
           // Days of week selector
           Expanded(
             child: ListView(
@@ -3089,7 +3155,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     ).animate().fadeIn(delay: delay).slideX(begin: -0.05);
   }
 
-  Widget _buildEquipmentSelector() {
+  Widget _buildEquipmentSelector({bool showHeader = true}) {
     return QuizEquipment(
       key: const ValueKey('equipment'),
       selectedEquipment: _selectedEquipment,
@@ -3103,6 +3169,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       otherSelectedEquipment: _otherSelectedEquipment,
       selectedEnvironment: _selectedEnvironment,
       onEnvironmentChanged: _handleEnvironmentChange,
+      showHeader: showHeader,
     );
   }
 
@@ -3130,11 +3197,12 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     );
   }
 
-  Widget _buildNutritionGoals() {
+  Widget _buildNutritionGoals({bool showHeader = true}) {
     return QuizNutritionGoals(
       key: const ValueKey('nutrition_goals'),
       selectedGoals: _selectedNutritionGoals,
       selectedRestrictions: _selectedDietaryRestrictions,
+      showHeader: showHeader,
       onToggle: (id) {
         setState(() {
           if (_selectedNutritionGoals.contains(id)) {
@@ -3219,7 +3287,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     );
   }
 
-  Widget _buildPrimaryGoal() {
+  Widget _buildPrimaryGoal({bool showHeader = true}) {
     final options = [
       {
         'id': 'muscle_hypertrophy',
@@ -3260,14 +3328,16 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       onSelect: (value) {
         setState(() => _selectedPrimaryGoal = value);
       },
+      showHeader: showHeader,
     );
   }
 
-  Widget _buildMuscleFocus() {
+  Widget _buildMuscleFocus({bool showHeader = true}) {
     return QuizMuscleFocus(
       key: const ValueKey('muscle_focus'),
       question: 'Would you like to give extra focus to any muscles?',
       subtitle: 'Allocate up to 5 focus points to prioritize specific muscle groups in your workouts',
+      showHeader: showHeader,
       focusPoints: _muscleFocusPoints,
       onPointsChanged: (points) {
         setState(() => _muscleFocusPoints = points);
@@ -3275,7 +3345,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     );
   }
 
-  Widget _buildGoalQuestion() {
+  Widget _buildGoalQuestion({bool showHeader = true}) {
     final goals = [
       {'id': 'build_muscle', 'label': 'Build Muscle', 'icon': Icons.fitness_center, 'color': AppColors.orange},
       {'id': 'lose_weight', 'label': 'Lose Weight', 'icon': Icons.monitor_weight_outlined, 'color': AppColors.orange},
@@ -3300,6 +3370,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           }
         });
       },
+      showHeader: showHeader,
     );
   }
 

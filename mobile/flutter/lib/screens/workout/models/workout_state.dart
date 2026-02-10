@@ -97,12 +97,43 @@ class WarmupExerciseData {
   final String name;
   final int duration;
   final IconData icon;
+  final double? inclinePercent;
+  final double? speedMph;
+  final int? rpm;
+  final int? resistanceLevel;
+  final int? strokeRateSpm;
+  final String? equipment;
 
   const WarmupExerciseData({
     required this.name,
     required this.duration,
     required this.icon,
+    this.inclinePercent,
+    this.speedMph,
+    this.rpm,
+    this.resistanceLevel,
+    this.strokeRateSpm,
+    this.equipment,
   });
+
+  /// Whether this exercise uses cardio equipment with adjustable params
+  bool get isCardioEquipment =>
+      inclinePercent != null ||
+      speedMph != null ||
+      rpm != null ||
+      resistanceLevel != null ||
+      strokeRateSpm != null;
+
+  /// Formatted cardio params for display (e.g., "3.0 mph | 2% incline")
+  String get cardioParamsDisplay {
+    final parts = <String>[];
+    if (speedMph != null) parts.add('${speedMph!.toStringAsFixed(1)} mph');
+    if (inclinePercent != null) parts.add('${inclinePercent!.toStringAsFixed(0)}% incline');
+    if (rpm != null) parts.add('$rpm RPM');
+    if (resistanceLevel != null) parts.add('Resistance $resistanceLevel');
+    if (strokeRateSpm != null) parts.add('$strokeRateSpm spm');
+    return parts.join(' | ');
+  }
 }
 
 /// Standard stretch exercises data
@@ -110,12 +141,43 @@ class StretchExerciseData {
   final String name;
   final int duration;
   final IconData icon;
+  final double? inclinePercent;
+  final double? speedMph;
+  final int? rpm;
+  final int? resistanceLevel;
+  final int? strokeRateSpm;
+  final String? equipment;
 
   const StretchExerciseData({
     required this.name,
     required this.duration,
     required this.icon,
+    this.inclinePercent,
+    this.speedMph,
+    this.rpm,
+    this.resistanceLevel,
+    this.strokeRateSpm,
+    this.equipment,
   });
+
+  /// Whether this exercise uses cardio equipment with adjustable params
+  bool get isCardioEquipment =>
+      inclinePercent != null ||
+      speedMph != null ||
+      rpm != null ||
+      resistanceLevel != null ||
+      strokeRateSpm != null;
+
+  /// Formatted cardio params for display
+  String get cardioParamsDisplay {
+    final parts = <String>[];
+    if (speedMph != null) parts.add('${speedMph!.toStringAsFixed(1)} mph');
+    if (inclinePercent != null) parts.add('${inclinePercent!.toStringAsFixed(0)}% incline');
+    if (rpm != null) parts.add('$rpm RPM');
+    if (resistanceLevel != null) parts.add('Resistance $resistanceLevel');
+    if (strokeRateSpm != null) parts.add('$strokeRateSpm spm');
+    return parts.join(' | ');
+  }
 }
 
 /// Default warmup exercises

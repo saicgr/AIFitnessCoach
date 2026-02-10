@@ -14,7 +14,7 @@ want to keep in every workout regardless of the weekly variation setting.
 Avoided exercises/muscles are excluded from AI-generated workouts entirely.
 """
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 import logging
@@ -37,6 +37,16 @@ class StapleExerciseCreate(BaseModel):
     library_id: Optional[str] = None
     muscle_group: Optional[str] = None
     reason: Optional[str] = Field(default=None, max_length=100)  # "core_compound", "favorite", "rehab"
+    gym_profile_id: Optional[str] = None
+    section: Optional[str] = Field(default="main")
+
+    @field_validator('section')
+    @classmethod
+    def validate_section(cls, v):
+        valid_sections = ('main', 'warmup', 'stretches')
+        if v and v not in valid_sections:
+            raise ValueError(f"section must be one of {valid_sections}")
+        return v or 'main'
 
 
 class StapleExerciseResponse(BaseModel):
@@ -51,6 +61,24 @@ class StapleExerciseResponse(BaseModel):
     body_part: Optional[str] = None
     equipment: Optional[str] = None
     gif_url: Optional[str] = None
+    # From join with gym_profiles
+    gym_profile_id: Optional[str] = None
+    gym_profile_name: Optional[str] = None
+    gym_profile_color: Optional[str] = None
+    # Section (main/warmup/stretches)
+    section: str = "main"
+    # Cardio metadata from exercise_library
+    default_incline_percent: Optional[float] = None
+    default_speed_mph: Optional[float] = None
+    default_rpm: Optional[int] = None
+    default_resistance_level: Optional[int] = None
+    stroke_rate_spm: Optional[int] = None
+    default_duration_seconds: Optional[int] = None
+    # Movement classification
+    movement_pattern: Optional[str] = None
+    energy_system: Optional[str] = None
+    impact_level: Optional[str] = None
+    category: Optional[str] = None
 
 
 class VariationPreferenceUpdate(BaseModel):
@@ -179,6 +207,20 @@ async def get_user_staples(user_id: str):
                 body_part=row.get("body_part"),
                 equipment=row.get("equipment"),
                 gif_url=row.get("gif_url"),
+                gym_profile_id=row.get("gym_profile_id"),
+                gym_profile_name=row.get("gym_profile_name"),
+                gym_profile_color=row.get("gym_profile_color"),
+                section=row.get("section", "main"),
+                default_incline_percent=row.get("default_incline_percent"),
+                default_speed_mph=row.get("default_speed_mph"),
+                default_rpm=row.get("default_rpm"),
+                default_resistance_level=row.get("default_resistance_level"),
+                stroke_rate_spm=row.get("stroke_rate_spm"),
+                default_duration_seconds=row.get("default_duration_seconds"),
+                movement_pattern=row.get("movement_pattern"),
+                energy_system=row.get("energy_system"),
+                impact_level=row.get("impact_level"),
+                category=row.get("category"),
             ))
 
         return staples
@@ -203,8 +245,13 @@ async def add_staple_exercise(request: StapleExerciseCreate):
     try:
         db = get_supabase_db()
 
-        # Check if already exists
-        existing = db.client.table("staple_exercises").select("id").eq("user_id", request.user_id).eq("exercise_name", request.exercise_name).execute()
+        # Check if already exists for this profile and section
+        existing_query = db.client.table("staple_exercises").select("id").eq("user_id", request.user_id).eq("exercise_name", request.exercise_name).eq("section", request.section or "main")
+        if request.gym_profile_id:
+            existing_query = existing_query.eq("gym_profile_id", request.gym_profile_id)
+        else:
+            existing_query = existing_query.is_("gym_profile_id", "null")
+        existing = existing_query.execute()
 
         if existing.data:
             raise HTTPException(status_code=400, detail="Exercise is already a staple")
@@ -216,6 +263,8 @@ async def add_staple_exercise(request: StapleExerciseCreate):
             "library_id": request.library_id,
             "muscle_group": request.muscle_group,
             "reason": request.reason,
+            "gym_profile_id": request.gym_profile_id,
+            "section": request.section or "main",
         }
 
         result = db.client.table("staple_exercises").insert(insert_data).execute()
@@ -246,14 +295,51 @@ async def add_staple_exercise(request: StapleExerciseCreate):
         body_part = None
         equipment = None
         gif_url = None
+        default_incline_percent = None
+        default_speed_mph = None
+        default_rpm = None
+        default_resistance_level = None
+        stroke_rate_spm = None
+        default_duration_seconds = None
+        movement_pattern = None
+        energy_system = None
+        impact_level = None
+        category = None
 
         if request.library_id:
-            lib_result = db.client.table("exercise_library").select("body_part, equipment, gif_url").eq("id", request.library_id).execute()
+            lib_result = db.client.table("exercise_library").select(
+                "body_part, equipment, gif_url, "
+                "default_incline_percent, default_speed_mph, default_rpm, "
+                "default_resistance_level, stroke_rate_spm, default_duration_seconds, "
+                "movement_pattern, energy_system, impact_level, category"
+            ).eq("id", request.library_id).execute()
             if lib_result.data:
                 lib_row = lib_result.data[0]
                 body_part = lib_row.get("body_part")
                 equipment = lib_row.get("equipment")
                 gif_url = lib_row.get("gif_url")
+                default_incline_percent = lib_row.get("default_incline_percent")
+                default_speed_mph = lib_row.get("default_speed_mph")
+                default_rpm = lib_row.get("default_rpm")
+                default_resistance_level = lib_row.get("default_resistance_level")
+                stroke_rate_spm = lib_row.get("stroke_rate_spm")
+                default_duration_seconds = lib_row.get("default_duration_seconds")
+                movement_pattern = lib_row.get("movement_pattern")
+                energy_system = lib_row.get("energy_system")
+                impact_level = lib_row.get("impact_level")
+                category = lib_row.get("category")
+
+        # Look up gym profile name/color if provided
+        gym_profile_name = None
+        gym_profile_color = None
+        if request.gym_profile_id:
+            try:
+                profile_result = db.client.table("gym_profiles").select("name, color").eq("id", request.gym_profile_id).execute()
+                if profile_result.data:
+                    gym_profile_name = profile_result.data[0].get("name")
+                    gym_profile_color = profile_result.data[0].get("color")
+            except Exception:
+                pass
 
         return StapleExerciseResponse(
             id=row["id"],
@@ -265,6 +351,20 @@ async def add_staple_exercise(request: StapleExerciseCreate):
             body_part=body_part,
             equipment=equipment,
             gif_url=gif_url,
+            gym_profile_id=request.gym_profile_id,
+            gym_profile_name=gym_profile_name,
+            gym_profile_color=gym_profile_color,
+            section=request.section or "main",
+            default_incline_percent=default_incline_percent,
+            default_speed_mph=default_speed_mph,
+            default_rpm=default_rpm,
+            default_resistance_level=default_resistance_level,
+            stroke_rate_spm=stroke_rate_spm,
+            default_duration_seconds=default_duration_seconds,
+            movement_pattern=movement_pattern,
+            energy_system=energy_system,
+            impact_level=impact_level,
+            category=category,
         )
 
     except HTTPException:
@@ -693,6 +793,23 @@ async def get_user_staple_exercises(user_id: str) -> List[str]:
         return [row["exercise_name"] for row in result.data or []]
     except Exception as e:
         logger.error(f"Error getting staple exercises: {e}")
+        return []
+
+
+async def get_user_staples_by_section(user_id: str, section: str) -> List[dict]:
+    """
+    Get staple exercises for a user filtered by section (main/warmup/stretches).
+    Returns full exercise data with metadata from user_staples_with_details view.
+    Used by warmup/stretch service to inject staple warmups/stretches.
+    """
+    try:
+        db = get_supabase_db()
+        result = db.client.table("user_staples_with_details").select("*").eq(
+            "user_id", user_id
+        ).eq("section", section).execute()
+        return result.data or []
+    except Exception as e:
+        logger.error(f"Error getting staples by section: {e}")
         return []
 
 
