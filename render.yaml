@@ -10,7 +10,7 @@ services:
   - type: web
     name: fitwiz-backend
     env: python
-    region: oregon
+    region: ohio
     plan: starter
     branch: main
     rootDir: backend
@@ -35,7 +35,7 @@ services:
   - type: worker
     name: fitwiz-program-generator
     env: python
-    region: oregon
+    region: ohio
     plan: starter
     branch: main
     rootDir: backend

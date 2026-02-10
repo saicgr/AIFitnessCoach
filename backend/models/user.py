@@ -152,6 +152,12 @@ class UserUpdate(BaseModel):
     muscle_focus_points: Optional[dict] = None
     # Profile photo URL (S3 storage)
     photo_url: Optional[str] = Field(default=None, max_length=1000)
+    # Device info fields
+    device_model: Optional[str] = Field(default=None, max_length=100)  # e.g., "Pixel 9 Pro Fold"
+    is_foldable: Optional[bool] = None
+    os_version: Optional[str] = Field(default=None, max_length=20)  # e.g., "15", "18.2"
+    screen_width: Optional[int] = Field(default=None, ge=0)
+    screen_height: Optional[int] = Field(default=None, ge=0)
 
 
 class User(BaseModel):
@@ -198,3 +204,11 @@ class User(BaseModel):
     muscle_focus_points: Optional[dict] = None
     # Profile photo URL (S3 storage)
     photo_url: Optional[str] = Field(default=None, max_length=1000)
+    # Device info fields
+    device_model: Optional[str] = Field(default=None, max_length=100)
+    device_platform: Optional[str] = Field(default=None, max_length=20)
+    is_foldable: bool = False
+    os_version: Optional[str] = Field(default=None, max_length=20)
+    screen_width: Optional[int] = None
+    screen_height: Optional[int] = None
+    last_device_update: Optional[datetime] = None

@@ -6,6 +6,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:workmanager/workmanager.dart';
 
+import '../../core/constants/api_constants.dart';
 import '../local/database.dart';
 
 /// Task identifiers for background work.
@@ -21,6 +22,18 @@ const String _syncNotificationChannelName = 'Sync Status';
 void callbackDispatcher() {
   Workmanager().executeTask((taskName, inputData) async {
     debugPrint('🔄 [BackgroundSync] Executing task: $taskName');
+
+    // WorkManager runs in a separate isolate — Supabase must be initialized here.
+    try {
+      await Supabase.initialize(
+        url: ApiConstants.supabaseUrl,
+        anonKey: ApiConstants.supabaseAnonKey,
+      );
+      debugPrint('✅ [BackgroundSync] Supabase initialized in background isolate');
+    } catch (e) {
+      // Already initialized (e.g. on iOS where isolate may be reused)
+      debugPrint('🔄 [BackgroundSync] Supabase init: $e');
+    }
 
     try {
       switch (taskName) {

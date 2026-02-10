@@ -7,11 +7,12 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/providers/subscription_provider.dart';
+import '../../core/providers/window_mode_provider.dart';
 import '../../core/constants/api_constants.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
+import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 import '../settings/subscription/subscription_history_screen.dart';
 
 /// Paywall/Membership Screen
@@ -34,405 +35,338 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Use ref.colors(context) to get dynamic accent color from provider
     final colors = ref.colors(context);
     final subscriptionState = ref.watch(subscriptionProvider);
     final currentTier = subscriptionState.tier;
     final isSubscribed = currentTier != SubscriptionTier.free;
+    final windowState = ref.watch(windowModeProvider);
+    final isFoldable = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
+    final hPad = isFoldable ? 14.0 : 20.0;
 
     return Scaffold(
       backgroundColor: colors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            children: [
-              // Header - Fixed at top
-              Padding(
-                padding: const EdgeInsets.only(top: 8, bottom: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    GestureDetector(
-                      onTap: () => context.pop(),
-                      child: Row(
-                        children: [
-                          Icon(Icons.chevron_left, color: colors.cyan, size: 28),
-                          Text(
-                            'Back',
-                            style: TextStyle(
-                              color: colors.cyan,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+        child: FoldableQuizScaffold(
+          headerTitle: isSubscribed ? 'Change Plan' : 'Start your fitness journey',
+          headerSubtitle: isSubscribed ? 'Upgrade or downgrade your subscription' : '7-day free trial · Cancel anytime',
+          content: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: hPad),
+            child: Column(
+              children: [
+                const SizedBox(height: 4),
+
+                // Show current plan status if subscribed
+                if (isSubscribed) ...[
+                  _CurrentPlanCard(
+                    tier: currentTier,
+                    isTrialActive: subscriptionState.isTrialActive,
+                    trialEndDate: subscriptionState.trialEndDate,
+                    subscriptionEndDate: subscriptionState.subscriptionEndDate,
+                    colors: colors,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Title (phone only — foldable shows it in left pane)
+                if (!isFoldable) ...[
+                  if (!isSubscribed) ...[
+                    Text(
+                      'Start your fitness journey',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
                       ),
                     ),
-                    if (!isSubscribed)
-                      GestureDetector(
-                        onTap: () => _skipToFree(context, ref),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: colors.surface,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.close, color: colors.textSecondary, size: 22),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.check_circle, color: Colors.green, size: 16),
+                        const SizedBox(width: 6),
+                        Text(
+                          '7-day free trial',
+                          style: TextStyle(fontSize: 14, color: Colors.green, fontWeight: FontWeight.w600),
                         ),
+                        const SizedBox(width: 12),
+                        Icon(Icons.cancel_outlined, color: colors.textSecondary, size: 16),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Cancel anytime',
+                          style: TextStyle(fontSize: 14, color: colors.textSecondary),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                  ] else ...[
+                    Text(
+                      'Change Plan',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
                       ),
+                    ),
+                    const SizedBox(height: 20),
                   ],
-                ),
-              ),
+                ],
 
-              // Scrollable content - CLEAN, PAYMENT FIRST DESIGN
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
+                // Billing cycle tabs (Yearly / Monthly)
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
                     children: [
-                      // Show current plan status if subscribed
-                      if (isSubscribed) ...[
-                        _CurrentPlanCard(
-                          tier: currentTier,
-                          isTrialActive: subscriptionState.isTrialActive,
-                          trialEndDate: subscriptionState.trialEndDate,
-                          subscriptionEndDate: subscriptionState.subscriptionEndDate,
-                          colors: colors,
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-
-                      // Simple title
-                      if (!isSubscribed) ...[
-                        Text(
-                          'Start your fitness journey',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.check_circle, color: Colors.green, size: 16),
-                            const SizedBox(width: 6),
-                            Text(
-                              '7-day free trial',
-                              style: TextStyle(fontSize: 14, color: Colors.green, fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(width: 12),
-                            Icon(Icons.cancel_outlined, color: colors.textSecondary, size: 16),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Cancel anytime',
-                              style: TextStyle(fontSize: 14, color: colors.textSecondary),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                      ] else ...[
-                        Text(
-                          'Change Plan',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // Billing cycle tabs (Yearly / Monthly)
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: colors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            _BillingTab(
-                              label: 'Yearly',
-                              sublabel: 'Best value',
-                              isSelected: _selectedBillingCycle == 'yearly',
-                              onTap: () => setState(() {
-                                _selectedBillingCycle = 'yearly';
-                                _selectedPlan = 'premium_plus_yearly';
-                              }),
-                              colors: colors,
-                            ),
-                            _BillingTab(
-                              label: 'Monthly',
-                              sublabel: 'Flexible',
-                              isSelected: _selectedBillingCycle == 'monthly',
-                              onTap: () => setState(() {
-                                _selectedBillingCycle = 'monthly';
-                                _selectedPlan = 'premium_plus_monthly';
-                              }),
-                              colors: colors,
-                            ),
-                          ],
-                        ),
+                      _BillingTab(
+                        label: 'Yearly',
+                        sublabel: 'Best value',
+                        isSelected: _selectedBillingCycle == 'yearly',
+                        onTap: () => setState(() {
+                          _selectedBillingCycle = 'yearly';
+                          _selectedPlan = 'premium_plus_yearly';
+                        }),
+                        colors: colors,
                       ),
-
-                      const SizedBox(height: 14),
-
-                      // Plan options based on selected billing cycle
-                      Column(
-                          children: [
-                            // Premium Plus plan (with accent border if yearly)
-                            if (_selectedBillingCycle == 'yearly')
-                              _AccentBorderCard(
-                                isSelected: _selectedPlan == 'premium_plus_yearly',
-                                colors: colors,
-                                child: _TierPlanCard(
-                                  planId: 'premium_plus_yearly',
-                                  tierName: 'Premium Plus',
-                                  badge: 'BEST VALUE',
-                                  badgeColor: colors.accent,
-                                  accentColor: colors.accent,
-                                  price: '\$6.67',
-                                  period: '/mo',
-                                  billedAs: '\$79.99/year',
-                                  features: const [
-                                    '∞ Unlimited workouts',
-                                    '📸 Food photo scanning',
-                                    '🍎 Full nutrition tracking',
-                                    '📊 Advanced analytics',
-                                  ],
-                                  isSelected: _selectedPlan == 'premium_plus_yearly',
-                                  onTap: () => setState(() => _selectedPlan = 'premium_plus_yearly'),
-                                  colors: colors,
-                                ),
-                              )
-                            else
-                              _TierPlanCard(
-                                planId: 'premium_plus_monthly',
-                                tierName: 'Premium Plus',
-                                badge: 'MOST POPULAR',
-                                badgeColor: colors.accent,
-                                accentColor: colors.accent,
-                                price: '\$9.99',
-                                period: '/mo',
-                                billedAs: 'Billed monthly',
-                                features: const [
-                                  '∞ Unlimited workouts',
-                                  '📸 Food photo scanning',
-                                  '🍎 Full nutrition tracking',
-                                  '📊 Advanced analytics',
-                                ],
-                                isSelected: _selectedPlan == 'premium_plus_monthly',
-                                onTap: () => setState(() => _selectedPlan = 'premium_plus_monthly'),
-                                colors: colors,
-                              ),
-
-                            const SizedBox(height: 10),
-
-                            // Premium plan
-                            _TierPlanCard(
-                              planId: _selectedBillingCycle == 'yearly' ? 'premium_yearly' : 'premium_monthly',
-                              tierName: 'Premium',
-                              badge: _selectedBillingCycle == 'yearly' ? 'SAVE 33%' : '',
-                              badgeColor: colors.accent,
-                              accentColor: colors.accent,
-                              price: _selectedBillingCycle == 'yearly' ? '\$4.00' : '\$5.99',
-                              period: '/mo',
-                              billedAs: _selectedBillingCycle == 'yearly' ? '\$47.99/year' : 'Billed monthly',
-                              features: const [
-                                'Daily workouts',
-                                '5 food scans/day',
-                                'Full macro tracking',
-                              ],
-                              isSelected: _selectedPlan == (_selectedBillingCycle == 'yearly' ? 'premium_yearly' : 'premium_monthly'),
-                              onTap: () => setState(() => _selectedPlan = _selectedBillingCycle == 'yearly' ? 'premium_yearly' : 'premium_monthly'),
-                              colors: colors,
-                            ),
-                          ],
-                        ),
-
-                      const SizedBox(height: 16),
-
-                      // Main action button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 54,
-                        child: ElevatedButton(
-                          onPressed: subscriptionState.isLoading
-                            ? null
-                            : () => _handleAction(context, ref, isSubscribed, currentTier),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _getButtonColor(),
-                            foregroundColor: colors.accentContrast,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: subscriptionState.isLoading
-                            ? SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation(colors.accentContrast),
-                                ),
-                              )
-                            : Text(
-                                _getButtonText(isSubscribed, currentTier),
-                                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-                              ),
-                        ),
+                      _BillingTab(
+                        label: 'Monthly',
+                        sublabel: 'Flexible',
+                        isSelected: _selectedBillingCycle == 'monthly',
+                        onTap: () => setState(() {
+                          _selectedBillingCycle = 'monthly';
+                          _selectedPlan = 'premium_plus_monthly';
+                        }),
+                        colors: colors,
                       ),
-
-                      // Continue Free button - clear and visible
-                      if (!isSubscribed) ...[
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: TextButton(
-                            onPressed: () => _skipToFree(context, ref),
-                            style: TextButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                side: BorderSide(color: colors.cardBorder),
-                              ),
-                            ),
-                            child: Text(
-                              'Continue Free',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: colors.textSecondary,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-
-                      const SizedBox(height: 16),
-
-                      // Preview options - compact row
-                      if (!isSubscribed && widget.showPlanPreview)
-                        Row(
-                          children: [
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => context.push('/plan-preview'),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: colors.surface,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: colors.cardBorder),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.visibility_outlined, size: 18, color: colors.cyan),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        'Preview Plan',
-                                        style: TextStyle(fontSize: 13, color: colors.cyan, fontWeight: FontWeight.w500),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => context.push('/demo-workout'),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: colors.surface,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: colors.cardBorder),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.play_circle_outline, size: 18, color: Colors.green),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        'Try Workout',
-                                        style: TextStyle(fontSize: 13, color: Colors.green, fontWeight: FontWeight.w500),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                      const SizedBox(height: 16),
-
-                      // Footer links
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          GestureDetector(
-                            onTap: () => _restorePurchases(context, ref),
-                            child: Text(
-                              'Restore',
-                              style: TextStyle(fontSize: 13, color: colors.cyan),
-                            ),
-                          ),
-                          Text(' • ', style: TextStyle(color: colors.textMuted)),
-                          GestureDetector(
-                            onTap: () => _openTermsOfService(),
-                            child: Text(
-                              'Terms',
-                              style: TextStyle(fontSize: 13, color: colors.textMuted),
-                            ),
-                          ),
-                          Text(' • ', style: TextStyle(color: colors.textMuted)),
-                          GestureDetector(
-                            onTap: () => _openPrivacyPolicy(),
-                            child: Text(
-                              'Privacy',
-                              style: TextStyle(fontSize: 13, color: colors.textMuted),
-                            ),
-                          ),
-                          if (isSubscribed) ...[
-                            Text(' • ', style: TextStyle(color: colors.textMuted)),
-                            GestureDetector(
-                              onTap: () => _navigateToSubscriptionHistory(context),
-                              child: Text(
-                                'History',
-                                style: TextStyle(fontSize: 13, color: colors.cyan),
-                              ),
-                            ),
-                          ],
-                          if (isSubscribed && currentTier != SubscriptionTier.lifetime) ...[
-                            Text(' • ', style: TextStyle(color: colors.textMuted)),
-                            GestureDetector(
-                              onTap: () => _openSubscriptionSettings(),
-                              child: Text(
-                                'Cancel',
-                                style: TextStyle(fontSize: 13, color: Colors.red.shade400),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-
-                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
-              ),
-            ],
+
+                SizedBox(height: isFoldable ? 10 : 14),
+
+                // Plan options
+                Column(
+                  children: [
+                    if (_selectedBillingCycle == 'yearly')
+                      _AccentBorderCard(
+                        isSelected: _selectedPlan == 'premium_plus_yearly',
+                        colors: colors,
+                        child: _TierPlanCard(
+                          planId: 'premium_plus_yearly',
+                          tierName: 'Premium Plus',
+                          badge: 'BEST VALUE',
+                          badgeColor: colors.accent,
+                          accentColor: colors.accent,
+                          price: '\$6.67',
+                          period: '/mo',
+                          billedAs: '\$79.99/year',
+                          features: const ['∞ Unlimited workouts', '📸 Food photo scanning', '🍎 Full nutrition tracking', '📊 Advanced analytics'],
+                          isSelected: _selectedPlan == 'premium_plus_yearly',
+                          onTap: () => setState(() => _selectedPlan = 'premium_plus_yearly'),
+                          colors: colors,
+                        ),
+                      )
+                    else
+                      _TierPlanCard(
+                        planId: 'premium_plus_monthly',
+                        tierName: 'Premium Plus',
+                        badge: 'MOST POPULAR',
+                        badgeColor: colors.accent,
+                        accentColor: colors.accent,
+                        price: '\$9.99',
+                        period: '/mo',
+                        billedAs: 'Billed monthly',
+                        features: const ['∞ Unlimited workouts', '📸 Food photo scanning', '🍎 Full nutrition tracking', '📊 Advanced analytics'],
+                        isSelected: _selectedPlan == 'premium_plus_monthly',
+                        onTap: () => setState(() => _selectedPlan = 'premium_plus_monthly'),
+                        colors: colors,
+                      ),
+
+                    const SizedBox(height: 10),
+
+                    _TierPlanCard(
+                      planId: _selectedBillingCycle == 'yearly' ? 'premium_yearly' : 'premium_monthly',
+                      tierName: 'Premium',
+                      badge: _selectedBillingCycle == 'yearly' ? 'SAVE 33%' : '',
+                      badgeColor: colors.accent,
+                      accentColor: colors.accent,
+                      price: _selectedBillingCycle == 'yearly' ? '\$4.00' : '\$5.99',
+                      period: '/mo',
+                      billedAs: _selectedBillingCycle == 'yearly' ? '\$47.99/year' : 'Billed monthly',
+                      features: const ['Daily workouts', '5 food scans/day', 'Full macro tracking'],
+                      isSelected: _selectedPlan == (_selectedBillingCycle == 'yearly' ? 'premium_yearly' : 'premium_monthly'),
+                      onTap: () => setState(() => _selectedPlan = _selectedBillingCycle == 'yearly' ? 'premium_yearly' : 'premium_monthly'),
+                      colors: colors,
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: isFoldable ? 12 : 16),
+
+                // Main action button
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton(
+                    onPressed: subscriptionState.isLoading
+                      ? null
+                      : () => _handleAction(context, ref, isSubscribed, currentTier),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _getButtonColor(),
+                      foregroundColor: colors.accentContrast,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: subscriptionState.isLoading
+                      ? SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(colors.accentContrast),
+                          ),
+                        )
+                      : Text(
+                          _getButtonText(isSubscribed, currentTier),
+                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                        ),
+                  ),
+                ),
+
+                // Continue Free button
+                if (!isSubscribed) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: TextButton(
+                      onPressed: () => _skipToFree(context, ref),
+                      style: TextButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: BorderSide(color: colors.cardBorder),
+                        ),
+                      ),
+                      child: Text(
+                        'Continue Free',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+
+                SizedBox(height: isFoldable ? 10 : 16),
+
+                // Preview options
+                if (!isSubscribed && widget.showPlanPreview)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => context.push('/plan-preview'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: colors.surface,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: colors.cardBorder),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.visibility_outlined, size: 18, color: colors.cyan),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Preview Plan',
+                                  style: TextStyle(fontSize: 13, color: colors.cyan, fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => context.push('/demo-workout'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: colors.surface,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: colors.cardBorder),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.play_circle_outline, size: 18, color: Colors.green),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Try Workout',
+                                  style: TextStyle(fontSize: 13, color: Colors.green, fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                SizedBox(height: isFoldable ? 10 : 16),
+
+                // Footer links
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: () => _restorePurchases(context, ref),
+                      child: Text('Restore', style: TextStyle(fontSize: 13, color: colors.cyan)),
+                    ),
+                    Text(' • ', style: TextStyle(color: colors.textMuted)),
+                    GestureDetector(
+                      onTap: () => _openTermsOfService(),
+                      child: Text('Terms', style: TextStyle(fontSize: 13, color: colors.textMuted)),
+                    ),
+                    Text(' • ', style: TextStyle(color: colors.textMuted)),
+                    GestureDetector(
+                      onTap: () => _openPrivacyPolicy(),
+                      child: Text('Privacy', style: TextStyle(fontSize: 13, color: colors.textMuted)),
+                    ),
+                    if (isSubscribed) ...[
+                      Text(' • ', style: TextStyle(color: colors.textMuted)),
+                      GestureDetector(
+                        onTap: () => _navigateToSubscriptionHistory(context),
+                        child: Text('History', style: TextStyle(fontSize: 13, color: colors.cyan)),
+                      ),
+                    ],
+                    if (isSubscribed && currentTier != SubscriptionTier.lifetime) ...[
+                      Text(' • ', style: TextStyle(color: colors.textMuted)),
+                      GestureDetector(
+                        onTap: () => _openSubscriptionSettings(),
+                        child: Text('Cancel', style: TextStyle(fontSize: 13, color: Colors.red.shade400)),
+                      ),
+                    ],
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
 
   Color _getButtonColor() {
     // Get dynamic accent color from provider

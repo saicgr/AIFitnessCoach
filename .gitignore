@@ -82,4 +82,5 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 
 google*
+gen-lang-client-*.json
 aifitnesscoach-5e5d3-firebase-adminsdk-fbsvc-5e932acb66.json

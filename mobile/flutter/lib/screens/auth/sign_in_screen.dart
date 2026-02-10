@@ -5,8 +5,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/window_mode_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../onboarding/pre_auth_quiz_screen.dart';
+import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 
 /// Dedicated sign-in screen shown after quiz and preview
 /// Shows progress indicator and value reinforcement
@@ -142,8 +144,37 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final authState = ref.watch(authStateProvider);
+    final windowState = ref.watch(windowModeProvider);
+    final useFoldable = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    Widget errorWidget = const SizedBox.shrink();
+    if (authState.status == AuthStatus.error && authState.errorMessage != null) {
+      errorWidget = Container(
+        margin: const EdgeInsets.only(top: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.error.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.error.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.error_outline, color: AppColors.error, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                authState.errorMessage!,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.error,
+                    ),
+              ),
+            ),
+          ],
+        ),
+      ).animate().fadeIn().shake();
+    }
 
     return Scaffold(
       body: Container(
@@ -161,71 +192,108 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                 ),
         ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                    child: IntrinsicHeight(
-                      child: Column(
-                        children: [
-                          // Header with back button
-                          _buildHeader(isDark, textSecondary),
-
-                          const Spacer(),
-
-                          // Main content
-                          _buildMainContent(isDark, textPrimary, textSecondary),
-
-                          const Spacer(),
-
-                          // Sign-in buttons
-                          _buildSignInButtons(isDark),
-
-                          // Error message
-                          if (authState.status == AuthStatus.error && authState.errorMessage != null)
-                            Container(
-                              margin: const EdgeInsets.only(top: 12),
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppColors.error.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppColors.error.withOpacity(0.3)),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.error_outline, color: AppColors.error, size: 20),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      authState.errorMessage!,
-                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                            color: AppColors.error,
-                                          ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ).animate().fadeIn().shake(),
-
-                          const SizedBox(height: 24),
-
-                          // Terms text
-                          _buildTermsText(textSecondary),
-
-                          const SizedBox(height: 24),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
+          child: useFoldable
+              ? _buildFoldableLayout(
+                  context, windowState, isDark, textPrimary, textSecondary, errorWidget)
+              : _buildPhoneLayout(isDark, textPrimary, textSecondary, errorWidget),
         ),
       ),
+    );
+  }
+
+  Widget _buildPhoneLayout(
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+    Widget errorWidget,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  children: [
+                    _buildHeader(isDark, textSecondary),
+                    const Spacer(),
+                    _buildMainContent(isDark, textPrimary, textSecondary),
+                    const Spacer(),
+                    _buildSignInButtons(isDark),
+                    errorWidget,
+                    const SizedBox(height: 24),
+                    _buildTermsText(textSecondary),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildFoldableLayout(
+    BuildContext context,
+    WindowModeState windowState,
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+    Widget errorWidget,
+  ) {
+    final hingeBounds = windowState.hingeBounds;
+    final safeLeft = MediaQuery.of(context).padding.left;
+    final rawHingeLeft = hingeBounds?.left ?? MediaQuery.of(context).size.width / 2;
+    final hingeLeft = (rawHingeLeft - safeLeft).clamp(100.0, double.infinity);
+    final hingeWidth = hingeBounds?.width ?? 0;
+
+    return Column(
+      children: [
+        // Header spans full width
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: _buildHeader(isDark, textSecondary),
+        ),
+        Expanded(
+          child: Row(
+            children: [
+              // Left pane: branding + value proposition
+              SizedBox(
+                width: hingeLeft,
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    child: _buildMainContent(isDark, textPrimary, textSecondary),
+                  ),
+                ),
+              ),
+              // Hinge gap
+              SizedBox(width: hingeWidth),
+              // Right pane: sign-in buttons
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildSignInButtons(isDark),
+                        errorWidget,
+                        const SizedBox(height: 24),
+                        _buildTermsText(textSecondary),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -247,9 +315,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.cyan.withOpacity(0.1),
+              color: (isDark ? AppColors.orange : AppColorsLight.orange).withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+              border: Border.all(
+                  color: (isDark ? AppColors.orange : AppColorsLight.orange).withOpacity(0.3)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -269,7 +338,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                         widthFactor: 0.9, // 90% complete
                         child: Container(
                           decoration: BoxDecoration(
-                            gradient: AppColors.cyanGradient,
+                            gradient: LinearGradient(
+                              colors: isDark
+                                  ? [AppColors.orange, AppColors.orangeLight]
+                                  : [AppColorsLight.orange, AppColorsLight.orangeLight],
+                            ),
                             borderRadius: BorderRadius.circular(3),
                           ),
                         ),
@@ -281,7 +354,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                 Text(
                   '90%',
                   style: TextStyle(
-                    color: AppColors.cyan,
+                    color: isDark ? AppColors.orange : AppColorsLight.orange,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -402,12 +475,12 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.cyan.withOpacity(0.15),
+              color: AppColors.orange.withOpacity(0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
               Icons.check_circle_outline,
-              color: AppColors.cyan,
+              color: AppColors.orange,
               size: 24,
             ),
           ),

@@ -190,6 +190,14 @@ def row_to_user(row: dict, is_new_user: bool = False, support_friend_added: bool
         weight_unit=row.get("weight_unit") or "kg",
         # Profile photo URL
         photo_url=row.get("photo_url"),
+        # Device info fields
+        device_model=row.get("device_model"),
+        device_platform=row.get("device_platform"),
+        is_foldable=row.get("is_foldable", False),
+        os_version=row.get("os_version"),
+        screen_width=row.get("screen_width"),
+        screen_height=row.get("screen_height"),
+        last_device_update=row.get("last_device_update"),
     )
 
 
@@ -1210,6 +1218,32 @@ async def update_user(user_id: str, user: UserUpdate):
         if user.device_platform is not None:
             update_data["device_platform"] = user.device_platform
             logger.info(f"Updating device platform for user {user_id}: {user.device_platform}")
+
+        # Handle device info fields
+        if user.device_model is not None:
+            update_data["device_model"] = user.device_model
+        if user.is_foldable is not None:
+            update_data["is_foldable"] = user.is_foldable
+        if user.os_version is not None:
+            update_data["os_version"] = user.os_version
+        if user.screen_width is not None:
+            update_data["screen_width"] = user.screen_width
+        if user.screen_height is not None:
+            update_data["screen_height"] = user.screen_height
+
+        # Auto-set last_device_update when any device field is present
+        has_device_fields = any([
+            user.device_model is not None,
+            user.device_platform is not None,
+            user.is_foldable is not None,
+            user.os_version is not None,
+            user.screen_width is not None,
+            user.screen_height is not None,
+        ])
+        if has_device_fields:
+            from datetime import datetime as dt, timezone as tz
+            update_data["last_device_update"] = dt.now(tz.utc).isoformat()
+            logger.info(f"Updating device info for user {user_id}: model={user.device_model}, foldable={user.is_foldable}")
 
         # Handle notification preferences
         if user.notification_preferences is not None:

@@ -2749,6 +2749,17 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     }
   }
 
+  /// Extra widget shown in the scaffold's left pane (foldable only).
+  /// Used for info buttons that belong near the question title.
+  Widget? _getStepHeaderExtra(BuildContext context, int step) {
+    switch (step) {
+      case 5: // Primary Goal — has an info button explaining how AI uses this
+        return QuizPrimaryGoal.buildInfoButton(context);
+      default:
+        return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -2774,6 +2785,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           child: FoldableQuizScaffold(
             headerTitle: _getStepTitle(_currentQuestion),
             headerSubtitle: _getStepSubtitle(_currentQuestion),
+            headerExtra: isFoldableOpen ? _getStepHeaderExtra(context, _currentQuestion) : null,
             progressBar: QuizProgressBar(progress: _progress),
             headerOverlay: QuizHeader(
               currentQuestion: _currentQuestion,

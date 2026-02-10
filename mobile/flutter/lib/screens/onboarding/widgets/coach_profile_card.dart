@@ -65,13 +65,28 @@ class CoachProfileCard extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header with gradient and icon
+            // Compact header with gradient and icon
             _buildHeader(isDark, textPrimary, textSecondary),
 
-            // Content section - just sample message, no traits/specialization to save space
+            // Content section - traits, specialization, and sample message
             Padding(
-              padding: const EdgeInsets.all(12),
-              child: _buildSampleMessage(isDark, textPrimary, textSecondary),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Specialization
+                  _buildSpecialization(isDark, textSecondary),
+                  const SizedBox(height: 8),
+
+                  // Personality traits
+                  _buildPersonalityTraits(isDark, textSecondary),
+                  const SizedBox(height: 10),
+
+                  // Sample message
+                  _buildSampleMessage(isDark, textPrimary, textSecondary),
+                ],
+              ),
             ),
           ],
         ),
@@ -82,7 +97,7 @@ class CoachProfileCard extends StatelessWidget {
   Widget _buildHeader(bool isDark, Color textPrimary, Color textSecondary) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -97,67 +112,58 @@ class CoachProfileCard extends StatelessWidget {
           topRight: Radius.circular(23),
         ),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         children: [
           // Coach avatar
           CoachAvatar(
             coach: coach,
-            size: 60,
+            size: 48,
             showBorder: true,
-            borderWidth: 3,
+            borderWidth: 2,
             showShadow: false,
-            enableTapToView: false, // Tap selects coach, not view
+            enableTapToView: false,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(width: 12),
 
-          // Coach name
-          Text(
-            coach.name,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          // Name + tagline
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  coach.name,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  coach.tagline,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-          ),
-
-          const SizedBox(height: 2),
-
-          // Tagline
-          Text(
-            coach.tagline,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.9),
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
           ),
 
           // Selected badge
           if (isSelected) ...[
-            const SizedBox(height: 6),
+            const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.25),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.check_circle, color: Colors.white, size: 11),
-                  SizedBox(width: 3),
-                  Text(
-                    'Selected',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
+              child: const Icon(Icons.check_circle, color: Colors.white, size: 16),
             ),
           ],
         ],

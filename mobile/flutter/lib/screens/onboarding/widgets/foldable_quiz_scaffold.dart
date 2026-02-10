@@ -84,7 +84,13 @@ class FoldableQuizScaffold extends ConsumerWidget {
             const SizedBox(height: 16),
           ],
         ),
-        if (headerOverlay != null) headerOverlay!,
+        if (headerOverlay != null)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: headerOverlay!,
+          ),
       ],
     );
   }
@@ -168,13 +174,16 @@ class FoldableQuizScaffold extends ConsumerWidget {
                   Expanded(
                     child: Column(
                       children: [
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 4),
                         Expanded(child: content),
                         if (button != null) ...[
-                          const SizedBox(height: 8),
-                          button!,
+                          const SizedBox(height: 4),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: button!,
+                          ),
                         ],
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
                       ],
                     ),
                   ),
@@ -183,7 +192,13 @@ class FoldableQuizScaffold extends ConsumerWidget {
             ),
           ],
         ),
-        if (headerOverlay != null) headerOverlay!,
+        if (headerOverlay != null)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: headerOverlay!,
+          ),
       ],
     );
   }

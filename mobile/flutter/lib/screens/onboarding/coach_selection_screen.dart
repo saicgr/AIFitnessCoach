@@ -321,6 +321,82 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     });
   }
 
+  void _skip() {
+    if (_isLoading) return;
+    HapticFeedback.mediumImpact();
+
+    // Use default first coach when skipping
+    final defaultCoach = CoachPersona.predefinedCoaches.first;
+    _selectedCoach = defaultCoach;
+    _isCustomMode = false;
+    ref.read(aiSettingsProvider.notifier).setCoachPersona(defaultCoach);
+
+    ref.read(authStateProvider.notifier).markCoachSelected();
+    ref.read(authStateProvider.notifier).markOnboardingComplete();
+
+    if (mounted) {
+      context.go('/fitness-assessment');
+    }
+
+    _submitUserPreferencesAndFlags();
+  }
+
+  Widget _buildHeaderOverlay(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Back button
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              if (widget.fromSettings) {
+                context.pop();
+              } else {
+                context.go('/weight-projection');
+              }
+            },
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.arrow_back,
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                size: 20,
+              ),
+            ),
+          ),
+
+          // Skip button (only during onboarding, not from settings)
+          if (!widget.fromSettings)
+            GestureDetector(
+              onTap: _skip,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Skip',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -365,6 +441,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                     ),
                   )
                 : null,
+            headerOverlay: _buildHeaderOverlay(isDark),
             content: Column(
               children: [
                 // Show header inline only on phone

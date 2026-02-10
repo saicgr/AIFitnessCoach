@@ -17,6 +17,7 @@ import '../repositories/hydration_repository.dart';
 import '../repositories/workout_repository.dart';
 import '../services/api_client.dart';
 import '../services/data_cache_service.dart';
+import '../services/device_info_service.dart';
 import '../services/wearable_service.dart';
 
 /// Auth state
@@ -475,6 +476,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _init();
   }
 
+  /// Fire-and-forget device info update after successful auth
+  void _updateDeviceInfo(String userId) {
+    final service = DeviceInfoService(_repository._apiClient);
+    service.updateIfNeeded(userId: userId).catchError((e) {
+      debugPrint('⚠️ [Auth] Device info update failed: $e');
+    });
+  }
+
   /// Initialize with cache-first pattern for instant auth
   Future<void> _init() async {
     try {
@@ -485,6 +494,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         // Show cached user immediately - no loading spinner!
         debugPrint('⚡ [Auth] Authenticated from cache instantly');
         state = AuthState(status: AuthStatus.authenticated, user: result.cached);
+        _updateDeviceInfo(result.cached!.id);
 
         // Step 2: Fetch fresh data in background and update silently
         result.fresh.then((freshUser) {
@@ -517,6 +527,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final user = await _repository.signInWithGoogle();
       state = AuthState(status: AuthStatus.authenticated, user: user);
+      _updateDeviceInfo(user.id);
     } catch (e) {
       state = AuthState(
         status: AuthStatus.error,
@@ -531,6 +542,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final user = await _repository.signInWithEmail(email, password);
       state = AuthState(status: AuthStatus.authenticated, user: user);
+      _updateDeviceInfo(user.id);
     } catch (e) {
       state = AuthState(
         status: AuthStatus.error,
@@ -545,6 +557,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final user = await _repository.signUpWithEmail(email, password, name: name);
       state = AuthState(status: AuthStatus.authenticated, user: user);
+      _updateDeviceInfo(user.id);
     } catch (e) {
       state = AuthState(
         status: AuthStatus.error,

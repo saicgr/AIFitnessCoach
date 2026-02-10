@@ -140,6 +140,65 @@ class _FitnessAssessmentScreenState
     }
   }
 
+  void _skip() {
+    HapticFeedback.mediumImpact();
+    // Skip without saving fitness data — defaults will be used
+    if (mounted) {
+      context.go('/paywall-features');
+    }
+  }
+
+  Widget _buildHeaderOverlay(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Back button
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              context.go('/coach-selection');
+            },
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.arrow_back,
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                size: 20,
+              ),
+            ),
+          ),
+
+          // Skip button
+          GestureDetector(
+            onTap: _skip,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'Skip',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -149,6 +208,11 @@ class _FitnessAssessmentScreenState
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+
+    final windowState = ref.watch(windowModeProvider);
+    final isFoldable = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
+    final gap = isFoldable ? 8.0 : 16.0;
+    final hPad = isFoldable ? 12.0 : 24.0;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -168,24 +232,20 @@ class _FitnessAssessmentScreenState
               child: const Icon(Icons.assessment, color: Colors.white, size: 26),
             ),
           ),
+          headerOverlay: _buildHeaderOverlay(isDark),
           content: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: EdgeInsets.symmetric(horizontal: hPad),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Show header inline only on phone (foldable shows it in the left pane)
-                Consumer(builder: (context, ref, _) {
-                  final windowState = ref.watch(windowModeProvider);
-                  if (FoldableQuizScaffold.shouldUseFoldableLayout(windowState)) {
-                    return const SizedBox.shrink();
-                  }
-                  return Padding(
+                if (!isFoldable)
+                  Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: _buildHeader(textPrimary, textSecondary),
-                  );
-                }),
+                  ),
 
-                const SizedBox(height: 8),
+                SizedBox(height: isFoldable ? 4.0 : 8.0),
 
                 // Question 1: Push-ups
                 _buildQuestionCard(
@@ -199,9 +259,10 @@ class _FitnessAssessmentScreenState
                   onChanged: (value) =>
                       setState(() => _pushupCapacity = value),
                   isDark: isDark,
+                  compact: isFoldable,
                 ),
 
-                const SizedBox(height: 16),
+                SizedBox(height: gap),
 
                 // Question 2: Pull-ups
                 _buildQuestionCard(
@@ -215,9 +276,10 @@ class _FitnessAssessmentScreenState
                   onChanged: (value) =>
                       setState(() => _pullupCapacity = value),
                   isDark: isDark,
+                  compact: isFoldable,
                 ),
 
-                const SizedBox(height: 16),
+                SizedBox(height: gap),
 
                 // Question 3: Plank
                 _buildQuestionCard(
@@ -231,9 +293,10 @@ class _FitnessAssessmentScreenState
                   onChanged: (value) =>
                       setState(() => _plankCapacity = value),
                   isDark: isDark,
+                  compact: isFoldable,
                 ),
 
-                const SizedBox(height: 16),
+                SizedBox(height: gap),
 
                 // Question 4: Squats
                 _buildQuestionCard(
@@ -247,9 +310,10 @@ class _FitnessAssessmentScreenState
                   onChanged: (value) =>
                       setState(() => _squatCapacity = value),
                   isDark: isDark,
+                  compact: isFoldable,
                 ),
 
-                const SizedBox(height: 16),
+                SizedBox(height: gap),
 
                 // Question 5: Experience
                 _buildQuestionCard(
@@ -263,9 +327,10 @@ class _FitnessAssessmentScreenState
                   onChanged: (value) =>
                       setState(() => _trainingExperience = value),
                   isDark: isDark,
+                  compact: isFoldable,
                 ),
 
-                const SizedBox(height: 16),
+                SizedBox(height: gap),
 
                 // Question 6: Cardio
                 _buildQuestionCard(
@@ -279,9 +344,10 @@ class _FitnessAssessmentScreenState
                   onChanged: (value) =>
                       setState(() => _cardioCapacity = value),
                   isDark: isDark,
+                  compact: isFoldable,
                 ),
 
-                const SizedBox(height: 100), // Space for button
+                SizedBox(height: isFoldable ? 60 : 100), // Space for button
               ],
             ),
           ),
@@ -347,6 +413,7 @@ class _FitnessAssessmentScreenState
     required String? selectedValue,
     required ValueChanged<String> onChanged,
     required bool isDark,
+    bool compact = false,
   }) {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -355,13 +422,24 @@ class _FitnessAssessmentScreenState
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
+    final cardPad = compact ? 10.0 : 16.0;
+    final iconPad = compact ? 6.0 : 8.0;
+    final iconSize = compact ? 16.0 : 20.0;
+    final titleSize = compact ? 14.0 : 16.0;
+    final subtitleSize = compact ? 11.0 : 12.0;
+    final chipHPad = compact ? 10.0 : 12.0;
+    final chipVPad = compact ? 6.0 : 8.0;
+    final chipFontSize = compact ? 12.0 : 13.0;
+    final chipSpacing = compact ? 6.0 : 8.0;
+    final headerChipGap = compact ? 8.0 : 12.0;
+
     return Container(
       decoration: BoxDecoration(
         color: elevated,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(compact ? 12 : 16),
         border: Border.all(color: cardBorder),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(cardPad),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -369,14 +447,14 @@ class _FitnessAssessmentScreenState
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(iconPad),
                 decoration: BoxDecoration(
                   color: iconColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(compact ? 8 : 10),
                 ),
-                child: Icon(icon, color: iconColor, size: 20),
+                child: Icon(icon, color: iconColor, size: iconSize),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -384,7 +462,7 @@ class _FitnessAssessmentScreenState
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: titleSize,
                         fontWeight: FontWeight.w600,
                         color: textPrimary,
                       ),
@@ -392,7 +470,7 @@ class _FitnessAssessmentScreenState
                     Text(
                       subtitle,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: subtitleSize,
                         color: textSecondary,
                       ),
                     ),
@@ -402,12 +480,12 @@ class _FitnessAssessmentScreenState
             ],
           ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: headerChipGap),
 
           // Options as chips
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: chipSpacing,
+            runSpacing: chipSpacing,
             children: options.map((option) {
               final isSelected = selectedValue == option['id'];
               return GestureDetector(
@@ -418,7 +496,7 @@ class _FitnessAssessmentScreenState
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      EdgeInsets.symmetric(horizontal: chipHPad, vertical: chipVPad),
                   decoration: BoxDecoration(
                     gradient: isSelected
                         ? LinearGradient(
@@ -444,7 +522,7 @@ class _FitnessAssessmentScreenState
                   child: Text(
                     option['label'] as String,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: chipFontSize,
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                       color: isSelected ? Colors.white : textPrimary,
                     ),

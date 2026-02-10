@@ -22,7 +22,33 @@ class QuizPrimaryGoal extends StatelessWidget {
     this.showHeader = true,
   });
 
-  void _showInfoSheet(BuildContext context, bool isDark, Color textPrimary, Color textSecondary) {
+  /// Builds the info button widget that opens the training focus info sheet.
+  /// Static so parent layouts (e.g. foldable scaffold) can place it near the title.
+  static Widget buildInfoButton(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        _showInfoSheet(context, isDark, textPrimary, textSecondary);
+      },
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: AppColors.orange.withValues(alpha: 0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.info_outline,
+          size: 20,
+          color: AppColors.orange,
+        ),
+      ),
+    );
+  }
+
+  static void _showInfoSheet(BuildContext context, bool isDark, Color textPrimary, Color textSecondary) {
     final cardBg = isDark ? AppColors.elevated : Colors.white;
 
     showModalBottomSheet(
@@ -146,7 +172,7 @@ class QuizPrimaryGoal extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoSection({
+  static Widget _buildInfoSection({
     required IconData icon,
     required String title,
     required String description,
@@ -229,24 +255,7 @@ class QuizPrimaryGoal extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    _showInfoSheet(context, isDark, textPrimary, textSecondary);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: AppColors.orange.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.info_outline,
-                      size: 20,
-                      color: AppColors.orange,
-                    ),
-                  ),
-                ),
+                buildInfoButton(context),
               ],
             ),
             const SizedBox(height: 10),

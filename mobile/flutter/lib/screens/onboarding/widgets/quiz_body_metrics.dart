@@ -26,6 +26,8 @@ class QuizBodyMetrics extends StatefulWidget {
   final ValueChanged<String>? onWeightDirectionChanged;
   final ValueChanged<double>? onWeightChangeAmountChanged;
   final bool showHeader;
+  /// When true, reduces spacing/padding to fit foldable right-pane without scrolling.
+  final bool compact;
 
   const QuizBodyMetrics({
     super.key,
@@ -48,6 +50,7 @@ class QuizBodyMetrics extends StatefulWidget {
     this.onWeightDirectionChanged,
     this.onWeightChangeAmountChanged,
     this.showHeader = true,
+    this.compact = false,
   });
 
   /// Calculate age from date of birth
@@ -224,10 +227,14 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     final cardBg = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
+    final sectionGap = widget.compact ? 12.0 : 20.0;
+    final goalGap = widget.compact ? 14.0 : 24.0;
+    final bottomPad = widget.compact ? 8.0 : 60.0;
+
     return Stack(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: EdgeInsets.symmetric(horizontal: widget.compact ? 16 : 24),
           child: SingleChildScrollView(
             controller: _scrollController,
             child: Column(
@@ -237,32 +244,32 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                   _buildTitle(textPrimary),
                   const SizedBox(height: 6),
                   _buildSubtitle(textSecondary),
-                  const SizedBox(height: 24),
+                  SizedBox(height: goalGap),
                 ],
 
                 // Name input (NEW)
                 _buildNameInput(isDark, textPrimary, textSecondary, cardBg, cardBorder),
-                const SizedBox(height: 20),
+                SizedBox(height: sectionGap),
 
                 // DOB and Gender inputs
                 _buildDobGenderSection(isDark, textPrimary, textSecondary, cardBg, cardBorder),
-                const SizedBox(height: 20),
+                SizedBox(height: sectionGap),
 
                 // Height and Weight in single row
                 _buildHeightWeightRow(isDark, textPrimary, textSecondary, cardBg, cardBorder),
 
                 // Two-step weight goal (only show if current weight is set)
                 if (widget.weightKg != null) ...[
-                  const SizedBox(height: 24),
+                  SizedBox(height: goalGap),
                   _buildWeightGoalSection(isDark, textPrimary, textSecondary, cardBg, cardBorder),
                 ],
 
-                const SizedBox(height: 60), // Extra space for scroll hint
+                SizedBox(height: bottomPad),
               ],
             ),
           ),
         ),
-        ScrollHintArrow(scrollController: _scrollController),
+        if (!widget.compact) ScrollHintArrow(scrollController: _scrollController),
       ],
     );
   }
@@ -296,31 +303,32 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     Color cardBg,
     Color cardBorder,
   ) {
+    final compact = widget.compact;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(compact ? 6 : 8),
               decoration: BoxDecoration(
                 color: AppColors.electricBlue.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(compact ? 8 : 10),
               ),
-              child: Icon(Icons.person_outline, color: AppColors.electricBlue, size: 20),
+              child: Icon(Icons.person_outline, color: AppColors.electricBlue, size: compact ? 16 : 20),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: compact ? 8 : 12),
             Text(
               'What should we call you?',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: compact ? 14 : 16,
                 fontWeight: FontWeight.w600,
                 color: textPrimary,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: compact ? 8 : 12),
         Container(
           decoration: BoxDecoration(
             color: cardBg,
@@ -332,7 +340,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
             keyboardType: TextInputType.name,
             textCapitalization: TextCapitalization.words,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: compact ? 16 : 18,
               fontWeight: FontWeight.w600,
               color: textPrimary,
             ),
@@ -342,7 +350,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
                 fontWeight: FontWeight.normal,
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding: EdgeInsets.symmetric(horizontal: compact ? 12 : 16, vertical: compact ? 10 : 14),
               border: InputBorder.none,
             ),
             onChanged: (value) {
@@ -961,31 +969,32 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     Color cardBg,
     Color cardBorder,
   ) {
+    final compact = widget.compact;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(compact ? 6 : 8),
               decoration: BoxDecoration(
                 color: AppColors.success.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(compact ? 8 : 10),
               ),
-              child: Icon(Icons.flag_outlined, color: AppColors.success, size: 20),
+              child: Icon(Icons.flag_outlined, color: AppColors.success, size: compact ? 16 : 20),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: compact ? 8 : 12),
             Text(
               'Weight Goal',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: compact ? 14 : 16,
                 fontWeight: FontWeight.w600,
                 color: textPrimary,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: compact ? 8 : 12),
 
         // Direction chips
         Wrap(
@@ -1100,8 +1109,14 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     final directionLabel = widget.weightDirection == 'lose' ? 'lose' : 'gain';
     const orange = Color(0xFFF97316);
 
+    final compact = widget.compact;
+    final cardPad = compact ? 12.0 : 16.0;
+    final innerGap = compact ? 10.0 : 16.0;
+    final amountFontSize = compact ? 28.0 : 36.0;
+    final btnSpacing = compact ? 14.0 : 20.0;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(cardPad),
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(14),
@@ -1125,7 +1140,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
               _buildAmountUnitToggle(isDark, cardBg, cardBorder),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: innerGap),
 
           // +/- buttons with amount display (tap number to type)
           Row(
@@ -1145,12 +1160,12 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                 isDark: isDark,
                 cardBorder: cardBorder,
               ),
-              const SizedBox(width: 20),
+              SizedBox(width: btnSpacing),
               // Tappable amount display
               GestureDetector(
                 onTap: () => _showAmountInputDialog(isDark, textPrimary, textSecondary, unit),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 16, vertical: compact ? 4 : 8),
                   decoration: BoxDecoration(
                     color: orange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -1160,8 +1175,8 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                     children: [
                       Text(
                         _weightChangeAmount.round().toString(),
-                        style: const TextStyle(
-                          fontSize: 36,
+                        style: TextStyle(
+                          fontSize: amountFontSize,
                           fontWeight: FontWeight.bold,
                           color: orange,
                         ),
@@ -1169,7 +1184,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                       Text(
                         unit,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: compact ? 12 : 14,
                           color: textSecondary,
                         ),
                       ),
@@ -1177,7 +1192,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                   ),
                 ),
               ),
-              const SizedBox(width: 20),
+              SizedBox(width: btnSpacing),
               _buildIncrementButton(
                 icon: Icons.add,
                 onTap: () {
@@ -1195,7 +1210,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
             ],
           ),
 
-          const SizedBox(height: 16),
+          SizedBox(height: innerGap),
 
           // Weight goal slider
           _buildWeightGoalSlider(isDark, textSecondary, cardBorder),

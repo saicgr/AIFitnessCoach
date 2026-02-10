@@ -222,6 +222,8 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final windowState = ref.watch(windowModeProvider);
+    final isFoldable = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
@@ -245,24 +247,20 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
         ),
         child: SafeArea(
           child: FoldableQuizScaffold(
-            headerTitle: 'Tell us about yourself',
-            headerSubtitle: 'This helps personalize your plan',
+            headerTitle: isFoldable
+                ? "Let's set your body goals"
+                : 'Tell us about yourself',
+            headerSubtitle: isFoldable
+                ? "We'll use this to calculate your personalized targets"
+                : 'This helps personalize your plan',
             headerExtra: _buildProgressIndicator(isDark),
             content: Column(
               children: [
                 // Show header + progress inline only on phone
-                Consumer(builder: (context, ref, _) {
-                  final windowState = ref.watch(windowModeProvider);
-                  if (FoldableQuizScaffold.shouldUseFoldableLayout(windowState)) {
-                    return const SizedBox.shrink();
-                  }
-                  return Column(
-                    children: [
-                      _buildHeader(isDark, textPrimary, textSecondary),
-                      _buildProgressIndicator(isDark),
-                    ],
-                  );
-                }),
+                if (!isFoldable) ...[
+                  _buildHeader(isDark, textPrimary, textSecondary),
+                  _buildProgressIndicator(isDark),
+                ],
 
                 // Body metrics form
                 Expanded(
@@ -285,6 +283,8 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                     onUnitChanged: (useMetric) => setState(() => _useMetric = useMetric),
                     onWeightDirectionChanged: (direction) => setState(() => _weightDirection = direction),
                     onWeightChangeAmountChanged: (amount) => setState(() => _weightChangeAmount = amount),
+                    showHeader: !isFoldable,
+                    compact: isFoldable,
                   ),
                 ),
               ],
