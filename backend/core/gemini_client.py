@@ -81,7 +81,21 @@ def get_genai_client() -> genai.Client:
     """
     settings = get_settings()
 
-    if settings.use_vertex_ai:
+    use_vertex = settings.use_vertex_ai
+    if use_vertex:
+        _setup_credentials()
+        has_creds = bool(
+            os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+            or settings.gcp_credentials_json_b64
+        )
+        if not has_creds:
+            logger.warning(
+                "Vertex AI enabled (GCP_PROJECT_ID set) but no credentials found. "
+                "Falling back to API key auth."
+            )
+            use_vertex = False
+
+    if use_vertex:
         return genai.Client(
             vertexai=True,
             project=settings.gcp_project_id,
@@ -105,7 +119,22 @@ def get_langchain_llm(temperature: float = 0.7, timeout: Optional[int] = None, m
     """
     settings = get_settings()
 
-    if settings.use_vertex_ai:
+    use_vertex = settings.use_vertex_ai
+    if use_vertex:
+        # Verify credentials are actually available before trying Vertex AI
+        _setup_credentials()
+        has_creds = bool(
+            os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+            or settings.gcp_credentials_json_b64
+        )
+        if not has_creds:
+            logger.warning(
+                "Vertex AI enabled (GCP_PROJECT_ID set) but no credentials found. "
+                "Falling back to API key auth."
+            )
+            use_vertex = False
+
+    if use_vertex:
         from langchain_google_vertexai import ChatVertexAI
 
         kwargs = {
