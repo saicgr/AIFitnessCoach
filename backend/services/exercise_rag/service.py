@@ -1212,10 +1212,10 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
                 system_content += " and certified physical therapist. SAFETY IS YOUR TOP PRIORITY."
             system_content += ". Select exercises wisely. Return ONLY valid JSON."
 
-            from google import genai
             from google.genai import types
+            from core.gemini_client import get_genai_client
 
-            client = genai.Client(api_key=settings.gemini_api_key)
+            client = get_genai_client()
             response = await client.aio.models.generate_content(
                 model=settings.gemini_model,
                 contents=f"{system_content}\n\n{prompt}",

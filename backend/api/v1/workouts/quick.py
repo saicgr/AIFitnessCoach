@@ -234,11 +234,11 @@ async def generate_quick_workout(request: QuickWorkoutRequest):
 
         try:
             from google.genai import types
-            from google import genai
             from core.config import get_settings
+            from core.gemini_client import get_genai_client
 
             settings = get_settings()
-            client = genai.Client(api_key=settings.gemini_api_key)
+            client = get_genai_client()
 
             response = await client.aio.models.generate_content(
                 model=settings.gemini_model,

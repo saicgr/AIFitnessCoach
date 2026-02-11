@@ -1485,12 +1485,12 @@ Example format: {{"suggestions": [...]}}"""
 
         user_prompt = request.prompt if request.prompt else "Give me some workout alternatives"
 
-        from google import genai
         from google.genai import types
         from core.config import get_settings
+        from core.gemini_client import get_genai_client
         settings = get_settings()
 
-        client = genai.Client(api_key=settings.gemini_api_key)
+        client = get_genai_client()
         response = await client.aio.models.generate_content(
             model=settings.gemini_model,
             contents=f"{system_prompt}\n\nUser request: {user_prompt}",

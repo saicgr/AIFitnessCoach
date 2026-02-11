@@ -18,6 +18,7 @@ from google import genai
 from google.genai import types
 
 from core.config import get_settings
+from core.gemini_client import get_genai_client
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from models.gemini_schemas import CustomGoalKeywordsResponse
@@ -33,7 +34,7 @@ class CustomGoalService:
     """Manages custom goal keyword generation and caching."""
 
     def __init__(self):
-        self.client = genai.Client(api_key=settings.gemini_api_key)
+        self.client = get_genai_client()
         self.model = settings.gemini_model
         self.db = get_supabase_db()
 

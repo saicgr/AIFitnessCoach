@@ -9,6 +9,7 @@ EASY TO MODIFY:
 Uses the new google-genai SDK (unified SDK for Gemini API).
 """
 from google import genai
+from core.gemini_client import get_genai_client
 from google.genai import types
 from typing import List, Dict, Optional
 import json
@@ -318,7 +319,7 @@ def validate_set_targets_strict(exercises: List[Dict], user_context: Dict = None
 ensure_set_targets = validate_set_targets_strict
 
 # Initialize the Gemini client
-client = genai.Client(api_key=settings.gemini_api_key)
+client = get_genai_client()
 
 
 class GeminiService:

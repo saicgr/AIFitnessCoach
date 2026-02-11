@@ -14,6 +14,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 import '../settings/subscription/subscription_history_screen.dart';
+import 'free_trial_screen.dart';
 
 /// Paywall/Membership Screen
 /// Shows current plan status and upgrade/downgrade options
@@ -366,7 +367,21 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         }
         return;
       }
-      // If user declined, let them go
+      // User declined discount — show 24-hour free trial screen
+      if (context.mounted) {
+        final trialAccepted = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(builder: (_) => const FreeTrialScreen()),
+        );
+        if (trialAccepted == true) {
+          await ref.read(subscriptionProvider.notifier).grant24HourTrial();
+          await _markPaywallComplete(ref);
+          if (context.mounted) {
+            await _navigateAfterPaywall(context, ref);
+          }
+          return;
+        }
+      }
     }
 
     await ref.read(subscriptionProvider.notifier).skipToFree();

@@ -9,9 +9,9 @@ import json
 from typing import Dict, Any, Literal
 from datetime import datetime
 
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 
+from core.gemini_client import get_langchain_llm
 from .state import WorkoutAgentState
 from ..tools import (
     add_exercise_to_workout,
@@ -207,11 +207,7 @@ async def workout_agent_node(state: WorkoutAgentState) -> Dict[str, Any]:
     logger.info(f"[Workout Agent] is_workout_creation={is_workout_creation}")
 
     # Create LLM with workout tools bound
-    llm = ChatGoogleGenerativeAI(
-        model=settings.gemini_model,
-        api_key=settings.gemini_api_key,
-        temperature=0.7,
-    )
+    llm = get_langchain_llm(temperature=0.7)
 
     # If it's a workout creation request, force the LLM to use generate_quick_workout
     if is_workout_creation:
@@ -282,11 +278,7 @@ If they just want information or advice, respond conversationally."""
         if "thought_signature" in str(e).lower():
             logger.warning(f"[Workout Agent] Thought signature error, retrying without tool_choice: {e}")
             # Retry with basic tool binding (no forced tool choice)
-            llm_retry = ChatGoogleGenerativeAI(
-                model=settings.gemini_model,
-                api_key=settings.gemini_api_key,
-                temperature=0.7,
-            )
+            llm_retry = get_langchain_llm(temperature=0.7)
             llm_with_tools_retry = llm_retry.bind_tools(WORKOUT_TOOLS)
             response = await llm_with_tools_retry.ainvoke(messages)
         else:
@@ -436,11 +428,7 @@ IMPORTANT:
 
     messages_with_system = [SystemMessage(content=system_prompt)] + messages + tool_messages
 
-    llm = ChatGoogleGenerativeAI(
-        model=settings.gemini_model,
-        api_key=settings.gemini_api_key,
-        temperature=0.7,
-    )
+    llm = get_langchain_llm(temperature=0.7)
 
     response = await llm.ainvoke(messages_with_system)
 

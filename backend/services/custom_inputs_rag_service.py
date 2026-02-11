@@ -322,12 +322,12 @@ Standard injury categories:
 Return ONLY the normalized category (lowercase, underscores instead of spaces).
 If it doesn't fit any category, create a simple 1-3 word normalized form."""
 
-            from google import genai
             from google.genai import types
             from core.config import get_settings
+            from core.gemini_client import get_genai_client
             settings = get_settings()
 
-            client = genai.Client(api_key=settings.gemini_api_key)
+            client = get_genai_client()
             response = await client.aio.models.generate_content(
                 model=settings.gemini_model,
                 contents=f"You are a fitness terminology normalizer. Return ONLY the normalized term, nothing else.\n\n{prompt}",

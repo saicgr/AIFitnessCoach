@@ -6,9 +6,9 @@ Uses ChromaDB (via ExerciseRAGService) for semantic search of exercises.
 import json
 from typing import Dict, Any, List
 
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage
 
+from core.gemini_client import get_langchain_llm
 from .state import ExerciseSuggestionState
 from core.config import get_settings
 from core.logger import get_logger
@@ -72,11 +72,7 @@ async def analyze_request_node(state: ExerciseSuggestionState) -> Dict[str, Any]
     current_exercise = state.get("current_exercise", {})
     user_message = state.get("user_message", "")
 
-    llm = ChatGoogleGenerativeAI(
-        model=settings.gemini_model,
-        temperature=0,
-        api_key=settings.gemini_api_key,
-    )
+    llm = get_langchain_llm(temperature=0)
 
     system_prompt = """You are an exercise analysis assistant. Analyze the user's request to swap an exercise.
 
@@ -299,11 +295,7 @@ async def generate_suggestions_node(state: ExerciseSuggestionState) -> Dict[str,
             "response_message": "I couldn't find any suitable alternatives in the exercise library. Try browsing manually or adjusting your preferences.",
         }
 
-    llm = ChatGoogleGenerativeAI(
-        model=settings.gemini_model,
-        temperature=0.3,
-        api_key=settings.gemini_api_key,
-    )
+    llm = get_langchain_llm(temperature=0.3)
 
     # Format candidates for AI
     candidates_text = "\n".join([

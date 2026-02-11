@@ -80,6 +80,7 @@ NutritionPreferences _$NutritionPreferencesFromJson(
   updatedAt: json['updated_at'] == null
       ? null
       : DateTime.parse(json['updated_at'] as String),
+  calorieEstimateBias: (json['calorie_estimate_bias'] as num?)?.toInt() ?? 0,
   weeklyCheckinEnabled: json['weekly_checkin_enabled'] as bool? ?? true,
   lastWeeklyCheckinAt: json['last_weekly_checkin_at'] == null
       ? null
@@ -129,6 +130,7 @@ Map<String, dynamic> _$NutritionPreferencesToJson(
   'last_recalculated_at': instance.lastRecalculatedAt?.toIso8601String(),
   'created_at': instance.createdAt?.toIso8601String(),
   'updated_at': instance.updatedAt?.toIso8601String(),
+  'calorie_estimate_bias': instance.calorieEstimateBias,
   'weekly_checkin_enabled': instance.weeklyCheckinEnabled,
   'last_weekly_checkin_at': instance.lastWeeklyCheckinAt?.toIso8601String(),
 };

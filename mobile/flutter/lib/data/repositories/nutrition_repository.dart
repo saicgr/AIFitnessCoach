@@ -9,6 +9,7 @@ import '../models/micronutrients.dart';
 import '../models/nutrition_preferences.dart';
 import '../models/recipe.dart';
 import '../services/api_client.dart';
+import '../services/health_service.dart';
 import '../providers/xp_provider.dart';
 
 /// Progress event for streaming food logging
@@ -363,7 +364,19 @@ class NutritionRepository {
           if (servingSizeG != null) 'serving_size_g': servingSizeG,
         },
       );
-      return LogBarcodeResponse.fromJson(response.data);
+      final result = LogBarcodeResponse.fromJson(response.data);
+
+      // Fire-and-forget: sync meal to Health Connect / HealthKit
+      HealthService.syncMealToHealthIfEnabled(
+        mealType: mealType,
+        calories: result.totalCalories.toDouble(),
+        proteinG: result.proteinG,
+        carbsG: result.carbsG,
+        fatG: result.fatG,
+        name: result.productName,
+      );
+
+      return result;
     } catch (e) {
       debugPrint('Error logging food from barcode: $e');
       rethrow;
@@ -390,7 +403,29 @@ class NutritionRepository {
         '/nutrition/log-image',
         data: formData,
       );
-      return LogFoodResponse.fromJson(response.data);
+      final result = LogFoodResponse.fromJson(response.data);
+
+      // Fire-and-forget: sync meal to Health Connect / HealthKit
+      HealthService.syncMealToHealthIfEnabled(
+        mealType: mealType,
+        calories: result.totalCalories.toDouble(),
+        proteinG: result.proteinG,
+        carbsG: result.carbsG,
+        fatG: result.fatG,
+        fiberG: result.fiberG,
+        sodiumMg: result.sodiumMg,
+        sugarG: result.sugarG,
+        cholesterolMg: result.cholesterolMg,
+        potassiumMg: result.potassiumMg,
+        vitaminAIu: result.vitaminAIu,
+        vitaminCMg: result.vitaminCMg,
+        vitaminDIu: result.vitaminDIu,
+        calciumMg: result.calciumMg,
+        ironMg: result.ironMg,
+        saturatedFatG: result.saturatedFatG,
+      );
+
+      return result;
     } catch (e) {
       debugPrint('Error logging food from image: $e');
       rethrow;
@@ -412,7 +447,29 @@ class NutritionRepository {
           'meal_type': mealType,
         },
       );
-      return LogFoodResponse.fromJson(response.data);
+      final result = LogFoodResponse.fromJson(response.data);
+
+      // Fire-and-forget: sync meal to Health Connect / HealthKit
+      HealthService.syncMealToHealthIfEnabled(
+        mealType: mealType,
+        calories: result.totalCalories.toDouble(),
+        proteinG: result.proteinG,
+        carbsG: result.carbsG,
+        fatG: result.fatG,
+        fiberG: result.fiberG,
+        sodiumMg: result.sodiumMg,
+        sugarG: result.sugarG,
+        cholesterolMg: result.cholesterolMg,
+        potassiumMg: result.potassiumMg,
+        vitaminAIu: result.vitaminAIu,
+        vitaminCMg: result.vitaminCMg,
+        vitaminDIu: result.vitaminDIu,
+        calciumMg: result.calciumMg,
+        ironMg: result.ironMg,
+        saturatedFatG: result.saturatedFatG,
+      );
+
+      return result;
     } catch (e) {
       debugPrint('Error logging food from text: $e');
       rethrow;
@@ -508,7 +565,30 @@ class NutritionRepository {
           if (omega6G != null) 'omega6_g': omega6G,
         },
       );
-      return LogFoodResponse.fromJson(response.data);
+      final result = LogFoodResponse.fromJson(response.data);
+
+      // Fire-and-forget: sync meal to Health Connect / HealthKit
+      HealthService.syncMealToHealthIfEnabled(
+        mealType: mealType,
+        calories: totalCalories.toDouble(),
+        proteinG: totalProtein.toDouble(),
+        carbsG: totalCarbs.toDouble(),
+        fatG: totalFat.toDouble(),
+        fiberG: totalFiber?.toDouble(),
+        sodiumMg: sodiumMg,
+        sugarG: sugarG,
+        saturatedFatG: saturatedFatG,
+        cholesterolMg: cholesterolMg,
+        potassiumMg: potassiumMg,
+        vitaminAIu: vitaminAUg,
+        vitaminCMg: vitaminCMg,
+        vitaminDIu: vitaminDIu,
+        calciumMg: calciumMg,
+        ironMg: ironMg,
+        name: foodItems.isNotEmpty ? (foodItems.first['name'] as String?) : null,
+      );
+
+      return result;
     } catch (e) {
       debugPrint('Error logging adjusted food: $e');
       rethrow;

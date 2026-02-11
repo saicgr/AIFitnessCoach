@@ -66,6 +66,7 @@ class NutritionPreferences(BaseModel):
     hormonal_goal: Optional[str] = Field(default=None, description="Primary hormonal goal for diet recommendations")
     show_hormone_supportive_foods: bool = Field(default=True, description="Show hormone-supportive food suggestions")
     cycle_aware_nutrition: bool = Field(default=False, description="Adjust nutrition suggestions based on menstrual cycle phase")
+    calorie_estimate_bias: int = Field(default=0, ge=-2, le=2, description="Bias for AI calorie estimates: -2 to 2")
 
 
 class NutritionPreferencesResponse(BaseModel):
@@ -92,6 +93,7 @@ class NutritionPreferencesUpdate(BaseModel):
     hormonal_goal: Optional[str] = None
     show_hormone_supportive_foods: Optional[bool] = None
     cycle_aware_nutrition: Optional[bool] = None
+    calorie_estimate_bias: Optional[int] = Field(default=None, ge=-2, le=2)
 
 
 # =============================================================================
@@ -334,6 +336,7 @@ async def get_nutrition_preferences(current_user: dict = Depends(get_current_use
                 hormonal_goal=prefs_data.get("hormonal_goal"),
                 show_hormone_supportive_foods=prefs_data.get("show_hormone_supportive_foods", True),
                 cycle_aware_nutrition=prefs_data.get("cycle_aware_nutrition", False),
+                calorie_estimate_bias=prefs_data.get("calorie_estimate_bias", 0),
             )
             updated_at = prefs_data.get("updated_at")
         else:
@@ -436,6 +439,7 @@ async def update_nutrition_preferences(
             hormonal_goal=prefs_data.get("hormonal_goal"),
             show_hormone_supportive_foods=prefs_data.get("show_hormone_supportive_foods", True),
             cycle_aware_nutrition=prefs_data.get("cycle_aware_nutrition", False),
+            calorie_estimate_bias=prefs_data.get("calorie_estimate_bias", 0),
         )
 
         return NutritionPreferencesResponse(

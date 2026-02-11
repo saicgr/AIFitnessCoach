@@ -13,6 +13,7 @@ from langchain_core.tools import tool
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.nutrition_bias import apply_calorie_bias, get_user_calorie_bias
 from .base import get_vision_service, run_async_in_sync
 
 logger = get_logger(__name__)
@@ -79,6 +80,11 @@ def analyze_food_image(
                 "user_id": user_id,
                 "message": "Failed to analyze food image - no food items identified"
             }
+
+        # Apply calorie estimate bias (AI estimates only)
+        bias = run_async_in_sync(get_user_calorie_bias(user_id), timeout=10)
+        if bias != 0:
+            analysis_result = apply_calorie_bias(analysis_result, bias)
 
         # Extract nutrition data directly from the result
         # VisionService returns total_protein_g, total_carbs_g, etc.
@@ -439,6 +445,11 @@ def log_food_from_text(
                 "user_id": user_id,
                 "message": "I couldn't identify the food you mentioned. Could you describe it more specifically?"
             }
+
+        # Apply calorie estimate bias (AI estimates only)
+        bias = run_async_in_sync(get_user_calorie_bias(user_id), timeout=10)
+        if bias != 0:
+            analysis_result = apply_calorie_bias(analysis_result, bias)
 
         # Extract nutrition data
         food_items = analysis_result.get("food_items", [])

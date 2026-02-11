@@ -1772,13 +1772,13 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
             # Non-streaming is 3-5x faster than streaming for small responses
             yield f"event: chunk\ndata: {json.dumps({'status': 'generating', 'message': 'Creating your ' + mood.value + ' workout...'})}\n\n"
 
-            from google import genai
             from google.genai import types
             from core.config import get_settings
+            from core.gemini_client import get_genai_client
             from models.gemini_schemas import GeneratedWorkoutResponse
 
             settings = get_settings()
-            client = genai.Client(api_key=settings.gemini_api_key)
+            client = get_genai_client()
 
             try:
                 # Use non-streaming for faster response (3-5s vs 19s with streaming)

@@ -29,6 +29,7 @@ import '../../core/providers/heart_rate_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/health_service.dart';
 import '../../core/theme/accent_color_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class WorkoutCompleteScreen extends ConsumerStatefulWidget {
   final Workout workout;
@@ -187,10 +188,35 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     // _loadExerciseProgress();
     // _loadProgressionSuggestions();
     _syncWorkoutWithGoals();
+    _syncWorkoutToHealth();
 
     // Complete challenge if this workout was from a challenge
     if (widget.challengeId != null && widget.workoutLogId != null) {
       _completeChallenge();
+    }
+  }
+
+  /// Fire-and-forget: write completed workout to Health Connect / HealthKit.
+  Future<void> _syncWorkoutToHealth() async {
+    try {
+      final syncState = ref.read(healthSyncProvider);
+      if (!syncState.isConnected) return;
+
+      final prefs = await SharedPreferences.getInstance();
+      if (!(prefs.getBool('health_sync_workouts_write') ?? true)) return;
+
+      final endTime = DateTime.now();
+      final startTime = endTime.subtract(Duration(seconds: widget.duration));
+
+      await ref.read(healthSyncProvider.notifier).writeWorkoutToHealth(
+        workoutType: widget.workout.type ?? 'strength',
+        startTime: startTime,
+        endTime: endTime,
+        totalCaloriesBurned: widget.calories,
+        title: widget.workout.name ?? 'FitWiz Workout',
+      );
+    } catch (e) {
+      debugPrint('⚠️ [Health] Non-critical: workout health sync failed: $e');
     }
   }
 

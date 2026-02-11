@@ -263,6 +263,26 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
         await checkSubscriptionStatus();
       }
 
+      // Check for active 24-hour free trial (persists through restarts)
+      if (state.tier == SubscriptionTier.free) {
+        final prefs = await SharedPreferences.getInstance();
+        final trialEndStr = prefs.getString('free_trial_end_date');
+        if (trialEndStr != null) {
+          final trialEnd = DateTime.tryParse(trialEndStr);
+          if (trialEnd != null && trialEnd.isAfter(DateTime.now())) {
+            state = state.copyWith(
+              tier: SubscriptionTier.premium,
+              isTrialActive: true,
+              trialEndDate: trialEnd,
+            );
+            debugPrint('✅ Active 24h trial found, expires: $trialEnd');
+          } else {
+            await prefs.remove('free_trial_end_date');
+            await prefs.setString('subscription_tier', 'free');
+          }
+        }
+      }
+
       state = state.copyWith(isLoading: false);
     } catch (e) {
       debugPrint('Failed to initialize subscription: $e');
@@ -447,10 +467,31 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final tierString = prefs.getString('subscription_tier') ?? 'free';
-      final tier = SubscriptionTier.values.firstWhere(
+      var tier = SubscriptionTier.values.firstWhere(
         (t) => t.name == tierString,
         orElse: () => SubscriptionTier.free,
       );
+
+      // Check for active 24-hour free trial
+      final trialEndStr = prefs.getString('free_trial_end_date');
+      if (trialEndStr != null) {
+        final trialEnd = DateTime.tryParse(trialEndStr);
+        if (trialEnd != null && trialEnd.isAfter(DateTime.now())) {
+          state = state.copyWith(
+            tier: SubscriptionTier.premium,
+            isTrialActive: true,
+            trialEndDate: trialEnd,
+          );
+          return;
+        } else {
+          // Trial expired — clean up
+          await prefs.remove('free_trial_end_date');
+          if (tier == SubscriptionTier.premium) {
+            tier = SubscriptionTier.free;
+            await prefs.setString('subscription_tier', 'free');
+          }
+        }
+      }
 
       state = state.copyWith(tier: tier);
     } catch (e) {
@@ -648,6 +689,21 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     await prefs.setString('subscription_tier', 'free');
     await prefs.setBool('paywall_seen', true);
     state = state.copyWith(tier: SubscriptionTier.free);
+  }
+
+  /// Grant a 24-hour free premium trial (used after declining paywall + discount)
+  Future<void> grant24HourTrial() async {
+    final prefs = await SharedPreferences.getInstance();
+    final trialEnd = DateTime.now().add(const Duration(hours: 24));
+    await prefs.setString('free_trial_end_date', trialEnd.toIso8601String());
+    await prefs.setString('subscription_tier', 'premium');
+    await prefs.setBool('paywall_seen', true);
+    state = state.copyWith(
+      tier: SubscriptionTier.premium,
+      isTrialActive: true,
+      trialEndDate: trialEnd,
+    );
+    debugPrint('✅ 24-hour free trial granted, expires: $trialEnd');
   }
 
   /// Check if paywall has been seen

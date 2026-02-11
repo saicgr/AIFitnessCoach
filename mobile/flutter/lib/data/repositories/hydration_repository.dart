@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/hydration.dart';
 import '../services/api_client.dart';
+import '../services/health_service.dart';
 
 /// In-memory cache for instant display on provider recreation
 /// Survives provider invalidation and prevents loading flash
@@ -119,6 +120,10 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
         workoutId: workoutId,
         notes: notes,
       );
+
+      // Fire-and-forget: sync hydration to Health Connect / HealthKit
+      HealthService.syncHydrationToHealthIfEnabled(amountMl: amountMl);
+
       // Refresh summary in background (no loading indicator)
       await loadTodaySummary(userId, showLoading: false);
       return true;
@@ -160,6 +165,10 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
         drinkType: drinkType,
         amountMl: amountMl,
       );
+
+      // Fire-and-forget: sync hydration to Health Connect / HealthKit
+      HealthService.syncHydrationToHealthIfEnabled(amountMl: amountMl);
+
       // Refresh summary in background (no loading indicator)
       await loadTodaySummary(userId, showLoading: false);
       return true;

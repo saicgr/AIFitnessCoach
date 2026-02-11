@@ -8,9 +8,9 @@ import json
 import time
 from typing import Dict, Any, Optional, Tuple
 
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
+from core.gemini_client import get_langchain_llm
 from ..state import OnboardingState
 from ..prompts import ONBOARDING_AGENT_SYSTEM_PROMPT, FIELD_ORDER, QUICK_REPLIES
 from .utils import ensure_string, detect_field_from_response
@@ -163,9 +163,7 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
 
     # Call LLM to generate next question with retry logic
     # Use JSON mode to get structured output with explicit field_type
-    llm = ChatGoogleGenerativeAI(
-        model=settings.gemini_model,
-        api_key=settings.gemini_api_key,
+    llm = get_langchain_llm(
         temperature=0.5,
         timeout=60,
         model_kwargs={"response_mime_type": "application/json"},

@@ -9,9 +9,9 @@ import json
 from typing import Dict, Any, Literal
 from datetime import datetime
 
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 
+from core.gemini_client import get_langchain_llm
 from .state import NutritionAgentState
 from ..tools import analyze_food_image, get_nutrition_summary, get_recent_meals, log_food_from_text
 from ..personality import build_personality_prompt
@@ -169,11 +169,7 @@ async def nutrition_agent_node(state: NutritionAgentState) -> Dict[str, Any]:
     context = "\n".join(context_parts)
 
     # Create LLM with nutrition tools bound
-    llm = ChatGoogleGenerativeAI(
-        model=settings.gemini_model,
-        api_key=settings.gemini_api_key,
-        temperature=0.7,
-    )
+    llm = get_langchain_llm(temperature=0.7)
     llm_with_tools = llm.bind_tools(NUTRITION_TOOLS)
 
     # Build system message
@@ -218,11 +214,7 @@ USER_ID: {state['user_id']}"""
     except Exception as e:
         if "thought_signature" in str(e).lower():
             logger.warning(f"Thought signature error, retrying: {e}")
-            llm_retry = ChatGoogleGenerativeAI(
-                model=settings.gemini_model,
-                api_key=settings.gemini_api_key,
-                temperature=0.7,
-            )
+            llm_retry = get_langchain_llm(temperature=0.7)
             response = await llm_retry.bind_tools(NUTRITION_TOOLS).ainvoke(messages)
         else:
             raise
@@ -341,11 +333,7 @@ IMPORTANT:
 
     messages_with_system = [SystemMessage(content=system_prompt)] + messages + tool_messages
 
-    llm = ChatGoogleGenerativeAI(
-        model=settings.gemini_model,
-        api_key=settings.gemini_api_key,
-        temperature=0.7,
-    )
+    llm = get_langchain_llm(temperature=0.7)
 
     response = await llm.ainvoke(messages_with_system)
 

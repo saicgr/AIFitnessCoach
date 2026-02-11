@@ -388,6 +388,10 @@ class NutritionPreferences {
   @JsonKey(name: 'updated_at')
   final DateTime? updatedAt;
 
+  // Calorie estimate bias
+  @JsonKey(name: 'calorie_estimate_bias')
+  final int calorieEstimateBias;
+
   // Weekly check-in settings
   @JsonKey(name: 'weekly_checkin_enabled')
   final bool weeklyCheckinEnabled;
@@ -435,6 +439,7 @@ class NutritionPreferences {
     this.lastRecalculatedAt,
     this.createdAt,
     this.updatedAt,
+    this.calorieEstimateBias = 0,
     this.weeklyCheckinEnabled = true,
     this.lastWeeklyCheckinAt,
   });
@@ -531,6 +536,7 @@ class NutritionPreferences {
     DateTime? lastRecalculatedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
+    int? calorieEstimateBias,
     bool? weeklyCheckinEnabled,
     DateTime? lastWeeklyCheckinAt,
   }) {
@@ -583,6 +589,8 @@ class NutritionPreferences {
       lastRecalculatedAt: lastRecalculatedAt ?? this.lastRecalculatedAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      calorieEstimateBias:
+          calorieEstimateBias ?? this.calorieEstimateBias,
       weeklyCheckinEnabled:
           weeklyCheckinEnabled ?? this.weeklyCheckinEnabled,
       lastWeeklyCheckinAt:

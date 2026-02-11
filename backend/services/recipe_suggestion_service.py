@@ -23,13 +23,14 @@ from google import genai
 from google.genai import types
 
 from core.config import get_settings
+from core.gemini_client import get_genai_client
 from core.db import get_supabase_db
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
 # Initialize Gemini client
-client = genai.Client(api_key=settings.gemini_api_key)
+client = get_genai_client()
 
 
 class BodyType(str, Enum):

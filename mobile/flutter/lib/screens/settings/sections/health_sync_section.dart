@@ -15,6 +15,9 @@ class HealthSyncPreferences {
   final bool syncBodyFat;
   final bool syncHeartRate;
   final bool syncSleep;
+  final bool syncWorkoutsToHealth;
+  final bool syncMealsToHealth;
+  final bool syncHydrationToHealth;
 
   const HealthSyncPreferences({
     this.syncSteps = true,
@@ -23,6 +26,9 @@ class HealthSyncPreferences {
     this.syncBodyFat = true,
     this.syncHeartRate = true,
     this.syncSleep = false,
+    this.syncWorkoutsToHealth = true,
+    this.syncMealsToHealth = true,
+    this.syncHydrationToHealth = true,
   });
 
   HealthSyncPreferences copyWith({
@@ -32,6 +38,9 @@ class HealthSyncPreferences {
     bool? syncBodyFat,
     bool? syncHeartRate,
     bool? syncSleep,
+    bool? syncWorkoutsToHealth,
+    bool? syncMealsToHealth,
+    bool? syncHydrationToHealth,
   }) {
     return HealthSyncPreferences(
       syncSteps: syncSteps ?? this.syncSteps,
@@ -40,6 +49,9 @@ class HealthSyncPreferences {
       syncBodyFat: syncBodyFat ?? this.syncBodyFat,
       syncHeartRate: syncHeartRate ?? this.syncHeartRate,
       syncSleep: syncSleep ?? this.syncSleep,
+      syncWorkoutsToHealth: syncWorkoutsToHealth ?? this.syncWorkoutsToHealth,
+      syncMealsToHealth: syncMealsToHealth ?? this.syncMealsToHealth,
+      syncHydrationToHealth: syncHydrationToHealth ?? this.syncHydrationToHealth,
     );
   }
 }
@@ -65,6 +77,9 @@ class HealthSyncPreferencesNotifier extends StateNotifier<HealthSyncPreferences>
       syncBodyFat: prefs.getBool('health_sync_body_fat') ?? true,
       syncHeartRate: prefs.getBool('health_sync_heart_rate') ?? true,
       syncSleep: prefs.getBool('health_sync_sleep') ?? false,
+      syncWorkoutsToHealth: prefs.getBool('health_sync_workouts_write') ?? true,
+      syncMealsToHealth: prefs.getBool('health_sync_meals_write') ?? true,
+      syncHydrationToHealth: prefs.getBool('health_sync_hydration_write') ?? true,
     );
   }
 
@@ -76,6 +91,9 @@ class HealthSyncPreferencesNotifier extends StateNotifier<HealthSyncPreferences>
     await prefs.setBool('health_sync_body_fat', state.syncBodyFat);
     await prefs.setBool('health_sync_heart_rate', state.syncHeartRate);
     await prefs.setBool('health_sync_sleep', state.syncSleep);
+    await prefs.setBool('health_sync_workouts_write', state.syncWorkoutsToHealth);
+    await prefs.setBool('health_sync_meals_write', state.syncMealsToHealth);
+    await prefs.setBool('health_sync_hydration_write', state.syncHydrationToHealth);
   }
 
   void setSyncSteps(bool value) {
@@ -105,6 +123,21 @@ class HealthSyncPreferencesNotifier extends StateNotifier<HealthSyncPreferences>
 
   void setSyncSleep(bool value) {
     state = state.copyWith(syncSleep: value);
+    _savePreferences();
+  }
+
+  void setSyncWorkoutsToHealth(bool value) {
+    state = state.copyWith(syncWorkoutsToHealth: value);
+    _savePreferences();
+  }
+
+  void setSyncMealsToHealth(bool value) {
+    state = state.copyWith(syncMealsToHealth: value);
+    _savePreferences();
+  }
+
+  void setSyncHydrationToHealth(bool value) {
+    state = state.copyWith(syncHydrationToHealth: value);
     _savePreferences();
   }
 }
@@ -643,6 +676,44 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
             label: 'Sleep',
             isEnabled: syncPrefs.syncSleep,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncSleep(v),
+            textSecondary: textSecondary,
+            textMuted: textMuted,
+          ),
+
+          const SizedBox(height: 12),
+          Divider(color: cardBorder),
+          const SizedBox(height: 8),
+          Text(
+            'Write to health app',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          _buildSyncToggle(
+            icon: Icons.fitness_center,
+            label: 'Workouts',
+            isEnabled: syncPrefs.syncWorkoutsToHealth,
+            onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncWorkoutsToHealth(v),
+            textSecondary: textSecondary,
+            textMuted: textMuted,
+          ),
+          _buildSyncToggle(
+            icon: Icons.restaurant,
+            label: 'Meals & Nutrition',
+            isEnabled: syncPrefs.syncMealsToHealth,
+            onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncMealsToHealth(v),
+            textSecondary: textSecondary,
+            textMuted: textMuted,
+          ),
+          _buildSyncToggle(
+            icon: Icons.water_drop_outlined,
+            label: 'Hydration',
+            isEnabled: syncPrefs.syncHydrationToHealth,
+            onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncHydrationToHealth(v),
             textSecondary: textSecondary,
             textMuted: textMuted,
           ),

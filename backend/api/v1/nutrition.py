@@ -61,6 +61,7 @@ from models.schemas import (
 )
 
 
+from core.nutrition_bias import apply_calorie_bias, get_user_calorie_bias
 from services.food_database_service import get_food_database_service
 from services.cooking_conversion_service import get_cooking_conversion_service
 from services.gemini_service import GeminiService
@@ -1120,6 +1121,11 @@ async def log_food_from_image(
                 detail="Could not identify any food items in the image"
             )
 
+        # Apply calorie estimate bias (AI estimates only, not barcode)
+        bias = await get_user_calorie_bias(user_id)
+        if bias != 0:
+            food_analysis = apply_calorie_bias(food_analysis, bias)
+
         # Extract data from analysis (includes weight_g, unit, count, weight_per_unit_g)
         food_items = food_analysis.get('food_items', [])
         total_calories = food_analysis.get('total_calories', 0)
@@ -1306,6 +1312,11 @@ async def log_food_from_text(request: LogTextRequest, background_tasks: Backgrou
                 status_code=400,
                 detail="Could not parse any food items from the description"
             )
+
+        # Apply calorie estimate bias (AI estimates only, not barcode)
+        bias = await get_user_calorie_bias(request.user_id)
+        if bias != 0:
+            food_analysis = apply_calorie_bias(food_analysis, bias)
 
         # Extract data from analysis
         food_items = food_analysis.get('food_items', [])
@@ -1640,6 +1651,11 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest):
             if not food_analysis or not food_analysis.get('food_items'):
                 yield send_error("Could not identify any food items from your description")
                 return
+
+            # Apply calorie estimate bias (AI estimates only)
+            bias = await get_user_calorie_bias(body.user_id)
+            if bias != 0:
+                food_analysis = apply_calorie_bias(food_analysis, bias)
 
             # Step 3: Calculate nutrition
             yield send_progress(3, 4, "Calculating nutrition...", f"Found {len(food_analysis.get('food_items', []))} items")
@@ -2044,6 +2060,11 @@ async def log_food_from_image_streaming(
             if not food_analysis or not food_analysis.get('food_items'):
                 yield send_error("Could not identify any food items in the image")
                 return
+
+            # Apply calorie estimate bias (AI estimates only)
+            bias = await get_user_calorie_bias(user_id)
+            if bias != 0:
+                food_analysis = apply_calorie_bias(food_analysis, bias)
 
             # Step 3: Calculate nutrition
             food_items = food_analysis.get('food_items', [])

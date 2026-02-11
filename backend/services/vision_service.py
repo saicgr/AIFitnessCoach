@@ -15,6 +15,7 @@ from google import genai
 from google.genai import types
 
 from core.config import get_settings
+from core.gemini_client import get_genai_client
 from core.logger import get_logger
 from models.gemini_schemas import FoodAnalysisResponse
 
@@ -22,7 +23,7 @@ logger = get_logger(__name__)
 settings = get_settings()
 
 # Initialize Gemini client
-client = genai.Client(api_key=settings.gemini_api_key)
+client = get_genai_client()
 
 
 class VisionService:

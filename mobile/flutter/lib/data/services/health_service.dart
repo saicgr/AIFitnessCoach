@@ -526,6 +526,98 @@ class HealthSyncNotifier extends StateNotifier<HealthSyncState> {
       return false;
     }
   }
+
+  /// Write a completed workout to Health Connect / HealthKit.
+  Future<bool> writeWorkoutToHealth({
+    required String workoutType,
+    required DateTime startTime,
+    required DateTime endTime,
+    int? totalCaloriesBurned,
+    String? title,
+  }) async {
+    if (!state.isConnected) return false;
+
+    try {
+      return await _healthService.writeWorkoutSession(
+        workoutType: workoutType,
+        startTime: startTime,
+        endTime: endTime,
+        totalCaloriesBurned: totalCaloriesBurned,
+        title: title,
+      );
+    } catch (e) {
+      debugPrint('❌ Error writing workout to Health: $e');
+      return false;
+    }
+  }
+
+  /// Write a meal to Health Connect / HealthKit.
+  Future<bool> writeMealToHealth({
+    required String mealType,
+    required DateTime loggedAt,
+    required double calories,
+    double? proteinG,
+    double? carbsG,
+    double? fatG,
+    double? fiberG,
+    double? sodiumMg,
+    double? sugarG,
+    double? cholesterolMg,
+    double? potassiumMg,
+    double? vitaminAIu,
+    double? vitaminCMg,
+    double? vitaminDIu,
+    double? calciumMg,
+    double? ironMg,
+    double? saturatedFatG,
+    String? name,
+  }) async {
+    if (!state.isConnected) return false;
+
+    try {
+      return await _healthService.writeMealToHealth(
+        mealType: mealType,
+        loggedAt: loggedAt,
+        calories: calories,
+        proteinG: proteinG,
+        carbsG: carbsG,
+        fatG: fatG,
+        fiberG: fiberG,
+        sodiumMg: sodiumMg,
+        sugarG: sugarG,
+        cholesterolMg: cholesterolMg,
+        potassiumMg: potassiumMg,
+        vitaminAIu: vitaminAIu,
+        vitaminCMg: vitaminCMg,
+        vitaminDIu: vitaminDIu,
+        calciumMg: calciumMg,
+        ironMg: ironMg,
+        saturatedFatG: saturatedFatG,
+        name: name,
+      );
+    } catch (e) {
+      debugPrint('❌ Error writing meal to Health: $e');
+      return false;
+    }
+  }
+
+  /// Write hydration / water intake to Health Connect / HealthKit.
+  Future<bool> writeHydrationToHealth({
+    required int amountMl,
+    DateTime? time,
+  }) async {
+    if (!state.isConnected) return false;
+
+    try {
+      return await _healthService.writeHydrationToHealth(
+        amountMl: amountMl,
+        time: time,
+      );
+    } catch (e) {
+      debugPrint('❌ Error writing hydration to Health: $e');
+      return false;
+    }
+  }
 }
 
 /// Health data point converted for app use
@@ -629,6 +721,9 @@ class HealthService {
     HealthDataType.BODY_FAT_PERCENTAGE,
     HealthDataType.HEIGHT,
     HealthDataType.WORKOUT,
+    HealthDataType.ACTIVE_ENERGY_BURNED,
+    HealthDataType.NUTRITION,
+    HealthDataType.WATER,
   ];
 
   /// Check if Health Connect is available on the device
@@ -1467,6 +1562,264 @@ class HealthService {
     } catch (e) {
       debugPrint('❌ Error getting today vitals: $e');
       return {};
+    }
+  }
+
+  // ============================================
+  // Write Workout / Meal / Hydration to Health
+  // ============================================
+
+  /// Map FitWiz workout type string to HealthWorkoutActivityType (platform-aware).
+  static HealthWorkoutActivityType _mapWorkoutType(String fitWizType) {
+    final type = fitWizType.toLowerCase().trim();
+    switch (type) {
+      case 'strength':
+      case 'resistance':
+        return Platform.isIOS
+            ? HealthWorkoutActivityType.TRADITIONAL_STRENGTH_TRAINING
+            : HealthWorkoutActivityType.STRENGTH_TRAINING;
+      case 'hiit':
+        return HealthWorkoutActivityType.HIGH_INTENSITY_INTERVAL_TRAINING;
+      case 'cardio':
+      case 'running':
+        return HealthWorkoutActivityType.RUNNING;
+      case 'yoga':
+        return HealthWorkoutActivityType.YOGA;
+      case 'pilates':
+        return HealthWorkoutActivityType.PILATES;
+      case 'flexibility':
+      case 'stretching':
+        return Platform.isIOS
+            ? HealthWorkoutActivityType.FLEXIBILITY
+            : HealthWorkoutActivityType.YOGA;
+      case 'calisthenics':
+      case 'bodyweight':
+        return Platform.isIOS
+            ? HealthWorkoutActivityType.FUNCTIONAL_STRENGTH_TRAINING
+            : HealthWorkoutActivityType.CALISTHENICS;
+      case 'swimming':
+        return HealthWorkoutActivityType.SWIMMING;
+      case 'cycling':
+      case 'biking':
+        return HealthWorkoutActivityType.BIKING;
+      case 'walking':
+        return HealthWorkoutActivityType.WALKING;
+      case 'rowing':
+        return HealthWorkoutActivityType.ROWING;
+      case 'boxing':
+        return HealthWorkoutActivityType.BOXING;
+      default:
+        return HealthWorkoutActivityType.OTHER;
+    }
+  }
+
+  /// Map FitWiz meal type string to health package MealType.
+  static MealType _mapMealType(String fitWizMealType) {
+    switch (fitWizMealType.toLowerCase().trim()) {
+      case 'breakfast':
+        return MealType.BREAKFAST;
+      case 'lunch':
+        return MealType.LUNCH;
+      case 'dinner':
+        return MealType.DINNER;
+      case 'snack':
+        return MealType.SNACK;
+      default:
+        return MealType.UNKNOWN;
+    }
+  }
+
+  /// Write a completed workout session to Health Connect / HealthKit.
+  Future<bool> writeWorkoutSession({
+    required String workoutType,
+    required DateTime startTime,
+    required DateTime endTime,
+    int? totalCaloriesBurned,
+    String? title,
+  }) async {
+    try {
+      await _ensureConfigured();
+      final activityType = _mapWorkoutType(workoutType);
+
+      final success = await _health.writeWorkoutData(
+        activityType: activityType,
+        start: startTime,
+        end: endTime,
+        totalEnergyBurned: totalCaloriesBurned,
+        title: title,
+      );
+
+      // Also write separate ACTIVE_ENERGY_BURNED data point for daily activity totals
+      if (totalCaloriesBurned != null && totalCaloriesBurned > 0) {
+        try {
+          await _health.writeHealthData(
+            value: totalCaloriesBurned.toDouble(),
+            type: HealthDataType.ACTIVE_ENERGY_BURNED,
+            startTime: startTime,
+            endTime: endTime,
+          );
+        } catch (e) {
+          debugPrint('⚠️ Non-critical: Failed to write active calories: $e');
+        }
+      }
+
+      debugPrint('🏋️ Wrote workout to Health: $activityType, success: $success');
+      return success;
+    } catch (e) {
+      debugPrint('❌ Error writing workout to Health: $e');
+      return false;
+    }
+  }
+
+  /// Write a meal / food log to Health Connect / HealthKit.
+  Future<bool> writeMealToHealth({
+    required String mealType,
+    required DateTime loggedAt,
+    required double calories,
+    double? proteinG,
+    double? carbsG,
+    double? fatG,
+    double? fiberG,
+    double? sodiumMg,
+    double? sugarG,
+    double? cholesterolMg,
+    double? potassiumMg,
+    double? vitaminAIu,
+    double? vitaminCMg,
+    double? vitaminDIu,
+    double? calciumMg,
+    double? ironMg,
+    double? saturatedFatG,
+    String? name,
+  }) async {
+    try {
+      await _ensureConfigured();
+      final healthMealType = _mapMealType(mealType);
+
+      final success = await _health.writeMeal(
+        mealType: healthMealType,
+        startTime: loggedAt,
+        endTime: loggedAt.add(const Duration(minutes: 30)),
+        caloriesConsumed: calories,
+        protein: proteinG,
+        carbohydrates: carbsG,
+        fatTotal: fatG,
+        fiber: fiberG,
+        sodium: sodiumMg,
+        sugar: sugarG,
+        cholesterol: cholesterolMg,
+        potassium: potassiumMg,
+        vitaminA: vitaminAIu,
+        vitaminC: vitaminCMg,
+        vitaminD: vitaminDIu,
+        calcium: calciumMg,
+        iron: ironMg,
+        fatSaturated: saturatedFatG,
+        name: name,
+      );
+
+      debugPrint('🥗 Wrote meal to Health: $mealType (${calories.toInt()} cal), success: $success');
+      return success;
+    } catch (e) {
+      debugPrint('❌ Error writing meal to Health: $e');
+      return false;
+    }
+  }
+
+  /// Write a hydration / water intake entry to Health Connect / HealthKit.
+  Future<bool> writeHydrationToHealth({
+    required int amountMl,
+    DateTime? time,
+  }) async {
+    try {
+      await _ensureConfigured();
+      final now = time ?? DateTime.now();
+
+      final success = await _health.writeHealthData(
+        value: amountMl.toDouble(),
+        type: HealthDataType.WATER,
+        startTime: now,
+        endTime: now,
+      );
+
+      debugPrint('💧 Wrote hydration to Health: ${amountMl}ml, success: $success');
+      return success;
+    } catch (e) {
+      debugPrint('❌ Error writing hydration to Health: $e');
+      return false;
+    }
+  }
+
+  // ============================================
+  // Static fire-and-forget helpers (no Riverpod)
+  // ============================================
+
+  /// Fire-and-forget: write a meal to Health if connected and user pref enabled.
+  /// Safe to call from anywhere (repository, UI) without Riverpod.
+  static Future<void> syncMealToHealthIfEnabled({
+    required String mealType,
+    required double calories,
+    double? proteinG,
+    double? carbsG,
+    double? fatG,
+    double? fiberG,
+    double? sodiumMg,
+    double? sugarG,
+    double? cholesterolMg,
+    double? potassiumMg,
+    double? vitaminAIu,
+    double? vitaminCMg,
+    double? vitaminDIu,
+    double? calciumMg,
+    double? ironMg,
+    double? saturatedFatG,
+    String? name,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (!(prefs.getBool('health_connected') ?? false)) return;
+      if (!(prefs.getBool('health_sync_meals_write') ?? true)) return;
+
+      final service = HealthService();
+      await service.writeMealToHealth(
+        mealType: mealType,
+        loggedAt: DateTime.now(),
+        calories: calories,
+        proteinG: proteinG,
+        carbsG: carbsG,
+        fatG: fatG,
+        fiberG: fiberG,
+        sodiumMg: sodiumMg,
+        sugarG: sugarG,
+        cholesterolMg: cholesterolMg,
+        potassiumMg: potassiumMg,
+        vitaminAIu: vitaminAIu,
+        vitaminCMg: vitaminCMg,
+        vitaminDIu: vitaminDIu,
+        calciumMg: calciumMg,
+        ironMg: ironMg,
+        saturatedFatG: saturatedFatG,
+        name: name,
+      );
+    } catch (e) {
+      debugPrint('⚠️ Non-critical: meal health sync failed: $e');
+    }
+  }
+
+  /// Fire-and-forget: write hydration to Health if connected and user pref enabled.
+  /// Safe to call from anywhere without Riverpod.
+  static Future<void> syncHydrationToHealthIfEnabled({
+    required int amountMl,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (!(prefs.getBool('health_connected') ?? false)) return;
+      if (!(prefs.getBool('health_sync_hydration_write') ?? true)) return;
+
+      final service = HealthService();
+      await service.writeHydrationToHealth(amountMl: amountMl);
+    } catch (e) {
+      debugPrint('⚠️ Non-critical: hydration health sync failed: $e');
     }
   }
 

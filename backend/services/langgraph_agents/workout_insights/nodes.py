@@ -150,7 +150,8 @@ Duration: {duration} min
 Generate 2 short, motivational insights for this workout."""
 
     # Initialize google.genai client
-    client = genai.Client(api_key=settings.gemini_api_key)
+    from core.gemini_client import get_genai_client
+    client = get_genai_client()
 
     # Deterministic fallback based on workout data (no AI needed)
     def _build_fallback(headline_text: str = None):

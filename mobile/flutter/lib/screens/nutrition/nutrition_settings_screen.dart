@@ -344,6 +344,28 @@ class _NutritionSettingsScreenState
 
                   const SizedBox(height: 24),
 
+                  // Calorie Estimate Bias Section
+                  _buildSectionHeader(
+                    context,
+                    'Calorie Estimate Bias',
+                    Icons.tune_rounded,
+                    textPrimary,
+                    textPrimary,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildCalorieBiasCard(
+                    context,
+                    isDark,
+                    elevated,
+                    cardBorder,
+                    textPrimary,
+                    textMuted,
+                    preferences,
+                    userId,
+                  ),
+
+                  const SizedBox(height: 24),
+
                   // Nutrition Goals Section
                   _buildSectionHeader(
                     context,
@@ -1165,6 +1187,7 @@ class _NutritionSettingsScreenState
     bool? compactTrackerViewEnabled,
     bool? showMacrosOnLog,
     bool? weeklyCheckinEnabled,
+    int? calorieEstimateBias,
   }) async {
     if (userId == null) return;
 
@@ -1181,6 +1204,7 @@ class _NutritionSettingsScreenState
         compactTrackerViewEnabled: compactTrackerViewEnabled,
         showMacrosOnLog: showMacrosOnLog,
         weeklyCheckinEnabled: weeklyCheckinEnabled,
+        calorieEstimateBias: calorieEstimateBias,
       );
 
       await ref.read(nutritionPreferencesProvider.notifier).savePreferences(
@@ -1393,6 +1417,332 @@ class _NutritionSettingsScreenState
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
+      ),
+    );
+  }
+
+  // ---------- Calorie Estimate Bias ----------
+
+  static const _biasLabels = <int, String>{
+    -2: 'Under More',
+    -1: 'Under',
+    0: 'No Bias',
+    1: 'Over',
+    2: 'Over More',
+  };
+
+  static const _biasMultipliers = <int, double>{
+    -2: 0.85,
+    -1: 0.93,
+    0: 1.0,
+    1: 1.07,
+    2: 1.15,
+  };
+
+  String _biasLabel(int bias) => _biasLabels[bias] ?? 'No Bias';
+
+  Widget _buildCalorieBiasCard(
+    BuildContext context,
+    bool isDark,
+    Color elevated,
+    Color cardBorder,
+    Color textPrimary,
+    Color textMuted,
+    NutritionPreferences preferences,
+    String? userId,
+  ) {
+    final bias = preferences.calorieEstimateBias;
+    final label = _biasLabel(bias);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _showCalorieBiasSheet(
+            context,
+            isDark,
+            textPrimary,
+            textMuted,
+            elevated,
+            preferences,
+            userId,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: textPrimary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.tune_rounded, color: textPrimary, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Calorie Estimate Bias',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Adjust AI calorie estimates to match your experience',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: textPrimary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.chevron_right, color: textMuted),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCalorieBiasSheet(
+    BuildContext context,
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+    Color elevated,
+    NutritionPreferences preferences,
+    String? userId,
+  ) {
+    if (userId == null) return;
+
+    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    int currentBias = preferences.calorieEstimateBias;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          final label = _biasLabel(currentBias);
+          final multiplier = _biasMultipliers[currentBias] ?? 1.0;
+          final exampleCal = (600 * multiplier).round();
+
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: nearBlack,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Calorie Estimate Bias',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: textPrimary,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Icon(Icons.close, color: textMuted),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'If AI calorie estimates feel too high or too low for your meals, '
+                    'adjust the bias so future estimates better match reality.',
+                    style: TextStyle(fontSize: 14, color: textMuted),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Current selection card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: elevated,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: currentBias == 0
+                                ? textMuted
+                                : (currentBias > 0 ? teal : Colors.orange),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${multiplier.toStringAsFixed(2)}x',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Slider
+                  SliderTheme(
+                    data: SliderThemeData(
+                      activeTrackColor: teal,
+                      inactiveTrackColor: textMuted.withValues(alpha: 0.2),
+                      thumbColor: teal,
+                      overlayColor: teal.withValues(alpha: 0.15),
+                      trackHeight: 4,
+                    ),
+                    child: Slider(
+                      value: currentBias.toDouble(),
+                      min: -2,
+                      max: 2,
+                      divisions: 4,
+                      onChanged: (value) {
+                        setSheetState(() {
+                          currentBias = value.round();
+                        });
+                      },
+                    ),
+                  ),
+                  // Slider labels
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Under More',
+                            style: TextStyle(fontSize: 11, color: textMuted)),
+                        Text('No Bias',
+                            style: TextStyle(fontSize: 11, color: textMuted)),
+                        Text('Over More',
+                            style: TextStyle(fontSize: 11, color: textMuted)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Example section
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: textPrimary.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.lightbulb_outline,
+                            size: 18, color: textMuted),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Example: A 600 cal meal would be logged as $exampleCal cal',
+                            style: TextStyle(fontSize: 13, color: textMuted),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Save button
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () {
+                        HapticService.light();
+                        Navigator.pop(context);
+                        _updatePreference(
+                          userId,
+                          preferences,
+                          calorieEstimateBias: currentBias,
+                        );
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: teal,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Save',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

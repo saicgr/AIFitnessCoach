@@ -1,23 +1,30 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Network connectivity status for the app.
 enum ConnectivityStatus { online, offline, unknown }
 
-/// Service that monitors network connectivity using connectivity_plus.
+/// Service that monitors network connectivity using connectivity_plus
+/// with an HTTP reachability fallback for devices where the plugin
+/// reports false negatives (common on Samsung custom firmware).
 ///
-/// Trusts the OS-level connectivity result (wifi, mobile, ethernet, vpn)
-/// for immediate status. No HTTP ping is required — this avoids false
-/// "offline" states on app startup due to DNS delays, cold backends, or
-/// transient network issues.
+/// Flow:
+/// 1. Trust connectivity_plus for "online" (wifi/mobile/ethernet/vpn).
+/// 2. When connectivity_plus says "offline" or "none", verify with a
+///    lightweight HTTP HEAD to Google's connectivity-check endpoint.
+/// 3. Only commit to offline if the HTTP check also fails.
 ///
 /// Features:
 /// - 1.5s debounce on rapid connectivity changes
+/// - HTTP reachability fallback for false negatives
+/// - Immediate recheck on app resume (no debounce)
 /// - Stream-based status updates
 /// - Auto-triggers sync on offline -> online transition
-class ConnectivityService {
+class ConnectivityService with WidgetsBindingObserver {
   final Connectivity _connectivity = Connectivity();
   final StreamController<ConnectivityStatus> _statusController =
       StreamController<ConnectivityStatus>.broadcast();
@@ -31,9 +38,20 @@ class ConnectivityService {
 
   /// Initialize and start monitoring connectivity.
   void initialize() {
-    // Check initial status synchronously from the OS
-    _connectivity.checkConnectivity().then((results) {
-      final status = _mapResults(results);
+    // Register for app lifecycle events to recheck on resume
+    WidgetsBinding.instance.addObserver(this);
+
+    // Check initial status from the OS
+    _connectivity.checkConnectivity().then((results) async {
+      final pluginStatus = _mapResults(results);
+      debugPrint(
+          '📡 [Connectivity] Plugin initial: $pluginStatus (raw: $results)');
+
+      // If plugin says offline, verify with HTTP before committing
+      final status = pluginStatus == ConnectivityStatus.offline
+          ? await _verifyWithHttp()
+          : pluginStatus;
+
       _currentStatus = status;
       _statusController.add(status);
       debugPrint('📡 [Connectivity] Initial status: $status');
@@ -47,23 +65,62 @@ class ConnectivityService {
     // Listen for changes with debounce
     _subscription = _connectivity.onConnectivityChanged.listen((results) {
       _debounceTimer?.cancel();
-      _debounceTimer = Timer(const Duration(milliseconds: 1500), () {
-        final newStatus = _mapResults(results);
-        if (newStatus != _currentStatus) {
-          final previousStatus = _currentStatus;
-          _currentStatus = newStatus;
-          _statusController.add(newStatus);
-          debugPrint(
-              '📡 [Connectivity] Status changed: $previousStatus -> $newStatus');
+      _debounceTimer = Timer(const Duration(milliseconds: 1500), () async {
+        final pluginStatus = _mapResults(results);
 
-          // Detect offline -> online transition for sync trigger
-          if (previousStatus == ConnectivityStatus.offline &&
-              newStatus == ConnectivityStatus.online) {
-            debugPrint('📡 [Connectivity] Back online — sync should trigger');
-          }
-        }
+        // If plugin says offline, verify with HTTP before committing
+        final newStatus = pluginStatus == ConnectivityStatus.offline
+            ? await _verifyWithHttp()
+            : pluginStatus;
+
+        _applyStatus(newStatus);
       });
     });
+  }
+
+  /// Called automatically when the app comes back to the foreground.
+  /// Cancels any pending debounce and rechecks immediately so the
+  /// offline banner doesn't flash on resume.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      recheckNow();
+    }
+  }
+
+  /// Force an immediate connectivity recheck (no debounce).
+  /// Call this on app resume or when you suspect stale state.
+  Future<void> recheckNow() async {
+    _debounceTimer?.cancel();
+    try {
+      final results = await _connectivity.checkConnectivity();
+      final pluginStatus = _mapResults(results);
+
+      final status = pluginStatus == ConnectivityStatus.offline
+          ? await _verifyWithHttp()
+          : pluginStatus;
+
+      _applyStatus(status);
+      debugPrint('📡 [Connectivity] Recheck: $status');
+    } catch (e) {
+      debugPrint('❌ [Connectivity] Recheck error: $e');
+    }
+  }
+
+  /// Apply a new status, emit to stream if changed.
+  void _applyStatus(ConnectivityStatus newStatus) {
+    if (newStatus != _currentStatus) {
+      final previousStatus = _currentStatus;
+      _currentStatus = newStatus;
+      _statusController.add(newStatus);
+      debugPrint(
+          '📡 [Connectivity] Status changed: $previousStatus -> $newStatus');
+
+      if (previousStatus == ConnectivityStatus.offline &&
+          newStatus == ConnectivityStatus.online) {
+        debugPrint('📡 [Connectivity] Back online — sync should trigger');
+      }
+    }
   }
 
   /// Map connectivity results to our simplified status.
@@ -84,8 +141,40 @@ class ConnectivityService {
     return ConnectivityStatus.unknown;
   }
 
+  /// HTTP reachability check — used when connectivity_plus reports offline
+  /// to guard against false negatives on Samsung/custom Android firmware.
+  ///
+  /// Uses Google's lightweight connectivity-check endpoint (returns 204).
+  /// 3-second timeout to avoid blocking the UI.
+  Future<ConnectivityStatus> _verifyWithHttp() async {
+    try {
+      final client = HttpClient()
+        ..connectionTimeout = const Duration(seconds: 3);
+      final request = await client.headUrl(
+        Uri.parse('https://connectivitycheck.gstatic.com/generate_204'),
+      );
+      final response = await request.close().timeout(
+        const Duration(seconds: 3),
+      );
+      client.close(force: true);
+
+      if (response.statusCode == 204 || response.statusCode == 200) {
+        debugPrint(
+            '📡 [Connectivity] HTTP check: reachable (plugin was wrong)');
+        return ConnectivityStatus.online;
+      }
+      debugPrint(
+          '📡 [Connectivity] HTTP check: status ${response.statusCode}');
+      return ConnectivityStatus.offline;
+    } catch (e) {
+      debugPrint('📡 [Connectivity] HTTP check: unreachable ($e)');
+      return ConnectivityStatus.offline;
+    }
+  }
+
   /// Clean up resources.
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _debounceTimer?.cancel();
     _subscription?.cancel();
     _statusController.close();

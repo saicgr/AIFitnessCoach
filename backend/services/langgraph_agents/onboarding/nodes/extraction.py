@@ -10,9 +10,9 @@ import re
 import time
 from typing import Dict, Any
 
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage
 
+from core.gemini_client import get_langchain_llm
 from ..state import OnboardingState
 from ..prompts import DATA_EXTRACTION_SYSTEM_PROMPT, REQUIRED_FIELDS
 from .utils import ensure_string, get_field_value, detect_non_gym_activity
@@ -810,12 +810,7 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
     logger.info(extraction_prompt)
     logger.info("=" * 60)
 
-    llm = ChatGoogleGenerativeAI(
-        model=settings.gemini_model,
-        api_key=settings.gemini_api_key,
-        temperature=0.3,
-        timeout=60,
-    )
+    llm = get_langchain_llm(temperature=0.3, timeout=60)
 
     max_retries = 3
     response = None
