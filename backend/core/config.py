@@ -28,16 +28,6 @@ class Settings(BaseSettings):
     # Enable/disable context caching (set to False to use non-cached generation)
     gemini_cache_enabled: bool = True
 
-    # Vertex AI Configuration (overrides API key auth when gcp_project_id is set)
-    gcp_project_id: Optional[str] = None
-    gcp_location: str = "us-central1"
-    gcp_credentials_json_b64: Optional[str] = None  # Base64-encoded service account JSON
-
-    @property
-    def use_vertex_ai(self) -> bool:
-        """Use Vertex AI if GCP project ID is configured."""
-        return self.gcp_project_id is not None
-
     # Server Configuration
     host: str = "0.0.0.0"
     port: int = 8000

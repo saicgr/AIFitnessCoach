@@ -24,7 +24,6 @@ import uuid
 import json
 
 from core.config import get_settings
-from core.gemini_client import _setup_credentials
 from core.logger import get_logger, set_log_context, clear_log_context
 from core.rate_limiter import limiter
 from api.v1 import router as v1_router
@@ -280,9 +279,6 @@ async def lifespan(app: FastAPI):
     logger.info("Starting FitWiz Backend...")
     logger.info(f"Gemini Model: {settings.gemini_model}")
     logger.info(f"Embedding Model: {settings.gemini_embedding_model}")
-
-    # ── Phase 0: Credential setup (Vertex AI or API key) ──
-    _setup_credentials()
 
     # ── Phase 1: Critical initialization (must complete before serving) ──
     phase1_start = time.time()
