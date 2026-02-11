@@ -10,6 +10,7 @@ import '../../data/providers/xp_provider.dart';
 import '../../data/models/xp_event.dart';
 import '../../data/models/user_xp.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/dismissed_banners_section.dart';
 import '../../widgets/segmented_tab_bar.dart';
 
 /// Full-screen XP Goals page showing daily, weekly, and monthly XP goals with tabs
@@ -196,6 +197,13 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
                           borderColor,
                           accentColor,
                         ),
+                      ),
+                    ),
+                    // Dismissed Banners (if any)
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: DismissedBannersSection(),
                       ),
                     ),
                     // Pinned tab bar

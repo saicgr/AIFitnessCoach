@@ -50,6 +50,8 @@ import '../../widgets/xp_earned_animation.dart';
 import '../../data/models/level_reward.dart';
 import 'widgets/gym_profile_switcher.dart';
 import 'widgets/daily_crate_banner.dart';
+import 'widgets/minimal_header.dart';
+import 'widgets/collapsed_banner_strip.dart';
 import '../../widgets/health_connect_sheet.dart';
 import '../../data/providers/health_import_provider.dart';
 import 'widgets/workout_import_screen.dart';
@@ -765,6 +767,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         return Icons.bolt;
       case TileType.upNext:
         return Icons.schedule;
+      case TileType.todayStats:
+        return Icons.bar_chart;
     }
   }
 
@@ -1095,19 +1099,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              setState(() {
-                _editingTiles = preset.toHomeTiles();
-              });
+              // Apply preset to local layout (tiles + SharedPreferences for header/banners)
+              await ref.read(localLayoutProvider.notifier).applyPreset(preset);
+              // Reload header style and collapse banners from SharedPreferences
+              await ref.read(headerStyleProvider.notifier).reload();
+              await ref.read(collapseBannersProvider.notifier).reload();
               HapticService.success();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${preset.name} layout applied!'),
-                  backgroundColor: AppColors.success,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${preset.name} layout applied!'),
+                    backgroundColor: AppColors.success,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.purple,
@@ -1122,20 +1130,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   void _resetToDefaultLayout() {
     Navigator.pop(context); // Close the sheet
-
-    // Default tiles that match the original FitWiz layout
-    final defaultTileTypes = [
-      TileType.fitnessScore,
-      TileType.moodPicker,
-      TileType.dailyActivity,
-      TileType.nextWorkout,
-      // Quick actions removed - now accessible via + button in nav bar
-      TileType.weekChanges,
-      TileType.weeklyProgress,
-      TileType.weeklyGoals,
-      TileType.upcomingWorkouts,
-      TileType.aiCoachTip,
-    ];
 
     // Show confirmation dialog
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -1162,7 +1156,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ],
         ),
         content: Text(
-          'This will restore the original FitWiz layout. Your current customizations will be replaced.',
+          'This will restore the Minimalist layout (the app default). Your current customizations will be replaced.',
           style: TextStyle(
             color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
           ),
@@ -1178,27 +1172,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              setState(() {
-                _editingTiles = defaultTileTypes.asMap().entries.map((entry) {
-                  return HomeTile(
-                    id: 'tile_${entry.key}',
-                    type: entry.value,
-                    order: entry.key,
-                    isVisible: true,
-                    size: TileSize.full,
-                  );
-                }).toList();
-              });
-              HapticService.success();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('🔄 Default layout restored!'),
-                  backgroundColor: AppColors.success,
-                  behavior: SnackBarBehavior.floating,
-                ),
+              // Find and apply the Minimalist preset
+              final minimalistPreset = layoutPresets.firstWhere(
+                (p) => p.id == 'minimalist',
               );
+              await ref.read(localLayoutProvider.notifier).applyPreset(minimalistPreset);
+              await ref.read(headerStyleProvider.notifier).reload();
+              await ref.read(collapseBannersProvider.notifier).reload();
+              HapticService.success();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Default layout restored!'),
+                    backgroundColor: AppColors.success,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.orange,
@@ -1474,7 +1466,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Define section groups and their tile types
     const insightsTiles = {TileType.aiCoachTip, TileType.personalRecords, TileType.fitnessScore};
     const goalsTiles = {TileType.weeklyGoals, TileType.weekChanges};
-    const trackingTiles = {TileType.habits, TileType.bodyWeight, TileType.achievements, TileType.dailyStats, TileType.quickLogWeight, TileType.quickLogMeasurements};
+    const trackingTiles = {TileType.habits, TileType.bodyWeight, TileType.achievements, TileType.dailyStats, TileType.quickLogWeight, TileType.quickLogMeasurements, TileType.todayStats};
 
     // Group tiles by section
     final workoutTiles = <HomeTile>[];  // nextWorkout, quickStart, quickActions
@@ -1528,6 +1520,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           TileType.aiCoachTip,
           TileType.personalRecords,
           TileType.fitnessScore,
+          TileType.todayStats,
         };
 
         if (tilesWithOwnPadding.contains(tile.type)) {
@@ -1667,6 +1660,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Watch the current streak from XP provider (login streak)
     final currentStreak = ref.watch(xpCurrentStreakProvider);
 
+    // Watch header style and banner collapse preferences
+    final headerStyle = ref.watch(headerStyleProvider);
+    final collapseBanners = ref.watch(collapseBannersProvider);
+
     // Get responsive padding based on window mode
     final horizontalPadding = responsiveHorizontalPadding;
     final verticalPadding = responsiveVerticalPadding;
@@ -1748,44 +1745,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           child: SafeArea(
             child: CustomScrollView(
             slivers: [
-              // Combined header: Gym Profile Switcher + Icons on same row
-              SliverToBoxAdapter(
-                child: _buildCombinedHeader(
-                  context,
-                  currentStreak,
-                  isDark,
-                  isCompact: isInSplitScreen || isNarrowLayout,
+              // Header: Minimal or Classic based on preset
+              if (headerStyle == HeaderStyle.minimal)
+                SliverToBoxAdapter(
+                  child: MinimalHeader(),
+                )
+              else
+                SliverToBoxAdapter(
+                  child: _buildCombinedHeader(
+                    context,
+                    currentStreak,
+                    isDark,
+                    isCompact: isInSplitScreen || isNarrowLayout,
+                  ),
                 ),
-              ),
 
-              // Daily XP Strip - Shows daily goals progress
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 8, bottom: 8),
-                  child: DailyXPStrip(),
+              // Banners: Collapsed strip or full individual banners
+              if (collapseBanners)
+                const SliverToBoxAdapter(
+                  child: CollapsedBannerStrip(),
+                )
+              else ...[
+                // Daily XP Strip - Shows daily goals progress
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 8, bottom: 8),
+                    child: DailyXPStrip(),
+                  ),
                 ),
-              ),
-
-              // Contextual Banner - Personalized, dismissible tips
-              SliverToBoxAdapter(
-                child: ContextualBanner(isDark: isDark),
-              ),
-
-              // Double XP Banner - Shows when Double XP event is active
-              const SliverToBoxAdapter(
-                child: DoubleXPBanner(),
-              ),
-
-              // Daily Crate Banner - Shows when user has unclaimed daily crates
-              const SliverToBoxAdapter(
-                child: DailyCrateBanner(),
-              ),
-
-              // Watch Install Banner - One-time prompt for WearOS (Android only)
-              // COMING SOON: Uncomment when WearOS app is ready for release
-              // SliverToBoxAdapter(
-              //   child: WatchInstallBanner(isDark: isDark),
-              // ),
+                // Contextual Banner - Personalized, dismissible tips
+                SliverToBoxAdapter(
+                  child: ContextualBanner(isDark: isDark),
+                ),
+                // Double XP Banner - Shows when Double XP event is active
+                const SliverToBoxAdapter(
+                  child: DoubleXPBanner(),
+                ),
+                // Daily Crate Banner - Shows when user has unclaimed daily crates
+                const SliverToBoxAdapter(
+                  child: DailyCrateBanner(),
+                ),
+              ],
 
               // Dynamic tiles from local layout
               ...localLayoutState.when(

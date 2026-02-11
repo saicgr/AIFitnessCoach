@@ -86,6 +86,14 @@ enum TileType {
   xpProgress,
   @JsonValue('upNext')
   upNext,
+  @JsonValue('todayStats')
+  todayStats,
+}
+
+/// Header style for layout presets
+enum HeaderStyle {
+  classic, // Original 6-icon header with gym switcher
+  minimal, // "Hey, {name}" + streak + XP badge + bell
 }
 
 /// Extension to provide metadata for tile types
@@ -171,6 +179,8 @@ extension TileTypeExtension on TileType {
         return 'Level & XP';
       case TileType.upNext:
         return 'Up Next';
+      case TileType.todayStats:
+        return 'Today Stats';
     }
   }
 
@@ -255,6 +265,8 @@ extension TileTypeExtension on TileType {
         return 'Your level and XP progress bar';
       case TileType.upNext:
         return 'Your upcoming schedule items';
+      case TileType.todayStats:
+        return 'Goals, calories, and hydration at a glance';
     }
   }
 
@@ -339,6 +351,8 @@ extension TileTypeExtension on TileType {
         return 'stars';
       case TileType.upNext:
         return 'schedule';
+      case TileType.todayStats:
+        return 'bar_chart';
     }
   }
 
@@ -399,6 +413,8 @@ extension TileTypeExtension on TileType {
         return TileCategory.progress;
       case TileType.upNext:
         return TileCategory.wellness;
+      case TileType.todayStats:
+        return TileCategory.progress;
     }
   }
 
@@ -459,6 +475,8 @@ extension TileTypeExtension on TileType {
         return [TileSize.full];
       case TileType.upNext:
         return [TileSize.full, TileSize.half];
+      case TileType.todayStats:
+        return [TileSize.full];
     }
   }
 
@@ -764,19 +782,20 @@ class UpdateLayoutRequest {
   Map<String, dynamic> toJson() => _$UpdateLayoutRequestToJson(this);
 }
 
-/// Default tile order for new users (visible tiles first, then hidden)
+/// Default tile order for new users (Minimalist preset)
 const List<TileType> defaultVisibleTiles = [
   TileType.nextWorkout, // Hero workout card at the top
-  TileType.quickActions, // Quick actions row (Log Food, Stats, etc.)
-  TileType.dailyStats, // Daily stats (steps, calories)
-  TileType.quickLogWeight, // Quick log weight
+  TileType.quickActions, // Quick actions row (compact: Weight, Food, Water, +)
+  TileType.todayStats, // Goals, calories, water pills
   TileType.habits, // Habits section (GitHub-style graphs)
-  TileType.bodyWeight, // Weight tracker with trend
   TileType.achievements, // Achievements section
 ];
 
 /// Hidden tiles available in the layout editor
 const List<TileType> defaultHiddenTiles = [
+  TileType.dailyStats,
+  TileType.quickLogWeight,
+  TileType.bodyWeight,
   TileType.weeklyProgress,
   TileType.upcomingWorkouts,
   TileType.aiCoachTip,
@@ -840,6 +859,8 @@ class LayoutPreset {
   final IconData icon;
   final Color color;
   final List<TileType> tiles;
+  final HeaderStyle headerStyle;
+  final bool collapseBanners;
 
   const LayoutPreset({
     required this.id,
@@ -848,6 +869,8 @@ class LayoutPreset {
     required this.icon,
     required this.color,
     required this.tiles,
+    this.headerStyle = HeaderStyle.classic,
+    this.collapseBanners = false,
   });
 
   /// Convert to HomeTile list
@@ -866,6 +889,40 @@ class LayoutPreset {
 
 /// Available preset layouts (all use non-deprecated tile types only)
 const List<LayoutPreset> layoutPresets = [
+  LayoutPreset(
+    id: 'minimalist',
+    name: 'Minimalist',
+    description: 'Clean and focused - workout first, everything else second',
+    icon: Icons.spa,
+    color: Color(0xFF1A1A2E),
+    tiles: [
+      TileType.nextWorkout,
+      TileType.quickActions,
+      TileType.todayStats,
+      TileType.habits,
+      TileType.achievements,
+    ],
+    headerStyle: HeaderStyle.minimal,
+    collapseBanners: true,
+  ),
+  LayoutPreset(
+    id: 'old_default',
+    name: 'Old Default',
+    description: 'The original FitWiz layout with all features visible',
+    icon: Icons.dashboard,
+    color: Color(0xFF607D8B),
+    tiles: [
+      TileType.nextWorkout,
+      TileType.quickActions,
+      TileType.dailyStats,
+      TileType.quickLogWeight,
+      TileType.habits,
+      TileType.bodyWeight,
+      TileType.achievements,
+    ],
+    headerStyle: HeaderStyle.classic,
+    collapseBanners: false,
+  ),
   LayoutPreset(
     id: 'gym_focused',
     name: 'Gym Focused',
@@ -941,9 +998,9 @@ const List<LayoutPreset> layoutPresets = [
     ],
   ),
   LayoutPreset(
-    id: 'minimal',
-    name: 'Minimal',
-    description: 'Just the essentials',
+    id: 'bare_bones',
+    name: 'Bare Bones',
+    description: 'Just the essentials - workout and actions only',
     icon: Icons.view_agenda,
     color: Color(0xFF00BCD4),
     tiles: [

@@ -12,6 +12,7 @@ import 'components/components.dart';
 import 'habits_section.dart';
 import 'body_metrics_section.dart';
 import 'achievements_section.dart';
+import 'today_stats_row.dart';
 
 /// Factory class for creating tile widgets based on TileType
 class TileFactory {
@@ -112,6 +113,8 @@ class TileFactory {
         return XPProgressCard(size: tile.size, isDark: isDark);
       case TileType.upNext:
         return UpNextCard(isDark: isDark);
+      case TileType.todayStats:
+        return const TodayStatsRow();
     }
   }
 

@@ -62,6 +62,7 @@ const _$TileTypeEnumMap = {
   TileType.habits: 'habits',
   TileType.xpProgress: 'xpProgress',
   TileType.upNext: 'upNext',
+  TileType.todayStats: 'todayStats',
 };
 
 const _$TileSizeEnumMap = {

@@ -7,19 +7,6 @@ Local development:
 AWS Lambda deployment:
     Deployed via Terraform with Mangum adapter (see lambda_handler.py)
 """
-# Force IPv6-first DNS resolution to avoid Google API geo-IP blocks on cloud providers.
-# Must run before any network imports.
-import socket
-
-_original_getaddrinfo = socket.getaddrinfo
-
-def _ipv6_first_getaddrinfo(*args, **kwargs):
-    results = _original_getaddrinfo(*args, **kwargs)
-    results.sort(key=lambda x: x[0] != socket.AF_INET6)
-    return results
-
-socket.getaddrinfo = _ipv6_first_getaddrinfo
-
 from contextlib import asynccontextmanager
 from datetime import datetime
 from fastapi import FastAPI, Request

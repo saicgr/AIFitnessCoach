@@ -9,6 +9,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 import '../workouts/widgets/exercise_preferences_card.dart';
+import '../../widgets/dismissed_banners_section.dart';
 import 'widgets/nutrition_fasting_card.dart';
 import 'widgets/widgets.dart';
 
@@ -67,6 +68,8 @@ class ProfileScreen extends ConsumerWidget {
           _buildNutritionFastingSection(),
           const SizedBox(height: 32),
           _buildAccountSection(context, ref),
+          const SizedBox(height: 24),
+          const DismissedBannersSection(),
           const SizedBox(height: 24),
           _buildAIPrivacyCard(context),
           const SizedBox(height: 32),

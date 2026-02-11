@@ -63,18 +63,26 @@ class _DailyXPStripState extends ConsumerState<DailyXPStrip>
       return const SizedBox.shrink();
     }
 
-    return AnimatedBuilder(
-      animation: _dismissController,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, _slideAnimation.value),
-          child: Opacity(
-            opacity: _fadeAnimation.value,
-            child: child,
-          ),
-        );
+    return Dismissible(
+      key: const ValueKey('daily_xp_strip_dismiss'),
+      direction: DismissDirection.horizontal,
+      onDismissed: (_) {
+        HapticService.light();
+        ref.read(dailyXPStripDismissedTodayProvider.notifier).dismissForToday();
       },
-      child: _buildContent(context),
+      child: AnimatedBuilder(
+        animation: _dismissController,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, _slideAnimation.value),
+            child: Opacity(
+              opacity: _fadeAnimation.value,
+              child: child,
+            ),
+          );
+        },
+        child: _buildContent(context),
+      ),
     );
   }
 

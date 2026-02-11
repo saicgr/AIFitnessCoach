@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/providers/fasting_provider.dart';
+import '../../../../data/providers/local_layout_provider.dart';
 import '../../../../data/repositories/hydration_repository.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/services/haptic_service.dart';
@@ -1068,6 +1069,275 @@ class _WaterSizeOption extends StatelessWidget {
   }
 }
 
-// Keep the old QuickActionsRow as an alias for backward compatibility
-// This allows existing code to continue working
-typedef QuickActionsRow = QuickActionsGrid;
+/// QuickActionsRow: switches between compact (Minimalist) and classic (Old Default) modes
+class QuickActionsRow extends ConsumerWidget {
+  const QuickActionsRow({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final collapseBanners = ref.watch(collapseBannersProvider);
+
+    if (collapseBanners) {
+      return const CompactQuickActionsRow();
+    }
+    return const QuickActionsGrid();
+  }
+}
+
+/// Compact quick actions: single row of Weight, Food, Water + "+" button
+/// Used in Minimalist preset
+class CompactQuickActionsRow extends ConsumerWidget {
+  const CompactQuickActionsRow({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark
+        ? Colors.black.withValues(alpha: 0.05)
+        : Colors.black.withValues(alpha: 0.03);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: _WeightGridActionItem(isDark: isDark),
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: _GridActionItem(
+                icon: Icons.restaurant_outlined,
+                label: 'Food',
+                iconColor: _QuickActionColors.food,
+                onTap: () {
+                  HapticService.light();
+                  showLogMealSheet(context, ref);
+                },
+                isDark: isDark,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: _WaterGridActionItem(isDark: isDark),
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: _MoreActionsButton(isDark: isDark),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "+" button that opens a bottom sheet with all 8 quick actions
+class _MoreActionsButton extends ConsumerWidget {
+  final bool isDark;
+
+  const _MoreActionsButton({required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final cardBg = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.05);
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.black.withValues(alpha: 0.08);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticService.light();
+          _showAllActionsSheet(context, ref);
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: borderColor, width: 1),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.more_horiz,
+                size: 22,
+                color: textColor.withValues(alpha: 0.7),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'More',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAllActionsSheet(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      useRootNavigator: true,
+      barrierColor: Colors.black.withValues(alpha: 0.2),
+      builder: (context) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.4)
+                  : Colors.white.withValues(alpha: 0.6),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              border: Border(
+                top: BorderSide(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : Colors.black.withValues(alpha: 0.1),
+                  width: 0.5,
+                ),
+              ),
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: textMuted,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Quick Actions',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: [
+                        // Row 1: Fasting, Food, Water, Weight
+                        Row(
+                          children: [
+                            Expanded(child: _FastGridActionItem(isDark: isDark)),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: _GridActionItem(
+                                icon: Icons.restaurant_outlined,
+                                label: 'Food',
+                                iconColor: _QuickActionColors.food,
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  HapticService.light();
+                                  showLogMealSheet(context, ref);
+                                },
+                                isDark: isDark,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(child: _WaterGridActionItem(isDark: isDark)),
+                            const SizedBox(width: 4),
+                            Expanded(child: _WeightGridActionItem(isDark: isDark)),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        // Row 2: Measure, History, Mood, Steps
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _GridActionItem(
+                                icon: Icons.straighten_outlined,
+                                label: 'Measure',
+                                iconColor: _QuickActionColors.measure,
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  HapticService.light();
+                                  context.push('/measurements');
+                                },
+                                isDark: isDark,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: _GridActionItem(
+                                icon: Icons.history_outlined,
+                                label: 'History',
+                                iconColor: _QuickActionColors.history,
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  HapticService.light();
+                                  context.push('/stats');
+                                },
+                                isDark: isDark,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(child: _MoodGridActionItem(isDark: isDark)),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: _GridActionItem(
+                                icon: Icons.directions_walk_outlined,
+                                label: 'Steps',
+                                iconColor: _QuickActionColors.steps,
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  HapticService.light();
+                                  context.push('/neat');
+                                },
+                                isDark: isDark,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    ).then((_) {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    });
+  }
+}

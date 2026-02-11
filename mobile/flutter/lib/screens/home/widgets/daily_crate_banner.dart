@@ -100,18 +100,26 @@ class _DailyCrateBannerState extends ConsumerState<DailyCrateBanner>
       return const SizedBox.shrink();
     }
 
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, _slideAnimation.value),
-          child: Opacity(
-            opacity: _fadeAnimation.value,
-            child: child,
-          ),
-        );
+    return Dismissible(
+      key: const ValueKey('daily_crate_banner_dismiss'),
+      direction: DismissDirection.horizontal,
+      onDismissed: (_) {
+        HapticService.light();
+        setState(() => _isDismissed = true);
       },
-      child: _buildBanner(context, cratesState),
+      child: AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, _slideAnimation.value),
+            child: Opacity(
+              opacity: _fadeAnimation.value,
+              child: child,
+            ),
+          );
+        },
+        child: _buildBanner(context, cratesState),
+      ),
     );
   }
 

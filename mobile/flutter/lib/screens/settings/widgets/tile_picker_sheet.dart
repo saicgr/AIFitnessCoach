@@ -333,6 +333,8 @@ class TilePickerSheet extends StatelessWidget {
         return Icons.bolt;
       case TileType.upNext:
         return Icons.schedule;
+      case TileType.todayStats:
+        return Icons.bar_chart;
     }
   }
 

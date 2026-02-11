@@ -9,12 +9,28 @@ const _uuid = Uuid();
 const _layoutsKey = 'home_layouts';
 const _activeLayoutKey = 'active_layout_id';
 const _userDefaultLayoutKey = 'user_default_layout_tiles';
+const _headerStyleKey = 'home_header_style';
+const _collapseBannersKey = 'home_collapse_banners';
 
 /// Local layout provider - stores layouts in SharedPreferences
 /// This works offline without needing backend API
 final localLayoutProvider =
     StateNotifierProvider<LocalLayoutNotifier, AsyncValue<HomeLayout?>>(
   (ref) => LocalLayoutNotifier(),
+);
+
+/// Provider for the active header style (minimal vs classic)
+/// Default: HeaderStyle.minimal (matching new Minimalist default)
+final headerStyleProvider =
+    StateNotifierProvider<HeaderStyleNotifier, HeaderStyle>(
+  (ref) => HeaderStyleNotifier(),
+);
+
+/// Provider for whether banners should be collapsed
+/// Default: true (matching new Minimalist default)
+final collapseBannersProvider =
+    StateNotifierProvider<CollapseBannersNotifier, bool>(
+  (ref) => CollapseBannersNotifier(),
 );
 
 /// All local layouts provider
@@ -312,6 +328,11 @@ class LocalLayoutNotifier extends StateNotifier<AsyncValue<HomeLayout?>> {
       await _saveLayouts(layouts);
     }
 
+    // Save header style and collapse banners from the preset
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_headerStyleKey, preset.headerStyle.name);
+    await prefs.setBool(_collapseBannersKey, preset.collapseBanners);
+
     state = AsyncValue.data(updatedLayout);
     debugPrint('✅ [LocalLayout] Applied preset: ${preset.name}');
   }
@@ -507,4 +528,51 @@ class AllLocalLayoutsNotifier extends StateNotifier<AsyncValue<List<HomeLayout>>
     final json = jsonEncode(layouts.map((l) => l.toJson()).toList());
     await prefs.setString(_layoutsKey, json);
   }
+}
+
+/// Notifier for header style preference
+class HeaderStyleNotifier extends StateNotifier<HeaderStyle> {
+  HeaderStyleNotifier() : super(HeaderStyle.minimal) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final value = prefs.getString(_headerStyleKey);
+    if (value == 'classic') {
+      state = HeaderStyle.classic;
+    } else {
+      state = HeaderStyle.minimal;
+    }
+  }
+
+  Future<void> set(HeaderStyle style) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_headerStyleKey, style.name);
+    state = style;
+  }
+
+  /// Re-read from SharedPreferences (called after applyPreset writes)
+  Future<void> reload() async => _load();
+}
+
+/// Notifier for collapse banners preference
+class CollapseBannersNotifier extends StateNotifier<bool> {
+  CollapseBannersNotifier() : super(true) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getBool(_collapseBannersKey) ?? true;
+  }
+
+  Future<void> set(bool collapse) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_collapseBannersKey, collapse);
+    state = collapse;
+  }
+
+  /// Re-read from SharedPreferences (called after applyPreset writes)
+  Future<void> reload() async => _load();
 }

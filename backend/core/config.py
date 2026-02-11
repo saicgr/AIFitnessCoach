@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3-flash-preview"  # Can be overridden by GEMINI_MODEL env var
     gemini_embedding_model: str = "gemini-embedding-001"
+    # Vertex AI (set GCP_PROJECT_ID and GCP_LOCATION env vars to enable)
+    gcp_project_id: Optional[str] = None
+    gcp_location: str = "global"
+    # Base64-encoded service account JSON
+    gcp_credentials_json_b64: Optional[str] = None
     gemini_max_tokens: int = 2500
     gemini_temperature: float = 0.7
     # Context caching for faster workout generation (TTL in seconds, default 1 hour)

@@ -304,18 +304,22 @@ class _ContextualBannerState extends ConsumerState<ContextualBanner>
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, _slideAnimation.value),
-          child: Opacity(
-            opacity: _fadeAnimation.value,
-            child: child,
-          ),
-        );
-      },
-      child: Padding(
+    return Dismissible(
+      key: ValueKey('contextual_banner_${content.dismissKey}'),
+      direction: DismissDirection.horizontal,
+      onDismissed: (_) => _dismiss(content.dismissKey, content.type),
+      child: AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, _slideAnimation.value),
+            child: Opacity(
+              opacity: _fadeAnimation.value,
+              child: child,
+            ),
+          );
+        },
+        child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
         child: Container(
           decoration: BoxDecoration(
@@ -421,6 +425,7 @@ class _ContextualBannerState extends ConsumerState<ContextualBanner>
             ),
           ),
         ),
+      ),
       ),
     );
   }
