@@ -1732,7 +1732,7 @@ INPUT TO PARSE:
             logger.warning(f"[EmbeddingCache] Cache lookup error (falling through): {cache_err}")
 
         result = client.models.embed_content(
-            model=f"models/{self.embedding_model}",
+            model=self.embedding_model,
             contents=text,
             config=types.EmbedContentConfig(output_dimensionality=768),
         )
@@ -1769,7 +1769,7 @@ INPUT TO PARSE:
             logger.warning(f"[EmbeddingCache] Cache lookup error (falling through): {cache_err}")
 
         result = await client.aio.models.embed_content(
-            model=f"models/{self.embedding_model}",
+            model=self.embedding_model,
             contents=text,
             config=types.EmbedContentConfig(output_dimensionality=768),
         )

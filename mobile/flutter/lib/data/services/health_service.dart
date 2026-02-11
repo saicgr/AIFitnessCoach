@@ -402,6 +402,13 @@ class HealthSyncNotifier extends StateNotifier<HealthSyncState> {
   /// Verify actual Health Connect permissions and update state accordingly.
   /// This handles the case where user grants permissions in Health Connect app
   /// outside of FitWiz, so our stored state becomes stale.
+  ///
+  /// IMPORTANT: We only *upgrade* isConnected (false -> true) based on
+  /// hasPermissions(), never *downgrade* (true -> false). The hasPermissions
+  /// API on Android is unreliable and can return false even when permissions
+  /// ARE granted, which causes the Health Connect popup to reappear.
+  /// We only revoke isConnected when an actual data-read fails with a
+  /// permission error (handled in loadTodayActivity and other read methods).
   Future<void> _verifyAndUpdateConnectionStatus() async {
     try {
       // Check if Health Connect is available first
@@ -411,20 +418,18 @@ class HealthSyncNotifier extends StateNotifier<HealthSyncState> {
         return;
       }
 
-      // Try to check if we have permissions by attempting to read data
+      // Try to check if we have permissions
       final hasPermissions = await _healthService.hasHealthPermissions();
 
       if (hasPermissions && !state.isConnected) {
-        // User granted permissions outside the app - update our state
+        // User granted permissions outside the app - upgrade our state
         debugPrint('🏥 Health Connect permissions detected (granted externally), updating state');
         state = state.copyWith(isConnected: true);
         await _saveSyncState();
-      } else if (!hasPermissions && state.isConnected) {
-        // User revoked permissions - update our state
-        debugPrint('🏥 Health Connect permissions revoked, updating state');
-        state = state.copyWith(isConnected: false);
-        await _saveSyncState();
       }
+      // NOTE: We intentionally do NOT downgrade isConnected to false here.
+      // Android's hasPermissions() API is unreliable and can return false
+      // even when permissions are still granted. Trust the stored flag.
     } catch (e) {
       debugPrint('⚠️ Error verifying Health Connect status: $e');
       // Don't change state on error - keep existing state

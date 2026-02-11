@@ -197,6 +197,42 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
     }
   }
 
+  /// Mark an existing FitWiz workout as complete using Health Connect data.
+  /// This avoids creating a duplicate - it completes the matched workout instead.
+  Future<void> markExistingWorkoutComplete(
+    PendingWorkoutImport pending,
+    String existingWorkoutId,
+  ) async {
+    state = state.copyWith(isImporting: true, error: null);
+
+    try {
+      // Mark the existing workout as complete with duration from HC.
+      await _apiClient.post(
+        '${ApiConstants.workouts}/$existingWorkoutId/complete',
+        data: {
+          'duration_minutes': pending.durationMinutes,
+        },
+      );
+
+      debugPrint(
+          '✅ [HealthImport] Marked existing workout $existingWorkoutId as complete');
+
+      // Mark UUID as tracked so it won't appear again.
+      await _importService.markImported(pending.uuid);
+
+      // Remove from pending list.
+      final updated = List<PendingWorkoutImport>.from(state.pendingImports)
+        ..removeWhere((p) => p.uuid == pending.uuid);
+      state = state.copyWith(isImporting: false, pendingImports: updated);
+    } catch (e) {
+      debugPrint('❌ [HealthImport] Error marking existing workout complete: $e');
+      state = state.copyWith(
+        isImporting: false,
+        error: e.toString(),
+      );
+    }
+  }
+
   /// Skip a pending workout without importing it. It will not appear again.
   Future<void> skipWorkout(PendingWorkoutImport pending) async {
     await _importService.markImported(pending.uuid);

@@ -200,6 +200,7 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
     showModalBottomSheet(
       context: parentContext,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.2),
       isScrollControlled: true,
       useRootNavigator: true,
       builder: (sheetContext) => _ProfilePickerSheet(
@@ -378,15 +379,15 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
             decoration: BoxDecoration(
               color: widget.isDark
                   ? Colors.black.withValues(alpha: 0.5)
-                  : Colors.white.withValues(alpha: 0.92),
+                  : Colors.white.withValues(alpha: 0.78),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(28),
               ),
               border: Border(
                 top: BorderSide(
                   color: widget.isDark
-                      ? Colors.white.withValues(alpha: 0.15)
-                      : Colors.black.withValues(alpha: 0.05),
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : Colors.black.withValues(alpha: 0.1),
                   width: 0.5,
                 ),
               ),
@@ -775,15 +776,15 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                     ),
                   if (!canDelete) const SizedBox(width: 6),
                   // Active indicator
-                  if (isActive)
+                  if (isActive) ...[
+                    const SizedBox(width: 6),
                     Container(
-                      margin: const EdgeInsets.only(left: 6),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: profileColor.withValues(alpha: 0.15),
+                        color: profileColor.withValues(alpha: 0.25),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Row(
@@ -791,7 +792,11 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                         children: [
                           Icon(
                             Icons.check_circle_rounded,
-                            color: profileColor,
+                            color: widget.isDark
+                                ? profileColor
+                                : HSLColor.fromColor(profileColor)
+                                    .withLightness(0.35)
+                                    .toColor(),
                             size: 12,
                           ),
                           const SizedBox(width: 3),
@@ -800,12 +805,17 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: profileColor,
+                              color: widget.isDark
+                                  ? profileColor
+                                  : HSLColor.fromColor(profileColor)
+                                      .withLightness(0.35)
+                                      .toColor(),
                             ),
                           ),
                         ],
                       ),
                     ),
+                  ],
                 ],
               ),
             ),

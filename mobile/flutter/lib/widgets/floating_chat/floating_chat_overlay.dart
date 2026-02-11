@@ -203,7 +203,6 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
 
     // Theme-aware colors
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final nearBackgroundColor = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
@@ -406,69 +405,103 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
               ),
             ),
 
-            // Input bar - directly in the sheet, no separate widget
-            Container(
-              padding: EdgeInsets.fromLTRB(12, 10, 12, bottomPadding + 12),
-              decoration: BoxDecoration(
-                color: nearBackgroundColor,
-                border: Border(
-                  top: BorderSide(color: cardBorder.withOpacity(0.5)),
-                ),
-              ),
+            // Input bar - iOS Messages style
+            Padding(
+              padding: EdgeInsets.fromLTRB(8, 8, 8, bottomPadding + 8),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _textController,
-                      focusNode: _focusNode,
-                      // Always enabled so user can type while AI is responding
-                      enabled: true,
-                      textInputAction: TextInputAction.send,
-                      textCapitalization: TextCapitalization.sentences,
-                      maxLines: 3,
-                      minLines: 1,
-                      style: TextStyle(fontSize: 14, color: textPrimary),
-                      decoration: InputDecoration(
-                        hintText: _isLoading ? 'Type your next message...' : 'Ask your AI coach...',
-                        hintStyle: TextStyle(color: textMuted, fontSize: 14),
-                        filled: true,
-                        fillColor: glassSurface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide.none,
+                  // Plus button (iOS style)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: GestureDetector(
+                      onTap: () {
+                        // TODO: attachment menu
+                      },
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.12)
+                              : Colors.black.withValues(alpha: 0.06),
+                          shape: BoxShape.circle,
                         ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide(color: cardBorder.withOpacity(0.5)),
+                        child: Icon(
+                          Icons.add,
+                          color: textMuted,
+                          size: 20,
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide(color: cyan),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       ),
-                      onSubmitted: (_) => _sendMessage(),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: _isLoading
-                            ? [textMuted, textMuted]
-                            : [cyan, purple],
+                  const SizedBox(width: 6),
+                  // Text field - pill shaped
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : Colors.black.withValues(alpha: 0.04),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.12)
+                              : Colors.black.withValues(alpha: 0.1),
+                        ),
                       ),
-                      shape: BoxShape.circle,
+                      child: TextField(
+                        controller: _textController,
+                        focusNode: _focusNode,
+                        enabled: true,
+                        textInputAction: TextInputAction.send,
+                        textCapitalization: TextCapitalization.sentences,
+                        maxLines: 4,
+                        minLines: 1,
+                        style: TextStyle(fontSize: 15, color: textPrimary),
+                        decoration: InputDecoration(
+                          hintText: _isLoading ? 'Type your next message...' : 'Ask your AI coach...',
+                          hintStyle: TextStyle(color: textMuted, fontSize: 15),
+                          filled: false,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        ),
+                        onSubmitted: (_) => _sendMessage(),
+                      ),
                     ),
-                    child: IconButton(
-                      onPressed: _isLoading ? null : _sendMessage,
-                      icon: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 6),
+                  // Send button - circular, iOS arrow-up style
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: GestureDetector(
+                      onTap: _isLoading ? null : _sendMessage,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: _isLoading
+                              ? (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.06))
+                              : cyan,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: _isLoading
+                              ? SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: textMuted,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.arrow_upward_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                        ),
+                      ),
                     ),
                   ),
                 ],

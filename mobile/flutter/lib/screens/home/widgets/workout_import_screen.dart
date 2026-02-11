@@ -79,6 +79,7 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
       pending.startTime.day,
     );
     for (final w in workouts) {
+      if (w.id == null) continue;
       if (w.isCompleted == true) continue;
       if (w.scheduledDate == null) continue;
       try {
@@ -264,8 +265,13 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
                             label:
                                 'Mark "${matchingWorkout.name ?? 'Workout'}" as done',
                             onPressed: () {
-                              // Import and link to existing workout
-                              _handleImport(current);
+                              HapticService.medium();
+                              ref
+                                  .read(healthImportProvider.notifier)
+                                  .markExistingWorkoutComplete(
+                                    current,
+                                    matchingWorkout.id!,
+                                  );
                             },
                             isDark: isDark,
                           ),

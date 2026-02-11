@@ -5,8 +5,9 @@ import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/hydration_repository.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../data/services/health_service.dart';
 
-/// Compact row of 3 stat pills: Goals, Calories, Water.
+/// Compact 2x2 grid of stat pills: Goals, Calories Eaten, Water, Burned.
 /// Displayed on the home screen beneath the hero section.
 class TodayStatsRow extends ConsumerWidget {
   const TodayStatsRow({super.key});
@@ -15,13 +16,23 @@ class TodayStatsRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(child: _GoalsPill(key: const ValueKey('goals_pill'))),
-          const SizedBox(width: 8),
-          Expanded(child: _CaloriesPill(key: const ValueKey('calories_pill'))),
-          const SizedBox(width: 8),
-          Expanded(child: _WaterPill(key: const ValueKey('water_pill'))),
+          Row(
+            children: [
+              Expanded(child: _GoalsPill(key: const ValueKey('goals_pill'))),
+              const SizedBox(width: 8),
+              Expanded(child: _CaloriesPill(key: const ValueKey('calories_pill'))),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: _WaterPill(key: const ValueKey('water_pill'))),
+              const SizedBox(width: 8),
+              Expanded(child: _BurnedPill(key: const ValueKey('burned_pill'))),
+            ],
+          ),
         ],
       ),
     );
@@ -80,7 +91,7 @@ class _GoalsPill extends ConsumerWidget {
 }
 
 // =============================================================================
-// Pill 2 - Calories
+// Pill 2 - Calories Eaten
 // =============================================================================
 
 class _CaloriesPill extends ConsumerWidget {
@@ -253,6 +264,72 @@ class _WaterPill extends ConsumerWidget {
               fontSize: 11,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Pill 4 - Calories Burned (from Health Connect / activity)
+// =============================================================================
+
+class _BurnedPill extends ConsumerWidget {
+  const _BurnedPill({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activityState = ref.watch(dailyActivityProvider);
+    final syncState = ref.watch(healthSyncProvider);
+    final activity = activityState.today;
+
+    final bool connected = syncState.isConnected;
+    final int burned = activity?.caloriesBurned.round() ?? 0;
+    final int steps = activity?.steps ?? 0;
+
+    return _StatPillContainer(
+      onTap: () {
+        HapticService.light();
+        // Navigate to stats/activity screen
+        context.push('/stats');
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.local_fire_department,
+                size: 14,
+                color: connected && burned > 0
+                    ? const Color(0xFFFF6B35)
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 3),
+              Expanded(
+                child: Text(
+                  connected ? '$burned cal' : '-- cal',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            connected && steps > 0 ? '$steps steps' : 'burned',
+            style: TextStyle(
+              fontSize: 11,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

@@ -19,7 +19,9 @@ langchain-text-splitters>=0.3.0
 # langchain-google-genai 4.2.0+ required for Gemini 3 thought_signature support in tool calls
 # Fixes: "400 Function call is missing a thought_signature in functionCall parts"
 langchain-google-genai>=4.2.0,<5.0.0
-langchain-google-vertexai>=2.0.0,<3.0.0
+# NOTE: langchain-google-vertexai removed - it pulls google-cloud-aiplatform (~200MB)
+# which causes OOM on Render free tier (512MB). langchain-google-genai 4.x supports
+# Vertex AI natively via vertexai=True parameter.
 langgraph>=0.6.0
 
 # Database
