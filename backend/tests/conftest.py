@@ -5,7 +5,6 @@ These fixtures provide mock services and test data that can be used
 across all test files.
 """
 import pytest
-import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
 from httpx import AsyncClient, ASGITransport
@@ -196,48 +195,22 @@ def mock_env(monkeypatch):
 
 # ============ Async Cleanup ============
 
-@pytest.fixture(autouse=True)
-async def cleanup_pending_tasks():
-    """
-    Cleanup fixture to suppress async task warnings during test teardown.
-
-    This handles the 'Task was destroyed but it is pending' warnings from
-    aiohttp/Google Genai client that occur when tests finish before async
-    cleanup tasks complete.
-    """
-    yield
-
-    # Give pending tasks a moment to complete
-    await asyncio.sleep(0.1)
-
-    # Cancel any remaining pending tasks gracefully
-    try:
-        loop = asyncio.get_running_loop()
-        pending = [t for t in asyncio.all_tasks(loop)
-                   if t is not asyncio.current_task() and not t.done()]
-
-        if pending:
-            # Give tasks a short time to complete
-            for task in pending:
-                task.cancel()
-
-            # Wait for cancellation to complete
-            await asyncio.gather(*pending, return_exceptions=True)
-    except Exception:
-        pass  # Ignore errors during cleanup
-
-
 @pytest.fixture(scope="session", autouse=True)
 def suppress_async_warnings():
     """
-    Session-scoped fixture to configure warnings filter for async cleanup messages.
+    Session-scoped fixture to suppress async cleanup warnings from
+    aiohttp/Google Genai client during test teardown.
     """
     import warnings
 
-    # Suppress the specific RuntimeWarning about unawaited coroutines
     warnings.filterwarnings(
         "ignore",
         message="coroutine .* was never awaited",
+        category=RuntimeWarning
+    )
+    warnings.filterwarnings(
+        "ignore",
+        message=".*Task was destroyed but it is pending.*",
         category=RuntimeWarning
     )
 
