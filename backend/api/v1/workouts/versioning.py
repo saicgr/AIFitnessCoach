@@ -32,10 +32,164 @@ from .utils import (
     index_workout_to_rag,
     parse_json_field,
     normalize_goals_list,
+    get_all_equipment,
 )
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+# ---------------------------------------------------------------------------
+# Difficulty scaling helpers
+# ---------------------------------------------------------------------------
+
+DIFFICULTY_PRESETS = {
+    "easy":   {"sets": (2, 3), "reps": (12, 15), "rest": (90, 120), "rpe": (5, 6)},
+    "hard":   {"sets": (3, 4), "reps": (6, 10),  "rest": (45, 75),  "rpe": (8, 9)},
+    "hell":   {"sets": (4, 5), "reps": (6, 8),   "rest": (30, 45),  "rpe": (9, 10),
+               "include_failure": True, "include_drop_sets": True},
+}
+
+_COMPOUND_GROUPS = {
+    "chest", "back", "quadriceps", "quads", "glutes", "hamstrings",
+    "shoulders", "full body", "full_body", "legs", "upper body", "lower body",
+}
+
+
+def _is_compound_exercise(exercise: dict) -> bool:
+    """Return True if the exercise targets a multi-joint muscle group."""
+    for field in ("body_part", "target_muscle", "muscle_group", "target_muscles"):
+        value = exercise.get(field, "")
+        if isinstance(value, list):
+            for v in value:
+                if str(v).lower().strip() in _COMPOUND_GROUPS:
+                    return True
+        elif isinstance(value, str) and value.lower().strip() in _COMPOUND_GROUPS:
+            return True
+    return False
+
+
+def _rebuild_set_targets(
+    num_sets: int,
+    reps: int,
+    weight_kg: float,
+    rpe: int,
+    is_hell: bool,
+    is_compound: bool,
+) -> list:
+    """Build a per-set targets array with warmup, working, and optional failure/drop sets."""
+    targets = []
+    set_number = 1
+    rir = max(0, 10 - rpe)
+
+    # Warmup set
+    targets.append({
+        "set_number": set_number,
+        "set_type": "warmup",
+        "target_reps": reps + 4,
+        "target_weight_kg": round(weight_kg * 0.5, 1) if weight_kg else None,
+        "target_rpe": 5,
+        "target_rir": 5,
+    })
+    set_number += 1
+
+    # Working sets
+    working_count = num_sets - 1  # subtract warmup
+    if is_hell:
+        working_count = max(1, working_count - (2 if not is_compound else 1))  # room for failure/drop
+
+    for _ in range(working_count):
+        targets.append({
+            "set_number": set_number,
+            "set_type": "working",
+            "target_reps": reps,
+            "target_weight_kg": round(weight_kg, 1) if weight_kg else None,
+            "target_rpe": rpe,
+            "target_rir": rir,
+        })
+        set_number += 1
+
+    # Hell mode: failure set on last working set
+    if is_hell:
+        targets.append({
+            "set_number": set_number,
+            "set_type": "failure",
+            "target_reps": reps,
+            "target_weight_kg": round(weight_kg, 1) if weight_kg else None,
+            "target_rpe": 10,
+            "target_rir": 0,
+            "is_failure_set": True,
+        })
+        set_number += 1
+
+        # Hell mode isolation: drop set
+        if not is_compound:
+            targets.append({
+                "set_number": set_number,
+                "set_type": "drop",
+                "target_reps": reps + 4,
+                "target_weight_kg": round(weight_kg * 0.6, 1) if weight_kg else None,
+                "target_rpe": 9,
+                "target_rir": 1,
+                "is_drop_set": True,
+            })
+            set_number += 1
+
+    return targets
+
+
+def _apply_difficulty_scaling(exercises: list, difficulty: str) -> list:
+    """Scale exercise parameters (sets, reps, rest, RPE) based on difficulty preset."""
+    preset_key = difficulty.lower().strip()
+    if preset_key not in DIFFICULTY_PRESETS:
+        return exercises
+
+    config = DIFFICULTY_PRESETS[preset_key]
+    sets_range = config["sets"]
+    reps_range = config["reps"]
+    rest_range = config["rest"]
+    rpe_range = config["rpe"]
+    is_hell = config.get("include_failure", False)
+
+    scaled = []
+    for ex in exercises:
+        ex = dict(ex)  # shallow copy
+        compound = _is_compound_exercise(ex)
+
+        # Compounds: max sets, lower reps, higher rest
+        # Isolation: min sets, higher reps, lower rest
+        num_sets = sets_range[1] if compound else sets_range[0]
+        reps = reps_range[0] if compound else reps_range[1]
+        rest = rest_range[1] if compound else rest_range[0]
+        rpe = rpe_range[1] if compound else rpe_range[0]
+
+        ex["sets"] = num_sets
+        ex["reps"] = reps
+        ex["rest_seconds"] = rest
+        ex["rpe"] = rpe
+
+        # Get baseline weight for set_targets
+        weight_kg = 0
+        if ex.get("weight_kg"):
+            weight_kg = float(ex["weight_kg"])
+        elif ex.get("set_targets") and isinstance(ex["set_targets"], list):
+            for st in ex["set_targets"]:
+                if isinstance(st, dict) and st.get("target_weight_kg"):
+                    weight_kg = float(st["target_weight_kg"])
+                    break
+
+        ex["set_targets"] = _rebuild_set_targets(
+            num_sets=num_sets,
+            reps=reps,
+            weight_kg=weight_kg,
+            rpe=rpe,
+            is_hell=is_hell,
+            is_compound=compound,
+        )
+
+        scaled.append(ex)
+
+    logger.info(f"🔥 Applied {preset_key} difficulty scaling to {len(scaled)} exercises")
+    return scaled
 
 
 @router.post("/regenerate", response_model=Workout)
@@ -71,6 +225,11 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
         fitness_level = request.fitness_level or user.get("fitness_level") or "intermediate"
         # IMPORTANT: Use explicit None check so empty list [] is respected
         equipment = request.equipment if request.equipment is not None else parse_json_field(user.get("equipment"), [])
+        # Merge custom equipment from user profile (e.g., "TRX Bands", "Yoga Wheel")
+        if user and isinstance(equipment, list):
+            for item in get_all_equipment(user):
+                if item and item not in equipment:
+                    equipment.append(item)
         goals = normalize_goals_list(user.get("goals"))
         preferences = parse_json_field(user.get("preferences"), {})
         # Get equipment counts - use request if provided, otherwise fall back to user preferences
@@ -109,7 +268,8 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
         logger.info(f"  - kettlebell_count={kettlebell_count} (from request: {request.kettlebell_count})")
         logger.info(f"  - difficulty={user_difficulty}")
         logger.info(f"  - workout_type={workout_type_override}")
-        logger.info(f"  - duration_minutes={request.duration_minutes}")
+        logger.info(f"  - duration_minutes={request.duration_minutes} (min={request.duration_minutes_min}, max={request.duration_minutes_max})")
+        logger.info(f"  - ai_prompt={request.ai_prompt}")
         logger.info(f"  - injuries={injuries}")
         logger.info(f"  - focus_areas={focus_areas}")
 
@@ -132,9 +292,17 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
 
         focus_area = focus_areas[0] if focus_areas else "full_body"
 
-        # Calculate exercise count based on duration
+        # Calculate target duration from min/max range or fallback
+        if request.duration_minutes_min and request.duration_minutes_max:
+            target_duration = (request.duration_minutes_min + request.duration_minutes_max) // 2
+        elif request.duration_minutes_min:
+            target_duration = request.duration_minutes_min
+        elif request.duration_minutes_max:
+            target_duration = request.duration_minutes_max
+        else:
+            target_duration = request.duration_minutes or 45
+
         # Rule: ~7 minutes per exercise (including rest) for a balanced workout
-        target_duration = request.duration_minutes or 45
         exercise_count = max(3, min(10, target_duration // 7))  # 3-10 exercises
         logger.info(f"Target duration: {target_duration} mins -> {exercise_count} exercises")
 
@@ -159,10 +327,13 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
                     exercises=rag_exercises,
                     fitness_level=fitness_level,
                     goals=goals if isinstance(goals, list) else [],
-                    duration_minutes=request.duration_minutes or 45,
+                    duration_minutes=target_duration,
                     focus_areas=focus_areas if focus_areas else [focus_area],
                     age=user_age,
-                    activity_level=user_activity_level
+                    activity_level=user_activity_level,
+                    intensity_preference=user_difficulty,
+                    workout_type_preference=workout_type_override,
+                    custom_program_description=request.ai_prompt if request.ai_prompt else None,
                 )
             else:
                 # No fallback - RAG must return exercises
@@ -187,6 +358,10 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
             # Use user-selected difficulty if provided, otherwise use AI-generated or default
             difficulty = user_difficulty or workout_data.get("difficulty", "medium")
 
+            # Apply difficulty scaling to exercises (non-medium only)
+            if user_difficulty and user_difficulty.lower() != "medium":
+                exercises = _apply_difficulty_scaling(exercises, user_difficulty)
+
         except Exception as ai_error:
             logger.error(f"AI workout regeneration failed: {ai_error}")
             raise HTTPException(
@@ -205,7 +380,7 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
             "difficulty": difficulty,
             "scheduled_date": existing.get("scheduled_date"),  # Keep same date
             "exercises_json": exercises,
-            "duration_minutes": request.duration_minutes or 45,
+            "duration_minutes": target_duration,
             "equipment": json.dumps(equipment) if equipment else "[]",  # Store user-selected equipment
             "is_completed": False,  # Reset completion on regenerate
             "generation_method": "rag_regenerate" if used_rag else "ai_regenerate",
@@ -383,6 +558,11 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
             # Parse user data
             fitness_level = body.fitness_level or user.get("fitness_level") or "intermediate"
             equipment = body.equipment if body.equipment is not None else parse_json_field(user.get("equipment"), [])
+            # Merge custom equipment from user profile (e.g., "TRX Bands", "Yoga Wheel")
+            if user and isinstance(equipment, list):
+                for item in get_all_equipment(user):
+                    if item and item not in equipment:
+                        equipment.append(item)
             goals = normalize_goals_list(user.get("goals"))
             preferences = parse_json_field(user.get("preferences"), {})
             dumbbell_count = body.dumbbell_count if body.dumbbell_count is not None else preferences.get("dumbbell_count", 2)
@@ -422,7 +602,17 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                         focus_areas = list(target_muscles)[:2]
 
             focus_area = focus_areas[0] if focus_areas else "full_body"
-            target_duration = body.duration_minutes or 45
+
+            # Calculate target duration from min/max range or fallback
+            if body.duration_minutes_min and body.duration_minutes_max:
+                target_duration = (body.duration_minutes_min + body.duration_minutes_max) // 2
+            elif body.duration_minutes_min:
+                target_duration = body.duration_minutes_min
+            elif body.duration_minutes_max:
+                target_duration = body.duration_minutes_max
+            else:
+                target_duration = body.duration_minutes or 45
+
             exercise_count = max(3, min(10, target_duration // 7))
 
             rag_exercises = await exercise_rag.select_exercises_for_workout(
@@ -451,7 +641,10 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                 duration_minutes=target_duration,
                 focus_areas=focus_areas if focus_areas else [focus_area],
                 age=user_age,
-                activity_level=user_activity_level
+                activity_level=user_activity_level,
+                intensity_preference=user_difficulty,
+                workout_type_preference=workout_type_override,
+                custom_program_description=body.ai_prompt if body.ai_prompt else None,
             )
 
             # Ensure workout_data is a dict (guard against Gemini returning a string)
@@ -490,6 +683,10 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
             workout_name = body.workout_name or workout_data.get("name", "Regenerated Workout")
             workout_type = workout_type_override or workout_data.get("type", existing.get("type", "strength"))
             difficulty = user_difficulty or workout_data.get("difficulty", "medium")
+
+            # Apply difficulty scaling to exercises (non-medium only)
+            if user_difficulty and user_difficulty.lower() != "medium":
+                exercises = _apply_difficulty_scaling(exercises, user_difficulty)
 
             # Step 4: Save to database
             yield send_progress(4, 4, "Saving workout...", "Finalizing your new workout")

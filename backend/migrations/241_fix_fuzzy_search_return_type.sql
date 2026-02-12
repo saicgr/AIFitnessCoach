@@ -1,0 +1,21 @@
+-- Migration: 241_fix_fuzzy_search_return_type.sql
+-- Created: 2026-02-12
+-- Purpose: Fix fuzzy_search_exercises_api return type for PostgREST compatibility
+--
+-- Problem: Migration 240 changed the return type from RETURNS TABLE(...) to
+--          RETURNS SETOF exercise_library_cleaned. PostgREST caches the schema
+--          on startup. When a function returns SETOF <view>, PostgREST must
+--          resolve the view's columns, but if the schema cache is stale, the
+--          RPC call fails silently. The Python code then falls back to ILIKE
+--          search, which has no typo tolerance.
+--
+-- Fix: Replace SETOF with explicit RETURNS TABLE(...) listing all view columns.
+--      This makes the function self-describing so PostgREST doesn't need to
+--      resolve the view's schema. The function body (SELECT e.* + equipment
+--      fuzzy search) stays the same.
+--
+-- NOTE: This SQL is generated dynamically by run_migration_241.py because
+--       the RETURNS TABLE columns must match the view's actual schema.
+--       Run the Python script instead of applying this file directly.
+--
+-- Usage: python backend/scripts/run_migration_241.py

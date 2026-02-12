@@ -1253,34 +1253,25 @@ class _MoreActionsButton extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
                       children: [
-                        // Row 1: Fasting, Food, Water, Weight
+                        // Row 1: Photo, Fasting, Measure, Mood
                         Row(
                           children: [
-                            Expanded(child: _FastGridActionItem(isDark: isDark)),
-                            const SizedBox(width: 4),
                             Expanded(
                               child: _GridActionItem(
-                                icon: Icons.restaurant_outlined,
-                                label: 'Food',
-                                iconColor: _QuickActionColors.food,
+                                icon: Icons.camera_alt_outlined,
+                                label: 'Photo',
+                                iconColor: _QuickActionColors.history,
                                 onTap: () {
                                   Navigator.pop(context);
                                   HapticService.light();
-                                  showLogMealSheet(context, ref);
+                                  context.push('/stats?openPhoto=true');
                                 },
                                 isDark: isDark,
                               ),
                             ),
                             const SizedBox(width: 4),
-                            Expanded(child: _WaterGridActionItem(isDark: isDark)),
+                            Expanded(child: _FastGridActionItem(isDark: isDark)),
                             const SizedBox(width: 4),
-                            Expanded(child: _WeightGridActionItem(isDark: isDark)),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        // Row 2: Measure, History, Mood, Steps
-                        Row(
-                          children: [
                             Expanded(
                               child: _GridActionItem(
                                 icon: Icons.straighten_outlined,
@@ -1295,6 +1286,13 @@ class _MoreActionsButton extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(width: 4),
+                            Expanded(child: _MoodGridActionItem(isDark: isDark)),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        // Row 2: History, Steps
+                        Row(
+                          children: [
                             Expanded(
                               child: _GridActionItem(
                                 icon: Icons.history_outlined,
@@ -1309,8 +1307,6 @@ class _MoreActionsButton extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(width: 4),
-                            Expanded(child: _MoodGridActionItem(isDark: isDark)),
-                            const SizedBox(width: 4),
                             Expanded(
                               child: _GridActionItem(
                                 icon: Icons.directions_walk_outlined,
@@ -1324,6 +1320,10 @@ class _MoreActionsButton extends ConsumerWidget {
                                 isDark: isDark,
                               ),
                             ),
+                            const SizedBox(width: 4),
+                            const Expanded(child: SizedBox()),
+                            const SizedBox(width: 4),
+                            const Expanded(child: SizedBox()),
                           ],
                         ),
                       ],

@@ -123,16 +123,13 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     );
 
     if (newWorkout != null && mounted) {
-      ref.invalidate(todayWorkoutProvider);
-      ref.invalidate(workoutsProvider);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Workout regenerated!'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
+      // Provider refresh already handled by showRegenerateWorkoutSheet
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Workout regenerated!'),
+          backgroundColor: AppColors.success,
+        ),
+      );
     }
   }
 

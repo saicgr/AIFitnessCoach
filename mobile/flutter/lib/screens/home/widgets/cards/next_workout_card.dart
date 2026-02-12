@@ -76,17 +76,13 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
 
     // If a new workout was returned, refresh the list
     if (newWorkout != null && mounted) {
-      await ref.read(workoutsProvider.notifier).refresh();
-      // Invalidate provider to force UI rebuild with fresh data
-      ref.invalidate(workoutsProvider);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Workout regenerated!'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
+      // Provider refresh already handled by showRegenerateWorkoutSheet
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Workout regenerated!'),
+          backgroundColor: AppColors.success,
+        ),
+      );
     }
   }
 

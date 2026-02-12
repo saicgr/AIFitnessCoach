@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -327,30 +328,52 @@ class _EdgePanelHandleState extends ConsumerState<_EdgePanelHandle> {
         onTap: widget.onTap,
         behavior: HitTestBehavior.opaque,
         child: Container(
-          // Larger touch area (24px) for easier interaction
-          width: 24,
-          height: 80,
+          // Larger touch area for easier interaction
+          width: 32,
+          height: 90,
           alignment: Alignment.centerRight,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            width: _isDragging ? 16 : 10,
-            height: 44,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: _isDragging ? 0.4 : 0.2)
-                  : Colors.black.withValues(alpha: _isDragging ? 0.3 : 0.15),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(6),
-                bottomLeft: Radius.circular(6),
-              ),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(10),
+              bottomLeft: Radius.circular(10),
             ),
-            child: Center(
-              child: Icon(
-                Icons.chevron_left,
-                size: _isDragging ? 14 : 10,
-                color: isDark
-                    ? Colors.white.withValues(alpha: _isDragging ? 0.7 : 0.5)
-                    : Colors.black.withValues(alpha: _isDragging ? 0.5 : 0.3),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: _isDragging ? 22 : 16,
+                height: _isDragging ? 58 : 52,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: _isDragging ? 0.2 : 0.12)
+                      : Colors.white.withValues(alpha: _isDragging ? 0.7 : 0.55),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(10),
+                    bottomLeft: Radius.circular(10),
+                  ),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: _isDragging ? 0.3 : 0.15)
+                        : Colors.black.withValues(alpha: _isDragging ? 0.12 : 0.06),
+                    width: 0.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 8,
+                      offset: const Offset(-2, 0),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.chevron_left,
+                    size: _isDragging ? 18 : 14,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: _isDragging ? 0.7 : 0.5)
+                        : Colors.black.withValues(alpha: _isDragging ? 0.45 : 0.3),
+                  ),
+                ),
               ),
             ),
           ),

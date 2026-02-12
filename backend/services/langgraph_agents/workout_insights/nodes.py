@@ -133,21 +133,11 @@ async def generate_structured_insights_node(state: WorkoutInsightsState) -> Dict
     exercises_str = ", ".join(exercise_list) if exercise_list else "various exercises"
 
     # Build the prompt (simpler since schema enforces structure)
-    prompt = f"""You are a fitness coach. Generate SHORT workout insights.
+    prompt = f"""Generate 2 short workout insights as JSON.
 
-RULES:
-1. Headline: 3-5 words max, motivational
-2. Each section content: 6-10 words max. Be direct.
-3. Generate exactly 2 sections.
-4. Icons to use: 💪 🎯 🔥 ⚡
-5. Colors: cyan, purple, orange, green
+Workout: {workout_name} | Focus: {workout_focus} | {duration} min | Exercises: {exercises_str}
 
-Workout: {workout_name}
-Focus: {workout_focus}
-Exercises: {exercises_str}
-Duration: {duration} min
-
-Generate 2 short, motivational insights for this workout."""
+Rules: headline 3-5 words, each section content 6-10 words, exactly 2 sections. Icons: 💪🎯🔥⚡ Colors: cyan, purple, orange, green."""
 
     # Initialize google.genai client
     from core.gemini_client import get_genai_client
@@ -181,7 +171,7 @@ Generate 2 short, motivational insights for this workout."""
                     response_mime_type="application/json",
                     response_schema=WorkoutInsightsResponse,
                     temperature=0.7,
-                    max_output_tokens=1024,
+                    max_output_tokens=2048,
                 ),
             )
 

@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
+import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../widgets/main_shell.dart';
 import 'components/components.dart';
@@ -64,6 +66,11 @@ class _RegenerateWorkoutSheetState
   int _totalSteps = 4;
   String _progressMessage = '';
   String? _progressDetail;
+
+  // Elapsed time tracking
+  final Stopwatch _stopwatch = Stopwatch();
+  Timer? _elapsedTimer;
+  Duration _elapsed = Duration.zero;
 
   // Custom inputs
   String _customFocusArea = '';
@@ -128,10 +135,99 @@ class _RegenerateWorkoutSheetState
         _selectedEquipment.add(eq);
       }
     }
+
+    // Override with user's saved profile preferences
+    _loadUserPreferences();
+  }
+
+  Future<void> _loadUserPreferences() async {
+    final authState = ref.read(authStateProvider);
+    final userId = authState.user?.id;
+    if (userId == null) return;
+
+    try {
+      final repo = ref.read(workoutRepositoryProvider);
+      final prefs = await repo.getProgramPreferences(userId);
+
+      if (!mounted || prefs == null) return;
+
+      setState(() {
+        if (prefs.difficulty != null) {
+          _selectedDifficulty = prefs.difficulty!.toLowerCase();
+        }
+        if (prefs.durationMinutes != null) {
+          final duration = prefs.durationMinutes!.toDouble().clamp(15.0, 90.0);
+          _selectedDurationMin = duration;
+          _selectedDurationMax = (duration + 15).clamp(15.0, 90.0);
+        }
+
+        if (prefs.equipment.isNotEmpty) {
+          _selectedEquipment.clear();
+          for (final equip in prefs.equipment) {
+            if (defaultEquipmentOptions.contains(equip)) {
+              _selectedEquipment.add(equip);
+            }
+          }
+        }
+
+        if (prefs.focusAreas.isNotEmpty) {
+          _selectedFocusAreas.clear();
+          for (final area in prefs.focusAreas) {
+            if (defaultFocusAreas.contains(area)) {
+              _selectedFocusAreas.add(area);
+            }
+          }
+          if (_selectedFocusAreas.isEmpty) {
+            _selectedFocusAreas.add('Full Body');
+          }
+        }
+
+        _selectedInjuries.clear();
+        for (final injury in prefs.injuries) {
+          if (defaultInjuries.contains(injury)) {
+            _selectedInjuries.add(injury);
+          }
+        }
+
+        if (prefs.dumbbellCount != null) {
+          _dumbbellCount = prefs.dumbbellCount!;
+        }
+        if (prefs.kettlebellCount != null) {
+          _kettlebellCount = prefs.kettlebellCount!;
+        }
+      });
+    } catch (e) {
+      // Silently fall back to workout-based defaults already set
+      debugPrint('Failed to load user preferences for regenerate sheet: $e');
+    }
+  }
+
+  void _startElapsedTimer() {
+    _stopwatch.reset();
+    _stopwatch.start();
+    _elapsed = Duration.zero;
+    _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() => _elapsed = _stopwatch.elapsed);
+      }
+    });
+  }
+
+  void _stopElapsedTimer() {
+    _stopwatch.stop();
+    _elapsedTimer?.cancel();
+    _elapsedTimer = null;
+  }
+
+  String _formatElapsed(Duration d) {
+    final minutes = d.inMinutes;
+    final seconds = d.inSeconds % 60;
+    return '${minutes}:${seconds.toString().padLeft(2, '0')}';
   }
 
   @override
   void dispose() {
+    _stopElapsedTimer();
     _tabController.dispose();
     _focusAreaController.dispose();
     _injuryController.dispose();
@@ -178,6 +274,7 @@ class _RegenerateWorkoutSheetState
   }
 
   Future<void> _regenerate() async {
+    _startElapsedTimer();
     setState(() {
       _isRegenerating = true;
       _currentStep = 0;
@@ -234,6 +331,7 @@ class _RegenerateWorkoutSheetState
         if (!mounted) return;
 
         if (progress.hasError) {
+          _stopElapsedTimer();
           setState(() => _isRegenerating = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -245,6 +343,7 @@ class _RegenerateWorkoutSheetState
         }
 
         if (progress.isCompleted && progress.workout != null) {
+          _stopElapsedTimer();
           // Update progress to show we're loading the review
           setState(() {
             _progressMessage = 'Loading review...';
@@ -259,7 +358,11 @@ class _RegenerateWorkoutSheetState
           );
 
           if (approvedWorkout != null && mounted) {
-            // User approved - close everything
+            // Centralized refresh: update caches + invalidate providers
+            WorkoutsNotifier.replaceInCache(widget.workout.id!, approvedWorkout);
+            TodayWorkoutNotifier.clearCache();
+            ref.invalidate(todayWorkoutProvider);
+            ref.invalidate(workoutsProvider);
             Navigator.pop(context, approvedWorkout);
           } else if (mounted) {
             // User pressed Back - return to customize with form preserved
@@ -277,6 +380,7 @@ class _RegenerateWorkoutSheetState
         });
       }
     } catch (e) {
+      _stopElapsedTimer();
       if (mounted) {
         setState(() => _isRegenerating = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -295,6 +399,7 @@ class _RegenerateWorkoutSheetState
       return;
     }
 
+    _startElapsedTimer();
     setState(() {
       _isRegenerating = true;
       _currentStep = 0;
@@ -306,6 +411,7 @@ class _RegenerateWorkoutSheetState
     final userId = authState.user?.id;
 
     if (userId == null) {
+      _stopElapsedTimer();
       setState(() => _isRegenerating = false);
       return;
     }
@@ -334,6 +440,7 @@ class _RegenerateWorkoutSheetState
         if (!mounted) return;
 
         if (progress.hasError) {
+          _stopElapsedTimer();
           setState(() => _isRegenerating = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -345,6 +452,7 @@ class _RegenerateWorkoutSheetState
         }
 
         if (progress.isCompleted && progress.workout != null) {
+          _stopElapsedTimer();
           // Update progress to show we're loading the review
           setState(() {
             _progressMessage = 'Loading review...';
@@ -359,7 +467,11 @@ class _RegenerateWorkoutSheetState
           );
 
           if (approvedWorkout != null && mounted) {
-            // User approved - close everything
+            // Centralized refresh: update caches + invalidate providers
+            WorkoutsNotifier.replaceInCache(widget.workout.id!, approvedWorkout);
+            TodayWorkoutNotifier.clearCache();
+            ref.invalidate(todayWorkoutProvider);
+            ref.invalidate(workoutsProvider);
             Navigator.pop(context, approvedWorkout);
           } else if (mounted) {
             // User pressed Back - return to customize with form preserved
@@ -377,6 +489,7 @@ class _RegenerateWorkoutSheetState
         });
       }
     } catch (e) {
+      _stopElapsedTimer();
       if (mounted) {
         setState(() => _isRegenerating = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -818,43 +931,159 @@ class _RegenerateWorkoutSheetState
     );
   }
 
-  Widget _buildRegenerateButton(SheetColors colors) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+  Widget _buildProgressSection(SheetColors colors, Color accentColor) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: accentColor.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accentColor.withOpacity(0.15)),
+      ),
       child: Column(
         children: [
-          // Progress indicator when regenerating
-          if (_isRegenerating) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: _totalSteps > 0 ? _currentStep / _totalSteps : null,
-                backgroundColor: colors.glassSurface,
-                valueColor: AlwaysStoppedAnimation<Color>(colors.purple),
-                minHeight: 6,
-              ),
+          // Step indicators row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(_totalSteps, (i) {
+              final stepNum = i + 1;
+              final isActive = stepNum == _currentStep;
+              final isDone = stepNum < _currentStep;
+              return Row(
+                children: [
+                  if (i > 0)
+                    Container(
+                      width: 24,
+                      height: 2,
+                      color: isDone
+                          ? accentColor
+                          : accentColor.withOpacity(0.2),
+                    ),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: isActive ? 32 : 28,
+                    height: isActive ? 32 : 28,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isDone
+                          ? accentColor
+                          : isActive
+                              ? accentColor.withOpacity(0.15)
+                              : colors.glassSurface,
+                      border: Border.all(
+                        color: isDone || isActive
+                            ? accentColor
+                            : accentColor.withOpacity(0.3),
+                        width: isActive ? 2 : 1,
+                      ),
+                    ),
+                    child: Center(
+                      child: isDone
+                          ? const Icon(Icons.check, size: 16, color: Colors.white)
+                          : Text(
+                              '$stepNum',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: isActive
+                                    ? accentColor
+                                    : colors.textMuted,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              );
+            }),
+          ),
+          const SizedBox(height: 14),
+          // Message + elapsed time
+          Text(
+            _progressMessage,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: colors.textPrimary,
             ),
-            const SizedBox(height: 8),
+          ),
+          if (_progressDetail != null) ...[
+            const SizedBox(height: 4),
             Text(
-              _progressMessage,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: colors.textPrimary,
-              ),
+              _progressDetail!,
+              style: TextStyle(fontSize: 13, color: colors.textMuted),
             ),
-            if (_progressDetail != null) ...[
-              const SizedBox(height: 4),
+          ],
+          const SizedBox(height: 10),
+          // Elapsed time + step count row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.timer_outlined, size: 14, color: colors.textMuted),
+              const SizedBox(width: 4),
               Text(
-                _progressDetail!,
+                _formatElapsed(_elapsed),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textSecondary,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                width: 1,
+                height: 14,
+                color: colors.textMuted.withOpacity(0.3),
+              ),
+              Text(
+                'Step $_currentStep of $_totalSteps',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: colors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Progress bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: _totalSteps > 0 ? _currentStep / _totalSteps : null,
+              backgroundColor: accentColor.withOpacity(0.15),
+              valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+              minHeight: 4,
+            ),
+          ),
+          const SizedBox(height: 10),
+          // "Takes time" hint
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.info_outline, size: 13, color: colors.textMuted),
+              const SizedBox(width: 4),
+              Text(
+                'AI generation typically takes 15-30s',
                 style: TextStyle(
                   fontSize: 12,
                   color: colors.textMuted,
                 ),
               ),
             ],
-            const SizedBox(height: 16),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRegenerateButton(SheetColors colors) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          if (_isRegenerating)
+            _buildProgressSection(colors, colors.purple),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -882,7 +1111,7 @@ class _RegenerateWorkoutSheetState
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'Step $_currentStep of $_totalSteps',
+                          'Generating... ${_formatElapsed(_elapsed)}',
                           style: const TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16),
                         ),
@@ -917,38 +1146,8 @@ class _RegenerateWorkoutSheetState
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Progress indicator when applying
-          if (_isRegenerating) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: _totalSteps > 0 ? _currentStep / _totalSteps : null,
-                backgroundColor: colors.glassSurface,
-                valueColor: AlwaysStoppedAnimation<Color>(colors.cyan),
-                minHeight: 6,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _progressMessage,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: colors.textPrimary,
-              ),
-            ),
-            if (_progressDetail != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                _progressDetail!,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colors.textMuted,
-                ),
-              ),
-            ],
-            const SizedBox(height: 12),
-          ],
+          if (_isRegenerating)
+            _buildProgressSection(colors, colors.cyan),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -976,7 +1175,7 @@ class _RegenerateWorkoutSheetState
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'Step $_currentStep of $_totalSteps',
+                          'Generating... ${_formatElapsed(_elapsed)}',
                           style: const TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16),
                         ),

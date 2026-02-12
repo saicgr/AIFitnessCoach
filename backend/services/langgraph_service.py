@@ -46,7 +46,7 @@ def _ensure_str(content) -> str:
                 parts.append(block.get("text", ""))
             elif isinstance(block, str):
                 parts.append(block)
-        return "".join(parts) if parts else str(content)
+        return "".join(parts) if parts else ""
     return str(content) if content else ""
 
 logger = get_logger(__name__)
@@ -441,8 +441,11 @@ class LangGraphCoachService:
             logger.info(f"[LangGraph Service] Agent returned action_data: {action_data}")
 
             raw_response = final_state.get("final_response", "I'm sorry, I couldn't process your request.")
+            message_str = _ensure_str(raw_response)
+            if not message_str.strip():
+                message_str = "I'm sorry, I couldn't generate a response. Could you try rephrasing?"
             response = ChatResponse(
-                message=_ensure_str(raw_response),
+                message=message_str,
                 intent=intent,
                 agent_type=selected_agent,
                 action_data=action_data,

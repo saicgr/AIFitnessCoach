@@ -183,17 +183,43 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             // Right side buttons
             Row(
               children: [
-                // Library button - glassmorphic
-                _GlassmorphicButton(
+                // Library button - pill shaped for text
+                GestureDetector(
                   onTap: () {
                     HapticService.light();
                     context.push('/library');
                   },
-                  isDark: isDark,
-                  child: Icon(
-                    Icons.fitness_center,
-                    color: accentColor,
-                    size: 22,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      child: Container(
+                        height: 40,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : Colors.black.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.15)
+                                : Colors.black.withValues(alpha: 0.08),
+                            width: 1,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Library',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: accentColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -359,76 +385,62 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
+      child: Row(
         children: [
-          // First row: Custom and Browse
-          Row(
-            children: [
-              // Custom Workout
-              Expanded(
-                child: _buildQuickActionButton(
-                  context,
-                  icon: Icons.add_circle_outline,
-                  label: 'Custom',
-                  color: accentColor,
-                  isDark: isDark,
-                  onTap: () {
-                    HapticService.light();
-                    context.push('/workout/build');
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Browse Library
-              Expanded(
-                child: _buildQuickActionButton(
-                  context,
-                  icon: Icons.search,
-                  label: 'Browse',
-                  color: accentColor,
-                  isDark: isDark,
-                  onTap: () {
-                    HapticService.light();
-                    context.push('/library');
-                  },
-                ),
-              ),
-            ],
+          Expanded(
+            child: _buildQuickActionButton(
+              context,
+              icon: Icons.add_circle_outline,
+              label: 'Custom',
+              color: accentColor,
+              isDark: isDark,
+              onTap: () {
+                HapticService.light();
+                context.push('/workout/build');
+              },
+            ),
           ),
-          const SizedBox(height: 12),
-          // Second row: Upcoming and Previous
-          Row(
-            children: [
-              // Upcoming Workouts
-              Expanded(
-                child: _buildQuickActionButton(
-                  context,
-                  icon: Icons.calendar_month_rounded,
-                  label: 'Upcoming',
-                  color: accentColor,
-                  isDark: isDark,
-                  onTap: () {
-                    HapticService.light();
-                    showUpcomingWorkoutsSheet(context, ref, workouts);
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Previous Workouts
-              Expanded(
-                child: _buildQuickActionButton(
-                  context,
-                  icon: Icons.history_rounded,
-                  label: 'Previous',
-                  color: accentColor,
-                  isDark: isDark,
-                  onTap: () {
-                    HapticService.light();
-                    showPreviousWorkoutsSheet(context, ref, completedWorkouts);
-                  },
-                ),
-              ),
-            ],
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildQuickActionButton(
+              context,
+              icon: Icons.search,
+              label: 'Browse',
+              color: accentColor,
+              isDark: isDark,
+              onTap: () {
+                HapticService.light();
+                context.push('/library');
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildQuickActionButton(
+              context,
+              icon: Icons.calendar_month_rounded,
+              label: 'Upcoming',
+              color: accentColor,
+              isDark: isDark,
+              onTap: () {
+                HapticService.light();
+                showUpcomingWorkoutsSheet(context, ref, workouts);
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildQuickActionButton(
+              context,
+              icon: Icons.history_rounded,
+              label: 'Previous',
+              color: accentColor,
+              isDark: isDark,
+              onTap: () {
+                HapticService.light();
+                showPreviousWorkoutsSheet(context, ref, completedWorkouts);
+              },
+            ),
           ),
         ],
       ),
@@ -452,18 +464,20 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           child: Column(
             children: [
-              Icon(icon, color: color, size: 24),
-              const SizedBox(height: 6),
+              Icon(icon, color: color, size: 22),
+              const SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: color,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

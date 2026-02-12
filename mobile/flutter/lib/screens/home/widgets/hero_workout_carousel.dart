@@ -317,6 +317,10 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
             mergedWorkouts.add(workout);
           }
         }
+        // Clean up _locallyGeneratedWorkouts: remove entries already in provider data
+        _locallyGeneratedWorkouts.removeWhere(
+          (local) => allWorkouts.any((w) => w.id == local.id),
+        );
 
         // Build carousel items: one slide per workout day, wrapping to next week
         List<CarouselItem> carouselItems = [];

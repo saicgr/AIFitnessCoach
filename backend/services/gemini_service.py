@@ -1061,6 +1061,28 @@ Create engaging, creative names that:
         # Add current message
         contents.append(types.Content(role="user", parts=[types.Part.from_text(text=user_message)]))
 
+        # Relaxed safety settings for chat — users may vent or use profanity,
+        # and the coach personas are designed to handle it in-character.
+        # Block only BLOCK_ONLY_HIGH to avoid false positives on fitness content.
+        chat_safety_settings = [
+            types.SafetySetting(
+                category="HARM_CATEGORY_HARASSMENT",
+                threshold="BLOCK_ONLY_HIGH",
+            ),
+            types.SafetySetting(
+                category="HARM_CATEGORY_HATE_SPEECH",
+                threshold="BLOCK_ONLY_HIGH",
+            ),
+            types.SafetySetting(
+                category="HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                threshold="BLOCK_MEDIUM_AND_ABOVE",
+            ),
+            types.SafetySetting(
+                category="HARM_CATEGORY_DANGEROUS_CONTENT",
+                threshold="BLOCK_ONLY_HIGH",
+            ),
+        ]
+
         try:
             response = await asyncio.wait_for(
                 client.aio.models.generate_content(
@@ -1070,6 +1092,7 @@ Create engaging, creative names that:
                         system_instruction=system_prompt,
                         max_output_tokens=settings.gemini_max_tokens,
                         temperature=settings.gemini_temperature,
+                        safety_settings=chat_safety_settings,
                     ),
                 ),
                 timeout=60,  # 60s for chat responses
@@ -4626,6 +4649,15 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
             for ex in exercises
         ])
 
+        # Difficulty-aware naming hints
+        difficulty_naming = ""
+        if difficulty in ("hell", "extreme"):
+            difficulty_naming = "\nThis is HELL MODE. Name MUST reflect EXTREME intensity (Inferno, Destroyer, Savage, Beast, Annihilation)."
+        elif difficulty == "hard":
+            difficulty_naming = "\nThis is a hard workout. Name should reflect high intensity and challenge."
+        elif difficulty == "easy":
+            difficulty_naming = "\nThis is an easy/recovery workout. Name should be approachable and light."
+
         prompt = f"""I have selected these exercises for a {duration_minutes}-minute {focus_areas[0] if focus_areas else 'full body'} workout:
 
 {exercise_list}
@@ -4633,7 +4665,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
 User profile:
 - Fitness Level: {fitness_level}
 - Goals: {', '.join(goals) if goals else 'General fitness'}{age_context}{custom_program_context}{performance_context}{safety_instruction}
-
+{difficulty_naming}
 Create a CREATIVE and MOTIVATING workout name (3-4 words) that reflects the user's training focus.
 
 Examples of good names:

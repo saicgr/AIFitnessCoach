@@ -3186,6 +3186,19 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
     debugPrint('🧹 [Workouts] In-memory cache cleared');
   }
 
+  /// Replace a superseded workout in the in-memory cache so that
+  /// provider recreation (after invalidate) immediately shows the new version
+  /// instead of stale data while the background fetch completes.
+  static void replaceInCache(String oldWorkoutId, Workout newWorkout) {
+    if (_workoutsInMemoryCache != null) {
+      _workoutsInMemoryCache = _workoutsInMemoryCache!
+          .where((w) => w.id != oldWorkoutId)
+          .toList()
+        ..add(newWorkout);
+      debugPrint('⚡ [Workouts] Cache updated: replaced $oldWorkoutId with ${newWorkout.id}');
+    }
+  }
+
   /// Initialize silently (when we already have cached data)
   Future<void> _initSilent() async {
     final userId = _userId ?? await _apiClient.getUserId();

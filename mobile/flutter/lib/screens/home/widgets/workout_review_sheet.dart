@@ -391,11 +391,19 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
   }
 
   Widget _buildBottomActions(SheetColors colors) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        color: isDark
+            ? Colors.black.withValues(alpha: 0.3)
+            : Colors.white.withValues(alpha: 0.5),
         border: Border(
-          top: BorderSide(color: colors.cardBorder),
+          top: BorderSide(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.15)
+                : Colors.black.withValues(alpha: 0.12),
+          ),
         ),
       ),
       child: Row(
@@ -404,11 +412,18 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
           Expanded(
             child: OutlinedButton.icon(
               onPressed: _goBack,
-              icon: const Icon(Icons.arrow_back, size: 18),
-              label: const Text('Back'),
+              icon: Icon(Icons.arrow_back, size: 18, color: colors.textPrimary),
+              label: Text(
+                'Back',
+                style: TextStyle(color: colors.textPrimary),
+              ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: colors.textSecondary,
-                side: BorderSide(color: colors.cardBorder),
+                foregroundColor: colors.textPrimary,
+                side: BorderSide(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.25)
+                      : Colors.black.withValues(alpha: 0.2),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
