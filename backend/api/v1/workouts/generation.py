@@ -1113,6 +1113,25 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 yield f"event: already_generating\ndata: {json.dumps({'status': 'already_generating', 'workout_id': workout_id, 'message': 'Workout generation already in progress'})}\n\n"
 
             return StreamingResponse(already_generating_sse(), media_type="text/event-stream")
+
+        # Duplicate check: If a completed/active workout already exists for this user+date, return it
+        existing_workout = db.client.table("workouts").select("id,name,status").eq(
+            "user_id", body.user_id
+        ).eq(
+            "scheduled_date", scheduled_date
+        ).neq(
+            "status", "generating"
+        ).limit(1).execute()
+
+        if existing_workout.data:
+            workout_id = existing_workout.data[0]["id"]
+            logger.info(f"✅ [Duplicate] Workout already exists for {body.user_id} on {scheduled_date}: {workout_id}")
+            full_workout = db.client.table("workouts").select("*").eq("id", workout_id).single().execute()
+
+            async def existing_sse():
+                yield f"event: done\ndata: {json.dumps(full_workout.data)}\n\n"
+
+            return StreamingResponse(existing_sse(), media_type="text/event-stream")
     except Exception as e:
         # Log but don't fail - idempotency check is a nice-to-have
         logger.warning(f"⚠️ [Idempotency] Check failed: {e}")

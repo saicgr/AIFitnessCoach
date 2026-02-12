@@ -63,8 +63,9 @@ List<bool> _getWorkoutDays(AsyncValue<List<Workout>> workoutsAsync, DateTime tod
       if (workout.scheduledDate == null) continue;
 
       try {
-        final workoutDate = DateTime.parse(workout.scheduledDate!);
-        final daysDiff = today.difference(DateTime(workoutDate.year, workoutDate.month, workoutDate.day)).inDays;
+        final workoutDate = workout.scheduledLocalDate;
+        if (workoutDate == null) continue;
+        final daysDiff = today.difference(workoutDate).inDays;
 
         // Index 0 = 29 days ago, Index 29 = today
         if (daysDiff >= 0 && daysDiff < 30) {

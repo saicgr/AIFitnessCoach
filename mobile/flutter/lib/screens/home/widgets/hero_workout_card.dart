@@ -92,16 +92,19 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
 
   String _getScheduledDateLabel(String? scheduledDate) {
     if (scheduledDate == null) return 'TODAY';
+    // Parse date from string directly to avoid timezone shift
+    final dateStr = scheduledDate.split('T')[0];
+    final parts = dateStr.split('-');
+    if (parts.length != 3) return 'TODAY';
     try {
-      final date = DateTime.parse(scheduledDate);
+      final date = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final tomorrow = today.add(const Duration(days: 1));
-      final workoutDate = DateTime(date.year, date.month, date.day);
 
-      if (workoutDate == today) {
+      if (date == today) {
         return 'TODAY';
-      } else if (workoutDate == tomorrow) {
+      } else if (date == tomorrow) {
         return 'TOMORROW';
       } else {
         final weekdays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];

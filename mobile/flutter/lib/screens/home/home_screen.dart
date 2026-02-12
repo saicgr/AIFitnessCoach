@@ -2365,19 +2365,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   /// Check if a workout is scheduled for today
   bool _isWorkoutScheduledForToday(Workout workout) {
-    final scheduledDate = workout.scheduledDate;
-    if (scheduledDate == null) return false;
-
-    try {
-      final date = DateTime.parse(scheduledDate);
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final workoutDate = DateTime(date.year, date.month, date.day);
-
-      return workoutDate == today;
-    } catch (_) {
-      return false;
-    }
+    return workout.isToday;
   }
 
   /// Build fixed trends section with progress cards

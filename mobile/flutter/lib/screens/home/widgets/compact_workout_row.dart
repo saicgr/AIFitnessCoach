@@ -17,16 +17,19 @@ class CompactWorkoutRow extends ConsumerWidget {
 
   String _getDateLabel(String? scheduledDate) {
     if (scheduledDate == null) return '';
+    // Parse date from string directly to avoid timezone shift
+    final dateStr = scheduledDate.split('T')[0];
+    final parts = dateStr.split('-');
+    if (parts.length != 3) return '';
     try {
-      final date = DateTime.parse(scheduledDate);
+      final date = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final tomorrow = today.add(const Duration(days: 1));
-      final workoutDate = DateTime(date.year, date.month, date.day);
 
-      if (workoutDate == today) {
+      if (date == today) {
         return 'Today';
-      } else if (workoutDate == tomorrow) {
+      } else if (date == tomorrow) {
         return 'Tomorrow';
       } else {
         final weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];

@@ -82,17 +82,9 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
       if (w.id == null) continue;
       if (w.isCompleted == true) continue;
       if (w.scheduledDate == null) continue;
-      try {
-        final scheduled = DateTime.parse(w.scheduledDate!);
-        final scheduledDate = DateTime(
-          scheduled.year,
-          scheduled.month,
-          scheduled.day,
-        );
-        if (scheduledDate == pendingDate) return w;
-      } catch (_) {
-        continue;
-      }
+      final scheduledDate = w.scheduledLocalDate;
+      if (scheduledDate == null) continue;
+      if (scheduledDate == pendingDate) return w;
     }
     return null;
   }

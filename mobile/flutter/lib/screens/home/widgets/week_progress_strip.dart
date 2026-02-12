@@ -42,30 +42,23 @@ class WeekProgressStrip extends ConsumerWidget {
 
               // Get this week's workouts
               final thisWeekWorkouts = workouts.where((w) {
-                if (w.scheduledDate == null) return false;
-                try {
-                  final date = DateTime.parse(w.scheduledDate!);
-                  final workoutWeekStart = date.subtract(Duration(days: date.weekday - 1));
-                  return workoutWeekStart.year == weekStart.year &&
-                      workoutWeekStart.month == weekStart.month &&
-                      workoutWeekStart.day == weekStart.day;
-                } catch (_) {
-                  return false;
-                }
+                final date = w.scheduledLocalDate;
+                if (date == null) return false;
+                final workoutWeekStart = date.subtract(Duration(days: date.weekday - 1));
+                return workoutWeekStart.year == weekStart.year &&
+                    workoutWeekStart.month == weekStart.month &&
+                    workoutWeekStart.day == weekStart.day;
               }).toList();
 
               // Create day states
               final dayStates = List<_DayState>.generate(7, (index) {
                 final dayDate = weekStart.add(Duration(days: index));
                 final dayWorkouts = thisWeekWorkouts.where((w) {
-                  try {
-                    final date = DateTime.parse(w.scheduledDate!);
-                    return date.year == dayDate.year &&
-                        date.month == dayDate.month &&
-                        date.day == dayDate.day;
-                  } catch (_) {
-                    return false;
-                  }
+                  final date = w.scheduledLocalDate;
+                  if (date == null) return false;
+                  return date.year == dayDate.year &&
+                      date.month == dayDate.month &&
+                      date.day == dayDate.day;
                 }).toList();
 
                 final hasWorkout = dayWorkouts.isNotEmpty;

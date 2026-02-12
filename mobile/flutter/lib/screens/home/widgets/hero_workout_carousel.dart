@@ -61,6 +61,9 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   /// Dates that have permanently failed (exceeded max retries)
   final Set<String> _permanentlyFailed = {};
 
+  /// Locally generated workouts stored for immediate display (Fix: workout vanishes after generation)
+  final List<Workout> _locallyGeneratedWorkouts = [];
+
   @override
   void initState() {
     super.initState();
@@ -150,6 +153,8 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
       }
 
       if (generatedWorkout != null) {
+        // Store locally for immediate display (prevents vanishing after generation)
+        _locallyGeneratedWorkouts.add(generatedWorkout);
         // Refresh providers to pick up the new workout
         ref.invalidate(workoutsProvider);
         ref.invalidate(todayWorkoutProvider);
@@ -233,22 +238,17 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
     return dates;
   }
 
-  /// Find workout for a specific date
+  /// Find workout for a specific date using string comparison
+  /// to avoid timezone shift issues (DateTime.parse on date-only strings
+  /// creates UTC midnight, and .toLocal() can shift the date backward).
   Workout? _findWorkoutForDate(List<Workout> workouts, DateTime date) {
+    final targetKey = _dateKey(date); // "YYYY-MM-DD" from local DateTime
     for (final workout in workouts) {
       if (workout.scheduledDate == null) continue;
-      try {
-        final workoutDate = DateTime.parse(workout.scheduledDate!).toLocal();
-        final workoutDateOnly = DateTime(
-          workoutDate.year,
-          workoutDate.month,
-          workoutDate.day,
-        );
-        if (workoutDateOnly == date) {
-          return workout;
-        }
-      } catch (e) {
-        debugPrint('⚠️ [HeroCarousel] Error parsing scheduledDate for workout ${workout.id}: $e');
+      // Compare date strings directly — scheduledDate is "YYYY-MM-DD" or "YYYY-MM-DDT..."
+      final workoutDateStr = workout.scheduledDate!.split('T')[0];
+      if (workoutDateStr == targetKey) {
+        return workout;
       }
     }
     return null;
@@ -275,6 +275,12 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         }
 
         final workoutDays = user.workoutDays;
+
+        // Wait for todayWorkoutProvider to complete initial load
+        // This prevents auto-triggering generation before we know if workouts exist
+        if (todayWorkoutAsync.isLoading && !todayWorkoutAsync.hasValue) {
+          return _buildLoadingState(isDark, accentColor);
+        }
 
         // Check todayWorkoutProvider first for today's/next workout
         final todayWorkoutResponse = todayWorkoutAsync.valueOrNull;
@@ -304,6 +310,12 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         }
         if (nextWorkout != null && !mergedWorkouts.any((w) => w.id == nextWorkout.id)) {
           mergedWorkouts.add(nextWorkout);
+        }
+        // Merge locally generated workouts for immediate display
+        for (final workout in _locallyGeneratedWorkouts) {
+          if (!mergedWorkouts.any((w) => w.id == workout.id)) {
+            mergedWorkouts.add(workout);
+          }
         }
 
         // Build carousel items: one slide per workout day, wrapping to next week

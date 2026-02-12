@@ -177,29 +177,42 @@ class Workout extends Equatable {
     return '${durationMinutes ?? 45} min';
   }
 
+  /// Extract the "YYYY-MM-DD" date key from scheduledDate, avoiding
+  /// timezone-sensitive DateTime.parse (which creates UTC midnight for
+  /// date-only strings, causing .toLocal() to shift the date backward).
+  String? get scheduledDateKey {
+    if (scheduledDate == null) return null;
+    return scheduledDate!.split('T')[0];
+  }
+
+  /// Get a local date-only DateTime from scheduledDate by splitting
+  /// the string first, avoiding UTC→local timezone shift bugs.
+  DateTime? get scheduledLocalDate {
+    final key = scheduledDateKey;
+    if (key == null) return null;
+    try {
+      final parts = key.split('-');
+      if (parts.length != 3) return null;
+      return DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Get formatted date
   String get formattedDate {
-    if (scheduledDate == null) return '';
-    try {
-      final date = DateTime.parse(scheduledDate!);
-      return '${date.month}/${date.day}/${date.year}';
-    } catch (_) {
-      return scheduledDate!;
-    }
+    final date = scheduledLocalDate;
+    if (date == null) return scheduledDate ?? '';
+    return '${date.month}/${date.day}/${date.year}';
   }
 
   /// Check if workout is today
   bool get isToday {
-    if (scheduledDate == null) return false;
-    try {
-      final date = DateTime.parse(scheduledDate!);
-      final now = DateTime.now();
-      return date.year == now.year &&
-          date.month == now.month &&
-          date.day == now.day;
-    } catch (_) {
-      return false;
-    }
+    final key = scheduledDateKey;
+    if (key == null) return false;
+    final now = DateTime.now();
+    final todayKey = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    return key == todayKey;
   }
 
   /// Get primary muscle groups

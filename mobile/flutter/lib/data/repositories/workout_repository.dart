@@ -3346,14 +3346,10 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
     final weekEnd = weekStart.add(const Duration(days: 7));
 
     final thisWeek = workouts.where((w) {
-      if (w.scheduledDate == null) return false;
-      try {
-        final date = DateTime.parse(w.scheduledDate!);
-        return date.isAfter(weekStart.subtract(const Duration(days: 1))) &&
-            date.isBefore(weekEnd);
-      } catch (_) {
-        return false;
-      }
+      final date = w.scheduledLocalDate;
+      if (date == null) return false;
+      return date.isAfter(weekStart.subtract(const Duration(days: 1))) &&
+          date.isBefore(weekEnd);
     }).toList();
 
     final completed = thisWeek.where((w) => w.isCompleted == true).length;
