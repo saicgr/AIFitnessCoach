@@ -265,19 +265,25 @@ async def list_exercises(
                                   exercise_types_list or goals_list or
                                   suitable_for_list or avoid_if_list)
 
-        # If post-filtering is needed, we must fetch ALL matching rows first,
-        # then filter, then apply limit/offset. Otherwise filters would be
-        # applied to a limited subset and miss results.
-        if needs_post_filter:
+        # When searching, ALWAYS use fuzzy search for typo tolerance
+        # (e.g., "threadmill" -> "Treadmill", "benchpress" -> "Bench Press")
+        if search:
+            all_rows = await fetch_fuzzy_search_results(
+                db, search,
+                equipment_filter=equipment_list[0] if len(equipment_list) == 1 else None,
+                body_part_filter=body_parts_list[0] if len(body_parts_list) == 1 else None,
+                limit=limit if not needs_post_filter else 2000
+            )
+        elif needs_post_filter:
             # Fetch all rows (with DB-level filters only)
             all_rows = await fetch_all_rows(
                 db, "exercise_library_cleaned", "*",
                 equipment_filter=equipment_list[0] if len(equipment_list) == 1 else None,
                 difficulty_filter=difficulty,
-                search_filter=search
+                search_filter=None
             )
         else:
-            # No post-filtering needed, can use limit/offset at DB level
+            # No search and no post-filtering, use limit/offset at DB level
             page_size = 1000
             all_rows = []
             current_offset = offset
@@ -291,8 +297,6 @@ async def list_exercises(
                     query = query.ilike("equipment", f"%{equipment_list[0]}%")
                 if difficulty:
                     query = query.eq("difficulty_level", difficulty)
-                if search:
-                    query = query.or_(f"name.ilike.%{search}%,original_name.ilike.%{search}%,equipment.ilike.%{search}%")
 
                 # Calculate how many rows we still need
                 rows_needed = min(page_size, limit - len(all_rows))
