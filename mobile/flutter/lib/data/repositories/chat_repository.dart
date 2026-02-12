@@ -482,23 +482,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       debugPrint('❌ [Chat] Error sending message: $e');
       debugPrint('❌ [Chat] Stack trace: $stackTrace');
 
-      // Determine error type for better user feedback
-      String errorContent;
-      if (e.toString().contains('timeout') || e.toString().contains('SocketException')) {
-        errorContent = 'Connection timed out. Please check your internet and try again.';
-      } else if (e.toString().contains('401') || e.toString().contains('403')) {
-        errorContent = 'Session expired. Please sign in again.';
-      } else if (e.toString().contains('429')) {
-        errorContent = 'Too many requests. Please wait a moment and try again.';
-      } else if (e.toString().contains('500') || e.toString().contains('503')) {
-        errorContent = 'Server is temporarily unavailable. Please try again in a moment.';
-      } else {
-        errorContent = 'Sorry, I encountered an error. Please try again.';
-      }
-
+      // Surface the real error - don't mask it as an AI response
       final errorMessage = ChatMessage(
-        role: 'assistant',
-        content: errorContent,
+        role: 'error',
+        content: e.toString(),
         createdAt: DateTime.now().toIso8601String(),
       );
       final updatedMessages = state.valueOrNull ?? [];

@@ -29,55 +29,29 @@ from services.langgraph_agents.coach_agent import build_coach_agent_graph
 from core.logger import get_logger
 from core.anonymize import anonymize_user_data
 
+
+def _ensure_str(content) -> str:
+    """Normalize LangChain AIMessage content to a plain string.
+
+    Newer langchain-google-genai (4.x) with Vertex AI can return content as a
+    list of blocks like [{'type': 'text', 'text': '...'}, ...] instead of a
+    simple string. This extracts and joins the text parts.
+    """
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "text":
+                parts.append(block.get("text", ""))
+            elif isinstance(block, str):
+                parts.append(block)
+        return "".join(parts) if parts else str(content)
+    return str(content) if content else ""
+
 logger = get_logger(__name__)
 
 # ──────────────────────────────────────────────
-# Fast-path: Simple message detection & responses
-# ──────────────────────────────────────────────
-# Patterns that indicate a simple message that doesn't need the full LangGraph pipeline.
-# These are checked BEFORE the expensive Gemini intent extraction call (~2s).
-
-_GREETING_PATTERNS = re.compile(
-    r"^(hi|hey|hello|howdy|yo|sup|what'?s up|hiya|good\s*(morning|afternoon|evening|night)|heya|greetings)[!?.]*$",
-    re.IGNORECASE,
-)
-
-_THANKS_PATTERNS = re.compile(
-    r"^(thanks?|thank\s*you|thx|ty|appreciate\s*it|cheers|much\s*appreciated)[!?.]*$",
-    re.IGNORECASE,
-)
-
-_GOODBYE_PATTERNS = re.compile(
-    r"^(bye|goodbye|see\s*ya|later|cya|peace|gotta\s*go|talk\s*later|ttyl|take\s*care)[!?.]*$",
-    re.IGNORECASE,
-)
-
-_OK_PATTERNS = re.compile(
-    r"^(ok|okay|k|got\s*it|sure|alright|sounds\s*good|cool|nice|great|awesome|perfect|yep|yup|yes|no|nah|nope)[!?.]*$",
-    re.IGNORECASE,
-)
-
-# Map of simple intent -> (response, CoachIntent)
-# Responses are kept short and energetic to match the fitness coaching persona.
-SIMPLE_INTENT_MAP = {
-    "greeting": (
-        "Hey! Ready to crush your workout? What can I help with today?",
-        CoachIntent.QUESTION,
-    ),
-    "thanks": (
-        "You're welcome! Let me know if you need anything else. Keep pushing!",
-        CoachIntent.QUESTION,
-    ),
-    "goodbye": (
-        "See you next time! Keep up the great work and stay consistent!",
-        CoachIntent.QUESTION,
-    ),
-    "acknowledgment": (
-        "Got it! Let me know if there's anything else I can help with.",
-        CoachIntent.QUESTION,
-    ),
-}
-
 # @mention patterns for direct agent routing
 AGENT_MENTION_PATTERNS = {
     r"@nutrition\b": AgentType.NUTRITION,
@@ -392,33 +366,6 @@ class LangGraphCoachService:
 
         return base_state
 
-    @staticmethod
-    def _quick_intent_check(message: str) -> Optional[str]:
-        """
-        Fast local check for simple messages that don't need the full pipeline.
-
-        Returns a simple intent key (e.g., "greeting", "thanks") if the message
-        is trivial, or None if it requires full processing.
-
-        This avoids a ~2s Gemini API call for intent extraction on simple messages.
-        """
-        stripped = message.strip()
-
-        # Only consider short messages (< 30 chars) to avoid false positives
-        if len(stripped) > 30:
-            return None
-
-        if _GREETING_PATTERNS.match(stripped):
-            return "greeting"
-        if _THANKS_PATTERNS.match(stripped):
-            return "thanks"
-        if _GOODBYE_PATTERNS.match(stripped):
-            return "goodbye"
-        if _OK_PATTERNS.match(stripped):
-            return "acknowledgment"
-
-        return None
-
     async def process_message(self, request: ChatRequest) -> ChatResponse:
         """
         Process a user message using dedicated domain agents.
@@ -436,22 +383,6 @@ class LangGraphCoachService:
         logger.info(f"Processing message: {request.message[:50]}...")
 
         try:
-            # 0. Fast-path: check if this is a simple message that doesn't need full pipeline
-            # Skip fast-path if there's an image (needs nutrition agent) or @mention
-            if not request.image_base64:
-                simple_intent = self._quick_intent_check(request.message)
-                if simple_intent and simple_intent in SIMPLE_INTENT_MAP:
-                    response_text, intent = SIMPLE_INTENT_MAP[simple_intent]
-                    logger.info(f"Fast-path handled simple message: '{request.message[:30]}' -> {simple_intent}")
-                    return ChatResponse(
-                        message=response_text,
-                        intent=intent,
-                        agent_type=AgentType.COACH,
-                        action_data=None,
-                        rag_context_used=False,
-                        similar_questions=[],
-                    )
-
             # 1. Detect @mention
             mentioned_agent, cleaned_message = self._detect_agent_mention(request.message)
 
@@ -499,17 +430,7 @@ class LangGraphCoachService:
                         final_state = await agent_graph.ainvoke(agent_state)
                     except Exception as retry_error:
                         logger.error(f"Retry also failed: {retry_error}")
-                        # Fall back to a text-only response
-                        elapsed = time.time() - start_time
-                        logger.info(f"Agent {selected_agent.value} failed after retry in {elapsed:.1f}s")
-                        return ChatResponse(
-                            message="I had trouble processing that request. Could you try rephrasing your message?",
-                            intent=intent,
-                            agent_type=selected_agent,
-                            action_data=None,
-                            rag_context_used=rag_used,
-                            similar_questions=similar_questions,
-                        )
+                        raise retry_error
                 else:
                     raise
             elapsed = time.time() - start_time
@@ -519,8 +440,9 @@ class LangGraphCoachService:
             action_data = final_state.get("action_data")
             logger.info(f"[LangGraph Service] Agent returned action_data: {action_data}")
 
+            raw_response = final_state.get("final_response", "I'm sorry, I couldn't process your request.")
             response = ChatResponse(
-                message=final_state.get("final_response", "I'm sorry, I couldn't process your request."),
+                message=_ensure_str(raw_response),
                 intent=intent,
                 agent_type=selected_agent,
                 action_data=action_data,
@@ -533,21 +455,4 @@ class LangGraphCoachService:
 
         except Exception as e:
             logger.error(f"Agent execution failed: {e}", exc_info=True)
-            # Provide specific error messages based on error type
-            error_message = "I'm sorry, I encountered an error processing your request. Please try again."
-            error_str = str(e).lower()
-            if "thought_signature" in error_str or "function call is missing" in error_str:
-                error_message = "I had a temporary issue with my tools. Please try your request again."
-            elif "timeout" in error_str or "deadline" in error_str:
-                error_message = "The request took too long. Please try a simpler request or try again in a moment."
-            elif "quota" in error_str or "rate" in error_str:
-                error_message = "I'm receiving too many requests right now. Please wait a moment and try again."
-
-            return ChatResponse(
-                message=error_message,
-                intent=CoachIntent.QUESTION,
-                agent_type=mentioned_agent or AgentType.COACH,
-                action_data=None,
-                rag_context_used=False,
-                similar_questions=[],
-            )
+            raise

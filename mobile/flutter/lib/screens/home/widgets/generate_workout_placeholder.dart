@@ -3,6 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
+/// Step labels for the generation progress UI
+const _stepLabels = [
+  'Analyzing profile',
+  'Selecting exercises',
+  'Building workout',
+  'Finalizing',
+];
+
 /// Placeholder card shown in the carousel when no workout exists for a day
 /// User can tap to generate a workout for that specific date
 class GenerateWorkoutPlaceholder extends ConsumerStatefulWidget {
@@ -18,12 +26,24 @@ class GenerateWorkoutPlaceholder extends ConsumerStatefulWidget {
   /// Whether generation has permanently failed after retries (Fix 4)
   final bool isGenerationFailed;
 
+  /// Current generation step (1-based), 0 = not started
+  final int generationStep;
+
+  /// Total generation steps
+  final int generationTotalSteps;
+
+  /// Current step message
+  final String? generationMessage;
+
   const GenerateWorkoutPlaceholder({
     super.key,
     required this.date,
     required this.onGenerate,
     this.isGenerating = false,
     this.isGenerationFailed = false,
+    this.generationStep = 0,
+    this.generationTotalSteps = 4,
+    this.generationMessage,
   });
 
   @override
@@ -103,15 +123,23 @@ class _GenerateWorkoutPlaceholderState
     final accentColor = accentColorEnum.getColor(isDark);
     final isToday = _isToday();
 
-    return Container(
-        height: 440,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: accentColor.withValues(alpha: 0.5),
-            width: 2,
+    return AnimatedBuilder(
+      animation: _pulseController,
+      builder: (context, child) {
+        return Container(
+          height: 440,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: widget.isGenerating
+                  ? accentColor.withValues(alpha: 0.4 + (_pulseController.value * 0.3))
+                  : accentColor.withValues(alpha: 0.5),
+              width: 2,
+            ),
           ),
-        ),
+          child: child,
+        );
+      },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(22),
         child: Stack(
@@ -145,142 +173,304 @@ class _GenerateWorkoutPlaceholderState
             // Content
             Padding(
               padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Day badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.15)
-                          : Colors.black.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.2)
-                            : Colors.black.withValues(alpha: 0.1),
-                      ),
-                    ),
-                    child: Text(
-                      isToday ? 'TODAY' : _getDayLabel(),
-                      style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black87,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  // Date label
-                  Text(
-                    _getDateLabel(),
-                    style: TextStyle(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.6)
-                          : Colors.black45,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-
-                  // Main message with info icon (Fix 5: contextual messages)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          widget.isGenerationFailed
-                              ? 'Generation failed'
-                              : widget.isGenerating
-                                  ? 'Generating your ${_getFullDayName()} workout...'
-                                  : 'Ready to train?',
-                          style: TextStyle(
-                            color: widget.isGenerationFailed
-                                ? (isDark ? Colors.redAccent : Colors.red[700])
-                                : (isDark ? Colors.white : Colors.black87),
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            height: 1.2,
-                          ),
-                        ),
-                      ),
-                      if (!widget.isGenerating && !widget.isGenerationFailed)
-                        _buildInfoIcon(context, isDark, accentColor),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Subtitle (Fix 5: contextual date info)
-                  Text(
-                    widget.isGenerationFailed
-                        ? 'Tap below to try again'
-                        : widget.isGenerating
-                            ? '${_getDateLabel()} - This may take a moment'
-                            : 'Tap below to generate your personalized workout',
-                    style: TextStyle(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.7)
-                          : Colors.black54,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Animated down arrow (hide during generation and failure)
-                  if (!widget.isGenerating && !widget.isGenerationFailed)
-                    _buildDownArrow(accentColor),
-                  const SizedBox(height: 12),
-
-                  // Generate / Retry / Loading button (Fix 4 + Fix 5)
-                  SizedBox(
-                    width: double.infinity,
-                    child: widget.isGenerating
-                        ? _buildLoadingButton(isDark, accentColor)
-                        : widget.isGenerationFailed
-                            ? _buildRetryButton(isDark, accentColor)
-                            : ElevatedButton.icon(
-                                onPressed: () {
-                                  HapticService.medium();
-                                  widget.onGenerate();
-                                },
-                                icon: const Icon(Icons.auto_awesome, size: 20),
-                                label: const Text(
-                                  'GENERATE WORKOUT',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.5,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: accentColor,
-                                  foregroundColor: isDark ? Colors.black : Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  elevation: 4,
-                                  shadowColor: accentColor.withValues(alpha: 0.5),
-                                ),
-                              ),
-                  ),
-                  if (!widget.isGenerating && !widget.isGenerationFailed) ...[
-                    const SizedBox(height: 12),
-                    _buildWorkoutHistoryIndicator(isDark, accentColor),
-                  ],
-                ],
-              ),
+              child: widget.isGenerating && widget.generationStep > 0
+                  ? _buildGeneratingContent(isDark, accentColor, isToday)
+                  : _buildIdleContent(isDark, accentColor, isToday),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  /// Content shown when generation is in progress with numbered steps
+  Widget _buildGeneratingContent(bool isDark, Color accentColor, bool isToday) {
+    final step = widget.generationStep.clamp(1, widget.generationTotalSteps);
+    final progress = step / widget.generationTotalSteps;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Top row: Day badge + Step counter
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Day badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : Colors.black.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : Colors.black.withValues(alpha: 0.1),
+                ),
+              ),
+              child: Text(
+                isToday ? 'TODAY' : _getDayLabel(),
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            // Step counter badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+              ),
+              child: Text(
+                'Step $step of ${widget.generationTotalSteps}',
+                style: TextStyle(
+                  color: accentColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        const Spacer(),
+
+        // Current step message (large)
+        Text(
+          widget.generationMessage ?? 'Generating...',
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black87,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            height: 1.2,
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Progress bar
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: progress),
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+            builder: (context, value, _) {
+              return LinearProgressIndicator(
+                value: value,
+                minHeight: 8,
+                backgroundColor: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.black.withValues(alpha: 0.08),
+                valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 4),
+        // Percentage text
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            '${(progress * 100).toInt()}%',
+            style: TextStyle(
+              color: accentColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Step list
+        ...List.generate(widget.generationTotalSteps, (index) {
+          final stepNum = index + 1;
+          final isCompleted = stepNum < step;
+          final isActive = stepNum == step;
+          final label = index < _stepLabels.length ? _stepLabels[index] : 'Step $stepNum';
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: [
+                // Step indicator
+                if (isCompleted)
+                  Icon(Icons.check_circle, size: 20, color: accentColor)
+                else if (isActive)
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: accentColor,
+                    ),
+                  )
+                else
+                  Icon(
+                    Icons.circle_outlined,
+                    size: 20,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.25)
+                        : Colors.black.withValues(alpha: 0.2),
+                  ),
+                const SizedBox(width: 12),
+                // Step label
+                Text(
+                  '$stepNum. $label',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                    color: isCompleted || isActive
+                        ? (isDark ? Colors.white : Colors.black87)
+                        : (isDark
+                            ? Colors.white.withValues(alpha: 0.35)
+                            : Colors.black.withValues(alpha: 0.3)),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  /// Content shown when not generating (idle / failed states)
+  Widget _buildIdleContent(bool isDark, Color accentColor, bool isToday) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Day badge
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.15)
+                : Colors.black.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.2)
+                  : Colors.black.withValues(alpha: 0.1),
+            ),
+          ),
+          child: Text(
+            isToday ? 'TODAY' : _getDayLabel(),
+            style: TextStyle(
+              color: isDark ? Colors.white : Colors.black87,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+
+        const Spacer(),
+
+        // Date label
+        Text(
+          _getDateLabel(),
+          style: TextStyle(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.6)
+                : Colors.black45,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+
+        // Main message with info icon
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                widget.isGenerationFailed
+                    ? 'Generation failed'
+                    : widget.isGenerating
+                        ? 'Generating your ${_getFullDayName()} workout...'
+                        : 'Ready to train?',
+                style: TextStyle(
+                  color: widget.isGenerationFailed
+                      ? (isDark ? Colors.redAccent : Colors.red[700])
+                      : (isDark ? Colors.white : Colors.black87),
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  height: 1.2,
+                ),
+              ),
+            ),
+            if (!widget.isGenerating && !widget.isGenerationFailed)
+              _buildInfoIcon(context, isDark, accentColor),
+          ],
+        ),
+        const SizedBox(height: 8),
+
+        // Subtitle
+        Text(
+          widget.isGenerationFailed
+              ? 'Tap below to try again'
+              : widget.isGenerating
+                  ? '${_getDateLabel()} - This may take a moment'
+                  : 'Tap below to generate your personalized workout',
+          style: TextStyle(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.7)
+                : Colors.black54,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Animated down arrow (hide during generation and failure)
+        if (!widget.isGenerating && !widget.isGenerationFailed)
+          _buildDownArrow(accentColor),
+        const SizedBox(height: 12),
+
+        // Generate / Retry / Loading button
+        SizedBox(
+          width: double.infinity,
+          child: widget.isGenerating
+              ? _buildLoadingButton(isDark, accentColor)
+              : widget.isGenerationFailed
+                  ? _buildRetryButton(isDark, accentColor)
+                  : ElevatedButton.icon(
+                      onPressed: () {
+                        HapticService.medium();
+                        widget.onGenerate();
+                      },
+                      icon: const Icon(Icons.auto_awesome, size: 20),
+                      label: const Text(
+                        'GENERATE WORKOUT',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                          fontSize: 14,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accentColor,
+                        foregroundColor: isDark ? Colors.black : Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 4,
+                        shadowColor: accentColor.withValues(alpha: 0.5),
+                      ),
+                    ),
+        ),
+        if (!widget.isGenerating && !widget.isGenerationFailed) ...[
+          const SizedBox(height: 12),
+          _buildWorkoutHistoryIndicator(isDark, accentColor),
+        ],
+      ],
     );
   }
 

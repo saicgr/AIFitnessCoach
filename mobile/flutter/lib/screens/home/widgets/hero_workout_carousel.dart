@@ -6,6 +6,7 @@ import '../../../core/providers/user_provider.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/today_workout_provider.dart';
+import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import 'hero_workout_card.dart';
 import 'generate_workout_placeholder.dart';
@@ -39,6 +40,11 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   int _currentPage = 0;
   DateTime? _generatingForDate;
   bool _autoGenerationTriggered = false;
+
+  /// Generation step tracking for numbered progress UI
+  int _generationStep = 0;
+  int _generationTotalSteps = 4;
+  String _generationMessage = '';
 
   /// Tracks generation failure counts per date for retry logic (Fix 4)
   final Map<String, int> _generationFailures = {};
@@ -83,24 +89,87 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
     // Clear permanent failure state if user manually taps retry
     _permanentlyFailed.remove(key);
 
-    setState(() => _generatingForDate = date);
-    try {
-      // Trigger workout generation for this date
-      await ref.read(workoutsProvider.notifier).generateWorkoutForDate(date);
-      // Refresh the workouts list
-      ref.invalidate(workoutsProvider);
-      ref.invalidate(todayWorkoutProvider);
+    setState(() {
+      _generatingForDate = date;
+      _generationStep = 1;
+      _generationTotalSteps = 4;
+      _generationMessage = 'Analyzing your profile...';
+    });
 
-      // Success: clear failure tracking for this date
-      _generationFailures.remove(key);
-      _retryTimers[key]?.cancel();
-      _retryTimers.remove(key);
+    try {
+      final repository = ref.read(workoutRepositoryProvider);
+      final apiClient = ref.read(apiClientProvider);
+      String? userId = await apiClient.getUserId();
+      if (userId == null || userId.isEmpty) {
+        debugPrint('❌ [HeroCarousel] Cannot generate workout: no userId');
+        _handleGenerationFailure(date);
+        return;
+      }
+
+      final scheduledDate = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      debugPrint('🏋️ [HeroCarousel] Streaming generation for $scheduledDate');
+
+      int chunkCount = 0;
+      Workout? generatedWorkout;
+
+      await for (final progress in repository.generateWorkoutStreaming(
+        userId: userId,
+        scheduledDate: scheduledDate,
+      )) {
+        if (!mounted) break;
+
+        if (progress.status == WorkoutGenerationStatus.started) {
+          setState(() {
+            _generationStep = 1;
+            _generationMessage = 'Analyzing your profile...';
+          });
+        } else if (progress.status == WorkoutGenerationStatus.progress) {
+          chunkCount++;
+          if (chunkCount == 1) {
+            setState(() {
+              _generationStep = 2;
+              _generationMessage = 'Selecting exercises...';
+            });
+          } else if (chunkCount >= 3) {
+            setState(() {
+              _generationStep = 3;
+              _generationMessage = 'Building your workout...';
+            });
+          }
+        } else if (progress.status == WorkoutGenerationStatus.completed) {
+          setState(() {
+            _generationStep = 4;
+            _generationMessage = 'Finalizing workout...';
+          });
+          generatedWorkout = progress.workout;
+        } else if (progress.status == WorkoutGenerationStatus.error) {
+          debugPrint('❌ [HeroCarousel] Stream error: ${progress.message}');
+          _handleGenerationFailure(date);
+          return;
+        }
+      }
+
+      if (generatedWorkout != null) {
+        // Refresh providers to pick up the new workout
+        ref.invalidate(workoutsProvider);
+        ref.invalidate(todayWorkoutProvider);
+        // Success: clear failure tracking
+        _generationFailures.remove(key);
+        _retryTimers[key]?.cancel();
+        _retryTimers.remove(key);
+      } else {
+        _handleGenerationFailure(date);
+      }
     } catch (e) {
-      debugPrint('[HeroCarousel] Generation failed for $key: $e');
+      debugPrint('❌ [HeroCarousel] Generation failed for $key: $e');
       _handleGenerationFailure(date);
     } finally {
       if (mounted) {
-        setState(() => _generatingForDate = null);
+        setState(() {
+          _generatingForDate = null;
+          _generationStep = 0;
+          _generationMessage = '';
+        });
       }
     }
   }
@@ -178,7 +247,9 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         if (workoutDateOnly == date) {
           return workout;
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('⚠️ [HeroCarousel] Error parsing scheduledDate for workout ${workout.id}: $e');
+      }
     }
     return null;
   }
@@ -223,128 +294,134 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
           } catch (_) {}
         }
 
-        return workoutsAsync.when(
-          loading: () => _buildLoadingState(isDark, accentColor),
-          error: (_, __) => _buildErrorState(isDark),
-          data: (workouts) {
-            // Merge in today's workout from todayWorkoutProvider if not already in list
-            final mergedWorkouts = List<Workout>.from(workouts);
-            if (todayWorkout != null && !mergedWorkouts.any((w) => w.id == todayWorkout.id)) {
-              mergedWorkouts.add(todayWorkout);
-            }
-            if (nextWorkout != null && !mergedWorkouts.any((w) => w.id == nextWorkout.id)) {
-              mergedWorkouts.add(nextWorkout);
-            }
+        // Use valueOrNull so we don't block on the slow all-workouts fetch
+        final allWorkouts = workoutsAsync.valueOrNull ?? [];
 
-            // Build carousel items: one slide per workout day, wrapping to next week
-            List<CarouselItem> carouselItems = [];
+        // Merge in today's workout from todayWorkoutProvider if not already in list
+        final mergedWorkouts = List<Workout>.from(allWorkouts);
+        if (todayWorkout != null && !mergedWorkouts.any((w) => w.id == todayWorkout.id)) {
+          mergedWorkouts.add(todayWorkout);
+        }
+        if (nextWorkout != null && !mergedWorkouts.any((w) => w.id == nextWorkout.id)) {
+          mergedWorkouts.add(nextWorkout);
+        }
 
-            if (workoutDays.isNotEmpty) {
-              final workoutDates = _getWorkoutDatesForWeek(workoutDays);
-              for (final date in workoutDates) {
-                final workout = _findWorkoutForDate(mergedWorkouts, date);
-                if (workout != null) {
-                  carouselItems.add(CarouselItem.workout(workout));
-                } else {
-                  final isThisDateAutoGenerating = isAutoGenerating &&
-                      autoGeneratingDate != null && date == autoGeneratingDate;
-                  final isThisDateFailed = _isGenerationFailed(date);
-                  carouselItems.add(CarouselItem.placeholder(
-                    date,
-                    isAutoGenerating: isThisDateAutoGenerating,
-                    isGenerationFailed: isThisDateFailed,
-                  ));
+        // Build carousel items: one slide per workout day, wrapping to next week
+        List<CarouselItem> carouselItems = [];
+
+        if (workoutDays.isNotEmpty) {
+          final workoutDates = _getWorkoutDatesForWeek(workoutDays);
+          for (final date in workoutDates) {
+            final workout = _findWorkoutForDate(mergedWorkouts, date);
+            if (workout != null) {
+              carouselItems.add(CarouselItem.workout(workout));
+            } else {
+              final isThisDateAutoGenerating = isAutoGenerating &&
+                  autoGeneratingDate != null && date == autoGeneratingDate;
+              final isThisDateFailed = _isGenerationFailed(date);
+              carouselItems.add(CarouselItem.placeholder(
+                date,
+                isAutoGenerating: isThisDateAutoGenerating,
+                isGenerationFailed: isThisDateFailed,
+              ));
+            }
+          }
+        }
+
+        // Auto-trigger generation for the first placeholder
+        // Skip if todayWorkoutProvider already shows isGenerating (prevents duplicate calls)
+        if (!_autoGenerationTriggered && carouselItems.isNotEmpty) {
+          final firstItem = carouselItems.first;
+          if (firstItem.isPlaceholder && !firstItem.isAutoGenerating && _generatingForDate == null) {
+            if (!isAutoGenerating) {
+              _autoGenerationTriggered = true;
+              debugPrint('🚀 [HeroCarousel] Auto-triggering generation for first placeholder: ${firstItem.placeholderDate}');
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  _handleGenerateWorkout(firstItem.placeholderDate!);
                 }
-              }
+              });
             }
+          }
+        }
 
-            // Auto-trigger generation for the first placeholder
-            if (!_autoGenerationTriggered && carouselItems.isNotEmpty) {
-              final firstItem = carouselItems.first;
-              if (firstItem.isPlaceholder && !firstItem.isAutoGenerating && _generatingForDate == null) {
-                if (!isAutoGenerating) {
-                  _autoGenerationTriggered = true;
-                  debugPrint('🚀 [HeroCarousel] Auto-triggering generation for first placeholder: ${firstItem.placeholderDate}');
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) {
-                      _handleGenerateWorkout(firstItem.placeholderDate!);
-                    }
-                  });
-                }
-              }
-            }
+        // If still no items, show appropriate state
+        if (carouselItems.isEmpty) {
+          if (workoutDays.isEmpty) {
+            return _buildNoWorkoutDaysState(isDark, accentColor);
+          }
+          return _buildAllDoneState(isDark, accentColor);
+        }
 
-            // If still no items, show appropriate state
-            if (carouselItems.isEmpty) {
-              if (workoutDays.isEmpty) {
-                return _buildNoWorkoutDaysState(isDark, accentColor);
-              }
-              return _buildAllDoneState(isDark, accentColor);
-            }
+        // Show single card if only one item (no carousel needed)
+        if (carouselItems.length == 1) {
+          final item = carouselItems.first;
+          final isItemGenerating = _generatingForDate == item.placeholderDate || item.isAutoGenerating;
+          return SizedBox(
+            height: 440,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: item.isWorkout
+                  ? HeroWorkoutCard(
+                      workout: item.workout!,
+                      inCarousel: false,
+                    )
+                  : GenerateWorkoutPlaceholder(
+                      date: item.placeholderDate!,
+                      onGenerate: () => _handleGenerateWorkout(item.placeholderDate!),
+                      isGenerating: isItemGenerating,
+                      isGenerationFailed: item.isGenerationFailed,
+                      generationStep: isItemGenerating ? _generationStep : 0,
+                      generationTotalSteps: _generationTotalSteps,
+                      generationMessage: isItemGenerating ? _generationMessage : null,
+                    ),
+            ),
+          );
+        }
 
-            // Show single card if only one item (no carousel needed)
-            if (carouselItems.length == 1) {
-              final item = carouselItems.first;
-              return SizedBox(
-                height: 440,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+        // PageView carousel for multiple items
+        return SizedBox(
+          height: 440,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: carouselItems.length,
+            onPageChanged: (index) {
+              HapticService.selection();
+              setState(() => _currentPage = index);
+            },
+            itemBuilder: (context, index) {
+              final item = carouselItems[index];
+
+              // Scale down and slightly dim non-active cards
+              final isActive = index == _currentPage;
+              final scale = isActive ? 1.0 : 0.92;
+              final opacity = isActive ? 1.0 : 0.8;
+              final isItemGenerating = _generatingForDate == item.placeholderDate || item.isAutoGenerating;
+
+              return AnimatedScale(
+                scale: scale,
+                duration: const Duration(milliseconds: 200),
+                child: AnimatedOpacity(
+                  opacity: opacity,
+                  duration: const Duration(milliseconds: 200),
                   child: item.isWorkout
                       ? HeroWorkoutCard(
                           workout: item.workout!,
-                          inCarousel: false,
+                          inCarousel: true,
                         )
                       : GenerateWorkoutPlaceholder(
                           date: item.placeholderDate!,
                           onGenerate: () => _handleGenerateWorkout(item.placeholderDate!),
-                          isGenerating: _generatingForDate == item.placeholderDate || item.isAutoGenerating,
+                          isGenerating: isItemGenerating,
                           isGenerationFailed: item.isGenerationFailed,
+                          generationStep: isItemGenerating ? _generationStep : 0,
+                          generationTotalSteps: _generationTotalSteps,
+                          generationMessage: isItemGenerating ? _generationMessage : null,
                         ),
                 ),
               );
-            }
-
-            // PageView carousel for multiple items
-            return SizedBox(
-              height: 440,
-              child: PageView.builder(
-                controller: _pageController,
-                itemCount: carouselItems.length,
-                onPageChanged: (index) {
-                  HapticService.selection();
-                  setState(() => _currentPage = index);
-                },
-                itemBuilder: (context, index) {
-                  final item = carouselItems[index];
-
-                  // Scale down and slightly dim non-active cards
-                  final isActive = index == _currentPage;
-                  final scale = isActive ? 1.0 : 0.92;
-                  final opacity = isActive ? 1.0 : 0.8;
-
-                  return AnimatedScale(
-                    scale: scale,
-                    duration: const Duration(milliseconds: 200),
-                    child: AnimatedOpacity(
-                      opacity: opacity,
-                      duration: const Duration(milliseconds: 200),
-                      child: item.isWorkout
-                          ? HeroWorkoutCard(
-                              workout: item.workout!,
-                              inCarousel: true,
-                            )
-                          : GenerateWorkoutPlaceholder(
-                              date: item.placeholderDate!,
-                              onGenerate: () => _handleGenerateWorkout(item.placeholderDate!),
-                              isGenerating: _generatingForDate == item.placeholderDate || item.isAutoGenerating,
-                              isGenerationFailed: item.isGenerationFailed,
-                            ),
-                    ),
-                  );
-                },
-              ),
-            );
-          },
+            },
+          ),
         );
       },
     );

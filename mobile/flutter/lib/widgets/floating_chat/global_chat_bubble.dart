@@ -403,11 +403,52 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
 
   Widget _buildMessageBubble(ChatMessage message) {
     final isUser = message.role == 'user';
+    final isError = message.role == 'error';
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final userTextColor = isDark ? AppColors.pureBlack : Colors.white;
+
+    if (isError) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.78,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.red.withOpacity(isDark ? 0.15 : 0.08),
+            borderRadius: BorderRadius.circular(18).copyWith(
+              bottomLeft: const Radius.circular(4),
+            ),
+            border: Border.all(color: Colors.red.withOpacity(0.3)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 2, right: 8),
+                child: Icon(Icons.error_outline, color: Colors.red, size: 16),
+              ),
+              Flexible(
+                child: Text(
+                  message.content,
+                  style: TextStyle(
+                    color: Colors.red[isDark ? 300 : 700],
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,

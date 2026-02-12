@@ -591,6 +591,7 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
   Widget _buildMessageBubble(BuildContext context, ChatMessage message) {
     final isUser = message.role == 'user';
     final isSystem = message.role == 'system';
+    final isError = message.role == 'error';
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -601,6 +602,47 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
     final userTextColor = isDark ? AppColors.pureBlack : Colors.white;
+
+    // Error messages are displayed with red accent on the left side
+    if (isError) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.red.withOpacity(isDark ? 0.15 : 0.08),
+            borderRadius: BorderRadius.circular(16).copyWith(
+              bottomLeft: const Radius.circular(4),
+            ),
+            border: Border.all(color: Colors.red.withOpacity(0.3)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 2, right: 8),
+                child: Icon(Icons.error_outline, color: Colors.red, size: 16),
+              ),
+              Flexible(
+                child: Text(
+                  message.content,
+                  style: TextStyle(
+                    color: Colors.red[isDark ? 300 : 700],
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     // System messages (like coach change notifications) are displayed centered
     if (isSystem) {
