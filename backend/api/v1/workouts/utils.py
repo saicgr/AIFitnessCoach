@@ -405,6 +405,8 @@ def row_to_workout(row: dict, enrich_videos: bool = True) -> Workout:
         valid_to=row.get("valid_to"),
         parent_workout_id=row.get("parent_workout_id"),
         superseded_by=row.get("superseded_by"),
+        completed_at=row.get("completed_at"),
+        completion_method=row.get("completion_method"),
     )
 
 
@@ -2503,6 +2505,24 @@ async def get_user_comeback_status(user_id: str) -> dict:
         if not user:
             return {"in_comeback_mode": False, "days_since_last_workout": None, "reason": "User not found"}
 
+        # Check account age - new accounts shouldn't trigger comeback mode
+        created_at = user.get("created_at")
+        if created_at:
+            try:
+                if isinstance(created_at, str):
+                    created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                else:
+                    created = created_at
+                account_age_days = (datetime.now(created.tzinfo) - created).days
+                if account_age_days < 14:
+                    return {
+                        "in_comeback_mode": False,
+                        "days_since_last_workout": None,
+                        "reason": f"Account only {account_age_days} days old (< 14 day threshold)"
+                    }
+            except Exception:
+                pass
+
         preferences = user.get("preferences", {})
         if isinstance(preferences, str):
             try:
@@ -4403,3 +4423,56 @@ def truncate_exercises_to_duration(
             break
 
     return truncated_exercises
+
+
+async def get_user_favorite_workouts(user_id: str) -> list:
+    """Get user's favorite workouts for generation context."""
+    try:
+        db = get_supabase_db()
+        result = db.client.table("workouts").select(
+            "name, type, difficulty, exercises_json, duration_minutes"
+        ).eq("user_id", user_id).eq("is_favorite", True).order(
+            "created_at", desc=True
+        ).limit(5).execute()
+
+        return result.data if result.data else []
+    except Exception as e:
+        logger.error(f"Error getting favorite workouts: {e}")
+        return []
+
+
+def build_favorite_workouts_context(favorites: list) -> str:
+    """Build prompt-ready context string from favorite workouts."""
+    if not favorites:
+        return ""
+
+    lines = ["FAVORITE WORKOUT TEMPLATES (workouts the user loved - use as inspiration):"]
+
+    for i, fav in enumerate(favorites, 1):
+        name = fav.get("name", "Unnamed")
+        workout_type = fav.get("type", "unknown")
+        difficulty = fav.get("difficulty", "medium")
+        duration = fav.get("duration_minutes", "?")
+
+        # Extract exercise names from exercises_json
+        exercise_names = []
+        exercises_json = fav.get("exercises_json")
+        if exercises_json:
+            parsed = parse_json_field(exercises_json, [])
+            for ex in parsed:
+                if isinstance(ex, dict):
+                    ex_name = ex.get("name") or ex.get("exercise_name")
+                    if ex_name:
+                        exercise_names.append(ex_name)
+
+        exercises_str = ", ".join(exercise_names[:6])  # Show up to 6 exercise names
+        if len(exercise_names) > 6:
+            exercises_str += f" (+{len(exercise_names) - 6} more)"
+
+        lines.append(
+            f"{i}. \"{name}\" ({workout_type}, {difficulty}): "
+            f"{exercises_str} [{len(exercise_names)} exercises, {duration}min]"
+        )
+
+    lines.append("When generating for the same muscle group/type, prefer similar exercise combinations and structures.")
+    return "\n".join(lines)

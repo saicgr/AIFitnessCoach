@@ -13,6 +13,21 @@ from .state import ExerciseSuggestionState
 from core.config import get_settings
 from core.logger import get_logger
 from core.supabase_db import get_supabase_db
+
+
+def _content_to_str(content) -> str:
+    """Normalize LLM response content to string (handles list-of-blocks format)."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "text":
+                parts.append(block.get("text", ""))
+            elif isinstance(block, str):
+                parts.append(block)
+        return "".join(parts)
+    return str(content) if content else ""
 from services.exercise_rag_service import get_exercise_rag_service
 from services.gemini_service import GeminiService
 
@@ -101,7 +116,7 @@ Respond ONLY with valid JSON, no explanations."""
 
     try:
         response = await llm.ainvoke(messages)
-        content = response.content.strip()
+        content = _content_to_str(response.content).strip()
         logger.info(f"[Analyze Node] Raw GPT response: {content[:200]}...")
 
         # Parse JSON response - extract just the JSON object
@@ -344,7 +359,7 @@ IMPORTANT: Only suggest exercises from the provided list. Match names exactly.""
             HumanMessage(content="Please suggest the best alternatives."),
         ])
 
-        content = response.content.strip()
+        content = _content_to_str(response.content).strip()
 
         # Parse JSON response - handle code blocks robustly
         if "```" in content:

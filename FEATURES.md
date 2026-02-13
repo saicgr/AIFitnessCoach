@@ -178,6 +178,8 @@ Each step includes difficulty rating (1-10), unlock criteria, tips, and video. U
 ✅ **SOLVED**: Comprehensive break detection and comeback system:
 - **Auto-detection**: Detects breaks of 7, 14, 28, and 42+ days automatically
 - **Comeback mode**: Reduced intensity workouts that gradually build back up over 1-4 weeks
+- **User consent**: Users are prompted with a "Welcome Back" sheet before generating, choosing between comeback (reduced) or full workout intensity
+- **Account age guard**: New accounts (< 14 days old) are never flagged for comeback mode, preventing false positives from re-created accounts
 - **Age-aware adjustments**: Additional intensity reduction for users 50+ (up to 25% extra reduction for 80+)
 - **Example**: 70-year-old returning after 5 weeks gets ~55-60% volume reduction, 50% intensity reduction, +60-75s rest, max 4 exercises, no explosive movements
 - **Rep capping**: Absolute maximums enforced (seniors 60+ max 12 reps, elderly 75+ max 10 reps) regardless of what AI generates

@@ -441,7 +441,8 @@ class WarmupStretchService:
                 from api.v1.exercise_preferences import get_user_staples_by_section
                 staple_rows = await get_user_staples_by_section(user_id, "warmup")
                 for row in staple_rows:
-                    duration = row.get("default_duration_seconds") or 300  # Default 5 min
+                    # User overrides take priority over library defaults
+                    duration = row.get("user_duration_seconds") or row.get("default_duration_seconds") or 300
                     warmup_staples.append({
                         "name": row.get("exercise_name"),
                         "sets": 1,
@@ -453,11 +454,12 @@ class WarmupStretchService:
                         "notes": "Staple warmup exercise",
                         "is_pre_workout": True,
                         "is_staple": True,
-                        "incline_percent": row.get("default_incline_percent"),
-                        "speed_mph": row.get("default_speed_mph"),
-                        "rpm": row.get("default_rpm"),
-                        "resistance_level": row.get("default_resistance_level"),
-                        "stroke_rate_spm": row.get("stroke_rate_spm"),
+                        "is_timed": True,
+                        "incline_percent": row.get("user_incline_percent") or row.get("default_incline_percent"),
+                        "speed_mph": row.get("user_speed_mph") or row.get("default_speed_mph"),
+                        "rpm": row.get("user_rpm") or row.get("default_rpm"),
+                        "resistance_level": row.get("user_resistance_level") or row.get("default_resistance_level"),
+                        "stroke_rate_spm": row.get("user_stroke_rate_spm") or row.get("stroke_rate_spm"),
                     })
                 if warmup_staples:
                     logger.info(f"⭐ Injected {len(warmup_staples)} warmup staples for user {user_id}")
@@ -597,7 +599,8 @@ class WarmupStretchService:
                 from api.v1.exercise_preferences import get_user_staples_by_section
                 staple_rows = await get_user_staples_by_section(user_id, "stretches")
                 for row in staple_rows:
-                    duration = row.get("default_duration_seconds") or 300
+                    # User overrides take priority over library defaults
+                    duration = row.get("user_duration_seconds") or row.get("default_duration_seconds") or 300
                     stretch_staples.append({
                         "name": row.get("exercise_name"),
                         "sets": 1,
@@ -609,11 +612,12 @@ class WarmupStretchService:
                         "notes": "Staple stretch/cool-down exercise",
                         "is_post_exercise": True,
                         "is_staple": True,
-                        "incline_percent": row.get("default_incline_percent"),
-                        "speed_mph": row.get("default_speed_mph"),
-                        "rpm": row.get("default_rpm"),
-                        "resistance_level": row.get("default_resistance_level"),
-                        "stroke_rate_spm": row.get("stroke_rate_spm"),
+                        "is_timed": True,
+                        "incline_percent": row.get("user_incline_percent") or row.get("default_incline_percent"),
+                        "speed_mph": row.get("user_speed_mph") or row.get("default_speed_mph"),
+                        "rpm": row.get("user_rpm") or row.get("default_rpm"),
+                        "resistance_level": row.get("user_resistance_level") or row.get("default_resistance_level"),
+                        "stroke_rate_spm": row.get("user_stroke_rate_spm") or row.get("stroke_rate_spm"),
                     })
                 if stretch_staples:
                     logger.info(f"⭐ Injected {len(stretch_staples)} stretch staples for user {user_id}")

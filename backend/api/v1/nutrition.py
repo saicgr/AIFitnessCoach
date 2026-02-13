@@ -5012,7 +5012,7 @@ async def calculate_adaptive_tdee(
 
         # Get food logs for the period
         food_result = db.client.table("food_logs")\
-            .select("logged_at, total_macros")\
+            .select("logged_at, total_calories, protein_g, carbs_g, fat_g")\
             .eq("user_id", user_id)\
             .gte("logged_at", f"{from_date_str}T00:00:00")\
             .execute()
@@ -5053,20 +5053,35 @@ async def calculate_adaptive_tdee(
                 "weight_entries": weight_entries,
             }
 
-            result = db.client.table("adaptive_nutrition_calculations")\
-                .insert(calc_data)\
-                .execute()
+            try:
+                result = db.client.table("adaptive_nutrition_calculations")\
+                    .insert(calc_data)\
+                    .execute()
+                if result.data:
+                    data = result.data[0]
+                    return AdaptiveCalculationResponse(
+                        id=data["id"],
+                        user_id=data["user_id"],
+                        calculated_at=datetime.fromisoformat(str(data["calculated_at"]).replace("Z", "+00:00")),
+                        period_start=datetime.fromisoformat(str(data["period_start"]).replace("Z", "+00:00")),
+                        period_end=datetime.fromisoformat(str(data["period_end"]).replace("Z", "+00:00")),
+                        avg_daily_intake=0,
+                        calculated_tdee=0,
+                        data_quality_score=quality_score,
+                        confidence_level="low",
+                        days_logged=days_logged,
+                        weight_entries=weight_entries,
+                    )
+            except Exception as insert_err:
+                logger.warning(f"Failed to persist adaptive calculation (non-critical): {insert_err}")
 
-            if not result.data:
-                raise HTTPException(status_code=500, detail="Failed to create adaptive calculation")
-
-            data = result.data[0]
+            # Return response without persisted ID if insert failed
             return AdaptiveCalculationResponse(
-                id=data["id"],
-                user_id=data["user_id"],
-                calculated_at=datetime.fromisoformat(str(data["calculated_at"]).replace("Z", "+00:00")),
-                period_start=datetime.fromisoformat(str(data["period_start"]).replace("Z", "+00:00")),
-                period_end=datetime.fromisoformat(str(data["period_end"]).replace("Z", "+00:00")),
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                calculated_at=datetime.utcnow(),
+                period_start=datetime.fromisoformat(from_date_str),
+                period_end=datetime.fromisoformat(to_date_str),
                 avg_daily_intake=0,
                 calculated_tdee=0,
                 data_quality_score=quality_score,
@@ -5078,8 +5093,7 @@ async def calculate_adaptive_tdee(
         # Calculate average daily calorie intake
         total_calories = 0
         for log in food_logs:
-            macros = log.get("total_macros") or {}
-            total_calories += macros.get("calories", 0)
+            total_calories += log.get("total_calories", 0) or 0
 
         avg_daily_intake = int(total_calories / days_logged) if days_logged > 0 else 0
 
@@ -5122,20 +5136,37 @@ async def calculate_adaptive_tdee(
             "weight_entries": weight_entries,
         }
 
-        result = db.client.table("adaptive_nutrition_calculations")\
-            .insert(calc_data)\
-            .execute()
+        try:
+            result = db.client.table("adaptive_nutrition_calculations")\
+                .insert(calc_data)\
+                .execute()
+            if result.data:
+                data = result.data[0]
+                return AdaptiveCalculationResponse(
+                    id=data["id"],
+                    user_id=data["user_id"],
+                    calculated_at=datetime.fromisoformat(str(data["calculated_at"]).replace("Z", "+00:00")),
+                    period_start=datetime.fromisoformat(str(data["period_start"]).replace("Z", "+00:00")),
+                    period_end=datetime.fromisoformat(str(data["period_end"]).replace("Z", "+00:00")),
+                    avg_daily_intake=avg_daily_intake,
+                    start_trend_weight_kg=start_trend,
+                    end_trend_weight_kg=end_trend,
+                    calculated_tdee=max(1000, calculated_tdee),
+                    data_quality_score=quality_score,
+                    confidence_level=confidence,
+                    days_logged=days_logged,
+                    weight_entries=weight_entries,
+                )
+        except Exception as insert_err:
+            logger.warning(f"Failed to persist adaptive calculation (non-critical): {insert_err}")
 
-        if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create adaptive calculation")
-
-        data = result.data[0]
+        # Return response without persisted ID if insert failed
         return AdaptiveCalculationResponse(
-            id=data["id"],
-            user_id=data["user_id"],
-            calculated_at=datetime.fromisoformat(str(data["calculated_at"]).replace("Z", "+00:00")),
-            period_start=datetime.fromisoformat(str(data["period_start"]).replace("Z", "+00:00")),
-            period_end=datetime.fromisoformat(str(data["period_end"]).replace("Z", "+00:00")),
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            calculated_at=datetime.utcnow(),
+            period_start=datetime.fromisoformat(from_date_str),
+            period_end=datetime.fromisoformat(to_date_str),
             avg_daily_intake=avg_daily_intake,
             start_trend_weight_kg=start_trend,
             end_trend_weight_kg=end_trend,
@@ -5772,7 +5803,7 @@ async def get_detailed_tdee(user_id: str, days: int = Query(default=14, ge=7, le
         start_date = end_date - timedelta(days=days)
 
         food_logs_result = db.client.table("food_logs")\
-            .select("logged_at, total_calories, total_macros")\
+            .select("logged_at, total_calories, protein_g, carbs_g, fat_g")\
             .eq("user_id", user_id)\
             .gte("logged_at", start_date.isoformat())\
             .lte("logged_at", end_date.isoformat())\
@@ -5785,10 +5816,9 @@ async def get_detailed_tdee(user_id: str, days: int = Query(default=14, ge=7, le
             if log_date not in daily_calories:
                 daily_calories[log_date] = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}
             daily_calories[log_date]["calories"] += log.get("total_calories", 0) or 0
-            macros = log.get("total_macros") or {}
-            daily_calories[log_date]["protein"] += macros.get("protein_g", 0) or 0
-            daily_calories[log_date]["carbs"] += macros.get("carbs_g", 0) or 0
-            daily_calories[log_date]["fat"] += macros.get("fat_g", 0) or 0
+            daily_calories[log_date]["protein"] += float(log.get("protein_g", 0) or 0)
+            daily_calories[log_date]["carbs"] += float(log.get("carbs_g", 0) or 0)
+            daily_calories[log_date]["fat"] += float(log.get("fat_g", 0) or 0)
 
         food_logs = [
             FoodLogSummary(
@@ -5964,7 +5994,7 @@ async def get_adherence_summary(user_id: str, weeks: int = Query(default=4, ge=1
 
         # Get food logs aggregated by day
         food_logs_result = db.client.table("food_logs")\
-            .select("logged_at, total_calories, total_macros")\
+            .select("logged_at, total_calories, protein_g, carbs_g, fat_g")\
             .eq("user_id", user_id)\
             .gte("logged_at", start_date.isoformat())\
             .lte("logged_at", end_date.isoformat())\
@@ -5977,10 +6007,9 @@ async def get_adherence_summary(user_id: str, weeks: int = Query(default=4, ge=1
             if log_date not in daily_totals:
                 daily_totals[log_date] = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0, "meals": 0}
             daily_totals[log_date]["calories"] += log.get("total_calories", 0) or 0
-            macros = log.get("total_macros") or {}
-            daily_totals[log_date]["protein"] += macros.get("protein_g", 0) or 0
-            daily_totals[log_date]["carbs"] += macros.get("carbs_g", 0) or 0
-            daily_totals[log_date]["fat"] += macros.get("fat_g", 0) or 0
+            daily_totals[log_date]["protein"] += float(log.get("protein_g", 0) or 0)
+            daily_totals[log_date]["carbs"] += float(log.get("carbs_g", 0) or 0)
+            daily_totals[log_date]["fat"] += float(log.get("fat_g", 0) or 0)
             daily_totals[log_date]["meals"] += 1
 
         # Calculate daily adherence
@@ -6056,7 +6085,8 @@ async def get_recommendation_options(user_id: str):
             .maybe_single()\
             .execute()
 
-        if not tdee_result.data or not tdee_result.data.get("calculated_tdee"):
+        tdee_data = getattr(tdee_result, 'data', None)
+        if not tdee_data or not tdee_data.get("calculated_tdee"):
             # Fall back to nutrition preferences TDEE
             prefs = db.client.table("nutrition_preferences")\
                 .select("calculated_tdee, nutrition_goal")\
@@ -6064,23 +6094,25 @@ async def get_recommendation_options(user_id: str):
                 .maybe_single()\
                 .execute()
 
-            if not prefs.data or not prefs.data.get("calculated_tdee"):
+            prefs_data = getattr(prefs, 'data', None)
+            if not prefs_data or not prefs_data.get("calculated_tdee"):
                 raise HTTPException(
                     status_code=400,
                     detail="No TDEE available. Please log food and weight data first."
                 )
 
-            current_tdee = prefs.data.get("calculated_tdee", 2000)
-            current_goal = prefs.data.get("nutrition_goal", "maintain")
+            current_tdee = prefs_data.get("calculated_tdee", 2000)
+            current_goal = prefs_data.get("nutrition_goal", "maintain")
         else:
-            current_tdee = tdee_result.data.get("calculated_tdee", 2000)
+            current_tdee = tdee_data.get("calculated_tdee", 2000)
             # Get goal from preferences
             prefs = db.client.table("nutrition_preferences")\
                 .select("nutrition_goal")\
                 .eq("user_id", user_id)\
                 .maybe_single()\
                 .execute()
-            current_goal = prefs.data.get("nutrition_goal", "maintain") if prefs.data else "maintain"
+            prefs_data = getattr(prefs, 'data', None)
+            current_goal = prefs_data.get("nutrition_goal", "maintain") if prefs_data else "maintain"
 
         # Get adherence summary
         adherence_response = await get_adherence_summary(user_id, weeks=4)

@@ -8,6 +8,8 @@ This module handles basic create, read, update, delete operations for workouts:
 - PUT /{id} - Update workout
 - DELETE /{id} - Delete workout
 - POST /{id}/complete - Mark workout as completed (with PR detection & strength recalc)
+- POST /{id}/uncomplete - Revert a marked-done workout back to incomplete
+- GET /{id}/completion-summary - Get combined summary data for a completed workout
 - GET /{id}/comparison - Get performance comparison for a completed workout
 """
 import json
@@ -138,7 +140,18 @@ class WorkoutCompletionResponse(BaseModel):
     performance_comparison: Optional[PerformanceComparisonInfo] = None
     strength_scores_updated: bool = False
     fitness_score_updated: bool = False
+    completion_method: str = "tracked"
     message: str = "Workout completed successfully"
+
+
+class WorkoutSummaryResponse(BaseModel):
+    """Response for the workout summary screen."""
+    workout: dict
+    performance_comparison: Optional[PerformanceComparisonInfo] = None
+    personal_records: List[PersonalRecordInfo] = []
+    coach_summary: Optional[str] = None
+    completion_method: Optional[str] = None
+    completed_at: Optional[str] = None
 
 
 @router.post("/", response_model=Workout)
@@ -314,6 +327,38 @@ async def update_workout(workout_id: str, workout: WorkoutUpdate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.patch("/{workout_id}/favorite")
+async def toggle_workout_favorite(workout_id: str, user_id: str = Query(...)):
+    """Toggle the favorite status of a workout."""
+    logger.info(f"Toggling favorite for workout: id={workout_id}, user={user_id}")
+    try:
+        db = get_supabase_db()
+
+        existing = db.get_workout(workout_id)
+        if not existing:
+            raise HTTPException(status_code=404, detail="Workout not found")
+
+        # Verify ownership
+        if existing.get("user_id") != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized")
+
+        current_favorite = existing.get("is_favorite", False)
+        new_favorite = not current_favorite
+
+        db.client.table("workouts").update(
+            {"is_favorite": new_favorite}
+        ).eq("id", workout_id).execute()
+
+        logger.info(f"{'⭐' if new_favorite else '💔'} Workout {workout_id} favorite: {new_favorite}")
+        return {"workout_id": workout_id, "is_favorite": new_favorite}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to toggle workout favorite: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.delete("/{workout_id}")
 async def delete_workout(workout_id: str):
     """Delete a workout and all related records."""
@@ -436,6 +481,7 @@ async def cleanup_old_workouts(
 async def complete_workout(
     workout_id: str,
     background_tasks: BackgroundTasks,
+    completion_method: str = Query(default="tracked", description="How the workout was completed: 'tracked' or 'marked_done'"),
 ):
     """
     Mark a workout as completed with PR detection and strength score updates.
@@ -466,6 +512,7 @@ async def complete_workout(
             "completed_at": now.isoformat(),
             "last_modified_at": now.isoformat(),
             "last_modified_method": "completed",
+            "completion_method": completion_method,
         }
         updated = db.update_workout(workout_id, update_data)
         workout = row_to_workout(updated)
@@ -478,7 +525,7 @@ async def complete_workout(
             change_type="completed",
             field_changed="is_completed",
             old_value=False,
-            new_value=True,
+            new_value={"is_completed": True, "completion_method": completion_method},
             change_source="user"
         )
 
@@ -896,6 +943,7 @@ async def complete_workout(
             performance_comparison=performance_comparison,
             strength_scores_updated=True,
             fitness_score_updated=True,
+            completion_method=completion_method,
             message=message,
         )
 
@@ -903,6 +951,252 @@ async def complete_workout(
         raise
     except Exception as e:
         logger.error(f"Failed to complete workout: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{workout_id}/uncomplete", response_model=Workout)
+async def uncomplete_workout(workout_id: str):
+    """
+    Revert a workout that was marked as done (completion_method='marked_done').
+
+    Cannot undo a fully tracked workout that has performance logs.
+    Clears is_completed, completed_at, and completion_method.
+    """
+    logger.info(f"Uncompleting workout: id={workout_id}")
+    try:
+        db = get_supabase_db()
+
+        existing = db.get_workout(workout_id)
+        if not existing:
+            raise HTTPException(status_code=404, detail="Workout not found")
+
+        if not existing.get("is_completed"):
+            raise HTTPException(status_code=400, detail="Workout is not completed")
+
+        # Only allow uncompleting workouts that were marked_done (not fully tracked)
+        if existing.get("completion_method") not in (None, "marked_done"):
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot undo a fully tracked workout. Only 'marked_done' workouts can be reverted."
+            )
+
+        # If completion_method is None (legacy), also block it since we can't be sure
+        if existing.get("completion_method") is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot undo this workout. Only workouts marked as done (not tracked) can be reverted."
+            )
+
+        from datetime import timezone
+        now = datetime.now(timezone.utc)
+        update_data = {
+            "is_completed": False,
+            "completed_at": None,
+            "completion_method": None,
+            "last_modified_at": now.isoformat(),
+            "last_modified_method": "uncompleted",
+        }
+        updated = db.update_workout(workout_id, update_data)
+        workout = row_to_workout(updated)
+
+        log_workout_change(
+            workout_id=workout_id,
+            user_id=workout.user_id,
+            change_type="uncompleted",
+            field_changed="is_completed",
+            old_value=True,
+            new_value=False,
+            change_source="user"
+        )
+
+        logger.info(f"Workout uncompleted: id={workout_id}")
+        return workout
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to uncomplete workout: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{workout_id}/completion-summary", response_model=WorkoutSummaryResponse)
+async def get_workout_completion_summary(workout_id: str):
+    """
+    Get a combined summary of a completed workout for the View Summary screen.
+
+    Returns workout details, performance comparison, personal records,
+    and an AI coach summary. For 'marked_done' workouts, returns minimal data.
+    """
+    logger.info(f"Fetching workout summary: id={workout_id}")
+    try:
+        db = get_supabase_db()
+        supabase = get_db().client
+
+        existing = db.get_workout(workout_id)
+        if not existing:
+            raise HTTPException(status_code=404, detail="Workout not found")
+
+        if not existing.get("is_completed"):
+            raise HTTPException(status_code=400, detail="Workout is not completed")
+
+        user_id = existing.get("user_id")
+        completion_method = existing.get("completion_method")
+        completed_at = existing.get("completed_at")
+
+        # Build workout dict for response
+        workout_data = {
+            "id": str(existing.get("id")),
+            "name": existing.get("name"),
+            "type": existing.get("type"),
+            "difficulty": existing.get("difficulty"),
+            "scheduled_date": str(existing.get("scheduled_date")),
+            "exercises_json": existing.get("exercises_json") or existing.get("exercises") or [],
+            "duration_minutes": existing.get("duration_minutes", 45),
+            "completion_method": completion_method,
+            "completed_at": str(completed_at) if completed_at else None,
+        }
+
+        # For marked_done workouts, return minimal data
+        if completion_method == "marked_done":
+            return WorkoutSummaryResponse(
+                workout=workout_data,
+                performance_comparison=None,
+                personal_records=[],
+                coach_summary=f"Manually marked as done{' at ' + str(completed_at) if completed_at else ''}.",
+                completion_method=completion_method,
+                completed_at=str(completed_at) if completed_at else None,
+            )
+
+        # For tracked workouts, gather full performance data
+        # 1. Get workout log
+        workout_log_response = supabase.table("workout_logs").select(
+            "id, total_time_seconds"
+        ).eq("workout_id", workout_id).order("completed_at", desc=True).limit(1).execute()
+
+        workout_log_id = None
+        duration_seconds = 0
+        if workout_log_response.data:
+            workout_log_id = workout_log_response.data[0].get("id")
+            duration_seconds = workout_log_response.data[0].get("total_time_seconds", 0)
+
+        # 2. Get personal records for this workout
+        prs_response = supabase.table("personal_records").select("*").eq(
+            "workout_id", workout_id
+        ).execute()
+
+        personal_records = []
+        for pr in (prs_response.data or []):
+            personal_records.append(PersonalRecordInfo(
+                exercise_name=pr.get("exercise_name", ""),
+                weight_kg=pr.get("weight_kg", 0),
+                reps=pr.get("reps", 0),
+                estimated_1rm_kg=pr.get("estimated_1rm_kg", 0),
+                previous_1rm_kg=pr.get("previous_1rm_kg"),
+                improvement_kg=pr.get("improvement_kg"),
+                improvement_percent=pr.get("improvement_percent"),
+                is_all_time_pr=pr.get("is_all_time_pr", True),
+                celebration_message=pr.get("celebration_message"),
+            ))
+
+        # 3. Get performance comparison from stored summaries
+        performance_comparison = None
+        if workout_log_id:
+            try:
+                comparison_service = PerformanceComparisonService()
+
+                # Get stored workout performance summary
+                wp_response = supabase.table("workout_performance_summary").select(
+                    "*"
+                ).eq("workout_log_id", workout_log_id).maybe_single().execute()
+
+                # Get stored exercise performance summaries
+                ep_response = supabase.table("exercise_performance_summary").select(
+                    "*"
+                ).eq("workout_log_id", workout_log_id).execute()
+
+                exercise_comparisons = []
+                for ep in (ep_response.data or []):
+                    exercise_comparisons.append(ExerciseComparisonInfo(
+                        exercise_name=ep.get("exercise_name", ""),
+                        exercise_id=ep.get("exercise_id"),
+                        current_sets=ep.get("total_sets", 0),
+                        current_reps=ep.get("total_reps", 0),
+                        current_volume_kg=ep.get("total_volume_kg", 0.0),
+                        current_max_weight_kg=ep.get("max_weight_kg"),
+                        current_1rm_kg=ep.get("estimated_1rm_kg"),
+                        status=ep.get("status", "first_time"),
+                    ))
+
+                improved_count = sum(1 for e in exercise_comparisons if e.status == 'improved')
+                maintained_count = sum(1 for e in exercise_comparisons if e.status == 'maintained')
+                declined_count = sum(1 for e in exercise_comparisons if e.status == 'declined')
+                first_time_count = sum(1 for e in exercise_comparisons if e.status == 'first_time')
+
+                wp_data = wp_response.data if wp_response and wp_response.data else {}
+                workout_comparison = WorkoutComparisonInfo(
+                    current_duration_seconds=wp_data.get("duration_seconds", duration_seconds),
+                    current_total_volume_kg=wp_data.get("total_volume_kg", 0.0),
+                    current_total_sets=wp_data.get("total_sets", 0),
+                    current_total_reps=wp_data.get("total_reps", 0),
+                    current_exercises=wp_data.get("exercises_count", 0),
+                    current_calories=wp_data.get("calories_burned", 0),
+                    has_previous=wp_data.get("has_previous", False),
+                    overall_status=wp_data.get("overall_status", "first_time"),
+                )
+
+                performance_comparison = PerformanceComparisonInfo(
+                    workout_comparison=workout_comparison,
+                    exercise_comparisons=exercise_comparisons,
+                    improved_count=improved_count,
+                    maintained_count=maintained_count,
+                    declined_count=declined_count,
+                    first_time_count=first_time_count,
+                )
+            except Exception as e:
+                logger.warning(f"Failed to build performance comparison for summary: {e}")
+
+        # 4. Generate AI coach summary
+        coach_summary = None
+        try:
+            exercises = existing.get("exercises") or existing.get("exercises_json") or []
+            if isinstance(exercises, str):
+                exercises = json.loads(exercises)
+
+            exercise_names = [ex.get("name", "") for ex in exercises if ex.get("name")]
+            pr_names = [pr.exercise_name for pr in personal_records]
+
+            summary_prompt = (
+                f"You are a supportive fitness coach. Write a brief 2-3 sentence summary of this completed workout.\n\n"
+                f"Workout: {existing.get('name')} ({existing.get('type')})\n"
+                f"Duration: {duration_seconds // 60} minutes\n"
+                f"Exercises: {', '.join(exercise_names[:8])}\n"
+                f"Personal Records: {', '.join(pr_names) if pr_names else 'None'}\n\n"
+                f"Keep it encouraging, specific, and under 50 words. No emojis."
+            )
+
+            response = await ai_insights_service.gemini.chat(
+                message=summary_prompt,
+                user_id=user_id,
+                context="workout_summary",
+            )
+            coach_summary = response.get("response")
+        except Exception as e:
+            logger.warning(f"Failed to generate AI coach summary: {e}")
+            coach_summary = "Great work completing your workout!"
+
+        return WorkoutSummaryResponse(
+            workout=workout_data,
+            performance_comparison=performance_comparison,
+            personal_records=personal_records,
+            coach_summary=coach_summary,
+            completion_method=completion_method,
+            completed_at=str(completed_at) if completed_at else None,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get workout summary: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

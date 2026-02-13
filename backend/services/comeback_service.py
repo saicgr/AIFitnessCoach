@@ -394,6 +394,42 @@ class ComebackService:
 
             user_age = user.get("age")
             fitness_level = user.get("fitness_level", "intermediate")
+
+            # Check account age - new accounts shouldn't trigger comeback mode
+            created_at = user.get("created_at")
+            if created_at:
+                try:
+                    if isinstance(created_at, str):
+                        created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                    else:
+                        created = created_at
+                    account_age_days = (datetime.now(created.tzinfo) - created).days
+                    if account_age_days < 14:
+                        logger.info(f"🔄 [Comeback] User {user_id} account only {account_age_days} days old, skipping comeback detection")
+                        return BreakStatus(
+                            days_since_last_workout=0,
+                            break_type=BreakType.ACTIVE,
+                            in_comeback_mode=False,
+                            comeback_week=0,
+                            comeback_started_at=None,
+                            adjustments=ComebackAdjustments(
+                                volume_multiplier=1.0,
+                                intensity_multiplier=1.0,
+                                extra_rest_seconds=0,
+                                extra_warmup_minutes=0,
+                                max_exercise_count=8,
+                                avoid_movements=[],
+                                focus_areas=[],
+                                notes=""
+                            ),
+                            user_age=user_age,
+                            age_adjustment_applied=0.0,
+                            recommended_comeback_weeks=0,
+                            prompt_context=""
+                        )
+                except Exception:
+                    pass
+
             in_comeback_mode = user.get("in_comeback_mode", False)
             comeback_week = user.get("comeback_week", 0)
             comeback_started_at = user.get("comeback_started_at")

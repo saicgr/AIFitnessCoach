@@ -107,8 +107,10 @@ This document provides detailed implementation locations for all features in FEA
 | 10 | Equipment Filtering | ✅ | MF✅Fb✅Hv✅Gr✅ | `services/exercise_rag/filters.py:184-253` | — |
 | 11 | Gemini Integration | ✅ | MF❌Fb❌Hv❌Gr❌ | `services/gemini_service.py:39-130` | — |
 | 12 | Background Generation | ✅ | MF❌Fb✅Hv❌Gr✅ | `api/v1/workouts/background.py:163-520` | — |
+| 13 | Comeback Mode Consent | ✅ | MF❌Fb❌Hv❌Gr❌ | `api/v1/workouts/generation.py:949,1522,1907` + `models/schemas.py:189` | `widgets/comeback_mode_sheet.dart` + `screens/home/widgets/hero_workout_carousel.dart:116` |
+| 14 | Account Age Comeback Guard | ✅ | MF❌Fb❌Hv❌Gr❌ | `api/v1/workouts/utils.py:2506` + `services/comeback_service.py:398` | — |
 
-**Summary**: 12/12 shown Fully Implemented (100%)
+**Summary**: 14/14 shown Fully Implemented (100%)
 
 ---
 

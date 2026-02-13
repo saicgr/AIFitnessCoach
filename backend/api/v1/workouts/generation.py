@@ -97,6 +97,9 @@ from .utils import (
     # Performance context for personalized notes
     get_user_personal_bests,
     format_performance_context,
+    # Favorite workouts context
+    get_user_favorite_workouts,
+    build_favorite_workouts_context,
 )
 from services.adaptive_workout_service import (
     apply_age_caps,
@@ -107,6 +110,27 @@ from services.adaptive_workout_service import (
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+
+# =============================================================================
+# Comeback Status Check (lightweight pre-generation check)
+# =============================================================================
+
+@router.get("/comeback-status")
+async def check_comeback_status(user_id: str):
+    """
+    Lightweight endpoint to check if a user is in comeback mode.
+
+    Called before workout generation to determine if the user should be
+    prompted with a comeback mode consent sheet.
+
+    Returns:
+        - in_comeback_mode: bool
+        - days_since_last_workout: int or None
+        - reason: str
+    """
+    status = await get_user_comeback_status(user_id)
+    return status
 
 
 # =============================================================================
@@ -425,6 +449,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
             variation_percentage,
             favorite_exercises,
             exercise_queue,
+            favorite_workouts,
         ) = await asyncio.gather(
             get_user_avoided_exercises(request.user_id),
             get_user_avoided_muscles(request.user_id),
@@ -440,6 +465,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
             get_user_variation_percentage(request.user_id),
             get_user_favorite_exercises(request.user_id),
             get_user_exercise_queue(request.user_id),
+            get_user_favorite_workouts(request.user_id),
         )
         logger.info(f"✅ [Workout Generation] All user preferences fetched in parallel")
         logger.info(f"🔄 [Consistency] Mode: {consistency_mode}, Recently used: {len(recently_used_exercises) if recently_used_exercises else 0}, Variation: {variation_percentage}%")
@@ -477,6 +503,11 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
             logger.info(f"[Workout Generation] User has set max_reps_per_set: {set_rep_limits.get('max_reps_per_set')}")
         if exercise_patterns:
             logger.info(f"[Workout Generation] Found {len(exercise_patterns)} exercise patterns from history")
+
+        # Build favorite workouts context for generation
+        favorite_workouts_context = build_favorite_workouts_context(favorite_workouts) if favorite_workouts else ""
+        if favorite_workouts:
+            logger.info(f"❤️ [Workout Generation] User has {len(favorite_workouts)} favorite workout templates")
 
         # Extract hormonal context
         hormonal_ai_context = hormonal_context.get("ai_context", "")
@@ -659,6 +690,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
                     staple_exercises=staple_names,
                     progression_philosophy=combined_context if combined_context else None,
                     workout_patterns_context=workout_patterns_context if workout_patterns_context else None,
+                    favorite_workouts_context=favorite_workouts_context if favorite_workouts_context else None,
                     set_type_context=set_type_context if set_type_context else None,
                     primary_goal=primary_goal,
                     muscle_focus_points=muscle_focus_points,
@@ -948,6 +980,8 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
 
             comeback_status = await get_user_comeback_status(request.user_id)
             is_comeback = comeback_status.get("in_comeback_mode", False)
+            if getattr(request, 'skip_comeback', None):
+                is_comeback = False
 
             if exercises:
                 exercises = validate_and_cap_exercise_parameters(
@@ -1517,6 +1551,8 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 user_age = user.get("age") if user else None
                 comeback_status = await get_user_comeback_status(body.user_id)
                 is_comeback = comeback_status.get("in_comeback_mode", False)
+                if getattr(body, 'skip_comeback', None):
+                    is_comeback = False
 
                 if exercises:
                     exercises = validate_and_cap_exercise_parameters(
@@ -1665,6 +1701,8 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 "duration_minutes": generated_workout.duration_minutes,
                 "total_time_ms": total_time_ms,
                 "chunk_count": chunk_count,
+                "comeback_detected": comeback_status.get("in_comeback_mode", False),
+                "days_since_last_workout": comeback_status.get("days_since_last_workout"),
             }
 
             yield f"event: done\ndata: {json.dumps(workout_response)}\n\n"
@@ -1699,6 +1737,7 @@ class MoodWorkoutRequest(BaseModel):
     duration_minutes: Optional[int] = Field(default=None, ge=10, le=45)
     device: Optional[str] = None
     app_version: Optional[str] = None
+    skip_comeback: Optional[bool] = Field(default=None, description="If True, skip comeback mode adjustments")
 
 
 @router.post("/generate-from-mood-stream")
@@ -1897,6 +1936,8 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
                 user_age = user.get("age") if user else None
                 comeback_status = await get_user_comeback_status(body.user_id)
                 is_comeback = comeback_status.get("in_comeback_mode", False)
+                if getattr(body, 'skip_comeback', None):
+                    is_comeback = False
 
                 if exercises:
                     exercises = validate_and_cap_exercise_parameters(
@@ -2007,6 +2048,8 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
                 "mood_color": params["mood_color"],
                 "mood_checkin_id": mood_checkin_id,
                 "motivational_message": motivational_message,
+                "comeback_detected": comeback_status.get("in_comeback_mode", False),
+                "days_since_last_workout": comeback_status.get("days_since_last_workout"),
             }
 
             yield f"event: done\ndata: {json.dumps(workout_response)}\n\n"

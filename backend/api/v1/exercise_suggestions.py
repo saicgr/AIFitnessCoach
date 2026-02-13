@@ -186,7 +186,7 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest):
     This endpoint is ~20x faster than /suggest (~500ms vs ~10s) because
     it uses direct database queries instead of AI analysis.
     """
-    from core.database import get_supabase_db
+    from core.supabase_db import get_supabase_db
     import random
 
     logger.info(f"Fast suggestion request for: {body.exercise_name}")

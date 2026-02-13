@@ -171,6 +171,8 @@ class Workout(BaseModel):
     valid_to: Optional[datetime] = None
     parent_workout_id: Optional[str] = Field(default=None, max_length=100)
     superseded_by: Optional[str] = Field(default=None, max_length=100)
+    completed_at: Optional[datetime] = None
+    completion_method: Optional[str] = Field(default=None, max_length=50)
 
 
 class GenerateWorkoutRequest(BaseModel):
@@ -186,6 +188,7 @@ class GenerateWorkoutRequest(BaseModel):
     goals: Optional[List[str]] = Field(default=None, max_length=20)
     equipment: Optional[List[str]] = Field(default=None, max_length=50)
     scheduled_date: Optional[str] = Field(default=None, description="Target date for workout (YYYY-MM-DD). If not provided, uses today's date.")
+    skip_comeback: Optional[bool] = Field(default=None, description="If True, skip comeback mode adjustments even if user qualifies")
 
 
 class GenerateWeeklyRequest(BaseModel):

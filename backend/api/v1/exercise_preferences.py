@@ -39,6 +39,13 @@ class StapleExerciseCreate(BaseModel):
     reason: Optional[str] = Field(default=None, max_length=100)  # "core_compound", "favorite", "rehab"
     gym_profile_id: Optional[str] = None
     section: Optional[str] = Field(default="main")
+    # User-provided cardio overrides (optional)
+    user_duration_seconds: Optional[int] = None
+    user_speed_mph: Optional[float] = None
+    user_incline_percent: Optional[float] = None
+    user_rpm: Optional[int] = None
+    user_resistance_level: Optional[int] = None
+    user_stroke_rate_spm: Optional[int] = None
 
     @field_validator('section')
     @classmethod
@@ -74,6 +81,13 @@ class StapleExerciseResponse(BaseModel):
     default_resistance_level: Optional[int] = None
     stroke_rate_spm: Optional[int] = None
     default_duration_seconds: Optional[int] = None
+    # User overrides (take priority over library defaults)
+    user_duration_seconds: Optional[int] = None
+    user_speed_mph: Optional[float] = None
+    user_incline_percent: Optional[float] = None
+    user_rpm: Optional[int] = None
+    user_resistance_level: Optional[int] = None
+    user_stroke_rate_spm: Optional[int] = None
     # Movement classification
     movement_pattern: Optional[str] = None
     energy_system: Optional[str] = None
@@ -217,6 +231,12 @@ async def get_user_staples(user_id: str):
                 default_resistance_level=row.get("default_resistance_level"),
                 stroke_rate_spm=row.get("stroke_rate_spm"),
                 default_duration_seconds=row.get("default_duration_seconds"),
+                user_duration_seconds=row.get("user_duration_seconds"),
+                user_speed_mph=row.get("user_speed_mph"),
+                user_incline_percent=row.get("user_incline_percent"),
+                user_rpm=row.get("user_rpm"),
+                user_resistance_level=row.get("user_resistance_level"),
+                user_stroke_rate_spm=row.get("user_stroke_rate_spm"),
                 movement_pattern=row.get("movement_pattern"),
                 energy_system=row.get("energy_system"),
                 impact_level=row.get("impact_level"),
@@ -265,7 +285,16 @@ async def add_staple_exercise(request: StapleExerciseCreate):
             "reason": request.reason,
             "gym_profile_id": request.gym_profile_id,
             "section": request.section or "main",
+            "user_duration_seconds": request.user_duration_seconds,
+            "user_speed_mph": request.user_speed_mph,
+            "user_incline_percent": request.user_incline_percent,
+            "user_rpm": request.user_rpm,
+            "user_resistance_level": request.user_resistance_level,
+            "user_stroke_rate_spm": request.user_stroke_rate_spm,
         }
+
+        # Remove None values to avoid DB errors for columns that may not exist yet
+        insert_data = {k: v for k, v in insert_data.items() if v is not None}
 
         result = db.client.table("staple_exercises").insert(insert_data).execute()
 
@@ -361,6 +390,12 @@ async def add_staple_exercise(request: StapleExerciseCreate):
             default_resistance_level=default_resistance_level,
             stroke_rate_spm=stroke_rate_spm,
             default_duration_seconds=default_duration_seconds,
+            user_duration_seconds=request.user_duration_seconds,
+            user_speed_mph=request.user_speed_mph,
+            user_incline_percent=request.user_incline_percent,
+            user_rpm=request.user_rpm,
+            user_resistance_level=request.user_resistance_level,
+            user_stroke_rate_spm=request.user_stroke_rate_spm,
             movement_pattern=movement_pattern,
             energy_system=energy_system,
             impact_level=impact_level,

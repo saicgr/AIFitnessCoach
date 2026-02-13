@@ -12,7 +12,9 @@ This module handles exercise library operations:
 """
 from typing import List, Dict, Any, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+import difflib
+
+from fastapi import APIRouter, HTTPException, Query, Response
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
@@ -220,8 +222,42 @@ async def get_body_parts():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def _extract_best_correction(search_term: str, top_rows: list) -> str | None:
+    """Find the best spelling correction from top search results."""
+    best_match = None
+    best_ratio = 0.0
+
+    for row in top_rows:
+        name = row.get('name', '').lower()
+        # Check each word in the exercise name
+        for word in name.split():
+            ratio = difflib.SequenceMatcher(None, search_term, word).ratio()
+            if ratio > best_ratio and ratio > 0.5:
+                best_ratio = ratio
+                best_match = word
+        # Also check the full name
+        ratio = difflib.SequenceMatcher(None, search_term, name).ratio()
+        if ratio > best_ratio and ratio > 0.5:
+            best_ratio = ratio
+            best_match = name
+
+    # Only return if it's different from the search term and reasonably similar
+    if best_match and best_match != search_term and best_ratio > 0.5:
+        # Capitalize properly - find original casing from first result
+        for row in top_rows:
+            orig_name = row.get('name', '')
+            if best_match in orig_name.lower():
+                # Return the properly-cased version
+                name_lower = orig_name.lower()
+                idx = name_lower.find(best_match)
+                return orig_name[idx:idx+len(best_match)]
+        return best_match.title()
+    return None
+
+
 @router.get("/exercises", response_model=List[LibraryExercise])
 async def list_exercises(
+    response: Response,
     body_parts: Optional[str] = Query(default=None, alias="body_parts", description="Comma-separated body parts (e.g., 'Chest,Back')"),
     equipment: Optional[str] = Query(default=None, description="Comma-separated equipment (e.g., 'Dumbbells,Barbell')"),
     exercise_types: Optional[str] = Query(default=None, alias="exercise_types", description="Comma-separated types (e.g., 'Strength,Cardio')"),
@@ -315,6 +351,16 @@ async def list_exercises(
                     break  # No more rows available
 
                 current_offset += rows_needed
+
+        # Detect search suggestion (e.g., "threadmill" -> "Treadmill")
+        if search and all_rows:
+            top_name = all_rows[0].get('name', '').lower()
+            search_lower = search.lower().strip()
+            # Only suggest if user's search isn't already a substring of the top result
+            if search_lower not in top_name:
+                suggestion = _extract_best_correction(search_lower, all_rows[:5])
+                if suggestion:
+                    response.headers["X-Search-Suggestion"] = suggestion
 
         # Convert to exercises (from cleaned view)
         exercises = [row_to_library_exercise(row, from_cleaned_view=True) for row in all_rows]
