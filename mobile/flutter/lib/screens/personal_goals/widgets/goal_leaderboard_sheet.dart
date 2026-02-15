@@ -1,8 +1,7 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../data/services/goal_social_service.dart';
 import '../../../data/services/personal_goals_service.dart';
 import '../../../data/providers/goal_suggestions_provider.dart';
@@ -33,43 +32,11 @@ class GoalLeaderboardSheet extends ConsumerWidget {
       goalFriendsProvider(GoalFriendsParams(userId: userId, goalId: goalId)),
     );
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.7,
-          ),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: Column(
+    return GlassSheet(
+      maxHeightFraction: 0.7,
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle bar
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textSecondary.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
           // Header
           Padding(
             padding: const EdgeInsets.all(20),
@@ -131,8 +98,6 @@ class GoalLeaderboardSheet extends ConsumerWidget {
             ),
           ),
         ],
-          ),
-        ),
       ),
     );
   }
@@ -463,11 +428,8 @@ void showGoalLeaderboardSheet(
   required String exerciseName,
   required PersonalGoalType goalType,
 }) {
-  showModalBottomSheet(
+  showGlassSheet(
     context: context,
-    isScrollControlled: true,
-    useRootNavigator: true,
-    backgroundColor: Colors.transparent,
     builder: (context) => GoalLeaderboardSheet(
       userId: userId,
       goalId: goalId,

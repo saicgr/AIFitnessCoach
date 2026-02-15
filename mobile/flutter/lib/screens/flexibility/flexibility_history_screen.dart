@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/flexibility_assessment.dart';
 import '../../data/providers/flexibility_provider.dart';
+import '../../widgets/glass_sheet.dart';
 
 /// Screen showing flexibility assessment history
 class FlexibilityHistoryScreen extends ConsumerStatefulWidget {
@@ -274,70 +275,72 @@ class _FlexibilityHistoryScreenState extends ConsumerState<FlexibilityHistoryScr
   }
 
   void _showAssessmentDetails(FlexibilityAssessment assessment, ThemeData theme) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
       useRootNavigator: true,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _formatTestType(assessment.testType),
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _formatTestType(assessment.testType),
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildDetailRow('Measurement', assessment.formattedMeasurement, theme),
+              _buildDetailRow('Rating', (assessment.rating ?? 'Unknown').toUpperCase(), theme),
+              if (assessment.percentile != null)
+                _buildDetailRow('Percentile', 'Top ${100 - assessment.percentile!}%', theme),
+              _buildDetailRow('Date', _formatDateFull(assessment.assessedAt), theme),
+              if (assessment.notes != null && assessment.notes!.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Notes',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
+                const SizedBox(height: 4),
+                Text(
+                  assessment.notes!,
+                  style: theme.textTheme.bodyMedium,
                 ),
               ],
-            ),
-            const SizedBox(height: 16),
-            _buildDetailRow('Measurement', assessment.formattedMeasurement, theme),
-            _buildDetailRow('Rating', (assessment.rating ?? 'Unknown').toUpperCase(), theme),
-            if (assessment.percentile != null)
-              _buildDetailRow('Percentile', 'Top ${100 - assessment.percentile!}%', theme),
-            _buildDetailRow('Date', _formatDateFull(assessment.assessedAt), theme),
-            if (assessment.notes != null && assessment.notes!.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(
-                'Notes',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    final confirmed = await _confirmDelete(context);
+                    if (confirmed == true) {
+                      await ref.read(flexibilityProvider.notifier).deleteAssessment(
+                        assessment.id,
+                        userId: widget.userId,
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  label: const Text('Delete Assessment', style: TextStyle(color: Colors.red)),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                assessment.notes!,
-                style: theme.textTheme.bodyMedium,
-              ),
             ],
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  Navigator.pop(context);
-                  final confirmed = await _confirmDelete(context);
-                  if (confirmed == true) {
-                    await ref.read(flexibilityProvider.notifier).deleteAssessment(
-                      assessment.id,
-                      userId: widget.userId,
-                    );
-                  }
-                },
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                label: const Text('Delete Assessment', style: TextStyle(color: Colors.red)),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

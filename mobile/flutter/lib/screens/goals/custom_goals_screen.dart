@@ -6,6 +6,8 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/custom_goal.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/glass_back_button.dart';
+import '../../widgets/glass_sheet.dart';
 
 /// Suggestions for custom goals
 const List<String> _goalSuggestions = [
@@ -140,14 +142,11 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
   }
 
   void _showGoalCreatedSheet(CustomGoal goal) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: AppColors.elevated,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
+      builder: (context) => GlassSheet(
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -256,6 +255,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -354,10 +354,8 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
           'Custom Goals',
           style: TextStyle(color: AppColors.textPrimary),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
       ),
       body: Column(
         children: [

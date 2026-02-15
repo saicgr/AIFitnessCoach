@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/saved_workouts_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../data/services/api_client.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -301,30 +302,15 @@ class _ActivityCardState extends State<ActivityCard> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
       useRootNavigator: true,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+      builder: (context) => GlassSheet(
+        child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle bar
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.textMuted.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-
             // Copy link option
             ListTile(
               leading: const Icon(Icons.link_rounded),
@@ -390,6 +376,7 @@ class _ActivityCardState extends State<ActivityCard> {
             SizedBox(height: MediaQuery.of(context).padding.bottom + 96),
           ],
         ),
+      ),
       ),
     );
   }
@@ -459,30 +446,15 @@ class _ActivityCardState extends State<ActivityCard> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
       useRootNavigator: true,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+      builder: (context) => GlassSheet(
+        child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle bar
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.textMuted.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-
             // Title
             Text(
               'React to this post',
@@ -528,6 +500,7 @@ class _ActivityCardState extends State<ActivityCard> {
               ),
           ],
         ),
+      ),
       ),
     );
   }

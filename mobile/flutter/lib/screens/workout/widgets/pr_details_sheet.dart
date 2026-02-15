@@ -10,6 +10,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/pr_detection_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../achievements/achievements_screen.dart';
 
 /// Shows a bottom sheet with PR details
@@ -17,12 +18,11 @@ Future<void> showPRDetailsSheet({
   required BuildContext context,
   required List<DetectedPR> prs,
 }) {
-  return showModalBottomSheet(
+  return showGlassSheet(
     context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    useRootNavigator: true,
-    builder: (context) => PRDetailsSheet(prs: prs),
+    builder: (context) => GlassSheet(
+      child: PRDetailsSheet(prs: prs),
+    ),
   );
 }
 
@@ -35,8 +35,6 @@ class PRDetailsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
@@ -50,26 +48,9 @@ class PRDetailsSheet extends StatelessWidget {
     final headerText =
         isMultiplePRs ? 'ON FIRE! ${prs.length} PRs!' : 'NEW PERSONAL RECORD!';
 
-    return Container(
-      margin: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
+    return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag handle
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: textMuted.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
           // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
@@ -187,7 +168,6 @@ class PRDetailsSheet extends StatelessWidget {
           // Bottom padding for safe area
           SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
         ],
-      ),
     );
   }
 }

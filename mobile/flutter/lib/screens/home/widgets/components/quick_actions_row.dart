@@ -1,28 +1,57 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/models/quick_action.dart';
 import '../../../../data/providers/fasting_provider.dart';
 import '../../../../data/providers/local_layout_provider.dart';
+import '../../../../data/providers/quick_action_provider.dart';
 import '../../../../data/repositories/hydration_repository.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../widgets/glass_sheet.dart';
 import '../../../../widgets/main_shell.dart';
 import '../../../../widgets/mood_picker_sheet.dart';
+import '../../../../widgets/quick_actions_sheet.dart';
 import '../../../fasting/widgets/log_weight_sheet.dart';
 import '../../../nutrition/log_meal_sheet.dart';
 
-/// Quick action icon colors (semantic meaning)
-class _QuickActionColors {
-  static const food = Color(0xFF22C55E); // Green
-  static const water = Color(0xFF3B82F6); // Blue
-  static const weight = Color(0xFFF59E0B); // Amber
-  static const measure = Color(0xFFA855F7); // Purple
-  static const history = Color(0xFF6B7280); // Gray
-  static const fasting = Color(0xFFF97316); // Orange
-  static const mood = Color(0xFFEC4899); // Pink
-  static const steps = Color(0xFF10B981); // Emerald/Green
+/// Maps action IDs to the correct widget
+Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context, WidgetRef ref) {
+  switch (actionId) {
+    case 'water':
+      return _WaterGridActionItem(isDark: isDark);
+    case 'weight':
+      return _WeightGridActionItem(isDark: isDark);
+    case 'fasting':
+      return _FastGridActionItem(isDark: isDark);
+    case 'mood':
+      return _MoodGridActionItem(isDark: isDark);
+    case 'food':
+      return _GridActionItem(
+        icon: Icons.restaurant_outlined,
+        label: 'Food',
+        iconColor: quickActionRegistry['food']!.color,
+        onTap: () {
+          HapticService.light();
+          showLogMealSheet(context, ref);
+        },
+        isDark: isDark,
+      );
+    default:
+      final action = quickActionRegistry[actionId];
+      if (action == null) return const SizedBox.shrink();
+      return _GridActionItem(
+        icon: action.icon,
+        label: action.label,
+        iconColor: action.color,
+        onTap: () {
+          HapticService.light();
+          context.push(action.route!);
+        },
+        isDark: isDark,
+      );
+  }
 }
 
 /// A grid of quick action buttons (2 rows x 4 columns) with hero card
@@ -33,6 +62,8 @@ class QuickActionsGrid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final allActions = ref.watch(orderedQuickActionsProvider);
+    final gridActions = allActions.take(8).toList();
     final cardBg = isDark
         ? Colors.black.withValues(alpha: 0.05)
         : Colors.black.withValues(alpha: 0.03);
@@ -51,81 +82,23 @@ class QuickActionsGrid extends ConsumerWidget {
             // Hero card (Track Your Progress / Active Fasting)
             _HeroActionCard(),
             const SizedBox(height: 8),
-            // Row 1: Fasting, Food, Water, Weight
+            // Row 1: first 4 actions
             Row(
               children: [
-                Expanded(
-                  child: _FastGridActionItem(isDark: isDark),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: _GridActionItem(
-                    icon: Icons.restaurant_outlined,
-                    label: 'Food',
-                    iconColor: _QuickActionColors.food,
-                    onTap: () {
-                      HapticService.light();
-                      showLogMealSheet(context, ref);
-                    },
-                    isDark: isDark,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: _WaterGridActionItem(isDark: isDark),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: _WeightGridActionItem(isDark: isDark),
-                ),
+                for (int i = 0; i < 4 && i < gridActions.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 4),
+                  Expanded(child: buildQuickActionWidget(gridActions[i].id, isDark, context, ref)),
+                ],
               ],
             ),
             const SizedBox(height: 4),
-            // Row 2: Measure, History, Mood, Steps
+            // Row 2: next 4 actions
             Row(
               children: [
-                Expanded(
-                  child: _GridActionItem(
-                    icon: Icons.straighten_outlined,
-                    label: 'Measure',
-                    iconColor: _QuickActionColors.measure,
-                    onTap: () {
-                      HapticService.light();
-                      context.push('/measurements');
-                    },
-                    isDark: isDark,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: _GridActionItem(
-                    icon: Icons.history_outlined,
-                    label: 'History',
-                    iconColor: _QuickActionColors.history,
-                    onTap: () {
-                      HapticService.light();
-                      context.push('/stats');
-                    },
-                    isDark: isDark,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: _MoodGridActionItem(isDark: isDark),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: _GridActionItem(
-                    icon: Icons.directions_walk_outlined,
-                    label: 'Steps',
-                    iconColor: _QuickActionColors.steps,
-                    onTap: () {
-                      HapticService.light();
-                      context.push('/neat');
-                    },
-                    isDark: isDark,
-                  ),
-                ),
+                for (int i = 4; i < 8 && i < gridActions.length; i++) ...[
+                  if (i > 4) const SizedBox(width: 4),
+                  Expanded(child: buildQuickActionWidget(gridActions[i].id, isDark, context, ref)),
+                ],
               ],
             ),
           ],
@@ -593,7 +566,7 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
                   Text('+${amountMl}ml water logged'),
                 ],
               ),
-              backgroundColor: _QuickActionColors.water,
+              backgroundColor: quickActionRegistry['water']!.color,
               behavior: SnackBarBehavior.floating,
               margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
               duration: const Duration(seconds: 2),
@@ -634,101 +607,69 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
 
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
-      barrierColor: Colors.black.withValues(alpha: 0.2),
-      builder: (context) => ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.4)
-                  : Colors.white.withValues(alpha: 0.6),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              border: Border(
-                top: BorderSide(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.black.withValues(alpha: 0.1),
-                  width: 0.5,
+      builder: (context) => GlassSheet(
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              Text(
+                'Log Water',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
                 ),
               ),
-            ),
-            child: SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 12),
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: textMuted,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Log Water',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: textColor,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Select amount to log',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: textMuted,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: _waterSizes.map((size) {
-                        return Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: _WaterSizeOption(
-                              ml: size.ml,
-                              label: size.label,
-                              icon: size.icon,
-                              isDark: isDark,
-                              onTap: () {
-                                Navigator.pop(context);
-                                _quickAddWater(size.ml);
-                              },
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      context.push('/hydration');
-                    },
-                    child: Text(
-                      'Open Hydration Tracker',
-                      style: TextStyle(
-                        color: _QuickActionColors.water,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
+              const SizedBox(height: 8),
+              Text(
+                'Select amount to log',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: textMuted,
+                ),
               ),
-            ),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: _waterSizes.map((size) {
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: _WaterSizeOption(
+                          ml: size.ml,
+                          label: size.label,
+                          icon: size.icon,
+                          isDark: isDark,
+                          onTap: () {
+                            Navigator.pop(context);
+                            _quickAddWater(size.ml);
+                          },
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  context.push('/hydration');
+                },
+                child: Text(
+                  'Open Hydration Tracker',
+                  style: TextStyle(
+                    color: quickActionRegistry['water']!.color,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
           ),
         ),
       ),
@@ -769,13 +710,13 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
                       height: 22,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: _QuickActionColors.water,
+                        color: quickActionRegistry['water']!.color,
                       ),
                     )
                   : Icon(
                       Icons.water_drop_outlined,
                       size: 22,
-                      color: _QuickActionColors.water,
+                      color: quickActionRegistry['water']!.color,
                     ),
               const SizedBox(height: 4),
               Text(
@@ -832,7 +773,7 @@ class _MoodGridActionItem extends ConsumerWidget {
               Icon(
                 Icons.mood_outlined,
                 size: 22,
-                color: _QuickActionColors.mood,
+                color: quickActionRegistry['mood']!.color,
               ),
               const SizedBox(height: 4),
               Text(
@@ -896,7 +837,7 @@ class _WeightGridActionItem extends ConsumerWidget {
               Icon(
                 Icons.monitor_weight_outlined,
                 size: 22,
-                color: _QuickActionColors.weight,
+                color: quickActionRegistry['weight']!.color,
               ),
               const SizedBox(height: 4),
               Text(
@@ -969,7 +910,7 @@ class _FastGridActionItem extends ConsumerWidget {
                   Icon(
                     hasFast ? Icons.timer : Icons.timer_outlined,
                     size: 22,
-                    color: _QuickActionColors.fasting,
+                    color: quickActionRegistry['fasting']!.color,
                   ),
                   if (hasFast)
                     Positioned(
@@ -1050,7 +991,7 @@ class _WaterSizeOption extends StatelessWidget {
               Icon(
                 icon,
                 size: 28,
-                color: _QuickActionColors.water,
+                color: quickActionRegistry['water']!.color,
               ),
               const SizedBox(height: 8),
               Text(
@@ -1084,7 +1025,7 @@ class QuickActionsRow extends ConsumerWidget {
   }
 }
 
-/// Compact quick actions: single row of Weight, Food, Water + "+" button
+/// Compact quick actions: single row of pinned actions + "+" button
 /// Used in Minimalist preset
 class CompactQuickActionsRow extends ConsumerWidget {
   const CompactQuickActionsRow({super.key});
@@ -1092,6 +1033,7 @@ class CompactQuickActionsRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pinnedActions = ref.watch(pinnedQuickActionsProvider);
     final cardBg = isDark
         ? Colors.black.withValues(alpha: 0.05)
         : Colors.black.withValues(alpha: 0.03);
@@ -1106,30 +1048,12 @@ class CompactQuickActionsRow extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            Expanded(
-              child: _WeightGridActionItem(isDark: isDark),
-            ),
+            for (int i = 0; i < pinnedActions.length; i++) ...[
+              if (i > 0) const SizedBox(width: 4),
+              Expanded(child: buildQuickActionWidget(pinnedActions[i].id, isDark, context, ref)),
+            ],
             const SizedBox(width: 4),
-            Expanded(
-              child: _GridActionItem(
-                icon: Icons.restaurant_outlined,
-                label: 'Food',
-                iconColor: _QuickActionColors.food,
-                onTap: () {
-                  HapticService.light();
-                  showLogMealSheet(context, ref);
-                },
-                isDark: isDark,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: _WaterGridActionItem(isDark: isDark),
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: _MoreActionsButton(isDark: isDark),
-            ),
+            Expanded(child: _MoreActionsButton(isDark: isDark)),
           ],
         ),
       ),
@@ -1137,7 +1061,7 @@ class CompactQuickActionsRow extends ConsumerWidget {
   }
 }
 
-/// "+" button that opens a bottom sheet with all 8 quick actions
+/// "+" button that opens a bottom sheet with all quick actions
 class _MoreActionsButton extends ConsumerWidget {
   final bool isDark;
 
@@ -1158,7 +1082,11 @@ class _MoreActionsButton extends ConsumerWidget {
       child: InkWell(
         onTap: () {
           HapticService.light();
-          _showAllActionsSheet(context, ref);
+          showQuickActionsSheet(context, ref);
+        },
+        onLongPress: () {
+          HapticService.medium();
+          showQuickActionsSheet(context, ref, editMode: true);
         },
         borderRadius: BorderRadius.circular(12),
         child: Container(
@@ -1193,151 +1121,5 @@ class _MoreActionsButton extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  void _showAllActionsSheet(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
-      barrierColor: Colors.black.withValues(alpha: 0.2),
-      builder: (context) => ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.4)
-                  : Colors.white.withValues(alpha: 0.6),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              border: Border(
-                top: BorderSide(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.black.withValues(alpha: 0.1),
-                  width: 0.5,
-                ),
-              ),
-            ),
-            child: SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 12),
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: textMuted,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Quick Actions',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: textColor,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      children: [
-                        // Row 1: Photo, Fasting, Measure, Mood
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _GridActionItem(
-                                icon: Icons.camera_alt_outlined,
-                                label: 'Photo',
-                                iconColor: _QuickActionColors.history,
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  HapticService.light();
-                                  context.push('/stats?openPhoto=true');
-                                },
-                                isDark: isDark,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(child: _FastGridActionItem(isDark: isDark)),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: _GridActionItem(
-                                icon: Icons.straighten_outlined,
-                                label: 'Measure',
-                                iconColor: _QuickActionColors.measure,
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  HapticService.light();
-                                  context.push('/measurements');
-                                },
-                                isDark: isDark,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(child: _MoodGridActionItem(isDark: isDark)),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        // Row 2: History, Steps
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _GridActionItem(
-                                icon: Icons.history_outlined,
-                                label: 'History',
-                                iconColor: _QuickActionColors.history,
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  HapticService.light();
-                                  context.push('/stats');
-                                },
-                                isDark: isDark,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: _GridActionItem(
-                                icon: Icons.directions_walk_outlined,
-                                label: 'Steps',
-                                iconColor: _QuickActionColors.steps,
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  HapticService.light();
-                                  context.push('/neat');
-                                },
-                                isDark: isDark,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Expanded(child: SizedBox()),
-                            const SizedBox(width: 4),
-                            const Expanded(child: SizedBox()),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    ).then((_) {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    });
   }
 }

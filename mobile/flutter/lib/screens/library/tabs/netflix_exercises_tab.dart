@@ -1,14 +1,19 @@
+import 'dart:async';
 import 'dart:ui';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/ai_split_preset.dart';
+import '../../../data/repositories/library_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../providers/library_providers.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../components/exercise_detail_sheet.dart';
 import '../components/ai_split_preset_detail_sheet.dart';
 import '../widgets/filter_chip_widget.dart';
@@ -113,23 +118,100 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
   String? _selectedCategory;
   String? _expandedSection; // Track which section is showing "View All"
 
+  // Smart search state
+  bool _useSmartSearch = true;
+  bool _isSmartSearching = false;
+  List<SmartSearchExerciseItem> _smartSearchResults = [];
+  String? _searchCorrection;
+  double? _searchTimeMs;
+  Timer? _debounceTimer;
+  CancelToken? _cancelToken;
+
   @override
   void dispose() {
     _scrollController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
+    _debounceTimer?.cancel();
+    _cancelToken?.cancel();
     super.dispose();
   }
 
   void _showExerciseDetail(LibraryExercise exercise) {
     HapticService.selection();
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => ExerciseDetailSheet(exercise: exercise),
     );
+  }
+
+  void _onSearchChanged(String query) {
+    if (_useSmartSearch) {
+      _debounceTimer?.cancel();
+      if (query.length < 2) {
+        _cancelToken?.cancel();
+        setState(() {
+          _smartSearchResults = [];
+          _isSmartSearching = false;
+          _searchCorrection = null;
+          _searchTimeMs = null;
+        });
+        return;
+      }
+      setState(() => _isSmartSearching = true);
+      _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+        _performSmartSearch(query);
+      });
+    } else {
+      // Client-side filter triggers immediately via setState
+      setState(() {});
+    }
+  }
+
+  Future<void> _performSmartSearch(String query) async {
+    _cancelToken?.cancel();
+    _cancelToken = CancelToken();
+
+    if (query.length < 2) {
+      if (mounted) {
+        setState(() {
+          _smartSearchResults = [];
+          _isSmartSearching = false;
+          _searchCorrection = null;
+          _searchTimeMs = null;
+        });
+      }
+      return;
+    }
+
+    if (mounted) setState(() => _isSmartSearching = true);
+
+    try {
+      final libraryRepo = ref.read(libraryRepositoryProvider);
+      final smartResponse = await libraryRepo.smartSearchExercises(
+        query: query,
+        cancelToken: _cancelToken,
+      );
+
+      if (mounted) {
+        setState(() {
+          _smartSearchResults = smartResponse.results;
+          _isSmartSearching = false;
+          _searchCorrection = smartResponse.correction;
+          _searchTimeMs = smartResponse.searchTimeMs;
+        });
+      }
+    } catch (e) {
+      if (e is DioException && e.type == DioExceptionType.cancel) return;
+      if (mounted) {
+        setState(() {
+          _smartSearchResults = [];
+          _isSmartSearching = false;
+          _searchCorrection = null;
+          _searchTimeMs = null;
+        });
+      }
+    }
   }
 
   @override
@@ -180,8 +262,8 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
           allExercises = categoryData.all[_selectedCategory] ?? [];
         }
 
-        // Apply search filter
-        if (searchQuery.isNotEmpty) {
+        // Apply client-side search filter (only when smart search is off)
+        if (!_useSmartSearch && searchQuery.isNotEmpty) {
           allExercises = allExercises.where((e) {
             return e.name.toLowerCase().contains(searchQuery) ||
                 (e.bodyPart?.toLowerCase().contains(searchQuery) ?? false) ||
@@ -283,7 +365,119 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
     bool isDark,
     Color textMuted,
   ) {
-    // If searching or filtering by category, show list view
+    // Smart search active: show AI results
+    if (_useSmartSearch && searchQuery.isNotEmpty && searchQuery.length >= 2) {
+      if (_isSmartSearching) {
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: isDark ? AppColors.cyan : AppColorsLight.cyan),
+              const SizedBox(height: 16),
+              Text('Searching...', style: TextStyle(color: textMuted)),
+            ],
+          ),
+        );
+      }
+
+      if (_smartSearchResults.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.search_off, color: textMuted, size: 48),
+              const SizedBox(height: 16),
+              const Text('No exercises found'),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _searchController.clear();
+                    _smartSearchResults = [];
+                    _searchCorrection = null;
+                    _searchTimeMs = null;
+                  });
+                },
+                child: const Text('Clear search'),
+              ),
+            ],
+          ),
+        );
+      }
+
+      final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+      final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+      return Column(
+        children: [
+          // Correction banner
+          if (_searchCorrection != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Row(
+                children: [
+                  Icon(Icons.auto_fix_high, size: 14, color: isDark ? AppColors.cyan : AppColorsLight.cyan),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: RichText(
+                      text: TextSpan(
+                        style: TextStyle(fontSize: 13, color: textSecondary),
+                        children: [
+                          const TextSpan(text: 'Showing results for '),
+                          TextSpan(
+                            text: _searchCorrection,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (_searchTimeMs != null)
+                    Text(
+                      '${_searchTimeMs!.round()}ms',
+                      style: TextStyle(fontSize: 11, color: textMuted),
+                    ),
+                ],
+              ),
+            ),
+          // Smart search results list
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+              itemCount: _smartSearchResults.length,
+              itemBuilder: (context, index) {
+                final result = _smartSearchResults[index];
+                // Convert SmartSearchExerciseItem to LibraryExercise for detail sheet
+                final exercise = LibraryExercise(
+                  id: result.id,
+                  nameValue: result.name,
+                  bodyPart: result.bodyPart,
+                  equipmentValue: result.equipment,
+                  targetMuscle: result.targetMuscle,
+                  gifUrl: result.gifUrl,
+                  videoUrl: result.videoUrl,
+                  imageUrl: result.imageUrl,
+                  difficultyLevelValue: result.difficulty,
+                  instructionsValue: result.instructions,
+                );
+                return _ExerciseListCard(
+                  exercise: exercise,
+                  isDark: isDark,
+                  isAiMatch: result.isSemanticMatch,
+                  onTap: () => _showExerciseDetail(exercise),
+                )
+                    .animate()
+                    .fadeIn(delay: Duration(milliseconds: index * 30));
+              },
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Client-side search or category filter: show list view
     if (searchQuery.isNotEmpty || _selectedCategory != null) {
       if (allExercises.isEmpty) {
         return Center(
@@ -840,11 +1034,8 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
                 isDark: isDark,
                 onTap: () {
                   HapticService.light();
-                  showModalBottomSheet(
+                  showGlassSheet(
                     context: context,
-                    isScrollControlled: true,
-                    useRootNavigator: true,
-                    backgroundColor: Colors.transparent,
                     builder: (context) => AISplitPresetDetailSheet(preset: preset),
                   );
                 },
@@ -895,14 +1086,16 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
                   child: TextField(
                     controller: _searchController,
                     focusNode: _searchFocusNode,
-                    onChanged: (_) => setState(() {}),
+                    onChanged: _onSearchChanged,
                     cursorColor: accentColor,
                     style: TextStyle(
                       color: isDark ? Colors.white : Colors.black87,
                       fontSize: 15,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Search exercises...',
+                      hintText: _useSmartSearch
+                          ? 'AI search (e.g. "something for chest")'
+                          : 'Search exercises...',
                       hintStyle: TextStyle(
                         color: textMuted.withValues(alpha: 0.6),
                         fontSize: 15,
@@ -921,8 +1114,14 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
                   GestureDetector(
                     onTap: () {
                       HapticService.light();
+                      _cancelToken?.cancel();
+                      _debounceTimer?.cancel();
                       setState(() {
                         _searchController.clear();
+                        _smartSearchResults = [];
+                        _isSmartSearching = false;
+                        _searchCorrection = null;
+                        _searchTimeMs = null;
                       });
                     },
                     child: Padding(
@@ -934,6 +1133,52 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
                       ),
                     ),
                   ),
+                // AI toggle button
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() {
+                      _useSmartSearch = !_useSmartSearch;
+                      _searchCorrection = null;
+                      _searchTimeMs = null;
+                      _smartSearchResults = [];
+                      _isSmartSearching = false;
+                    });
+                    // Re-trigger search with new mode
+                    final query = _searchController.text;
+                    if (query.length >= 2) {
+                      if (_useSmartSearch) {
+                        _debounceTimer?.cancel();
+                        setState(() => _isSmartSearching = true);
+                        _debounceTimer = Timer(const Duration(milliseconds: 100), () {
+                          _performSmartSearch(query);
+                        });
+                      } else {
+                        setState(() {}); // Triggers client-side rebuild
+                      }
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: _useSmartSearch
+                            ? (isDark ? AppColors.cyan : AppColorsLight.cyan).withValues(alpha: 0.2)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        Icons.auto_awesome,
+                        color: _useSmartSearch
+                            ? (isDark ? AppColors.cyan : AppColorsLight.cyan)
+                            : textMuted,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ),
                 // "+" button for custom exercises
                 GestureDetector(
                   onTap: () {
@@ -966,36 +1211,19 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final orange = isDark ? AppColors.orange : AppColorsLight.orange;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.nearBlack : AppColorsLight.nearWhite,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 16,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.textMuted.withValues(alpha: 0.3)
-                    : AppColorsLight.textMuted.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
             Icon(
               Icons.construction_rounded,
               size: 48,
@@ -1037,6 +1265,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -1389,11 +1618,13 @@ class _ExerciseListCard extends StatelessWidget {
   final LibraryExercise exercise;
   final bool isDark;
   final VoidCallback onTap;
+  final bool isAiMatch;
 
   const _ExerciseListCard({
     required this.exercise,
     required this.isDark,
     required this.onTap,
+    this.isAiMatch = false,
   });
 
   Color _getDifficultyColor(String? difficulty) {
@@ -1449,15 +1680,39 @@ class _ExerciseListCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    exercise.name,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          exercise.name,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (isAiMatch) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.cyan.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'AI',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.cyan,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Row(

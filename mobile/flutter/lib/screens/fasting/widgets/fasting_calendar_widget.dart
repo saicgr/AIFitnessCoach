@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/fasting_impact.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import 'mark_fasting_day_sheet.dart';
 
 /// Calendar widget showing fasting days with tap-to-mark functionality
@@ -117,30 +118,15 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Text(
               DateFormat('EEEE, MMMM d').format(date),
               style: TextStyle(
@@ -206,6 +192,7 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
             const SizedBox(height: 24),
           ],
         ),
+      ),
       ),
     );
   }

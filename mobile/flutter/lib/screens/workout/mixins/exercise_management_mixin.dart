@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Mixin providing exercise management functionality for workout screens.
 /// This includes reordering, skipping, swapping, and superset management.
@@ -82,29 +83,14 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
   void showExerciseOptionsMenu(BuildContext ctx, int index) {
     final exercise = exercises[index];
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: ctx,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
-      builder: (context) => Container(
+      builder: (context) => GlassSheet(
+        child: Padding(
         padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle bar
-            Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.textMuted.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
             Text(
               exercise.name,
               style: const TextStyle(
@@ -210,6 +196,7 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
             const SizedBox(height: 20),
           ],
         ),
+      ),
       ),
     );
   }

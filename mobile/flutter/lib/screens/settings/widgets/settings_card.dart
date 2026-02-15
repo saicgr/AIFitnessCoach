@@ -27,6 +27,7 @@ import '../../../core/providers/user_provider.dart';
 import '../equipment/environment_list_screen.dart';
 import '../offline/downloaded_videos_screen.dart';
 import 'setting_tile.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// A card container for grouping related settings items.
 ///
@@ -44,20 +45,20 @@ class SettingsCard extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentTimezone = ref.read(timezoneProvider).timezone;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      isScrollControlled: true,
       useRootNavigator: true,
+      initialChildSize: 0.7,
+      minChildSize: 0.5,
+      maxChildSize: 0.9,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.7,
         minChildSize: 0.5,
         maxChildSize: 0.9,
         expand: false,
-        builder: (context, scrollController) => SafeArea(
+        builder: (context, scrollController) => GlassSheet(
+          showHandle: false,
+          child: SafeArea(
           child: Column(
             children: [
               const SizedBox(height: 8),
@@ -103,6 +104,7 @@ class SettingsCard extends ConsumerWidget {
             ],
           ),
         ),
+        ),
       ),
     );
   }
@@ -111,27 +113,14 @@ class SettingsCard extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentPace = ref.read(trainingPreferencesProvider).progressionPace;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
+      builder: (context) => GlassSheet(
+        child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
@@ -168,6 +157,7 @@ class SettingsCard extends ConsumerWidget {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -175,27 +165,14 @@ class SettingsCard extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentType = ref.read(trainingPreferencesProvider).workoutType;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
+      builder: (context) => GlassSheet(
+        child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
@@ -231,6 +208,7 @@ class SettingsCard extends ConsumerWidget {
             const SizedBox(height: 16),
           ],
         ),
+      ),
       ),
     );
   }
@@ -280,20 +258,20 @@ class SettingsCard extends ConsumerWidget {
       'dont_know',
     ];
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      isScrollControlled: true,
       useRootNavigator: true,
+      initialChildSize: 0.7,
+      minChildSize: 0.5,
+      maxChildSize: 0.9,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.7,
         minChildSize: 0.5,
         maxChildSize: 0.9,
         expand: false,
-        builder: (context, scrollController) => SafeArea(
+        builder: (context, scrollController) => GlassSheet(
+          showHandle: false,
+          child: SafeArea(
           child: Column(
             children: [
               const SizedBox(height: 8),
@@ -420,6 +398,7 @@ class SettingsCard extends ConsumerWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );
@@ -579,19 +558,16 @@ class SettingsCard extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentEquipment = ref.read(environmentEquipmentProvider).equipment;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      isScrollControlled: true,
       useRootNavigator: true,
-      builder: (context) => _EquipmentSelectorSheet(
+      builder: (context) => GlassSheet(
+        child: _EquipmentSelectorSheet(
         initialEquipment: currentEquipment,
         onSave: (equipment) {
           ref.read(environmentEquipmentProvider.notifier).setEquipment(equipment);
         },
+      ),
       ),
     );
   }
@@ -600,27 +576,14 @@ class SettingsCard extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentMode = ref.read(consistencyModeProvider).mode;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
+      builder: (context) => GlassSheet(
+        child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
@@ -657,6 +620,7 @@ class SettingsCard extends ConsumerWidget {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -680,18 +644,16 @@ class SettingsCard extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentPercentage = ref.read(variationProvider).percentage;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => _VariationSliderSheet(
+      builder: (context) => GlassSheet(
+        child: _VariationSliderSheet(
         initialValue: currentPercentage,
         onSave: (value) {
           ref.read(variationProvider.notifier).setVariation(value);
         },
+      ),
       ),
     );
   }
@@ -729,18 +691,16 @@ class SettingsCard extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentIntensity = ref.read(trainingIntensityProvider).globalIntensityPercent;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => _TrainingIntensitySheet(
+      builder: (context) => GlassSheet(
+        child: _TrainingIntensitySheet(
         initialValue: currentIntensity,
         onSave: (value) {
           ref.read(trainingIntensityProvider.notifier).setGlobalIntensity(value);
         },
+      ),
       ),
     );
   }
@@ -749,27 +709,14 @@ class SettingsCard extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentUnit = ref.read(weightUnitProvider);
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
+      builder: (context) => GlassSheet(
+        child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
@@ -821,6 +768,7 @@ class SettingsCard extends ConsumerWidget {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -853,27 +801,14 @@ class SettingsCard extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentAccent = ref.read(accentColorProvider);
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
+      builder: (context) => GlassSheet(
+        child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
@@ -911,6 +846,7 @@ class SettingsCard extends ConsumerWidget {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -919,19 +855,14 @@ class SettingsCard extends ConsumerWidget {
     final user = authState.user;
     final currentDays = user?.workoutDays ?? [];
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.elevated
-          : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      isScrollControlled: true,
       useRootNavigator: true,
-      builder: (context) => _WorkoutDaysSelectorSheet(
+      builder: (context) => GlassSheet(
+        child: _WorkoutDaysSelectorSheet(
         initialDays: currentDays,
         userId: user?.id ?? '',
+      ),
       ),
     );
   }

@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_back_button.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../data/models/workout.dart';
 import 'pre_auth_quiz_screen.dart';
@@ -60,9 +62,8 @@ class PlanPreviewScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: _FloatingBackButton(
-                  isDark: isDark,
-                  onPressed: () {
+                child: GlassBackButton(
+                  onTap: () {
                     HapticFeedback.lightImpact();
                     Navigator.of(context).pop();
                   },
@@ -685,47 +686,43 @@ class PlanPreviewScreen extends ConsumerWidget {
 
     HapticFeedback.lightImpact();
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with sparkle icon
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.orange.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.auto_awesome_rounded,
-                    color: AppColors.orange,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    'AI-Powered Workouts',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with sparkle icon
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.orange.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.auto_awesome_rounded,
+                      color: AppColors.orange,
+                      size: 24,
                     ),
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      'AI-Powered Workouts',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             const SizedBox(height: 20),
 
             // Explanation text
@@ -799,6 +796,7 @@ class PlanPreviewScreen extends ConsumerWidget {
 
             SizedBox(height: MediaQuery.of(context).padding.bottom),
           ],
+          ),
         ),
       ),
     );
@@ -811,47 +809,43 @@ class PlanPreviewScreen extends ConsumerWidget {
 
     HapticFeedback.lightImpact();
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with tune icon
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.orange.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.tune_rounded,
-                    color: AppColors.orange,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    'Personalization',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with tune icon
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.orange.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.tune_rounded,
+                      color: AppColors.orange,
+                      size: 24,
                     ),
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      'Personalization',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             const SizedBox(height: 20),
 
             // Explanation text
@@ -959,6 +953,7 @@ class PlanPreviewScreen extends ConsumerWidget {
 
             SizedBox(height: MediaQuery.of(context).padding.bottom),
           ],
+          ),
         ),
       ),
     );
@@ -1036,57 +1031,5 @@ class PlanPreviewScreen extends ConsumerWidget {
     parts.add(split);
 
     return parts.join(' • ');
-  }
-}
-
-/// Glassmorphic floating back button with blur effect
-class _FloatingBackButton extends StatelessWidget {
-  final bool isDark;
-  final VoidCallback onPressed;
-
-  const _FloatingBackButton({
-    required this.isDark,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(22),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.15)
-                : Colors.white.withValues(alpha: 0.85),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.2)
-                  : Colors.black.withValues(alpha: 0.1),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.08),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Center(
-            child: Icon(
-              Icons.arrow_back_ios_rounded,
-              size: 18,
-              color: isDark ? Colors.white : const Color(0xFF0A0A0A),
-            ),
-          ),
-        ),
-      ),
-    ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.1);
   }
 }

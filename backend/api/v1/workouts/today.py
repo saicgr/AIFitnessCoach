@@ -13,6 +13,8 @@ belonging to the currently active gym profile.
 """
 from datetime import datetime, date, timedelta
 from typing import Optional, List, Set
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import json
 
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
@@ -23,6 +25,10 @@ from core.logger import get_logger
 from services.user_context_service import user_context_service
 
 from .utils import parse_json_field
+
+
+# Thread pool for running synchronous DB calls concurrently
+_db_executor = ThreadPoolExecutor(max_workers=4)
 
 
 # =============================================================================
@@ -46,9 +52,6 @@ def _get_active_gym_profile_id(db, user_id: str) -> Optional[str]:
             .single() \
             .execute()
         if result.data:
-            from core.logger import get_logger
-            logger = get_logger(__name__)
-            logger.info(f"[GYM PROFILE] Active profile for user {user_id}: {result.data.get('name')} ({result.data.get('id')})")
             return result.data.get("id")
     except Exception:
         # No active profile found (single() raises if no match)
@@ -216,29 +219,40 @@ def _get_upcoming_dates_needing_generation(
 ) -> List[date]:
     """Find up to `max_dates` upcoming scheduled workout days that have no workout generated.
 
-    Scans the next 7 calendar days and returns dates that:
+    Scans the next 8 calendar days and returns dates that:
     1. Fall on one of the user's selected workout days
     2. Are today or in the future
     3. Don't already have a workout (completed or not) in the database
+
+    Uses a single DB query to fetch all workouts in the date range instead of
+    one query per day.
     """
     today_date = date.today()
-    results: List[date] = []
+    end_date = today_date + timedelta(days=8)
 
+    # Single query for ALL workouts in the next 8 days
+    existing_workouts = db.list_workouts(
+        user_id=user_id,
+        from_date=today_date.isoformat(),
+        to_date=end_date.isoformat(),
+        limit=20,
+        gym_profile_id=active_profile_id,
+    )
+
+    # Build set of dates that already have workouts
+    existing_dates = set()
+    for w in existing_workouts:
+        sd = w.get("scheduled_date", "")
+        if sd:
+            existing_dates.add(sd[:10])
+
+    # Find scheduled days without workouts
+    results: List[date] = []
     for days_ahead in range(0, 8):
         check_date = today_date + timedelta(days=days_ahead)
         if check_date.weekday() not in selected_days:
             continue
-
-        check_str = check_date.isoformat()
-        # Check for ANY workout on this date (completed or not)
-        existing = db.list_workouts(
-            user_id=user_id,
-            from_date=check_str,
-            to_date=check_str,
-            limit=1,
-            gym_profile_id=active_profile_id,
-        )
-        if not existing:
+        if check_date.isoformat() not in existing_dates:
             results.append(check_date)
             if len(results) >= max_dates:
                 break
@@ -349,47 +363,45 @@ async def get_today_workout(
 
         # Get active gym profile for filtering
         active_profile_id = _get_active_gym_profile_id(db, user_id)
-        if active_profile_id:
-            logger.info(f"[GYM PROFILE] Filtering workouts by active profile: {active_profile_id}")
-        else:
-            logger.info(f"[GYM PROFILE] No active profile - showing all workouts for user {user_id}")
+        logger.debug(f"[GYM PROFILE] Active profile for user {user_id}: {active_profile_id}")
 
         selected_days = _get_user_workout_days(user)
 
         day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-        today_day_name = day_names[date.today().weekday()]
         is_today_workout_day = _is_today_a_workout_day(selected_days)
 
-        # Enhanced user context logging for debugging
+        # Enhanced user context logging for debugging (downgraded to debug)
         user_preferences = parse_json_field(user.get("preferences"), {})
         user_timezone = user.get("timezone") or user_preferences.get("timezone") or "Not set"
-        user_created_at = user.get("created_at", "Unknown")
-        onboarding_completed = user.get("onboarding_completed", False)
-        onboarding_completed_at = user.get("onboarding_completed_at", "Not recorded")
-        user_name = user.get("name") or user.get("username") or "Unknown"
+        logger.debug(f"[USER CONTEXT] user_id={user_id}, timezone={user_timezone}, "
+                     f"onboarding_completed={user.get('onboarding_completed', False)}")
+        logger.debug(f"[TODAY DEBUG] server_date={today_str}, selected_days={selected_days}, "
+                     f"is_workout_day={is_today_workout_day}")
 
-        logger.info(f"[USER CONTEXT] user_id={user_id}, name={user_name}")
-        logger.info(f"[USER CONTEXT] timezone={user_timezone}, created_at={user_created_at}")
-        logger.info(f"[USER CONTEXT] onboarding_completed={onboarding_completed}, onboarding_at={onboarding_completed_at}")
-        logger.info(f"[TODAY DEBUG] server_date={today_str}, server_weekday={date.today().weekday()} ({today_day_name})")
-        logger.info(f"[TODAY DEBUG] selected_days={selected_days} ({[day_names[d] for d in selected_days if 0 <= d < 7]}), is_workout_day={is_today_workout_day}")
+        # Compute date range strings before parallel queries
+        tomorrow_str = (date.today() + timedelta(days=1)).isoformat()
+        future_end = (date.today() + timedelta(days=30)).isoformat()
 
-        # Get today's workout (not completed) - filtered by active gym profile
-        today_rows = db.list_workouts(
-            user_id=user_id,
-            from_date=today_str,
-            to_date=today_str,
-            is_completed=False,
-            limit=1,
-            gym_profile_id=active_profile_id,
+        # Run 3 independent DB queries in parallel using thread pool
+        # (db.list_workouts is synchronous, so we use run_in_executor)
+        loop = asyncio.get_event_loop()
+        today_rows, future_rows, completed_today_rows = await asyncio.gather(
+            loop.run_in_executor(_db_executor, lambda: db.list_workouts(
+                user_id=user_id, from_date=today_str, to_date=today_str,
+                is_completed=False, limit=1, gym_profile_id=active_profile_id,
+            )),
+            loop.run_in_executor(_db_executor, lambda: db.list_workouts(
+                user_id=user_id, from_date=tomorrow_str, to_date=future_end,
+                is_completed=False, limit=1, order_asc=True, gym_profile_id=active_profile_id,
+            )),
+            loop.run_in_executor(_db_executor, lambda: db.list_workouts(
+                user_id=user_id, from_date=today_str, to_date=today_str,
+                is_completed=True, limit=1, gym_profile_id=active_profile_id,
+            )),
         )
 
-        # Debug: log query result and all user workouts if none found today
-        logger.info(f"[TODAY DEBUG] Query result: {len(today_rows)} workout(s) for today ({today_str})")
         if not today_rows:
-            all_user_workouts = db.list_workouts(user_id=user_id, from_date=None, to_date=None, limit=5, gym_profile_id=active_profile_id)
-            dates = [w.get('scheduled_date', 'N/A')[:10] if w.get('scheduled_date') else 'N/A' for w in all_user_workouts]
-            logger.info(f"[TODAY DEBUG] No workout for today (profile: {active_profile_id}). User's first 5 workout dates: {dates}")
+            logger.debug(f"[TODAY DEBUG] No workout found for today ({today_str}), profile={active_profile_id}")
 
         today_workout: Optional[TodayWorkoutSummary] = None
         next_workout: Optional[TodayWorkoutSummary] = None
@@ -401,47 +413,18 @@ async def get_today_workout(
         if today_rows:
             today_workout = _row_to_summary(today_rows[0])
             has_workout_today = True
-            logger.info(f"[TODAY DEBUG] Found today's workout: {today_workout.name}, scheduled_date={today_workout.scheduled_date}")
-
-        # Always look for next upcoming workout (for "Your Next Workout" label)
-        # Filtered by active gym profile
-        tomorrow_str = (date.today() + timedelta(days=1)).isoformat()
-        future_end = (date.today() + timedelta(days=30)).isoformat()
-
-        future_rows = db.list_workouts(
-            user_id=user_id,
-            from_date=tomorrow_str,
-            to_date=future_end,
-            is_completed=False,
-            limit=1,
-            order_asc=True,  # Get earliest upcoming workout first
-            gym_profile_id=active_profile_id,
-        )
+            logger.debug(f"[TODAY DEBUG] Found today's workout: {today_workout.name}")
 
         if future_rows:
             next_workout = _row_to_summary(future_rows[0])
             next_date = datetime.strptime(next_workout.scheduled_date, "%Y-%m-%d").date()
             days_until_next = (next_date - date.today()).days
-            next_weekday = next_date.weekday()
-            logger.info(f"[TODAY DEBUG] Found next workout: {next_workout.name}, date={next_workout.scheduled_date} ({day_names[next_weekday]}), in {days_until_next} days")
+            logger.debug(f"[TODAY DEBUG] Found next workout: {next_workout.name}, in {days_until_next} days")
 
-        # JIT Generation Safety Net: If no workouts exist, trigger generation automatically
-        # This ensures a workout ALWAYS exists for the user
-        # BUT: Don't generate if today's workout was already completed (user already did their workout!)
-
-        # Check if a completed workout exists for today - filtered by active profile
-        completed_today_rows = db.list_workouts(
-            user_id=user_id,
-            from_date=today_str,
-            to_date=today_str,
-            is_completed=True,
-            limit=1,
-            gym_profile_id=active_profile_id,
-        )
         has_completed_workout_today = len(completed_today_rows) > 0
 
         if has_completed_workout_today:
-            logger.info(f"[JIT Safety Net] User {user_id} already completed today's workout. Skipping auto-generation.")
+            logger.debug(f"[JIT Safety Net] User {user_id} already completed today's workout. Skipping auto-generation.")
 
         # Check if today is a scheduled workout day
         is_today_workout_day = _is_today_a_workout_day(selected_days)
@@ -471,21 +454,19 @@ async def get_today_workout(
                            f"(next existing is {next_workout.scheduled_date}). "
                            f"Signaling generation for {next_workout_date}")
 
-        # Log analytics event for quick start view
-        try:
-            await user_context_service.log_event(
-                user_id=user_id,
-                event_type="quick_start_viewed",
-                event_data={
-                    "has_workout_today": has_workout_today,
-                    "workout_id": today_workout.id if today_workout else None,
-                    "next_workout_id": next_workout.id if next_workout else None,
-                    "days_until_next": days_until_next,
-                    "is_generating": is_generating,
-                },
-            )
-        except Exception as log_error:
-            logger.warning(f"Failed to log quick_start_viewed event: {log_error}")
+        # Log analytics event for quick start view (non-blocking)
+        background_tasks.add_task(
+            user_context_service.log_event,
+            user_id=user_id,
+            event_type="quick_start_viewed",
+            event_data={
+                "has_workout_today": has_workout_today,
+                "workout_id": today_workout.id if today_workout else None,
+                "next_workout_id": next_workout.id if next_workout else None,
+                "days_until_next": days_until_next,
+                "is_generating": is_generating,
+            },
+        )
 
         # Build completed workout summary if user completed today's workout
         completed_workout_summary: Optional[TodayWorkoutSummary] = None

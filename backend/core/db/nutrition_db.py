@@ -888,6 +888,135 @@ class NutritionDB(BaseDB):
             logger.error(f"Error listing common foods: {e}")
             return []
 
+    def upsert_learned_food(
+        self,
+        name: str,
+        serving_size: str,
+        serving_weight_g: float,
+        calories: int,
+        protein_g: float,
+        carbs_g: float,
+        fat_g: float,
+        fiber_g: float = 0,
+        micronutrients: Optional[Dict[str, Any]] = None,
+        category: str = "general",
+        source: str = "ai_learned",
+        aliases: Optional[List[str]] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Insert or update a learned food in the common_foods table.
+
+        If a food with the same name exists, it will only update if the new
+        data has more non-null micronutrient fields. New aliases are appended
+        without duplicating existing ones.
+
+        Args:
+            name: Food name
+            serving_size: Human-readable serving size (e.g., "1 cup")
+            serving_weight_g: Weight of one serving in grams
+            calories: Calories per serving
+            protein_g: Protein grams per serving
+            carbs_g: Carbohydrate grams per serving
+            fat_g: Fat grams per serving
+            fiber_g: Fiber grams per serving
+            micronutrients: JSONB dict of micronutrient values
+            category: Food category
+            source: Data source (default 'ai_learned')
+            aliases: List of alternative names
+
+        Returns:
+            Upserted common food record or None on error
+        """
+        try:
+            normalized_name = name.lower().strip()
+            new_aliases = [a.lower().strip() for a in (aliases or [])]
+            new_micros = micronutrients or {}
+
+            # Check for existing entry by name
+            existing = (
+                self.client.table("common_foods")
+                .select("*")
+                .ilike("name", normalized_name)
+                .maybe_single()
+                .execute()
+            )
+
+            if existing and existing.data:
+                # Update only if new data has more micronutrient fields
+                existing_micros = existing.data.get("micronutrients") or {}
+                existing_non_null = sum(
+                    1 for v in existing_micros.values() if v is not None
+                )
+                new_non_null = sum(
+                    1 for v in new_micros.values() if v is not None
+                )
+
+                if new_non_null <= existing_non_null:
+                    logger.info(
+                        f"Skipping update for '{name}': existing has "
+                        f"{existing_non_null} micros vs new {new_non_null}"
+                    )
+                    return existing.data
+
+                # Merge aliases without duplicates
+                existing_aliases = existing.data.get("aliases") or []
+                merged_aliases = list(
+                    dict.fromkeys(existing_aliases + new_aliases)
+                )
+
+                update_data = {
+                    "serving_size": serving_size,
+                    "serving_weight_g": serving_weight_g,
+                    "calories": calories,
+                    "protein_g": protein_g,
+                    "carbs_g": carbs_g,
+                    "fat_g": fat_g,
+                    "fiber_g": fiber_g,
+                    "micronutrients": new_micros,
+                    "category": category,
+                    "source": source,
+                    "aliases": merged_aliases,
+                    "updated_at": datetime.utcnow().isoformat(),
+                }
+
+                result = (
+                    self.client.table("common_foods")
+                    .update(update_data)
+                    .eq("id", existing.data["id"])
+                    .execute()
+                )
+                logger.info(f"✅ Updated learned food: {name}")
+                return result.data[0] if result.data else None
+
+            # Insert new entry
+            insert_data = {
+                "name": normalized_name,
+                "serving_size": serving_size,
+                "serving_weight_g": serving_weight_g,
+                "calories": calories,
+                "protein_g": protein_g,
+                "carbs_g": carbs_g,
+                "fat_g": fat_g,
+                "fiber_g": fiber_g,
+                "micronutrients": new_micros,
+                "category": category,
+                "source": source,
+                "aliases": new_aliases,
+                "is_active": True,
+            }
+
+            result = (
+                self.client.table("common_foods")
+                .insert(insert_data)
+                .execute()
+            )
+            logger.info(f"✅ Inserted new learned food: {name}")
+            return result.data[0] if result.data else None
+
+        except Exception as e:
+            logger.error(f"Error upserting learned food '{name}': {e}")
+            return None
+
     # ==================== RAG CONTEXT CACHING ====================
 
     def get_cached_rag_context(

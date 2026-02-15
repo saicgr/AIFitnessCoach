@@ -6,13 +6,16 @@ Handles progress photo uploads, retrieval, and before/after comparisons.
 
 import uuid
 import boto3
+from botocore.config import Config as BotoConfig
 from datetime import datetime
 from typing import Optional, List
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from core.db import get_supabase_db
 from core.config import get_settings
+
+PRESIGNED_URL_EXPIRATION = 3600  # 1 hour
 
 router = APIRouter()
 
@@ -33,7 +36,7 @@ class ProgressPhotoResponse(BaseModel):
     measurement_id: Optional[str] = None
     is_comparison_ready: bool = True
     visibility: str = 'private'
-    created_at: datetime
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 class ProgressPhotoCreate(BaseModel):
@@ -88,14 +91,32 @@ class PhotoStatsResponse(BaseModel):
 # ============================================================================
 
 def get_s3_client():
-    """Get S3 client with configured credentials."""
+    """Get S3 client with configured credentials and s3v4 signatures."""
     settings = get_settings()
     return boto3.client(
         's3',
         aws_access_key_id=settings.aws_access_key_id,
         aws_secret_access_key=settings.aws_secret_access_key,
         region_name=settings.aws_default_region,
+        config=BotoConfig(signature_version='s3v4'),
     )
+
+
+def _presign_photo(photo: dict) -> dict:
+    """Replace photo_url with a presigned S3 URL using the storage_key."""
+    storage_key = photo.get('storage_key')
+    if storage_key:
+        try:
+            settings = get_settings()
+            s3 = get_s3_client()
+            photo['photo_url'] = s3.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': settings.s3_bucket_name, 'Key': storage_key},
+                ExpiresIn=PRESIGNED_URL_EXPIRATION,
+            )
+        except Exception:
+            pass  # keep original URL as fallback
+    return photo
 
 
 async def upload_photo_to_s3(
@@ -211,7 +232,7 @@ async def upload_progress_photo(
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to save photo record")
 
-        return ProgressPhotoResponse(**result.data[0])
+        return ProgressPhotoResponse(**_presign_photo(result.data[0]))
 
     except HTTPException:
         raise
@@ -259,7 +280,7 @@ async def get_progress_photos(
 
         result = query.execute()
 
-        return [ProgressPhotoResponse(**photo) for photo in result.data]
+        return [ProgressPhotoResponse(**_presign_photo(photo)) for photo in result.data]
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching photos: {str(e)}")
@@ -294,14 +315,14 @@ async def get_latest_photos_by_view(user_id: str):
                     .execute()
 
                 if photo_result.data:
-                    photos_by_view[view_type] = ProgressPhotoResponse(**photo_result.data[0])
+                    photos_by_view[view_type] = ProgressPhotoResponse(**_presign_photo(photo_result.data[0]))
 
             return photos_by_view
 
         # Parse RPC result
         photos_by_view = {}
         for photo in result.data:
-            photos_by_view[photo['view_type']] = ProgressPhotoResponse(**photo)
+            photos_by_view[photo['view_type']] = ProgressPhotoResponse(**_presign_photo(photo))
 
         return photos_by_view
 
@@ -325,7 +346,7 @@ async def get_progress_photo(user_id: str, photo_id: str):
         if not result.data:
             raise HTTPException(status_code=404, detail="Photo not found")
 
-        return ProgressPhotoResponse(**result.data)
+        return ProgressPhotoResponse(**_presign_photo(result.data))
 
     except HTTPException:
         raise
@@ -367,7 +388,7 @@ async def update_progress_photo(
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to update photo")
 
-        return ProgressPhotoResponse(**result.data[0])
+        return ProgressPhotoResponse(**_presign_photo(result.data[0]))
 
     except HTTPException:
         raise
@@ -477,8 +498,8 @@ async def create_photo_comparison(data: PhotoComparisonCreate):
         return PhotoComparisonResponse(
             id=comparison['id'],
             user_id=comparison['user_id'],
-            before_photo=ProgressPhotoResponse(**before_photo.data),
-            after_photo=ProgressPhotoResponse(**after_photo.data),
+            before_photo=ProgressPhotoResponse(**_presign_photo(before_photo.data)),
+            after_photo=ProgressPhotoResponse(**_presign_photo(after_photo.data)),
             title=comparison.get('title'),
             description=comparison.get('description'),
             weight_change_kg=comparison.get('weight_change_kg'),
@@ -515,8 +536,8 @@ async def get_photo_comparisons(
             comparisons.append(PhotoComparisonResponse(
                 id=comp['id'],
                 user_id=comp['user_id'],
-                before_photo=ProgressPhotoResponse(**comp['before_photo']),
-                after_photo=ProgressPhotoResponse(**comp['after_photo']),
+                before_photo=ProgressPhotoResponse(**_presign_photo(comp['before_photo'])),
+                after_photo=ProgressPhotoResponse(**_presign_photo(comp['after_photo'])),
                 title=comp.get('title'),
                 description=comp.get('description'),
                 weight_change_kg=comp.get('weight_change_kg'),

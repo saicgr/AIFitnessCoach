@@ -6,6 +6,7 @@ import '../../data/models/skill_progression.dart';
 import '../../data/providers/skill_progression_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_sheet.dart';
 import 'widgets/progression_step_card.dart';
 import 'widgets/practice_attempt_sheet.dart';
 
@@ -593,18 +594,18 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
 
   void _showPracticeSheet(ProgressionStep step) {
     HapticService.light();
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => PracticeAttemptSheet(
-        step: step,
-        chainId: widget.chainId,
-        onAttemptLogged: (attempt) {
-          // Reload data after attempt
-          _loadChainDetail();
-        },
+      builder: (context) => GlassSheet(
+        child: PracticeAttemptSheet(
+          step: step,
+          chainId: widget.chainId,
+          onAttemptLogged: (attempt) {
+            // Reload data after attempt
+            _loadChainDetail();
+          },
+        ),
       ),
     );
   }
@@ -612,12 +613,12 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
   void _showStepDetail(ProgressionStep step) {
     HapticService.light();
     // Show detailed view of the step (could navigate to exercise detail or show a sheet)
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _StepDetailSheet(step: step),
+      builder: (context) => GlassSheet(
+        child: _StepDetailSheet(step: step),
+      ),
     );
   }
 }
@@ -638,27 +639,11 @@ class _StepDetailSheet extends StatelessWidget {
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
-    return Container(
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: cardBorder),
-      ),
+    return Padding(
+      padding: const EdgeInsets.all(16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: cardBorder,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
           Padding(
             padding: const EdgeInsets.all(24),
             child: Column(

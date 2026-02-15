@@ -6,6 +6,7 @@ import '../../data/models/hydration.dart';
 import '../../data/repositories/hydration_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/main_shell.dart';
+import '../../widgets/glass_sheet.dart';
 
 class HydrationScreen extends ConsumerStatefulWidget {
   const HydrationScreen({super.key});
@@ -153,38 +154,22 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
     // Hide floating nav bar when sheet opens
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-    final result = await showModalBottomSheet<int>(
+    final result = await showGlassSheet<int>(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: EdgeInsets.fromLTRB(
-          24,
-          20,
-          24,
-          MediaQuery.of(context).viewInsets.bottom + 24,
-        ),
-        decoration: BoxDecoration(
-          color: nearBlack,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            20,
+            24,
+            MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
               children: [
                 Icon(Icons.water_drop, color: electricBlue, size: 28),
                 const SizedBox(width: 12),
@@ -295,7 +280,8 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
                 ),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -320,38 +306,22 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
     // Hide floating nav bar when sheet opens
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-    final result = await showModalBottomSheet<Map<String, dynamic>>(
+    final result = await showGlassSheet<Map<String, dynamic>>(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: EdgeInsets.fromLTRB(
-          16,
-          16,
-          16,
-          MediaQuery.of(context).viewInsets.bottom + 16,
-        ),
-        decoration: BoxDecoration(
-          color: nearBlack,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            MediaQuery.of(context).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
               children: [
                 Text(
                   type.emoji,
@@ -430,6 +400,7 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
               ),
             ),
           ],
+          ),
         ),
       ),
     );
@@ -476,16 +447,11 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
     // Hide floating nav bar when sheet opens
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
       useRootNavigator: true,
-      builder: (context) => Container(
+      builder: (context) => GlassSheet(
         padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: nearBlack,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

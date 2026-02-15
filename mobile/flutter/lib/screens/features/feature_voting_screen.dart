@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/feature_request.dart';
 import '../../data/providers/feature_provider.dart';
+import '../../widgets/glass_sheet.dart';
+import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/suggest_feature_sheet.dart';
 
 /// Feature voting screen (Robinhood-style with tabs and countdown timers)
@@ -55,20 +57,21 @@ class _FeatureVotingScreenState extends ConsumerState<FeatureVotingScreen>
             tooltip: 'Suggest a Feature',
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: const Color(0xFF00D9FF),
-          labelColor: const Color(0xFF00D9FF),
-          unselectedLabelColor: isDark ? Colors.white60 : Colors.black54,
-          tabs: const [
-            Tab(text: 'Voting'),
-            Tab(text: 'Planned'),
-            Tab(text: 'In Progress'),
-            Tab(text: 'Released'),
-          ],
-        ),
       ),
-      body: featuresAsync.when(
+      body: Column(
+        children: [
+          SegmentedTabBar(
+            controller: _tabController,
+            showIcons: false,
+            tabs: [
+              SegmentedTabItem(label: 'Voting'),
+              SegmentedTabItem(label: 'Planned'),
+              SegmentedTabItem(label: 'In Progress'),
+              SegmentedTabItem(label: 'Released'),
+            ],
+          ),
+          Expanded(
+            child: featuresAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
           child: Column(
@@ -96,6 +99,9 @@ class _FeatureVotingScreenState extends ConsumerState<FeatureVotingScreen>
             ],
           );
         },
+      ),
+          ),
+        ],
       ),
     );
   }
@@ -287,12 +293,12 @@ class _FeatureVotingScreenState extends ConsumerState<FeatureVotingScreen>
   }
 
   void _showSuggestFeatureSheet(BuildContext context) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const SuggestFeatureSheet(),
+      builder: (context) => const GlassSheet(
+        child: SuggestFeatureSheet(),
+      ),
     );
   }
 }

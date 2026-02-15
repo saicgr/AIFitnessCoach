@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_back_button.dart';
 
 /// Model for a notification item
 class NotificationItem {
@@ -198,10 +199,8 @@ class NotificationsScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'Notifications',
           style: TextStyle(

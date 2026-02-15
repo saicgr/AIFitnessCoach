@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/micronutrients.dart';
+import '../../widgets/glass_sheet.dart';
 
 /// Nutrient Explorer Tab - MacroFactor/Cronometer inspired
 /// Shows all vitamins, minerals, fatty acids, and other nutrients
@@ -123,15 +124,14 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
   }
 
   void _showNutrientDetail(NutrientProgress nutrient) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => NutrientDetailSheet(
-        nutrient: nutrient,
-        userId: widget.userId,
-        isDark: widget.isDark,
+      builder: (context) => GlassSheet(
+        child: NutrientDetailSheet(
+          nutrient: nutrient,
+          userId: widget.userId,
+          isDark: widget.isDark,
+        ),
       ),
     );
   }

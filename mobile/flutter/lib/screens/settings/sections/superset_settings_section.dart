@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/superset_preferences_provider.dart';
 import '../widgets/widgets.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// The superset settings section for configuring superset preferences.
 ///
@@ -191,25 +192,20 @@ class SupersetSettingsSection extends ConsumerWidget {
   }
 
   void _showAddPairSheet(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.elevated
-          : AppColorsLight.elevated,
-      isScrollControlled: true,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => _AddFavoritePairSheet(
-        onAdd: (exercise1, exercise2) {
-          final pair = FavoriteSupersetPair(
-            id: const Uuid().v4(),
-            exercise1Name: exercise1,
-            exercise2Name: exercise2,
-          );
-          ref.read(supersetPreferencesProvider.notifier).addFavoritePair(pair);
-        },
+      builder: (context) => GlassSheet(
+        child: _AddFavoritePairSheet(
+          onAdd: (exercise1, exercise2) {
+            final pair = FavoriteSupersetPair(
+              id: const Uuid().v4(),
+              exercise1Name: exercise1,
+              exercise2Name: exercise2,
+            );
+            ref.read(supersetPreferencesProvider.notifier).addFavoritePair(pair);
+          },
+        ),
       ),
     );
   }

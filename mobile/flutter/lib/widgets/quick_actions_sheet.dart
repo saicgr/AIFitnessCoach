@@ -1,30 +1,29 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/animations/app_animations.dart';
 import '../core/constants/app_colors.dart';
+import '../core/models/quick_action.dart';
 import '../data/providers/fasting_provider.dart';
+import '../data/providers/quick_action_provider.dart';
 import '../data/repositories/hydration_repository.dart';
 import '../data/services/api_client.dart';
 import '../screens/nutrition/log_meal_sheet.dart';
 import 'main_shell.dart';
+import 'glass_sheet.dart';
 
 /// Shows the quick actions bottom sheet when + button is tapped
-void showQuickActionsSheet(BuildContext context, WidgetRef ref) {
+void showQuickActionsSheet(BuildContext context, WidgetRef ref, {bool editMode = false}) {
   HapticFeedback.mediumImpact();
 
   // Hide nav bar while sheet is open
   ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-  showModalBottomSheet(
+  showGlassSheet(
     context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2), // Light scrim so content shows through
-    isScrollControlled: true,
     useRootNavigator: true,
-    builder: (context) => _QuickActionsSheet(ref: ref),
+    builder: (context) => _QuickActionsSheet(ref: ref, startInEditMode: editMode),
   ).then((_) {
     // Show nav bar when sheet is closed
     ref.read(floatingNavBarVisibleProvider.notifier).state = true;
@@ -33,8 +32,9 @@ void showQuickActionsSheet(BuildContext context, WidgetRef ref) {
 
 class _QuickActionsSheet extends ConsumerStatefulWidget {
   final WidgetRef ref;
+  final bool startInEditMode;
 
-  const _QuickActionsSheet({required this.ref});
+  const _QuickActionsSheet({required this.ref, this.startInEditMode = false});
 
   @override
   ConsumerState<_QuickActionsSheet> createState() => _QuickActionsSheetState();
@@ -42,6 +42,13 @@ class _QuickActionsSheet extends ConsumerStatefulWidget {
 
 class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
   bool _isLoggingWater = false;
+  bool _isEditMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isEditMode = widget.startInEditMode;
+  }
 
   Future<void> _quickAddWater() async {
     if (_isLoggingWater) return;
@@ -117,211 +124,340 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget _buildNormalModeAction(QuickAction action, bool isDark, BuildContext context) {
+    switch (action.id) {
+      case 'water':
+        return _CompactActionItem(
+          icon: action.icon,
+          label: action.label,
+          onTap: _quickAddWater,
+          isDark: isDark,
+          isLoading: _isLoggingWater,
+          iconColor: action.color,
+        );
+      case 'food':
+        return _CompactActionItem(
+          icon: action.icon,
+          label: action.label,
+          onTap: () {
+            Navigator.pop(context);
+            showLogMealSheet(context, widget.ref);
+          },
+          isDark: isDark,
+          iconColor: action.color,
+        );
+      case 'fasting':
+        return _CompactActionItem(
+          icon: action.icon,
+          label: action.label,
+          onTap: () {
+            Navigator.pop(context);
+            context.push('/fasting');
+          },
+          isDark: isDark,
+          iconColor: action.color,
+        );
+      default:
+        return _CompactActionItem(
+          icon: action.icon,
+          label: action.label,
+          onTap: () {
+            Navigator.pop(context);
+            HapticFeedback.lightImpact();
+            if (action.route != null) {
+              context.push(action.route!);
+            }
+          },
+          isDark: isDark,
+          iconColor: action.color,
+        );
+    }
+  }
+
+  Widget _buildNormalMode(BuildContext context, bool isDark) {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final allActions = ref.watch(orderedQuickActionsProvider);
 
-    // Define all actions with semantic colors
-    final trackActions = [
-      _ActionData(
-        icon: Icons.camera_alt_outlined,
-        label: 'Photo',
-        iconColor: const Color(0xFFA855F7), // Purple for photos
-        onTap: () {
-          Navigator.pop(context);
-          context.push('/stats');
-        },
-      ),
-      _ActionData(
-        icon: Icons.restaurant_outlined,
-        label: 'Food',
-        iconColor: const Color(0xFF22C55E), // Green for food/nutrition
-        onTap: () {
-          Navigator.pop(context);
-          showLogMealSheet(context, widget.ref);
-        },
-      ),
-      _ActionData(
-        icon: Icons.water_drop_outlined,
-        label: 'Water',
-        iconColor: const Color(0xFF3B82F6), // Blue for water
-        onTap: _quickAddWater,
-        isLoading: _isLoggingWater,
-      ),
-      _ActionData(
-        icon: Icons.monitor_weight_outlined,
-        label: 'Weight',
-        iconColor: const Color(0xFFF59E0B), // Amber for weight
-        onTap: () {
-          Navigator.pop(context);
-          context.push('/measurements');
-        },
-      ),
-    ];
-
-    final viewActions = [
-      _ActionData(
-        icon: Icons.straighten_outlined,
-        label: 'Measure',
-        iconColor: const Color(0xFFA855F7), // Purple for measurements
-        onTap: () {
-          Navigator.pop(context);
-          context.push('/measurements');
-        },
-      ),
-      _ActionData(
-        icon: Icons.history_outlined,
-        label: 'History',
-        iconColor: const Color(0xFF6B7280), // Gray for history
-        onTap: () {
-          Navigator.pop(context);
-          context.push('/stats');
-        },
-      ),
-      _ActionData(
-        icon: Icons.fitness_center_outlined,
-        label: 'Workout',
-        iconColor: const Color(0xFFEF4444), // Red for workout intensity
-        onTap: () {
-          Navigator.pop(context);
-          context.push('/workouts');
-        },
-      ),
-      _ActionData(
-        icon: Icons.timer_outlined,
-        label: 'Fast',
-        iconColor: const Color(0xFFF97316), // Orange for fasting
-        onTap: () {
-          Navigator.pop(context);
-          context.push('/fasting');
-        },
-      ),
-    ];
-
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: SafeArea(
-              top: false, // Don't add top padding
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 12),
-                  // Drag handle
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: textMuted.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
+    // Build rows of 4
+    final rows = <Widget>[];
+    for (int rowStart = 0; rowStart < allActions.length; rowStart += 4) {
+      final rowEnd = (rowStart + 4).clamp(0, allActions.length);
+      final rowActions = allActions.sublist(rowStart, rowEnd);
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Row(
+            children: [
+              for (int i = 0; i < rowActions.length; i++) ...[
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      left: i > 0 ? 2 : 0,
+                      right: i < rowActions.length - 1 ? 2 : 0,
                     ),
+                    child: _buildNormalModeAction(rowActions[i], isDark, context)
+                        .animateListItem(index: rowStart + i + 1),
                   ),
-                  const SizedBox(height: 16),
-
-                  // Hero Card (contextual) - edge to edge with minimal padding
-                  _HeroActionCard(
-                    onClose: () => Navigator.pop(context),
-                  ).animateHeroEntrance(),
-
-                  const SizedBox(height: 12),
-
-                  // Row 1: Track Actions - truly edge to edge
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Row(
-                      children: trackActions.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final action = entry.value;
-                        return Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              left: index > 0 ? 2 : 0,
-                              right: index < 3 ? 2 : 0,
-                            ),
-                            child: _CompactActionItem(
-                              icon: action.icon,
-                              label: action.label,
-                              onTap: action.onTap,
-                              isDark: isDark,
-                              isLoading: action.isLoading,
-                              iconColor: action.iconColor,
-                            ).animateListItem(index: index + 1),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  // Row 2: View/Act Actions - truly edge to edge
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Row(
-                      children: viewActions.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final action = entry.value;
-                        return Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              left: index > 0 ? 2 : 0,
-                              right: index < 3 ? 2 : 0,
-                            ),
-                            child: _CompactActionItem(
-                              icon: action.icon,
-                              label: action.label,
-                              onTap: action.onTap,
-                              isDark: isDark,
-                              iconColor: action.iconColor,
-                            ).animateListItem(index: index + 5),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-                ],
-              ),
-            ),
+                ),
+              ],
+              // Fill remaining slots with empty Expanded to keep alignment
+              for (int i = rowActions.length; i < 4; i++) ...[
+                const Expanded(child: SizedBox()),
+              ],
+            ],
           ),
         ),
       );
+    }
+
+    return GlassSheet(
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Hero Card (contextual)
+            _HeroActionCard(
+              onClose: () => Navigator.pop(context),
+            ).animateHeroEntrance(),
+
+            const SizedBox(height: 12),
+
+            // Header with edit button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  Text(
+                    'Quick Actions',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: textMuted,
+                    ),
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() => _isEditMode = true);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.edit_outlined,
+                        size: 18,
+                        color: textMuted,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            // Action rows
+            ...rows.expand((row) sync* {
+              yield row;
+              yield const SizedBox(height: 6);
+            }),
+
+            const SizedBox(height: 10),
+          ],
+        ),
+      ),
+    );
   }
-}
 
-/// Data class for action items
-class _ActionData {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool isLoading;
-  final Color? iconColor; // Optional color for icon
+  Widget _buildEditMode(BuildContext context, bool isDark) {
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final order = ref.watch(quickActionOrderProvider);
 
-  _ActionData({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.isLoading = false,
-    this.iconColor,
-  });
+    return GlassSheet(
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Customize Quick Actions',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: textColor,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => setState(() => _isEditMode = false),
+                    child: Text(
+                      'Done',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? AppColors.cyan : const Color(0xFF0891B2),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Text(
+                'Drag to reorder. Top 3 appear in your shortcut bar.',
+                style: TextStyle(fontSize: 13, color: textMuted),
+              ),
+            ),
+            // Reorderable list in a constrained height container
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.55,
+              ),
+              child: ReorderableListView.builder(
+                shrinkWrap: true,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                proxyDecorator: (child, index, animation) {
+                  return AnimatedBuilder(
+                    animation: animation,
+                    builder: (context, child) {
+                      final elevation = Tween<double>(begin: 0, end: 8).evaluate(animation);
+                      return Material(
+                        elevation: elevation,
+                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.transparent,
+                        child: child,
+                      );
+                    },
+                    child: child,
+                  );
+                },
+                onReorderStart: (_) => HapticFeedback.mediumImpact(),
+                onReorder: (oldIndex, newIndex) {
+                  HapticFeedback.lightImpact();
+                  ref.read(quickActionOrderProvider.notifier).reorder(oldIndex, newIndex);
+                },
+                itemCount: order.length,
+                itemBuilder: (context, index) {
+                  final actionId = order[index];
+                  final action = quickActionRegistry[actionId]!;
+                  final isTop3 = index < 3;
+
+                  return Container(
+                    key: ValueKey(actionId),
+                    margin: const EdgeInsets.only(bottom: 4),
+                    decoration: BoxDecoration(
+                      color: isTop3
+                          ? action.color.withValues(alpha: isDark ? 0.12 : 0.08)
+                          : elevatedColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: isTop3
+                          ? Border.all(color: action.color.withValues(alpha: 0.3))
+                          : null,
+                    ),
+                    child: Row(
+                      children: [
+                        // Drag handle
+                        ReorderableDragStartListener(
+                          index: index,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Icon(Icons.drag_handle, color: textMuted, size: 20),
+                          ),
+                        ),
+                        // Icon
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: action.color.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(action.icon, color: action.color, size: 18),
+                        ),
+                        const SizedBox(width: 12),
+                        // Label
+                        Expanded(
+                          child: Text(
+                            action.label,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: textColor,
+                            ),
+                          ),
+                        ),
+                        // Badge for top 3
+                        if (isTop3)
+                          Container(
+                            width: 24,
+                            height: 24,
+                            margin: const EdgeInsets.only(right: 12),
+                            decoration: BoxDecoration(
+                              color: action.color,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Center(
+                              child: Text(
+                                '${index + 1}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          const SizedBox(width: 12),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            // Reset button
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: TextButton(
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  ref.read(quickActionOrderProvider.notifier).resetToDefault();
+                },
+                child: Text(
+                  'Reset to Default',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textMuted,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    if (_isEditMode) {
+      return _buildEditMode(context, isDark);
+    }
+    return _buildNormalMode(context, isDark);
+  }
 }
 
 /// Hero card that shows contextual content based on fasting state

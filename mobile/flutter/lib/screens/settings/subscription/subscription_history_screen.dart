@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/repositories/subscription_repository.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/glass_back_button.dart';
 
 /// Subscription History Screen
 /// Shows a timeline of all subscription events with color-coded badges
@@ -82,10 +83,8 @@ class _SubscriptionHistoryScreenState extends ConsumerState<SubscriptionHistoryS
             fontWeight: FontWeight.w600,
           ),
         ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
       ),
       body: RefreshIndicator(
         onRefresh: _loadHistory,

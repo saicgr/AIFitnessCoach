@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +8,7 @@ import 'package:video_player/video_player.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Shows a detailed exercise view with set tracking table
 /// Similar to the Hevy app design
@@ -19,16 +19,15 @@ Future<void> showExerciseDetailSheet(
   int? warmupSets,
   List<SetData>? previousSets,
 }) async {
-  await showModalBottomSheet(
+  await showGlassSheet(
     context: context,
-    isScrollControlled: true,
-    useRootNavigator: true,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    builder: (context) => ExerciseDetailSheet(
-      exercise: exercise,
-      warmupSets: warmupSets ?? 0,
-      previousSets: previousSets ?? [],
+    builder: (context) => GlassSheet(
+      showHandle: false,
+      child: ExerciseDetailSheet(
+        exercise: exercise,
+        warmupSets: warmupSets ?? 0,
+        previousSets: previousSets ?? [],
+      ),
     ),
   );
 }
@@ -278,43 +277,13 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: DraggableScrollableSheet(
+    return DraggableScrollableSheet(
           initialChildSize: 0.9,
           minChildSize: 0.5,
           maxChildSize: 0.95,
           builder: (context, scrollController) {
-            return Container(
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.4)
-                    : Colors.white.withValues(alpha: 0.6),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                border: Border(
-                  top: BorderSide(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : Colors.black.withValues(alpha: 0.1),
-                    width: 0.5,
-                  ),
-                ),
-              ),
-              child: Column(
+            return Column(
             children: [
-              // Drag handle
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-
               Expanded(
                 child: ListView(
                   controller: scrollController,
@@ -413,11 +382,8 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
                 ),
               ),
             ],
-          ),
-            );
+          );
           },
-        ),
-      ),
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Shows a picker to select an exercise from the current workout exercises
 Future<WorkoutExercise?> showSupersetExercisePicker(
@@ -10,15 +11,14 @@ Future<WorkoutExercise?> showSupersetExercisePicker(
   List<WorkoutExercise> excludeExercises = const [],
   String title = 'Select Exercise',
 }) async {
-  return await showModalBottomSheet<WorkoutExercise>(
+  return await showGlassSheet<WorkoutExercise>(
     context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    useRootNavigator: true,
-    builder: (context) => _SupersetExercisePicker(
-      exercises: exercises,
-      excludeExercises: excludeExercises,
-      title: title,
+    builder: (context) => GlassSheet(
+      child: _SupersetExercisePicker(
+        exercises: exercises,
+        excludeExercises: excludeExercises,
+        title: title,
+      ),
     ),
   );
 }
@@ -71,35 +71,15 @@ class _SupersetExercisePickerState extends State<_SupersetExercisePicker> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.nearBlack : AppColorsLight.pureWhite;
     final cardBackground = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.7,
-      ),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
+    return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: textMuted.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
           // Header
           Padding(
             padding: const EdgeInsets.all(16),
@@ -201,7 +181,6 @@ class _SupersetExercisePickerState extends State<_SupersetExercisePicker> {
                   ),
           ),
         ],
-      ),
     );
   }
 }

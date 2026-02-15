@@ -9,28 +9,24 @@ import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 
 /// Shows the upcoming workouts bottom sheet
 Future<void> showUpcomingWorkoutsSheet(
   BuildContext context,
   WidgetRef ref,
-  List<Workout> existingWorkouts,
 ) async {
   final parentTheme = Theme.of(context);
 
   // Hide nav bar while sheet is open
   ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-  return showModalBottomSheet<void>(
+  return showGlassSheet<void>(
     context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    isScrollControlled: true,
-    useRootNavigator: true,
     builder: (sheetContext) => Theme(
       data: parentTheme,
-      child: _UpcomingWorkoutsSheet(existingWorkouts: existingWorkouts),
+      child: const _UpcomingWorkoutsSheet(),
     ),
   ).whenComplete(() {
     // Show nav bar when sheet is closed
@@ -39,9 +35,7 @@ Future<void> showUpcomingWorkoutsSheet(
 }
 
 class _UpcomingWorkoutsSheet extends ConsumerStatefulWidget {
-  final List<Workout> existingWorkouts;
-
-  const _UpcomingWorkoutsSheet({required this.existingWorkouts});
+  const _UpcomingWorkoutsSheet();
 
   @override
   ConsumerState<_UpcomingWorkoutsSheet> createState() => _UpcomingWorkoutsSheetState();
@@ -53,6 +47,10 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
 
   @override
   Widget build(BuildContext context) {
+    // Load workouts on-demand from the provider
+    final workoutsState = ref.watch(workoutsProvider);
+    final workouts = workoutsState.valueOrNull ?? [];
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -82,28 +80,11 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
       }
     }
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
-      ),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+    return GlassSheet(
+      maxHeightFraction: 0.85,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag handle
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: textSecondary.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
           // Header
           Padding(
             padding: const EdgeInsets.all(20),
@@ -169,6 +150,7 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
                       accentColor,
                       textPrimary,
                       textSecondary,
+                      workouts,
                     )),
                   ],
 
@@ -184,6 +166,7 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
                       accentColor,
                       textPrimary,
                       textSecondary,
+                      workouts,
                     )),
                   ],
 
@@ -265,10 +248,10 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
   }
 
   /// Check if a workout exists for the given date
-  Workout? _getWorkoutForDate(DateTime date) {
+  Workout? _getWorkoutForDate(DateTime date, List<Workout> workouts) {
     final dateStr = DateFormat('yyyy-MM-dd').format(date);
 
-    for (final workout in widget.existingWorkouts) {
+    for (final workout in workouts) {
       if (workout.scheduledDate != null) {
         final workoutDate = workout.scheduledDate!.split('T')[0];
         if (workoutDate == dateStr && workout.isCompleted != true) {
@@ -286,13 +269,14 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
     Color accentColor,
     Color textPrimary,
     Color textSecondary,
+    List<Workout> workouts,
   ) {
     final cardColor = isDark
         ? AppColors.background.withValues(alpha: 0.5)
         : AppColorsLight.background;
 
     final dateStr = DateFormat('yyyy-MM-dd').format(date);
-    final existingWorkout = _getWorkoutForDate(date);
+    final existingWorkout = _getWorkoutForDate(date, workouts);
     final isGenerating = _generatingDates.contains(dateStr);
 
     // Format date display

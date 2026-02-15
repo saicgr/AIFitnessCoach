@@ -4,12 +4,11 @@
 /// Displayed when user taps "What do these mean?" in the exercise menu.
 library;
 
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Show the exercise options info sheet
 Future<void> showExerciseOptionsInfoSheet({
@@ -17,13 +16,11 @@ Future<void> showExerciseOptionsInfoSheet({
 }) {
   HapticFeedback.lightImpact();
 
-  return showModalBottomSheet(
+  return showGlassSheet(
     context: context,
-    isScrollControlled: true,
-    useRootNavigator: true,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    builder: (ctx) => const ExerciseOptionsInfoSheet(),
+    builder: (ctx) => const GlassSheet(
+      child: ExerciseOptionsInfoSheet(),
+    ),
   );
 }
 
@@ -38,48 +35,11 @@ class ExerciseOptionsInfoSheet extends StatelessWidget {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: screenHeight * 0.85,
-          ),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: SingleChildScrollView(
+    return SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Handle bar
-                Center(
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.2)
-                          : Colors.black.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-
                 // Title
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
@@ -209,9 +169,6 @@ class ExerciseOptionsInfoSheet extends StatelessWidget {
                 SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
               ],
             ),
-          ),
-        ),
-      ),
     );
   }
 

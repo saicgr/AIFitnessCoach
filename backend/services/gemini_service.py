@@ -2245,12 +2245,12 @@ IMPORTANT - ALWAYS identify foods:
 - NEVER return empty food_items - always make your best estimate'''
 
         # Retry logic for intermittent Gemini failures
-        max_retries = 3
+        max_retries = 2
         last_error = None
         content = ""
 
-        # Timeout for food analysis (30 seconds per attempt - complex foods need more time)
-        FOOD_ANALYSIS_TIMEOUT = 30
+        # Timeout for food analysis (20 seconds per attempt)
+        FOOD_ANALYSIS_TIMEOUT = 20
 
         for attempt in range(max_retries):
             try:

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/repositories/nutrition_repository.dart';
+import '../glass_sheet.dart';
 
 /// Provider for food-mood analytics data
 /// Note: Removed autoDispose to prevent refetching on navigation
@@ -516,14 +517,15 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
   }
 
   void _showAnalyticsSheet(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _FoodMoodAnalyticsSheet(
-        userId: userId,
-        isDark: isDark,
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: _FoodMoodAnalyticsSheet(
+          userId: userId,
+          isDark: isDark,
+        ),
       ),
     );
   }
@@ -550,26 +552,10 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
 
-    return Container(
+    return SizedBox(
       height: MediaQuery.of(context).size.height * 0.85,
-      decoration: BoxDecoration(
-        color: nearBlack,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       child: Column(
         children: [
-          // Handle bar
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
           // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),

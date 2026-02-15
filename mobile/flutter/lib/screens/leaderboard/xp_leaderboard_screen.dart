@@ -9,6 +9,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/xp_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_back_button.dart';
 
 /// XP Leaderboard screen showing top users by level and XP
 class XPLeaderboardScreen extends ConsumerStatefulWidget {
@@ -83,10 +84,8 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen> {
       appBar: AppBar(
         backgroundColor: bgColor,
         surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textColor),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

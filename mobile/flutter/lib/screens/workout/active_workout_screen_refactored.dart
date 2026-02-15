@@ -32,6 +32,7 @@ import '../../data/models/exercise.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/rest_messages.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../widgets/log_1rm_sheet.dart';
 import '../../widgets/weight_increments_sheet.dart';
 import '../ai_settings/ai_settings_screen.dart';
@@ -599,20 +600,20 @@ class _ActiveWorkoutScreenState
 
   /// Show the RPE/RIR selector bottom sheet
   void _showRpeSelectorSheet() {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       isDismissible: false, // Force user to respond
       enableDrag: false,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        builder: (context, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          child: RpeRirSelector(
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) => SingleChildScrollView(
+            controller: scrollController,
+            child: RpeRirSelector(
             currentRpe: _lastSetRpe,
             currentRir: _lastSetRir,
             onRpeChanged: (rpe) => setState(() => _lastSetRpe = rpe),
@@ -623,6 +624,7 @@ class _ActiveWorkoutScreenState
             },
           ),
         ),
+      ),
       ),
     );
   }
@@ -1380,34 +1382,16 @@ class _ActiveWorkoutScreenState
   void _showRpeInfoSheet() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surface : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Title
+      builder: (ctx) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
             Text(
               'What is RPE?',
               style: TextStyle(
@@ -1459,6 +1443,7 @@ class _ActiveWorkoutScreenState
             const SizedBox(height: 8),
           ],
         ),
+      ),
       ),
     );
   }
@@ -2694,14 +2679,13 @@ class _ActiveWorkoutScreenState
   }
 
   void _showLog1RMSheet(WorkoutExercise exercise) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Log1RMSheet(
-        exerciseName: exercise.name,
-        exerciseId: exercise.id ?? exercise.libraryId ?? '',
+      builder: (context) => GlassSheet(
+        child: Log1RMSheet(
+          exerciseName: exercise.name,
+          exerciseId: exercise.id ?? exercise.libraryId ?? '',
+        ),
       ),
     );
   }
@@ -4392,13 +4376,12 @@ class _ActiveWorkoutScreenState
   /// Show exercise details sheet (muscles, description, etc.)
   /// Hybrid approach: shows static data immediately, then loads AI insights
   void _showExerciseDetailsSheet(WorkoutExercise exercise) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      builder: (context) => _ExerciseDetailsSheetContent(
-        exercise: exercise,
+      builder: (context) => GlassSheet(
+        child: _ExerciseDetailsSheetContent(
+          exercise: exercise,
+        ),
       ),
     );
   }
@@ -4456,14 +4439,14 @@ class _ActiveWorkoutScreenState
 
   /// Show warmup sheet
   void _showWarmupSheet(WorkoutExercise exercise) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
-      builder: (context) => _buildInfoSheet(
-        title: 'Warm Up',
-        content: 'Warming up helps prevent injury and improves performance.\n\nRecommended: 1-2 lighter sets before working sets.',
-        icon: Icons.whatshot_outlined,
+      builder: (context) => GlassSheet(
+        child: _buildInfoSheet(
+          title: 'Warm Up',
+          content: 'Warming up helps prevent injury and improves performance.\n\nRecommended: 1-2 lighter sets before working sets.',
+          icon: Icons.whatshot_outlined,
+        ),
       ),
     );
   }
@@ -4471,19 +4454,14 @@ class _ActiveWorkoutScreenState
   /// Show targets sheet
   void _showTargetsSheet(WorkoutExercise exercise) {
     final setTargets = exercise.setTargets ?? [];
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isDark ? WorkoutDesign.surface : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
+        return GlassSheet(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -4526,6 +4504,7 @@ class _ActiveWorkoutScreenState
               const SizedBox(height: 20),
             ],
           ),
+        ),
         );
       },
     );
@@ -4576,48 +4555,31 @@ class _ActiveWorkoutScreenState
         }
       }
 
-      showModalBottomSheet(
+      showGlassSheet(
         context: context,
-        backgroundColor: Colors.transparent,
-        useRootNavigator: true,
         builder: (ctx) {
           final isDark = Theme.of(ctx).brightness == Brightness.dark;
-          return Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Handle bar
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                // Title
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.purple.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
+          return GlassSheet(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.link, color: Colors.purple, size: 24),
                       ),
-                      child: const Icon(Icons.link, color: Colors.purple, size: 24),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Superset (${supersetExercises.length} exercises)',
+                      const SizedBox(width: 12),
+                      Text(
+                        'Superset (${supersetExercises.length} exercises)',
                       style: TextStyle(
                         color: isDark ? Colors.white : Colors.black,
                         fontSize: 18,
@@ -4694,53 +4656,37 @@ class _ActiveWorkoutScreenState
                 SizedBox(height: MediaQuery.of(ctx).padding.bottom + 8),
               ],
             ),
+          ),
           );
         },
       );
     } else {
       // Not in a superset - show instructions
-      showModalBottomSheet(
+      showGlassSheet(
         context: context,
-        backgroundColor: Colors.transparent,
-        useRootNavigator: true,
         builder: (ctx) {
           final isDark = Theme.of(ctx).brightness == Brightness.dark;
-          return Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Handle bar
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                // Title
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.purple.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
+          return GlassSheet(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.link, color: Colors.purple, size: 24),
                       ),
-                      child: const Icon(Icons.link, color: Colors.purple, size: 24),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Create Superset',
+                      const SizedBox(width: 12),
+                      Text(
+                        'Create Superset',
                       style: TextStyle(
                         color: isDark ? Colors.white : Colors.black,
                         fontSize: 18,
@@ -4797,8 +4743,9 @@ class _ActiveWorkoutScreenState
                     fontSize: 13,
                   ),
                 ),
-                SizedBox(height: MediaQuery.of(ctx).padding.bottom + 8),
-              ],
+                  SizedBox(height: MediaQuery.of(ctx).padding.bottom + 8),
+                ],
+              ),
             ),
           );
         },
@@ -4848,14 +4795,14 @@ class _ActiveWorkoutScreenState
 
   /// Show equipment sheet
   void _showEquipmentSheet(WorkoutExercise exercise) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
-      builder: (context) => _buildInfoSheet(
-        title: 'Equipment',
-        content: 'Required: ${exercise.equipment ?? 'Bodyweight'}\n\nNo equipment? Tap Swap to find alternatives.',
-        icon: Icons.fitness_center,
+      builder: (context) => GlassSheet(
+        child: _buildInfoSheet(
+          title: 'Equipment',
+          content: 'Required: ${exercise.equipment ?? 'Bodyweight'}\n\nNo equipment? Tap Swap to find alternatives.',
+          icon: Icons.fitness_center,
+        ),
       ),
     );
   }
@@ -4863,19 +4810,14 @@ class _ActiveWorkoutScreenState
   /// Show history sheet
   void _showHistorySheet(WorkoutExercise exercise) {
     final previousSets = _previousSets[_viewingExerciseIndex] ?? [];
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isDark ? WorkoutDesign.surface : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
+        return GlassSheet(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -4918,6 +4860,7 @@ class _ActiveWorkoutScreenState
               const SizedBox(height: 20),
             ],
           ),
+        ),
         );
       },
     );
@@ -5185,36 +5128,17 @@ class _ActiveWorkoutScreenState
     final isDark = Theme.of(context).brightness == Brightness.dark;
     int selectedRir = currentRir ?? 2;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: SafeArea(
+      builder: (context) => GlassSheet(
+        child: StatefulBuilder(
+          builder: (context, setModalState) => SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Handle bar
-                  Center(
-                    child: Container(
-                      width: 36,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
                   // Header
                   Row(
                     children: [
@@ -6130,35 +6054,13 @@ class _ActiveWorkoutScreenState
 
     HapticFeedback.mediumImpact();
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.7,
-        ),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.nearBlack : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
+      builder: (ctx) => GlassSheet(
+        maxHeightFraction: 0.7,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle bar
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withOpacity(0.2)
-                    : Colors.black.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-
             // Title
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),

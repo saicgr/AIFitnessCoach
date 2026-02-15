@@ -5,6 +5,8 @@ import '../../data/models/recipe_suggestion.dart';
 import '../../data/providers/recipe_suggestion_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/providers/xp_provider.dart';
+import '../../widgets/glass_sheet.dart';
+import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/recipe_suggestion_card.dart';
 import 'widgets/recipe_preferences_sheet.dart';
 
@@ -63,12 +65,11 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
   }
 
   void _showPreferencesSheet() {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const RecipePreferencesSheet(),
+      builder: (context) => const GlassSheet(
+        child: RecipePreferencesSheet(),
+      ),
     );
   }
 
@@ -94,35 +95,39 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
             tooltip: 'Recipe Preferences',
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Suggestions'),
-            Tab(text: 'Saved'),
-          ],
-          labelColor: accent,
-          unselectedLabelColor: textSecondary,
-          indicatorColor: accent,
-        ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Column(
         children: [
-          // Suggestions Tab
-          _buildSuggestionsTab(
-            isDark: isDark,
-            state: state,
-            surface: surface,
-            textPrimary: textPrimary,
-            textSecondary: textSecondary,
-            accent: accent,
+          SegmentedTabBar(
+            controller: _tabController,
+            showIcons: false,
+            tabs: const [
+              SegmentedTabItem(label: 'Suggestions'),
+              SegmentedTabItem(label: 'Saved'),
+            ],
           ),
-          // Saved Tab
-          _buildSavedTab(
-            isDark: isDark,
-            state: state,
-            textPrimary: textPrimary,
-            textSecondary: textSecondary,
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                // Suggestions Tab
+                _buildSuggestionsTab(
+                  isDark: isDark,
+                  state: state,
+                  surface: surface,
+                  textPrimary: textPrimary,
+                  textSecondary: textSecondary,
+                  accent: accent,
+                ),
+                // Saved Tab
+                _buildSavedTab(
+                  isDark: isDark,
+                  state: state,
+                  textPrimary: textPrimary,
+                  textSecondary: textSecondary,
+                ),
+              ],
+            ),
           ),
         ],
       ),

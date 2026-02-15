@@ -1,11 +1,10 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/repositories/fasting_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Bottom sheet for marking a historical date as a fasting day
 class MarkFastingDaySheet extends ConsumerStatefulWidget {
@@ -27,16 +26,14 @@ class MarkFastingDaySheet extends ConsumerStatefulWidget {
     DateTime? initialDate,
     VoidCallback? onSuccess,
   }) async {
-    return showModalBottomSheet<MarkFastingDayResult?>(
+    return showGlassSheet<MarkFastingDayResult?>(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.2),
-      builder: (context) => MarkFastingDaySheet(
-        userId: userId,
-        initialDate: initialDate,
-        onSuccess: onSuccess,
+      builder: (context) => GlassSheet(
+        child: MarkFastingDaySheet(
+          userId: userId,
+          initialDate: initialDate,
+          onSuccess: onSuccess,
+        ),
       ),
     );
   }
@@ -216,32 +213,12 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: Padding(
+    return Padding(
             padding: EdgeInsets.only(
               left: 24,
               right: 24,
@@ -253,19 +230,6 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Handle bar
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: textMuted.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
                   // Title
               Row(
                 children: [
@@ -576,9 +540,6 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
                 ],
               ),
             ),
-          ),
-        ),
-      ),
     );
   }
 }

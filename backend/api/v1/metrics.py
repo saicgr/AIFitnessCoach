@@ -3,7 +3,11 @@ Health Metrics API Router.
 
 Provides endpoints for calculating and storing health metrics.
 """
+import io
+
+import pandas as pd
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
@@ -600,4 +604,194 @@ async def delete_body_measurement(user_id: str, measurement_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to delete measurement: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/body/grouped/{user_id}", tags=["body-measurements"])
+async def get_grouped_body_measurements(user_id: str, limit: int = 300):
+    """
+    Fetch ALL measurement types in a single query, grouped by type.
+    Replaces 15 per-type API calls with one.
+    """
+    logger.info(f"Fetching grouped body measurements for user {user_id}")
+
+    db = get_supabase_db()
+
+    select_cols = ",".join([
+        "id", "user_id", "measured_at", "created_at", "notes",
+        *METRIC_TYPE_TO_COLUMN.values(),
+        "is_fasting_day", "fasting_record_id", "fasting_protocol",
+        "fasting_duration_minutes", "days_since_last_fast",
+    ])
+
+    try:
+        result = db.client.table("body_measurements") \
+            .select(select_cols) \
+            .eq("user_id", user_id) \
+            .order("measured_at", desc=True) \
+            .limit(limit) \
+            .execute()
+
+        # Group: iterate rows once, unpack non-null columns into per-type lists
+        grouped = {mt: [] for mt in METRIC_TYPE_TO_COLUMN}
+        for row in result.data:
+            for metric_type, column in METRIC_TYPE_TO_COLUMN.items():
+                value = row.get(column)
+                if value is not None:
+                    entry = {
+                        "id": str(row["id"]),
+                        "user_id": row["user_id"],
+                        "metric_type": metric_type,
+                        "value": value,
+                        "unit": "kg" if metric_type == "weight" else (
+                            "%" if metric_type == "body_fat" else "cm"),
+                        "recorded_at": row.get("measured_at") or row.get("created_at"),
+                        "notes": row.get("notes"),
+                    }
+                    if metric_type == "weight":
+                        entry["is_fasting_day"] = row.get("is_fasting_day")
+                        entry["fasting_record_id"] = (
+                            str(row["fasting_record_id"])
+                            if row.get("fasting_record_id") else None)
+                        entry["fasting_protocol"] = row.get("fasting_protocol")
+                        entry["fasting_duration_minutes"] = row.get(
+                            "fasting_duration_minutes")
+                        entry["days_since_last_fast"] = row.get("days_since_last_fast")
+                    grouped[metric_type].append(entry)
+
+        return grouped
+    except Exception as e:
+        logger.error(f"Failed to get grouped measurements: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============ BODY MEASUREMENTS EXPORT ============
+
+
+@router.get("/body/export/{user_id}", tags=["body-measurements"])
+async def export_body_measurements(
+    user_id: str,
+    format: str = "csv",
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    types: Optional[str] = None,
+):
+    """
+    Export body measurements in the specified format.
+
+    Query parameters:
+    - format: "csv", "json", "xlsx", or "parquet". Default: "csv"
+    - start_date: Optional ISO date (YYYY-MM-DD) filter
+    - end_date: Optional ISO date (YYYY-MM-DD) filter
+    - types: Optional comma-separated measurement types to include (e.g. "weight,waist,body_fat"). Default: all types.
+    """
+    if format not in ("csv", "json", "xlsx", "parquet"):
+        raise HTTPException(status_code=400, detail=f"Unsupported format: {format}. Use csv, json, xlsx, or parquet.")
+
+    # Parse types filter
+    allowed_types = None
+    if types:
+        allowed_types = set(t.strip() for t in types.split(",") if t.strip())
+        invalid = allowed_types - set(METRIC_TYPE_TO_COLUMN.keys())
+        if invalid:
+            raise HTTPException(status_code=400, detail=f"Unknown measurement types: {', '.join(invalid)}. Valid types: {', '.join(METRIC_TYPE_TO_COLUMN.keys())}")
+
+    logger.info(f"Exporting body measurements for user {user_id}, format={format}, types={allowed_types}")
+
+    db = get_supabase_db()
+
+    try:
+        query = db.client.table("body_measurements") \
+            .select("*") \
+            .eq("user_id", user_id) \
+            .order("measured_at", desc=True)
+
+        if start_date:
+            query = query.gte("measured_at", start_date)
+        if end_date:
+            query = query.lte("measured_at", end_date + "T23:59:59Z")
+
+        result = query.limit(5000).execute()
+        rows = result.data or []
+
+        # Flatten: for each row, for each metric column with a non-null value, create a record
+        UNIT_MAP = {
+            "weight": "kg",
+            "body_fat": "%",
+        }
+        flat_rows = []
+        for row in rows:
+            date = row.get("measured_at") or row.get("created_at", "")
+            notes = row.get("notes", "")
+            for metric_type, column in METRIC_TYPE_TO_COLUMN.items():
+                if allowed_types and metric_type not in allowed_types:
+                    continue
+                value = row.get(column)
+                if value is not None:
+                    flat_rows.append({
+                        "date": date,
+                        "type": metric_type,
+                        "value": value,
+                        "unit": UNIT_MAP.get(metric_type, "cm"),
+                        "notes": notes,
+                    })
+
+        df = pd.DataFrame(flat_rows) if flat_rows else pd.DataFrame(columns=["date", "type", "value", "unit", "notes"])
+
+        date_str = datetime.utcnow().strftime("%Y-%m-%d")
+
+        if format == "json":
+            records = df.to_dict(orient="records")
+            return JSONResponse(
+                content=records,
+                headers={
+                    "Content-Disposition": f'attachment; filename="body_measurements_{date_str}.json"',
+                }
+            )
+
+        elif format == "xlsx":
+            buf = io.BytesIO()
+            df.to_excel(buf, index=False, engine="openpyxl")
+            buf.seek(0)
+            xlsx_bytes = buf.getvalue()
+            return StreamingResponse(
+                io.BytesIO(xlsx_bytes),
+                media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                headers={
+                    "Content-Disposition": f'attachment; filename="body_measurements_{date_str}.xlsx"',
+                    "Content-Length": str(len(xlsx_bytes)),
+                }
+            )
+
+        elif format == "parquet":
+            buf = io.BytesIO()
+            df.to_parquet(buf, engine="pyarrow", index=False)
+            buf.seek(0)
+            parquet_bytes = buf.getvalue()
+            return StreamingResponse(
+                io.BytesIO(parquet_bytes),
+                media_type="application/octet-stream",
+                headers={
+                    "Content-Disposition": f'attachment; filename="body_measurements_{date_str}.parquet"',
+                    "Content-Length": str(len(parquet_bytes)),
+                }
+            )
+
+        else:
+            # CSV
+            csv_str = df.to_csv(index=False)
+            csv_bytes = csv_str.encode("utf-8")
+            return StreamingResponse(
+                io.BytesIO(csv_bytes),
+                media_type="text/csv",
+                headers={
+                    "Content-Disposition": f'attachment; filename="body_measurements_{date_str}.csv"',
+                    "Content-Length": str(len(csv_bytes)),
+                }
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to export body measurements: {e}")
         raise HTTPException(status_code=500, detail=str(e))

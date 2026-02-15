@@ -6,6 +6,7 @@ import '../../../data/models/exercise_progression.dart';
 import '../../../data/providers/exercise_progression_provider.dart';
 import '../widgets/section_header.dart';
 import '../widgets/setting_tile.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Settings section for rep range and progression preferences.
 ///
@@ -328,65 +329,54 @@ class RepPreferencesSection extends ConsumerWidget {
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'Training Focus',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : AppColorsLight.textPrimary,
+      builder: (context) => GlassSheet(
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Training Focus',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'Choose your primary training goal',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Choose your primary training goal',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            ...TrainingFocus.values.map(
-              (focus) => _TrainingFocusOptionTile(
-                focus: focus,
-                isSelected: focus == prefs.trainingFocus,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  ref
-                      .read(exerciseProgressionProvider.notifier)
-                      .setTrainingFocus(focus);
-                  Navigator.pop(context);
-                },
+              const SizedBox(height: 16),
+              ...TrainingFocus.values.map(
+                (focus) => _TrainingFocusOptionTile(
+                  focus: focus,
+                  isSelected: focus == prefs.trainingFocus,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    ref
+                        .read(exerciseProgressionProvider.notifier)
+                        .setTrainingFocus(focus);
+                    Navigator.pop(context);
+                  },
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -399,21 +389,19 @@ class RepPreferencesSection extends ConsumerWidget {
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => _RepRangeSliderSheet(
-        initialMin: prefs.preferredMinReps,
-        initialMax: prefs.preferredMaxReps,
-        onSave: (min, max) {
-          ref
-              .read(exerciseProgressionProvider.notifier)
-              .setRepRange(min, max);
-        },
+      builder: (context) => GlassSheet(
+        child: _RepRangeSliderSheet(
+          initialMin: prefs.preferredMinReps,
+          initialMax: prefs.preferredMaxReps,
+          onSave: (min, max) {
+            ref
+                .read(exerciseProgressionProvider.notifier)
+                .setRepRange(min, max);
+          },
+        ),
       ),
     );
   }
@@ -425,65 +413,54 @@ class RepPreferencesSection extends ConsumerWidget {
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'Progression Style',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : AppColorsLight.textPrimary,
+      builder: (context) => GlassSheet(
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Progression Style',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'How should we progress your exercises?',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'How should we progress your exercises?',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            ...ProgressionStyle.values.map(
-              (style) => _ProgressionStyleOptionTile(
-                style: style,
-                isSelected: style == prefs.progressionStyle,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  ref
-                      .read(exerciseProgressionProvider.notifier)
-                      .setProgressionStyle(style);
-                  Navigator.pop(context);
-                },
+              const SizedBox(height: 16),
+              ...ProgressionStyle.values.map(
+                (style) => _ProgressionStyleOptionTile(
+                  style: style,
+                  isSelected: style == prefs.progressionStyle,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    ref
+                        .read(exerciseProgressionProvider.notifier)
+                        .setProgressionStyle(style);
+                    Navigator.pop(context);
+                  },
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -496,21 +473,19 @@ class RepPreferencesSection extends ConsumerWidget {
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => _SetsRangeSliderSheet(
-        initialMin: prefs.minSetsPerExercise,
-        initialMax: prefs.maxSetsPerExercise,
-        onSave: (min, max) {
-          ref
-              .read(exerciseProgressionProvider.notifier)
-              .setSetsRange(min, max);
-        },
+      builder: (context) => GlassSheet(
+        child: _SetsRangeSliderSheet(
+          initialMin: prefs.minSetsPerExercise,
+          initialMax: prefs.maxSetsPerExercise,
+          onSave: (min, max) {
+            ref
+                .read(exerciseProgressionProvider.notifier)
+                .setSetsRange(min, max);
+          },
+        ),
       ),
     );
   }

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
@@ -38,14 +37,10 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
   // Get coach for feedback
   final coach = coachPersona ?? CoachPersona.defaultCoach;
 
-  return showModalBottomSheet<QuitWorkoutResult>(
+  return showGlassSheet<QuitWorkoutResult>(
     context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    useRootNavigator: true,
     isDismissible: true,
     enableDrag: true,
-    barrierColor: GlassSheetStyle.barrierColor(),
     builder: (ctx) => StatefulBuilder(
       builder: (context, setModalState) {
         // Show coach feedback view if a reason was selected and confirmed
@@ -71,29 +66,13 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
         final bottomPadding = MediaQuery.of(context).viewInsets.bottom +
             MediaQuery.of(context).padding.bottom;
 
-        return ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(GlassSheetStyle.borderRadius)),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: GlassSheetStyle.blurSigma, sigmaY: GlassSheetStyle.blurSigma),
-            child: Container(
-              decoration: BoxDecoration(
-                color: GlassSheetStyle.backgroundColor(isDark),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(GlassSheetStyle.borderRadius)),
-                border: Border(
-                  top: BorderSide(
-                    color: GlassSheetStyle.borderColor(isDark),
-                    width: 0.5,
-                  ),
-                ),
-              ),
+        return GlassSheet(
               child: SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(20, 0, 20, 20 + bottomPadding),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Handle bar
-                    GlassSheetHandle(isDark: isDark),
                     const SizedBox(height: 16),
 
                     // Title with progress
@@ -306,8 +285,6 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                 ],
               ),
             ),
-          ),
-        ),
         );
       },
     ),
@@ -385,27 +362,11 @@ Widget _buildCoachFeedbackView({
   required String feedback,
   required VoidCallback onConfirm,
 }) {
-  return ClipRRect(
-    borderRadius: const BorderRadius.vertical(top: Radius.circular(GlassSheetStyle.borderRadius)),
-    child: BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: GlassSheetStyle.blurSigma, sigmaY: GlassSheetStyle.blurSigma),
-      child: Container(
-        decoration: BoxDecoration(
-          color: GlassSheetStyle.backgroundColor(isDark),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(GlassSheetStyle.borderRadius)),
-          border: Border(
-            top: BorderSide(
-              color: GlassSheetStyle.borderColor(isDark),
-              width: 0.5,
-            ),
-          ),
-        ),
+  return GlassSheet(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle bar
-            GlassSheetHandle(isDark: isDark),
             const SizedBox(height: 20),
 
             // Coach avatar with image
@@ -479,8 +440,6 @@ Widget _buildCoachFeedbackView({
           SizedBox(height: MediaQuery.of(context).padding.bottom),
         ],
       ),
-    ),
-    ),
   );
 }
 

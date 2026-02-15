@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/health_service.dart';
 import '../widgets/section_header.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Health sync preferences model.
 class HealthSyncPreferences {
@@ -208,16 +209,16 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
   }
 
   void _showSamsungHealthSetup(BuildContext context, bool isDark) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      isScrollControlled: true,
       useRootNavigator: true,
+      initialChildSize: 0.7,
+      minChildSize: 0.5,
+      maxChildSize: 0.9,
       builder: (context) {
-        return DraggableScrollableSheet(
+        return GlassSheet(
+          showHandle: false,
+          child: DraggableScrollableSheet(
           initialChildSize: 0.7,
           minChildSize: 0.5,
           maxChildSize: 0.9,
@@ -229,17 +230,6 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
                   Row(
                     children: [
                       Container(
@@ -371,7 +361,7 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
               ),
             );
           },
-        );
+        ));
       },
     );
   }

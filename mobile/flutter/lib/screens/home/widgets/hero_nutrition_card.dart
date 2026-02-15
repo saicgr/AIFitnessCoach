@@ -7,6 +7,8 @@ import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../data/providers/nutrition_preferences_provider.dart';
+import '../../../data/repositories/nutrition_preferences_repository.dart';
 import '../../nutrition/log_meal_sheet.dart';
 
 /// Hero nutrition card - prominent action-focused nutrition display
@@ -34,6 +36,9 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
       await ref.read(nutritionProvider.notifier).loadTodaySummary(userId);
       await ref.read(nutritionProvider.notifier).loadTargets(userId);
 
+      // Load dynamic targets (training/rest day adjustments)
+      ref.read(nutritionPreferencesProvider.notifier).initialize(userId);
+
       // Check if targets are null - if so, try to calculate them from user profile
       final nutritionState = ref.read(nutritionProvider);
       if (nutritionState.targets?.dailyCalorieTarget == null) {
@@ -45,6 +50,19 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  String _adjustmentLabel(DynamicNutritionTargets dt) {
+    switch (dt.adjustmentReason) {
+      case 'training_day':
+        return 'Training day (+${dt.calorieAdjustment} kcal)';
+      case 'rest_day':
+        return 'Rest day (${dt.calorieAdjustment} kcal)';
+      case 'fasting_day':
+        return 'Fasting day';
+      default:
+        return '';
     }
   }
 
@@ -124,11 +142,13 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
     final nutritionState = ref.watch(nutritionProvider);
     final summary = nutritionState.todaySummary;
     final targets = nutritionState.targets;
+    final prefsState = ref.watch(nutritionPreferencesProvider);
+    final dynamicTargets = prefsState.dynamicTargets;
 
     debugPrint('🥗 [HeroNutritionCard] summary: $summary, targets: $targets');
 
     final caloriesConsumed = summary?.totalCalories ?? 0;
-    final calorieTarget = targets?.dailyCalorieTarget ?? 2000;
+    final calorieTarget = dynamicTargets?.targetCalories ?? targets?.dailyCalorieTarget ?? 2000;
     final proteinConsumed = summary?.totalProteinG ?? 0;
     final carbsConsumed = summary?.totalCarbsG ?? 0;
     final fatConsumed = summary?.totalFatG ?? 0;
@@ -256,6 +276,33 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
                         color: textSecondary,
                       ),
                     ),
+
+                    // Training/rest day adjustment info
+                    if (dynamicTargets != null &&
+                        dynamicTargets.adjustmentReason != 'base_targets') ...[
+                      const SizedBox(height: 6),
+                      Builder(builder: (context) {
+                        final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: teal.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.info_outline, size: 12, color: teal),
+                              const SizedBox(width: 4),
+                              Text(
+                                _adjustmentLabel(dynamicTargets),
+                                style: TextStyle(fontSize: 10, color: teal),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
                     const SizedBox(height: 12),
 
                     // Macros row

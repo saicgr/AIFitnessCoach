@@ -330,11 +330,13 @@ class ApiClient with WidgetsBindingObserver {
     String path, {
     Map<String, dynamic>? queryParameters,
     Options? options,
+    CancelToken? cancelToken,
   }) async {
     return _dio.get<T>(
       path,
       queryParameters: queryParameters,
       options: options,
+      cancelToken: cancelToken,
     );
   }
 

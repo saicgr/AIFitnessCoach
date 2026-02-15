@@ -14,6 +14,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../models/workout_state.dart';
 import 'enhanced_notes_sheet.dart';
 import 'exercise_analytics_page.dart';
@@ -371,37 +372,20 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     );
     int selectedRir = existingTarget?.targetRir ?? 2;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) => Container(
+      builder: (ctx) => GlassSheet(
+        child: StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
             top: 16,
             left: 20,
             right: 20,
           ),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.surface : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Handle bar
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 16),
-
               // Title
               Text(
                 'Set Target',
@@ -551,6 +535,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -976,75 +961,58 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
       }
     }
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surface : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Title
-            Row(
-              children: [
-                Icon(Icons.history_rounded, color: AppColors.electricBlue, size: 24),
-                const SizedBox(width: 10),
-                Text(
-                  'Exercise History',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
+      builder: (ctx) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
+              Row(
+                children: [
+                  Icon(Icons.history_rounded, color: AppColors.electricBlue, size: 24),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Exercise History',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
+                ],
+              ),
+              const SizedBox(height: 20),
 
-            // Last session
-            _buildHistoryItem(
-              label: 'Last Session',
-              value: lastDisplay,
-              subtitle: lastDate.isNotEmpty ? lastDate : null,
-              color: AppColors.electricBlue,
-              isDark: isDark,
-              textPrimary: textPrimary,
-              textMuted: textMuted,
-            ),
-            const SizedBox(height: 16),
+              // Last session
+              _buildHistoryItem(
+                label: 'Last Session',
+                value: lastDisplay,
+                subtitle: lastDate.isNotEmpty ? lastDate : null,
+                color: AppColors.electricBlue,
+                isDark: isDark,
+                textPrimary: textPrimary,
+                textMuted: textMuted,
+              ),
+              const SizedBox(height: 16),
 
-            // Personal Record
-            _buildHistoryItem(
-              label: 'Personal Record',
-              value: prDisplay,
-              color: AppColors.success,
-              isDark: isDark,
-              textPrimary: textPrimary,
-              textMuted: textMuted,
-              showTrophy: widget.prData != null,
-            ),
+              // Personal Record
+              _buildHistoryItem(
+                label: 'Personal Record',
+                value: prDisplay,
+                color: AppColors.success,
+                isDark: isDark,
+                textPrimary: textPrimary,
+                textMuted: textMuted,
+                showTrophy: widget.prData != null,
+              ),
 
-            SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
-          ],
+              SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
+            ],
+          ),
         ),
       ),
     );
@@ -1124,95 +1092,78 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
 
   /// Show analytics bottom sheet
   void _showAnalyticsSheet(bool isDark, Color textPrimary, Color textMuted) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surface : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Title
-            Row(
-              children: [
-                Icon(Icons.analytics_outlined, color: AppColors.success, size: 24),
-                const SizedBox(width: 10),
-                Text(
-                  'Exercise Analytics',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Coming soon placeholder
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withOpacity(0.05)
-                    : Colors.black.withOpacity(0.03),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.1)
-                      : Colors.black.withOpacity(0.08),
-                ),
-              ),
-              child: Column(
+      builder: (ctx) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
+              Row(
                 children: [
-                  Icon(
-                    Icons.show_chart_rounded,
-                    size: 48,
-                    color: textMuted.withOpacity(0.5),
-                  ),
-                  const SizedBox(height: 12),
+                  Icon(Icons.analytics_outlined, color: AppColors.success, size: 24),
+                  const SizedBox(width: 10),
                   Text(
-                    'Progress Charts Coming Soon',
+                    'Exercise Analytics',
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                       color: textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Track your strength gains over time',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: textMuted,
                     ),
                   ),
                 ],
               ),
-            ),
+              const SizedBox(height: 20),
 
-            SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
-          ],
+              // Coming soon placeholder
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.05)
+                      : Colors.black.withOpacity(0.03),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.black.withOpacity(0.08),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.show_chart_rounded,
+                      size: 48,
+                      color: textMuted.withOpacity(0.5),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Progress Charts Coming Soon',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Track your strength gains over time',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
+            ],
+          ),
         ),
       ),
     );
@@ -1220,37 +1171,17 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
 
   /// Show weight increment picker sheet
   void _showWeightIncrementSheet(bool isDark, Color textPrimary, Color textMuted) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      enableDrag: true,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surface : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle bar (draggable indicator)
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Title with close button
-            Row(
+      builder: (ctx) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title with close button
+              Row(
               children: [
                 Icon(Icons.tune_rounded, color: AppColors.orange, size: 24),
                 const SizedBox(width: 10),
@@ -1347,7 +1278,8 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
             ),
 
             SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1746,36 +1678,18 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
   void _showSetTypeInfoSheet(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surface : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Title
-            Text(
-              'Set Types',
+      builder: (ctx) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
+              Text(
+                'Set Types',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -1817,7 +1731,8 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
             ),
 
             SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -2200,36 +2115,18 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
   void _showRpeInfoSheet() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surface : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Title
-            Text(
-              'What is RPE?',
+      builder: (ctx) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
+              Text(
+                'What is RPE?',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -2277,7 +2174,8 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
               ),
             ),
             const SizedBox(height: 8),
-          ],
+            ],
+          ),
         ),
       ),
     );

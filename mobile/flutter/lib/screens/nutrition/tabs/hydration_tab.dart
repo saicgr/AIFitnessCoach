@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/hydration.dart';
 import '../../../data/repositories/hydration_repository.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../widgets/liquid_body_hydration.dart';
 
 /// Hydration unit for display conversion
@@ -342,37 +343,20 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
         ? AppColors.electricBlue
         : AppColorsLight.electricBlue;
 
-    final result = await showModalBottomSheet<int>(
+    final result = await showGlassSheet<int>(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: EdgeInsets.fromLTRB(
-          24,
-          20,
-          24,
-          MediaQuery.of(context).viewInsets.bottom + 24,
-        ),
-        decoration: BoxDecoration(
-          color: nearBlack,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            8,
+            24,
+            MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Row(
               children: [
                 Icon(Icons.water_drop, color: electricBlue, size: 28),
@@ -487,6 +471,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
           ],
         ),
       ),
+      ),
     );
 
     if (result != null && result > 0) {
@@ -513,37 +498,20 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
         ? AppColors.electricBlue
         : AppColorsLight.electricBlue;
 
-    final result = await showModalBottomSheet<Map<String, dynamic>>(
+    final result = await showGlassSheet<Map<String, dynamic>>(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: EdgeInsets.fromLTRB(
-          16,
-          16,
-          16,
-          MediaQuery.of(context).viewInsets.bottom + 16,
-        ),
-        decoration: BoxDecoration(
-          color: nearBlack,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            8,
+            16,
+            MediaQuery.of(context).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Row(
               children: [
                 Text(type.emoji, style: const TextStyle(fontSize: 32)),
@@ -614,6 +582,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
           ],
         ),
       ),
+      ),
     );
 
     if (result != null && widget.userId.isNotEmpty) {
@@ -661,22 +630,17 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
         ? AppColors.electricBlue
         : AppColorsLight.electricBlue;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: nearBlack,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Daily Goal',
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Daily Goal',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -728,6 +692,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
@@ -120,33 +121,18 @@ class ProfileScreen extends ConsumerWidget {
 
   void _showCustomEquipmentSheet(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.85,
         minChildSize: 0.5,
         maxChildSize: 0.95,
         expand: false,
         builder: (context, scrollController) {
-          return Container(
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            ),
+          return GlassSheet(
+            showHandle: false,
             child: Column(
               children: [
-                const SizedBox(height: 8),
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
                 const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -374,6 +360,8 @@ class ProfileScreen extends ConsumerWidget {
         children: [
           Expanded(child: _buildTitlePill(context, isDark)),
           const SizedBox(width: 12),
+          _buildStatsButton(context, isDark),
+          const SizedBox(width: 8),
           _buildSettingsButton(context, isDark),
         ],
       ),
@@ -407,6 +395,53 @@ class ProfileScreen extends ConsumerWidget {
                 fontWeight: FontWeight.w600,
                 color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
               ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsButton(BuildContext context, bool isDark) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.selection();
+        context.push('/stats');
+      },
+      child: Container(
+        height: 56,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated,
+          borderRadius: BorderRadius.circular(28),
+          border: isDark
+              ? null
+              : Border.all(color: AppColorsLight.cardBorder.withOpacity(0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withOpacity(0.4)
+                  : Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.bar_chart_rounded,
+              color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+              size: 20,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'Stats',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                  ),
+            ),
+          ],
         ),
       ),
     );
@@ -447,11 +482,8 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   void _showEditPersonalInfoSheet(BuildContext context) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
       builder: (context) => const EditPersonalInfoSheet(),
     );
   }

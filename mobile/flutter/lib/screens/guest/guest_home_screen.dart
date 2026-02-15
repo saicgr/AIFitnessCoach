@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/providers/guest_mode_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_sheet.dart';
 import 'widgets/guest_sample_workout_card.dart';
 import 'widgets/guest_sign_up_banner.dart';
 import 'widgets/guest_session_timer.dart';
@@ -585,33 +586,24 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
       'For back pain relief, focus on core strengthening and mobility work. Try bird-dogs, dead bugs, cat-cow stretches, and gentle hip flexor stretches. Avoid exercises that aggravate pain. I recommend consulting a healthcare provider for persistent pain.',
     ];
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: elevatedColor,
-      isScrollControlled: true,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => StatefulBuilder(
-          builder: (context, setState) {
-            return Column(
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(top: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: textMuted,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                Padding(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) => StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                children: [
+                  Padding(
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
@@ -723,6 +715,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
             );
           },
         ),
+      ),
       ),
     );
   }

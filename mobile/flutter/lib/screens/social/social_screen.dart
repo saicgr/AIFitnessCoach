@@ -13,6 +13,7 @@ import 'tabs/leaderboard_tab.dart';
 import 'tabs/friends_tab.dart';
 import 'tabs/messages_tab.dart';
 import 'senior/senior_social_screen.dart';
+import '../../widgets/glass_back_button.dart';
 import 'friend_search_screen.dart';
 
 /// Social screen - Shows activity feed, challenges, and friends
@@ -530,13 +531,8 @@ class _MessagesScreen extends StatelessWidget {
         backgroundColor: backgroundColor,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: isDark ? Colors.white : AppColors.pureBlack,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'Messages',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(

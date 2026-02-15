@@ -10,6 +10,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Show the workout plan drawer as a bottom sheet
 Future<void> showWorkoutPlanDrawer({
@@ -24,21 +25,20 @@ Future<void> showWorkoutPlanDrawer({
   required Function(int) onDeleteExercise,
   required VoidCallback onAddExercise,
 }) {
-  return showModalBottomSheet(
+  return showGlassSheet(
     context: context,
-    isScrollControlled: true,
-    useRootNavigator: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => WorkoutPlanDrawer(
-      exercises: exercises,
-      currentExerciseIndex: currentExerciseIndex,
-      completedSetsPerExercise: completedSetsPerExercise,
-      totalSetsPerExercise: totalSetsPerExercise,
-      onJumpToExercise: onJumpToExercise,
-      onReorder: onReorder,
-      onSwapExercise: onSwapExercise,
-      onDeleteExercise: onDeleteExercise,
-      onAddExercise: onAddExercise,
+    builder: (context) => GlassSheet(
+      child: WorkoutPlanDrawer(
+        exercises: exercises,
+        currentExerciseIndex: currentExerciseIndex,
+        completedSetsPerExercise: completedSetsPerExercise,
+        totalSetsPerExercise: totalSetsPerExercise,
+        onJumpToExercise: onJumpToExercise,
+        onReorder: onReorder,
+        onSwapExercise: onSwapExercise,
+        onDeleteExercise: onDeleteExercise,
+        onAddExercise: onAddExercise,
+      ),
     ),
   );
 }
@@ -100,24 +100,8 @@ class _WorkoutPlanDrawerState extends State<WorkoutPlanDrawer> {
 
     return Container(
       height: screenHeight * 0.85,
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.nearBlack : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       child: Column(
         children: [
-          // Drag handle
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withOpacity(0.2)
-                  : Colors.black.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
 
           // Header
           Padding(

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../data/providers/consistency_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
@@ -29,11 +28,9 @@ class ShareStatsSheet extends ConsumerStatefulWidget {
 
   /// Show the share stats bottom sheet
   static Future<void> show(BuildContext context, WidgetRef ref) async {
-    await showModalBottomSheet(
+    await showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => const ShareStatsSheet(),
     );
   }
@@ -353,44 +350,12 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.4)
-                  : Colors.white.withValues(alpha: 0.6),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              border: Border(
-                top: BorderSide(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.black.withValues(alpha: 0.1),
-                  width: 0.5,
-                ),
-              ),
-            ),
-            child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle bar
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-
-            // Header
+    return GlassSheet(
+      maxHeightFraction: 0.85,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header
             Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -559,11 +524,8 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
               ),
             ),
           ],
-            ),
-          ),
         ),
-      ),
-    );
+      );
   }
 
   /// Get background gradient colors for Instagram Story wrapper based on template

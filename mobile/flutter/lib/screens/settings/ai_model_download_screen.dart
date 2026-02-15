@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/providers/device_capability_provider.dart';
 import '../../data/providers/model_download_provider.dart';
@@ -9,15 +10,72 @@ import '../../services/model_download_service.dart';
 /// Dedicated screen for managing on-device AI model downloads.
 ///
 /// Shows:
+/// - HuggingFace token input (required for gated model repos)
 /// - Device capability assessment (RAM, storage)
 /// - Model options with recommendations
 /// - Download progress
-/// - Test generation button
-class AiModelDownloadScreen extends ConsumerWidget {
+class AiModelDownloadScreen extends ConsumerStatefulWidget {
   const AiModelDownloadScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AiModelDownloadScreen> createState() =>
+      _AiModelDownloadScreenState();
+}
+
+class _AiModelDownloadScreenState
+    extends ConsumerState<AiModelDownloadScreen> {
+  final _tokenController = TextEditingController();
+  bool _tokenObscured = true;
+  bool _tokenSaved = false;
+  bool _tokenLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTokenState();
+  }
+
+  Future<void> _loadTokenState() async {
+    final token = await ref.read(modelDownloadProvider.notifier).getHuggingFaceToken();
+    if (mounted) {
+      setState(() {
+        _tokenSaved = token != null && token.isNotEmpty;
+        _tokenLoading = false;
+      });
+    }
+  }
+
+  Future<void> _saveToken() async {
+    final token = _tokenController.text.trim();
+    if (token.isEmpty) return;
+    await ref.read(modelDownloadProvider.notifier).setHuggingFaceToken(token);
+    _tokenController.clear();
+    if (mounted) {
+      setState(() => _tokenSaved = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('HuggingFace token saved')),
+      );
+    }
+  }
+
+  Future<void> _clearToken() async {
+    await ref.read(modelDownloadProvider.notifier).clearHuggingFaceToken();
+    if (mounted) {
+      setState(() => _tokenSaved = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('HuggingFace token removed')),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _tokenController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg =
         isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -40,6 +98,133 @@ class AiModelDownloadScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // --- HuggingFace Token ---
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text('HuggingFace Token',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: textPrimary)),
+                    const SizedBox(width: 8),
+                    if (_tokenLoading)
+                      const SizedBox(
+                        width: 16, height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    else if (_tokenSaved)
+                      const Icon(Icons.check_circle_rounded,
+                          color: Colors.green, size: 20),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Required to download models from HuggingFace. '
+                  'You must also accept the Gemma license on HuggingFace before downloading.',
+                  style: TextStyle(fontSize: 12, color: textMuted, height: 1.4),
+                ),
+                const SizedBox(height: 12),
+                if (_tokenSaved) ...[
+                  Row(
+                    children: [
+                      const Icon(Icons.vpn_key_rounded,
+                          color: Colors.green, size: 16),
+                      const SizedBox(width: 8),
+                      Text('Token saved securely',
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: textPrimary,
+                              fontWeight: FontWeight.w500)),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: _clearToken,
+                        child: const Text('Remove',
+                            style: TextStyle(color: Colors.red, fontSize: 13)),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  TextField(
+                    controller: _tokenController,
+                    obscureText: _tokenObscured,
+                    style: TextStyle(fontSize: 13, color: textPrimary),
+                    decoration: InputDecoration(
+                      hintText: 'hf_...',
+                      hintStyle: TextStyle(color: textMuted, fontSize: 13),
+                      filled: true,
+                      fillColor: isDark
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.black.withOpacity(0.04),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 12),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _tokenObscured
+                              ? Icons.visibility_off_rounded
+                              : Icons.visibility_rounded,
+                          size: 20,
+                          color: textMuted,
+                        ),
+                        onPressed: () =>
+                            setState(() => _tokenObscured = !_tokenObscured),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _saveToken,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.orange,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
+                          child: const Text('Save Token',
+                              style: TextStyle(fontSize: 13)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () => launchUrl(
+                    Uri.parse('https://huggingface.co/settings/tokens'),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                  child: Text(
+                    'Get your token at huggingface.co/settings/tokens',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.blue.shade400,
+                      decoration: TextDecoration.underline,
+                      decorationColor: Colors.blue.shade400,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
           // --- Device Compatibility ---
           Container(
             padding: const EdgeInsets.all(16),
@@ -179,6 +364,13 @@ class AiModelDownloadScreen extends ConsumerWidget {
                     'Downloading... ${(downloadState.progress * 100).toInt()}%',
                     style: TextStyle(fontSize: 13, color: textMuted),
                   ),
+                  if (downloadState.progressDisplay.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      downloadState.progressDisplay,
+                      style: TextStyle(fontSize: 12, color: textMuted),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   TextButton(
                     onPressed: () =>
@@ -248,7 +440,7 @@ class AiModelDownloadScreen extends ConsumerWidget {
   Widget _buildModelList(WidgetRef ref, ModelDownloadState downloadState, DeviceCapability cap) {
     final allModels = [
       (
-        type: GemmaModelType.functionGemma270M,
+        type: GemmaModelType.gemma3_270M,
         minCap: DeviceCapability.basic,
         recommended: true,
         badges: const <String>['Recommended'],

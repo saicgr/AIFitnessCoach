@@ -6,9 +6,10 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../core/theme/accent_color_provider.dart';
-import '../../core/theme/theme_colors.dart';
 import '../../data/models/progress_photos.dart';
 import '../../data/providers/consistency_provider.dart';
 import '../../data/providers/scores_provider.dart';
@@ -19,12 +20,24 @@ import '../../core/animations/app_animations.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/activity_heatmap.dart';
 import '../../widgets/exercise_search_results.dart';
+import '../../widgets/glass_sheet.dart';
+import '../../widgets/segmented_tab_bar.dart';
 import '../../widgets/workout_day_detail_sheet.dart';
 import '../progress/comparison_view.dart';
 import '../progress/photo_editor_screen.dart';
 import '../progress/widgets/readiness_checkin_card.dart';
 import '../progress/widgets/strength_overview_card.dart';
 import '../progress/widgets/pr_summary_card.dart';
+import '../../data/providers/mood_history_provider.dart';
+import '../../widgets/mood_picker_sheet.dart';
+import '../../data/models/nutrition_preferences.dart';
+import '../../data/providers/nutrition_stats_provider.dart';
+import '../../widgets/nutrition/health_metrics_card.dart';
+import '../../widgets/nutrition/food_mood_analytics_card.dart';
+import '../mood/widgets/mood_weekly_chart.dart';
+import '../mood/widgets/mood_streak_card.dart';
+import '../mood/widgets/mood_analytics_card.dart';
+import '../mood/widgets/mood_calendar_heatmap.dart';
 import 'widgets/date_range_filter_sheet.dart';
 import 'widgets/export_stats_sheet.dart';
 import 'widgets/share_stats_sheet.dart';
@@ -35,9 +48,13 @@ class ComprehensiveStatsScreen extends ConsumerStatefulWidget {
   /// If true, opens the add photo sheet immediately after loading
   final bool openPhotoSheet;
 
+  /// If set, opens this tab index on load
+  final int? initialTab;
+
   const ComprehensiveStatsScreen({
     super.key,
     this.openPhotoSheet = false,
+    this.initialTab,
   });
 
   @override
@@ -48,11 +65,20 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String? _userId;
+  int _currentTabIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() => _currentTabIndex = _tabController.index);
+      }
+    });
+    if (widget.initialTab != null && widget.initialTab! >= 0 && widget.initialTab! < 6) {
+      _tabController.index = widget.initialTab!;
+    }
     _loadData();
   }
 
@@ -87,10 +113,6 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    // Use dynamic accent color from provider
-    final cyan = ref.colors(context).accent;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -98,8 +120,9 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
         backgroundColor: backgroundColor,
         foregroundColor: textPrimary,
         automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
-          'Your Progress',
+          'Stats & Scores',
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
@@ -108,8 +131,8 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
         ),
         centerTitle: false,
         actions: [
-          // Compare Photos (only show when photos tab visible)
-          if (_userId != null)
+          // Compare Photos (only show on Photos tab - index 1)
+          if (_userId != null && _currentTabIndex == 1)
             IconButton(
               icon: Icon(Icons.compare_arrows, color: textPrimary),
               onPressed: () => _showComparisonPicker(),
@@ -147,31 +170,17 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
       body: Column(
         children: [
           // Tab Bar
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: elevated,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: TabBar(
-              controller: _tabController,
-              indicator: BoxDecoration(
-                color: cyan,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              indicatorSize: TabBarIndicatorSize.tab,
-              labelColor: Colors.white,
-              unselectedLabelColor: textMuted,
-              labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-              dividerColor: Colors.transparent,
-              tabs: const [
-                Tab(text: 'Overview'),
-                Tab(text: 'Photos'),
-                Tab(text: 'Strength'),
-                Tab(text: 'Body'),
-                Tab(text: 'Nutrition'),
-              ],
-            ),
+          SegmentedTabBar(
+            controller: _tabController,
+            showIcons: false,
+            tabs: const [
+              SegmentedTabItem(label: 'Overview'),
+              SegmentedTabItem(label: 'Photos'),
+              SegmentedTabItem(label: 'Strength'),
+              SegmentedTabItem(label: 'Body'),
+              SegmentedTabItem(label: 'Nutrition'),
+              SegmentedTabItem(label: 'Mood'),
+            ],
           ),
 
           // Tab content
@@ -183,7 +192,8 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
                 _PhotosTab(userId: _userId, openPhotoSheet: widget.openPhotoSheet),
                 _StrengthTab(userId: _userId),
                 _BodyTab(),
-                _NutritionTab(),
+                _NutritionTab(userId: _userId),
+                _MoodTab(),
               ],
             ),
           ),
@@ -357,12 +367,6 @@ class _OverviewTabState extends ConsumerState<_OverviewTab> {
           _SectionHeader(title: 'Quick Access'),
           const SizedBox(height: 12),
           _QuickActionButton(
-            icon: Icons.insights,
-            label: 'View Detailed Metrics',
-            onTap: () => context.push('/metrics'),
-          ),
-          const SizedBox(height: 8),
-          _QuickActionButton(
             icon: Icons.monitor_weight_outlined,
             label: 'Body Measurements',
             onTap: () => context.push('/measurements'),
@@ -435,9 +439,13 @@ class _PhotosTab extends ConsumerStatefulWidget {
   ConsumerState<_PhotosTab> createState() => _PhotosTabState();
 }
 
-class _PhotosTabState extends ConsumerState<_PhotosTab> {
+class _PhotosTabState extends ConsumerState<_PhotosTab>
+    with AutomaticKeepAliveClientMixin {
   PhotoViewType? _selectedViewFilter;
   bool _hasOpenedPhotoSheet = false;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -455,80 +463,98 @@ class _PhotosTabState extends ConsumerState<_PhotosTab> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required by AutomaticKeepAliveClientMixin
+
     if (widget.userId == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
     final state = ref.watch(progressPhotosNotifierProvider(widget.userId!));
+    final colorScheme = Theme.of(context).colorScheme;
 
-    return RefreshIndicator(
-      onRefresh: () => ref
-          .read(progressPhotosNotifierProvider(widget.userId!).notifier)
-          .loadAll(),
-      child: CustomScrollView(
-        slivers: [
-          // Stats Card
-          SliverToBoxAdapter(
-            child: _buildPhotoStatsCard(state),
-          ),
-
-          // View Type Filter
-          SliverToBoxAdapter(
-            child: _buildViewTypeFilter(),
-          ),
-
-          // Latest Photos by View
-          if (state.latestByView != null && _selectedViewFilter == null)
-            SliverToBoxAdapter(
-              child: _buildLatestPhotosByView(state.latestByView!),
-            ),
-
-          // Photo Grid
-          if (state.isLoading)
-            const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (state.photos.isEmpty)
-            SliverFillRemaining(
-              child: _buildEmptyPhotosState(),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.all(16),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  childAspectRatio: 0.75,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final filteredPhotos = _selectedViewFilter == null
-                        ? state.photos
-                        : state.photos
-                            .where((p) =>
-                                p.viewTypeEnum == _selectedViewFilter)
-                            .toList();
-                    if (index >= filteredPhotos.length) return null;
-                    return _buildPhotoCard(filteredPhotos[index]);
-                  },
-                  childCount: _selectedViewFilter == null
-                      ? state.photos.length
-                      : state.photos
-                          .where(
-                              (p) => p.viewTypeEnum == _selectedViewFilter)
-                          .length,
-                ),
+    return Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: () => ref
+              .read(progressPhotosNotifierProvider(widget.userId!).notifier)
+              .loadAll(),
+          child: CustomScrollView(
+            slivers: [
+              // Stats Card
+              SliverToBoxAdapter(
+                child: _buildPhotoStatsCard(state),
               ),
-            ),
 
-          // FAB spacer
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 80),
+              // View Type Filter
+              SliverToBoxAdapter(
+                child: _buildViewTypeFilter(),
+              ),
+
+              // Latest Photos by View
+              if (state.latestByView != null && _selectedViewFilter == null)
+                SliverToBoxAdapter(
+                  child: _buildLatestPhotosByView(state.latestByView!),
+                ),
+
+              // Photo Grid
+              if (state.isLoading)
+                const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (state.photos.isEmpty)
+                SliverFillRemaining(
+                  child: _buildEmptyPhotosState(),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.all(16),
+                  sliver: SliverGrid(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      childAspectRatio: 0.75,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final filteredPhotos = _selectedViewFilter == null
+                            ? state.photos
+                            : state.photos
+                                .where((p) =>
+                                    p.viewTypeEnum == _selectedViewFilter)
+                                .toList();
+                        if (index >= filteredPhotos.length) return null;
+                        return _buildPhotoCard(filteredPhotos[index]);
+                      },
+                      childCount: _selectedViewFilter == null
+                          ? state.photos.length
+                          : state.photos
+                              .where(
+                                  (p) => p.viewTypeEnum == _selectedViewFilter)
+                              .length,
+                    ),
+                  ),
+                ),
+
+              // FAB spacer
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 80),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        // Camera FAB
+        Positioned(
+          right: 16,
+          bottom: 16,
+          child: FloatingActionButton(
+            onPressed: _showAddPhotoSheet,
+            backgroundColor: colorScheme.primary,
+            foregroundColor: colorScheme.onPrimary,
+            child: const Icon(Icons.camera_alt),
+          ),
+        ),
+      ],
     );
   }
 
@@ -870,31 +896,33 @@ class _PhotosTabState extends ConsumerState<_PhotosTab> {
     PhotoViewType? selectedType;
 
     // First, pick a view type
-    selectedType = await showModalBottomSheet<PhotoViewType>(
+    selectedType = await showGlassSheet<PhotoViewType>(
       context: context,
       useRootNavigator: true,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Select View Type',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Select View Type',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            ...PhotoViewType.values.map((type) => ListTile(
-                  leading: Icon(_getViewTypeIcon(type)),
-                  title: Text(type.displayName),
-                  subtitle: Text(_getViewTypeDescription(type)),
-                  onTap: () => Navigator.pop(context, type),
-                )),
-          ],
+              const SizedBox(height: 16),
+              ...PhotoViewType.values.map((type) => ListTile(
+                    leading: Icon(_getViewTypeIcon(type)),
+                    title: Text(type.displayName),
+                    subtitle: Text(_getViewTypeDescription(type)),
+                    onTap: () => Navigator.pop(context, type),
+                  )),
+            ],
+          ),
         ),
       ),
     );
@@ -902,27 +930,29 @@ class _PhotosTabState extends ConsumerState<_PhotosTab> {
     if (selectedType == null || !mounted) return;
 
     // Then pick image source
-    final source = await showModalBottomSheet<ImageSource>(
+    final source = await showGlassSheet<ImageSource>(
       context: context,
       useRootNavigator: true,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Take Photo'),
-              subtitle: const Text('Use camera'),
-              onTap: () => Navigator.pop(context, ImageSource.camera),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Choose from Gallery'),
-              subtitle: const Text('Select existing photo'),
-              onTap: () => Navigator.pop(context, ImageSource.gallery),
-            ),
-          ],
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take Photo'),
+                subtitle: const Text('Use camera'),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from Gallery'),
+                subtitle: const Text('Select existing photo'),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1002,32 +1032,19 @@ class _PhotosTabState extends ConsumerState<_PhotosTab> {
 
   void _showPhotoDetail(ProgressPhoto photo) {
     final colorScheme = Theme.of(context).colorScheme;
-    showModalBottomSheet(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.9,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.9,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) => Column(
             children: [
-              // Handle
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colorScheme.outline.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+              GlassSheetHandle(isDark: isDark),
               // Photo
               Expanded(
                 child: SingleChildScrollView(
@@ -1403,69 +1420,1214 @@ class _BodyTab extends StatelessWidget {
 // NUTRITION TAB - Calorie trends, macro breakdown, goals
 // ═══════════════════════════════════════════════════════════════════
 
-class _NutritionTab extends StatelessWidget {
+class _NutritionTab extends ConsumerWidget {
+  final String? userId;
+  const _NutritionTab({this.userId});
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.black.withValues(alpha: 0.04);
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    if (userId == null || userId!.isEmpty) {
+      return const Center(child: Text('Sign in to view nutrition stats'));
+    }
+
+    final weeklySummary = ref.watch(weeklySummaryProvider(userId!));
+    final weeklyNutrition = ref.watch(weeklyNutritionProvider(userId!));
+    final detailedTDEE = ref.watch(detailedTDEEProvider(userId!));
+    final adherence = ref.watch(adherenceSummaryProvider(userId!));
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionHeader(title: 'Daily Averages (7 days)'),
-          const SizedBox(height: 12),
-          Row(
+          // Card 1: Weekly Overview Summary
+          _WeeklyOverviewCard(
+            weeklySummary: weeklySummary,
+            cardColor: cardColor,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+            textMuted: textMuted,
+            isDark: isDark,
+          ),
+          const SizedBox(height: 16),
+
+          // Card 2: Calorie Trend Chart
+          _CalorieTrendCard(
+            weeklyNutrition: weeklyNutrition,
+            cardColor: cardColor,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+            textMuted: textMuted,
+            isDark: isDark,
+          ),
+          const SizedBox(height: 16),
+
+          // Card 3: Macro Breakdown
+          _MacroBreakdownCard(
+            weeklyNutrition: weeklyNutrition,
+            cardColor: cardColor,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+            textMuted: textMuted,
+            isDark: isDark,
+          ),
+          const SizedBox(height: 16),
+
+          // Card 4: TDEE & Energy Balance
+          _TDEECard(
+            detailedTDEE: detailedTDEE,
+            weeklySummary: weeklySummary,
+            cardColor: cardColor,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+            textMuted: textMuted,
+            isDark: isDark,
+          ),
+          const SizedBox(height: 16),
+
+          // Card 5: Adherence & Consistency
+          _AdherenceCard(
+            adherence: adherence,
+            cardColor: cardColor,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+            textMuted: textMuted,
+            isDark: isDark,
+          ),
+          const SizedBox(height: 16),
+
+          // Card 6: Health Metrics (existing)
+          HealthMetricsCard(isDark: isDark),
+          const SizedBox(height: 16),
+
+          // Card 7: Food-Mood Analytics (existing)
+          FoodMoodAnalyticsCard(userId: userId!, isDark: isDark),
+
+          const SizedBox(height: 80),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Card 1: Weekly Overview ──────────────────────────────────────
+
+class _WeeklyOverviewCard extends StatelessWidget {
+  final AsyncValue<WeeklySummaryData?> weeklySummary;
+  final Color cardColor;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color textMuted;
+  final bool isDark;
+
+  const _WeeklyOverviewCard({
+    required this.weeklySummary,
+    required this.cardColor,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textMuted,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: weeklySummary.when(
+        loading: () => const SizedBox(
+          height: 80,
+          child: Center(child: CircularProgressIndicator.adaptive()),
+        ),
+        error: (_, __) => _errorRow('Could not load weekly summary'),
+        data: (data) {
+          if (data == null) return _errorRow('No data available');
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: _StatCard(
-                  icon: Icons.local_fire_department,
-                  label: 'Calories',
-                  value: '2,150',
-                  color: AppColors.orange,
+              Text(
+                'Weekly Overview',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatCard(
-                  icon: Icons.opacity,
-                  label: 'Water',
-                  value: '2.1L',
-                  color: Colors.blue,
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _StatBadge(
+                    label: 'Days Logged',
+                    value: '${data.daysLogged}/7',
+                    icon: Icons.calendar_today,
+                    color: const Color(0xFF4CAF50),
+                    isDark: isDark,
+                  ),
+                  const SizedBox(width: 8),
+                  _StatBadge(
+                    label: 'Avg Calories',
+                    value: '${data.avgCalories}',
+                    icon: Icons.local_fire_department,
+                    color: const Color(0xFFFF9800),
+                    isDark: isDark,
+                  ),
+                  const SizedBox(width: 8),
+                  _StatBadge(
+                    label: 'Avg Protein',
+                    value: '${data.avgProtein}g',
+                    icon: Icons.fitness_center,
+                    color: const Color(0xFF009688),
+                    isDark: isDark,
+                  ),
+                  if (data.weightChange != null) ...[
+                    const SizedBox(width: 8),
+                    _StatBadge(
+                      label: 'Weight',
+                      value:
+                          '${data.weightChange! > 0 ? '+' : ''}${data.weightChange!.toStringAsFixed(1)} kg',
+                      icon: data.weightChange! > 0
+                          ? Icons.trending_up
+                          : data.weightChange! < 0
+                              ? Icons.trending_down
+                              : Icons.trending_flat,
+                      color: const Color(0xFF2196F3),
+                      isDark: isDark,
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _errorRow(String message) {
+    return Row(
+      children: [
+        Icon(Icons.info_outline, size: 16, color: textMuted),
+        const SizedBox(width: 8),
+        Text(message, style: TextStyle(color: textMuted, fontSize: 13)),
+      ],
+    );
+  }
+}
+
+class _StatBadge extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+  final bool isDark;
+
+  const _StatBadge({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: isDark ? 0.15 : 0.08),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Card 2: Calorie Trend Chart ──────────────────────────────────
+
+class _CalorieTrendCard extends StatelessWidget {
+  final AsyncValue<WeeklyNutritionData?> weeklyNutrition;
+  final Color cardColor;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color textMuted;
+  final bool isDark;
+
+  const _CalorieTrendCard({
+    required this.weeklyNutrition,
+    required this.cardColor,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textMuted,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: weeklyNutrition.when(
+        loading: () => const SizedBox(
+          height: 200,
+          child: Center(child: CircularProgressIndicator.adaptive()),
+        ),
+        error: (_, __) => SizedBox(
+          height: 80,
+          child: Center(
+            child: Text('Could not load calorie data',
+                style: TextStyle(color: textMuted)),
+          ),
+        ),
+        data: (data) {
+          if (data == null || data.dailySummaries.isEmpty) {
+            return SizedBox(
+              height: 80,
+              child: Center(
+                child: Text('No nutrition data this week',
+                    style: TextStyle(color: textMuted)),
+              ),
+            );
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'Calorie Trend',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    'avg ${data.averageDailyCalories.round()} cal',
+                    style: TextStyle(fontSize: 12, color: textMuted),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 180,
+                child: _CalorieBarChart(
+                  entries: data.dailySummaries,
+                  avgCalories: data.averageDailyCalories,
+                  isDark: isDark,
                 ),
               ),
             ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CalorieBarChart extends StatelessWidget {
+  final List<DailyNutritionEntry> entries;
+  final double avgCalories;
+  final bool isDark;
+
+  const _CalorieBarChart({
+    required this.entries,
+    required this.avgCalories,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final maxCal = entries
+        .fold<double>(avgCalories, (m, e) => e.calories > m ? e.calories.toDouble() : m);
+    final chartMax = (maxCal * 1.2).ceilToDouble();
+
+    return BarChart(
+      BarChartData(
+        maxY: chartMax,
+        barTouchData: BarTouchData(
+          touchTooltipData: BarTouchTooltipData(
+            getTooltipColor: (_) => isDark
+                ? const Color(0xFF2A2A2A)
+                : Colors.white,
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              final entry = entries[group.x];
+              return BarTooltipItem(
+                '${entry.calories} cal\nP: ${entry.proteinG.round()}g  C: ${entry.carbsG.round()}g  F: ${entry.fatG.round()}g',
+                TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              );
+            },
           ),
-
-          const SizedBox(height: 24),
-
-          _SectionHeader(title: 'Macro Breakdown'),
-          const SizedBox(height: 12),
-          _PlaceholderGraph(
-            height: 150,
-            message: 'Protein / Carbs / Fats pie chart',
+        ),
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                final idx = value.toInt();
+                if (idx < 0 || idx >= entries.length) return const SizedBox();
+                return Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    entries[idx].dayLabel,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
-
-          const SizedBox(height: 24),
-
-          _SectionHeader(title: 'Calorie Trend'),
-          const SizedBox(height: 12),
-          _PlaceholderGraph(
-            height: 200,
-            message: 'Daily calorie intake over time',
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 40,
+              getTitlesWidget: (value, meta) {
+                if (value == 0 || value == meta.max) return const SizedBox();
+                return Text(
+                  '${value.toInt()}',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  ),
+                );
+              },
+            ),
           ),
+        ),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: chartMax / 4,
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.black.withValues(alpha: 0.05),
+            strokeWidth: 1,
+          ),
+        ),
+        borderData: FlBorderData(show: false),
+        extraLinesData: ExtraLinesData(
+          horizontalLines: [
+            HorizontalLine(
+              y: avgCalories,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: 0.2),
+              strokeWidth: 1,
+              dashArray: [4, 4],
+              label: HorizontalLineLabel(
+                show: true,
+                alignment: Alignment.topRight,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                ),
+                labelResolver: (_) => 'avg',
+              ),
+            ),
+          ],
+        ),
+        barGroups: List.generate(entries.length, (i) {
+          final cal = entries[i].calories.toDouble();
+          final barColor = cal > 0
+              ? (isDark ? const Color(0xFF4FC3F7) : const Color(0xFF1E88E5))
+              : Colors.transparent;
+          return BarChartGroupData(
+            x: i,
+            barRods: [
+              BarChartRodData(
+                toY: cal > 0 ? cal : 0,
+                color: barColor,
+                width: 24,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+}
 
-          const SizedBox(height: 24),
+// ── Card 3: Macro Breakdown ──────────────────────────────────────
 
-          // Quick action to nutrition screen
-          ElevatedButton.icon(
-            onPressed: () => context.go('/nutrition'),
-            icon: const Icon(Icons.restaurant),
-            label: const Text('Track Nutrition'),
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 48),
+class _MacroBreakdownCard extends StatelessWidget {
+  final AsyncValue<WeeklyNutritionData?> weeklyNutrition;
+  final Color cardColor;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color textMuted;
+  final bool isDark;
+
+  const _MacroBreakdownCard({
+    required this.weeklyNutrition,
+    required this.cardColor,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textMuted,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: weeklyNutrition.when(
+        loading: () => const SizedBox(
+          height: 120,
+          child: Center(child: CircularProgressIndicator.adaptive()),
+        ),
+        error: (_, __) => SizedBox(
+          height: 60,
+          child: Center(
+            child: Text('Could not load macros',
+                style: TextStyle(color: textMuted)),
+          ),
+        ),
+        data: (data) {
+          if (data == null || data.daysWithData == 0) {
+            return SizedBox(
+              height: 60,
+              child: Center(
+                child: Text('No macro data this week',
+                    style: TextStyle(color: textMuted)),
+              ),
+            );
+          }
+          final macros = data.averageMacros;
+          final totalCals = (macros.protein * 4) +
+              (macros.carbs * 4) +
+              (macros.fat * 9);
+          final proteinPct =
+              totalCals > 0 ? (macros.protein * 4 / totalCals * 100) : 0.0;
+          final carbsPct =
+              totalCals > 0 ? (macros.carbs * 4 / totalCals * 100) : 0.0;
+          final fatPct =
+              totalCals > 0 ? (macros.fat * 9 / totalCals * 100) : 0.0;
+
+          const proteinColor = Color(0xFF009688);
+          const carbsColor = Color(0xFF42A5F5);
+          const fatColor = Color(0xFFFF9800);
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Macro Breakdown',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Weekly average distribution',
+                style: TextStyle(fontSize: 12, color: textMuted),
+              ),
+              const SizedBox(height: 16),
+              // Stacked bar showing macro distribution
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: SizedBox(
+                  height: 20,
+                  child: Row(
+                    children: [
+                      if (proteinPct > 0)
+                        Expanded(
+                          flex: proteinPct.round().clamp(1, 100),
+                          child: Container(color: proteinColor),
+                        ),
+                      if (carbsPct > 0)
+                        Expanded(
+                          flex: carbsPct.round().clamp(1, 100),
+                          child: Container(color: carbsColor),
+                        ),
+                      if (fatPct > 0)
+                        Expanded(
+                          flex: fatPct.round().clamp(1, 100),
+                          child: Container(color: fatColor),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Macro detail rows
+              _MacroRow(
+                label: 'Protein',
+                grams: macros.protein,
+                pct: proteinPct,
+                color: proteinColor,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 8),
+              _MacroRow(
+                label: 'Carbs',
+                grams: macros.carbs,
+                pct: carbsPct,
+                color: carbsColor,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 8),
+              _MacroRow(
+                label: 'Fat',
+                grams: macros.fat,
+                pct: fatPct,
+                color: fatColor,
+                isDark: isDark,
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _MacroRow extends StatelessWidget {
+  final String label;
+  final double grams;
+  final double pct;
+  final Color color;
+  final bool isDark;
+
+  const _MacroRow({
+    required this.label,
+    required this.grams,
+    required this.pct,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 56,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+            ),
+          ),
+        ),
+        Text(
+          '${grams.round()}g',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          '${pct.round()}%',
+          style: TextStyle(
+            fontSize: 13,
+            color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Card 4: TDEE & Energy Balance ────────────────────────────────
+
+class _TDEECard extends StatelessWidget {
+  final AsyncValue<DetailedTDEE?> detailedTDEE;
+  final AsyncValue<WeeklySummaryData?> weeklySummary;
+  final Color cardColor;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color textMuted;
+  final bool isDark;
+
+  const _TDEECard({
+    required this.detailedTDEE,
+    required this.weeklySummary,
+    required this.cardColor,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textMuted,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: detailedTDEE.when(
+        loading: () => const SizedBox(
+          height: 100,
+          child: Center(child: CircularProgressIndicator.adaptive()),
+        ),
+        error: (_, __) => SizedBox(
+          height: 60,
+          child: Center(
+            child: Text('Could not load TDEE data',
+                style: TextStyle(color: textMuted)),
+          ),
+        ),
+        data: (tdee) {
+          if (tdee == null) {
+            return SizedBox(
+              height: 60,
+              child: Center(
+                child: Text('Not enough data for TDEE estimate',
+                    style: TextStyle(color: textMuted, fontSize: 13)),
+              ),
+            );
+          }
+
+          final avgIntake =
+              weeklySummary.valueOrNull?.avgCalories ?? 0;
+          final confidenceColor = switch (tdee.confidenceLevel) {
+            'high' => const Color(0xFF4CAF50),
+            'medium' => const Color(0xFFFF9800),
+            _ => const Color(0xFFF44336),
+          };
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'TDEE & Energy Balance',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: confidenceColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      tdee.confidenceLevel.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: confidenceColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Main TDEE display
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${tdee.tdee}',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 5),
+                    child: Text(
+                      'cal/day  ${tdee.uncertaintyDisplay}',
+                      style: TextStyle(fontSize: 13, color: textMuted),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Intake vs TDEE
+              if (avgIntake > 0) ...[
+                Row(
+                  children: [
+                    Icon(Icons.restaurant, size: 14, color: textSecondary),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Avg intake: $avgIntake cal',
+                      style: TextStyle(fontSize: 13, color: textSecondary),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${avgIntake - tdee.tdee > 0 ? '+' : ''}${avgIntake - tdee.tdee} cal',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: (avgIntake - tdee.tdee).abs() < 100
+                            ? const Color(0xFF4CAF50)
+                            : (avgIntake > tdee.tdee
+                                ? const Color(0xFFFF9800)
+                                : const Color(0xFF42A5F5)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+              // Weight trend
+              Row(
+                children: [
+                  Icon(
+                    tdee.weightTrend.direction == 'losing'
+                        ? Icons.trending_down
+                        : tdee.weightTrend.direction == 'gaining'
+                            ? Icons.trending_up
+                            : Icons.trending_flat,
+                    size: 14,
+                    color: textSecondary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Weight: ${tdee.weightTrend.formattedWeeklyRate}',
+                    style: TextStyle(fontSize: 13, color: textSecondary),
+                  ),
+                ],
+              ),
+              // Metabolic adaptation warning
+              if (tdee.hasAdaptation) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF9800).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.warning_amber,
+                          size: 16, color: Color(0xFFFF9800)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          tdee.metabolicAdaptation?.actionDescription ??
+                              'Metabolic adaptation detected',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFFFF9800),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ── Card 5: Adherence & Consistency ──────────────────────────────
+
+class _AdherenceCard extends StatelessWidget {
+  final AsyncValue<AdherenceSummary?> adherence;
+  final Color cardColor;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color textMuted;
+  final bool isDark;
+
+  const _AdherenceCard({
+    required this.adherence,
+    required this.cardColor,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textMuted,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: adherence.when(
+        loading: () => const SizedBox(
+          height: 100,
+          child: Center(child: CircularProgressIndicator.adaptive()),
+        ),
+        error: (_, __) => SizedBox(
+          height: 60,
+          child: Center(
+            child: Text('Could not load adherence data',
+                style: TextStyle(color: textMuted)),
+          ),
+        ),
+        data: (data) {
+          if (data == null) {
+            return SizedBox(
+              height: 60,
+              child: Center(
+                child: Text('Not enough data for adherence analysis',
+                    style: TextStyle(color: textMuted, fontSize: 13)),
+              ),
+            );
+          }
+
+          final ratingColor = switch (data.sustainabilityRating) {
+            'high' => const Color(0xFF4CAF50),
+            'medium' => const Color(0xFFFF9800),
+            _ => const Color(0xFFF44336),
+          };
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'Adherence & Consistency',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: ratingColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      data.sustainabilityRating.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: ratingColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Overall adherence + sustainability row
+              Row(
+                children: [
+                  // Circular progress for overall adherence
+                  SizedBox(
+                    width: 56,
+                    height: 56,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          value: (data.averageAdherence / 100).clamp(0.0, 1.0),
+                          strokeWidth: 5,
+                          backgroundColor: isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : Colors.black.withValues(alpha: 0.06),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(ratingColor),
+                        ),
+                        Text(
+                          '${data.averageAdherence.round()}%',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _MiniStatRow(
+                          label: 'Consistency',
+                          value: '${data.consistencyScore.round()}%',
+                          isDark: isDark,
+                        ),
+                        const SizedBox(height: 4),
+                        _MiniStatRow(
+                          label: 'Logging',
+                          value: '${data.loggingScore.round()}%',
+                          isDark: isDark,
+                        ),
+                        const SizedBox(height: 4),
+                        _MiniStatRow(
+                          label: 'Weeks analyzed',
+                          value: '${data.weeksAnalyzed}',
+                          isDark: isDark,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              // Weekly adherence mini chart
+              if (data.weeklyAdherence.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'Last ${data.weeklyAdherence.length} weeks',
+                  style: TextStyle(fontSize: 12, color: textMuted),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 32,
+                  child: Row(
+                    children: data.weeklyAdherence.map((w) {
+                      final pct =
+                          (w.avgOverallAdherence / 100).clamp(0.0, 1.0);
+                      return Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: Column(
+                            children: [
+                              Expanded(
+                                child: Align(
+                                  alignment: Alignment.bottomCenter,
+                                  child: FractionallySizedBox(
+                                    heightFactor: pct > 0 ? pct : 0.05,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: ratingColor
+                                            .withValues(alpha: 0.4 + pct * 0.6),
+                                        borderRadius:
+                                            BorderRadius.circular(3),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+              // AI recommendation
+              if (data.recommendation.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.04)
+                        : Colors.black.withValues(alpha: 0.03),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.lightbulb_outline,
+                          size: 14, color: textMuted),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          data.recommendation,
+                          style:
+                              TextStyle(fontSize: 12, color: textSecondary),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _MiniStatRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isDark;
+
+  const _MiniStatRow({
+    required this.label,
+    required this.value,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MoodTab extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_MoodTab> createState() => _MoodTabState();
+}
+
+class _MoodTabState extends ConsumerState<_MoodTab> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(moodHistoryProvider.notifier).initialize();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final state = ref.watch(moodHistoryProvider);
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+
+    if (state.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Weekly mood chart
+          const MoodWeeklyChart(),
+          const SizedBox(height: 16),
+
+          // Mood streaks
+          if (state.analytics != null)
+            MoodStreakCard(streaks: state.analytics!.streaks),
+
+          // Mood analytics summary
+          if (state.analytics != null) ...[
+            const SizedBox(height: 16),
+            MoodAnalyticsCard(analytics: state.analytics!),
+          ],
+
+          const SizedBox(height: 16),
+
+          // Calendar heatmap
+          const MoodCalendarHeatmap(),
+
+          const SizedBox(height: 16),
+
+          // Log Mood button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => showMoodPickerSheet(context, ref),
+              icon: const Icon(Icons.mood),
+              label: const Text('Log Mood'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+              ),
             ),
           ),
 
-          // Bottom padding for floating nav bar
+          // Link to full history
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton(
+              onPressed: () => context.push('/mood-history'),
+              child: Text('View Full History', style: TextStyle(color: teal)),
+            ),
+          ),
+
           const SizedBox(height: 80),
         ],
       ),
@@ -1501,60 +2663,6 @@ class _SectionHeader extends StatelessWidget {
             child: const Text('View All'),
           ),
       ],
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-
-  const _StatCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: elevatedColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

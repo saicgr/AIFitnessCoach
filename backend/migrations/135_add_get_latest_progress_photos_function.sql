@@ -15,7 +15,9 @@ RETURNS TABLE (
   view_type TEXT,
   taken_at TIMESTAMP WITH TIME ZONE,
   body_weight_kg DOUBLE PRECISION,
-  notes TEXT
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE,
+  storage_key TEXT
 )
 LANGUAGE sql
 SECURITY DEFINER
@@ -29,7 +31,9 @@ AS $$
     view_type,
     taken_at,
     body_weight_kg,
-    notes
+    notes,
+    created_at,
+    storage_key
   FROM progress_photos
   WHERE user_id = p_user_id
   ORDER BY view_type, taken_at DESC;

@@ -241,6 +241,41 @@ class NutritionRepository {
 
   NutritionRepository(this._client);
 
+  // --- Client-side LRU cache for food text analysis ---
+  static const int _maxCacheSize = 50;
+  static final Map<String, LogFoodResponse> _analysisCache = {};
+  static final List<String> _cacheOrder = []; // LRU order: most recent at end
+
+  /// Normalize description for cache key: lowercase, trimmed, collapsed spaces
+  static String _normalizeCacheKey(String description) {
+    return description.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  /// Store a result in the LRU cache, evicting oldest if full
+  static void _cacheResult(String key, LogFoodResponse result) {
+    // If key already exists, move it to end (most recent)
+    _cacheOrder.remove(key);
+    _cacheOrder.add(key);
+    _analysisCache[key] = result;
+
+    // Evict oldest entries if over capacity
+    while (_cacheOrder.length > _maxCacheSize) {
+      final evicted = _cacheOrder.removeAt(0);
+      _analysisCache.remove(evicted);
+    }
+  }
+
+  /// Look up a cached result, returning null on miss
+  static LogFoodResponse? _getCached(String key) {
+    final result = _analysisCache[key];
+    if (result != null) {
+      // Move to end (most recently used)
+      _cacheOrder.remove(key);
+      _cacheOrder.add(key);
+    }
+    return result;
+  }
+
   /// Get food logs for a user
   Future<List<FoodLog>> getFoodLogs(
     String userId, {
@@ -885,6 +920,24 @@ class NutritionRepository {
     debugPrint('🔍 [Nutrition] Starting streaming food ANALYSIS for $userId');
     final startTime = DateTime.now();
 
+    // --- Check client-side cache first ---
+    final cacheKey = _normalizeCacheKey(description);
+    final cached = _getCached(cacheKey);
+    if (cached != null) {
+      debugPrint('✅ [Nutrition] Cache HIT for: "$cacheKey"');
+      yield FoodLoggingProgress(
+        step: 3,
+        totalSteps: 3,
+        message: 'Analysis complete!',
+        elapsedMs: DateTime.now().difference(startTime).inMilliseconds,
+        foodLog: cached,
+        isCompleted: true,
+        isAnalysisOnly: true,
+      );
+      return;
+    }
+    debugPrint('🔍 [Nutrition] Cache MISS for: "$cacheKey"');
+
     try {
       // Emit initial status
       yield FoodLoggingProgress(
@@ -966,6 +1019,8 @@ class NutritionRepository {
                   try {
                     final foodLog = LogFoodResponse.fromJson(data);
                     debugPrint('✅ [Nutrition-Text] Parsed: ${foodLog.totalCalories} cal, ${foodLog.foodItems.length} items');
+                    // Cache the successful result
+                    _cacheResult(cacheKey, foodLog);
                     yield FoodLoggingProgress(
                       step: 3,
                       totalSteps: 3,
@@ -1700,6 +1755,23 @@ class NutritionRepository {
       return WeeklyRecommendation.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
       debugPrint('❌ [Nutrition] Error generating weekly recommendation: $e');
+      return null;
+    }
+  }
+
+  /// Get weekly nutrition data with daily breakdown (for charts)
+  Future<WeeklyNutritionData?> getWeeklyNutrition(String userId) async {
+    try {
+      debugPrint('📊 [Nutrition] Getting weekly nutrition data for $userId');
+      final response = await _client.get('/nutrition/summary/weekly/$userId');
+
+      if (response.data == null) {
+        return null;
+      }
+
+      return WeeklyNutritionData.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ [Nutrition] Error getting weekly nutrition data: $e');
       return null;
     }
   }

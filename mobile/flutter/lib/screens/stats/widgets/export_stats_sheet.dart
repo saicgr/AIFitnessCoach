@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +11,7 @@ import '../../../data/providers/consistency_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/pdf_export_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../settings/dialogs/export_dialog.dart';
 
 /// Bottom sheet for exporting stats in various formats
@@ -19,11 +19,9 @@ class ExportStatsSheet extends ConsumerStatefulWidget {
   const ExportStatsSheet({super.key});
 
   static Future<void> show(BuildContext context, WidgetRef ref) {
-    return showModalBottomSheet(
+    return showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => const ExportStatsSheet(),
     );
   }
@@ -56,42 +54,11 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: SafeArea(
+    return GlassSheet(
+      child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle bar
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-
             // Title
             Padding(
               padding: const EdgeInsets.all(20),
@@ -154,8 +121,6 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
 
             const SizedBox(height: 24),
           ],
-            ),
-          ),
         ),
       ),
     );

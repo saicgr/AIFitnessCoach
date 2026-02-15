@@ -24,6 +24,9 @@ Workout _$WorkoutFromJson(Map<String, dynamic> json) => Workout(
   generationMetadata: _parseGenerationMetadata(json['generation_metadata']),
   createdAt: json['created_at'] as String?,
   updatedAt: json['updated_at'] as String?,
+  completedAt: json['completed_at'] as String?,
+  completionMethod: json['completion_method'] as String?,
+  isFavorite: json['is_favorite'] as bool?,
 );
 
 Map<String, dynamic> _$WorkoutToJson(Workout instance) => <String, dynamic>{
@@ -43,4 +46,7 @@ Map<String, dynamic> _$WorkoutToJson(Workout instance) => <String, dynamic>{
   'generation_metadata': instance.generationMetadata,
   'created_at': instance.createdAt,
   'updated_at': instance.updatedAt,
+  'completed_at': instance.completedAt,
+  'completion_method': instance.completionMethod,
+  'is_favorite': instance.isFavorite,
 };

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/providers/quick_workout_provider.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 
 /// Shows the Quick Workout bottom sheet for busy users
@@ -15,13 +14,12 @@ Future<Workout?> showQuickWorkoutSheet(BuildContext context, WidgetRef ref) asyn
   // Hide nav bar while sheet is open
   ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-  final result = await showModalBottomSheet<Workout>(
+  final result = await showGlassSheet<Workout>(
     context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    isScrollControlled: true,
-    useRootNavigator: true,
-    builder: (context) => const _QuickWorkoutSheet(),
+    builder: (context) => const GlassSheet(
+      showHandle: false,
+      child: _QuickWorkoutSheet(),
+    ),
   );
 
   // Show nav bar when sheet is closed
@@ -59,44 +57,9 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.75,
-          ),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: Column(
+    return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Handle
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.black.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-
           // Header
           Padding(
             padding: const EdgeInsets.all(20),
@@ -350,9 +313,6 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
               ),
             ),
         ],
-          ),
-        ),
-      ),
     );
   }
 

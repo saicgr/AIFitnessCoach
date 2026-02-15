@@ -1,8 +1,7 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// A bottom sheet widget for editing the daily step goal.
 ///
@@ -39,11 +38,9 @@ class StepGoalEditorSheet extends StatefulWidget {
     bool useProgressiveGoal = false,
     bool isDark = true,
   }) {
-    return showModalBottomSheet<Map<String, dynamic>>(
+    return showGlassSheet<Map<String, dynamic>>(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => StepGoalEditorSheet(
         currentGoal: currentGoal,
         useProgressiveGoal: useProgressiveGoal,
@@ -105,48 +102,17 @@ class _StepGoalEditorSheetState extends State<StepGoalEditorSheet> {
     final electricBlue = isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
     final success = isDark ? AppColors.success : AppColorsLight.success;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
+    return GlassSheet(
           padding: EdgeInsets.fromLTRB(
             20,
-            16,
+            0,
             20,
             MediaQuery.of(context).viewPadding.bottom + 20,
-          ),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
           ),
           child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Handle bar
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-
           // Title
           Row(
             children: [
@@ -465,8 +431,6 @@ class _StepGoalEditorSheetState extends State<StepGoalEditorSheet> {
           ),
         ],
           ),
-        ),
-      ),
     );
   }
 

@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/metrics_repository.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../widgets/glass_sheet.dart';
 
 class MetricsDashboardScreen extends ConsumerStatefulWidget {
   const MetricsDashboardScreen({super.key});
@@ -541,11 +542,9 @@ class _MetricsDashboardScreenState
   }
 
   void _showAddMetricSheet(BuildContext context) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => _AddMetricSheet(
         onSubmit: (metricType, value) async {
           final auth = ref.read(authStateProvider);
@@ -756,13 +755,9 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
       (m) => m['value'] == _selectedMetric,
     );
 
-    return Container(
+    return GlassSheet(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      decoration: const BoxDecoration(
-        color: AppColors.nearBlack,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -770,19 +765,6 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.textMuted.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
             // Title
             const Text(
               'Add Metric',

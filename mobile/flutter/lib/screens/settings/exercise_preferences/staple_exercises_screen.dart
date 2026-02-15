@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,8 +7,12 @@ import '../../../core/providers/staples_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
+import '../../../data/repositories/library_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/exercise_image.dart';
+import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/staple_choice_sheet.dart';
 import '../../library/components/exercise_detail_sheet.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
@@ -35,7 +37,10 @@ class StapleExercisesScreen extends ConsumerWidget {
 
     if (result != null && context.mounted) {
       // Show choice sheet before saving
-      final choice = await _showStapleChoiceSheet(context);
+      final choice = await showStapleChoiceSheet(
+        context,
+        exerciseName: result.exerciseName,
+      );
       if (choice == null) return; // Cancelled
 
       final success = await ref.read(staplesProvider.notifier).addStaple(
@@ -46,6 +51,8 @@ class StapleExercisesScreen extends ConsumerWidget {
         addToCurrentWorkout: choice.addToday,
         section: choice.section,
         gymProfileId: choice.gymProfileId,
+        swapExerciseId: choice.swapExerciseId,
+        cardioParams: choice.cardioParams,
       );
 
       if (context.mounted) {
@@ -63,57 +70,6 @@ class StapleExercisesScreen extends ConsumerWidget {
     }
   }
 
-  Future<({bool addToday, String section, String? gymProfileId})?> _showStapleChoiceSheet(
-    BuildContext context,
-  ) async {
-    return showModalBottomSheet<({bool addToday, String section, String? gymProfileId})>(
-      context: context,
-      isDismissible: false,
-      enableDrag: false,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (sheetContext) => _StapleChoiceSheet(
-        onCancel: () async {
-          // Show discard confirmation
-          final discard = await showDialog<bool>(
-            context: sheetContext,
-            builder: (dialogContext) {
-              final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
-              return AlertDialog(
-                backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-                title: const Text('Discard selection?'),
-                content: const Text(
-                  'Your exercise won\'t be saved as a staple.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(dialogContext, false),
-                    child: Text(
-                      'Go Back',
-                      style: TextStyle(
-                        color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                      ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(dialogContext, true),
-                    child: Text(
-                      'Discard',
-                      style: TextStyle(color: AppColors.error),
-                    ),
-                  ),
-                ],
-              );
-            },
-          );
-          if (discard == true && sheetContext.mounted) {
-            Navigator.pop(sheetContext); // Pop the choice sheet, returns null
-          }
-        },
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -124,128 +80,53 @@ class StapleExercisesScreen extends ConsumerWidget {
 
     final staplesState = ref.watch(staplesProvider);
 
-    final cardBorder = isDark
-        ? Colors.white.withValues(alpha: 0.1)
-        : Colors.black.withValues(alpha: 0.08);
-    final topPad = MediaQuery.of(context).padding.top;
-
     return Scaffold(
       backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        surfaceTintColor: Colors.transparent,
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
+        centerTitle: true,
+        title: Text(
+          'Staple Exercises',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: textPrimary,
+          ),
+        ),
+      ),
+      floatingActionButton: staplesState.isRegenerating
+          ? null
+          : FloatingActionButton(
+              onPressed: () {
+                HapticService.light();
+                _showAddExercisePicker(context, ref);
+              },
+              backgroundColor: AppColors.cyan,
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
       body: Stack(
         children: [
-          // Main content with top padding for floating header
-          Padding(
-            padding: EdgeInsets.only(top: topPad + 60),
-            child: staplesState.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : staplesState.staples.isEmpty
-                    ? _buildEmptyState(context, ref, textMuted)
-                    : _buildStaplesList(
-                        context,
-                        ref,
-                        staplesState.staples,
-                        isDark,
-                        textPrimary,
-                        textMuted,
-                        elevated,
-                      ),
-          ),
-
-          // Floating header row
-          Positioned(
-            top: topPad + 8,
-            left: 16,
-            right: 16,
-            child: Row(
-              children: [
-                // Floating back button
-                _buildFloatingButton(
-                  icon: Icons.arrow_back,
-                  onTap: () => context.pop(),
-                  isDark: isDark,
-                  elevated: elevated,
-                  textPrimary: textPrimary,
-                  cardBorder: cardBorder,
-                ),
-                const Spacer(),
-                // Title
-                Text(
-                  'Staple Exercises',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
-                ),
-                const Spacer(),
-                // Floating add button
-                _buildFloatingButton(
-                  icon: Icons.add,
-                  onTap: staplesState.isRegenerating
-                      ? null
-                      : () => _showAddExercisePicker(context, ref),
-                  isDark: isDark,
-                  elevated: elevated,
-                  textPrimary: AppColors.cyan,
-                  cardBorder: cardBorder,
-                ),
-              ],
-            ),
-          ),
+          staplesState.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : staplesState.staples.isEmpty
+                  ? _buildEmptyState(context, ref, textMuted)
+                  : _buildStaplesList(
+                      context,
+                      ref,
+                      staplesState.staples,
+                      isDark,
+                      textPrimary,
+                      textMuted,
+                      elevated,
+                    ),
 
           // Regeneration overlay
           if (staplesState.isRegenerating)
             _buildRegenerationOverlay(context, staplesState.regenerationMessage, isDark),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFloatingButton({
-    required IconData icon,
-    required bool isDark,
-    required Color elevated,
-    required Color textPrimary,
-    required Color cardBorder,
-    VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap != null
-          ? () {
-              HapticService.light();
-              onTap();
-            }
-          : null,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.6)
-                  : Colors.white.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: cardBorder),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Icon(
-              icon,
-              color: onTap != null
-                  ? textPrimary
-                  : textPrimary.withValues(alpha: 0.3),
-              size: 20,
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -304,9 +185,10 @@ class StapleExercisesScreen extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.lock_outline,
+              Icons.push_pin_outlined,
               size: 72,
-              color: textMuted.withValues(alpha: 0.5),
+              color: (Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.purple : AppColorsLight.purple).withValues(alpha: 0.5),
             ),
             const SizedBox(height: 24),
             Text(
@@ -364,17 +246,17 @@ class StapleExercisesScreen extends ConsumerWidget {
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.cyan.withValues(alpha: 0.1),
+            color: (isDark ? AppColors.purple : AppColorsLight.purple).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppColors.cyan.withValues(alpha: 0.3),
+              color: (isDark ? AppColors.purple : AppColorsLight.purple).withValues(alpha: 0.3),
             ),
           ),
           child: Row(
             children: [
               Icon(
-                Icons.lock,
-                color: AppColors.cyan,
+                Icons.push_pin,
+                color: isDark ? AppColors.purple : AppColorsLight.purple,
                 size: 24,
               ),
               const SizedBox(width: 12),
@@ -462,7 +344,7 @@ class StapleExercisesScreen extends ConsumerWidget {
   }
 }
 
-class _StapleExerciseTile extends StatelessWidget {
+class _StapleExerciseTile extends ConsumerWidget {
   final StapleExercise staple;
   final bool isDark;
   final Color textPrimary;
@@ -481,20 +363,69 @@ class _StapleExerciseTile extends StatelessWidget {
     required this.onRemove,
   });
 
-  void _showDetail(BuildContext context) {
-    final libraryExercise = LibraryExercise(
-      id: staple.libraryId,
-      nameValue: staple.exerciseName,
-      bodyPart: staple.bodyPart,
-      equipmentValue: staple.equipment,
-      gifUrl: staple.gifUrl,
-    );
+  Future<void> _showDetail(BuildContext context, WidgetRef ref) async {
+    // Try to fetch full exercise data from library API
+    final repo = ref.read(libraryRepositoryProvider);
+    LibraryExercise libraryExercise;
 
-    showModalBottomSheet(
+    try {
+      LibraryExerciseItem? fullExercise;
+
+      // First try by library ID if available
+      if (staple.libraryId != null) {
+        fullExercise = await repo.getExercise(staple.libraryId!);
+      }
+
+      // Fallback: search by name
+      if (fullExercise == null) {
+        final results = await repo.searchExercises(
+          query: staple.exerciseName,
+          limit: 1,
+        );
+        if (results.isNotEmpty) {
+          fullExercise = results.first;
+        }
+      }
+
+      if (fullExercise != null) {
+        libraryExercise = LibraryExercise(
+          id: fullExercise.id,
+          nameValue: fullExercise.name,
+          bodyPart: fullExercise.bodyPart,
+          equipmentValue: fullExercise.equipment,
+          targetMuscle: fullExercise.targetMuscle,
+          gifUrl: fullExercise.gifUrl,
+          videoUrl: fullExercise.videoUrl,
+          imageUrl: fullExercise.imageUrl,
+          difficultyLevelValue: fullExercise.difficulty,
+          instructionsValue: fullExercise.instructions,
+        );
+      } else {
+        // Use minimal data from staple as last resort
+        libraryExercise = LibraryExercise(
+          id: staple.libraryId,
+          nameValue: staple.exerciseName,
+          bodyPart: staple.bodyPart,
+          equipmentValue: staple.equipment,
+          gifUrl: staple.gifUrl,
+          category: staple.category,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error fetching exercise details: $e');
+      libraryExercise = LibraryExercise(
+        id: staple.libraryId,
+        nameValue: staple.exerciseName,
+        bodyPart: staple.bodyPart,
+        equipmentValue: staple.equipment,
+        gifUrl: staple.gifUrl,
+        category: staple.category,
+      );
+    }
+
+    if (!context.mounted) return;
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => ExerciseDetailSheet(exercise: libraryExercise),
     );
   }
@@ -525,7 +456,7 @@ class _StapleExerciseTile extends StatelessWidget {
       case 'strength_focus':
         return Icons.trending_up;
       default:
-        return Icons.lock;
+        return Icons.push_pin;
     }
   }
 
@@ -539,7 +470,7 @@ class _StapleExerciseTile extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final color = _badgeColor(staple.reason);
 
     return Container(
@@ -551,7 +482,7 @@ class _StapleExerciseTile extends StatelessWidget {
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        onTap: () => _showDetail(context),
+        onTap: () => _showDetail(context, ref),
         leading: SizedBox(
           width: 56,
           height: 56,
@@ -693,7 +624,7 @@ class _StapleExerciseTile extends StatelessWidget {
           ],
         ),
         trailing: IconButton(
-          icon: Icon(Icons.delete_outline, color: textMuted),
+          icon: const Icon(Icons.delete_outline, color: AppColors.error),
           onPressed: onRemove,
         ),
       ),
@@ -717,353 +648,3 @@ class _StapleExerciseTile extends StatelessWidget {
   }
 }
 
-/// Bottom sheet for choosing when a staple exercise should apply
-class _StapleChoiceSheet extends ConsumerStatefulWidget {
-  final VoidCallback onCancel;
-
-  const _StapleChoiceSheet({required this.onCancel});
-
-  @override
-  ConsumerState<_StapleChoiceSheet> createState() => _StapleChoiceSheetState();
-}
-
-class _StapleChoiceSheetState extends ConsumerState<_StapleChoiceSheet> {
-  String _selectedSection = 'main';
-  String? _selectedProfileId;
-  bool _profileIdInitialized = false;
-
-  static const _sections = [
-    ('main', 'Main'),
-    ('warmup', 'Warmup'),
-    ('stretches', 'Stretch'),
-  ];
-
-  Color _parseChipColor(String hexColor) {
-    try {
-      final hex = hexColor.replaceAll('#', '');
-      return Color(int.parse('FF$hex', radix: 16));
-    } catch (_) {
-      return AppColors.cyan;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark
-        ? Colors.white.withValues(alpha: 0.1)
-        : Colors.black.withValues(alpha: 0.08);
-
-    final profiles = ref.watch(gymProfilesProvider).valueOrNull ?? [];
-    final activeProfile = ref.watch(activeGymProfileProvider);
-
-    // Initialize selected profile ID to active profile on first build
-    if (!_profileIdInitialized && activeProfile != null) {
-      _selectedProfileId = activeProfile.id;
-      _profileIdInitialized = true;
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom +
-            MediaQuery.of(context).padding.bottom + 16,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 12),
-          // Handle bar
-          Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-              color: textMuted.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Gym profile picker (only show if 2+ profiles)
-          if (profiles.length >= 2) ...[
-            Text(
-              'Which gym profile?',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  // "All Profiles" chip
-                  GestureDetector(
-                    onTap: () {
-                      HapticService.light();
-                      setState(() => _selectedProfileId = null);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _selectedProfileId == null
-                            ? textMuted.withValues(alpha: 0.3)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: _selectedProfileId == null
-                              ? textMuted.withValues(alpha: 0.5)
-                              : textMuted.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Text(
-                        'All Profiles',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: _selectedProfileId == null
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                          color: _selectedProfileId == null
-                              ? textPrimary
-                              : textMuted,
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Profile chips
-                  ...profiles.map((profile) {
-                    final isSelected = _selectedProfileId == profile.id;
-                    final chipColor = _parseChipColor(profile.color);
-                    return GestureDetector(
-                      onTap: () {
-                        HapticService.light();
-                        setState(() => _selectedProfileId = profile.id);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? chipColor
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isSelected
-                                ? chipColor
-                                : textMuted.withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Text(
-                          profile.name,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: isSelected
-                                ? FontWeight.w600
-                                : FontWeight.w400,
-                            color: isSelected
-                                ? Colors.white
-                                : textMuted,
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-          ],
-
-          // Title
-          Text(
-            'When should this apply?',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Option 1: Add to today's workout
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: GestureDetector(
-              onTap: () {
-                HapticService.light();
-                Navigator.pop(
-                  context,
-                  (addToday: true, section: _selectedSection, gymProfileId: _selectedProfileId),
-                );
-              },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: cardBorder),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.bolt,
-                          color: AppColors.cyan,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Add to today\'s workout',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    // Section chips
-                    Row(
-                      children: _sections.map((entry) {
-                        final (value, label) = entry;
-                        final isSelected = _selectedSection == value;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: GestureDetector(
-                            onTap: () {
-                              HapticService.light();
-                              setState(() => _selectedSection = value);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? AppColors.cyan
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? AppColors.cyan
-                                      : textMuted.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              child: Text(
-                                label,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.w400,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : textMuted,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Option 2: Start from next workout
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: GestureDetector(
-              onTap: () {
-                HapticService.light();
-                Navigator.pop(
-                  context,
-                  (addToday: false, section: _selectedSection, gymProfileId: _selectedProfileId),
-                );
-              },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: cardBorder),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.skip_next,
-                      color: textMuted,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Start from next workout',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Current workout unchanged',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Cancel button
-          TextButton(
-            onPressed: widget.onCancel,
-            child: Text(
-              'Cancel',
-              style: TextStyle(
-                fontSize: 15,
-                color: textMuted,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

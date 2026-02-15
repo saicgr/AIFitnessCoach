@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/glass_sheet.dart';
 import 'scroll_hint_arrow.dart';
 
 /// Combined Training Preferences widget for quiz screens.
@@ -96,36 +97,22 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final surface = isDark ? AppColors.surface : AppColorsLight.surface;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: surface,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.7,
         minChildSize: 0.5,
         maxChildSize: 0.9,
         expand: false,
-        builder: (context, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: textSecondary.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
+        builder: (context, scrollController) => GlassSheet(
+          showHandle: false,
+          child: SingleChildScrollView(
+            controller: scrollController,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
               Text(
                 'Training Splits Explained',
                 style: TextStyle(
@@ -173,6 +160,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

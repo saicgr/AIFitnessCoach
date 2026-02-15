@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../data/models/muscle_analytics.dart';
 import '../../../data/providers/muscle_analytics_provider.dart';
 import '../../../data/repositories/muscle_analytics_repository.dart';
+import '../../../widgets/segmented_tab_bar.dart';
 import 'widgets/muscle_heatmap_widget.dart';
 import 'widgets/muscle_balance_chart.dart';
 import 'widgets/muscle_frequency_chart.dart';
@@ -61,14 +62,6 @@ class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Muscle Analytics'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.grid_view), text: 'Heatmap'),
-            Tab(icon: Icon(Icons.bar_chart), text: 'Frequency'),
-            Tab(icon: Icon(Icons.balance), text: 'Balance'),
-          ],
-        ),
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.calendar_today),
@@ -86,12 +79,27 @@ class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
           ),
         ],
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [
-          _HeatmapTab(),
-          _FrequencyTab(),
-          _BalanceTab(),
+      body: Column(
+        children: [
+          SegmentedTabBar(
+            controller: _tabController,
+            showIcons: false,
+            tabs: const [
+              SegmentedTabItem(label: 'Heatmap'),
+              SegmentedTabItem(label: 'Frequency'),
+              SegmentedTabItem(label: 'Balance'),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: const [
+                _HeatmapTab(),
+                _FrequencyTab(),
+                _BalanceTab(),
+              ],
+            ),
+          ),
         ],
       ),
     );

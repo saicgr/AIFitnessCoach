@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/health_service.dart';
+import '../glass_sheet.dart';
 
 /// Provider for blood glucose data
 /// Note: Removed autoDispose to prevent refetching on navigation
@@ -322,12 +323,13 @@ class HealthMetricsCard extends ConsumerWidget {
   }
 
   void _showHealthMetricsSheet(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _HealthMetricsDetailSheet(isDark: isDark),
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: _HealthMetricsDetailSheet(isDark: isDark),
+      ),
     );
   }
 }
@@ -350,26 +352,10 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    return Container(
+    return SizedBox(
       height: MediaQuery.of(context).size.height * 0.85,
-      decoration: BoxDecoration(
-        color: nearBlack,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       child: Column(
         children: [
-          // Handle bar
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
           // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),

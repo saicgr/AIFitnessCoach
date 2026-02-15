@@ -112,11 +112,36 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
     bool addToCurrentWorkout = false,
     String section = 'main',
     String? gymProfileId,
+    String? swapExerciseId,
+    Map<String, double>? cardioParams,
   }) async {
     try {
       final apiClient = _ref.read(apiClientProvider);
       final userId = await apiClient.getUserId();
       if (userId == null) return false;
+
+      // If swapping, replace the old exercise in the workout first
+      if (swapExerciseId != null) {
+        final todayWorkoutAsync = _ref.read(todayWorkoutProvider);
+        final response = todayWorkoutAsync.valueOrNull;
+        final workout = response?.todayWorkout ?? response?.nextWorkout;
+        if (workout != null) {
+          try {
+            await apiClient.post(
+              '${ApiConstants.workouts}/swap-exercise',
+              data: {
+                'workout_id': workout.id,
+                'old_exercise_name': swapExerciseId,
+                'new_exercise_name': exerciseName,
+                'section': section,
+              },
+            );
+            debugPrint('✅ Swapped "$swapExerciseId" with "$exerciseName"');
+          } catch (e) {
+            debugPrint('❌ Failed to swap exercise: $e');
+          }
+        }
+      }
 
       final repo = _ref.read(exercisePreferencesRepositoryProvider);
       final staple = await repo.addStapleExercise(
@@ -127,6 +152,7 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
         reason: reason,
         gymProfileId: gymProfileId,
         section: section,
+        cardioParams: cardioParams,
       );
 
       state = state.copyWith(
@@ -135,7 +161,8 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
 
       debugPrint('⭐ Staple added: $exerciseName');
 
-      if (addToCurrentWorkout) {
+      // Only inject if not swapping (swap already placed the exercise)
+      if (addToCurrentWorkout && swapExerciseId == null) {
         await _injectIntoCurrentWorkout(exerciseName, section);
       }
 

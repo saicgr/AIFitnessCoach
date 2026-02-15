@@ -1,8 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../services/device_capability_service.dart';
 import '../../services/model_download_service.dart';
+import '../services/api_client.dart';
+
+/// Key for storing HuggingFace token in secure storage.
+const _hfTokenKey = 'hf_token';
 
 /// State notifier for managing model download lifecycle.
 class ModelDownloadNotifier extends StateNotifier<ModelDownloadState> {
@@ -12,6 +17,9 @@ class ModelDownloadNotifier extends StateNotifier<ModelDownloadState> {
   ModelDownloadNotifier(this._ref) : super(const ModelDownloadState()) {
     _checkInitialState();
   }
+
+  FlutterSecureStorage get _secureStorage =>
+      _ref.read(secureStorageProvider);
 
   /// Check if any models are already downloaded on startup.
   Future<void> _checkInitialState() async {
@@ -33,6 +41,23 @@ class ModelDownloadNotifier extends StateNotifier<ModelDownloadState> {
     } catch (e) {
       debugPrint('⚠️ [ModelDownloadProvider] Error checking initial state: $e');
     }
+  }
+
+  /// Save a HuggingFace token to secure storage.
+  Future<void> setHuggingFaceToken(String token) async {
+    await _secureStorage.write(key: _hfTokenKey, value: token);
+    debugPrint('✅ [ModelDownloadProvider] HuggingFace token saved');
+  }
+
+  /// Read the stored HuggingFace token, or null if not set.
+  Future<String?> getHuggingFaceToken() async {
+    return _secureStorage.read(key: _hfTokenKey);
+  }
+
+  /// Delete the stored HuggingFace token.
+  Future<void> clearHuggingFaceToken() async {
+    await _secureStorage.delete(key: _hfTokenKey);
+    debugPrint('✅ [ModelDownloadProvider] HuggingFace token cleared');
   }
 
   /// Select a model type (without downloading).
@@ -73,8 +98,11 @@ class ModelDownloadNotifier extends StateNotifier<ModelDownloadState> {
     debugPrint('🔍 [ModelDownloadProvider] Starting download: ${modelInfo.displayName}');
 
     try {
+      final token = await getHuggingFaceToken();
+
       await _downloadService.downloadModel(
         modelType,
+        huggingFaceToken: token,
         onProgress: (progress) {
           if (mounted) {
             state = state.copyWith(
@@ -162,4 +190,11 @@ final modelDownloadProvider =
 final modelStorageProvider = FutureProvider<int>((ref) async {
   final service = ModelDownloadService();
   return service.getTotalModelStorageBytes();
+});
+
+/// Provider for checking if HuggingFace token is saved.
+final hfTokenSavedProvider = FutureProvider<bool>((ref) async {
+  final storage = ref.read(secureStorageProvider);
+  final token = await storage.read(key: _hfTokenKey);
+  return token != null && token.isNotEmpty;
 });

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_back_button.dart';
 
 /// Fitness glossary data - term and definition pairs
 class GlossaryTerm {
@@ -158,13 +159,8 @@ class _GlossaryScreenState extends ConsumerState<GlossaryScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
       ),
       body: Column(
         children: [

@@ -14,6 +14,7 @@ import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import 'info_badge.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../components/exercise_detail_sheet.dart';
 
 /// Card widget displaying exercise info in a list format
@@ -57,23 +58,20 @@ class ExerciseCard extends ConsumerWidget {
   }
 
   void _showExerciseDetail(BuildContext context) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => ExerciseDetailSheet(exercise: exercise),
     );
   }
 
   void _showAddToWorkoutSheet(BuildContext context, WidgetRef ref) {
     HapticService.light();
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
-      builder: (context) => _AddToWorkoutSheet(
-        exerciseName: exercise.name,
+      builder: (context) => GlassSheet(
+        child: _AddToWorkoutSheet(
+          exerciseName: exercise.name,
+        ),
       ),
     );
   }

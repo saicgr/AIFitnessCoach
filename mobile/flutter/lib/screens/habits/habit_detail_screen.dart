@@ -11,7 +11,9 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/habit_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/share_service.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../utils/image_capture_utils.dart';
+import '../../widgets/segmented_tab_bar.dart';
 
 /// Provider for habit detail data
 final habitDetailProvider = FutureProvider.autoDispose
@@ -442,17 +444,11 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
       child: Row(
         children: [
           // Back button
-          _GlassmorphicButton(
+          GlassBackButton(
             onTap: () {
               HapticService.light();
               context.pop();
             },
-            isDark: isDark,
-            child: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: isDark ? Colors.white : Colors.black87,
-              size: 18,
-            ),
           ),
           const Spacer(),
           // Share button
@@ -702,31 +698,13 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
   }
 
   Widget _buildTabBar(Color elevated, Color accentColor, Color textMuted, bool isDark) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(12),
-        border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        indicatorSize: TabBarIndicatorSize.tab,
-        indicator: BoxDecoration(
-          color: accentColor.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        labelColor: accentColor,
-        unselectedLabelColor: textMuted,
-        labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
-        dividerColor: Colors.transparent,
-        padding: const EdgeInsets.all(4),
-        tabs: const [
-          Tab(text: 'Calendar'),
-          Tab(text: 'History'),
-        ],
-      ),
+    return SegmentedTabBar(
+      controller: _tabController,
+      showIcons: false,
+      tabs: const [
+        SegmentedTabItem(label: 'Calendar'),
+        SegmentedTabItem(label: 'History'),
+      ],
     );
   }
 

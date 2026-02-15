@@ -22,6 +22,10 @@ Map<String, dynamic>? _parseGenerationMetadata(dynamic value) {
   return null;
 }
 
+/// Cache for parsed exercises, keyed by Workout instance.
+/// Uses Expando so entries are garbage-collected when the Workout is.
+final Expando<List<WorkoutExercise>> _exerciseCache = Expando<List<WorkoutExercise>>();
+
 @JsonSerializable()
 class Workout extends Equatable {
   final String? id;
@@ -52,6 +56,12 @@ class Workout extends Equatable {
   final String? createdAt;
   @JsonKey(name: 'updated_at')
   final String? updatedAt;
+  @JsonKey(name: 'completed_at')
+  final String? completedAt;
+  @JsonKey(name: 'completion_method')
+  final String? completionMethod;
+  @JsonKey(name: 'is_favorite')
+  final bool? isFavorite;
 
   /// Optional known exercise count (used when exercises aren't fully loaded)
   /// This is set when converting from TodayWorkoutSummary which has count from API
@@ -75,15 +85,21 @@ class Workout extends Equatable {
     this.generationMetadata,
     this.createdAt,
     this.updatedAt,
+    this.completedAt,
+    this.completionMethod,
+    this.isFavorite,
     this.knownExerciseCount,
   });
 
   factory Workout.fromJson(Map<String, dynamic> json) => _$WorkoutFromJson(json);
   Map<String, dynamic> toJson() => _$WorkoutToJson(this);
 
-  /// Parse exercises from JSON
+  /// Parse exercises from JSON (memoized - only parses once per instance)
   List<WorkoutExercise> get exercises {
-    if (exercisesJson == null) return [];
+    final cached = _exerciseCache[this];
+    if (cached != null) return cached;
+
+    if (exercisesJson == null) return const [];
     try {
       List<dynamic> exercisesList;
       if (exercisesJson is String) {
@@ -91,9 +107,9 @@ class Workout extends Equatable {
       } else if (exercisesJson is List) {
         exercisesList = exercisesJson as List;
       } else {
-        return [];
+        return const [];
       }
-      return exercisesList.map((e) {
+      final result = exercisesList.map((e) {
         // Handle case where exercise is already a WorkoutExercise object
         if (e is WorkoutExercise) {
           return e;
@@ -114,10 +130,12 @@ class Workout extends Equatable {
         }
         return null;
       }).whereType<WorkoutExercise>().toList();
+      _exerciseCache[this] = result;
+      return result;
     } catch (e) {
       // Log the actual error for debugging
       print('❌ [Workout.exercises] Parse error: $e');
-      return [];
+      return const [];
     }
   }
 
@@ -261,6 +279,9 @@ class Workout extends Equatable {
         isCompleted,
         durationMinutes,
         generationMetadata,
+        completedAt,
+        completionMethod,
+        isFavorite,
         knownExerciseCount,
       ];
 
@@ -278,6 +299,9 @@ class Workout extends Equatable {
     Map<String, dynamic>? generationMetadata,
     String? createdAt,
     String? updatedAt,
+    String? completedAt,
+    String? completionMethod,
+    bool? isFavorite,
     int? knownExerciseCount,
   }) {
     return Workout(
@@ -294,6 +318,9 @@ class Workout extends Equatable {
       generationMetadata: generationMetadata ?? this.generationMetadata,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      completedAt: completedAt ?? this.completedAt,
+      completionMethod: completionMethod ?? this.completionMethod,
+      isFavorite: isFavorite ?? this.isFavorite,
       knownExerciseCount: knownExerciseCount ?? this.knownExerciseCount,
     );
   }
@@ -674,4 +701,51 @@ class WorkoutCompletionResponse {
 
   /// Check if any exercises declined
   bool get hasDeclines => performanceComparison?.hasDeclines ?? false;
+}
+
+/// Response from workout summary API (for completed workouts)
+class WorkoutSummaryResponse {
+  final Map<String, dynamic> workout;
+  final PerformanceComparisonInfo? performanceComparison;
+  final List<PersonalRecordInfo> personalRecords;
+  final String? coachSummary;
+  final String? completionMethod;
+  final String? completedAt;
+
+  const WorkoutSummaryResponse({
+    required this.workout,
+    this.performanceComparison,
+    this.personalRecords = const [],
+    this.coachSummary,
+    this.completionMethod,
+    this.completedAt,
+  });
+
+  factory WorkoutSummaryResponse.fromJson(Map<String, dynamic> json) {
+    final workoutData = json['workout'] as Map<String, dynamic>? ?? {};
+    final prsData = json['personal_records'] as List<dynamic>? ?? [];
+    final comparisonData = json['performance_comparison'] as Map<String, dynamic>?;
+
+    return WorkoutSummaryResponse(
+      workout: workoutData,
+      performanceComparison: comparisonData != null
+          ? PerformanceComparisonInfo.fromJson(comparisonData)
+          : null,
+      personalRecords: prsData
+          .map((pr) => PersonalRecordInfo.fromJson(pr as Map<String, dynamic>))
+          .toList(),
+      coachSummary: json['coach_summary'] as String?,
+      completionMethod: json['completion_method'] as String?,
+      completedAt: json['completed_at'] as String?,
+    );
+  }
+
+  /// Check if any PRs were achieved
+  bool get hasPRs => personalRecords.isNotEmpty;
+
+  /// Check if performance comparison data is available
+  bool get hasComparison => performanceComparison != null;
+
+  /// Whether this was a quick mark-as-done (no tracking)
+  bool get isMarkedDone => completionMethod == 'marked_done';
 }

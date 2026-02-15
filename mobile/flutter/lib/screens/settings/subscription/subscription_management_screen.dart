@@ -11,6 +11,8 @@ import '../../../data/repositories/subscription_repository.dart';
 import '../../../data/services/api_client.dart';
 import 'cancel_confirmation_sheet.dart';
 import 'pause_subscription_sheet.dart';
+import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Subscription Management Screen
 /// Shows current subscription status with cancel, pause, and resume options
@@ -86,29 +88,29 @@ class _SubscriptionManagementScreenState
 
   void _showCancelConfirmation() {
     HapticFeedback.mediumImpact();
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => CancelConfirmationSheet(
-        planName: _subscription?.planName ?? 'Premium',
-        onCancelConfirmed: _handleCancelConfirmed,
-        onPauseInstead: _showPauseSheet,
+      builder: (context) => GlassSheet(
+        child: CancelConfirmationSheet(
+          planName: _subscription?.planName ?? 'Premium',
+          onCancelConfirmed: _handleCancelConfirmed,
+          onPauseInstead: _showPauseSheet,
+        ),
       ),
     );
   }
 
   void _showPauseSheet() {
     HapticFeedback.lightImpact();
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => PauseSubscriptionSheet(
-        planName: _subscription?.planName ?? 'Premium',
-        onPauseConfirmed: _handlePauseConfirmed,
+      builder: (context) => GlassSheet(
+        child: PauseSubscriptionSheet(
+          planName: _subscription?.planName ?? 'Premium',
+          onPauseConfirmed: _handlePauseConfirmed,
+        ),
       ),
     );
   }
@@ -244,10 +246,8 @@ class _SubscriptionManagementScreenState
             fontWeight: FontWeight.w600,
           ),
         ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
       ),
       body: _isLoading
           ? const Center(

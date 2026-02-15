@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +11,7 @@ import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/image_url_cache.dart';
+import '../../../widgets/glass_sheet.dart';
 import 'regenerate_workout_sheet.dart';
 import '../../workout/widgets/exercise_add_sheet.dart';
 
@@ -33,6 +35,7 @@ class HeroWorkoutCard extends ConsumerStatefulWidget {
 
 class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   bool _isSkipping = false;
+  bool _isMarkingDone = false;
   String? _backgroundImageUrl;
   bool _isLoadingImage = true;
 
@@ -210,32 +213,228 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     }
   }
 
+  Future<void> _markAsDone() async {
+    final dateLabel = _getScheduledDateLabel(widget.workout.scheduledDate);
+    final isToday = dateLabel == 'TODAY';
+    final dialogMessage = isToday
+        ? 'This will mark the workout as completed without tracking sets.'
+        : 'Mark workout for $dateLabel as done? This will mark it as completed without tracking sets.';
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black54,
+      builder: (dialogContext) {
+        final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          surfaceTintColor: Colors.transparent,
+          title: Text(
+            'Mark as Done?',
+            style: TextStyle(
+              color: isDark ? Colors.white : Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            dialogMessage,
+            style: TextStyle(color: isDark ? Colors.white70 : Colors.black54),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: isDark ? Colors.white60 : Colors.black45,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              style: TextButton.styleFrom(foregroundColor: AppColors.success),
+              child: const Text('Mark Done'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isMarkingDone = true);
+
+    try {
+      final repo = ref.read(workoutRepositoryProvider);
+      final result = await repo.markWorkoutAsDone(widget.workout.id!);
+
+      if (result != null && mounted) {
+        TodayWorkoutNotifier.clearCache();
+        ref.invalidate(todayWorkoutProvider);
+        ref.invalidate(workoutsProvider);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Workout marked as done!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not mark workout as done'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+
+    if (mounted) {
+      setState(() => _isMarkingDone = false);
+    }
+  }
+
+  Widget _buildOverlayButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.15)
+              : Colors.black.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.2)
+                : Colors.black.withValues(alpha: 0.1),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: isDark ? Colors.white : Colors.black87),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _repeatWorkout() {
+    HapticService.medium();
+    context.push('/active-workout', extra: widget.workout);
+  }
+
+  Future<void> _markAsUndone() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black54,
+      builder: (dialogContext) {
+        final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          surfaceTintColor: Colors.transparent,
+          title: Text(
+            'Undo Completion?',
+            style: TextStyle(
+              color: isDark ? Colors.white : Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            'This will mark the workout as not done.',
+            style: TextStyle(color: isDark ? Colors.white70 : Colors.black54),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: isDark ? Colors.white60 : Colors.black45,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              style: TextButton.styleFrom(foregroundColor: AppColors.error),
+              child: const Text('Undo'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    try {
+      final repo = ref.read(workoutRepositoryProvider);
+      final success = await repo.uncompleteWorkout(widget.workout.id!);
+
+      if (success && mounted) {
+        TodayWorkoutNotifier.clearCache();
+        ref.invalidate(todayWorkoutProvider);
+        ref.invalidate(workoutsProvider);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Workout unmarked'),
+              backgroundColor: AppColors.textMuted,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not undo completion'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _viewSummary() {
+    HapticService.selection();
+    context.push('/workout-summary/${widget.workout.id}');
+  }
+
   void _showOptionsMenu() {
     HapticService.light();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : Colors.white,
-      useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.textMuted,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+      builder: (sheetContext) => GlassSheet(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
               // Glance Workout
               ListTile(
                 leading: Icon(
@@ -320,6 +519,24 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                   context.push('/workout/${widget.workout.id}');
                 },
               ),
+              // Mark as Done
+              ListTile(
+                leading: Icon(
+                  Icons.check_circle_outline,
+                  color: isDark ? AppColors.success : AppColors.success,
+                ),
+                title: Text(
+                  'Mark as Done',
+                  style: TextStyle(
+                    color: isDark ? AppColors.success : AppColors.success,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _markAsDone();
+                },
+              ),
               // Divider before destructive action
               const Divider(height: 1),
               // Skip Workout
@@ -340,6 +557,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -838,12 +1056,71 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
               ),
             ),
 
-            // Loading indicator for skipping
-            if (_isSkipping)
+            // Loading indicator for skipping or marking done
+            if (_isSkipping || _isMarkingDone)
               Container(
                 color: Colors.black.withValues(alpha: 0.6),
                 child: const Center(
                   child: CircularProgressIndicator(color: Colors.white),
+                ),
+              ),
+
+            // Completed workout overlay
+            if (widget.workout.isCompleted == true)
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                    child: Container(
+                      color: AppColors.success.withValues(alpha: isDark ? 0.25 : 0.2),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.success, width: 3),
+                              color: AppColors.success.withValues(alpha: 0.2),
+                            ),
+                            child: const Icon(Icons.check, color: AppColors.success, size: 40),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Workout Complete',
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black87,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            workout.name ?? '',
+                            style: TextStyle(
+                              color: isDark ? Colors.white70 : Colors.black54,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildOverlayButton(icon: Icons.replay, label: 'Repeat', onTap: _repeatWorkout, isDark: isDark),
+                              if (widget.workout.completionMethod == 'marked_done') ...[
+                                const SizedBox(width: 12),
+                                _buildOverlayButton(icon: Icons.undo, label: 'Undo', onTap: _markAsUndone, isDark: isDark),
+                              ],
+                              const SizedBox(width: 12),
+                              _buildOverlayButton(icon: Icons.bar_chart, label: 'Summary', onTap: _viewSummary, isDark: isDark),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
           ],

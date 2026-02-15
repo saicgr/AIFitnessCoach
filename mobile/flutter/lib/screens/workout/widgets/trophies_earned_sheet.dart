@@ -1,8 +1,8 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Shows a bottom sheet displaying trophies and achievements earned from the workout
 Future<void> showTrophiesEarnedSheet(
@@ -14,17 +14,16 @@ Future<void> showTrophiesEarnedSheet(
 }) async {
   HapticFeedback.mediumImpact();
 
-  return showModalBottomSheet<void>(
+  return showGlassSheet<void>(
     context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withOpacity(0.5),
-    isScrollControlled: true,
-    useRootNavigator: true,
-    builder: (context) => _TrophiesEarnedSheet(
-      newPRs: newPRs,
-      achievements: achievements,
-      totalWorkouts: totalWorkouts,
-      currentStreak: currentStreak,
+    builder: (context) => GlassSheet(
+      showHandle: false,
+      child: _TrophiesEarnedSheet(
+        newPRs: newPRs,
+        achievements: achievements,
+        totalWorkouts: totalWorkouts,
+        currentStreak: currentStreak,
+      ),
     ),
   );
 }
@@ -56,33 +55,9 @@ class _TrophiesEarnedSheet extends StatelessWidget {
         ?.map((a) => Map<String, dynamic>.from(a as Map))
         .toList() ?? [];
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-          ),
-          decoration: BoxDecoration(
-            color: backgroundColor.withOpacity(0.95),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border.all(color: cardBorder),
-          ),
-          child: Column(
+    return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Drag handle
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textSecondary.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-
               // Header
               Padding(
                 padding: const EdgeInsets.all(20),
@@ -218,9 +193,6 @@ class _TrophiesEarnedSheet extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
     );
   }
 

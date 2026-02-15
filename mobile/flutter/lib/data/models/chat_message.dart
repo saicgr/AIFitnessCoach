@@ -186,7 +186,7 @@ class ChatMessage extends Equatable {
 }
 
 /// Chat request model
-@JsonSerializable()
+@JsonSerializable(includeIfNull: false)
 class ChatRequest {
   final String message;
   @JsonKey(name: 'user_id')

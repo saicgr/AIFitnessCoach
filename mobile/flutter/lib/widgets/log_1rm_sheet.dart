@@ -1,10 +1,10 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/app_colors.dart';
 import '../data/repositories/workout_repository.dart';
 import '../data/services/api_client.dart';
+import 'glass_sheet.dart';
 
 /// Shows a bottom sheet to log 1RM for an exercise
 Future<Map<String, dynamic>?> showLog1RMSheet(
@@ -14,12 +14,9 @@ Future<Map<String, dynamic>?> showLog1RMSheet(
   String? exerciseId,
   double? current1rm,
 }) async {
-  return showModalBottomSheet<Map<String, dynamic>>(
+  return showGlassSheet<Map<String, dynamic>>(
     context: context,
-    isScrollControlled: true,
     useRootNavigator: true,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
     builder: (context) => Log1RMSheet(
       exerciseName: exerciseName,
       exerciseId: exerciseId ?? exerciseName.toLowerCase().replaceAll(' ', '_'),
@@ -157,25 +154,7 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
                  _estimated1rm != null &&
                  _estimated1rm! > widget.current1rm!;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
+    return GlassSheet(
           padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
@@ -185,19 +164,6 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Drag handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
             // Title
             Row(
               children: [
@@ -576,8 +542,6 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
               ),
             ),
           ],
-        ),
-      ),
         ),
       ),
     );

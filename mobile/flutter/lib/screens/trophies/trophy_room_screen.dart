@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +10,8 @@ import '../../data/models/user_xp.dart';
 import '../../data/providers/trophy_filter_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_back_button.dart';
+import '../../widgets/glass_sheet.dart';
 import 'widgets/trophy_filter_sheet.dart';
 
 /// Filter options for trophy status display
@@ -279,13 +280,8 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
-            child: _buildFloatingButton(
-              icon: Icons.arrow_back,
+            child: GlassBackButton(
               onTap: () => context.pop(),
-              isDark: isDark,
-              elevatedColor: elevatedColor,
-              textColor: textColor,
-              cardBorder: cardBorder,
             ),
           ),
 
@@ -607,16 +603,17 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
 
   void _showFilterSheet(BuildContext context) {
     HapticService.medium();
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
       useRootNavigator: true,
-      builder: (context) => DraggableScrollableSheet(
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
         initialChildSize: 0.85,
         minChildSize: 0.5,
         maxChildSize: 0.95,
         builder: (context, scrollController) => const TrophyFilterSheet(),
+      ),
       ),
     );
   }
@@ -1068,10 +1065,8 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
     Color accentColor,
   ) {
     HapticService.medium();
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
       useRootNavigator: true,
       builder: (context) => _TrophyDetailSheet(
         trophyProgress: trophy,
@@ -1324,40 +1319,11 @@ class _TrophyDetailSheet extends StatelessWidget {
     final isMystery = trophyProgress.isMystery;
     final primaryColor = isMystery ? AppColors.purple : tier.primaryColor;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.8)
-                : Colors.white.withValues(alpha: 0.95),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: SafeArea(
+    return GlassSheet(
+        child: SafeArea(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Handle
-                Container(
-                  margin: const EdgeInsets.only(top: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: textMuted.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-
                 Padding(
                   padding: const EdgeInsets.all(24),
                   child: Column(
@@ -1624,8 +1590,6 @@ class _TrophyDetailSheet extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ),
     );
   }
 

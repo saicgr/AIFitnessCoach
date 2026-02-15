@@ -6,6 +6,7 @@ import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/sheet_header.dart';
 import 'add_gym_profile_sheet.dart';
 import 'edit_gym_profile_sheet.dart';
@@ -76,11 +77,8 @@ class _ManageGymProfilesSheetState
 
   void _showEditSheet(GymProfile profile) {
     Navigator.of(context).pop(); // Close this sheet first
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => EditGymProfileSheet(
         profile: profile,
         onBack: () => _reopenManageSheet(),
@@ -90,11 +88,8 @@ class _ManageGymProfilesSheetState
 
   void _showAddSheet() {
     Navigator.of(context).pop(); // Close this sheet first
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => AddGymProfileSheet(
         onBack: () => _reopenManageSheet(),
       ),
@@ -102,11 +97,8 @@ class _ManageGymProfilesSheetState
   }
 
   void _reopenManageSheet() {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => ManageGymProfilesSheet(
         onBack: widget.onBack,
       ),
@@ -240,11 +232,8 @@ class _ManageGymProfilesSheetState
       }
     });
 
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+    return GlassSheet(
+      showHandle: false,
       child: DraggableScrollableSheet(
         initialChildSize: 0.6,
         minChildSize: 0.4,
@@ -252,16 +241,7 @@ class _ManageGymProfilesSheetState
         expand: false,
         builder: (context, scrollController) => Column(
           children: [
-            // Handle
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+            GlassSheetHandle(isDark: isDark),
 
             // Header
             Padding(

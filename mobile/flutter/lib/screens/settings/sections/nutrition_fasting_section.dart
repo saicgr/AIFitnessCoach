@@ -9,6 +9,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/fasting_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../widgets/section_header.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Provider for fasting settings state
 final fastingSettingsProvider =
@@ -462,16 +463,17 @@ class _NutritionFastingCard extends ConsumerWidget {
   }
 
   void _showProtocolSelector(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
       useRootNavigator: true,
-      builder: (context) => _ProtocolSelectorSheet(
-        currentProtocol: settingsState.fastingProtocol,
-        onSelect: (protocol) {
-          ref.read(fastingSettingsProvider.notifier).setFastingProtocol(protocol);
-          Navigator.pop(context);
-        },
+      builder: (context) => GlassSheet(
+        child: _ProtocolSelectorSheet(
+          currentProtocol: settingsState.fastingProtocol,
+          onSelect: (protocol) {
+            ref.read(fastingSettingsProvider.notifier).setFastingProtocol(protocol);
+            Navigator.pop(context);
+          },
+        ),
       ),
     );
   }

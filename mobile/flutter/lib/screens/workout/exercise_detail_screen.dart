@@ -7,6 +7,7 @@ import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../core/providers/warmup_duration_provider.dart';
 import '../../data/models/exercise.dart';
 import '../../data/services/api_client.dart';
@@ -354,28 +355,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
       Positioned(
         top: MediaQuery.of(context).padding.top + 8,
         left: 16,
-        child: GestureDetector(
+        child: GlassBackButton(
           onTap: () => context.pop(),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: isDark ? Colors.black54 : Colors.white.withValues(alpha: 0.9),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Icon(
-              Icons.arrow_back,
-              size: 20,
-              color: isDark ? Colors.white : Colors.black87,
-            ),
-          ),
         ),
       ),
         ],

@@ -6,6 +6,7 @@ import '../../data/models/achievement.dart';
 import '../../data/repositories/achievements_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/lottie_animations.dart';
+import '../../widgets/segmented_tab_bar.dart';
 
 class AchievementsScreen extends ConsumerStatefulWidget {
   const AchievementsScreen({super.key});
@@ -56,33 +57,37 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen>
         backgroundColor: backgroundColor,
         foregroundColor: textPrimary,
         title: Text('Achievements', style: TextStyle(color: textPrimary)),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: cyan,
-          labelColor: cyan,
-          unselectedLabelColor: textMuted,
-          tabs: const [
-            Tab(text: 'Summary'),
-            Tab(text: 'Badges'),
-            Tab(text: 'PRs'),
-          ],
-        ),
       ),
-      body: state.isLoading
-          ? Center(
-              child: LottieLoading(size: 80, color: cyan),
-            )
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _SummaryTab(summary: state.summary, isDark: isDark),
-                _BadgesTab(achievements: state.achievements, isDark: isDark),
-                _PersonalRecordsTab(
-                  records: state.summary?.personalRecords ?? [],
-                  isDark: isDark,
-                ),
-              ],
-            ),
+      body: Column(
+        children: [
+          SegmentedTabBar(
+            controller: _tabController,
+            showIcons: false,
+            tabs: const [
+              SegmentedTabItem(label: 'Summary'),
+              SegmentedTabItem(label: 'Badges'),
+              SegmentedTabItem(label: 'PRs'),
+            ],
+          ),
+          Expanded(
+            child: state.isLoading
+                ? Center(
+                    child: LottieLoading(size: 80, color: cyan),
+                  )
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _SummaryTab(summary: state.summary, isDark: isDark),
+                      _BadgesTab(achievements: state.achievements, isDark: isDark),
+                      _PersonalRecordsTab(
+                        records: state.summary?.personalRecords ?? [],
+                        isDark: isDark,
+                      ),
+                    ],
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

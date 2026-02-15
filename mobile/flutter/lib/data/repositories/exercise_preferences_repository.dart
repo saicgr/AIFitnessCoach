@@ -805,21 +805,45 @@ class ExercisePreferencesRepository {
     String? reason,
     String? gymProfileId,
     String section = 'main',
+    Map<String, double>? cardioParams,
   }) async {
     debugPrint('🔒 [ExercisePrefs] Adding staple: $exerciseName for user: $userId');
 
     try {
+      final data = <String, dynamic>{
+        'user_id': userId,
+        'exercise_name': exerciseName,
+        if (libraryId != null) 'library_id': libraryId,
+        if (muscleGroup != null) 'muscle_group': muscleGroup,
+        if (reason != null) 'reason': reason,
+        if (gymProfileId != null) 'gym_profile_id': gymProfileId,
+        'section': section,
+      };
+
+      if (cardioParams != null) {
+        if (cardioParams.containsKey('duration_seconds')) {
+          data['user_duration_seconds'] = cardioParams['duration_seconds']!.toInt();
+        }
+        if (cardioParams.containsKey('speed_mph')) {
+          data['user_speed_mph'] = cardioParams['speed_mph'];
+        }
+        if (cardioParams.containsKey('incline_percent')) {
+          data['user_incline_percent'] = cardioParams['incline_percent'];
+        }
+        if (cardioParams.containsKey('rpm')) {
+          data['user_rpm'] = cardioParams['rpm']!.toInt();
+        }
+        if (cardioParams.containsKey('resistance_level')) {
+          data['user_resistance_level'] = cardioParams['resistance_level']!.toInt();
+        }
+        if (cardioParams.containsKey('stroke_rate_spm')) {
+          data['user_stroke_rate_spm'] = cardioParams['stroke_rate_spm']!.toInt();
+        }
+      }
+
       final response = await _apiClient.post<Map<String, dynamic>>(
         '${ApiConstants.apiBaseUrl}/exercise-preferences/staples',
-        data: {
-          'user_id': userId,
-          'exercise_name': exerciseName,
-          if (libraryId != null) 'library_id': libraryId,
-          if (muscleGroup != null) 'muscle_group': muscleGroup,
-          if (reason != null) 'reason': reason,
-          if (gymProfileId != null) 'gym_profile_id': gymProfileId,
-          'section': section,
-        },
+        data: data,
       );
 
       if (response.data != null) {

@@ -9,6 +9,8 @@ import 'widgets/strain_risk_card.dart';
 import 'widgets/volume_alert_card.dart';
 import 'volume_history_screen.dart';
 import 'report_strain_screen.dart';
+import '../../widgets/glass_back_button.dart';
+import '../../widgets/glass_sheet.dart';
 
 /// Provider for strain dashboard data
 final strainDashboardProvider =
@@ -167,10 +169,8 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
         centerTitle: true,
         backgroundColor: colorScheme.surface,
         surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         actions: [
           IconButton(
             icon: const Icon(Icons.history),
@@ -591,34 +591,17 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
   void _showAlertsSheet(StrainDashboardData data) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.9,
-        builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(20),
-            ),
-          ),
-          child: Column(
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.5,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) => Column(
             children: [
-              // Handle
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colorScheme.outline.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -662,35 +645,17 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final riskColor = Color(risk.riskLevelEnum.colorValue);
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
       useRootNavigator: true,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(20),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colorScheme.outline.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            Row(
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -772,6 +737,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

@@ -42,6 +42,9 @@ final selectedAvoidSetProvider = StateProvider<Set<String>>((ref) => {});
 /// Exercise search query
 final exerciseSearchProvider = StateProvider<String>((ref) => '');
 
+/// Search suggestion from backend (e.g., "Did you mean: treadmill?")
+final searchSuggestionProvider = StateProvider<String?>((ref) => null);
+
 // ============================================================================
 // EXERCISES STATE NOTIFIER
 // ============================================================================
@@ -110,6 +113,10 @@ class ExercisesNotifier extends StateNotifier<ExercisesState> {
       final url = '${ApiConstants.library}/exercises?$queryString';
 
       final response = await apiClient.get(url);
+
+      // Read search suggestion header from response
+      final suggestion = response.headers.value('x-search-suggestion');
+      _ref.read(searchSuggestionProvider.notifier).state = suggestion;
 
       if (response.statusCode == 200) {
         try {

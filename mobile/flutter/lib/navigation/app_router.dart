@@ -38,6 +38,7 @@ import '../screens/metrics/metrics_dashboard_screen.dart';
 import '../screens/workout/active_workout_screen_refactored.dart';
 import '../screens/workout/workout_complete_screen.dart';
 import '../screens/workout/workout_detail_screen.dart';
+import '../screens/workout/workout_summary_screen.dart';
 import '../screens/workout/exercise_detail_screen.dart';
 import '../screens/workout/custom_workout_builder_screen.dart';
 import '../screens/schedule/schedule_screen.dart';
@@ -968,15 +969,6 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
-            path: '/stats',
-            pageBuilder: (context, state) {
-              final openPhoto = state.uri.queryParameters['openPhoto'] == 'true';
-              return NoTransitionPage(
-                child: ComprehensiveStatsScreen(openPhotoSheet: openPhoto),
-              );
-            },
-          ),
-          GoRoute(
             path: '/social',
             pageBuilder: (context, state) => const NoTransitionPage(
               child: SocialScreen(),
@@ -997,12 +989,22 @@ final routerProvider = Provider<GoRouter>((ref) {
               );
             },
           ),
-          // Redirect /progress to /stats (Progress merged into Stats)
-          GoRoute(
-            path: '/progress',
-            redirect: (context, state) => '/stats',
-          ),
         ],
+      ),
+
+      // Stats (full screen, no bottom nav)
+      GoRoute(
+        path: '/stats',
+        builder: (context, state) {
+          final openPhoto = state.uri.queryParameters['openPhoto'] == 'true';
+          final initialTab = int.tryParse(state.uri.queryParameters['tab'] ?? '');
+          return ComprehensiveStatsScreen(openPhotoSheet: openPhoto, initialTab: initialTab);
+        },
+      ),
+      // Redirect /progress to /stats
+      GoRoute(
+        path: '/progress',
+        redirect: (context, state) => '/stats',
       ),
 
       // Chat (full screen overlay)
@@ -1043,6 +1045,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final workoutId = state.pathParameters['id']!;
           return WorkoutDetailScreen(workoutId: workoutId);
+        },
+      ),
+
+      // Workout completion summary
+      GoRoute(
+        path: '/workout-summary/:id',
+        builder: (context, state) {
+          final workoutId = state.pathParameters['id']!;
+          return WorkoutSummaryScreen(workoutId: workoutId);
         },
       ),
 

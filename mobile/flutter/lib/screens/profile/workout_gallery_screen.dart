@@ -7,6 +7,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../data/providers/workout_gallery_provider.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/workout_gallery_service.dart';
@@ -514,43 +515,44 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
   void _showImageOptions(WorkoutGalleryImage image) {
     HapticFeedback.mediumImpact();
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      useRootNavigator: true,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(Icons.share_rounded, color: AppColors.cyan),
-              title: const Text('Share Again'),
-              onTap: () async {
-                Navigator.pop(context);
-                await _reshareImage(image);
-              },
-            ),
-            if (!image.sharedToFeed)
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               ListTile(
-                leading: Icon(Icons.feed_rounded, color: AppColors.purple),
-                title: const Text('Post to Feed'),
+                leading: Icon(Icons.share_rounded, color: AppColors.cyan),
+                title: const Text('Share Again'),
                 onTap: () async {
                   Navigator.pop(context);
-                  await _postToFeed(image);
+                  await _reshareImage(image);
                 },
               ),
-            ListTile(
-              leading: Icon(Icons.delete_outline_rounded, color: AppColors.error),
-              title: Text(
-                'Delete',
-                style: TextStyle(color: AppColors.error),
+              if (!image.sharedToFeed)
+                ListTile(
+                  leading: Icon(Icons.feed_rounded, color: AppColors.purple),
+                  title: const Text('Post to Feed'),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _postToFeed(image);
+                  },
+                ),
+              ListTile(
+                leading: Icon(Icons.delete_outline_rounded, color: AppColors.error),
+                title: Text(
+                  'Delete',
+                  style: TextStyle(color: AppColors.error),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _confirmDelete(image);
+                },
               ),
-              onTap: () {
-                Navigator.pop(context);
-                _confirmDelete(image);
-              },
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

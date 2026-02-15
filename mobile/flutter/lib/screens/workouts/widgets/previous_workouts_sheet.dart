@@ -5,29 +5,26 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/workout.dart';
+import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 
 /// Shows the previous workouts bottom sheet
 Future<void> showPreviousWorkoutsSheet(
   BuildContext context,
   WidgetRef ref,
-  List<Workout> completedWorkouts,
 ) async {
   final parentTheme = Theme.of(context);
 
   // Hide nav bar while sheet is open
   ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-  return showModalBottomSheet<void>(
+  return showGlassSheet<void>(
     context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    isScrollControlled: true,
-    useRootNavigator: true,
     builder: (sheetContext) => Theme(
       data: parentTheme,
-      child: _PreviousWorkoutsSheet(completedWorkouts: completedWorkouts),
+      child: const _PreviousWorkoutsSheet(),
     ),
   ).whenComplete(() {
     // Show nav bar when sheet is closed
@@ -36,17 +33,19 @@ Future<void> showPreviousWorkoutsSheet(
 }
 
 class _PreviousWorkoutsSheet extends ConsumerWidget {
-  final List<Workout> completedWorkouts;
-
-  const _PreviousWorkoutsSheet({required this.completedWorkouts});
+  const _PreviousWorkoutsSheet();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final accentColor = ref.colors(context).accent;
+
+    // Load workouts on-demand from the provider and filter for completed
+    final workoutsState = ref.watch(workoutsProvider);
+    final allWorkouts = workoutsState.valueOrNull ?? [];
+    final completedWorkouts = allWorkouts.where((w) => w.isCompleted == true).toList();
 
     // Sort by scheduled date (most recent first)
     final sortedWorkouts = List<Workout>.from(completedWorkouts)
@@ -56,28 +55,11 @@ class _PreviousWorkoutsSheet extends ConsumerWidget {
         return bDate.compareTo(aDate);
       });
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
-      ),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+    return GlassSheet(
+      maxHeightFraction: 0.85,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag handle
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: textSecondary.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
           // Header
           Padding(
             padding: const EdgeInsets.all(20),

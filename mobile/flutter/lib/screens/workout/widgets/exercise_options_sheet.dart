@@ -5,14 +5,13 @@
 /// Exercise History, Notes, and destructive actions.
 library;
 
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
+import '../../../widgets/glass_sheet.dart';
 import 'exercise_info_sheet.dart';
 
 /// Rep progression types
@@ -108,23 +107,22 @@ Future<void> showExerciseOptionsSheet({
 }) {
   HapticFeedback.mediumImpact();
 
-  return showModalBottomSheet(
+  return showGlassSheet(
     context: context,
-    isScrollControlled: true,
-    useRootNavigator: true,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    builder: (ctx) => ExerciseOptionsSheet(
-      exercise: exercise,
-      currentProgression: currentProgression,
-      onProgressionChanged: onProgressionChanged,
-      onReplace: onReplace,
-      onViewHistory: onViewHistory,
-      onViewInstructions: onViewInstructions,
-      onAddNotes: onAddNotes,
-      onRemoveFromWorkout: onRemoveFromWorkout,
-      onAddToSuperset: onAddToSuperset,
-      onRemoveAndDontRecommend: onRemoveAndDontRecommend,
+    builder: (ctx) => GlassSheet(
+      showHandle: false,
+      child: ExerciseOptionsSheet(
+        exercise: exercise,
+        currentProgression: currentProgression,
+        onProgressionChanged: onProgressionChanged,
+        onReplace: onReplace,
+        onViewHistory: onViewHistory,
+        onViewInstructions: onViewInstructions,
+        onAddNotes: onAddNotes,
+        onRemoveFromWorkout: onRemoveFromWorkout,
+        onAddToSuperset: onAddToSuperset,
+        onRemoveAndDontRecommend: onRemoveAndDontRecommend,
+      ),
     ),
   );
 }
@@ -168,47 +166,11 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final screenHeight = MediaQuery.of(context).size.height;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: screenHeight * 0.85,
-          ),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: SingleChildScrollView(
+    return SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Handle bar
-                Container(
-                  margin: const EdgeInsets.only(top: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : Colors.black.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-
                 // Exercise header
                 _buildExerciseHeader(isDark, textPrimary, textMuted),
 
@@ -224,9 +186,6 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
                 SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
               ],
             ),
-          ),
-        ),
-      ),
     );
   }
 

@@ -10,6 +10,8 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/habit_repository.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_back_button.dart';
+import '../../widgets/glass_sheet.dart';
 import '../home/widgets/habit_card.dart';
 
 /// Unified habit item for display (combines auto-tracked and custom)
@@ -567,32 +569,11 @@ class HabitsScreen extends ConsumerWidget {
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
-            child: GestureDetector(
+            child: GlassBackButton(
               onTap: () {
                 HapticService.light();
                 context.pop();
               },
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: cardBg,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: cardBorder),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.arrow_back,
-                  color: textPrimary,
-                  size: 20,
-                ),
-              ),
             ),
           ),
 
@@ -1106,30 +1087,15 @@ class HabitsScreen extends ConsumerWidget {
       grouped.putIfAbsent(t.category, () => []).add(t);
     }
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: sheetBg,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (context) {
-        return SafeArea(
-          child: Container(
-            height: MediaQuery.of(context).size.height * 0.85,
-            padding: const EdgeInsets.only(top: 12),
+        return GlassSheet(
+          maxHeightFraction: 0.85,
+          child: SafeArea(
             child: Column(
               children: [
-                // Handle
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: textSecondary.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Row(
@@ -1344,40 +1310,24 @@ class HabitsScreen extends ConsumerWidget {
     final nameController = TextEditingController();
     String selectedIcon = 'check_circle';
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: sheetBg,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (context) {
-        return StatefulBuilder(
+        return GlassSheet(
+          child: StatefulBuilder(
           builder: (context, setSheetState) {
             return SafeArea(
               child: Padding(
                 padding: EdgeInsets.only(
                   bottom: MediaQuery.of(context).viewInsets.bottom,
                 ),
-                child: Container(
+                child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Handle
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: textSecondary.withValues(alpha: 0.3),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
                       // Header with back button
                       Row(
                         children: [
@@ -1546,6 +1496,7 @@ class HabitsScreen extends ConsumerWidget {
               ),
             );
           },
+        ),
         );
       },
     );

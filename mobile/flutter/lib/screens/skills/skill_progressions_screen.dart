@@ -6,6 +6,7 @@ import '../../data/models/skill_progression.dart';
 import '../../data/providers/skill_progression_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/progression_chain_card.dart';
 import 'widgets/category_filter_chips.dart';
 import 'widgets/skill_progress_summary_card.dart';
@@ -149,37 +150,13 @@ class _SkillProgressionsScreenState
     Color textMuted,
     bool isDark,
   ) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(12),
-        border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        indicatorSize: TabBarIndicatorSize.tab,
-        indicator: BoxDecoration(
-          color: cyan.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        labelColor: cyan,
-        unselectedLabelColor: textMuted,
-        labelStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.normal,
-          fontSize: 14,
-        ),
-        dividerColor: Colors.transparent,
-        padding: const EdgeInsets.all(4),
-        tabs: const [
-          Tab(text: 'My Progress'),
-          Tab(text: 'All Skills'),
-        ],
-      ),
+    return SegmentedTabBar(
+      controller: _tabController,
+      showIcons: false,
+      tabs: const [
+        SegmentedTabItem(label: 'My Progress'),
+        SegmentedTabItem(label: 'All Skills'),
+      ],
     );
   }
 

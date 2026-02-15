@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Step labels for the generation progress UI
 const _stepLabels = [
@@ -541,91 +542,82 @@ class _GenerateWorkoutPlaceholderState
   }
 
   void _showGenerationInfoSheet(BuildContext context, bool isDark, Color accentColor) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      useRootNavigator: true, // Shows above the floating nav bar
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: Container(
-          margin: const EdgeInsets.all(16),
+      builder: (context) => GlassSheet(
+        child: Padding(
           padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.auto_awesome,
-                  color: accentColor,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'What powers your workout?',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Your AI coach creates workouts based on:',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.7)
-                    : Colors.black54,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildInfoItem(isDark, accentColor, 'Fitness Level & Experience'),
-            _buildInfoItem(isDark, accentColor, 'Your Goals (muscle building, weight loss, etc.)'),
-            _buildInfoItem(isDark, accentColor, 'Available Equipment'),
-            _buildInfoItem(isDark, accentColor, 'Any Injuries or Limitations'),
-            _buildInfoItem(isDark, accentColor, 'Target Duration & Difficulty'),
-            _buildInfoItem(isDark, accentColor, 'Previous Workout Performance'),
-            _buildInfoItem(isDark, accentColor, 'Your Physical Profile (age, weight, height)'),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
                   Icon(
-                    Icons.trending_up,
+                    Icons.auto_awesome,
                     color: accentColor,
-                    size: 20,
+                    size: 24,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Each workout adapts to help you progress safely!',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.white : Colors.black87,
-                      ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'What powers your workout?',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black87,
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
+              const SizedBox(height: 16),
+              Text(
+                'Your AI coach creates workouts based on:',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.7)
+                      : Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildInfoItem(isDark, accentColor, 'Fitness Level & Experience'),
+              _buildInfoItem(isDark, accentColor, 'Your Goals (muscle building, weight loss, etc.)'),
+              _buildInfoItem(isDark, accentColor, 'Available Equipment'),
+              _buildInfoItem(isDark, accentColor, 'Any Injuries or Limitations'),
+              _buildInfoItem(isDark, accentColor, 'Target Duration & Difficulty'),
+              _buildInfoItem(isDark, accentColor, 'Previous Workout Performance'),
+              _buildInfoItem(isDark, accentColor, 'Your Physical Profile (age, weight, height)'),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.trending_up,
+                      color: accentColor,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Each workout adapts to help you progress safely!',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     );

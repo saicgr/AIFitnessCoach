@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_back_button.dart';
 
 final progressionPaceProvider = StateNotifierProvider<ProgressionPaceNotifier, ProgressionPaceState>((ref) => ProgressionPaceNotifier());
 
@@ -50,7 +51,7 @@ class _ProgressionPaceScreenState extends ConsumerState<ProgressionPaceScreen> {
     final st = ref.watch(progressionPaceProvider);
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(backgroundColor: bg, elevation: 0, leading: IconButton(icon: Icon(Icons.arrow_back, color: tp), onPressed: () => context.pop()), title: Text('Progression Pace', style: TextStyle(fontWeight: FontWeight.bold, color: tp)), centerTitle: true),
+      appBar: AppBar(backgroundColor: bg, elevation: 0, automaticallyImplyLeading: false, leading: const GlassBackButton(), title: Text('Progression Pace', style: TextStyle(fontWeight: FontWeight.bold, color: tp)), centerTitle: true),
       body: SafeArea(child: st.isLoading ? const Center(child: CircularProgressIndicator()) : SingleChildScrollView(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _buildInfoCard(d, tp, tm),
         const SizedBox(height: 24),

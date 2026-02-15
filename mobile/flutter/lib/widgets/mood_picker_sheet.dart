@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,18 +9,16 @@ import '../data/services/context_logging_service.dart';
 import '../data/services/haptic_service.dart';
 import '../data/repositories/workout_repository.dart';
 import 'main_shell.dart';
+import 'glass_sheet.dart';
 
 /// Shows the mood picker bottom sheet.
 void showMoodPickerSheet(BuildContext context, WidgetRef ref) {
   HapticService.light();
   ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-  showModalBottomSheet(
+  showGlassSheet(
     context: context,
-    backgroundColor: Colors.transparent,
     useRootNavigator: true,
-    isScrollControlled: true,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
     builder: (context) => const MoodPickerSheet(),
   ).then((_) {
     ref.read(floatingNavBarVisibleProvider.notifier).state = true;
@@ -59,43 +56,13 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
     final textColorStrong = isDark ? textColor : Colors.black.withValues(alpha: 0.85);
     final textMutedStrong = isDark ? textMuted : Colors.black.withValues(alpha: 0.55);
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
+    return GlassSheet(
           child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(height: 12),
-                  // Handle bar
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: textMuted.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
                   // Header row with icon and title
                   Row(
                     children: [
@@ -236,8 +203,6 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
               ),
             ),
           ),
-        ),
-      ),
     );
   }
 

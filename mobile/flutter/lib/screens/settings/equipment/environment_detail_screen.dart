@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/environment_equipment_provider.dart';
 import '../../../models/equipment_item.dart';
+import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Screen showing equipment details for a specific workout environment.
 class EnvironmentDetailScreen extends ConsumerStatefulWidget {
@@ -42,13 +44,8 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
       appBar: AppBar(
         backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.background,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: isDark ? Colors.white : AppColorsLight.textPrimary,
-          ),
-          onPressed: () => _handleBack(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: GlassBackButton(onTap: () => _handleBack()),
         title: Row(
           children: [
             Text(
@@ -288,15 +285,12 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
   void _showAddEquipmentSheet() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      isScrollControlled: true,
       useRootNavigator: true,
-      builder: (context) => _AddEquipmentSheet(
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: _AddEquipmentSheet(
         existingEquipment: _equipmentItems.map((e) => e.name).toSet(),
         onAdd: (item) {
           setState(() {
@@ -304,24 +298,21 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
             _hasChanges = true;
           });
         },
-      ),
+      )),
     );
   }
 
   void _showEquipmentEditor(EquipmentItem item, void Function(EquipmentItem) onSave) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      isScrollControlled: true,
       useRootNavigator: true,
-      builder: (context) => _EditEquipmentSheet(
-        item: item,
-        onSave: onSave,
+      builder: (context) => GlassSheet(
+        child: _EditEquipmentSheet(
+          item: item,
+          onSave: onSave,
+        ),
       ),
     );
   }

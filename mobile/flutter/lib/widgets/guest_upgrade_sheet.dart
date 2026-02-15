@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -7,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../core/constants/app_colors.dart';
 import '../data/providers/guest_mode_provider.dart';
 import '../data/providers/guest_usage_limits_provider.dart';
+import 'glass_sheet.dart';
 
 /// Types of features that can trigger upgrade prompts
 enum GuestFeatureLimit {
@@ -47,11 +47,8 @@ class GuestUpgradeSheet extends ConsumerWidget {
     VoidCallback? onDismiss,
   }) {
     HapticFeedback.mediumImpact();
-    return showModalBottomSheet(
+    return showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.2),
-      isScrollControlled: true,
       useRootNavigator: true,
       builder: (context) => GuestUpgradeSheet(
         feature: feature,
@@ -183,42 +180,14 @@ class GuestUpgradeSheet extends ConsumerWidget {
     final usage = ref.watch(guestUsageLimitsProvider);
     final accentColor = _getColor();
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
+    return GlassSheet(
           child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Drag handle
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-
               const SizedBox(height: 24),
 
               // Icon with gradient background
@@ -372,8 +341,6 @@ class GuestUpgradeSheet extends ConsumerWidget {
               ),
             ],
           ),
-        ),
-      ),
         ),
       ),
     );

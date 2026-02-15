@@ -9,6 +9,8 @@ import '../../../data/providers/guest_mode_provider.dart';
 import '../../../data/providers/guest_usage_limits_provider.dart';
 import '../../../data/services/fasting_timer_service.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/segmented_tab_bar.dart';
 import '../../fasting/widgets/protocol_selector_sheet.dart';
 import '../../fasting/widgets/fasting_settings_sheet.dart';
 import '../../fasting/widgets/fasting_history_list.dart';
@@ -143,56 +145,18 @@ class _FastingTabState extends ConsumerState<FastingTab>
     final fastingState = ref.watch(fastingProvider);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
       child: Row(
         children: [
           // Tab Bar
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              height: 44,
-              decoration: BoxDecoration(
-                color: elevated,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: TabBar(
-        controller: _tabController!,
-        indicatorSize: TabBarIndicatorSize.tab,
-        indicator: BoxDecoration(
-          color: accentColor,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        labelColor: accentContrast,
-        unselectedLabelColor: textMuted,
-        dividerHeight: 0,
-        labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-        unselectedLabelStyle:
-            const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
-        tabs: const [
-          Tab(
-            height: 32,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.timer_outlined, size: 16),
-                SizedBox(width: 6),
-                Text('Timer'),
+            child: SegmentedTabBar(
+              controller: _tabController!,
+              showIcons: false,
+              tabs: const [
+                SegmentedTabItem(label: 'Timer', icon: Icons.timer_outlined),
+                SegmentedTabItem(label: 'History', icon: Icons.history),
               ],
-            ),
-          ),
-          Tab(
-            height: 32,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.history, size: 16),
-                SizedBox(width: 6),
-                Text('History'),
-              ],
-            ),
-          ),
-        ],
-              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -929,36 +893,34 @@ class _FastingTabState extends ConsumerState<FastingTab>
   }
 
   void _showProtocolSelector(BuildContext context) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => ProtocolSelectorSheet(
-        currentProtocol: _selectedProtocol,
-        currentCustomHours: _customHours,
-        onSelect: (protocol, customHours) {
-          setState(() {
-            _selectedProtocol = protocol;
-            if (customHours != null) {
-              _customHours = customHours;
-            }
-          });
-          Navigator.of(context).pop();
-        },
+      builder: (context) => GlassSheet(
+        child: ProtocolSelectorSheet(
+          currentProtocol: _selectedProtocol,
+          currentCustomHours: _customHours,
+          onSelect: (protocol, customHours) {
+            setState(() {
+              _selectedProtocol = protocol;
+              if (customHours != null) {
+                _customHours = customHours;
+              }
+            });
+            Navigator.of(context).pop();
+          },
+        ),
       ),
     );
   }
 
   void _showFastingSettings(BuildContext context, FastingState fastingState) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => FastingSettingsSheet(
-        preferences:
-            fastingState.preferences ?? const FastingPreferences(userId: ''),
+      builder: (context) => GlassSheet(
+        child: FastingSettingsSheet(
+          preferences:
+              fastingState.preferences ?? const FastingPreferences(userId: ''),
+        ),
       ),
     );
   }

@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/injury.dart';
+import '../../widgets/glass_back_button.dart';
+import '../../widgets/glass_sheet.dart';
 import 'widgets/rehab_exercise_card.dart';
 
 /// Screen for viewing detailed information about an injury
@@ -105,23 +107,23 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen> {
   }
 
   void _showCheckInSheet() {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _CheckInSheet(
-        injury: _injury!,
-        onSubmit: (painLevel, notes) async {
-          // TODO: API call to log check-in
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Check-in logged successfully'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-          _loadInjuryDetails();
-        },
+      builder: (context) => GlassSheet(
+        child: _CheckInSheet(
+          injury: _injury!,
+          onSubmit: (painLevel, notes) async {
+            // TODO: API call to log check-in
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Check-in logged successfully'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+            _loadInjuryDetails();
+          },
+        ),
       ),
     );
   }
@@ -194,10 +196,8 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen> {
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'Injury Details',
           style: TextStyle(
@@ -866,13 +866,9 @@ class _CheckInSheetState extends State<_CheckInSheet> {
             ? AppColors.warning
             : AppColors.error;
 
-    return Container(
+    return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: SafeArea(
         child: Padding(
@@ -881,19 +877,6 @@ class _CheckInSheetState extends State<_CheckInSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: textMuted,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
               // Title
               Text(
                 'Daily Check-in',

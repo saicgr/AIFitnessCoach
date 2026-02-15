@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../widgets/glass_sheet.dart';
 import 'sheet_theme_colors.dart';
 import 'section_title.dart';
 
@@ -122,17 +123,16 @@ class TrainingProgramSelector extends StatelessWidget {
 
   void _showCustomProgramSheet(BuildContext context) {
     HapticFeedback.mediumImpact();
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _CustomProgramSheet(
-        initialDescription: customProgramDescription,
-        onSave: (description) {
-          onCustomDescriptionChanged?.call(description);
-          onSelectionChanged('custom');
-        },
+      builder: (context) => GlassSheet(
+        child: _CustomProgramSheet(
+          initialDescription: customProgramDescription,
+          onSave: (description) {
+            onCustomDescriptionChanged?.call(description);
+            onSelectionChanged('custom');
+          },
+        ),
       ),
     );
   }
@@ -342,11 +342,7 @@ class _CustomProgramSheetState extends State<_CustomProgramSheet> {
     final colors = context.sheetColors;
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.elevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+    return Padding(
       padding: EdgeInsets.only(bottom: bottomPadding),
       child: SingleChildScrollView(
         child: Padding(
@@ -355,19 +351,6 @@ class _CustomProgramSheetState extends State<_CustomProgramSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colors.textMuted.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
               // Header
               Row(
                 children: [

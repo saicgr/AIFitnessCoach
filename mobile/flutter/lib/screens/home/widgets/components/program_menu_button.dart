@@ -8,6 +8,7 @@ import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../widgets/glass_sheet.dart';
 import '../../../../widgets/main_shell.dart';
 import '../edit_program_sheet.dart';
 
@@ -142,31 +143,13 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
     // Hide nav bar while sheet is open
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      builder: (ctx) => Container(
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: elevatedColor,
-          borderRadius: BorderRadius.circular(20),
-        ),
+      builder: (ctx) => GlassSheet(
         child: SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(height: 12),
-              // Handle bar
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textSecondary.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
               const SizedBox(height: 16),
               // Title
               Padding(

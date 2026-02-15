@@ -6,6 +6,8 @@ import '../../data/models/milestone.dart';
 import '../../data/providers/milestones_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_sheet.dart';
+import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/milestone_celebration_dialog.dart';
 
 /// Milestones screen showing achieved and upcoming milestones with ROI metrics.
@@ -69,26 +71,30 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
         ),
         backgroundColor: backgroundColor,
         elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Milestones'),
-            Tab(text: 'Your ROI'),
-          ],
-          indicatorColor: AppColors.purple,
-          labelColor: AppColors.purple,
-          unselectedLabelColor: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-        ),
       ),
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _buildMilestonesTab(isDark, state),
-                _buildROITab(isDark, state),
-              ],
-            ),
+      body: Column(
+        children: [
+          SegmentedTabBar(
+            controller: _tabController,
+            showIcons: false,
+            tabs: [
+              SegmentedTabItem(label: 'Milestones'),
+              SegmentedTabItem(label: 'Your ROI'),
+            ],
+          ),
+          Expanded(
+            child: state.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildMilestonesTab(isDark, state),
+                      _buildROITab(isDark, state),
+                    ],
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -580,14 +586,11 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final tier = progress.milestone.tier;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
+      builder: (context) => GlassSheet(
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -711,6 +714,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
             const SizedBox(height: 24),
           ],
         ),
+      ),
       ),
     );
   }

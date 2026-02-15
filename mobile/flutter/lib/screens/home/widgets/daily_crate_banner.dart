@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/xp_repository.dart' show DailyCratesState, CrateReward;
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Banner showing available daily crates with tap to open selection
 ///
@@ -73,16 +74,15 @@ class _DailyCrateBannerState extends ConsumerState<DailyCrateBanner>
     final cratesState = ref.read(dailyCratesProvider);
     if (cratesState == null) return;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      builder: (context) => DailyCrateSelectionSheet(
-        cratesState: cratesState,
-        onCrateClaimed: () {
-          _dismiss();
-        },
+      builder: (context) => GlassSheet(
+        child: DailyCrateSelectionSheet(
+          cratesState: cratesState,
+          onCrateClaimed: () {
+            _dismiss();
+          },
+        ),
       ),
     );
   }
@@ -366,27 +366,11 @@ class _DailyCrateSelectionSheetState
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SafeArea(
+    return SafeArea(
         top: false,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textSecondary.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-
             // Title
             Padding(
               padding: const EdgeInsets.all(20),
@@ -482,7 +466,6 @@ class _DailyCrateSelectionSheetState
             SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
           ],
         ),
-      ),
     );
   }
 }

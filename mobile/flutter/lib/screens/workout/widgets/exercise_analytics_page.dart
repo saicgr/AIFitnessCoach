@@ -13,6 +13,8 @@ import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
+import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/segmented_tab_bar.dart';
 
 /// Exercise Analytics Page - full page with My Analytics and Friends tabs
 class ExerciseAnalyticsPage extends StatefulWidget {
@@ -61,17 +63,8 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
       appBar: AppBar(
         backgroundColor: isDark ? AppColors.surface : Colors.white,
         elevation: 0,
-        leading: IconButton(
-          onPressed: () {
-            HapticFeedback.selectionClick();
-            Navigator.pop(context);
-          },
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: textPrimary,
-            size: 20,
-          ),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Column(
           children: [
             Text(
@@ -94,34 +87,28 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
           ],
         ),
         centerTitle: true,
-        bottom: TabBar(
-          controller: _tabController,
-          onTap: (_) => HapticFeedback.selectionClick(),
-          indicatorColor: AppColors.success,
-          indicatorWeight: 3,
-          labelColor: AppColors.success,
-          unselectedLabelColor: textMuted,
-          labelStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-          tabs: const [
-            Tab(text: 'My Analytics'),
-            Tab(text: 'Friends'),
-          ],
-        ),
       ),
-      body: TabBarView(
+      body: Column(
+        children: [
+          SegmentedTabBar(
+            controller: _tabController,
+            showIcons: false,
+            tabs: const [
+              SegmentedTabItem(label: 'My Analytics'),
+              SegmentedTabItem(label: 'Friends'),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
         controller: _tabController,
         children: [
           // My Analytics Tab
           _buildMyAnalyticsTab(isDark, textPrimary, textMuted),
           // Friends Tab
           _buildFriendsTab(isDark, textPrimary, textMuted),
+        ],
+      ),
+          ),
         ],
       ),
     );

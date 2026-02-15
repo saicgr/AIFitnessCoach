@@ -5,6 +5,8 @@ import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/environment_equipment_provider.dart';
 import 'environment_detail_screen.dart';
+import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Screen showing list of workout environments with their equipment.
 class EnvironmentListScreen extends ConsumerStatefulWidget {
@@ -26,13 +28,8 @@ class _EnvironmentListScreenState extends ConsumerState<EnvironmentListScreen> {
       appBar: AppBar(
         backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.background,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: isDark ? Colors.white : AppColorsLight.textPrimary,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'Workout Environment',
           style: TextStyle(
@@ -126,15 +123,11 @@ class _EnvironmentListScreenState extends ConsumerState<EnvironmentListScreen> {
   void _showAddEnvironmentSheet(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      isScrollControlled: true,
       useRootNavigator: true,
-      builder: (context) => Padding(
+      builder: (context) => GlassSheet(
+        child: Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
@@ -147,7 +140,7 @@ class _EnvironmentListScreenState extends ConsumerState<EnvironmentListScreen> {
             );
           },
         ),
-      ),
+      )),
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/personal_goals_service.dart';
 import '../../data/providers/goal_suggestions_provider.dart';
@@ -78,21 +79,20 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
   }
 
   void _showCreateGoalSheet() {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => CreateGoalSheet(
-        onSubmit: (exerciseName, goalType, targetValue) async {
-          await _goalsService.createGoal(
-            userId: _userId!,
-            exerciseName: exerciseName,
-            goalType: goalType,
-            targetValue: targetValue,
-          );
-          _loadData();
-        },
+      builder: (context) => GlassSheet(
+        child: CreateGoalSheet(
+          onSubmit: (exerciseName, goalType, targetValue) async {
+            await _goalsService.createGoal(
+              userId: _userId!,
+              exerciseName: exerciseName,
+              goalType: goalType,
+              targetValue: targetValue,
+            );
+            _loadData();
+          },
+        ),
       ),
     );
   }
@@ -144,22 +144,21 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
         break;
     }
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => ExpandedSuggestionCard(
-        suggestion: suggestion,
-        accentColor: accentColor,
-        onAccept: () {
-          Navigator.pop(context);
-          _acceptSuggestion(suggestion);
-        },
-        onDismiss: () {
-          Navigator.pop(context);
-          _dismissSuggestion(suggestion);
-        },
+      builder: (context) => GlassSheet(
+        child: ExpandedSuggestionCard(
+          suggestion: suggestion,
+          accentColor: accentColor,
+          onAccept: () {
+            Navigator.pop(context);
+            _acceptSuggestion(suggestion);
+          },
+          onDismiss: () {
+            Navigator.pop(context);
+            _dismissSuggestion(suggestion);
+          },
+        ),
       ),
     );
   }

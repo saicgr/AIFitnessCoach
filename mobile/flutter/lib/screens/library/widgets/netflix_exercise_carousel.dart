@@ -8,6 +8,7 @@ import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../components/exercise_detail_sheet.dart';
 import '../screens/category_exercises_screen.dart';
 
@@ -317,11 +318,8 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
 
   void _showExerciseDetail(LibraryExercise exercise) {
     HapticService.light();
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => ExerciseDetailSheet(exercise: exercise),
     );
   }
@@ -653,11 +651,8 @@ class _NetflixCard extends StatelessWidget {
 
   void _showExerciseDetail(BuildContext context) {
     HapticService.light();
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => ExerciseDetailSheet(exercise: exercise),
     );
   }

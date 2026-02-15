@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/scheduling_provider.dart';
 import '../../../data/repositories/scheduling_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../workout/widgets/reschedule_sheet.dart';
 
 /// Banner showing missed workout(s) with quick action buttons
@@ -93,14 +94,13 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
 
     if (!mounted) return;
 
-    final selectedReason = await showModalBottomSheet<SkipReasonCategory>(
+    final selectedReason = await showGlassSheet<SkipReasonCategory>(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      builder: (context) => _SkipReasonSheet(
-        workout: workout,
-        reasons: skipReasons,
+      builder: (context) => GlassSheet(
+        child: _SkipReasonSheet(
+          workout: workout,
+          reasons: skipReasons,
+        ),
       ),
     );
 
@@ -433,28 +433,9 @@ class _SkipReasonSheet extends StatelessWidget {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.5,
-      ),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
+    return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: textSecondary.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
           // Title
           Padding(
             padding: const EdgeInsets.all(16),
@@ -559,7 +540,6 @@ class _SkipReasonSheet extends StatelessWidget {
           // Safe area padding
           SizedBox(height: MediaQuery.of(context).padding.bottom),
         ],
-      ),
     );
   }
 }

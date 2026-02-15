@@ -8,6 +8,8 @@ import 'widgets/flexibility_score_card.dart';
 import 'widgets/record_assessment_sheet.dart';
 import 'flexibility_test_detail_screen.dart';
 import 'flexibility_history_screen.dart';
+import '../../widgets/glass_sheet.dart';
+import '../../widgets/segmented_tab_bar.dart';
 
 /// Main flexibility assessment screen showing all tests and user progress
 class FlexibilityAssessmentScreen extends ConsumerStatefulWidget {
@@ -67,27 +69,34 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
             tooltip: 'Refresh',
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Overview'),
-            Tab(text: 'All Tests'),
-            Tab(text: 'My Plans'),
-          ],
-        ),
       ),
-      body: state.isLoading && state.tests.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : state.error != null && state.tests.isEmpty
-              ? _buildErrorState(state.error!)
-              : TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildOverviewTab(state, theme),
-                    _buildAllTestsTab(state, theme),
-                    _buildPlansTab(state, theme),
-                  ],
-                ),
+      body: Column(
+        children: [
+          SegmentedTabBar(
+            controller: _tabController,
+            showIcons: false,
+            tabs: [
+              SegmentedTabItem(label: 'Overview'),
+              SegmentedTabItem(label: 'All Tests'),
+              SegmentedTabItem(label: 'My Plans'),
+            ],
+          ),
+          Expanded(
+            child: state.isLoading && state.tests.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : state.error != null && state.tests.isEmpty
+                    ? _buildErrorState(state.error!)
+                    : TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildOverviewTab(state, theme),
+                          _buildAllTestsTab(state, theme),
+                          _buildPlansTab(state, theme),
+                        ],
+                      ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -480,9 +489,8 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
   }
 
   void _showRecordSheet(FlexibilityTest test) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
       builder: (context) => RecordAssessmentSheet(
         test: test,

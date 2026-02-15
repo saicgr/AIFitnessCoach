@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/glass_back_button.dart';
+import '../../widgets/segmented_tab_bar.dart';
 
 /// Screen displaying available and claimed rewards
 class RewardsScreen extends ConsumerStatefulWidget {
@@ -184,10 +186,8 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: const Text(
           'Rewards',
           style: TextStyle(
@@ -195,16 +195,6 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
-        ),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: const Color(0xFFFFD700),
-          labelColor: const Color(0xFFFFD700),
-          unselectedLabelColor: Colors.white60,
-          tabs: const [
-            Tab(text: 'Available'),
-            Tab(text: 'Claimed'),
-          ],
         ),
       ),
       body: Column(
@@ -300,6 +290,16 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                 ),
               ],
             ),
+          ),
+
+          // Tab Bar
+          SegmentedTabBar(
+            controller: _tabController,
+            showIcons: false,
+            tabs: const [
+              SegmentedTabItem(label: 'Available'),
+              SegmentedTabItem(label: 'Claimed'),
+            ],
           ),
 
           // Tab Content

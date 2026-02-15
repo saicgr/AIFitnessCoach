@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/habit.dart';
 import '../../data/providers/habit_provider.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../widgets/glass_sheet.dart';
 import 'widgets/habit_card.dart';
 import 'widgets/habit_progress_header.dart';
 import 'widgets/create_habit_sheet.dart';
@@ -193,10 +194,11 @@ class _HabitTrackerScreenState extends ConsumerState<HabitTrackerScreen> {
   }
 
   void _showAddHabitOptions(BuildContext context, String userId) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
       useRootNavigator: true,
-      builder: (context) => SafeArea(
+      builder: (context) => GlassSheet(
+        child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -222,16 +224,17 @@ class _HabitTrackerScreenState extends ConsumerState<HabitTrackerScreen> {
           ],
         ),
       ),
+      ),
     );
   }
 
   void _showTemplates(BuildContext context, String userId) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      useSafeArea: true,
-      builder: (context) => DraggableScrollableSheet(
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
         initialChildSize: 0.7,
         maxChildSize: 0.9,
         minChildSize: 0.5,
@@ -254,16 +257,16 @@ class _HabitTrackerScreenState extends ConsumerState<HabitTrackerScreen> {
           },
         ),
       ),
+      ),
     );
   }
 
   void _showCreateHabit(BuildContext context, String userId) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      useSafeArea: true,
-      builder: (context) => Padding(
+      builder: (context) => GlassSheet(
+        child: Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
@@ -273,6 +276,7 @@ class _HabitTrackerScreenState extends ConsumerState<HabitTrackerScreen> {
             await ref.read(habitsProvider(userId).notifier).createHabit(habit);
           },
         ),
+      ),
       ),
     );
   }
@@ -288,12 +292,11 @@ class _HabitTrackerScreenState extends ConsumerState<HabitTrackerScreen> {
   }
 
   void _editHabit(BuildContext context, String userId, HabitWithStatus habit) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      useSafeArea: true,
-      builder: (context) => Padding(
+      builder: (context) => GlassSheet(
+        child: Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
@@ -318,6 +321,7 @@ class _HabitTrackerScreenState extends ConsumerState<HabitTrackerScreen> {
                 );
           },
         ),
+      ),
       ),
     );
   }
@@ -346,12 +350,12 @@ class _HabitTrackerScreenState extends ConsumerState<HabitTrackerScreen> {
   }
 
   void _showInsights(BuildContext context, String userId) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      useSafeArea: true,
-      builder: (context) => DraggableScrollableSheet(
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
         initialChildSize: 0.6,
         maxChildSize: 0.9,
         minChildSize: 0.4,
@@ -361,22 +365,11 @@ class _HabitTrackerScreenState extends ConsumerState<HabitTrackerScreen> {
             builder: (context, ref, child) {
               final insightsAsync = ref.watch(habitInsightsProvider(userId));
 
-              return Container(
+              return Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
                     Text(
                       'Habit Insights',
                       style: Theme.of(context).textTheme.headlineSmall,
@@ -433,6 +426,7 @@ class _HabitTrackerScreenState extends ConsumerState<HabitTrackerScreen> {
             },
           );
         },
+      ),
       ),
     );
   }

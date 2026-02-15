@@ -1,8 +1,7 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
@@ -14,15 +13,14 @@ Future<void> showWorkoutActionsSheet(
   Workout workout, {
   VoidCallback? onRefresh,
 }) async {
-  await showModalBottomSheet(
+  await showGlassSheet(
     context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    isScrollControlled: true,
-    useRootNavigator: true,
-    builder: (context) => _WorkoutActionsSheet(
-      workout: workout,
-      onRefresh: onRefresh,
+    builder: (context) => GlassSheet(
+      showHandle: false,
+      child: _WorkoutActionsSheet(
+        workout: workout,
+        onRefresh: onRefresh,
+      ),
     ),
   );
 }
@@ -55,40 +53,10 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
     final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: SafeArea(
+    return SafeArea(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Handle bar
-                Container(
-                  margin: const EdgeInsets.only(top: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: textMuted.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-
             // Title
             Padding(
               padding: const EdgeInsets.all(20),
@@ -208,9 +176,6 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
             const SizedBox(height: 8),
           ],
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -385,17 +350,16 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
 
     Navigator.pop(context);
 
-    await showModalBottomSheet(
+    await showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      builder: (context) => _VersionHistorySheet(
-        workoutId: widget.workout.id!,
-        versions: versions,
-        onRevert: () {
-          widget.onRefresh?.call();
-        },
+      builder: (context) => GlassSheet(
+        child: _VersionHistorySheet(
+          workoutId: widget.workout.id!,
+          versions: versions,
+          onRevert: () {
+            widget.onRefresh?.call();
+          },
+        ),
       ),
     );
   }
@@ -419,14 +383,13 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
     Navigator.pop(context);
 
     if (warmup.isNotEmpty) {
-      await showModalBottomSheet(
+      await showGlassSheet(
         context: context,
-        backgroundColor: Colors.transparent,
-        isScrollControlled: true,
-        useRootNavigator: true,
-        builder: (context) => _WarmupStretchesSheet(
-          title: 'Warmup Exercises',
-          exercises: warmup,
+        builder: (context) => GlassSheet(
+          child: _WarmupStretchesSheet(
+            title: 'Warmup Exercises',
+            exercises: warmup,
+          ),
         ),
       );
     } else {
@@ -458,14 +421,13 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
     Navigator.pop(context);
 
     if (stretches.isNotEmpty) {
-      await showModalBottomSheet(
+      await showGlassSheet(
         context: context,
-        backgroundColor: Colors.transparent,
-        isScrollControlled: true,
-        useRootNavigator: true,
-        builder: (context) => _WarmupStretchesSheet(
-          title: 'Cool-Down Stretches',
-          exercises: stretches,
+        builder: (context) => GlassSheet(
+          child: _WarmupStretchesSheet(
+            title: 'Cool-Down Stretches',
+            exercises: stretches,
+          ),
         ),
       );
     } else {

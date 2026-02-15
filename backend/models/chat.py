@@ -70,6 +70,14 @@ class AISettings(BaseModel):
     nutrition_mentions: bool = True
     injury_sensitivity: bool = True
 
+    # Frontend-only fields (accepted but not used by backend agents directly)
+    is_custom_coach: bool = False
+    show_ai_coach_during_workouts: bool = True
+    save_chat_history: bool = True
+    use_rag: bool = True
+    default_agent: Optional[str] = Field(default=None, max_length=50)
+    enabled_agents: Optional[Dict[str, bool]] = None
+
 
 class UserProfile(BaseModel):
     """User profile for context in chat."""
@@ -138,6 +146,11 @@ class ChatRequest(BaseModel):
     ai_settings: Optional[AISettings] = Field(
         default=None,
         description="AI personality and behavior settings"
+    )
+    unified_context: Optional[str] = Field(
+        default=None,
+        max_length=50000,
+        description="Unified fasting/nutrition/workout context string"
     )
 
 

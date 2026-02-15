@@ -7,6 +7,7 @@ import '../../../data/models/gym_profile.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../models/equipment_item.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/sheet_header.dart';
 import '../../gym_profile/gym_location_picker_screen.dart';
 import 'gym_equipment_sheet.dart';
@@ -136,23 +137,22 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
         .map((e) => EquipmentItem.fromJson(e))
         .toList();
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => GymEquipmentSheet(
-        selectedEquipment: _selectedEquipment,
-        equipmentDetails: equipmentItems,
-        title: 'Equipment',
-        onSave: (equipment, details) {
-          setState(() {
-            _selectedEquipment = equipment;
-            _equipmentDetails = details;
-          });
-          _markChanged();
-          debugPrint('✅ [EditGymProfile] Equipment updated: ${equipment.length} items');
-        },
+      builder: (context) => GlassSheet(
+        child: GymEquipmentSheet(
+          selectedEquipment: _selectedEquipment,
+          equipmentDetails: equipmentItems,
+          title: 'Equipment',
+          onSave: (equipment, details) {
+            setState(() {
+              _selectedEquipment = equipment;
+              _equipmentDetails = details;
+            });
+            _markChanged();
+            debugPrint('✅ [EditGymProfile] Equipment updated: ${equipment.length} items');
+          },
+        ),
       ),
     );
   }
@@ -261,11 +261,8 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final selectedColorObj = GymProfileColors.fromHex(_selectedColor);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+    return GlassSheet(
+      showHandle: false,
       child: DraggableScrollableSheet(
         initialChildSize: 0.85,
         minChildSize: 0.5,
@@ -273,16 +270,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
         expand: false,
         builder: (context, scrollController) => Column(
           children: [
-            // Handle
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+            GlassSheetHandle(isDark: isDark),
 
             // Header
             Padding(
@@ -1099,15 +1087,12 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final selectedColorObj = GymProfileColors.fromHex(_selectedColor);
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : Colors.white,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1160,6 +1145,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
             SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
           ],
         ),
+      ),
       ),
     );
   }

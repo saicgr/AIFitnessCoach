@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/injury.dart';
+import '../../widgets/glass_back_button.dart';
 
 final injuriesListProvider = StateNotifierProvider<InjuriesListNotifier, InjuriesListState>((ref) => InjuriesListNotifier());
 
@@ -57,7 +58,7 @@ class _InjuriesListScreenState extends ConsumerState<InjuriesListScreen> {
     final st = ref.watch(injuriesListProvider);
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(backgroundColor: bg, elevation: 0, leading: IconButton(icon: Icon(Icons.arrow_back, color: tp), onPressed: () => context.pop()), title: Text('Injury Management', style: TextStyle(fontWeight: FontWeight.bold, color: tp)), centerTitle: true, actions: [IconButton(icon: Icon(Icons.add_circle_outline, color: AppColors.error), onPressed: () => context.push('/injuries/report'))]),
+      appBar: AppBar(backgroundColor: bg, elevation: 0, automaticallyImplyLeading: false, leading: const GlassBackButton(), title: Text('Injury Management', style: TextStyle(fontWeight: FontWeight.bold, color: tp)), centerTitle: true, actions: [IconButton(icon: Icon(Icons.add_circle_outline, color: AppColors.error), onPressed: () => context.push('/injuries/report'))]),
       body: SafeArea(child: Column(children: [_filters(d, st.filter), Expanded(child: _content(d, tp, tm, el, st))])),
       floatingActionButton: FloatingActionButton.extended(onPressed: () => context.push('/injuries/report'), backgroundColor: AppColors.error, icon: const Icon(Icons.add), label: const Text('Report Injury')),
     );

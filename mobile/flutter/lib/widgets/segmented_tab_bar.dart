@@ -12,6 +12,7 @@ class SegmentedTabBar extends StatelessWidget {
   final bool showIcons;
   final EdgeInsets padding;
   final double borderRadius;
+  final bool showBorder;
 
   const SegmentedTabBar({
     super.key,
@@ -20,6 +21,7 @@ class SegmentedTabBar extends StatelessWidget {
     this.showIcons = true,
     this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     this.borderRadius = 12,
+    this.showBorder = false,
   });
 
   @override
@@ -34,6 +36,23 @@ class SegmentedTabBar extends StatelessWidget {
               ? Colors.white.withValues(alpha: 0.05)
               : Colors.black.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(borderRadius + 4),
+          border: showBorder
+              ? Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.08),
+                )
+              : null,
+          boxShadow: showBorder
+              ? [
+                  BoxShadow(
+                    color: Colors.black
+                        .withValues(alpha: isDark ? 0.2 : 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         padding: const EdgeInsets.all(4),
         child: AnimatedBuilder(

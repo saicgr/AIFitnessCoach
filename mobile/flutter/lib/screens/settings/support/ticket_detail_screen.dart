@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/support_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../models/support_ticket.dart';
+import '../../../widgets/glass_back_button.dart';
 
 /// Screen showing ticket details and message thread
 class TicketDetailScreen extends ConsumerStatefulWidget {
@@ -176,10 +177,8 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: ticketAsync.when(
           data: (ticket) => Text(
             ticket?.ticketNumber ?? 'Ticket',

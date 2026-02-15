@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Result from the superset edit sheet
 class SupersetEditResult {
@@ -27,15 +26,14 @@ Future<SupersetEditResult?> showSupersetEditSheet(
   required List<WorkoutExercise> exercises,
   required int groupNumber,
 }) async {
-  return await showModalBottomSheet<SupersetEditResult>(
+  return await showGlassSheet<SupersetEditResult>(
     context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    isScrollControlled: true,
-    useRootNavigator: true,
-    builder: (context) => _SupersetEditSheet(
-      exercises: exercises,
-      groupNumber: groupNumber,
+    builder: (context) => GlassSheet(
+      showHandle: false,
+      child: _SupersetEditSheet(
+        exercises: exercises,
+        groupNumber: groupNumber,
+      ),
     ),
   );
 }
@@ -186,42 +184,9 @@ class _SupersetEditSheetState extends ConsumerState<_SupersetEditSheet> {
     final accentColor = ref.watch(accentColorProvider).getColor(isDark);
     final errorColor = isDark ? AppColors.error : AppColorsLight.error;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.75,
-          ),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: Column(
+    return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Handle
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-
               // Header
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -459,9 +424,6 @@ class _SupersetEditSheetState extends ConsumerState<_SupersetEditSheet> {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
     );
   }
 

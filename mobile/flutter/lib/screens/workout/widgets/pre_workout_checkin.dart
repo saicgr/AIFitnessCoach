@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/subjective_feedback.dart';
 import '../../../data/providers/subjective_feedback_provider.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Pre-workout check-in widget displayed before the workout begins.
 /// Quick, skippable - designed to take less than 5 seconds.
@@ -442,33 +443,16 @@ class _PreWorkoutCheckinSheetState extends ConsumerState<PreWorkoutCheckinSheet>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SafeArea(
+    return SafeArea(
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Drag handle
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textSecondary.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 20),
-
               // Header
               Text(
                 'How are you feeling?',
@@ -593,7 +577,6 @@ class _PreWorkoutCheckinSheetState extends ConsumerState<PreWorkoutCheckinSheet>
             ],
           ),
         ),
-      ),
     );
   }
 
@@ -622,12 +605,11 @@ class _PreWorkoutCheckinSheetState extends ConsumerState<PreWorkoutCheckinSheet>
 
 /// Helper function to show pre-workout check-in sheet
 Future<bool> showPreWorkoutCheckin(BuildContext context, {String? workoutId}) async {
-  final result = await showModalBottomSheet<bool>(
+  final result = await showGlassSheet<bool>(
     context: context,
-    isScrollControlled: true,
-    useRootNavigator: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => PreWorkoutCheckinSheet(workoutId: workoutId),
+    builder: (context) => GlassSheet(
+      child: PreWorkoutCheckinSheet(workoutId: workoutId),
+    ),
   );
 
   return result ?? false;

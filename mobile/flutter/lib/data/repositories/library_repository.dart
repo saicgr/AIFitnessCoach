@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
@@ -87,6 +88,90 @@ class LibraryExerciseItem {
   }
 }
 
+/// Filter option with name and count
+class FilterOption {
+  final String name;
+  final int count;
+
+  const FilterOption({required this.name, required this.count});
+}
+
+/// Smart search exercise item with relevance scoring
+class SmartSearchExerciseItem extends LibraryExerciseItem {
+  final double relevanceScore;
+  final List<String> matchSources;
+
+  SmartSearchExerciseItem({
+    required super.id,
+    required super.name,
+    super.bodyPart,
+    super.equipment,
+    super.targetMuscle,
+    super.gifUrl,
+    super.videoUrl,
+    super.imageUrl,
+    super.difficulty,
+    super.instructions,
+    this.relevanceScore = 0.0,
+    this.matchSources = const [],
+  });
+
+  bool get isSemanticMatch => matchSources.contains('semantic');
+
+  factory SmartSearchExerciseItem.fromJson(Map<String, dynamic> json) {
+    return SmartSearchExerciseItem(
+      id: json['id']?.toString() ?? '',
+      name: json['name'] ?? '',
+      bodyPart: json['body_part'],
+      equipment: json['equipment'],
+      targetMuscle: json['target_muscle'],
+      gifUrl: json['gif_url'],
+      videoUrl: json['video_url'],
+      imageUrl: json['image_url'],
+      difficulty: json['difficulty_level']?.toString(),
+      instructions: json['instructions'],
+      relevanceScore: (json['relevance_score'] as num?)?.toDouble() ?? 0.0,
+      matchSources: (json['match_sources'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+    );
+  }
+}
+
+/// Response wrapper for smart search
+class SmartSearchResponse {
+  final List<SmartSearchExerciseItem> results;
+  final String query;
+  final int total;
+  final double searchTimeMs;
+  final bool cacheHit;
+  final String? correction;
+
+  const SmartSearchResponse({
+    required this.results,
+    required this.query,
+    required this.total,
+    required this.searchTimeMs,
+    required this.cacheHit,
+    this.correction,
+  });
+
+  factory SmartSearchResponse.fromJson(Map<String, dynamic> json) {
+    return SmartSearchResponse(
+      results: (json['results'] as List<dynamic>?)
+              ?.map((e) => SmartSearchExerciseItem.fromJson(e))
+              .toList() ??
+          [],
+      query: json['query'] ?? '',
+      total: json['total'] as int? ?? 0,
+      searchTimeMs: (json['search_time_ms'] as num?)?.toDouble() ?? 0.0,
+      cacheHit: json['cache_hit'] as bool? ?? false,
+      correction: json['correction'] as String?,
+    );
+  }
+}
+
 /// Exercise search provider
 final exerciseSearchProvider =
     StateNotifierProvider<ExerciseSearchNotifier, ExerciseSearchState>((ref) {
@@ -159,7 +244,10 @@ class LibraryRepository {
   Future<List<LibraryExerciseItem>> searchExercises({
     String? query,
     String? bodyPart,
+    String? equipment,
+    String? exerciseTypes,
     int limit = 50,
+    CancelToken? cancelToken,
   }) async {
     try {
       final params = <String, dynamic>{'limit': limit};
@@ -167,12 +255,19 @@ class LibraryRepository {
         params['search'] = query;
       }
       if (bodyPart != null && bodyPart.isNotEmpty) {
-        params['body_part'] = bodyPart;
+        params['body_parts'] = bodyPart;
+      }
+      if (equipment != null && equipment.isNotEmpty) {
+        params['equipment'] = equipment;
+      }
+      if (exerciseTypes != null && exerciseTypes.isNotEmpty) {
+        params['exercise_types'] = exerciseTypes;
       }
 
       final response = await _client.get(
         '${ApiConstants.library}/exercises',
         queryParameters: params,
+        cancelToken: cancelToken,
       );
 
       if (response.statusCode == 200) {
@@ -181,8 +276,43 @@ class LibraryRepository {
       }
       return [];
     } catch (e) {
+      // Silently ignore cancelled requests
+      if (e is DioException && e.type == DioExceptionType.cancel) {
+        return [];
+      }
       debugPrint('❌ Error searching exercises: $e');
       return [];
+    }
+  }
+
+  /// Get filter options (body parts, equipment, exercise types with counts)
+  Future<Map<String, List<FilterOption>>> getFilterOptions() async {
+    try {
+      final response = await _client.get(
+        '${ApiConstants.library}/exercises/filter-options',
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        final result = <String, List<FilterOption>>{};
+
+        for (final key in ['body_parts', 'equipment', 'exercise_types']) {
+          if (data[key] != null) {
+            result[key] = (data[key] as List)
+                .map((item) => FilterOption(
+                      name: item['name']?.toString() ?? '',
+                      count: item['count'] as int? ?? 0,
+                    ))
+                .where((f) => f.name.isNotEmpty)
+                .toList();
+          }
+        }
+        return result;
+      }
+      return {};
+    } catch (e) {
+      debugPrint('❌ Error getting filter options: $e');
+      return {};
     }
   }
 
@@ -197,6 +327,63 @@ class LibraryRepository {
     } catch (e) {
       debugPrint('❌ Error getting exercise: $e');
       return null;
+    }
+  }
+
+  /// Smart search exercises (hybrid fuzzy + semantic)
+  Future<SmartSearchResponse> smartSearchExercises({
+    required String query,
+    String? equipment,
+    String? bodyParts,
+    int limit = 20,
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      final params = <String, dynamic>{
+        'q': query,
+        'limit': limit,
+      };
+      if (equipment != null && equipment.isNotEmpty) {
+        params['equipment'] = equipment;
+      }
+      if (bodyParts != null && bodyParts.isNotEmpty) {
+        params['body_parts'] = bodyParts;
+      }
+
+      final response = await _client.get(
+        '${ApiConstants.library}/exercises/smart-search',
+        queryParameters: params,
+        cancelToken: cancelToken,
+      );
+
+      if (response.statusCode == 200) {
+        return SmartSearchResponse.fromJson(response.data);
+      }
+      return SmartSearchResponse(
+        results: [],
+        query: query,
+        total: 0,
+        searchTimeMs: 0,
+        cacheHit: false,
+      );
+    } catch (e) {
+      if (e is DioException && e.type == DioExceptionType.cancel) {
+        return SmartSearchResponse(
+          results: [],
+          query: query,
+          total: 0,
+          searchTimeMs: 0,
+          cacheHit: false,
+        );
+      }
+      debugPrint('Error in smart search: $e');
+      return SmartSearchResponse(
+        results: [],
+        query: query,
+        total: 0,
+        searchTimeMs: 0,
+        cacheHit: false,
+      );
     }
   }
 

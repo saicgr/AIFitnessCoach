@@ -8,6 +8,7 @@ import 'widgets/cycle_tracker_widget.dart';
 import 'widgets/hormone_log_sheet.dart';
 import 'widgets/hormone_goals_card.dart';
 import 'widgets/quick_stats_card.dart';
+import '../../widgets/glass_sheet.dart';
 
 /// Main screen for hormonal health tracking and insights
 class HormonalHealthScreen extends ConsumerStatefulWidget {
@@ -396,12 +397,12 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
   }
 
   void _showLogSheet(BuildContext context) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      useSafeArea: true,
-      builder: (context) => const HormoneLogSheet(),
+      builder: (context) => GlassSheet(
+        child: const HormoneLogSheet(),
+      ),
     );
   }
 

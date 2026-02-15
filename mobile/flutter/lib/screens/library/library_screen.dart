@@ -1,10 +1,10 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_back_button.dart';
+import '../../widgets/segmented_tab_bar.dart';
 import 'tabs/netflix_exercises_tab.dart';
 import 'tabs/programs_tab.dart';
 import 'tabs/skills_tab.dart';
@@ -88,17 +88,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             Positioned(
               top: 8,
               left: 8,
-              child: _GlassmorphicButton(
+              child: GlassBackButton(
                 onTap: () {
                   HapticService.light();
                   context.pop();
                 },
-                isDark: isDark,
-                child: Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: isDark ? Colors.white : Colors.black87,
-                  size: 18,
-                ),
               ),
             ),
           ],
@@ -131,82 +125,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     Color textMuted,
     bool isDark,
   ) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(12),
-        border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        indicatorSize: TabBarIndicatorSize.tab,
-        indicator: BoxDecoration(
-          color: cyan.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        labelColor: cyan,
-        unselectedLabelColor: textMuted,
-        labelStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.normal,
-          fontSize: 14,
-        ),
-        dividerColor: Colors.transparent,
-        padding: const EdgeInsets.all(4),
-        tabs: const [
-          Tab(text: 'Exercises'),
-          Tab(text: 'Programs'),
-          Tab(text: 'Skills'),
-        ],
-      ),
-    );
-  }
-}
-
-/// Glassmorphic button with blur effect
-class _GlassmorphicButton extends StatelessWidget {
-  final VoidCallback onTap;
-  final Widget child;
-  final bool isDark;
-
-  const _GlassmorphicButton({
-    required this.onTap,
-    required this.child,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const size = 40.0;
-    return GestureDetector(
-      onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(size / 2),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : Colors.black.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(size / 2),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.15)
-                    : Colors.black.withValues(alpha: 0.08),
-                width: 1,
-              ),
-            ),
-            child: Center(child: child),
-          ),
-        ),
-      ),
+    return SegmentedTabBar(
+      controller: _tabController,
+      showIcons: false,
+      tabs: const [
+        SegmentedTabItem(label: 'Exercises'),
+        SegmentedTabItem(label: 'Programs'),
+        SegmentedTabItem(label: 'Skills'),
+      ],
     );
   }
 }

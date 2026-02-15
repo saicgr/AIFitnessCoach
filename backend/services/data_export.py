@@ -1,7 +1,7 @@
 """
 Data Export Service for FitWiz.
 
-Exports user data to CSV files packaged in a ZIP archive.
+Exports user data to CSV, JSON, Excel, and Parquet formats.
 Supports export for data portability and re-import after account deletion.
 """
 import csv
@@ -11,6 +11,8 @@ import time
 import zipfile
 from datetime import datetime
 from typing import Dict, List, Any, Optional
+
+import pandas as pd
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
@@ -165,6 +167,170 @@ def export_user_data(
     logger.info(f"✅ Data export complete for user {user_id} in {time.time() - total_start:.2f}s: {export_counts}")
 
     # Get the ZIP file bytes
+    zip_buffer.seek(0)
+    return zip_buffer.getvalue()
+
+
+def _query_all_data(user_id: str, start_date: Optional[str], end_date: Optional[str]) -> tuple:
+    """
+    Shared query logic for all export formats.
+    Returns (user, results) tuple.
+    """
+    db = get_supabase_db()
+
+    user = db.get_user(user_id)
+    if not user:
+        raise ValueError(f"User {user_id} not found")
+
+    results = {}
+    queries = [
+        ("metrics", lambda: _get_filtered_metrics(db, user_id, start_date, end_date)),
+        ("workouts", lambda: _get_filtered_workouts(db, user_id, start_date, end_date)),
+        ("workout_logs", lambda: _get_filtered_workout_logs(db, user_id, start_date, end_date)),
+        ("performance_logs", lambda: _get_filtered_performance_logs(db, user_id, start_date, end_date)),
+        ("strength_records", lambda: _get_filtered_strength_records(db, user_id, start_date, end_date)),
+        ("achievements", lambda: _get_filtered_achievements(db, user_id, start_date, end_date)),
+        ("streaks", lambda: _get_user_streaks(db, user_id)),
+    ]
+
+    for key, query_fn in queries:
+        try:
+            results[key] = query_fn()
+        except Exception as e:
+            logger.error(f"Error fetching {key}: {e}")
+            results[key] = []
+
+    return user, results
+
+
+def export_user_data_json(
+    user_id: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+) -> dict:
+    """
+    Export all user data as a JSON-serializable dict.
+
+    Returns dict with all data categories as lists of dicts.
+    """
+    total_start = time.time()
+    logger.info(f"Starting JSON export for user: {user_id}")
+
+    user, results = _query_all_data(user_id, start_date, end_date)
+
+    # Parse JSONB fields in user profile
+    for field in ("goals", "equipment", "active_injuries"):
+        val = user.get(field, [])
+        if isinstance(val, str):
+            try:
+                user[field] = json.loads(val)
+            except Exception:
+                user[field] = []
+
+    export = {
+        "profile": user,
+        "body_metrics": results["metrics"],
+        "workouts": results["workouts"],
+        "workout_logs": results["workout_logs"],
+        "exercise_sets": results["performance_logs"],
+        "strength_records": results["strength_records"],
+        "achievements": results["achievements"],
+        "streaks": results["streaks"],
+        "metadata": {
+            "export_version": EXPORT_VERSION,
+            "exported_at": datetime.utcnow().isoformat() + "Z",
+            "app_version": APP_VERSION,
+            "original_user_id": user_id,
+            "filter_start_date": start_date,
+            "filter_end_date": end_date,
+        },
+    }
+
+    logger.info(f"JSON export complete for user {user_id} in {time.time() - total_start:.2f}s")
+    return export
+
+
+def export_user_data_excel(
+    user_id: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+) -> bytes:
+    """
+    Export all user data as an Excel (.xlsx) file with one sheet per data type.
+
+    Returns .xlsx bytes.
+    """
+    total_start = time.time()
+    logger.info(f"Starting Excel export for user: {user_id}")
+
+    user, results = _query_all_data(user_id, start_date, end_date)
+
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        # Profile
+        pd.DataFrame([user]).to_excel(writer, sheet_name="profile", index=False)
+
+        # Data categories
+        sheet_map = {
+            "body_metrics": results["metrics"],
+            "workouts": results["workouts"],
+            "workout_logs": results["workout_logs"],
+            "exercise_sets": results["performance_logs"],
+            "strength_records": results["strength_records"],
+            "achievements": results["achievements"],
+            "streaks": results["streaks"],
+        }
+
+        for sheet_name, data in sheet_map.items():
+            df = pd.DataFrame(data) if data else pd.DataFrame()
+            df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+    logger.info(f"Excel export complete for user {user_id} in {time.time() - total_start:.2f}s")
+    output.seek(0)
+    return output.getvalue()
+
+
+def export_user_data_parquet(
+    user_id: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+) -> bytes:
+    """
+    Export all user data as a ZIP of Parquet files (one per data type).
+
+    Returns ZIP bytes.
+    """
+    total_start = time.time()
+    logger.info(f"Starting Parquet export for user: {user_id}")
+
+    user, results = _query_all_data(user_id, start_date, end_date)
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        # Profile
+        df = pd.DataFrame([user])
+        buf = io.BytesIO()
+        df.to_parquet(buf, engine="pyarrow", index=False)
+        zf.writestr("profile.parquet", buf.getvalue())
+
+        # Data categories
+        file_map = {
+            "body_metrics": results["metrics"],
+            "workouts": results["workouts"],
+            "workout_logs": results["workout_logs"],
+            "exercise_sets": results["performance_logs"],
+            "strength_records": results["strength_records"],
+            "achievements": results["achievements"],
+            "streaks": results["streaks"],
+        }
+
+        for name, data in file_map.items():
+            df = pd.DataFrame(data) if data else pd.DataFrame()
+            buf = io.BytesIO()
+            df.to_parquet(buf, engine="pyarrow", index=False)
+            zf.writestr(f"{name}.parquet", buf.getvalue())
+
+    logger.info(f"Parquet export complete for user {user_id} in {time.time() - total_start:.2f}s")
     zip_buffer.seek(0)
     return zip_buffer.getvalue()
 

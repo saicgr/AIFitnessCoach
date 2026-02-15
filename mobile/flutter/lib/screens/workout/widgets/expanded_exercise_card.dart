@@ -13,6 +13,7 @@ import '../../../core/providers/exercise_queue_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import 'exercise_options_info_sheet.dart';
 
 /// Expanded exercise card that shows the SET/LBS/REP table inline
@@ -882,6 +883,8 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                       // Alternating hands chip (for single-dumbbell exercises)
                       if (exercise.alternatingHands == true)
                         _buildAlternatingHandsChip(),
+                      // Preference indicator chips
+                      ..._buildPreferenceChips(),
                     ],
                   ),
                 ],
@@ -1546,37 +1549,95 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     );
   }
 
+  /// Build preference indicator chips (Staple, Favorite, Queued)
+  List<Widget> _buildPreferenceChips() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final exerciseName = widget.exercise.name;
+    final chips = <Widget>[];
+
+    final isStaple = ref.watch(staplesProvider).isStaple(exerciseName);
+    final isFavorite = ref.watch(favoritesProvider).isFavorite(exerciseName);
+    final isQueued = ref.watch(exerciseQueueProvider).isQueued(exerciseName);
+
+    if (isStaple) {
+      final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+      final bgOpacity = isDark ? 0.1 : 0.15;
+      chips.add(Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: AppColors.purple.withOpacity(bgOpacity),
+          borderRadius: BorderRadius.circular(6),
+          border: isDark ? null : Border.all(color: purple.withOpacity(0.3), width: 0.5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.push_pin, size: 12, color: purple),
+            const SizedBox(width: 4),
+            Text('Staple', style: TextStyle(fontSize: 11, color: purple, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ));
+    }
+
+    if (isFavorite) {
+      final red = isDark ? AppColors.error : _darkenColor(AppColors.error);
+      final bgOpacity = isDark ? 0.1 : 0.15;
+      chips.add(Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: AppColors.error.withOpacity(bgOpacity),
+          borderRadius: BorderRadius.circular(6),
+          border: isDark ? null : Border.all(color: red.withOpacity(0.3), width: 0.5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.favorite, size: 12, color: red),
+            const SizedBox(width: 4),
+            Text('Favorite', style: TextStyle(fontSize: 11, color: red, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ));
+    }
+
+    if (isQueued) {
+      final cyan = isDark ? AppColors.cyan : _darkenColor(AppColors.cyan);
+      final bgOpacity = isDark ? 0.1 : 0.15;
+      chips.add(Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: AppColors.cyan.withOpacity(bgOpacity),
+          borderRadius: BorderRadius.circular(6),
+          border: isDark ? null : Border.all(color: cyan.withOpacity(0.3), width: 0.5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.playlist_add_check, size: 12, color: cyan),
+            const SizedBox(width: 4),
+            Text('Queued', style: TextStyle(fontSize: 11, color: cyan, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ));
+    }
+
+    return chips;
+  }
+
   void _showBreathingGuidance(BuildContext context) {
     final breathingPattern = _getBreathingPattern();
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.textMuted.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Title with icon
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title with icon
             Row(
               children: [
                 Container(
@@ -1666,6 +1727,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
             const SizedBox(height: 16),
           ],
         ),
+      ),
       ),
     );
   }

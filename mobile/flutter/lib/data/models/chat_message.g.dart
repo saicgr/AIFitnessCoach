@@ -54,12 +54,13 @@ Map<String, dynamic> _$ChatRequestToJson(ChatRequest instance) =>
     <String, dynamic>{
       'message': instance.message,
       'user_id': instance.userId,
-      'user_profile': instance.userProfile,
-      'current_workout': instance.currentWorkout,
-      'workout_schedule': instance.workoutSchedule,
-      'conversation_history': instance.conversationHistory,
-      'ai_settings': instance.aiSettings,
-      'unified_context': instance.unifiedContext,
+      if (instance.userProfile case final value?) 'user_profile': value,
+      if (instance.currentWorkout case final value?) 'current_workout': value,
+      if (instance.workoutSchedule case final value?) 'workout_schedule': value,
+      if (instance.conversationHistory case final value?)
+        'conversation_history': value,
+      if (instance.aiSettings case final value?) 'ai_settings': value,
+      if (instance.unifiedContext case final value?) 'unified_context': value,
     };
 
 ChatResponse _$ChatResponseFromJson(Map<String, dynamic> json) => ChatResponse(

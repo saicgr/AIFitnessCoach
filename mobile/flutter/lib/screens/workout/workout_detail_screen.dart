@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../../widgets/glass_back_button.dart';
+import '../../widgets/glass_sheet.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
@@ -72,6 +74,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   // Auto-save state for exercise modifications
   Timer? _autoSaveTimer;
   bool _isSaving = false;
+  bool _isFavorite = false;
 
   /// Toggle between kg and lbs units locally
   void _toggleUnit() {
@@ -79,6 +82,30 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       final bool currentUseKg = _useKgOverride ?? ref.read(useKgProvider);
       _useKgOverride = !currentUseKg;
     });
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_workout == null) return;
+
+    final previousState = _isFavorite;
+    setState(() => _isFavorite = !_isFavorite);
+    HapticService.selection();
+
+    try {
+      final repo = ref.read(workoutRepositoryProvider);
+      final newState = await repo.toggleWorkoutFavorite(_workout!.id!);
+      if (mounted) {
+        setState(() => _isFavorite = newState);
+      }
+    } catch (e) {
+      // Rollback on error
+      if (mounted) {
+        setState(() => _isFavorite = previousState);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update favorite')),
+        );
+      }
+    }
   }
 
   @override
@@ -132,6 +159,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       final workout = await workoutRepo.getWorkout(widget.workoutId);
       setState(() {
         _workout = workout;
+        _isFavorite = workout?.isFavorite ?? false;
         _isLoading = false;
       });
       // Load workout summary, training split, generation params, and warmup/stretches
@@ -273,15 +301,14 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       return EquipmentItem.fromName(name.toLowerCase().replaceAll(' ', '_'));
     }).toList();
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => EditWorkoutEquipmentSheet(
-        currentEquipment: workout.equipmentNeeded,
-        equipmentDetails: currentEquipmentDetails,
-        onApply: (selectedEquipment) => _applyEquipmentChanges(workout, selectedEquipment),
+      builder: (context) => GlassSheet(
+        child: EditWorkoutEquipmentSheet(
+          currentEquipment: workout.equipmentNeeded,
+          equipmentDetails: currentEquipmentDetails,
+          onApply: (selectedEquipment) => _applyEquipmentChanges(workout, selectedEquipment),
+        ),
       ),
     );
   }
@@ -1344,10 +1371,8 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
         backgroundColor: backgroundColor,
         appBar: AppBar(
           backgroundColor: backgroundColor,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.pop(),
-          ),
+          automaticallyImplyLeading: false,
+          leading: const GlassBackButton(),
         ),
         body: Center(
           child: Column(
@@ -2005,6 +2030,37 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
               ),
             ),
             const SizedBox(width: 12),
+            // Favorite button - floating pill
+            GestureDetector(
+              onTap: _toggleFavorite,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                height: 44,
+                width: 44,
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated,
+                  borderRadius: BorderRadius.circular(22),
+                  border: isDark ? null : Border.all(color: cardBorder.withOpacity(0.3)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                    key: ValueKey(_isFavorite),
+                    color: _isFavorite ? Colors.redAccent : (isDark ? Colors.white : AppColorsLight.textPrimary),
+                    size: 22,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
             // Menu button - floating pill
             GestureDetector(
               onTap: () => _showWorkoutActions(context, ref, workout),
@@ -2333,12 +2389,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     var sections = (insights?['sections'] as List<dynamic>?) ?? [];
     var isRegenerating = false;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      builder: (modalContext) => StatefulBuilder(
+      builder: (modalContext) => GlassSheet(
+        child: StatefulBuilder(
         builder: (context, setModalState) {
           Future<void> regenerateInsights() async {
             setModalState(() => isRegenerating = true);
@@ -2497,6 +2551,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
             ),
           );
         },
+      ),
       ),
     );
   }
@@ -2924,7 +2979,6 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     if (_generationParams == null) return;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
@@ -2933,34 +2987,16 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
 
     final params = _generationParams!;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      useRootNavigator: true,
       builder: (context) => DraggableScrollableSheet(
+        expand: false,
         initialChildSize: 0.75,
         minChildSize: 0.4,
         maxChildSize: 0.9,
-        builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: elevatedColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
+        builder: (context, scrollController) => GlassSheet(
           child: Column(
             children: [
-              // Draggable handle
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: textMuted.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
               // Header
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 12, 16),

@@ -1,11 +1,11 @@
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/api_client.dart';
 
@@ -117,44 +117,42 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
 
   void _showImageSourceDialog() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: Icon(Icons.camera_alt, color: isDark ? AppColors.accent : AppColorsLight.accent),
-                title: const Text('Take Photo'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.camera);
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.photo_library, color: isDark ? AppColors.accent : AppColorsLight.accent),
-                title: const Text('Choose from Gallery'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.gallery);
-                },
-              ),
-              if (_currentPhotoUrl != null || _selectedPhotoFile != null)
+      builder: (context) => GlassSheet(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 ListTile(
-                  leading: Icon(Icons.delete, color: AppColors.error),
-                  title: const Text('Remove Photo'),
+                  leading: Icon(Icons.camera_alt, color: isDark ? AppColors.accent : AppColorsLight.accent),
+                  title: const Text('Take Photo'),
                   onTap: () {
                     Navigator.pop(context);
-                    _removePhoto();
+                    _pickImage(ImageSource.camera);
                   },
                 ),
-            ],
+                ListTile(
+                  leading: Icon(Icons.photo_library, color: isDark ? AppColors.accent : AppColorsLight.accent),
+                  title: const Text('Choose from Gallery'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.gallery);
+                  },
+                ),
+                if (_currentPhotoUrl != null || _selectedPhotoFile != null)
+                  ListTile(
+                    leading: Icon(Icons.delete, color: AppColors.error),
+                    title: const Text('Remove Photo'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _removePhoto();
+                    },
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -287,26 +285,9 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
       initialChildSize: 0.85,
       minChildSize: 0.5,
       maxChildSize: 0.95,
-      builder: (context, scrollController) => ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.4)
-                  : Colors.white.withValues(alpha: 0.6),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              border: Border(
-                top: BorderSide(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.black.withValues(alpha: 0.1),
-                  width: 0.5,
-                ),
-              ),
-            ),
-            child: Column(
+      builder: (context, scrollController) => GlassSheet(
+        showHandle: false,
+        child: Column(
           children: [
             _buildHandle(textMuted),
             _buildTitle(context, accentColor),
@@ -323,8 +304,6 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
                 accentColor,
               ),
           ],
-            ),
-          ),
         ),
       ),
     );

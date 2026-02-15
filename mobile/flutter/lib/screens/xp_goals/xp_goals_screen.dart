@@ -11,6 +11,7 @@ import '../../data/models/xp_event.dart';
 import '../../data/models/user_xp.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/dismissed_banners_section.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../widgets/segmented_tab_bar.dart';
 
 /// Full-screen XP Goals page showing daily, weekly, and monthly XP goals with tabs
@@ -1996,14 +1997,13 @@ Widget _buildXPInfoSection(String title, List<String> items, bool isDark) {
 /// Shows the "View All Levels" sheet
 void _showAllLevelsSheet(BuildContext context, int currentLevel, Color accentColor) {
   HapticFeedback.lightImpact();
-  showModalBottomSheet(
+  showGlassSheet(
     context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    useRootNavigator: true,
-    builder: (context) => _AllLevelsSheet(
-      currentLevel: currentLevel,
-      accentColor: accentColor,
+    builder: (context) => GlassSheet(
+      child: _AllLevelsSheet(
+        currentLevel: currentLevel,
+        accentColor: accentColor,
+      ),
     ),
   );
 }

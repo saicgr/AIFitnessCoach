@@ -14,8 +14,10 @@ Expected Performance:
 - Cache miss (first time): 30-60 seconds
 - Common food: < 1 second
 """
+import asyncio
 import logging
-from typing import Optional, Dict, Any, List
+import re
+from typing import Optional, Dict, Any, List, Tuple
 
 from core.db.facade import get_supabase_db
 from core.db.nutrition_db import NutritionDB
@@ -109,6 +111,16 @@ class FoodAnalysisCacheService:
                 result["cache_source"] = "common_foods"
                 return result
 
+        # Step 1b: Try multi-item common food lookup
+        if use_cache:
+            multi_result = await self._try_multi_item_common_food(description)
+            if multi_result:
+                logger.info(f"🎯 Multi-item common food HIT: {description}")
+                result.update(multi_result)
+                result["cache_hit"] = True
+                result["cache_source"] = "multi_common_foods"
+                return result
+
         # Step 2: Try food analysis cache (cached AI response)
         if use_cache:
             cached = await self._try_cache(description)
@@ -133,6 +145,9 @@ class FoodAnalysisCacheService:
             # Cache the successful result
             if use_cache:
                 await self._cache_result(description, analysis)
+
+            # Auto-learn food items for future common food lookups
+            asyncio.create_task(self._auto_learn_food_items(analysis))
 
             result.update(analysis)
             result["cache_hit"] = False
@@ -165,6 +180,194 @@ class FoodAnalysisCacheService:
 
         except Exception as e:
             logger.warning(f"Common food lookup failed: {e}")
+            return None
+
+    async def _auto_learn_food_items(self, analysis_result: Dict[str, Any]) -> None:
+        """
+        Auto-learn individual food items from a Gemini analysis result
+        into the common_foods table for faster future lookups.
+
+        Args:
+            analysis_result: Successful Gemini food analysis result
+        """
+        food_items = analysis_result.get("food_items", [])
+        if not food_items:
+            return
+
+        for item in food_items:
+            try:
+                name = item.get("name")
+                if not name:
+                    continue
+
+                # Build micronutrients dict from item or top-level result
+                micro_keys = [
+                    "sugar_g", "sodium_mg", "cholesterol_mg",
+                    "vitamin_a_ug", "vitamin_c_mg", "vitamin_d_iu",
+                    "calcium_mg", "iron_mg", "potassium_mg",
+                ]
+                micronutrients = {}
+                for key in micro_keys:
+                    val = item.get(key) or analysis_result.get(key)
+                    if val is not None:
+                        micronutrients[key] = val
+
+                # Infer category from food name
+                category = self._infer_food_category(name)
+
+                self.nutrition_db.upsert_learned_food(
+                    name=name,
+                    serving_size=item.get("amount", "1 serving"),
+                    serving_weight_g=float(item.get("weight_g") or 0),
+                    calories=int(item.get("calories") or 0),
+                    protein_g=float(item.get("protein_g") or 0),
+                    carbs_g=float(item.get("carbs_g") or 0),
+                    fat_g=float(item.get("fat_g") or 0),
+                    fiber_g=float(item.get("fiber_g") or 0),
+                    micronutrients=micronutrients,
+                    category=category,
+                    source="ai_learned",
+                )
+                logger.info(f"✅ Auto-learned food: {name}")
+            except Exception as e:
+                logger.error(f"❌ Failed to auto-learn food '{item.get('name')}': {e}")
+
+    @staticmethod
+    def _infer_food_category(name: str) -> str:
+        """Infer a food category from the food name using keyword heuristics."""
+        lower = name.lower()
+        protein_keywords = ["chicken", "beef", "fish", "salmon", "tuna", "egg",
+                            "shrimp", "pork", "lamb", "turkey", "tofu", "paneer"]
+        grain_keywords = ["rice", "bread", "pasta", "noodle", "roti", "naan",
+                          "oat", "cereal", "wheat", "chapati"]
+        fruit_keywords = ["apple", "banana", "mango", "orange", "grape",
+                          "berry", "melon", "pear", "peach", "plum"]
+        veg_keywords = ["broccoli", "spinach", "carrot", "tomato", "onion",
+                        "potato", "lettuce", "cucumber", "pepper", "cabbage"]
+        dairy_keywords = ["milk", "cheese", "yogurt", "curd", "butter", "cream"]
+
+        for kw in protein_keywords:
+            if kw in lower:
+                return "protein"
+        for kw in grain_keywords:
+            if kw in lower:
+                return "grains"
+        for kw in fruit_keywords:
+            if kw in lower:
+                return "fruit"
+        for kw in veg_keywords:
+            if kw in lower:
+                return "vegetable"
+        for kw in dairy_keywords:
+            if kw in lower:
+                return "dairy"
+        return "general"
+
+    def _split_food_description(
+        self, description: str
+    ) -> List[Tuple[float, str]]:
+        """
+        Split a multi-item food description into individual items with quantities.
+
+        Splits on: comma, ' and ', ' & ', ' + ', ' with '
+        Extracts quantity prefix: "2 eggs" -> (2.0, "eggs")
+
+        Args:
+            description: Food description potentially containing multiple items
+
+        Returns:
+            List of (quantity, food_name) tuples
+        """
+        # Split on delimiters
+        parts = re.split(r'\s*,\s*|\s+and\s+|\s+&\s+|\s+\+\s+|\s+with\s+', description.strip())
+        items: List[Tuple[float, str]] = []
+
+        for part in parts:
+            part = part.strip()
+            if not part:
+                continue
+            # Try to extract leading quantity (e.g., "2 eggs", "1.5 cups rice")
+            qty_match = re.match(r'^(\d+(?:\.\d+)?)\s+(.+)$', part)
+            if qty_match:
+                qty = float(qty_match.group(1))
+                food_name = qty_match.group(2).strip()
+            else:
+                qty = 1.0
+                food_name = part
+            items.append((qty, food_name))
+
+        return items
+
+    async def _try_multi_item_common_food(
+        self, description: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Try to resolve a multi-item food description from the common foods DB.
+
+        Only activates when multiple items are detected. If ALL items are found
+        in common_foods, combines and returns the result. Otherwise returns None
+        to let Gemini handle it.
+
+        Args:
+            description: Food description
+
+        Returns:
+            Combined analysis dict if all items found, None otherwise
+        """
+        try:
+            items = self._split_food_description(description)
+            if len(items) <= 1:
+                return None
+
+            all_food_items = []
+            total_cals = 0
+            total_protein = 0.0
+            total_carbs = 0.0
+            total_fat = 0.0
+            total_fiber = 0.0
+
+            for qty, food_name in items:
+                common = self.nutrition_db.get_common_food(food_name)
+                if not common:
+                    # Any miss means we fall through to Gemini
+                    return None
+
+                analysis = self._common_food_to_analysis(common)
+                # Scale by quantity
+                for fi in analysis["food_items"]:
+                    fi["calories"] = int(fi["calories"] * qty)
+                    fi["protein_g"] = round(fi["protein_g"] * qty, 1)
+                    fi["carbs_g"] = round(fi["carbs_g"] * qty, 1)
+                    fi["fat_g"] = round(fi["fat_g"] * qty, 1)
+                    fi["fiber_g"] = round(fi["fiber_g"] * qty, 1)
+                    if fi.get("weight_g"):
+                        fi["weight_g"] = round(fi["weight_g"] * qty, 1)
+                    if qty != 1.0:
+                        fi["amount"] = f"{qty} x {fi['amount']}"
+                    all_food_items.append(fi)
+
+                total_cals += int(analysis["total_calories"] * qty)
+                total_protein += analysis["protein_g"] * qty
+                total_carbs += analysis["carbs_g"] * qty
+                total_fat += analysis["fat_g"] * qty
+                total_fiber += analysis["fiber_g"] * qty
+
+            return {
+                "food_items": all_food_items,
+                "total_calories": total_cals,
+                "protein_g": round(total_protein, 1),
+                "carbs_g": round(total_carbs, 1),
+                "fat_g": round(total_fat, 1),
+                "fiber_g": round(total_fiber, 1),
+                "encouragements": ["All items found in our database for instant results!"],
+                "warnings": [],
+                "ai_suggestion": None,
+                "recommended_swap": None,
+                "data_source": "multi_common_foods",
+            }
+
+        except Exception as e:
+            logger.warning(f"Multi-item common food lookup failed: {e}")
             return None
 
     def _common_food_to_analysis(self, common_food: Dict[str, Any]) -> Dict[str, Any]:

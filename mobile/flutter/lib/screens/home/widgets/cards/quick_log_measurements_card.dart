@@ -6,6 +6,7 @@ import '../../../../data/models/home_layout.dart';
 import '../../../../data/repositories/measurements_repository.dart';
 import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../widgets/glass_sheet.dart';
 import '../../../progress/log_measurement_sheet.dart';
 
 /// Quick Log Measurements Tile - Shows key body measurements
@@ -381,12 +382,11 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
       return;
     }
 
-    await showModalBottomSheet(
+    await showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => LogMeasurementSheet(userId: userId),
+      builder: (context) => GlassSheet(
+        child: LogMeasurementSheet(userId: userId),
+      ),
     );
 
     // Refresh measurements after logging

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -11,6 +9,8 @@ import '../../../data/repositories/library_repository.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/exercise_image.dart';
+import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/segmented_tab_bar.dart';
 
 /// Shows exercise swap sheet with fast DB suggestions and optional AI picks
 Future<Workout?> showExerciseSwapSheet(
@@ -19,15 +19,14 @@ Future<Workout?> showExerciseSwapSheet(
   required String workoutId,
   required WorkoutExercise exercise,
 }) async {
-  return await showModalBottomSheet<Workout>(
+  return await showGlassSheet<Workout>(
     context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    isScrollControlled: true,
-    useRootNavigator: true,
-    builder: (context) => _ExerciseSwapSheet(
-      workoutId: workoutId,
-      exercise: exercise,
+    builder: (context) => GlassSheet(
+      showHandle: false,
+      child: _ExerciseSwapSheet(
+        workoutId: workoutId,
+        exercise: exercise,
+      ),
     ),
   );
 }
@@ -367,42 +366,9 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     final glassSurface =
         isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-          ),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: Column(
+    return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Handle
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-
               // Header with current exercise
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -523,17 +489,14 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
               ),
 
               // Tabs - 4 tabs now
-              TabBar(
+              SegmentedTabBar(
                 controller: _tabController,
-                indicatorColor: AppColors.cyan,
-                labelColor: AppColors.cyan,
-                unselectedLabelColor: textMuted,
-                labelStyle: const TextStyle(fontSize: 13),
-                tabs: const [
-                  Tab(text: 'Similar'),
-                  Tab(text: 'Recent'),
-                  Tab(text: 'Library'),
-                  Tab(text: 'AI Picks'),
+                showIcons: false,
+                tabs: [
+                  SegmentedTabItem(label: 'Similar'),
+                  SegmentedTabItem(label: 'Recent'),
+                  SegmentedTabItem(label: 'Library'),
+                  SegmentedTabItem(label: 'AI Picks'),
                 ],
               ),
 
@@ -566,9 +529,6 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                   ),
                 ),
             ],
-          ),
-        ),
-      ),
     );
   }
 

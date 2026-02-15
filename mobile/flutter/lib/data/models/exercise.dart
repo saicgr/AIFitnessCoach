@@ -552,13 +552,36 @@ class LibraryExercise extends Equatable {
   /// Get instructions as list
   List<String> get instructions {
     if (instructionsValue == null || instructionsValue!.isEmpty) return [];
-    // Try to split by numbered list or periods
-    final lines = instructionsValue!
-        .split(RegExp(r'(?:\d+\.\s*|\n|\.(?=\s+[A-Z]))'))
+
+    // Phase 1: Try splitting on numbered lists anchored to line start (e.g. "1. Do this\n2. Do that")
+    final numberedPattern = RegExp(r'(?:^|\n)\s*\d+\.\s+', multiLine: true);
+    if (numberedPattern.hasMatch(instructionsValue!)) {
+      final parts = instructionsValue!
+          .split(numberedPattern)
+          .where((s) => s.trim().isNotEmpty)
+          .map((s) => s.trim())
+          .toList();
+      if (parts.length > 1) return parts;
+    }
+
+    // Phase 2: Try splitting on newlines
+    final newlineParts = instructionsValue!
+        .split('\n')
         .where((s) => s.trim().isNotEmpty)
         .map((s) => s.trim())
         .toList();
-    return lines.isNotEmpty ? lines : [instructionsValue!];
+    if (newlineParts.length > 1) return newlineParts;
+
+    // Phase 3: Try splitting on sentence boundaries (period + space + uppercase letter)
+    final sentenceParts = instructionsValue!
+        .split(RegExp(r'\.(?=\s+[A-Z])'))
+        .where((s) => s.trim().isNotEmpty)
+        .map((s) => s.trim())
+        .toList();
+    if (sentenceParts.length > 1) return sentenceParts;
+
+    // Phase 4: Return as single instruction
+    return [instructionsValue!];
   }
 
   /// Check if this is a bodyweight exercise

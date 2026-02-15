@@ -5,11 +5,10 @@
 /// and quick action buttons for common adjustments.
 library;
 
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Reasons for adjusting sets during a workout
 enum SetAdjustmentReason {
@@ -147,45 +146,14 @@ class _SetAdjustmentSheetState extends State<SetAdjustmentSheet> {
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
+    return Padding(
           padding: EdgeInsets.only(bottom: bottomPadding),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
           child: SafeArea(
             top: false,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Handle bar
-                Center(
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: textMuted.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-
                 // Header
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
@@ -451,8 +419,6 @@ class _SetAdjustmentSheetState extends State<SetAdjustmentSheet> {
           ],
             ),
           ),
-        ),
-      ),
     );
   }
 }
@@ -466,19 +432,18 @@ Future<(SetAdjustmentReason, String?)?> showSetAdjustmentSheet({
 }) async {
   (SetAdjustmentReason, String?)? result;
 
-  await showModalBottomSheet(
+  await showGlassSheet(
     context: context,
-    isScrollControlled: true,
-    useRootNavigator: true,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    builder: (context) => SetAdjustmentSheet(
-      title: title,
-      subtitle: subtitle,
-      showNotesField: showNotesField,
-      onConfirm: (reason, notes) {
-        result = (reason, notes);
-      },
+    builder: (context) => GlassSheet(
+      showHandle: false,
+      child: SetAdjustmentSheet(
+        title: title,
+        subtitle: subtitle,
+        showNotesField: showNotesField,
+        onConfirm: (reason, notes) {
+          result = (reason, notes);
+        },
+      ),
     ),
   );
 
@@ -550,45 +515,14 @@ class _SkipRemainingSetsSheetState extends State<SkipRemainingSetsSheet> {
     final remainingSets = widget.totalSets - widget.completedSets;
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
+    return Padding(
           padding: EdgeInsets.only(bottom: bottomPadding),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
           child: SafeArea(
             top: false,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Handle bar
-                Center(
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: textMuted.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-
                 // Header with icon
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
@@ -898,8 +832,6 @@ class _SkipRemainingSetsSheetState extends State<SkipRemainingSetsSheet> {
           ],
             ),
           ),
-        ),
-      ),
     );
   }
 }
@@ -913,19 +845,18 @@ Future<(SetAdjustmentReason, String?)?> showSkipRemainingSetsSheet({
 }) async {
   (SetAdjustmentReason, String?)? result;
 
-  await showModalBottomSheet(
+  await showGlassSheet(
     context: context,
-    isScrollControlled: true,
-    useRootNavigator: true,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    builder: (context) => SkipRemainingSetsSheet(
-      exerciseName: exerciseName,
-      completedSets: completedSets,
-      totalSets: totalSets,
-      onConfirm: (reason, notes) {
-        result = (reason, notes);
-      },
+    builder: (context) => GlassSheet(
+      showHandle: false,
+      child: SkipRemainingSetsSheet(
+        exerciseName: exerciseName,
+        completedSets: completedSets,
+        totalSets: totalSets,
+        onConfirm: (reason, notes) {
+          result = (reason, notes);
+        },
+      ),
     ),
   );
 
@@ -1132,45 +1063,14 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
     final completedCount = _sets.where((s) => s.isCompleted).length;
     final remainingCount = _sets.length - completedCount;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
+    return Padding(
           padding: EdgeInsets.only(bottom: bottomPadding),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
           child: SafeArea(
             top: false,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Handle bar
-                Center(
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-
             // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
@@ -1596,8 +1496,6 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
           ],
             ),
           ),
-        ),
-      ),
     );
   }
 }
@@ -1787,22 +1685,22 @@ Future<InWorkoutSetEditResult?> showInWorkoutSetEditingSheet({
 }) async {
   InWorkoutSetEditResult? result;
 
-  await showModalBottomSheet(
+  await showGlassSheet(
     context: context,
-    isScrollControlled: true,
-    useRootNavigator: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => InWorkoutSetEditingSheet(
-      exerciseName: exerciseName,
-      initialSets: initialSets,
-      originalSetCount: originalSetCount,
-      currentSetIndex: currentSetIndex,
-      defaultWeight: defaultWeight,
-      defaultReps: defaultReps,
-      useKg: useKg,
-      onConfirm: (r) {
-        result = r;
-      },
+    builder: (context) => GlassSheet(
+      showHandle: false,
+      child: InWorkoutSetEditingSheet(
+        exerciseName: exerciseName,
+        initialSets: initialSets,
+        originalSetCount: originalSetCount,
+        currentSetIndex: currentSetIndex,
+        defaultWeight: defaultWeight,
+        defaultReps: defaultReps,
+        useKg: useKg,
+        onConfirm: (r) {
+          result = r;
+        },
+      ),
     ),
   );
 

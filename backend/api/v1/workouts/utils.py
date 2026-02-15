@@ -9,6 +9,7 @@ This module contains common utilities used across workout-related endpoints:
 - Date calculations
 """
 import json
+import time
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 
@@ -261,6 +262,44 @@ def get_all_equipment(user: dict) -> List[str]:
     return all_equipment
 
 
+# Module-level cache for exercise library media URLs
+_exercise_library_cache: Optional[Dict[str, Dict]] = None
+_exercise_library_cache_time: float = 0
+_EXERCISE_LIBRARY_CACHE_TTL = 300  # 5 minutes
+
+
+def _get_exercise_library_url_map(db) -> Dict[str, Dict]:
+    """Get cached exercise library URL map.
+
+    Caches the full exercise_library_cleaned table in memory with a 5-minute TTL
+    to avoid re-querying on every workout enrichment call.
+    """
+    global _exercise_library_cache, _exercise_library_cache_time
+
+    now = time.time()
+    if _exercise_library_cache is not None and (now - _exercise_library_cache_time) < _EXERCISE_LIBRARY_CACHE_TTL:
+        return _exercise_library_cache
+
+    result = db.client.table("exercise_library_cleaned").select(
+        "name, gif_url, video_url, image_url"
+    ).execute()
+
+    url_map: Dict[str, Dict] = {}
+    if result.data:
+        for row in result.data:
+            lib_name = (row.get("name") or "").lower().strip()
+            if lib_name:
+                url_map[lib_name] = {
+                    "gif_url": row.get("gif_url"),
+                    "video_url": row.get("video_url"),
+                    "image_s3_path": row.get("image_url"),
+                }
+
+    _exercise_library_cache = url_map
+    _exercise_library_cache_time = now
+    return url_map
+
+
 def enrich_exercises_with_video_urls(exercises: List[Dict], db=None) -> List[Dict]:
     """
     Enrich exercises with video/image URLs from the exercise library.
@@ -296,26 +335,12 @@ def enrich_exercises_with_video_urls(exercises: List[Dict], db=None) -> List[Dic
         return exercises
 
     try:
-        # Fetch media URLs from exercise_library_cleaned view
-        # image_url in the view is from image_s3_path column
-        result = db.client.table("exercise_library_cleaned").select(
-            "name, gif_url, video_url, image_url"
-        ).execute()
+        # Use cached exercise library URL map (5-minute TTL)
+        url_map = _get_exercise_library_url_map(db)
 
-        if not result.data:
+        if not url_map:
             logger.debug("No exercises found in library for media enrichment")
             return exercises
-
-        # Build a lookup map (lowercase name -> urls)
-        url_map = {}
-        for row in result.data:
-            lib_name = (row.get("name") or "").lower().strip()
-            if lib_name:
-                url_map[lib_name] = {
-                    "gif_url": row.get("gif_url"),
-                    "video_url": row.get("video_url"),
-                    "image_s3_path": row.get("image_url"),  # Map image_url to image_s3_path
-                }
 
         # Enrich exercises
         enriched_count = 0

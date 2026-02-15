@@ -326,6 +326,8 @@ class LangGraphCoachService:
             "error": None,
             # AI personality settings
             "ai_settings": request.ai_settings.model_dump() if request.ai_settings else None,
+            # Unified fasting/nutrition/workout context from frontend
+            "unified_context": request.unified_context,
         }
 
         # Add agent-specific fields

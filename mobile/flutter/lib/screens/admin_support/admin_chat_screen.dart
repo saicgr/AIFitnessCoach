@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_sheet.dart';
 import 'admin_support_provider.dart';
 
 /// Admin chat screen - reply to user support messages
@@ -261,31 +262,17 @@ class _AdminChatScreenState extends ConsumerState<AdminChatScreen> {
   void _showUserInfo(BuildContext context, AdminSupportChat? chat) {
     if (chat == null) return;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: AppColors.elevated,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.textMuted,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
               'User Information',
               style: TextStyle(
                 fontSize: 18,
@@ -307,6 +294,7 @@ class _AdminChatScreenState extends ConsumerState<AdminChatScreen> {
             const SizedBox(height: 20),
           ],
         ),
+      ),
       ),
     );
   }

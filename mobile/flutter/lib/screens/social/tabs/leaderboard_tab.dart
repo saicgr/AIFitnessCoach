@@ -6,6 +6,7 @@ import '../../../data/services/leaderboard_service.dart';
 import '../../../data/services/challenges_service.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/leaderboard_locked_state.dart';
@@ -339,14 +340,15 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
     final userName = entry['user_name'] as String? ?? 'User';
     final userId = entry['user_id'] as String;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
       useRootNavigator: true,
       builder: (sheetContext) {
         final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
         final accentColor = sheetContext.colors.accent;
 
-        return Container(
+        return GlassSheet(
+          child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -392,6 +394,7 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
               ),
             ],
           ),
+        ),
         );
       },
     );

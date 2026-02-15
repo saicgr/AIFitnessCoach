@@ -1,26 +1,29 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/app_colors.dart';
 import '../core/providers/weight_increments_provider.dart';
+import 'glass_sheet.dart';
 
 /// Shows the weight increments customization bottom sheet.
 Future<void> showWeightIncrementsSheet(BuildContext context) async {
-  await showModalBottomSheet(
+  await showGlassSheet(
     context: context,
-    isScrollControlled: true,
     useRootNavigator: true,
-    backgroundColor: Colors.transparent,
     enableDrag: true,
+    initialChildSize: 0.85,
+    minChildSize: 0.4,
+    maxChildSize: 0.95,
     builder: (context) => DraggableScrollableSheet(
       initialChildSize: 0.85,
       minChildSize: 0.4,
       maxChildSize: 0.95,
       expand: false,
-      builder: (context, scrollController) => WeightIncrementsSheet(
-        scrollController: scrollController,
+      builder: (context, scrollController) => GlassSheet(
+        showHandle: false,
+        child: WeightIncrementsSheet(
+          scrollController: scrollController,
+        ),
       ),
     ),
   );
@@ -55,26 +58,7 @@ class WeightIncrementsSheet extends ConsumerWidget {
     final isKg = state.unit == 'kg';
     final options = isKg ? incrementOptionsKg : incrementOptionsLbs;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: SafeArea(
+    return SafeArea(
         child: SingleChildScrollView(
           controller: scrollController,
           padding: const EdgeInsets.all(20),
@@ -82,19 +66,6 @@ class WeightIncrementsSheet extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Drag handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: textMuted,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
               // Header with unit toggle
               Row(
                 children: [
@@ -314,10 +285,7 @@ class WeightIncrementsSheet extends ConsumerWidget {
               const SizedBox(height: 8),
             ],
           ),
-            ),
-          ),
         ),
-      ),
     );
   }
 

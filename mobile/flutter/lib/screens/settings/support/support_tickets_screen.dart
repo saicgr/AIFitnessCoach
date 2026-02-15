@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/support_provider.dart';
 import '../../../models/support_ticket.dart';
+import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/segmented_tab_bar.dart';
 
 /// Screen showing all user's support tickets
 class SupportTicketsScreen extends ConsumerStatefulWidget {
@@ -48,10 +50,8 @@ class _SupportTicketsScreenState extends ConsumerState<SupportTicketsScreen>
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'Support Tickets',
           style: TextStyle(
@@ -60,45 +60,48 @@ class _SupportTicketsScreenState extends ConsumerState<SupportTicketsScreen>
           ),
         ),
         centerTitle: true,
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppColors.cyan,
-          unselectedLabelColor: textSecondary,
-          indicatorColor: AppColors.cyan,
-          indicatorWeight: 3,
-          tabs: const [
-            Tab(text: 'Active'),
-            Tab(text: 'Closed'),
-          ],
-        ),
       ),
-      body: ticketsAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.cyan),
-        ),
-        error: (error, _) => _buildErrorState(error, isDark),
-        data: (tickets) {
-          final openTickets = tickets.where((t) => !t.isClosed && !t.isResolved).toList();
-          final closedTickets = tickets.where((t) => t.isClosed || t.isResolved).toList();
-
-          return TabBarView(
+      body: Column(
+        children: [
+          SegmentedTabBar(
             controller: _tabController,
-            children: [
-              _buildTicketsList(
-                tickets: openTickets,
-                emptyMessage: 'No active tickets',
-                emptySubtitle: 'Create a new ticket to get help from our support team',
-                isDark: isDark,
-              ),
-              _buildTicketsList(
-                tickets: closedTickets,
-                emptyMessage: 'No closed tickets',
-                emptySubtitle: 'Your resolved tickets will appear here',
-                isDark: isDark,
-              ),
+            showIcons: false,
+            tabs: const [
+              SegmentedTabItem(label: 'Active'),
+              SegmentedTabItem(label: 'Closed'),
             ],
-          );
-        },
+          ),
+          Expanded(
+            child: ticketsAsync.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: AppColors.cyan),
+              ),
+              error: (error, _) => _buildErrorState(error, isDark),
+              data: (tickets) {
+                final openTickets = tickets.where((t) => !t.isClosed && !t.isResolved).toList();
+                final closedTickets = tickets.where((t) => t.isClosed || t.isResolved).toList();
+
+                return TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildTicketsList(
+                      tickets: openTickets,
+                      emptyMessage: 'No active tickets',
+                      emptySubtitle: 'Create a new ticket to get help from our support team',
+                      isDark: isDark,
+                    ),
+                    _buildTicketsList(
+                      tickets: closedTickets,
+                      emptyMessage: 'No closed tickets',
+                      emptySubtitle: 'Your resolved tickets will appear here',
+                      isDark: isDark,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/support-tickets/create'),

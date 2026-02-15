@@ -5,6 +5,7 @@ import '../../../data/models/gym_profile.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../models/equipment_item.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/sheet_header.dart';
 import 'gym_equipment_sheet.dart';
 
@@ -146,22 +147,21 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     // Convert equipment details to EquipmentItem list
     final equipmentItems = _equipmentDetails.map((e) => EquipmentItem.fromJson(e)).toList();
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => GymEquipmentSheet(
-        selectedEquipment: _selectedEquipment,
-        equipmentDetails: equipmentItems,
-        title: 'Equipment',
-        onSave: (equipment, details) {
-          setState(() {
-            _selectedEquipment = equipment;
-            _equipmentDetails = details;
-          });
-          debugPrint('✅ [AddGymProfile] Equipment updated: ${equipment.length} items');
-        },
+      builder: (context) => GlassSheet(
+        child: GymEquipmentSheet(
+          selectedEquipment: _selectedEquipment,
+          equipmentDetails: equipmentItems,
+          title: 'Equipment',
+          onSave: (equipment, details) {
+            setState(() {
+              _selectedEquipment = equipment;
+              _equipmentDetails = details;
+            });
+            debugPrint('✅ [AddGymProfile] Equipment updated: ${equipment.length} items');
+          },
+        ),
       ),
     );
   }
@@ -232,11 +232,8 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+    return GlassSheet(
+      showHandle: false,
       child: DraggableScrollableSheet(
         initialChildSize: 0.85,
         minChildSize: 0.5,
@@ -244,16 +241,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
         expand: false,
         builder: (context, scrollController) => Column(
           children: [
-            // Handle
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+            GlassSheetHandle(isDark: isDark),
 
             // Header
             Padding(

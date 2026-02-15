@@ -1,9 +1,9 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/models/exercise.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 import '../../workout/widgets/exercise_swap_sheet.dart';
 import '../../workout/widgets/exercise_add_sheet.dart';
@@ -19,12 +19,8 @@ Future<Workout?> showWorkoutReviewSheet(
   // Hide nav bar while sheet is open
   ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-  return await showModalBottomSheet<Workout>(
+  return await showGlassSheet<Workout>(
     context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    isScrollControlled: true,
-    useRootNavigator: true,
     isDismissible: false,
     enableDrag: false,
     builder: (context) => _WorkoutReviewSheet(workout: generatedWorkout),
@@ -111,44 +107,23 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
     final colors = context.sheetColors;
     final exercises = _currentWorkout.exercises;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-          ),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
+    return GlassSheet(
+      maxHeightFraction: 0.85,
+      showHandle: false,
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHeader(colors),
+            Divider(height: 1, color: colors.cardBorder),
+            _buildWorkoutSummary(colors),
+            Divider(height: 1, color: colors.cardBorder),
+            Expanded(
+              child: _buildExerciseList(colors, exercises),
             ),
-          ),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildHeader(colors),
-                Divider(height: 1, color: colors.cardBorder),
-                _buildWorkoutSummary(colors),
-                Divider(height: 1, color: colors.cardBorder),
-                Expanded(
-                  child: _buildExerciseList(colors, exercises),
-                ),
-                _buildAddExerciseButton(colors),
-                _buildBottomActions(colors),
-              ],
-            ),
-          ),
+            _buildAddExerciseButton(colors),
+            _buildBottomActions(colors),
+          ],
         ),
       ),
     );

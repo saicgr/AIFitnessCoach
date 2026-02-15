@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/glass_back_button.dart';
 import '../widgets/exercise_card.dart';
 
 /// Screen showing all exercises for a specific category
@@ -172,10 +173,8 @@ class _CategoryExercisesScreenState
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -6,6 +6,8 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/repositories/xp_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_back_button.dart';
+import '../../widgets/glass_sheet.dart';
 import '../home/widgets/daily_crate_banner.dart';
 
 /// Screen displaying user's consumables inventory
@@ -562,13 +564,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
-            child: _buildFloatingButton(
-              icon: Icons.arrow_back,
+            child: GlassBackButton(
               onTap: () => context.pop(),
-              isDark: isDark,
-              elevatedColor: elevatedColor,
-              textColor: textColor,
-              cardBorder: cardBorder,
             ),
           ),
 
@@ -906,16 +903,16 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     final dailyCrates = ref.read(dailyCratesProvider);
     if (dailyCrates == null) return;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DailyCrateSelectionSheet(
-        cratesState: dailyCrates,
-        onCrateClaimed: () {
-          ref.read(xpProvider.notifier).loadDailyCrates();
-          ref.read(xpProvider.notifier).loadConsumables();
-        },
+      builder: (context) => GlassSheet(
+        child: DailyCrateSelectionSheet(
+          cratesState: dailyCrates,
+          onCrateClaimed: () {
+            ref.read(xpProvider.notifier).loadDailyCrates();
+            ref.read(xpProvider.notifier).loadConsumables();
+          },
+        ),
       ),
     );
   }

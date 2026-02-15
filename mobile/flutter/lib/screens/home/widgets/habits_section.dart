@@ -8,6 +8,7 @@ import '../../../data/providers/habits_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/habit_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import 'habit_card.dart';
 
 /// Provider to fetch custom habits for home section
@@ -185,12 +186,11 @@ class HabitsSection extends ConsumerWidget {
   }
 
   void _showAddHabitSheet(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _AddHabitBottomSheet(ref: ref),
+      builder: (context) => GlassSheet(
+        child: _AddHabitBottomSheet(ref: ref),
+      ),
     );
   }
 }
@@ -353,24 +353,10 @@ class _AddHabitBottomSheetState extends ConsumerState<_AddHabitBottomSheet> {
         ? _templates
         : _templates.where((t) => t.category.value == _selectedCategory).toList();
 
-    return Container(
+    return SizedBox(
       height: MediaQuery.of(context).size.height * 0.7,
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       child: Column(
         children: [
-          // Handle
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: dividerColor,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
           // Header
           Padding(
             padding: const EdgeInsets.all(16),

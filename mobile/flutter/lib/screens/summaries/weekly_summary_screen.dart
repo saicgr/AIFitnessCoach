@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/weekly_summary.dart';
 import '../../data/repositories/weekly_summary_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/glass_sheet.dart';
 
 class WeeklySummaryScreen extends ConsumerStatefulWidget {
   const WeeklySummaryScreen({super.key});
@@ -290,22 +291,19 @@ class _SummaryCard extends StatelessWidget {
   }
 
   void _showDetailSheet(BuildContext context) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.nearBlack : AppColorsLight.nearWhite,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: _SummaryDetailSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) => _SummaryDetailSheet(
             summary: summary,
             scrollController: scrollController,
             isDark: isDark,
@@ -507,19 +505,6 @@ class _SummaryDetailSheet extends StatelessWidget {
 
     return Column(
       children: [
-        // Handle
-        Center(
-          child: Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: textMuted,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ),
-
         Expanded(
           child: SingleChildScrollView(
             controller: scrollController,

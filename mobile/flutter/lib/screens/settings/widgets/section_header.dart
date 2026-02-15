@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// A styled section header for the settings screen.
 ///
@@ -101,31 +102,21 @@ class SectionHeader extends StatelessWidget {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: elevatedColor,
-      isScrollControlled: true,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
+      initialChildSize: 0.5,
+      minChildSize: 0.3,
+      maxChildSize: 0.85,
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
         initialChildSize: 0.5,
         minChildSize: 0.3,
         maxChildSize: 0.85,
         expand: false,
         builder: (context, scrollController) => Column(
           children: [
-            // Handle
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
             // Title
             Padding(
               padding: const EdgeInsets.all(16),
@@ -221,7 +212,7 @@ class SectionHeader extends StatelessWidget {
             const SizedBox(height: 16),
           ],
         ),
-      ),
+      )),
     );
   }
 }

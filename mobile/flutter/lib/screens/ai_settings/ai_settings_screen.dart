@@ -8,6 +8,7 @@ import '../../data/models/chat_message.dart';
 import '../../data/models/coach_persona.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/glass_back_button.dart';
 
 /// AI Settings storage provider - loads from API when user is authenticated
 final aiSettingsProvider = StateNotifierProvider<AISettingsNotifier, AISettings>((ref) {
@@ -455,10 +456,8 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'AI Settings',
           style: TextStyle(

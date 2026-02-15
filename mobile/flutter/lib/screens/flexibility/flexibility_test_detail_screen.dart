@@ -4,6 +4,7 @@ import '../../data/models/flexibility_assessment.dart';
 import '../../data/providers/flexibility_provider.dart';
 import 'widgets/flexibility_progress_chart.dart';
 import 'widgets/record_assessment_sheet.dart';
+import '../../widgets/glass_sheet.dart';
 
 /// Detailed view of a specific flexibility test with progress tracking
 class FlexibilityTestDetailScreen extends ConsumerStatefulWidget {
@@ -541,9 +542,8 @@ class _FlexibilityTestDetailScreenState extends ConsumerState<FlexibilityTestDet
   }
 
   void _showRecordSheet() {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
       builder: (context) => RecordAssessmentSheet(
         test: widget.test,

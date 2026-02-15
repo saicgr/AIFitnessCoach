@@ -7,6 +7,7 @@ import '../../data/models/fasting_impact.dart';
 import '../../data/providers/fasting_impact_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/context_logging_service.dart';
+import '../../widgets/glass_back_button.dart';
 import 'widgets/fasting_calendar_widget.dart';
 import 'widgets/fasting_impact_card.dart';
 import 'widgets/weight_fasting_chart.dart';
@@ -117,10 +118,8 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh, color: textMuted),

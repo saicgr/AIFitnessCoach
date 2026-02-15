@@ -16,6 +16,8 @@ import '../../data/providers/scores_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/repositories/progress_photos_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/glass_sheet.dart';
+import '../../widgets/segmented_tab_bar.dart';
 import '../../widgets/main_shell.dart';
 import 'log_measurement_sheet.dart';
 import 'comparison_view.dart';
@@ -197,26 +199,30 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
               onPressed: _userId != null ? _showComparisonPicker : null,
             ),
           ],
-          bottom: TabBar(
-            controller: _tabController,
-            labelColor: colorScheme.primary,
-            unselectedLabelColor: colorScheme.onSurfaceVariant,
-            indicatorColor: colorScheme.primary,
-            tabs: const [
-              Tab(icon: Icon(Icons.fitness_center), text: 'Scores'),
-              Tab(icon: Icon(Icons.photo_library), text: 'Photos'),
-              Tab(icon: Icon(Icons.straighten), text: 'Measurements'),
-            ],
-          ),
         ),
         body: _isLoading || _userId == null
             ? const Center(child: CircularProgressIndicator())
-            : TabBarView(
-                controller: _tabController,
+            : Column(
                 children: [
-                  _buildScoresTab(),
-                  _buildPhotosTab(),
-                  _buildMeasurementsTab(),
+                  SegmentedTabBar(
+                    controller: _tabController,
+                    showIcons: true,
+                    tabs: const [
+                      SegmentedTabItem(label: 'Scores', icon: Icons.fitness_center),
+                      SegmentedTabItem(label: 'Photos', icon: Icons.photo_library),
+                      SegmentedTabItem(label: 'Measurements', icon: Icons.straighten),
+                    ],
+                  ),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildScoresTab(),
+                        _buildPhotosTab(),
+                        _buildMeasurementsTab(),
+                      ],
+                    ),
+                  ),
                 ],
               ),
         floatingActionButton: _buildFAB(),
@@ -332,32 +338,17 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
   void _showMuscleDetail(String muscleGroup) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
         initialChildSize: 0.7,
         minChildSize: 0.5,
         maxChildSize: 0.9,
-        builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
+        builder: (context, scrollController) => Column(
             children: [
-              // Handle
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colorScheme.outline.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -1073,10 +1064,11 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
     PhotoViewType? selectedType;
 
     // First, pick a view type
-    selectedType = await showModalBottomSheet<PhotoViewType>(
+    selectedType = await showGlassSheet<PhotoViewType>(
       context: context,
       useRootNavigator: true,
-      builder: (context) => Container(
+      builder: (context) => GlassSheet(
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1100,15 +1092,17 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
           ],
         ),
       ),
+      ),
     );
 
     if (selectedType == null || !mounted) return;
 
     // Then pick image source
-    final source = await showModalBottomSheet<ImageSource>(
+    final source = await showGlassSheet<ImageSource>(
       context: context,
       useRootNavigator: true,
-      builder: (context) => Container(
+      builder: (context) => GlassSheet(
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1127,6 +1121,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
             ),
           ],
         ),
+      ),
       ),
     );
 
@@ -1285,43 +1280,28 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
 
   void _showAddMeasurementSheet() {
     if (_userId == null) return;
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => LogMeasurementSheet(userId: _userId!),
+      builder: (context) => GlassSheet(
+        child: LogMeasurementSheet(userId: _userId!),
+      ),
     );
   }
 
   void _showPhotoDetail(ProgressPhoto photo) {
     final colorScheme = Theme.of(context).colorScheme;
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
         initialChildSize: 0.9,
         minChildSize: 0.5,
         maxChildSize: 0.95,
-        builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
+        builder: (context, scrollController) => Column(
             children: [
-              // Handle
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colorScheme.outline.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
               // Photo
               Expanded(
                 child: SingleChildScrollView(

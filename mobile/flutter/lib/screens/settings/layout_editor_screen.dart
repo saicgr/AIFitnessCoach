@@ -6,6 +6,9 @@ import '../../core/theme/theme_colors.dart';
 import '../../data/models/home_layout.dart';
 import '../../data/providers/local_layout_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_back_button.dart';
+import '../../widgets/glass_sheet.dart';
+import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/preview_tile_mock.dart';
 
 /// Screen for editing home screen layout with tabs for Toggles and Discover
@@ -68,10 +71,8 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
             fontWeight: FontWeight.bold,
           ),
         ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textColor),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         actions: [
           // Reset button - only show when layout is modified from default
           if (!isAtDefault)
@@ -115,31 +116,13 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
       body: Column(
         children: [
           // Styled TabBar
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: elevatedColor,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: TabBar(
-              controller: _tabController,
-              indicator: BoxDecoration(
-                color: accentColor,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              indicatorSize: TabBarIndicatorSize.tab,
-              labelColor: isDark ? Colors.black : Colors.white,
-              unselectedLabelColor: textMuted,
-              labelStyle:
-                  const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-              unselectedLabelStyle: const TextStyle(fontSize: 14),
-              dividerColor: Colors.transparent,
-              padding: const EdgeInsets.all(4),
-              tabs: const [
-                Tab(text: 'Toggles'),
-                Tab(text: 'Discover'),
-              ],
-            ),
+          SegmentedTabBar(
+            controller: _tabController,
+            showIcons: false,
+            tabs: const [
+              SegmentedTabItem(label: 'Toggles'),
+              SegmentedTabItem(label: 'Discover'),
+            ],
           ),
           // Content
           Expanded(
@@ -997,31 +980,17 @@ class _DiscoverTab extends ConsumerWidget {
     final color = isDark ? preset.color : _darkenColor(preset.color);
     final sheetBg = isDark ? const Color(0xFF0A0A0A) : const Color(0xFFFFFFFF);
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => DraggableScrollableSheet(
+      builder: (ctx) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
         initialChildSize: 0.75,
         minChildSize: 0.5,
         maxChildSize: 0.95,
-        builder: (_, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: sheetBg,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
+        expand: false,
+        builder: (_, scrollController) => Column(
             children: [
-              // Drag handle
-              Container(
-                margin: const EdgeInsets.only(top: 10, bottom: 6),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted.withOpacity(0.4),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
               // Header
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),

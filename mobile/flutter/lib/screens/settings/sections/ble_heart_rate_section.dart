@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/ble_heart_rate_provider.dart';
 import '../../../data/services/ble_heart_rate_service.dart';
 import '../widgets/section_header.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Settings section for connecting a BLE heart rate monitor.
 ///
@@ -209,17 +210,13 @@ class _BleHrSettingsCard extends ConsumerWidget {
   }
 
   void _showScanSheet(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.elevated
-          : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      isScrollControlled: true,
       useRootNavigator: true,
-      builder: (context) => const _ScanDevicesSheet(),
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: const _ScanDevicesSheet(),
+      ),
     );
   }
 }

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,6 +16,7 @@ import '../coach_avatar.dart';
 import '../guest_upgrade_sheet.dart';
 import '../main_shell.dart';
 import 'floating_chat_provider.dart';
+import '../glass_sheet.dart';
 
 /// Hero tag for chat window animation
 const String chatHeroTag = 'chat-window-hero';
@@ -50,12 +50,9 @@ void showChatBottomSheet(BuildContext context, WidgetRef ref) {
   // Get the container to pass to the sheet (needed for provider access)
   final container = ProviderScope.containerOf(context);
 
-  showModalBottomSheet(
+  showGlassSheet(
     context: context,
-    isScrollControlled: true, // Allows the sheet to take full height
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2), // Light scrim to match weekly check-in
-    useRootNavigator: true, // Use root navigator to ensure proper overlay
+    useRootNavigator: true,
     builder: (sheetContext) {
       debugPrint('🤖 [EdgeHandle] Building _ChatBottomSheet');
       // Wrap with UncontrolledProviderScope to give access to providers
@@ -89,19 +86,21 @@ void showChatBottomSheetNoAnimation(BuildContext context, WidgetRef ref) {
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2), // Light scrim to match weekly check-in
     useRootNavigator: true,
+    barrierColor: GlassSheetStyle.barrierColor(),
     // Use a very fast animation to appear instantly
     transitionAnimationController: AnimationController(
       duration: const Duration(milliseconds: 1),
       vsync: Navigator.of(context),
     ),
-    builder: (sheetContext) => UncontrolledProviderScope(
-      container: container,
-      child: _ChatBottomSheet(
-        onClose: () {
-          Navigator.of(sheetContext).pop();
-        },
+    builder: (sheetContext) => GlassSheet(
+      child: UncontrolledProviderScope(
+        container: container,
+        child: _ChatBottomSheet(
+          onClose: () {
+            Navigator.of(sheetContext).pop();
+          },
+        ),
       ),
     ),
   ).whenComplete(() {
@@ -218,40 +217,11 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
     // Use Padding to handle keyboard - this is the Flutter-recommended way
     return Padding(
       padding: EdgeInsets.only(bottom: keyboardHeight),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Container(
-            height: screenHeight * 0.7,
-            decoration: BoxDecoration(
-              // Glassmorphic semi-transparent background (matches weekly check-in)
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.4)
-                  : Colors.white.withValues(alpha: 0.6),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              border: Border(
-                top: BorderSide(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.black.withValues(alpha: 0.1),
-                  width: 0.5,
-                ),
-              ),
-            ),
-            child: Column(
+      child: GlassSheet(
+        child: SizedBox(
+          height: screenHeight * 0.7,
+          child: Column(
           children: [
-            // Handle bar
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-
             // Header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -511,8 +481,7 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildEmptyState(BuildContext context, CoachPersona coach, Color textPrimary, Color textMuted, Color cardBorder) {

@@ -9,6 +9,9 @@ import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/providers/xp_provider.dart';
+import '../../widgets/glass_back_button.dart';
+import '../../widgets/glass_sheet.dart';
+import '../../widgets/segmented_tab_bar.dart';
 import 'recipe_builder_sheet.dart';
 
 /// Sort options for the food library
@@ -337,17 +340,17 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
 
     HapticService.light();
 
-    await showModalBottomSheet(
+    await showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
-      builder: (context) => _SortOptionsSheet(
-        currentSort: currentSort,
-        isDark: isDark,
-        onSelect: (option) {
-          ref.read(foodLibraryProvider(_userId!).notifier).setSortOption(option);
-          Navigator.pop(context);
-        },
+      builder: (context) => GlassSheet(
+        child: _SortOptionsSheet(
+          currentSort: currentSort,
+          isDark: isDark,
+          onSelect: (option) {
+            ref.read(foodLibraryProvider(_userId!).notifier).setSortOption(option);
+            Navigator.pop(context);
+          },
+        ),
       ),
     );
   }
@@ -359,14 +362,13 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final result = await showModalBottomSheet<bool>(
+    final result = await showGlassSheet<bool>(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => RecipeBuilderSheet(
-        userId: _userId!,
-        isDark: isDark,
+      builder: (context) => GlassSheet(
+        child: RecipeBuilderSheet(
+          userId: _userId!,
+          isDark: isDark,
+        ),
       ),
     );
 
@@ -385,11 +387,11 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
     final repository = ref.read(nutritionRepositoryProvider);
 
     // Show meal type selector
-    final mealType = await showModalBottomSheet<MealType>(
+    final mealType = await showGlassSheet<MealType>(
       context: context,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
-      builder: (context) => _MealTypeSelector(isDark: isDark),
+      builder: (context) => GlassSheet(
+        child: _MealTypeSelector(isDark: isDark),
+      ),
     );
 
     if (mealType == null || !mounted) return;
@@ -485,41 +487,38 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
 
     HapticService.light();
 
-    await showModalBottomSheet(
+    await showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _FoodDetailSheet(
-        item: item,
-        userId: _userId!,
-        isDark: isDark,
-        onLog: () {
-          Navigator.pop(context);
-          _quickLogItem(item);
-        },
-        onEdit: () async {
-          Navigator.pop(context);
-          if (item is RecipeLibraryItem) {
-            // Load full recipe then open editor
-            final repository = ref.read(nutritionRepositoryProvider);
-            try {
-              final fullRecipe = await repository.getRecipe(
-                userId: _userId!,
-                recipeId: item.id,
-              );
-              if (mounted) {
-                final result = await showModalBottomSheet<bool>(
-                  context: context,
-                  isScrollControlled: true,
-                  useRootNavigator: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) => RecipeBuilderSheet(
-                    userId: _userId!,
-                    isDark: isDark,
-                    existingRecipe: fullRecipe,
-                  ),
+      builder: (context) => GlassSheet(
+        child: _FoodDetailSheet(
+          item: item,
+          userId: _userId!,
+          isDark: isDark,
+          onLog: () {
+            Navigator.pop(context);
+            _quickLogItem(item);
+          },
+          onEdit: () async {
+            Navigator.pop(context);
+            if (item is RecipeLibraryItem) {
+              // Load full recipe then open editor
+              final repository = ref.read(nutritionRepositoryProvider);
+              try {
+                final fullRecipe = await repository.getRecipe(
+                  userId: _userId!,
+                  recipeId: item.id,
                 );
+                if (mounted) {
+                  final result = await showGlassSheet<bool>(
+                    context: context,
+                    builder: (context) => GlassSheet(
+                      child: RecipeBuilderSheet(
+                        userId: _userId!,
+                        isDark: isDark,
+                        existingRecipe: fullRecipe,
+                      ),
+                    ),
+                  );
                 if (result == true && mounted) {
                   ref.read(foodLibraryProvider(_userId!).notifier).loadData();
                 }
@@ -540,6 +539,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
           Navigator.pop(context);
           await _deleteItem(item);
         },
+      ),
       ),
     );
   }
@@ -655,10 +655,8 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
         backgroundColor: backgroundColor,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'Food Library',
           style: TextStyle(
@@ -738,41 +736,14 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
           ),
 
           // Tab Bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              height: 44,
-              decoration: BoxDecoration(
-                color: elevated,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: cardBorder),
-              ),
-              child: TabBar(
-                controller: _tabController,
-                indicator: BoxDecoration(
-                  color: accentColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicatorPadding: const EdgeInsets.all(4),
-                labelColor: Colors.white,
-                unselectedLabelColor: textMuted,
-                labelStyle: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-                unselectedLabelStyle: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-                dividerColor: Colors.transparent,
-                tabs: [
-                  Tab(text: 'All (${libraryState.allItems.length})'),
-                  Tab(text: 'Saved (${libraryState.savedItems.length})'),
-                  Tab(text: 'Recipes (${libraryState.recipeItems.length})'),
-                ],
-              ),
-            ),
+          SegmentedTabBar(
+            controller: _tabController,
+            showIcons: false,
+            tabs: [
+              SegmentedTabItem(label: 'All (${libraryState.allItems.length})'),
+              SegmentedTabItem(label: 'Saved (${libraryState.savedItems.length})'),
+              SegmentedTabItem(label: 'Recipes (${libraryState.recipeItems.length})'),
+            ],
           ),
 
           const SizedBox(height: 8),

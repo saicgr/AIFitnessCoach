@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_back_button.dart';
 
 final volumeHistoryProvider = StateNotifierProvider<VolumeHistoryNotifier, VolumeHistoryState>((ref) => VolumeHistoryNotifier());
 
@@ -62,7 +63,7 @@ class _VolumeHistoryScreenState extends ConsumerState<VolumeHistoryScreen> {
     final st = ref.watch(volumeHistoryProvider);
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(backgroundColor: bg, elevation: 0, leading: IconButton(icon: Icon(Icons.arrow_back, color: tp), onPressed: () => context.pop()), title: Text('Volume History', style: TextStyle(fontWeight: FontWeight.bold, color: tp)), centerTitle: true),
+      appBar: AppBar(backgroundColor: bg, elevation: 0, automaticallyImplyLeading: false, leading: const GlassBackButton(), title: Text('Volume History', style: TextStyle(fontWeight: FontWeight.bold, color: tp)), centerTitle: true),
       body: SafeArea(child: _buildContent(d, tp, tm, el, st)),
     );
   }

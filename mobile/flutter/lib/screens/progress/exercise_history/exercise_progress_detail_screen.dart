@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../../data/models/exercise_history.dart';
 import '../../../data/providers/exercise_history_provider.dart';
 import '../../../data/repositories/exercise_history_repository.dart';
+import '../../../widgets/segmented_tab_bar.dart';
 
 /// Detail screen showing progression and history for a specific exercise
 class ExerciseProgressDetailScreen extends ConsumerStatefulWidget {
@@ -56,27 +57,34 @@ class _ExerciseProgressDetailScreenState extends ConsumerState<ExerciseProgressD
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.exerciseName),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Progress'),
-            Tab(text: 'History'),
-          ],
-        ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Column(
         children: [
-          // Progress Tab
-          _ProgressTab(
-            exerciseName: widget.exerciseName,
-            historyAsync: historyAsync,
-            prsAsync: prsAsync,
+          SegmentedTabBar(
+            controller: _tabController,
+            showIcons: false,
+            tabs: const [
+              SegmentedTabItem(label: 'Progress'),
+              SegmentedTabItem(label: 'History'),
+            ],
           ),
-          // History Tab
-          _HistoryTab(
-            exerciseName: widget.exerciseName,
-            historyAsync: historyAsync,
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                // Progress Tab
+                _ProgressTab(
+                  exerciseName: widget.exerciseName,
+                  historyAsync: historyAsync,
+                  prsAsync: prsAsync,
+                ),
+                // History Tab
+                _HistoryTab(
+                  exerciseName: widget.exerciseName,
+                  historyAsync: historyAsync,
+                ),
+              ],
+            ),
           ),
         ],
       ),

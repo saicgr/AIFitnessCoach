@@ -6,10 +6,12 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/workout.dart';
+import '../../data/models/workout_screen_summary.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../widgets/main_shell.dart';
 import '../../widgets/pill_swipe_navigation.dart';
 import '../home/widgets/cards/next_workout_card.dart';
@@ -64,6 +66,8 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     final workoutsState = ref.watch(workoutsProvider);
     // Watch todayWorkoutProvider (for today's/next workout - same as Home screen)
     final todayWorkoutState = ref.watch(todayWorkoutProvider);
+    // Watch lightweight screen summary (for weekly progress + previous sessions)
+    final screenSummary = ref.watch(workoutScreenSummaryProvider);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -93,43 +97,16 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                   ),
                 ),
 
-                // Content
-                workoutsState.when(
-                  data: (workouts) => _buildContent(
-                    context,
-                    isDark,
-                    textPrimary,
-                    textSecondary,
-                    accentColor,
-                    workouts,
-                    todayWorkoutState,
-                  ),
-                  loading: () => const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                  error: (error, _) => SliverFillRemaining(
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.error_outline, size: 48, color: AppColors.error),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Failed to load workouts',
-                            style: TextStyle(color: textPrimary),
-                          ),
-                          const SizedBox(height: 8),
-                          ElevatedButton(
-                            onPressed: () {
-                              ref.invalidate(workoutsProvider);
-                              ref.invalidate(todayWorkoutProvider);
-                            },
-                            child: const Text('Retry'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                // Content - render unconditionally using valueOrNull to avoid blocking on load
+                _buildContent(
+                  context,
+                  isDark,
+                  textPrimary,
+                  textSecondary,
+                  accentColor,
+                  workoutsState.valueOrNull ?? [],
+                  todayWorkoutState,
+                  screenSummary,
                 ),
               ],
             ),
@@ -168,17 +145,11 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             // Back button - glassmorphic (left side)
-            _GlassmorphicButton(
+            GlassBackButton(
               onTap: () {
                 HapticService.light();
                 context.go('/home');
               },
-              isDark: isDark,
-              child: Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: accentColor,
-                size: 20,
-              ),
             ),
             // Right side buttons
             Row(
@@ -252,6 +223,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     Color accentColor,
     List<Workout> workouts,
     AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
+    AsyncValue<WorkoutScreenSummary?> screenSummary,
   ) {
     final now = DateTime.now();
 
@@ -288,30 +260,39 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
       }
     }
 
-    // Calculate weekly progress
-    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    final endOfWeek = startOfWeek.add(const Duration(days: 7));
-    final completedThisWeek = workouts.where((w) {
-      if (w.isCompleted != true) return false;
-      if (w.scheduledDate == null) return false;
-      final scheduledDate = DateTime.tryParse(w.scheduledDate!);
-      if (scheduledDate == null) return false;
-      return scheduledDate.isAfter(startOfWeek) && scheduledDate.isBefore(endOfWeek);
-    }).length;
-    final plannedThisWeek = workouts.where((w) {
-      if (w.scheduledDate == null) return false;
-      final scheduledDate = DateTime.tryParse(w.scheduledDate!);
-      if (scheduledDate == null) return false;
-      return scheduledDate.isAfter(startOfWeek) &&
-          scheduledDate.isBefore(startOfWeek.add(const Duration(days: 7)));
-    }).length;
+    // Calculate weekly progress - prefer screen summary if available
+    final summaryData = screenSummary.valueOrNull;
+    final int completedThisWeek;
+    final int plannedThisWeek;
+    if (summaryData != null) {
+      completedThisWeek = summaryData.completedThisWeek;
+      plannedThisWeek = summaryData.plannedThisWeek;
+    } else {
+      // Fallback to computing from workouts list
+      final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+      final endOfWeek = startOfWeek.add(const Duration(days: 7));
+      completedThisWeek = workouts.where((w) {
+        if (w.isCompleted != true) return false;
+        if (w.scheduledDate == null) return false;
+        final scheduledDate = DateTime.tryParse(w.scheduledDate!);
+        if (scheduledDate == null) return false;
+        return scheduledDate.isAfter(startOfWeek) && scheduledDate.isBefore(endOfWeek);
+      }).length;
+      plannedThisWeek = workouts.where((w) {
+        if (w.scheduledDate == null) return false;
+        final scheduledDate = DateTime.tryParse(w.scheduledDate!);
+        if (scheduledDate == null) return false;
+        return scheduledDate.isAfter(startOfWeek) &&
+            scheduledDate.isBefore(startOfWeek.add(const Duration(days: 7)));
+      }).length;
+    }
 
     return SliverList(
       delegate: SliverChildListDelegate([
         const SizedBox(height: 8),
 
         // Quick Actions Row
-        _buildQuickActions(context, isDark, textSecondary, accentColor, workouts),
+        _buildQuickActions(context, isDark, textSecondary, accentColor),
 
         const SizedBox(height: 16),
 
@@ -378,11 +359,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     bool isDark,
     Color textSecondary,
     Color accentColor,
-    List<Workout> workouts,
   ) {
-    // Separate completed and upcoming workouts for the sheets
-    final completedWorkouts = workouts.where((w) => w.isCompleted == true).toList();
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -424,7 +401,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
               isDark: isDark,
               onTap: () {
                 HapticService.light();
-                showUpcomingWorkoutsSheet(context, ref, workouts);
+                showUpcomingWorkoutsSheet(context, ref);
               },
             ),
           ),
@@ -438,7 +415,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
               isDark: isDark,
               onTap: () {
                 HapticService.light();
-                showPreviousWorkoutsSheet(context, ref, completedWorkouts);
+                showPreviousWorkoutsSheet(context, ref);
               },
             ),
           ),

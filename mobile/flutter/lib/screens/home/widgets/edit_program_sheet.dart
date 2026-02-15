@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../models/program_history.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 import 'components/components.dart';
 // import 'program_history_screen.dart';
@@ -20,12 +20,8 @@ Future<bool?> showEditProgramSheet(
   // Hide nav bar while sheet is open
   ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-  return showModalBottomSheet<bool>(
+  return showGlassSheet<bool>(
     context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    isScrollControlled: true,
-    useRootNavigator: true,
     builder: (sheetContext) => Theme(
       data: parentTheme,
       child: const _EditProgramSheet(),
@@ -347,17 +343,16 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
       }
 
       // Show history dialog
-      await showModalBottomSheet(
+      await showGlassSheet(
         context: context,
-        isScrollControlled: true,
-        useRootNavigator: true,
-        backgroundColor: Colors.transparent,
-        builder: (ctx) => _ProgramHistorySheet(
-          history: history,
-          onRestore: (programId) async {
-            Navigator.pop(ctx); // Close history sheet
-            await _restoreProgram(userId, programId);
-          },
+        builder: (ctx) => GlassSheet(
+          child: _ProgramHistorySheet(
+            history: history,
+            onRestore: (programId) async {
+              Navigator.pop(ctx); // Close history sheet
+              await _restoreProgram(userId, programId);
+            },
+          ),
         ),
       );
     } catch (e) {
@@ -414,46 +409,25 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = context.sheetColors;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.95,
-          ),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
+    return GlassSheet(
+      maxHeightFraction: 0.95,
+      showHandle: false,
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHeader(colors),
+            Divider(height: 1, color: colors.cardBorder),
+            _buildProgressIndicator(colors),
+            Flexible(
+              child: _isLoading
+                  ? Center(
+                      child: CircularProgressIndicator(color: colors.cyan))
+                  : _buildCurrentStep(colors),
             ),
-          ),
-          child: SafeArea(
-            bottom: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildHeader(colors),
-                Divider(height: 1, color: colors.cardBorder),
-                _buildProgressIndicator(colors),
-                Flexible(
-                  child: _isLoading
-                      ? Center(
-                          child: CircularProgressIndicator(color: colors.cyan))
-                      : _buildCurrentStep(colors),
-                ),
-                _buildNavigationButtons(colors),
-              ],
-            ),
-          ),
+            _buildNavigationButtons(colors),
+          ],
         ),
       ),
     );
@@ -465,18 +439,6 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
       padding: const EdgeInsets.fromLTRB(20, 12, 12, 12),
       child: Column(
         children: [
-          // Handle bar for draggable appearance
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colors.textMuted.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
           // Header row
           Row(
             children: [
@@ -775,20 +737,19 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
 
   void _showCustomProgramSheet(SheetColors colors) {
     HapticFeedback.mediumImpact();
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => _CustomProgramInputSheet(
-        initialDescription: _customProgramDescription,
-        onSave: (description) {
-          setState(() {
-            _customProgramDescription = description;
-            _selectedProgramId = 'custom';
-          });
-        },
-        colors: colors,
+      builder: (ctx) => GlassSheet(
+        child: _CustomProgramInputSheet(
+          initialDescription: _customProgramDescription,
+          onSave: (description) {
+            setState(() {
+              _customProgramDescription = description;
+              _selectedProgramId = 'custom';
+            });
+          },
+          colors: colors,
+        ),
       ),
     );
   }
@@ -1196,11 +1157,7 @@ class _CustomProgramInputSheetState extends State<_CustomProgramInputSheet> {
     final colors = widget.colors;
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.elevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+    return Padding(
       padding: EdgeInsets.only(bottom: bottomPadding),
       child: SingleChildScrollView(
         child: Padding(
@@ -1209,19 +1166,6 @@ class _CustomProgramInputSheetState extends State<_CustomProgramInputSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colors.textMuted.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
               // Header
               Row(
                 children: [
@@ -1364,28 +1308,9 @@ class _ProgramHistorySheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.sheetColors;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.7,
-      ),
-      decoration: BoxDecoration(
-        color: colors.elevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
+    return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle bar
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: colors.textMuted.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
           // Header
           Padding(
             padding: const EdgeInsets.all(20),
@@ -1439,7 +1364,6 @@ class _ProgramHistorySheet extends StatelessWidget {
             ),
           ),
         ],
-      ),
     );
   }
 

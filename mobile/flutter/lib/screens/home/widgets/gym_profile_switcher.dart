@@ -8,6 +8,7 @@ import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import 'add_gym_profile_sheet.dart';
 import 'components/sheet_theme_colors.dart';
 import 'edit_gym_profile_sheet.dart';
@@ -80,11 +81,8 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
 
   void _showAddProfileSheet({bool fromProfilePicker = false}) {
     HapticService.light();
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => AddGymProfileSheet(
         onBack: fromProfilePicker ? () => _reopenProfilePicker() : null,
       ),
@@ -197,12 +195,8 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
     bool isDark,
   ) {
     HapticService.light();
-    showModalBottomSheet(
+    showGlassSheet(
       context: parentContext,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.2),
-      isScrollControlled: true,
-      useRootNavigator: true,
       builder: (sheetContext) => _ProfilePickerSheet(
         profiles: profiles,
         isDark: isDark,
@@ -287,11 +281,8 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
 
   void _showEditProfileSheet(GymProfile profile) {
     HapticService.light();
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => EditGymProfileSheet(
         profile: profile,
         onBack: () => _reopenProfilePicker(),
@@ -367,32 +358,14 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
         ? Colors.black
         : Colors.white;
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.55,
-      minChildSize: 0.3,
-      maxChildSize: 0.85,
-      builder: (context, scrollController) => ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Container(
-            decoration: BoxDecoration(
-              color: widget.isDark
-                  ? Colors.black.withValues(alpha: 0.5)
-                  : Colors.white.withValues(alpha: 0.78),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-              border: Border(
-                top: BorderSide(
-                  color: widget.isDark
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.black.withValues(alpha: 0.1),
-                  width: 0.5,
-                ),
-              ),
-            ),
-            child: Stack(
+    return GlassSheet(
+      showHandle: false,
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.55,
+        minChildSize: 0.3,
+        maxChildSize: 0.85,
+        expand: false,
+        builder: (context, scrollController) => Stack(
               clipBehavior: Clip.none,
               children: [
                 Column(
@@ -540,8 +513,6 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                 ),
               ],
             ),
-          ),
-        ),
       ),
     );
   }

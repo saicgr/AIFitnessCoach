@@ -16,7 +16,7 @@ import 'workout_prompt_builder.dart';
 /// Uses flutter_gemma v0.11+ API:
 ///   FlutterGemma.initialize() → installModel().fromFile() → getActiveModel() → createSession()
 ///
-/// Supports FunctionGemma 270M, Gemma 3 1B, Gemma 3n E2B, Gemma 3n E4B,
+/// Supports Gemma 3 270M, Gemma 3 1B, Gemma 3n E2B, Gemma 3n E4B,
 /// and EmbeddingGemma 300M.
 ///
 /// NO FALLBACK - if generation fails, an error is thrown for the UI to handle.

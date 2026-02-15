@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/video_cache_provider.dart';
 import '../../../data/services/video_cache_service.dart';
+import '../../../widgets/glass_back_button.dart';
 
 /// Screen for managing downloaded exercise videos
 class DownloadedVideosScreen extends ConsumerWidget {
@@ -30,10 +31,8 @@ class DownloadedVideosScreen extends ConsumerWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         actions: [
           if (cacheState.cachedVideoCount > 0)
             IconButton(

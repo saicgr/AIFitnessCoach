@@ -5,6 +5,7 @@ import '../../data/providers/scores_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/context_logging_service.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_back_button.dart';
 import 'widgets/overall_score_hero.dart';
 import 'widgets/score_breakdown_section.dart';
 import 'widgets/nutrition_score_card.dart';
@@ -85,10 +86,8 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
               ),
             ),
             centerTitle: true,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: textColor),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
+            automaticallyImplyLeading: false,
+            leading: const GlassBackButton(),
             actions: [
               IconButton(
                 icon: Icon(

@@ -1,10 +1,9 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
+import '../../../widgets/glass_sheet.dart';
 import 'superset_exercise_picker.dart';
 
 /// Superset type definitions
@@ -110,15 +109,14 @@ Future<SupersetPairResult?> showSupersetPairSheet(
   required List<WorkoutExercise> workoutExercises,
   WorkoutExercise? preselectedExercise,
 }) async {
-  return await showModalBottomSheet<SupersetPairResult>(
+  return await showGlassSheet<SupersetPairResult>(
     context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    isScrollControlled: true,
-    useRootNavigator: true,
-    builder: (context) => _SupersetPairSheet(
-      workoutExercises: workoutExercises,
-      preselectedExercise: preselectedExercise,
+    builder: (context) => GlassSheet(
+      showHandle: false,
+      child: _SupersetPairSheet(
+        workoutExercises: workoutExercises,
+        preselectedExercise: preselectedExercise,
+      ),
     ),
   );
 }
@@ -300,42 +298,9 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
 
     final canCreate = _exercise1 != null && _exercise2 != null;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.9,
-          ),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: Column(
+    return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: textMuted.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
           // Header
           Padding(
             padding: const EdgeInsets.all(16),
@@ -671,9 +636,6 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
             ),
           ),
         ],
-        ),
-      ),
-      ),
     );
   }
 

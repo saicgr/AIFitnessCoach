@@ -11,6 +11,7 @@ import '../../../core/providers/exercise_queue_provider.dart';
 import '../../../core/providers/warmup_duration_provider.dart';
 import '../../../core/providers/weight_increments_provider.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/weight_increments_sheet.dart';
 
 /// Expandable card showing exercise preferences in the Workouts screen
@@ -375,32 +376,19 @@ class _ExercisePreferencesCardState
       },
     ];
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: elevatedColor,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.55,
-        minChildSize: 0.3,
-        maxChildSize: 0.85,
-        expand: false,
-        builder: (context, scrollController) => Column(
-          children: [
-            // Handle
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            // Title
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.55,
+          minChildSize: 0.3,
+          maxChildSize: 0.85,
+          expand: false,
+          builder: (context, scrollController) => Column(
+            children: [
+              GlassSheetHandle(isDark: isDark),
+              // Title
             Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -495,6 +483,7 @@ class _ExercisePreferencesCardState
             const SizedBox(height: 16),
           ],
         ),
+      ),
       ),
     );
   }

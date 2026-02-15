@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../providers/library_providers.dart';
 import '../widgets/stat_badge.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../components/exercise_stats_sheet.dart';
 
 /// My Stats tab showing exercise history and performance
@@ -183,11 +184,8 @@ class _ExerciseHistoryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         onTap: () {
           // Show detailed stats sheet
-          showModalBottomSheet(
+          showGlassSheet(
             context: context,
-            isScrollControlled: true,
-            useRootNavigator: true,
-            backgroundColor: Colors.transparent,
             builder: (context) => ExerciseStatsSheet(
                 exerciseName: item.exerciseName, item: item),
           );

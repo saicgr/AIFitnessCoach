@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Primary goal selection widget for quiz screens.
 /// Single-select card-based UI with descriptions visible.
@@ -51,17 +52,11 @@ class QuizPrimaryGoal extends StatelessWidget {
   static void _showInfoSheet(BuildContext context, bool isDark, Color textPrimary, Color textSecondary) {
     final cardBg = isDark ? AppColors.elevated : Colors.white;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => Container(
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(24),
-        ),
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,6 +163,7 @@ class QuizPrimaryGoal extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

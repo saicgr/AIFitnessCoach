@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../models/equipment_item.dart';
+import '../../../widgets/glass_sheet.dart';
 import 'edit_weights_sheet.dart';
 
 /// Equipment categories and their items
@@ -137,18 +138,17 @@ class _EditWorkoutEquipmentSheetState extends State<EditWorkoutEquipmentSheet> {
   void _showEditWeights(String equipmentName) {
     final equipment = _equipmentMap[equipmentName] ?? EquipmentItem.fromName(equipmentName);
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => EditWeightsSheet(
-        equipment: equipment,
-        onSave: (updated) {
-          setState(() {
-            _equipmentMap[equipmentName] = updated;
-          });
-        },
+      builder: (context) => GlassSheet(
+        child: EditWeightsSheet(
+          equipment: equipment,
+          onSave: (updated) {
+            setState(() {
+              _equipmentMap[equipmentName] = updated;
+            });
+          },
+        ),
       ),
     );
   }
@@ -202,27 +202,8 @@ class _EditWorkoutEquipmentSheetState extends State<EditWorkoutEquipmentSheet> {
     final bgColor = isDark ? AppColors.elevated : AppColorsLight.surface;
     final accentColor = isDark ? AppColors.cyan : AppColorsLight.accent;
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surface : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
+    return Column(
         children: [
-          // Handle bar
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-
           // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -346,7 +327,6 @@ class _EditWorkoutEquipmentSheetState extends State<EditWorkoutEquipmentSheet> {
             ),
           ),
         ],
-      ),
     );
   }
 

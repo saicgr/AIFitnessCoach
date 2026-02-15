@@ -10,6 +10,8 @@ import 'widgets/strength_chart.dart';
 import 'widgets/summary_cards.dart';
 import 'widgets/time_range_selector.dart';
 import 'widgets/muscle_group_filter.dart';
+import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/segmented_tab_bar.dart';
 
 /// Visual Progress Charts Screen
 /// Displays line and bar charts showing strength and volume progression over time
@@ -65,10 +67,8 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
         centerTitle: true,
         backgroundColor: colorScheme.surface,
         surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -79,16 +79,6 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
                     ref.read(progressChartsProvider.notifier).refresh(userId: _userId),
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: colorScheme.primary,
-          unselectedLabelColor: colorScheme.onSurfaceVariant,
-          indicatorColor: colorScheme.primary,
-          tabs: const [
-            Tab(icon: Icon(Icons.bar_chart), text: 'Volume'),
-            Tab(icon: Icon(Icons.show_chart), text: 'Strength'),
-          ],
-        ),
       ),
       body: _userId == null || state.isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -96,6 +86,16 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
               ? _buildErrorState(state.error!)
               : Column(
                   children: [
+                    // Tab Bar
+                    SegmentedTabBar(
+                      controller: _tabController,
+                      showIcons: false,
+                      tabs: const [
+                        SegmentedTabItem(label: 'Volume'),
+                        SegmentedTabItem(label: 'Strength'),
+                      ],
+                    ),
+
                     // Time Range Selector
                     TimeRangeSelector(
                       selectedRange: state.selectedTimeRange,

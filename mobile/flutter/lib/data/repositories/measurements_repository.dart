@@ -154,62 +154,63 @@ final measurementsProvider =
 class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
   final MeasurementsRepository _repository;
 
-  MeasurementsNotifier(this._repository) : super(const MeasurementsState());
+  // Static cache survives ref.invalidate() (which recreates the notifier instance)
+  // This means: log weight → invalidate → reopen screen → instant display from cache
+  static MeasurementsState? _cache;
 
-  /// Load all measurement history for user
+  MeasurementsNotifier(this._repository) : super(
+    _cache ?? const MeasurementsState(),
+  );
+
+  /// Load all measurement history for user via single grouped API call.
   Future<void> loadAllMeasurements(String userId) async {
+    // Case 1: Instance state has data (navigate away → come back) → skip fetch
+    if (state.historyByType.isNotEmpty) return;
+
+    // Case 2: Static cache exists (after ref.invalidate) → show instantly + background refresh
+    if (_cache != null && _cache!.historyByType.isNotEmpty) {
+      state = _cache!;
+      // Silent background refresh (no loading spinner)
+      _fetchAndUpdate(userId);
+      return;
+    }
+
+    // Case 3: First ever load → show loading spinner → fetch
     state = state.copyWith(isLoading: true, error: null);
+    await _fetchAndUpdate(userId);
+  }
+
+  Future<void> _fetchAndUpdate(String userId) async {
     try {
-      final historyByType = <MeasurementType, List<MeasurementEntry>>{};
+      final historyByType = await _repository.getAllMeasurementsGrouped(userId);
+
       final latestByType = <MeasurementType, MeasurementEntry>{};
       final changeFromPrevious = <MeasurementType, double>{};
-
-      // Load history for all measurement types in PARALLEL for faster loading
-      // But with a timeout to prevent infinite loading
-      final allTypes = MeasurementType.values;
-      final futures = allTypes.map((type) =>
-        _repository.getMeasurementHistory(userId, type)
-      ).toList();
-
-      // Set a 20-second overall timeout to prevent infinite loading
-      final allHistories = await Future.wait(futures)
-          .timeout(
-            const Duration(seconds: 20),
-            onTimeout: () {
-              debugPrint('⚠️ Timeout loading all measurements, returning partial data');
-              // Return empty lists for all types on timeout
-              return List.generate(allTypes.length, (_) => <MeasurementEntry>[]);
-            },
-          );
-
-      // Process results
-      for (var i = 0; i < allTypes.length; i++) {
-        final type = allTypes[i];
-        final history = allHistories[i];
-        if (history.isNotEmpty) {
-          historyByType[type] = history;
-          latestByType[type] = history.first;
-
-          // Calculate change from previous
-          if (history.length > 1) {
-            changeFromPrevious[type] = history[0].value - history[1].value;
+      for (final entry in historyByType.entries) {
+        if (entry.value.isNotEmpty) {
+          latestByType[entry.key] = entry.value.first;
+          if (entry.value.length > 1) {
+            changeFromPrevious[entry.key] =
+                entry.value[0].value - entry.value[1].value;
           }
         }
       }
 
-      final summary = MeasurementsSummary(
-        latestByType: latestByType,
-        changeFromPrevious: changeFromPrevious,
-      );
-
-      state = state.copyWith(
-        isLoading: false,
+      final newState = MeasurementsState(
         historyByType: historyByType,
-        summary: summary,
+        summary: MeasurementsSummary(
+          latestByType: latestByType,
+          changeFromPrevious: changeFromPrevious,
+        ),
       );
+      _cache = newState;
+      state = newState;
     } catch (e) {
       debugPrint('❌ Error loading measurements: $e');
-      state = state.copyWith(isLoading: false, error: e.toString());
+      if (state.historyByType.isEmpty) {
+        // Only show error if we have nothing to display
+        state = state.copyWith(isLoading: false, error: e.toString());
+      }
     }
   }
 
@@ -242,6 +243,7 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
           changeFromPrevious: changeFromPrevious,
         ),
       );
+      _cache = state;
     } catch (e) {
       debugPrint('❌ Error loading measurement history: $e');
     }
@@ -291,6 +293,7 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
             changeFromPrevious: changeFromPrevious,
           ),
         );
+        _cache = state;
         return true;
       }
       return false;
@@ -321,6 +324,37 @@ class MeasurementsRepository {
   final ApiClient _client;
 
   MeasurementsRepository(this._client);
+
+  /// Get all measurements grouped by type in a single API call
+  Future<Map<MeasurementType, List<MeasurementEntry>>> getAllMeasurementsGrouped(
+    String userId, {int limit = 300}
+  ) async {
+    try {
+      final response = await _client.get(
+        '${ApiConstants.metrics}/body/grouped/$userId',
+        queryParameters: {'limit': limit},
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = response.data;
+        final result = <MeasurementType, List<MeasurementEntry>>{};
+
+        for (final type in MeasurementType.values) {
+          final entries = data[type.apiValue] as List? ?? [];
+          if (entries.isNotEmpty) {
+            result[type] = entries
+                .map((json) => MeasurementEntry.fromJson(json as Map<String, dynamic>))
+                .toList();
+          }
+        }
+        return result;
+      }
+      return {};
+    } catch (e) {
+      debugPrint('❌ Error getting grouped measurements: $e');
+      rethrow;
+    }
+  }
 
   /// Get measurement history for a specific type
   Future<List<MeasurementEntry>> getMeasurementHistory(

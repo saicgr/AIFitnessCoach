@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/challenges_service.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/segmented_tab_bar.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 /// Challenge History Screen - Shows all challenges with outcomes and retry options
@@ -151,22 +152,16 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
                       if (_stats != null) _buildStatsOverview(isDark),
 
                       // Tabs
-                      Container(
-                        color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-                        child: TabBar(
-                          controller: _tabController,
-                          isScrollable: true,
-                          indicatorColor: AppColors.cyan,
-                          labelColor: AppColors.cyan,
-                          unselectedLabelColor: AppColors.textMuted,
-                          tabs: [
-                            _buildTab('All', _allChallenges.length),
-                            _buildTab('Won', _stats?['challenges_won'] ?? 0),
-                            _buildTab('Lost', _stats?['challenges_lost'] ?? 0),
-                            _buildTab('Quit', _getAbandonedCount()),
-                            _buildTab('Pending', _getPendingCount()),
-                          ],
-                        ),
+                      SegmentedTabBar(
+                        controller: _tabController,
+                        showIcons: false,
+                        tabs: const [
+                          SegmentedTabItem(label: 'All'),
+                          SegmentedTabItem(label: 'Won'),
+                          SegmentedTabItem(label: 'Lost'),
+                          SegmentedTabItem(label: 'Quit'),
+                          SegmentedTabItem(label: 'Pending'),
+                        ],
                       ),
 
                       // Challenge list

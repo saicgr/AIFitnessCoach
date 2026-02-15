@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
@@ -6,6 +5,7 @@ import '../../data/models/nutrition_preferences.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../widgets/main_shell.dart';
 
 /// Shows the weekly check-in bottom sheet from anywhere in the app
@@ -18,13 +18,11 @@ Future<void> showWeeklyCheckinSheet(BuildContext context, WidgetRef ref) async {
   // Hide nav bar while sheet is open
   ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-  await showModalBottomSheet(
+  await showGlassSheet(
     context: context,
-    isScrollControlled: true,
-    useRootNavigator: true,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    builder: (context) => WeeklyCheckinSheet(userId: userId, isDark: isDark),
+    builder: (context) => GlassSheet(
+      child: WeeklyCheckinSheet(userId: userId, isDark: isDark),
+    ),
   );
 
   // Show nav bar when sheet is closed
@@ -230,47 +228,15 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
-    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
+    return SizedBox(
           height: MediaQuery.of(context).size.height * 0.9,
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
           child: Column(
         children: [
-          // Handle bar
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-
           // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
@@ -409,8 +375,6 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet> {
                       ),
           ),
         ],
-      ),
-        ),
       ),
     );
   }

@@ -5,6 +5,7 @@ import '../../data/providers/hormonal_health_provider.dart';
 import '../../data/repositories/hormonal_health_repository.dart';
 import '../../core/providers/user_provider.dart';
 import '../settings/sections/kegel_settings_section.dart';
+import '../../widgets/glass_sheet.dart';
 
 /// Settings screen for hormonal health configuration
 class HormonalHealthSettingsScreen extends ConsumerStatefulWidget {
@@ -261,38 +262,40 @@ class _HormonalHealthSettingsScreenState
 
   void _showGenderPicker(
       BuildContext context, String userId, HormonalProfile? profile) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
       useRootNavigator: true,
       builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text('Gender Identity',
-                    style: Theme.of(context).textTheme.titleMedium),
-              ),
-              ...Gender.values.map((gender) {
-                return ListTile(
-                  leading: Radio<Gender>(
-                    value: gender,
-                    groupValue: profile?.gender,
-                    onChanged: (_) async {
+        return GlassSheet(
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text('Gender Identity',
+                      style: Theme.of(context).textTheme.titleMedium),
+                ),
+                ...Gender.values.map((gender) {
+                  return ListTile(
+                    leading: Radio<Gender>(
+                      value: gender,
+                      groupValue: profile?.gender,
+                      onChanged: (_) async {
+                        await _updateProfile(userId, {'gender': gender.value});
+                        if (context.mounted) Navigator.pop(context);
+                      },
+                    ),
+                    title: Text(gender.displayName),
+                    onTap: () async {
                       await _updateProfile(userId, {'gender': gender.value});
                       if (context.mounted) Navigator.pop(context);
                     },
-                  ),
-                  title: Text(gender.displayName),
-                  onTap: () async {
-                    await _updateProfile(userId, {'gender': gender.value});
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                );
-              }),
-              const SizedBox(height: 16),
-            ],
+                  );
+                }),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         );
       },
@@ -301,38 +304,40 @@ class _HormonalHealthSettingsScreenState
 
   void _showBirthSexPicker(
       BuildContext context, String userId, HormonalProfile? profile) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
       useRootNavigator: true,
       builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text('Birth Sex',
-                    style: Theme.of(context).textTheme.titleMedium),
-              ),
-              ...BirthSex.values.map((sex) {
-                return ListTile(
-                  leading: Radio<BirthSex>(
-                    value: sex,
-                    groupValue: profile?.birthSex,
-                    onChanged: (_) async {
+        return GlassSheet(
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text('Birth Sex',
+                      style: Theme.of(context).textTheme.titleMedium),
+                ),
+                ...BirthSex.values.map((sex) {
+                  return ListTile(
+                    leading: Radio<BirthSex>(
+                      value: sex,
+                      groupValue: profile?.birthSex,
+                      onChanged: (_) async {
+                        await _updateProfile(userId, {'birth_sex': sex.value});
+                        if (context.mounted) Navigator.pop(context);
+                      },
+                    ),
+                    title: Text(sex.displayName),
+                    onTap: () async {
                       await _updateProfile(userId, {'birth_sex': sex.value});
                       if (context.mounted) Navigator.pop(context);
                     },
-                  ),
-                  title: Text(sex.displayName),
-                  onTap: () async {
-                    await _updateProfile(userId, {'birth_sex': sex.value});
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                );
-              }),
-              const SizedBox(height: 16),
-            ],
+                  );
+                }),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         );
       },
@@ -341,59 +346,64 @@ class _HormonalHealthSettingsScreenState
 
   void _showHormoneGoalsPicker(
       BuildContext context, String userId, List<HormoneGoal> currentGoals) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
+      initialChildSize: 0.7,
+      maxChildSize: 0.9,
+      minChildSize: 0.5,
       builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.7,
-          maxChildSize: 0.9,
-          minChildSize: 0.5,
-          expand: false,
-          builder: (context, scrollController) {
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text('Select Hormone Goals',
-                      style: Theme.of(context).textTheme.titleMedium),
-                ),
-                Expanded(
-                  child: ListView(
-                    controller: scrollController,
-                    children: HormoneGoal.values.map((goal) {
-                      final isSelected = currentGoals.contains(goal);
-                      return CheckboxListTile(
-                        title: Text(goal.displayName),
-                        subtitle: Text(_getGoalDescription(goal)),
-                        value: isSelected,
-                        onChanged: (selected) async {
-                          final newGoals = List<HormoneGoal>.from(currentGoals);
-                          if (selected == true) {
-                            newGoals.add(goal);
-                          } else {
-                            newGoals.remove(goal);
-                          }
-                          await _updateProfile(userId, {
-                            'hormone_goals':
-                                newGoals.map((g) => g.value).toList()
-                          });
-                        },
-                      );
-                    }).toList(),
+        return GlassSheet(
+          showHandle: false,
+          child: DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            maxChildSize: 0.9,
+            minChildSize: 0.5,
+            expand: false,
+            builder: (context, scrollController) {
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text('Select Hormone Goals',
+                        style: Theme.of(context).textTheme.titleMedium),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: FilledButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Done'),
+                  Expanded(
+                    child: ListView(
+                      controller: scrollController,
+                      children: HormoneGoal.values.map((goal) {
+                        final isSelected = currentGoals.contains(goal);
+                        return CheckboxListTile(
+                          title: Text(goal.displayName),
+                          subtitle: Text(_getGoalDescription(goal)),
+                          value: isSelected,
+                          onChanged: (selected) async {
+                            final newGoals = List<HormoneGoal>.from(currentGoals);
+                            if (selected == true) {
+                              newGoals.add(goal);
+                            } else {
+                              newGoals.remove(goal);
+                            }
+                            await _updateProfile(userId, {
+                              'hormone_goals':
+                                  newGoals.map((g) => g.value).toList()
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
                   ),
-                ),
-              ],
-            );
-          },
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: FilledButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Done'),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         );
       },
     );
@@ -408,48 +418,50 @@ class _HormonalHealthSettingsScreenState
 
   void _showCycleLengthPicker(
       BuildContext context, String userId, HormonalProfile? profile) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
       useRootNavigator: true,
       builder: (context) {
         int selected = profile?.cycleLengthDays ?? 28;
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text('Cycle Length',
-                        style: Theme.of(context).textTheme.titleMedium),
-                  ),
-                  Slider(
-                    value: selected.toDouble(),
-                    min: 21,
-                    max: 45,
-                    divisions: 24,
-                    label: '$selected days',
-                    onChanged: (value) {
-                      setModalState(() => selected = value.round());
-                    },
-                  ),
-                  Text('$selected days',
-                      style: Theme.of(context).textTheme.headlineMedium),
-                  const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: () async {
-                      await _updateProfile(
-                          userId, {'cycle_length_days': selected});
-                      if (context.mounted) Navigator.pop(context);
-                    },
-                    child: const Text('Save'),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ),
-            );
-          },
+        return GlassSheet(
+          child: StatefulBuilder(
+            builder: (context, setModalState) {
+              return SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text('Cycle Length',
+                          style: Theme.of(context).textTheme.titleMedium),
+                    ),
+                    Slider(
+                      value: selected.toDouble(),
+                      min: 21,
+                      max: 45,
+                      divisions: 24,
+                      label: '$selected days',
+                      onChanged: (value) {
+                        setModalState(() => selected = value.round());
+                      },
+                    ),
+                    Text('$selected days',
+                        style: Theme.of(context).textTheme.headlineMedium),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () async {
+                        await _updateProfile(
+                            userId, {'cycle_length_days': selected});
+                        if (context.mounted) Navigator.pop(context);
+                      },
+                      child: const Text('Save'),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              );
+            },
+          ),
         );
       },
     );
@@ -457,48 +469,50 @@ class _HormonalHealthSettingsScreenState
 
   void _showPeriodDurationPicker(
       BuildContext context, String userId, HormonalProfile? profile) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
       useRootNavigator: true,
       builder: (context) {
         int selected = profile?.typicalPeriodDurationDays ?? 5;
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text('Period Duration',
-                        style: Theme.of(context).textTheme.titleMedium),
-                  ),
-                  Slider(
-                    value: selected.toDouble(),
-                    min: 2,
-                    max: 10,
-                    divisions: 8,
-                    label: '$selected days',
-                    onChanged: (value) {
-                      setModalState(() => selected = value.round());
-                    },
-                  ),
-                  Text('$selected days',
-                      style: Theme.of(context).textTheme.headlineMedium),
-                  const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: () async {
-                      await _updateProfile(
-                          userId, {'typical_period_duration_days': selected});
-                      if (context.mounted) Navigator.pop(context);
-                    },
-                    child: const Text('Save'),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ),
-            );
-          },
+        return GlassSheet(
+          child: StatefulBuilder(
+            builder: (context, setModalState) {
+              return SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text('Period Duration',
+                          style: Theme.of(context).textTheme.titleMedium),
+                    ),
+                    Slider(
+                      value: selected.toDouble(),
+                      min: 2,
+                      max: 10,
+                      divisions: 8,
+                      label: '$selected days',
+                      onChanged: (value) {
+                        setModalState(() => selected = value.round());
+                      },
+                    ),
+                    Text('$selected days',
+                        style: Theme.of(context).textTheme.headlineMedium),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () async {
+                        await _updateProfile(
+                            userId, {'typical_period_duration_days': selected});
+                        if (context.mounted) Navigator.pop(context);
+                      },
+                      child: const Text('Save'),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              );
+            },
+          ),
         );
       },
     );

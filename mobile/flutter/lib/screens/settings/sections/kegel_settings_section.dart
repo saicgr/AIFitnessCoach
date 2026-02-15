@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/kegel.dart';
 import '../../../data/providers/kegel_provider.dart';
 import '../../../core/providers/user_provider.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Settings section for kegel/pelvic floor exercise preferences
 class KegelSettingsSection extends ConsumerWidget {
@@ -288,27 +289,39 @@ class KegelSettingsSection extends ConsumerWidget {
     String userId,
     KegelPreferences? prefs,
   ) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
       useRootNavigator: true,
       builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Select Exercise Level',
-                  style: Theme.of(context).textTheme.titleMedium,
+        return GlassSheet(
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Select Exercise Level',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                 ),
-              ),
-              ...KegelLevel.values.map((level) {
-                return ListTile(
-                  leading: Radio<KegelLevel>(
-                    value: level,
-                    groupValue: prefs?.currentLevel,
-                    onChanged: (_) async {
+                ...KegelLevel.values.map((level) {
+                  return ListTile(
+                    leading: Radio<KegelLevel>(
+                      value: level,
+                      groupValue: prefs?.currentLevel,
+                      onChanged: (_) async {
+                        final notifier = ref.read(
+                          kegelPreferencesNotifierProvider(userId).notifier,
+                        );
+                        await notifier.setCurrentLevel(level);
+                        ref.invalidate(kegelPreferencesProvider);
+                        if (context.mounted) Navigator.pop(context);
+                      },
+                    ),
+                    title: Text(level.displayName),
+                    subtitle: Text(_getLevelDescription(level)),
+                    onTap: () async {
                       final notifier = ref.read(
                         kegelPreferencesNotifierProvider(userId).notifier,
                       );
@@ -316,21 +329,11 @@ class KegelSettingsSection extends ConsumerWidget {
                       ref.invalidate(kegelPreferencesProvider);
                       if (context.mounted) Navigator.pop(context);
                     },
-                  ),
-                  title: Text(level.displayName),
-                  subtitle: Text(_getLevelDescription(level)),
-                  onTap: () async {
-                    final notifier = ref.read(
-                      kegelPreferencesNotifierProvider(userId).notifier,
-                    );
-                    await notifier.setCurrentLevel(level);
-                    ref.invalidate(kegelPreferencesProvider);
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                );
-              }),
-              const SizedBox(height: 16),
-            ],
+                  );
+                }),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         );
       },
@@ -343,27 +346,39 @@ class KegelSettingsSection extends ConsumerWidget {
     String userId,
     KegelPreferences? prefs,
   ) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
       useRootNavigator: true,
       builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Select Focus Area',
-                  style: Theme.of(context).textTheme.titleMedium,
+        return GlassSheet(
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Select Focus Area',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                 ),
-              ),
-              ...KegelFocusArea.values.map((focus) {
-                return ListTile(
-                  leading: Radio<KegelFocusArea>(
-                    value: focus,
-                    groupValue: prefs?.focusArea,
-                    onChanged: (_) async {
+                ...KegelFocusArea.values.map((focus) {
+                  return ListTile(
+                    leading: Radio<KegelFocusArea>(
+                      value: focus,
+                      groupValue: prefs?.focusArea,
+                      onChanged: (_) async {
+                        final notifier = ref.read(
+                          kegelPreferencesNotifierProvider(userId).notifier,
+                        );
+                        await notifier.setFocusArea(focus);
+                        ref.invalidate(kegelPreferencesProvider);
+                        if (context.mounted) Navigator.pop(context);
+                      },
+                    ),
+                    title: Text(focus.displayName),
+                    subtitle: Text(_getFocusDescription(focus)),
+                    onTap: () async {
                       final notifier = ref.read(
                         kegelPreferencesNotifierProvider(userId).notifier,
                       );
@@ -371,21 +386,11 @@ class KegelSettingsSection extends ConsumerWidget {
                       ref.invalidate(kegelPreferencesProvider);
                       if (context.mounted) Navigator.pop(context);
                     },
-                  ),
-                  title: Text(focus.displayName),
-                  subtitle: Text(_getFocusDescription(focus)),
-                  onTap: () async {
-                    final notifier = ref.read(
-                      kegelPreferencesNotifierProvider(userId).notifier,
-                    );
-                    await notifier.setFocusArea(focus);
-                    ref.invalidate(kegelPreferencesProvider);
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                );
-              }),
-              const SizedBox(height: 16),
-            ],
+                  );
+                }),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         );
       },

@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/exercise.dart';
 import '../../data/providers/guest_mode_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_sheet.dart';
 import '../library/providers/library_providers.dart';
 
 /// Maximum exercises shown in guest mode
@@ -565,33 +566,22 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: elevatedColor,
-      isScrollControlled: true,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.8,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => Column(
-          children: [
-            // Handle
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-
-            Expanded(
+      initialChildSize: 0.8,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.8,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) => Column(
+            children: [
+              Expanded(
               child: ListView(
                 controller: scrollController,
                 padding: const EdgeInsets.all(16),
@@ -771,7 +761,8 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                 ],
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );

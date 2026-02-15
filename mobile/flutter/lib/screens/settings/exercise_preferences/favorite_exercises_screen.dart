@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/favorites_provider.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
+import '../../../widgets/glass_back_button.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
 /// Screen for managing favorite exercises
@@ -62,10 +63,8 @@ class FavoriteExercisesScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'Favorite Exercises',
           style: TextStyle(

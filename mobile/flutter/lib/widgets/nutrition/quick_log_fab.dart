@@ -5,6 +5,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/haptic_service.dart';
 import '../../screens/nutrition/log_meal_sheet.dart';
+import '../glass_sheet.dart';
 import 'batch_portioning_sheet.dart';
 
 /// Quick-Add FAB for nutrition logging
@@ -272,13 +273,13 @@ class _QuickLogFABState extends State<QuickLogFAB>
 
   void _openBatchPortioning() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => BatchPortioningSheet(
-        isDark: isDark,
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: BatchPortioningSheet(
+          isDark: isDark,
+        ),
       ),
     ).then((result) {
       if (result != null) {
@@ -293,14 +294,14 @@ class _QuickLogFABState extends State<QuickLogFAB>
     String? initialText,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => LogMealSheet(
-        userId: widget.userId,
-        isDark: isDark,
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: LogMealSheet(
+          userId: widget.userId,
+          isDark: isDark,
+        ),
       ),
     ).then((_) {
       widget.onLogComplete?.call();
@@ -332,13 +333,15 @@ class QuickLogFABCompact extends StatelessWidget {
   }
 
   void _showQuickActions(BuildContext context) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
       useRootNavigator: true,
-      builder: (context) => _QuickActionsSheet(
-        userId: userId,
-        onLogComplete: onLogComplete,
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: _QuickActionsSheet(
+          userId: userId,
+          onLogComplete: onLogComplete,
+        ),
       ),
     );
   }
@@ -359,25 +362,12 @@ class _QuickActionsSheet extends StatelessWidget {
     final bgColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
       child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textPrimary.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
             Text(
               'Log Food',
               style: TextStyle(
@@ -485,13 +475,13 @@ class _QuickActionsSheet extends StatelessWidget {
 
     if (method == 'batch') {
       // Open batch portioning sheet
-      showModalBottomSheet(
+      showGlassSheet(
         context: context,
-        isScrollControlled: true,
-        useRootNavigator: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => BatchPortioningSheet(
-          isDark: isDark,
+        builder: (_) => GlassSheet(
+          showHandle: false,
+          child: BatchPortioningSheet(
+            isDark: isDark,
+          ),
         ),
       ).then((result) {
         if (result != null) {
@@ -502,26 +492,26 @@ class _QuickActionsSheet extends StatelessWidget {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(source: ImageSource.camera);
       if (pickedFile != null && context.mounted) {
-        showModalBottomSheet(
+        showGlassSheet(
           context: context,
-          isScrollControlled: true,
-          useRootNavigator: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => LogMealSheet(
-            userId: userId,
-            isDark: isDark,
+          builder: (_) => GlassSheet(
+            showHandle: false,
+            child: LogMealSheet(
+              userId: userId,
+              isDark: isDark,
+            ),
           ),
         ).then((_) => onLogComplete?.call());
       }
     } else {
-      showModalBottomSheet(
+      showGlassSheet(
         context: context,
-        isScrollControlled: true,
-        useRootNavigator: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => LogMealSheet(
-          userId: userId,
-          isDark: isDark,
+        builder: (_) => GlassSheet(
+          showHandle: false,
+          child: LogMealSheet(
+            userId: userId,
+            isDark: isDark,
+          ),
         ),
       ).then((_) => onLogComplete?.call());
     }

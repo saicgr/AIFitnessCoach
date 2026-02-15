@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/subscription_provider.dart';
 import '../../../data/repositories/subscription_repository.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/glass_back_button.dart';
 
 /// Request Refund Screen
 /// Allows users to request a refund with reason selection and optional comments
@@ -144,10 +145,8 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

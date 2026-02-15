@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../core/services/analytics_service.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/onboarding_repository.dart';
@@ -3632,12 +3633,10 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   }
 
   void _showOtherEquipmentSheet() {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => EquipmentSearchSheet(
+      builder: (ctx) => GlassSheet(
+        child: EquipmentSearchSheet(
         selectedEquipment: _otherSelectedEquipment,
         allEquipment: EquipmentSearchSheet.databaseEquipment,
         initialCustomEquipment: _customEquipment,
@@ -3653,6 +3652,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             _customEquipment.addAll(customList);
           });
         },
+        ),
       ),
     );
   }
@@ -3673,31 +3673,16 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           'Multiple kettlebells: Allows for double KB exercises and weight progression';
     }
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: textSecondary.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            Row(
+      builder: (ctx) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
               children: [
                 Icon(Icons.info_outline, color: AppColors.accent),
                 const SizedBox(width: 12),
@@ -3738,6 +3723,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             ),
           ],
         ),
+      ),
       ),
     );
   }

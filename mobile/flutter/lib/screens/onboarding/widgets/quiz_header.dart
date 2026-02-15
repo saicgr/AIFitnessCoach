@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
+import '../../../widgets/glass_back_button.dart';
 
 /// Floating header for quiz screens with glassmorphic back button and question counter.
 /// Positioned absolutely over content with blur effect for modern look.
@@ -50,14 +51,11 @@ class QuizHeader extends StatelessWidget {
         children: [
           // Floating back button
           if (canGoBack || onBackToWelcome != null)
-            _FloatingButton(
-              isDark: isDark,
-              onPressed: canGoBack ? onBack : onBackToWelcome!,
-              child: Icon(
-                Icons.arrow_back_ios_rounded,
-                size: 18,
-                color: isDark ? Colors.white : const Color(0xFF0A0A0A),
-              ),
+            GlassBackButton(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                (canGoBack ? onBack : onBackToWelcome!)();
+              },
             )
           else
             const SizedBox(width: 44),
@@ -68,63 +66,6 @@ class QuizHeader extends StatelessWidget {
             text: _getProgressText(),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Glassmorphic floating button with blur effect
-class _FloatingButton extends StatelessWidget {
-  final bool isDark;
-  final VoidCallback onPressed;
-  final Widget child;
-
-  const _FloatingButton({
-    required this.isDark,
-    required this.onPressed,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onPressed();
-        },
-        borderRadius: BorderRadius.circular(22),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(22),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.15)
-                    : Colors.white.withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.black.withValues(alpha: 0.1),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Center(child: child),
-            ),
-          ),
-        ),
       ),
     );
   }

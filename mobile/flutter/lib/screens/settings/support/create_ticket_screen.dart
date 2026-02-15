@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/support_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../models/support_ticket.dart';
+import '../../../widgets/glass_back_button.dart';
 
 /// Screen for creating a new support ticket
 class CreateTicketScreen extends ConsumerStatefulWidget {
@@ -226,10 +227,8 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'Create Ticket',
           style: TextStyle(

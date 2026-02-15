@@ -9,6 +9,8 @@ import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/fasting_timer_service.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_sheet.dart';
+import '../../widgets/segmented_tab_bar.dart';
 import '../../widgets/main_shell.dart';
 import '../../widgets/pill_swipe_navigation.dart';
 import 'widgets/fasting_timer_widget.dart';
@@ -258,53 +260,15 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                   ),
                   const SizedBox(width: 8),
                 ],
-                bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(52),
-                  child: Container(
-                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: elevated,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: TabBar(
-                      controller: _tabController,
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      indicator: BoxDecoration(
-                        color: isDark ? AppColors.accent : AppColorsLight.accent,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      labelColor: isDark ? AppColors.accentContrast : AppColorsLight.accentContrast,
-                      unselectedLabelColor: textMuted,
-                      dividerHeight: 0,
-                      labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
-                      tabs: const [
-                        Tab(
-                          height: 36,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.timer_outlined, size: 18),
-                              SizedBox(width: 6),
-                              Text('Timer'),
-                            ],
-                          ),
-                        ),
-                        Tab(
-                          height: 36,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.history, size: 18),
-                              SizedBox(width: 6),
-                              Text('History'),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+              ),
+              SliverToBoxAdapter(
+                child: SegmentedTabBar(
+                  controller: _tabController,
+                  showIcons: false,
+                  tabs: [
+                    SegmentedTabItem(label: 'Timer', icon: Icons.timer_outlined),
+                    SegmentedTabItem(label: 'History', icon: Icons.history),
+                  ],
                 ),
               ),
             ];
@@ -535,33 +499,32 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
     // Hide nav bar while sheet is open
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StartFastSheet(
-        userId: userId,
-        defaultProtocol: preferences?.defaultProtocol != null
-            ? FastingProtocol.fromString(preferences!.defaultProtocol)
-            : null,
-        onStartFast: (protocol, customMinutes, startTime) async {
-          await ref.read(fastingProvider.notifier).startFast(
-                userId: userId,
-                protocol: protocol,
-                customDurationMinutes: customMinutes,
-                startTime: startTime,
-              );
+      builder: (context) => GlassSheet(
+        child: StartFastSheet(
+          userId: userId,
+          defaultProtocol: preferences?.defaultProtocol != null
+              ? FastingProtocol.fromString(preferences!.defaultProtocol)
+              : null,
+          onStartFast: (protocol, customMinutes, startTime) async {
+            await ref.read(fastingProvider.notifier).startFast(
+                  userId: userId,
+                  protocol: protocol,
+                  customDurationMinutes: customMinutes,
+                  startTime: startTime,
+                );
 
-          // Start timer service monitoring
-          final activeFast = ref.read(fastingProvider).activeFast;
-          if (activeFast != null) {
-            ref.read(fastingTimerServiceProvider).startZoneMonitoring(activeFast);
-            ref.read(fastingTimerServiceProvider).showFastStartedNotification(protocol);
-          }
+            // Start timer service monitoring
+            final activeFast = ref.read(fastingProvider).activeFast;
+            if (activeFast != null) {
+              ref.read(fastingTimerServiceProvider).startZoneMonitoring(activeFast);
+              ref.read(fastingTimerServiceProvider).showFastStartedNotification(protocol);
+            }
 
-          if (mounted) Navigator.pop(context);
-        },
+            if (mounted) Navigator.pop(context);
+          },
+        ),
       ),
     ).then((_) {
       // Show nav bar when sheet is closed
@@ -573,22 +536,21 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
   void _showProtocolSelector(BuildContext context) {
     HapticService.light();
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => ProtocolSelectorSheet(
-        currentProtocol: _selectedProtocol,
-        currentCustomHours: _customHours,
-        onSelect: (protocol, customHours) {
-          setState(() {
-            _selectedProtocol = protocol;
-            if (customHours != null) {
-              _customHours = customHours;
-            }
-          });
-        },
+      builder: (context) => GlassSheet(
+        child: ProtocolSelectorSheet(
+          currentProtocol: _selectedProtocol,
+          currentCustomHours: _customHours,
+          onSelect: (protocol, customHours) {
+            setState(() {
+              _selectedProtocol = protocol;
+              if (customHours != null) {
+                _customHours = customHours;
+              }
+            });
+          },
+        ),
       ),
     );
   }
@@ -757,38 +719,23 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
 
     HapticService.light();
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-                borderRadius: BorderRadius.circular(2),
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Score card with full breakdown
+              FastingScoreCard(
+                score: score,
+                trend: fastingState.scoreTrend,
+                isDark: isDark,
               ),
-            ),
-            // Score card with full breakdown
-            FastingScoreCard(
-              score: score,
-              trend: fastingState.scoreTrend,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -807,12 +754,11 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
 
     HapticService.light();
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => FastingSettingsSheet(preferences: preferences),
+      builder: (context) => GlassSheet(
+        child: FastingSettingsSheet(preferences: preferences),
+      ),
     );
   }
 }

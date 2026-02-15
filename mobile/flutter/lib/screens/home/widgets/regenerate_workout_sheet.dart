@@ -7,6 +7,8 @@ import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/segmented_tab_bar.dart';
 import '../../../widgets/main_shell.dart';
 import 'components/components.dart';
 import 'workout_review_sheet.dart';
@@ -22,12 +24,8 @@ Future<Workout?> showRegenerateWorkoutSheet(
   // Hide nav bar while sheet is open
   ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-  return showModalBottomSheet<Workout>(
+  return showGlassSheet<Workout>(
     context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    isScrollControlled: true,
-    useRootNavigator: true,
     builder: (sheetContext) => Theme(
       data: parentTheme,
       child: _RegenerateWorkoutSheet(workout: workout),
@@ -507,48 +505,27 @@ class _RegenerateWorkoutSheetState
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = context.sheetColors;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-          ),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
+    return GlassSheet(
+      maxHeightFraction: 0.85,
+      showHandle: false,
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHeader(colors),
+            _buildTabBar(colors),
+            const SizedBox(height: 8),
+            Divider(height: 1, color: colors.cardBorder),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildCustomizeTab(colors),
+                  _buildAISuggestionsTab(colors),
+                ],
               ),
             ),
-          ),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildHeader(colors),
-                _buildTabBar(colors),
-                const SizedBox(height: 8),
-                Divider(height: 1, color: colors.cardBorder),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildCustomizeTab(colors),
-                      _buildAISuggestionsTab(colors),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );
@@ -619,31 +596,14 @@ class _RegenerateWorkoutSheetState
   }
 
   Widget _buildTabBar(SheetColors colors) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: colors.glassSurface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        indicator: BoxDecoration(
-          color: colors.purple,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        indicatorSize: TabBarIndicatorSize.tab,
-        labelColor: Colors.white,
-        unselectedLabelColor: colors.textSecondary,
-        labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-        unselectedLabelStyle:
-            const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
-        dividerColor: Colors.transparent,
-        padding: const EdgeInsets.all(4),
-        tabs: const [
-          Tab(text: 'Customize'),
-          Tab(text: 'AI Suggestions'),
-        ],
-      ),
+    return SegmentedTabBar(
+      controller: _tabController,
+      showIcons: false,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      tabs: const [
+        SegmentedTabItem(label: 'Customize'),
+        SegmentedTabItem(label: 'AI Suggestions'),
+      ],
     );
   }
 

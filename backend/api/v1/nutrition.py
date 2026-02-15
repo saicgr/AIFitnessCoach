@@ -1764,9 +1764,9 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
     Use /log-direct to save after user confirmation.
 
     Provides real-time feedback during food analysis:
-    - Step 1: Loading user profile and goals
-    - Step 2: Analyzing food with AI
-    - Step 3: Calculating nutrition (analysis complete)
+    - Step 1: Analyzing your food (parallel profile + cache check)
+    - Step 2: Calculating nutrition (AI analysis, skipped on cache hit)
+    - Step 3: Finalizing results
 
     Returns SSE events with progress updates and final analysis (no save).
     """
@@ -1794,35 +1794,12 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             return f"event: error\ndata: {json.dumps(data)}\n\n"
 
         try:
-            # Step 1: Load user profile and goals
-            yield send_progress(1, 6, "Loading your profile...", "Fetching nutrition goals")
+            # Step 1: Analyze food (parallel user profile + cache check)
+            yield send_progress(1, 3, "Analyzing your food...", "Loading profile & checking cache")
 
             db = get_supabase_db()
+            cache_service = get_food_analysis_cache_service()
 
-            user_goals = None
-            nutrition_targets = None
-            try:
-                user = db.get_user(body.user_id)
-                if user:
-                    goals_str = user.get('goals', '[]')
-                    if isinstance(goals_str, str):
-                        try:
-                            user_goals = json.loads(goals_str)
-                        except json.JSONDecodeError:
-                            user_goals = []
-                    elif isinstance(goals_str, list):
-                        user_goals = goals_str
-
-                    nutrition_targets = {
-                        'daily_calorie_target': user.get('daily_calorie_target'),
-                        'daily_protein_target_g': user.get('daily_protein_target_g'),
-                        'daily_carbs_target_g': user.get('daily_carbs_target_g'),
-                        'daily_fat_target_g': user.get('daily_fat_target_g'),
-                    }
-            except Exception as e:
-                logger.warning(f"[ANALYZE-STREAM] Could not fetch user goals: {e}")
-
-            # Step 2: Get RAG context and analyze with AI
             # Check if this is a complex/regional food that may take longer
             description_lower = body.description.lower()
             regional_keywords = ['biryani', 'curry', 'masala', 'tikka', 'tandoori', 'paneer', 'dosa', 'idli',
@@ -1840,70 +1817,94 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                                'gnocchi', 'carbonara', 'bolognese', 'osso buco', 'tiramisu', 'panna cotta']
             is_complex = any(keyword in description_lower for keyword in regional_keywords)
 
-            # Step 2: Check cache for instant results
-            yield send_progress(2, 6, "Checking food database...", "Looking for cached data")
+            # Run user profile fetch and cache check in parallel
+            user_goals = None
+            nutrition_targets = None
 
-            # Use caching service for faster lookups
-            cache_service = get_food_analysis_cache_service()
+            async def fetch_user_profile():
+                """Fetch user profile in executor since db.get_user() is sync."""
+                loop = asyncio.get_event_loop()
+                return await loop.run_in_executor(None, db.get_user, body.user_id)
 
-            # First try cache (common foods + cached AI responses)
-            food_analysis = await cache_service.analyze_food(
-                description=body.description,
-                user_goals=user_goals,
-                nutrition_targets=nutrition_targets,
-                rag_context=None,  # Skip RAG on initial cache check
-                use_cache=True,
-            )
+            async def check_cache():
+                """Initial cache check without RAG context."""
+                return await cache_service.analyze_food(
+                    description=body.description,
+                    user_goals=None,  # No user goals yet during parallel fetch
+                    nutrition_targets=None,
+                    rag_context=None,
+                    use_cache=True,
+                )
 
-            # If cache hit, skip the slow AI steps
+            try:
+                user, food_analysis = await asyncio.gather(
+                    fetch_user_profile(),
+                    check_cache(),
+                )
+
+                # Process user profile
+                if user:
+                    goals_str = user.get('goals', '[]')
+                    if isinstance(goals_str, str):
+                        try:
+                            user_goals = json.loads(goals_str)
+                        except json.JSONDecodeError:
+                            user_goals = []
+                    elif isinstance(goals_str, list):
+                        user_goals = goals_str
+
+                    nutrition_targets = {
+                        'daily_calorie_target': user.get('daily_calorie_target'),
+                        'daily_protein_target_g': user.get('daily_protein_target_g'),
+                        'daily_carbs_target_g': user.get('daily_carbs_target_g'),
+                        'daily_fat_target_g': user.get('daily_fat_target_g'),
+                    }
+            except Exception as e:
+                logger.warning(f"[ANALYZE-STREAM] Could not fetch user/cache: {e}")
+                food_analysis = None
+
+            # If cache hit, skip to finalizing
             if food_analysis and food_analysis.get("cache_hit"):
                 cache_source = food_analysis.get("cache_source", "cache")
-                logger.info(f"[ANALYZE-STREAM] 🎯 Cache HIT ({cache_source}) for: {body.description[:50]}...")
-                # Skip to step 5 (nutrition data)
-                yield send_progress(5, 6, "Fetching nutrition data...", f"🎯 Found in {cache_source}!")
+                logger.info(f"[ANALYZE-STREAM] Cache HIT ({cache_source}) for: {body.description[:50]}...")
+                yield send_progress(3, 3, "Finalizing results...", f"Found in {cache_source}!")
             else:
                 # Cache miss - do full AI analysis
-                # Step 3: Identify ingredients
+                # Step 2: Calculate nutrition with AI
                 desc_preview = body.description[:30] + "..." if len(body.description) > 30 else body.description
                 if is_complex:
-                    yield send_progress(3, 6, "Analyzing regional cuisine...", f"🌍 {desc_preview}")
+                    yield send_progress(2, 3, "Calculating nutrition...", f"Analyzing regional cuisine: {desc_preview}")
                 else:
-                    yield send_progress(3, 6, "Identifying ingredients...", f"Analyzing: {desc_preview}")
+                    yield send_progress(2, 3, "Calculating nutrition...", f"Analyzing: {desc_preview}")
 
-                # Get RAG context for better AI response
+                # Get RAG context only for complex foods with user goals
                 rag_context = None
-                if user_goals:
+                if user_goals and is_complex:
                     try:
                         nutrition_rag = get_nutrition_rag_service()
                         rag_context = await nutrition_rag.get_context_for_goals(
                             food_description=body.description,
                             user_goals=user_goals,
-                            n_results=3,  # Reduced from 5 for speed
+                            n_results=3,
                         )
                     except Exception as e:
                         logger.warning(f"[ANALYZE-STREAM] Could not fetch RAG context: {e}")
 
-                # Step 4: AI portion estimation
-                yield send_progress(4, 6, "Calculating portions...", "AI is estimating serving sizes")
-
-                # Re-analyze with RAG context (cache will save for next time)
+                # Full AI analysis with RAG context (cache will save for next time)
                 food_analysis = await cache_service.analyze_food(
                     description=body.description,
                     user_goals=user_goals,
                     nutrition_targets=nutrition_targets,
                     rag_context=rag_context,
-                    use_cache=True,  # Will cache this new result
+                    use_cache=True,
                 )
 
-                # Step 5: Fetch nutrition data
-                yield send_progress(5, 6, "Fetching nutrition data...", f"Found {len(food_analysis.get('food_items', []))} items")
+                # Step 3: Finalize results
+                yield send_progress(3, 3, "Finalizing results...", f"Found {len(food_analysis.get('food_items', []))} items")
 
             if not food_analysis or not food_analysis.get('food_items'):
                 yield send_error("Could not identify any food items from your description")
                 return
-
-            # Step 6: Finalize results
-            yield send_progress(6, 6, "Finalizing results...", "Almost ready!")
 
             food_items = food_analysis.get('food_items', [])
             total_calories = food_analysis.get('total_calories', 0)

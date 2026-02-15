@@ -5,7 +5,6 @@
 library;
 
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,6 +12,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Breathing pattern types
 enum BreathingPattern {
@@ -76,13 +76,12 @@ Future<void> showBreathingGuide({
   required BuildContext context,
   required WorkoutExercise exercise,
 }) {
-  return showModalBottomSheet(
+  return showGlassSheet(
     context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    isScrollControlled: true,
-    useRootNavigator: true,
-    builder: (ctx) => BreathingGuideSheet(exercise: exercise),
+    builder: (ctx) => GlassSheet(
+      showHandle: false,
+      child: BreathingGuideSheet(exercise: exercise),
+    ),
   );
 }
 
@@ -157,40 +156,11 @@ class _BreathingGuideSheetState extends State<BreathingGuideSheet>
     final pattern = getBreathingPattern(widget.exercise);
     final patternInfo = _getPatternInfo(pattern);
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
+    return Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Handle bar
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.black.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
           const SizedBox(height: 24),
 
           // Title
@@ -353,9 +323,7 @@ class _BreathingGuideSheetState extends State<BreathingGuideSheet>
           SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
         ],
       ),
-    ),
-  ),
-)
+    )
         .animate()
         .fadeIn(duration: 300.ms)
         .slideY(begin: 0.1, end: 0, duration: 300.ms);

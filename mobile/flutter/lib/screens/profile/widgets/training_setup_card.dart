@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/user.dart';
 import '../../../data/providers/gym_profile_provider.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../home/widgets/edit_gym_profile_sheet.dart';
 
 /// Unified card displaying equipment and workout preferences with edit capability.
@@ -99,11 +100,8 @@ class TrainingSetupCard extends ConsumerWidget {
                 GestureDetector(
                   onTap: () {
                     HapticFeedback.lightImpact();
-                    showModalBottomSheet(
+                    showGlassSheet(
                       context: context,
-                      isScrollControlled: true,
-                      useRootNavigator: true,
-                      backgroundColor: Colors.transparent,
                       builder: (context) => EditGymProfileSheet(
                         profile: activeGymProfile,
                       ),

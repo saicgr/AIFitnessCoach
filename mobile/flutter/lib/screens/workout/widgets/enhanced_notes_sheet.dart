@@ -10,6 +10,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Enhanced Exercise Notes Sheet with audio, photo, and expandable text input
 class EnhancedNotesSheet extends StatefulWidget {
@@ -307,7 +308,6 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.surface : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accentColor = AppColors.purple;
@@ -316,31 +316,13 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SingleChildScrollView(
+      child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Handle bar
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
                 // Title row with expand button
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -489,7 +471,6 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
             ),
           ),
         ),
-      ),
     );
   }
 
@@ -833,16 +814,15 @@ void showEnhancedNotesSheet(
   List<String>? initialPhotoPaths,
   required Function(String notes, String? audioPath, List<String> photoPaths) onSave,
 }) {
-  showModalBottomSheet(
+  showGlassSheet(
     context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    useRootNavigator: true,
-    builder: (ctx) => EnhancedNotesSheet(
-      initialNotes: initialNotes,
-      initialAudioPath: initialAudioPath,
-      initialPhotoPaths: initialPhotoPaths,
-      onSave: onSave,
+    builder: (ctx) => GlassSheet(
+      child: EnhancedNotesSheet(
+        initialNotes: initialNotes,
+        initialAudioPath: initialAudioPath,
+        initialPhotoPaths: initialPhotoPaths,
+        onSave: onSave,
+      ),
     ),
   );
 }

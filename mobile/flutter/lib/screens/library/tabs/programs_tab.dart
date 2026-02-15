@@ -11,6 +11,7 @@ import '../providers/library_providers.dart';
 import '../widgets/filter_chip_widget.dart';
 import '../widgets/program_card.dart';
 import '../widgets/program_carousel_section.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../components/programs_intro_sheet.dart';
 
 /// Format category name: replace underscores with spaces and capitalize each word
@@ -121,11 +122,8 @@ class _ProgramsTabState extends ConsumerState<ProgramsTab> {
   }
 
   void _showIntroSheet() {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       isDismissible: true,
       builder: (context) => const ProgramsIntroSheet(),
     );

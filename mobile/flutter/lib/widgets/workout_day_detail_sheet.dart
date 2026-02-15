@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -8,6 +6,7 @@ import '../data/models/consistency.dart';
 import '../data/models/workout_day_detail.dart';
 import '../data/providers/consistency_provider.dart';
 import '../data/services/api_client.dart';
+import 'glass_sheet.dart';
 
 /// Bottom sheet showing detailed workout information for a specific day
 class WorkoutDayDetailSheet extends ConsumerWidget {
@@ -20,11 +19,9 @@ class WorkoutDayDetailSheet extends ConsumerWidget {
 
   /// Show the bottom sheet
   static Future<void> show(BuildContext context, String date) {
-    return showModalBottomSheet(
+    return showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => WorkoutDayDetailSheet(date: date),
     );
   }
@@ -40,25 +37,8 @@ class WorkoutDayDetailSheet extends ConsumerWidget {
       minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (context, scrollController) {
-        return ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-            child: Container(
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.4)
-                    : Colors.white.withValues(alpha: 0.6),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                border: Border(
-                  top: BorderSide(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : Colors.black.withValues(alpha: 0.1),
-                    width: 0.5,
-                  ),
-                ),
-              ),
+        return GlassSheet(
+              showHandle: false,
               child: FutureBuilder<String?>(
             future: apiClient.getUserId(),
             builder: (context, userSnapshot) {
@@ -81,8 +61,6 @@ class WorkoutDayDetailSheet extends ConsumerWidget {
               );
             },
           ),
-        ),
-      ),
     );
       },
     );

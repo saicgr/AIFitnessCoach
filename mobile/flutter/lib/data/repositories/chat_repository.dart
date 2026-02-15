@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -121,10 +122,36 @@ class ChatRepository {
         return chatResponse;
       }
       throw Exception('Failed to send message');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 422) {
+        final detail = e.response?.data;
+        debugPrint('❌ [Chat] 422 Validation error: $detail');
+        final validationMsg = _extractValidationMessage(detail);
+        throw Exception('Validation error: $validationMsg');
+      }
+      debugPrint('❌ [Chat] Error sending message: $e');
+      rethrow;
     } catch (e) {
       debugPrint('❌ [Chat] Error sending message: $e');
       rethrow;
     }
+  }
+
+  /// Extract human-readable validation message from Pydantic 422 error detail
+  String _extractValidationMessage(dynamic detail) {
+    if (detail == null) return 'Unknown validation error';
+    if (detail is Map<String, dynamic>) {
+      final errors = detail['detail'];
+      if (errors is List && errors.isNotEmpty) {
+        return errors.map((e) {
+          final loc = (e['loc'] as List?)?.join(' -> ') ?? '';
+          final msg = e['msg'] ?? '';
+          return '$loc: $msg';
+        }).join('; ');
+      }
+      return detail.toString();
+    }
+    return detail.toString();
   }
 
   /// Report an AI message for review

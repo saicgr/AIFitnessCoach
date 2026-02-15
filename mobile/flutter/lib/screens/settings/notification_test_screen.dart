@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/notification_service.dart';
+import '../../widgets/glass_back_button.dart';
 
 /// Screen for testing all notification types via Firebase
 class NotificationTestScreen extends ConsumerStatefulWidget {
@@ -77,10 +78,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'Notification Testing',
           style: TextStyle(

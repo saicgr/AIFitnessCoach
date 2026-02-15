@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/injury.dart';
+import '../../widgets/glass_back_button.dart';
+import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/injury_card.dart';
 
 /// Filter tabs for injuries list
@@ -192,10 +194,8 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'Injury Tracker',
           style: TextStyle(
@@ -210,134 +210,27 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
             onPressed: _loadInjuries,
           ),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: elevated,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: TabBar(
-              controller: _tabController,
-              indicator: BoxDecoration(
-                color: AppColors.coral,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              indicatorSize: TabBarIndicatorSize.tab,
-              indicatorPadding: const EdgeInsets.all(4),
-              labelColor: Colors.white,
-              unselectedLabelColor: textMuted,
-              labelStyle: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-              unselectedLabelStyle: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-              ),
-              dividerColor: Colors.transparent,
-              tabs: [
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('Active'),
-                      if (_getCountForFilter(InjuryFilter.active) > 0) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _currentFilter == InjuryFilter.active
-                                ? Colors.white.withValues(alpha: 0.3)
-                                : AppColors.error.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '${_getCountForFilter(InjuryFilter.active)}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: _currentFilter == InjuryFilter.active
-                                  ? Colors.white
-                                  : AppColors.error,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('Recovering'),
-                      if (_getCountForFilter(InjuryFilter.recovering) > 0) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _currentFilter == InjuryFilter.recovering
-                                ? Colors.white.withValues(alpha: 0.3)
-                                : AppColors.warning.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '${_getCountForFilter(InjuryFilter.recovering)}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: _currentFilter == InjuryFilter.recovering
-                                  ? Colors.white
-                                  : AppColors.warning,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('Healed'),
-                      if (_getCountForFilter(InjuryFilter.healed) > 0) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _currentFilter == InjuryFilter.healed
-                                ? Colors.white.withValues(alpha: 0.3)
-                                : AppColors.success.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '${_getCountForFilter(InjuryFilter.healed)}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: _currentFilter == InjuryFilter.healed
-                                  ? Colors.white
-                                  : AppColors.success,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
-      body: _isLoading
+      body: Column(
+        children: [
+          SegmentedTabBar(
+            controller: _tabController,
+            showIcons: false,
+            tabs: const [
+              SegmentedTabItem(label: 'Active'),
+              SegmentedTabItem(label: 'Recovering'),
+              SegmentedTabItem(label: 'Healed'),
+            ],
+          ),
+          Expanded(
+            child: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? _buildErrorState(textPrimary, textSecondary)
               : _buildContent(textPrimary, textSecondary, textMuted, elevated, cardBorder),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _navigateToReportInjury,
         backgroundColor: AppColors.coral,

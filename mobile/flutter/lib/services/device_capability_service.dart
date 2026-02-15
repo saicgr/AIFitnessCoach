@@ -86,7 +86,7 @@ class DeviceCapabilityService {
   ///
   /// Thresholds:
   /// - <2GB: incompatible
-  /// - 2-3GB: basic (FunctionGemma 270M, EmbeddingGemma 300M)
+  /// - 2-3GB: basic (Gemma 3 270M, EmbeddingGemma 300M)
   /// - 3-4GB: standard (+ Gemma 3 1B, Gemma 3n E2B)
   /// - 4GB+: optimal (+ Gemma 3n E4B)
   Future<DeviceCapability> assessCapability() async {
@@ -114,9 +114,9 @@ class DeviceCapabilityService {
       case DeviceCapability.incompatible:
         // Return smallest model even though device can't run it;
         // caller should check capability first.
-        return GemmaModelInfo.functionGemma270M();
+        return GemmaModelInfo.gemma3_270M();
       case DeviceCapability.basic:
-        return GemmaModelInfo.functionGemma270M();
+        return GemmaModelInfo.gemma3_270M();
       case DeviceCapability.standard:
         return GemmaModelInfo.gemma3n_E2B();
       case DeviceCapability.optimal:
@@ -127,8 +127,8 @@ class DeviceCapabilityService {
 
 /// Gemma model variant type
 enum GemmaModelType {
-  /// FunctionGemma 270M - smallest, fastest, function-calling format
-  functionGemma270M,
+  /// Gemma 3 270M IT - smallest, fastest, instruction-tuned
+  gemma3_270M,
 
   /// Gemma 3 1B - medium, good quality with instruction format
   gemma3_1B,
@@ -165,14 +165,14 @@ class GemmaModelInfo {
     this.contextLength = 32768,
   });
 
-  /// FunctionGemma 270M - ~200MB, needs 2GB RAM
-  factory GemmaModelInfo.functionGemma270M() => const GemmaModelInfo(
-        type: GemmaModelType.functionGemma270M,
-        displayName: 'FunctionGemma 270M',
-        description: 'Lightweight model for basic workout generation. Fast inference, minimal storage.',
-        sizeBytes: 200 * 1024 * 1024, // ~200 MB
+  /// Gemma 3 270M IT - ~270MB, needs 2GB RAM
+  factory GemmaModelInfo.gemma3_270M() => const GemmaModelInfo(
+        type: GemmaModelType.gemma3_270M,
+        displayName: 'Gemma 3 270M',
+        description: 'Lightweight instruction-tuned model for basic workout generation. Fast inference, minimal storage.',
+        sizeBytes: 270 * 1024 * 1024, // ~270 MB
         minRamGB: 2.0,
-        fileName: 'function_gemma_270m.bin',
+        fileName: 'gemma3-270m-it-q8.task',
         isMultimodal: false,
         contextLength: 32768,
       );
@@ -184,7 +184,7 @@ class GemmaModelInfo {
         description: 'Balanced model for quality workout generation. Good quality with moderate storage.',
         sizeBytes: 700 * 1024 * 1024, // ~700 MB
         minRamGB: 3.0,
-        fileName: 'gemma3_1b.bin',
+        fileName: 'gemma3-1b-it-int4.task',
         isMultimodal: false,
         contextLength: 32768,
       );
@@ -196,7 +196,7 @@ class GemmaModelInfo {
         description: 'Mobile-optimized multimodal model. Supports images for exercise form check and food photo recognition.',
         sizeBytes: 3100 * 1024 * 1024, // ~3.1 GB
         minRamGB: 2.0,
-        fileName: 'gemma3n_e2b.bin',
+        fileName: 'gemma-3n-E2B-it-int4.task',
         isMultimodal: true,
         contextLength: 32768,
       );
@@ -208,7 +208,7 @@ class GemmaModelInfo {
         description: 'Best mobile AI model. Full multimodal with highest quality output.',
         sizeBytes: 6500 * 1024 * 1024, // ~6.5 GB
         minRamGB: 3.0,
-        fileName: 'gemma3n_e4b.bin',
+        fileName: 'gemma-3n-E4B-it-int4.task',
         isMultimodal: true,
         contextLength: 32768,
       );
@@ -220,7 +220,7 @@ class GemmaModelInfo {
         description: 'Enables offline semantic search for exercises and food. Very lightweight.',
         sizeBytes: 200 * 1024 * 1024, // ~200 MB
         minRamGB: 0.5,
-        fileName: 'embedding_gemma_300m.bin',
+        fileName: 'embeddinggemma-300M_seq512_mixed-precision.tflite',
         isMultimodal: false,
         contextLength: 2048,
       );
@@ -228,8 +228,8 @@ class GemmaModelInfo {
   /// Get model info by type
   factory GemmaModelInfo.fromType(GemmaModelType type) {
     switch (type) {
-      case GemmaModelType.functionGemma270M:
-        return GemmaModelInfo.functionGemma270M();
+      case GemmaModelType.gemma3_270M:
+        return GemmaModelInfo.gemma3_270M();
       case GemmaModelType.gemma3_1B:
         return GemmaModelInfo.gemma3_1B();
       case GemmaModelType.gemma3n_E2B:

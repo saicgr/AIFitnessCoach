@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import '../models/home_layout.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_sheet.dart';
 import 'share_service.dart';
 
 /// Service for generating and sharing layout previews
@@ -348,24 +349,9 @@ class _ShareLayoutSheetState extends State<ShareLayoutSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
+    return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle bar
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.textMuted.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
           // Header
           Padding(
             padding: const EdgeInsets.all(16),
@@ -438,7 +424,6 @@ class _ShareLayoutSheetState extends State<ShareLayoutSheet> {
           // Safe area padding
           SizedBox(height: MediaQuery.of(context).padding.bottom),
         ],
-      ),
     );
   }
 
@@ -592,11 +577,10 @@ Future<void> showShareLayoutSheet(
   BuildContext context,
   HomeLayout layout,
 ) async {
-  await showModalBottomSheet(
+  await showGlassSheet(
     context: context,
-    isScrollControlled: true,
-    useRootNavigator: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => ShareLayoutSheet(layout: layout),
+    builder: (context) => GlassSheet(
+      child: ShareLayoutSheet(layout: layout),
+    ),
   );
 }

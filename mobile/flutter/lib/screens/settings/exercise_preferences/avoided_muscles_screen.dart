@@ -8,6 +8,8 @@ import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/body_muscle_selector.dart';
+import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Provider for avoided muscles list
 final avoidedMusclesProvider =
@@ -62,10 +64,8 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textColor),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'Muscles to Avoid',
           style: TextStyle(
@@ -371,29 +371,14 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
       useRootNavigator: true,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+      builder: (context) => GlassSheet(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
             Text(
               muscle.displayName,
               style: TextStyle(
@@ -468,31 +453,16 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    return showModalBottomSheet<bool?>(
+    return showGlassSheet<bool?>(
       context: context,
-      backgroundColor: Colors.transparent,
       isDismissible: false,
       enableDrag: false,
       useRootNavigator: true,
-      builder: (sheetContext) => Container(
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+      builder: (sheetContext) => GlassSheet(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
             Text(
               'When should this apply?',
               style: TextStyle(

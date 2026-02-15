@@ -8,6 +8,8 @@ import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_back_button.dart';
+import '../../widgets/glass_sheet.dart';
 import 'food_library_screen.dart';
 import 'weekly_checkin_sheet.dart';
 
@@ -47,10 +49,8 @@ class _NutritionSettingsScreenState
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'Nutrition Settings',
           style: TextStyle(
@@ -1257,20 +1257,15 @@ class _NutritionSettingsScreenState
       text: (preferences.targetFatG ?? 65).toString(),
     );
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: nearBlack,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 8,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1550,27 +1545,21 @@ class _NutritionSettingsScreenState
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
     int currentBias = preferences.calorieEstimateBias;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setSheetState) {
-          final label = _biasLabel(currentBias);
-          final multiplier = _biasMultipliers[currentBias] ?? 1.0;
-          final exampleCal = (600 * multiplier).round();
+      builder: (context) => GlassSheet(
+        child: StatefulBuilder(
+          builder: (context, setSheetState) {
+            final label = _biasLabel(currentBias);
+            final multiplier = _biasMultipliers[currentBias] ?? 1.0;
+            final exampleCal = (600 * multiplier).round();
 
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: nearBlack,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 8,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1740,9 +1729,9 @@ class _NutritionSettingsScreenState
                   ),
                 ],
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -1925,21 +1914,16 @@ class _NutritionSettingsScreenState
     String selectedRate = preferences.rateOfChange ?? 'moderate';
     bool isSaving = false;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setSheetState) => Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: nearBlack,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      builder: (context) => GlassSheet(
+        child: StatefulBuilder(
+          builder: (context, setSheetState) => Padding(
+            padding: EdgeInsets.only(
+              left: 24,
+              right: 24,
+              top: 8,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 24,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,

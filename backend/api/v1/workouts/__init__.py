@@ -18,6 +18,7 @@ from the following submodules:
 - quick: Quick workouts (5-15 min) for busy users
 - modifications: Active workout modifications (body part exclusion, exercise replacement)
 - batch_generation: Batch upcoming workout retrieval for offline pre-caching
+- screen_summary: Lightweight summary data for the Workouts screen
 """
 from fastapi import APIRouter
 
@@ -36,6 +37,7 @@ from .set_adjustments import router as set_adjustments_router
 from .today import router as today_router
 from .quick import router as quick_router
 from .batch_generation import router as batch_generation_router
+from .screen_summary import router as screen_summary_router
 from .modifications import router as modifications_router
 from .rest_suggestions import router as rest_suggestions_router
 from .fatigue_alerts import router as fatigue_alerts_router
@@ -54,6 +56,9 @@ router.include_router(quick_router)
 
 # Batch upcoming workout retrieval (offline pre-caching) - must come before CRUD
 router.include_router(batch_generation_router)
+
+# Workout screen summary (lightweight data for Workouts tab) - must come before CRUD
+router.include_router(screen_summary_router)
 
 # CRUD operations (basic CRUD) - has /{workout_id} which would match "today" and "quick"
 router.include_router(crud_router)

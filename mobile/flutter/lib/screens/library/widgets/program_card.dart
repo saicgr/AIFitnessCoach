@@ -5,6 +5,7 @@ import '../../../data/models/branded_program.dart';
 import 'info_badge.dart';
 import 'coming_soon_overlay.dart';
 import '../components/program_detail_sheet.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../components/coming_soon_bottom_sheet.dart';
 
 /// Card widget displaying program info in a list format
@@ -47,20 +48,14 @@ class ProgramCard extends StatelessWidget {
   void _handleProgramTap(BuildContext context) {
     if (showComingSoon) {
       // Show coming soon modal
-      showModalBottomSheet(
+      showGlassSheet(
         context: context,
-        isScrollControlled: true,
-        useRootNavigator: true,
-        backgroundColor: Colors.transparent,
         builder: (context) => ComingSoonBottomSheet(program: program),
       );
     } else {
       // Show program detail sheet (normal behavior)
-      showModalBottomSheet(
+      showGlassSheet(
         context: context,
-        isScrollControlled: true,
-        useRootNavigator: true,
-        backgroundColor: Colors.transparent,
         builder: (context) => ProgramDetailSheet(program: program),
       );
     }

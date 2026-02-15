@@ -15,6 +15,8 @@ import '../../data/repositories/nutrition_repository.dart';
 import '../../data/repositories/nutrition_preferences_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/providers/xp_provider.dart';
+import '../../widgets/glass_sheet.dart';
+import '../../widgets/segmented_tab_bar.dart';
 import '../../widgets/main_shell.dart';
 import '../../widgets/pill_swipe_navigation.dart';
 import '../../widgets/nutrition/health_metrics_card.dart';
@@ -27,7 +29,6 @@ import 'weekly_checkin_sheet.dart';
 import 'widgets/quick_add_fab.dart';
 import 'widgets/quick_add_sheet.dart';
 import 'widgets/nutrition_goals_card.dart';
-import 'widgets/hydration_summary_block.dart';
 import 'tabs/hydration_tab.dart';
 import 'tabs/fasting_tab.dart';
 import '../../data/repositories/hydration_repository.dart';
@@ -263,16 +264,6 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  // Title
-                  Text(
-                    'Food',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
-                    ),
-                  ),
                   const Spacer(),
                   // Date Navigation
                   GestureDetector(
@@ -343,27 +334,27 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                   GestureDetector(
                     onTap: () => _showFavoritesSheet(isDark),
                     child: Container(
-                      width: 40,
-                      height: 40,
+                      width: 32,
+                      height: 32,
                       decoration: BoxDecoration(
                         color: glassSurface,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Icon(Icons.star_outline, size: 20, color: AppColors.yellow),
+                      child: Icon(Icons.star_outline, size: 18, color: AppColors.yellow),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Analytics - floating circle
+                  // Stats - floating circle
                   GestureDetector(
-                    onTap: () => _showAnalyticsSheet(isDark),
+                    onTap: () => context.push('/stats?tab=4'),
                     child: Container(
-                      width: 40,
-                      height: 40,
+                      width: 32,
+                      height: 32,
                       decoration: BoxDecoration(
                         color: glassSurface,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Icon(Icons.insights_outlined, size: 20, color: textSecondary),
+                      child: Icon(Icons.bar_chart_rounded, size: 18, color: textSecondary),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -378,22 +369,31 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                       );
                     },
                     child: Container(
-                      width: 40,
-                      height: 40,
+                      width: 32,
+                      height: 32,
                       decoration: BoxDecoration(
                         color: glassSurface,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Icon(Icons.settings_outlined, size: 20, color: textSecondary),
+                      child: Icon(Icons.settings_outlined, size: 18, color: textSecondary),
                     ),
                   ),
                 ],
               ),
             ),
             // Tab Bar with colored tabs
-            _ColoredNutritionTabBar(
-              tabController: _tabController,
-              isDark: isDark,
+            SegmentedTabBar(
+              controller: _tabController,
+              showIcons: true,
+              showBorder: true,
+              tabs: const [
+                SegmentedTabItem(label: 'Daily', icon: Icons.restaurant_menu_rounded),
+                SegmentedTabItem(label: 'Nutrients', icon: Icons.science_outlined),
+                SegmentedTabItem(label: 'Recipes', icon: Icons.menu_book_rounded),
+                SegmentedTabItem(label: 'Water', icon: Icons.water_drop_outlined),
+                SegmentedTabItem(label: 'Fast', icon: Icons.timer_outlined),
+              ],
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             ),
 
           // Tab Content
@@ -483,6 +483,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
               },
             )
           : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
@@ -517,15 +518,14 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     // Hide nav bar while sheet is open
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => LogMealSheet(
-        userId: userId!,
-        isDark: isDark,
-        initialMealType: initialMealType,
+      builder: (context) => GlassSheet(
+        child: LogMealSheet(
+          userId: userId!,
+          isDark: isDark,
+          initialMealType: initialMealType,
+        ),
       ),
     ).then((_) {
       // Show nav bar when sheet is closed
@@ -544,13 +544,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     // Hide nav bar while sheet is open
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) =>
-          RecipeBuilderSheet(userId: _userId!, isDark: isDark),
+      builder: (context) => GlassSheet(
+        child: RecipeBuilderSheet(userId: _userId!, isDark: isDark),
+      ),
     ).then((_) {
       // Show nav bar when sheet is closed
       ref.read(floatingNavBarVisibleProvider.notifier).state = true;
@@ -558,75 +556,6 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     });
   }
 
-  /// Show analytics in a bottom sheet
-  void _showAnalyticsSheet(bool isDark) {
-    if (_userId == null || _userId!.isEmpty) {
-      debugPrint('Cannot show AnalyticsSheet: userId is null or empty');
-      return;
-    }
-
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    // Hide nav bar while sheet is open
-    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: elevated,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.only(top: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: textMuted.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              // Analytics content
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      HealthMetricsCard(
-                        isDark: isDark,
-                      ),
-                      const SizedBox(height: 16),
-                      FoodMoodAnalyticsCard(
-                        userId: _userId!,
-                        isDark: isDark,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ).whenComplete(() {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    });
-  }
 
   /// Show favorites/saved foods sheet
   void _showFavoritesSheet(bool isDark) async {
@@ -655,35 +584,18 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     // Hide nav bar while sheet is open
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: elevated,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) => Column(
             children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.only(top: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: textMuted.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
+              const SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -848,41 +760,38 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
-    return showModalBottomSheet<MealType>(
+    return showGlassSheet<MealType>(
       context: context,
-      backgroundColor: nearBlack,
-      useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Log as...',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: textPrimary,
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Log as...',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: textPrimary,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            ...MealType.values.map((type) => ListTile(
-                  leading: Text(type.emoji, style: const TextStyle(fontSize: 24)),
-                  title: Text(
-                    type.label,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: textPrimary,
+              const SizedBox(height: 16),
+              ...MealType.values.map((type) => ListTile(
+                    leading: Text(type.emoji, style: const TextStyle(fontSize: 24)),
+                    title: Text(
+                      type.label,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: textPrimary,
+                      ),
                     ),
-                  ),
-                  onTap: () => Navigator.pop(context, type),
-                )),
-          ],
+                    onTap: () => Navigator.pop(context, type),
+                  )),
+            ],
+          ),
         ),
       ),
     );
@@ -915,21 +824,15 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: nearBlack,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(24)),
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 8,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1040,102 +943,6 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 // Colored Tab Bar with distinct colors for each tab
 // ─────────────────────────────────────────────────────────────────
 
-class _ColoredNutritionTabBar extends StatelessWidget {
-  final TabController tabController;
-  final bool isDark;
-
-  const _ColoredNutritionTabBar({
-    required this.tabController,
-    required this.isDark,
-  });
-
-  // Tab colors - each tab has its own accent color
-  static const List<Color> _tabColors = [
-    Color(0xFF10B981), // Daily - green (teal)
-    Color(0xFFF59E0B), // Nutrients - amber/orange
-    Color(0xFFEC4899), // Recipes - pink
-    Color(0xFF3B82F6), // Hydration - blue
-    Color(0xFF8B5CF6), // Fasting - purple
-  ];
-
-  static const List<String> _tabLabels = [
-    'Daily',
-    'Nutrients',
-    'Recipes',
-    'Water',
-    'Fast',
-  ];
-
-  static const List<IconData> _tabIcons = [
-    Icons.restaurant_menu_rounded,
-    Icons.science_outlined,
-    Icons.menu_book_rounded,
-    Icons.water_drop_outlined,
-    Icons.timer_outlined,
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: AnimatedBuilder(
-        animation: tabController,
-        builder: (context, child) {
-          return Row(
-            children: List.generate(5, (index) {
-              final isSelected = tabController.index == index;
-              final color = _tabColors[index];
-
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => tabController.animateTo(index),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeInOut,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected ? color : Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          _tabIcons[index],
-                          size: 16,
-                          color: isSelected ? Colors.white : textMuted,
-                        ),
-                        if (isSelected) ...[
-                          const SizedBox(width: 4),
-                          Text(
-                            _tabLabels[index],
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
-          );
-        },
-      ),
-    );
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────
 // Daily Tab - MacroFactor-inspired layout
@@ -1269,38 +1076,21 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
     // Hide nav bar while sheet is open
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.55,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: elevated,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: SingleChildScrollView(
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.55,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) => SingleChildScrollView(
             controller: scrollController,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Handle bar
-                Center(
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: textMuted.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
+                const SizedBox(height: 12),
 
                 Padding(
                   padding: const EdgeInsets.all(20),
@@ -1445,20 +1235,15 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
     // Hide nav bar while sheet is open
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: nearBlack,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      builder: (ctx) => GlassSheet(
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 8,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1626,27 +1411,7 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. GOALS AT TOP - Nutrition Goals Card
-                if (!widget.calmMode)
-                  NutritionGoalsCard(
-                    targets: widget.targets,
-                    summary: widget.summary,
-                    isDark: widget.isDark,
-                    onEdit: () => _showEditTargetsSheet(context),
-                    onRecalculate: () => _recalculateTargets(),
-                  ),
-
-                if (!widget.calmMode) const SizedBox(height: 12),
-
-                // 1.5. HYDRATION SUMMARY - Quick view of water intake
-                HydrationSummaryBlock(
-                  isDark: widget.isDark,
-                  onTap: widget.onSwitchToHydrationTab,
-                ),
-
-                const SizedBox(height: 12),
-
-                // 2. PINNED NUTRIENTS - Right after goals
+                // 1. PINNED NUTRIENTS - Compact, at the very top
                 if (widget.micronutrients != null &&
                     widget.micronutrients!.pinned.isNotEmpty) ...[
                   _PinnedNutrientsCard(
@@ -1659,6 +1424,19 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
                   ),
                   const SizedBox(height: 12),
                 ],
+
+                // 2. GOALS - Nutrition Goals Card
+                if (!widget.calmMode)
+                  NutritionGoalsCard(
+                    targets: widget.targets,
+                    summary: widget.summary,
+                    isDark: widget.isDark,
+                    onEdit: () => _showEditTargetsSheet(context),
+                    onRecalculate: () => _recalculateTargets(),
+                    onHydrationTap: widget.onSwitchToHydrationTab,
+                  ),
+
+                if (!widget.calmMode) const SizedBox(height: 12),
 
                 // 3. COMPACT MEAL LOGGING ROW - Quick add buttons for each meal type
                 _CompactMealLogRow(
@@ -1681,6 +1459,7 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
                   const SizedBox(height: 12),
                 ],
 
+
                 const SizedBox(height: 80),
               ],
             ),
@@ -1690,70 +1469,6 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
     );
   }
 
-  /// Show analytics in a bottom sheet
-  void _showAnalyticsSheet(BuildContext context) {
-    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    // Hide nav bar while sheet is open
-    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: elevated,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.only(top: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: textMuted.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              // Analytics content
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      HealthMetricsCard(
-                        isDark: widget.isDark,
-                      ),
-                      const SizedBox(height: 16),
-                      FoodMoodAnalyticsCard(
-                        userId: widget.userId,
-                        isDark: widget.isDark,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ).whenComplete(() {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    });
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -2122,33 +1837,13 @@ class _LoggedMealsSection extends StatelessWidget {
     final teal = isDarkTheme ? AppColors.teal : AppColorsLight.teal;
     final cardBorder = isDarkTheme ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-        ),
-        decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+      builder: (ctx) => GlassSheet(
+        maxHeightFraction: 0.6,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle bar
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
             // Header
             Padding(
               padding: const EdgeInsets.all(16),
@@ -3499,7 +3194,7 @@ class _CompactMacroCard extends StatelessWidget {
 // Pinned Nutrients Card
 // ─────────────────────────────────────────────────────────────────
 
-class _PinnedNutrientsCard extends StatelessWidget {
+class _PinnedNutrientsCard extends StatefulWidget {
   final List<NutrientProgress> pinned;
   final bool isDark;
   final VoidCallback? onEdit;
@@ -3511,14 +3206,22 @@ class _PinnedNutrientsCard extends StatelessWidget {
   });
 
   @override
+  State<_PinnedNutrientsCard> createState() => _PinnedNutrientsCardState();
+}
+
+class _PinnedNutrientsCardState extends State<_PinnedNutrientsCard> {
+  bool _isExpanded = false;
+
+  @override
   Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated =
+        widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+    final textMuted =
+        widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(16),
@@ -3526,37 +3229,76 @@ class _PinnedNutrientsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                'PINNED NUTRIENTS',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: textMuted,
-                  letterSpacing: 1,
+          // Header - always visible, tappable
+          InkWell(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            child: Row(
+              children: [
+                Text(
+                  'PINNED NUTRIENTS',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: textMuted,
+                    letterSpacing: 1,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              IconButton(
-                onPressed: onEdit,
-                icon: Icon(Icons.edit, size: 16, color: textMuted),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                tooltip: 'Edit Pinned Nutrients',
-              ),
-            ],
+                const SizedBox(width: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: teal.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${widget.pinned.length}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: teal,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: widget.onEdit,
+                  icon: Icon(Icons.edit, size: 14, color: textMuted),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Edit Pinned Nutrients',
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  _isExpanded
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
+                  size: 20,
+                  color: textMuted,
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: pinned.map((nutrient) {
-              return _PinnedNutrientChip(
-                nutrient: nutrient,
-                isDark: isDark,
-              );
-            }).toList(),
+          // Expandable chips
+          AnimatedCrossFade(
+            firstChild: Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: widget.pinned.map((nutrient) {
+                  return _PinnedNutrientChip(
+                    nutrient: nutrient,
+                    isDark: widget.isDark,
+                  );
+                }).toList(),
+              ),
+            ),
+            secondChild: const SizedBox.shrink(),
+            crossFadeState: _isExpanded
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+            duration: const Duration(milliseconds: 200),
           ),
         ],
       ),
@@ -3585,8 +3327,8 @@ class _PinnedNutrientChip extends StatelessWidget {
     final percentage = nutrient.percentage.clamp(0.0, 100.0);
 
     return Container(
-      width: 80,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      width: 68,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
       decoration: BoxDecoration(
         color: glassSurface,
         borderRadius: BorderRadius.circular(12),
@@ -3607,56 +3349,28 @@ class _PinnedNutrientChip extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 8),
-          // Progress bar with percentage
-          SizedBox(
-            width: double.infinity,
-            child: Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: (percentage / 100).clamp(0.0, 1.0),
-                    minHeight: 8,
-                    backgroundColor: elevated,
-                    color: color,
-                  ),
-                ),
-                // Percentage overlay (only show if > 10% for visibility)
-                if (percentage >= 10)
-                  Positioned.fill(
-                    child: Center(
-                      child: Text(
-                        '${percentage.toInt()}%',
-                        style: TextStyle(
-                          fontSize: 7,
-                          fontWeight: FontWeight.bold,
-                          color: percentage > 50 ? Colors.white : color,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
+          const SizedBox(height: 6),
+          // Progress bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: LinearProgressIndicator(
+              value: (percentage / 100).clamp(0.0, 1.0),
+              minHeight: 6,
+              backgroundColor: elevated,
+              color: color,
             ),
           ),
-          const SizedBox(height: 6),
-          // Current / Target value
+          const SizedBox(height: 4),
+          // Current / Target + Unit combined
           Text(
-            '${nutrient.formattedCurrent}/${nutrient.formattedTarget}',
+            '${nutrient.formattedCurrent}/${nutrient.formattedTarget} ${nutrient.unit}',
             style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w600,
               color: color,
             ),
             maxLines: 1,
-          ),
-          // Unit
-          Text(
-            nutrient.unit,
-            style: TextStyle(
-              fontSize: 8,
-              color: textMuted,
-            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -3746,16 +3460,15 @@ class _CollapsibleMealSectionState extends State<_CollapsibleMealSection> {
   bool _isExpanded = true;
 
   void _showFoodDetail(FoodLog meal) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _FoodDetailSheet(
-        meal: meal,
-        userId: widget.userId,
-        isDark: widget.isDark,
-        onSaved: widget.onFoodSaved,
+      builder: (context) => GlassSheet(
+        child: _FoodDetailSheet(
+          meal: meal,
+          userId: widget.userId,
+          isDark: widget.isDark,
+          onSaved: widget.onFoodSaved,
+        ),
       ),
     );
   }

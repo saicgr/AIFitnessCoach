@@ -11,6 +11,7 @@ import '../../../core/animations/celebration_animations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/pr_detection_service.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import 'share_templates/pr_share_card.dart';
 
 /// Show full screen PR celebration
@@ -414,15 +415,14 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
 
   void _showShareSheet() {
     HapticService.selection();
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => PRShareSheet(
-        pr: widget.pr,
-        workoutName: widget.workoutName,
-        progressData: widget.progressData,
+      builder: (context) => GlassSheet(
+        child: PRShareSheet(
+          pr: widget.pr,
+          workoutName: widget.workoutName,
+          progressData: widget.progressData,
+        ),
       ),
     );
   }

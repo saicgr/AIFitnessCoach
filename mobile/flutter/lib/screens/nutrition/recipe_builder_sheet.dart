@@ -1,9 +1,9 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/recipe.dart';
 import '../../data/repositories/nutrition_repository.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../widgets/nutrition/cooking_converter_sheet.dart';
 import '../../widgets/nutrition/batch_portioning_sheet.dart';
 
@@ -108,14 +108,13 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
   }
 
   Future<void> _addIngredient() async {
-    final result = await showModalBottomSheet<_IngredientEntry>(
+    final result = await showGlassSheet<_IngredientEntry>(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _AddIngredientSheet(
-        userId: widget.userId,
-        isDark: widget.isDark,
+      builder: (context) => GlassSheet(
+        child: _AddIngredientSheet(
+          userId: widget.userId,
+          isDark: widget.isDark,
+        ),
       ),
     );
 
@@ -202,13 +201,12 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
   }
 
   void _openCookingConverter(BuildContext context) async {
-    final result = await showModalBottomSheet<CookingConversionResult>(
+    final result = await showGlassSheet<CookingConversionResult>(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => CookingConverterSheet(
-        isDark: widget.isDark,
+      builder: (context) => GlassSheet(
+        child: CookingConverterSheet(
+          isDark: widget.isDark,
+        ),
       ),
     );
 
@@ -229,19 +227,18 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
   }
 
   void _openBatchPortioning(BuildContext context) async {
-    final result = await showModalBottomSheet<BatchPortioningResult>(
+    final result = await showGlassSheet<BatchPortioningResult>(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => BatchPortioningSheet(
-        isDark: widget.isDark,
-        recipeName: _nameController.text.isNotEmpty ? _nameController.text : null,
-        totalCalories: _totalCalories,
-        totalProtein: _totalProtein,
-        totalCarbs: _totalCarbs,
-        totalFat: _totalFat,
-        defaultServings: _servings,
+      builder: (context) => GlassSheet(
+        child: BatchPortioningSheet(
+          isDark: widget.isDark,
+          recipeName: _nameController.text.isNotEmpty ? _nameController.text : null,
+          totalCalories: _totalCalories,
+          totalProtein: _totalProtein,
+          totalCarbs: _totalCarbs,
+          totalFat: _totalFat,
+          defaultServings: _servings,
+        ),
       ),
     );
 
@@ -263,7 +260,6 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
-    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -272,41 +268,10 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
+    return SizedBox(
           height: MediaQuery.of(context).size.height * 0.9,
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
           child: Column(
         children: [
-          // Handle bar
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-
           // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 20, 16, 16),
@@ -826,8 +791,6 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
           ),
         ],
       ),
-        ),
-      ),
     );
   }
 }
@@ -1076,33 +1039,15 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
-    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
-    return Container(
+    return SizedBox(
       height: MediaQuery.of(context).size.height * 0.75,
-      decoration: BoxDecoration(
-        color: nearBlack,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       child: Column(
         children: [
-          // Handle bar
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-
           // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 20, 16, 16),

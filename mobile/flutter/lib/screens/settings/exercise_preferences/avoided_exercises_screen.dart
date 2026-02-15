@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
@@ -7,6 +8,9 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/glass_sheet.dart';
+import 'widgets/exercise_picker_sheet.dart';
 
 /// Provider for avoided exercises list
 final avoidedExercisesProvider = FutureProvider.family<List<AvoidedExercise>, String>((ref, userId) async {
@@ -23,15 +27,7 @@ class AvoidedExercisesScreen extends ConsumerStatefulWidget {
 }
 
 class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen> {
-  final _searchController = TextEditingController();
-  final String _searchQuery = '';
   bool _isAdding = false;
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,10 +55,8 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textColor),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'Exercises to Avoid',
           style: TextStyle(
@@ -176,229 +170,222 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
     );
   }
 
-  void _showAddExerciseSheet(BuildContext context, String userId) {
+  Future<void> _showAddExerciseSheet(BuildContext context, String userId) async {
+    HapticFeedback.lightImpact();
+
+    // Get existing avoided exercise names to exclude
+    final avoidedAsync = ref.read(avoidedExercisesProvider(userId));
+    final excludeNames = avoidedAsync.valueOrNull
+            ?.map((e) => e.exerciseName.toLowerCase())
+            .toSet() ??
+        {};
+
+    // Step 1: Pick an exercise using the smart search picker
+    final pickerResult = await showExercisePickerSheet(
+      context,
+      ref,
+      type: ExercisePickerType.avoided,
+      excludeExercises: excludeNames,
+    );
+
+    if (pickerResult == null || !mounted) return;
+
+    // Step 2: Show reason / temporary options sheet
+    final avoidOptions = await _showAvoidOptionsSheet(
+      context,
+      pickerResult.exerciseName,
+    );
+
+    if (avoidOptions == null || !mounted) return;
+
+    // Step 3: Add the exercise
+    await _addExercise(
+      context,
+      userId,
+      pickerResult.exerciseName,
+      avoidOptions.reason,
+      avoidOptions.isTemporary,
+      avoidOptions.endDate,
+    );
+  }
+
+  /// Shows a sheet for reason / temporary toggle after exercise is picked
+  Future<_AvoidOptions?> _showAvoidOptionsSheet(
+    BuildContext context,
+    String exerciseName,
+  ) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.background : AppColorsLight.background;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    String exerciseName = '';
     String reason = '';
     bool isTemporary = false;
     DateTime? endDate;
 
-    showModalBottomSheet(
+    return await showGlassSheet<_AvoidOptions>(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setSheetState) => Container(
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Handle
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
+      builder: (sheetContext) => GlassSheet(
+        child: StatefulBuilder(
+          builder: (context, setSheetState) => Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Text(
+                    'Avoid "$exerciseName"',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Reason field
+                  TextField(
+                    autofocus: true,
+                    style: TextStyle(color: textColor),
+                    decoration: InputDecoration(
+                      labelText: 'Reason (optional)',
+                      labelStyle: TextStyle(color: textMuted),
+                      hintText: 'e.g., Knee injury',
+                      hintStyle: TextStyle(color: textMuted.withValues(alpha: 0.5)),
+                      filled: true,
+                      fillColor: elevatedColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    onChanged: (value) => reason = value,
+                  ),
+                  const SizedBox(height: 16),
+                  // Temporary toggle
+                  Container(
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: textMuted.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Title
-                Text(
-                  'Add Exercise to Avoid',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Exercise name field
-                TextField(
-                  autofocus: true,
-                  style: TextStyle(color: textColor),
-                  decoration: InputDecoration(
-                    labelText: 'Exercise Name',
-                    labelStyle: TextStyle(color: textMuted),
-                    hintText: 'e.g., Barbell Squat',
-                    hintStyle: TextStyle(color: textMuted.withValues(alpha: 0.5)),
-                    filled: true,
-                    fillColor: elevatedColor,
-                    border: OutlineInputBorder(
+                      color: elevatedColor,
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppColors.cyan),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Temporary',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: textColor,
+                                ),
+                              ),
+                              Text(
+                                'Set an end date for this restriction',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: isTemporary,
+                          onChanged: (value) {
+                            setSheetState(() {
+                              isTemporary = value;
+                              if (!value) endDate = null;
+                            });
+                          },
+                          activeThumbColor: AppColors.cyan,
+                        ),
+                      ],
                     ),
                   ),
-                  onChanged: (value) => exerciseName = value,
-                ),
-                const SizedBox(height: 16),
-                // Reason field
-                TextField(
-                  style: TextStyle(color: textColor),
-                  decoration: InputDecoration(
-                    labelText: 'Reason (optional)',
-                    labelStyle: TextStyle(color: textMuted),
-                    hintText: 'e.g., Knee injury',
-                    hintStyle: TextStyle(color: textMuted.withValues(alpha: 0.5)),
-                    filled: true,
-                    fillColor: elevatedColor,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  onChanged: (value) => reason = value,
-                ),
-                const SizedBox(height: 16),
-                // Temporary toggle
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: elevatedColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  if (isTemporary) ...[
+                    const SizedBox(height: 16),
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now().add(const Duration(days: 30)),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime.now().add(const Duration(days: 365)),
+                        );
+                        if (picked != null) {
+                          setSheetState(() => endDate = picked);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: elevatedColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
                           children: [
-                            Text(
-                              'Temporary',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: textColor,
+                            Icon(Icons.calendar_today, color: AppColors.cyan, size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                endDate != null
+                                    ? 'Until ${endDate!.day}/${endDate!.month}/${endDate!.year}'
+                                    : 'Select end date',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: endDate != null ? textColor : textMuted,
+                                ),
                               ),
                             ),
-                            Text(
-                              'Set an end date for this restriction',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: textMuted,
-                              ),
-                            ),
+                            Icon(Icons.chevron_right, color: textMuted),
                           ],
                         ),
                       ),
-                      Switch(
-                        value: isTemporary,
-                        onChanged: (value) {
-                          setSheetState(() {
-                            isTemporary = value;
-                            if (!value) endDate = null;
-                          });
-                        },
-                        activeThumbColor: AppColors.cyan,
-                      ),
-                    ],
-                  ),
-                ),
-                if (isTemporary) ...[
-                  const SizedBox(height: 16),
-                  InkWell(
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now().add(const Duration(days: 30)),
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 365)),
-                      );
-                      if (picked != null) {
-                        setSheetState(() => endDate = picked);
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: elevatedColor,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.calendar_today, color: AppColors.cyan, size: 20),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              endDate != null
-                                  ? 'Until ${endDate!.day}/${endDate!.month}/${endDate!.year}'
-                                  : 'Select end date',
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: endDate != null ? textColor : textMuted,
-                              ),
-                            ),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  // Add button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(
+                          sheetContext,
+                          _AvoidOptions(
+                            reason: reason.trim().isEmpty ? null : reason.trim(),
+                            isTemporary: isTemporary,
+                            endDate: endDate,
                           ),
-                          Icon(Icons.chevron_right, color: textMuted),
-                        ],
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.cyan,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Add to Avoid List',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
+                  SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
                 ],
-                const SizedBox(height: 24),
-                // Add button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isAdding || exerciseName.trim().isEmpty
-                        ? null
-                        : () => _addExercise(
-                              context,
-                              userId,
-                              exerciseName.trim(),
-                              reason.trim().isEmpty ? null : reason.trim(),
-                              isTemporary,
-                              endDate,
-                            ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.cyan,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _isAdding
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Add to Avoid List',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                  ),
-                ),
-                SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
-              ],
+              ),
             ),
           ),
         ),
@@ -407,7 +394,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
   }
 
   Future<void> _addExercise(
-    BuildContext sheetContext,
+    BuildContext parentContext,
     String userId,
     String exerciseName,
     String? reason,
@@ -418,13 +405,10 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
     HapticService.light();
 
     try {
-      // Pop the add sheet first
-      if (mounted) Navigator.pop(sheetContext);
+      // Show the choice sheet using the scaffold context
+      final regenerateNow = await _showAvoidChoiceSheet(parentContext);
 
-      // Show the choice sheet using the scaffold context (not the popped sheet context)
-      final regenerateNow = await _showAvoidChoiceSheet(context);
-
-      // User dismissed or cancelled -> show discard confirmation
+      // User dismissed or cancelled
       if (regenerateNow == null) {
         return;
       }
@@ -476,33 +460,16 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    final result = await showModalBottomSheet<bool>(
+    final result = await showGlassSheet<bool>(
       context: context,
       isDismissible: false,
       enableDrag: false,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => Container(
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+      builder: (sheetContext) => GlassSheet(
+        padding: const EdgeInsets.all(24),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
+          child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Handle
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: textMuted.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 24),
                 Text(
                   'When should this apply?',
                   style: TextStyle(
@@ -553,7 +520,6 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
             ),
           ),
         ),
-      ),
     );
 
     return result;
@@ -864,16 +830,13 @@ class _AvoidedExerciseCard extends ConsumerWidget {
 
   void _showSubstitutesSheet(BuildContext context, WidgetRef ref) {
     HapticService.light();
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _SubstitutesSheet(
+      builder: (context) => GlassSheet(child: _SubstitutesSheet(
         exerciseName: exercise.exerciseName,
         reason: exercise.reason,
         isDark: isDark,
-      ),
+      )),
     );
   }
 }
@@ -935,29 +898,9 @@ class _SubstitutesSheetState extends ConsumerState<_SubstitutesSheet> {
     final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevatedColor = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.75,
-      ),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
+    return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
           // Header
           Padding(
             padding: const EdgeInsets.all(20),
@@ -1166,7 +1109,19 @@ class _SubstitutesSheetState extends ConsumerState<_SubstitutesSheet> {
             ),
           SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
         ],
-      ),
     );
   }
+}
+
+/// Options collected from the avoid options sheet
+class _AvoidOptions {
+  final String? reason;
+  final bool isTemporary;
+  final DateTime? endDate;
+
+  const _AvoidOptions({
+    this.reason,
+    this.isTemporary = false,
+    this.endDate,
+  });
 }

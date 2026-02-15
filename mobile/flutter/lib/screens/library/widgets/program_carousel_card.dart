@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/models/branded_program.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../components/coming_soon_bottom_sheet.dart';
 
 /// Compact card for horizontal carousel display
@@ -60,11 +61,8 @@ class ProgramCarouselCard extends StatelessWidget {
   }
 
   void _handleTap(BuildContext context) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => ComingSoonBottomSheet(program: program),
     );
   }

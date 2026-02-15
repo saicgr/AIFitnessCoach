@@ -1,18 +1,23 @@
 import 'dart:io';
-import 'dart:ui';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:go_router/go_router.dart';
-import 'package:health/health.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/measurements_repository.dart';
+import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
-import '../../data/services/health_service.dart';
+import '../../widgets/glass_back_button.dart';
+import '../../widgets/glass_sheet.dart';
+import '../settings/dialogs/export_dialog.dart';
 
 class MeasurementsScreen extends ConsumerStatefulWidget {
   const MeasurementsScreen({super.key});
@@ -23,15 +28,18 @@ class MeasurementsScreen extends ConsumerStatefulWidget {
 
 class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
   MeasurementType _selectedType = MeasurementType.weight;
+  String _selectedGroup = 'Body Composition';
   String _selectedPeriod = '30d';
   bool _isMetric = true;
   bool _loadingTimedOut = false;
+  DateTimeRange? _customDateRange;
 
   final _periods = [
     {'label': '7D', 'value': '7d', 'days': 7},
     {'label': '30D', 'value': '30d', 'days': 30},
     {'label': '90D', 'value': '90d', 'days': 90},
     {'label': 'All', 'value': 'all', 'days': 365},
+    {'label': 'Custom', 'value': 'custom', 'days': 0},
   ];
 
   // Group measurement types by body part
@@ -81,8 +89,8 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
 
     final auth = ref.read(authStateProvider);
     if (auth.user != null) {
-      // Start a timeout timer - if loading takes more than 25 seconds, show timeout state
-      Future.delayed(const Duration(seconds: 25), () {
+      // Start a timeout timer - if loading takes more than 12 seconds, show timeout state
+      Future.delayed(const Duration(seconds: 12), () {
         if (mounted) {
           final state = ref.read(measurementsProvider);
           if (state.isLoading) {
@@ -136,6 +144,20 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                               ),
                             ),
                           ),
+                          // Export button
+                          GestureDetector(
+                            onTap: () => _showExportSheet(context),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: elevated,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: cardBorder),
+                              ),
+                              child: Icon(Icons.upload_outlined, color: cyan, size: 18),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
                           // Unit toggle
                           GestureDetector(
                             onTap: () => setState(() => _isMetric = !_isMetric),
@@ -168,12 +190,30 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                       child: Row(
                         children: _periods.map((period) {
                           final isSelected = _selectedPeriod == period['value'];
+                          final isCustom = period['value'] == 'custom';
                           return Expanded(
                             child: GestureDetector(
-                              onTap: () => setState(() => _selectedPeriod = period['value'] as String),
+                              onTap: () async {
+                                if (isCustom) {
+                                  final picked = await showDateRangePicker(
+                                    context: context,
+                                    firstDate: DateTime(2020),
+                                    lastDate: DateTime.now(),
+                                    initialDateRange: _customDateRange,
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      _customDateRange = picked;
+                                      _selectedPeriod = 'custom';
+                                    });
+                                  }
+                                } else {
+                                  setState(() => _selectedPeriod = period['value'] as String);
+                                }
+                              },
                               child: Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 4),
-                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                margin: const EdgeInsets.symmetric(horizontal: 3),
+                                padding: const EdgeInsets.symmetric(vertical: 8),
                                 decoration: BoxDecoration(
                                   color: isSelected ? cyan.withOpacity(0.2) : elevated,
                                   borderRadius: BorderRadius.circular(8),
@@ -182,14 +222,38 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                                   ),
                                 ),
                                 child: Center(
-                                  child: Text(
-                                    period['label'] as String,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                      color: isSelected ? cyan : textSecondary,
-                                    ),
-                                  ),
+                                  child: isCustom && isSelected && _customDateRange != null
+                                      ? Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              period['label'] as String,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: cyan,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              '${DateFormat('MMM d').format(_customDateRange!.start)} - ${DateFormat('MMM d').format(_customDateRange!.end)}',
+                                              style: TextStyle(
+                                                fontSize: 8,
+                                                color: cyan.withOpacity(0.8),
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        )
+                                      : Text(
+                                          period['label'] as String,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                            color: isSelected ? cyan : textSecondary,
+                                          ),
+                                        ),
                                 ),
                               ),
                             ),
@@ -197,13 +261,6 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                         }).toList(),
                       ),
                     ).animate().fadeIn(delay: 100.ms),
-                  ),
-
-                  // Health Connect sync card
-                  SliverToBoxAdapter(
-                    child: _HealthConnectCard(
-                      onSyncComplete: _loadMeasurements,
-                    ).animate().fadeIn(delay: 120.ms),
                   ),
 
                   // BMI & WHR Cards
@@ -330,17 +387,11 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
             Positioned(
               top: 8,
               left: 8,
-              child: _GlassmorphicButton(
+              child: GlassBackButton(
                 onTap: () {
                   HapticService.light();
                   Navigator.pop(context);
                 },
-                isDark: isDark,
-                child: Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: isDark ? Colors.white : Colors.black87,
-                  size: 18,
-                ),
               ),
             ),
           ],
@@ -860,6 +911,19 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
     );
   }
 
+  List<MeasurementType> _typesForGroup(String groupTitle) {
+    final group = _measurementGroups.firstWhere((g) => g['title'] == groupTitle);
+    return group['types'] as List<MeasurementType>;
+  }
+
+  String _groupForType(MeasurementType type) {
+    for (final group in _measurementGroups) {
+      final types = group['types'] as List<MeasurementType>;
+      if (types.contains(type)) return group['title'] as String;
+    }
+    return 'Body Composition';
+  }
+
   Widget _buildTypeSelector(
     MeasurementsState state, {
     required bool isDark,
@@ -869,57 +933,85 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
     required Color cardBorder,
     required Color cyan,
   }) {
-    return SizedBox(
-      height: 44,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: MeasurementType.values.length,
-        itemBuilder: (context, index) {
-          final type = MeasurementType.values[index];
-          final isSelected = _selectedType == type;
-          final hasData = state.historyByType[type]?.isNotEmpty ?? false;
-
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              onTap: () => setState(() => _selectedType = type),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isSelected ? cyan.withOpacity(0.2) : elevated,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected ? cyan : cardBorder,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      type.displayName,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        color: isSelected ? cyan : textSecondary,
-                      ),
-                    ),
-                    if (hasData) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: cyan,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ],
-                  ],
+    final currentTypes = _typesForGroup(_selectedGroup);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          // Group dropdown
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: elevated,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: cardBorder),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedGroup,
+                  isExpanded: true,
+                  icon: Icon(Icons.keyboard_arrow_down, color: textMuted, size: 20),
+                  dropdownColor: elevated,
+                  style: TextStyle(fontSize: 13, color: textSecondary),
+                  items: _measurementGroups.map((group) {
+                    final title = group['title'] as String;
+                    return DropdownMenuItem(value: title, child: Text(title));
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    final types = _typesForGroup(value);
+                    setState(() {
+                      _selectedGroup = value;
+                      _selectedType = types.first;
+                    });
+                  },
                 ),
               ),
             ),
-          );
-        },
+          ),
+          const SizedBox(width: 8),
+          // Type dropdown
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: elevated,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: cyan),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<MeasurementType>(
+                  value: _selectedType,
+                  isExpanded: true,
+                  icon: Icon(Icons.keyboard_arrow_down, color: cyan, size: 20),
+                  dropdownColor: elevated,
+                  style: TextStyle(fontSize: 13, color: cyan, fontWeight: FontWeight.w600),
+                  items: currentTypes.map((type) {
+                    final hasData = state.historyByType[type]?.isNotEmpty ?? false;
+                    return DropdownMenuItem(
+                      value: type,
+                      child: Row(
+                        children: [
+                          Expanded(child: Text(type.displayName)),
+                          if (hasData)
+                            Container(
+                              width: 6, height: 6,
+                              decoration: BoxDecoration(color: cyan, shape: BoxShape.circle),
+                            ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() => _selectedType = value);
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1263,7 +1355,12 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
 
   List<MeasurementEntry> _filterByPeriod(List<MeasurementEntry> history) {
     if (_selectedPeriod == 'all') return history;
-
+    if (_selectedPeriod == 'custom' && _customDateRange != null) {
+      return history.where((e) =>
+        e.recordedAt.isAfter(_customDateRange!.start.subtract(const Duration(days: 1))) &&
+        e.recordedAt.isBefore(_customDateRange!.end.add(const Duration(days: 1)))
+      ).toList();
+    }
     final days = _periods.firstWhere((p) => p['value'] == _selectedPeriod)['days'] as int;
     final cutoff = DateTime.now().subtract(Duration(days: days));
     return history.where((e) => e.recordedAt.isAfter(cutoff)).toList();
@@ -1316,36 +1413,46 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
     }
   }
 
-  void _showAddMeasurementSheet(BuildContext context) {
-    showModalBottomSheet(
+  void _showExportSheet(BuildContext context) {
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _AddMeasurementSheet(
-        selectedType: _selectedType,
-        isMetric: _isMetric,
-        onSubmit: (type, value, unit, notes) async {
-          final auth = ref.read(authStateProvider);
-          if (auth.user != null) {
-            final success = await ref.read(measurementsProvider.notifier).recordMeasurement(
-              userId: auth.user!.id,
-              type: type,
-              value: value,
-              unit: unit,
-              notes: notes,
-            );
-            if (success && mounted) {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${type.displayName} recorded'),
-                  backgroundColor: AppColors.success,
-                ),
+      builder: (context) => GlassSheet(
+        child: _MeasurementsExportSheet(ref: ref),
+      ),
+    );
+  }
+
+  void _showAddMeasurementSheet(BuildContext context) {
+    showGlassSheet(
+      context: context,
+      useRootNavigator: true,
+      builder: (context) => GlassSheet(
+        child: _AddMeasurementSheet(
+          selectedType: _selectedType,
+          isMetric: _isMetric,
+          onSubmit: (type, value, unit, notes) async {
+            final auth = ref.read(authStateProvider);
+            if (auth.user != null) {
+              final success = await ref.read(measurementsProvider.notifier).recordMeasurement(
+                userId: auth.user!.id,
+                type: type,
+                value: value,
+                unit: unit,
+                notes: notes,
               );
+              if (success && mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${type.displayName} recorded'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              }
             }
-          }
-        },
+          },
+        ),
       ),
     );
   }
@@ -1372,15 +1479,30 @@ class _AddMeasurementSheet extends StatefulWidget {
 
 class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
   late MeasurementType _selectedType;
+  late String _selectedGroup;
   late bool _isMetric;
   final _valueController = TextEditingController();
   final _notesController = TextEditingController();
   bool _isSubmitting = false;
 
+  String _groupForType(MeasurementType type) {
+    for (final group in _MeasurementsScreenState._measurementGroups) {
+      final types = group['types'] as List<MeasurementType>;
+      if (types.contains(type)) return group['title'] as String;
+    }
+    return 'Body Composition';
+  }
+
+  List<MeasurementType> _typesForGroup(String groupTitle) {
+    final group = _MeasurementsScreenState._measurementGroups.firstWhere((g) => g['title'] == groupTitle);
+    return group['types'] as List<MeasurementType>;
+  }
+
   @override
   void initState() {
     super.initState();
     _selectedType = widget.selectedType;
+    _selectedGroup = _groupForType(widget.selectedType);
     _isMetric = widget.isMetric;
   }
 
@@ -1401,13 +1523,9 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final unit = _isMetric ? _selectedType.metricUnit : _selectedType.imperialUnit;
 
-    return Container(
+    return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -1415,19 +1533,6 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
             // Title
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1474,40 +1579,70 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
               ),
             ),
             const SizedBox(height: 8),
-            SizedBox(
-              height: 40,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: MeasurementType.values.length,
-                itemBuilder: (context, index) {
-                  final type = MeasurementType.values[index];
-                  final isSelected = _selectedType == type;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: GestureDetector(
-                      onTap: () => setState(() => _selectedType = type),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: isSelected ? cyan.withOpacity(0.2) : elevated,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isSelected ? cyan : cardBorder,
-                          ),
-                        ),
-                        child: Text(
-                          type.displayName,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                            color: isSelected ? cyan : textMuted,
-                          ),
-                        ),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: elevated,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: cardBorder),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedGroup,
+                        isExpanded: true,
+                        icon: Icon(Icons.keyboard_arrow_down, color: textMuted, size: 20),
+                        dropdownColor: elevated,
+                        style: TextStyle(fontSize: 13, color: textMuted),
+                        items: _MeasurementsScreenState._measurementGroups.map((group) {
+                          final title = group['title'] as String;
+                          return DropdownMenuItem(value: title, child: Text(title));
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          final types = _typesForGroup(value);
+                          setState(() {
+                            _selectedGroup = value;
+                            _selectedType = types.first;
+                          });
+                        },
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: elevated,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: cyan),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<MeasurementType>(
+                        value: _selectedType,
+                        isExpanded: true,
+                        icon: Icon(Icons.keyboard_arrow_down, color: cyan, size: 20),
+                        dropdownColor: elevated,
+                        style: TextStyle(fontSize: 13, color: cyan, fontWeight: FontWeight.w600),
+                        items: _typesForGroup(_selectedGroup).map((type) {
+                          return DropdownMenuItem(
+                            value: type,
+                            child: Text(type.displayName),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setState(() => _selectedType = value);
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 20),
 
@@ -1659,505 +1794,538 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Health Connect Sync Card
+// Measurements Export Sheet
 // ─────────────────────────────────────────────────────────────────
 
-class _HealthConnectCard extends ConsumerStatefulWidget {
-  final VoidCallback? onSyncComplete;
+class _MeasurementsExportSheet extends StatefulWidget {
+  final WidgetRef ref;
 
-  const _HealthConnectCard({this.onSyncComplete});
+  const _MeasurementsExportSheet({required this.ref});
 
   @override
-  ConsumerState<_HealthConnectCard> createState() => _HealthConnectCardState();
+  State<_MeasurementsExportSheet> createState() => _MeasurementsExportSheetState();
 }
 
-class _HealthConnectCardState extends ConsumerState<_HealthConnectCard> {
-  bool _isExpanded = false;
-  bool _isAvailable = false;
-  bool _checkingAvailability = true;
+class _MeasurementsExportSheetState extends State<_MeasurementsExportSheet> {
+  String _selectedFormat = 'csv';
+  DateTime? _startDate;
+  DateTime? _endDate;
+  final Set<String> _selectedTypes = {
+    'weight', 'body_fat', 'chest', 'waist', 'hips', 'neck', 'shoulders',
+    'biceps_left', 'biceps_right', 'forearm_left', 'forearm_right',
+    'thigh_left', 'thigh_right', 'calf_left', 'calf_right',
+  };
 
-  @override
-  void initState() {
-    super.initState();
-    _checkAvailability();
-  }
+  static const _formats = [
+    {'label': 'CSV', 'value': 'csv'},
+    {'label': 'JSON', 'value': 'json'},
+    {'label': 'Excel', 'value': 'xlsx'},
+    {'label': 'Parquet', 'value': 'parquet'},
+  ];
 
-  Future<void> _checkAvailability() async {
-    final healthService = ref.read(healthServiceProvider);
-    final available = await healthService.isHealthConnectAvailable();
-    if (mounted) {
-      setState(() {
-        _isAvailable = available;
-        _checkingAvailability = false;
-      });
-    }
-  }
+  static const _allTypes = [
+    {'key': 'weight', 'label': 'Weight'},
+    {'key': 'body_fat', 'label': 'Body Fat'},
+    {'key': 'chest', 'label': 'Chest'},
+    {'key': 'waist', 'label': 'Waist'},
+    {'key': 'hips', 'label': 'Hips'},
+    {'key': 'neck', 'label': 'Neck'},
+    {'key': 'shoulders', 'label': 'Shoulders'},
+    {'key': 'biceps_left', 'label': 'Biceps L'},
+    {'key': 'biceps_right', 'label': 'Biceps R'},
+    {'key': 'forearm_left', 'label': 'Forearm L'},
+    {'key': 'forearm_right', 'label': 'Forearm R'},
+    {'key': 'thigh_left', 'label': 'Thigh L'},
+    {'key': 'thigh_right', 'label': 'Thigh R'},
+    {'key': 'calf_left', 'label': 'Calf L'},
+    {'key': 'calf_right', 'label': 'Calf R'},
+  ];
+
+  bool get _allSelected => _selectedTypes.length == _allTypes.length;
 
   @override
   Widget build(BuildContext context) {
-    final healthSyncState = ref.watch(healthSyncProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
-    // Use different colors for Samsung Health (green) vs Apple Health (red)
-    final healthColor = Platform.isAndroid ? AppColors.success : AppColors.error;
-    final healthName = Platform.isAndroid ? 'Samsung Health' : 'Apple Health';
-    final healthIcon = Platform.isAndroid ? Icons.watch : Icons.favorite;
-
-    if (_checkingAvailability) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: SizedBox(height: 60),
-      );
-    }
-
-    if (!_isAvailable) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: elevated,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: cardBorder),
-          ),
-          child: Row(
-            children: [
-              Icon(healthIcon, color: textMuted, size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  Platform.isAndroid
-                      ? 'Health Connect not available. Install from Play Store.'
-                      : 'HealthKit not available on this device.',
-                  style: TextStyle(fontSize: 12, color: textMuted),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              healthColor.withValues(alpha: 0.15),
-              healthColor.withValues(alpha: 0.05),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title
+            Row(
+              children: [
+                Icon(Icons.upload_outlined, color: cyan, size: 22),
+              const SizedBox(width: 10),
+              Text(
+                'Export Measurements',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: textPrimary,
+                ),
+              ),
             ],
           ),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: healthColor.withValues(alpha: 0.3)),
-        ),
-        child: Column(
-          children: [
-            // Header (always visible)
-            InkWell(
-              onTap: () => setState(() => _isExpanded = !_isExpanded),
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: healthColor.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(healthIcon, color: healthColor, size: 20),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            healthName,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: textPrimary,
-                            ),
-                          ),
-                          Text(
-                            healthSyncState.isConnected
-                                ? healthSyncState.lastSyncTime != null
-                                    ? 'Last sync: ${_formatSyncTime(healthSyncState.lastSyncTime!)}'
-                                    : 'Connected'
-                                : 'Tap to connect',
-                            style: TextStyle(fontSize: 11, color: textMuted),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (healthSyncState.isSyncing)
-                      SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: healthColor,
-                        ),
-                      )
-                    else if (healthSyncState.isConnected)
-                      Icon(Icons.check_circle, color: healthColor, size: 20)
-                    else
-                      Icon(Icons.add_circle_outline, color: healthColor, size: 20),
-                    const SizedBox(width: 8),
-                    Icon(
-                      _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                      color: textMuted,
-                      size: 20,
-                    ),
-                  ],
+          const SizedBox(height: 20),
+
+          // Format label with info button
+          Row(
+            children: [
+              Text(
+                'Format',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
                 ),
               ),
-            ),
+              const SizedBox(width: 6),
+              GestureDetector(
+                onTap: () => _showFormatInfoDialog(context),
+                child: Icon(Icons.info_outline, size: 16, color: textMuted),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
 
-            // Expanded content
-            AnimatedCrossFade(
-              firstChild: const SizedBox.shrink(),
-              secondChild: Container(
-                padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Divider(color: healthColor.withValues(alpha: 0.2)),
-                    const SizedBox(height: 8),
+          // Format chips
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _formats.map((fmt) {
+              final isSelected = _selectedFormat == fmt['value'];
+              return ChoiceChip(
+                label: Text(fmt['label']!),
+                selected: isSelected,
+                onSelected: (_) => setState(() => _selectedFormat = fmt['value']!),
+                selectedColor: cyan.withOpacity(0.2),
+                backgroundColor: elevated,
+                side: BorderSide(color: isSelected ? cyan : cardBorder),
+                labelStyle: TextStyle(
+                  color: isSelected ? cyan : textSecondary,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 13,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
 
-                    // Info text
-                    Text(
-                      Platform.isAndroid
-                          ? 'Sync weight, body fat, and heart rate from your Samsung watch via Health Connect.'
-                          : 'Sync weight, body fat, and heart rate from Apple Health.',
-                      style: TextStyle(fontSize: 12, color: textSecondary),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Supported data types
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        _DataTypeChip(label: 'Weight', color: healthColor),
-                        _DataTypeChip(label: 'Body Fat', color: healthColor),
-                        _DataTypeChip(label: 'Heart Rate', color: healthColor),
-                        _DataTypeChip(label: 'Steps', color: healthColor),
-                        _DataTypeChip(label: 'BMI', color: healthColor),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Sync buttons
-                    if (healthSyncState.isConnected) ...[
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: healthSyncState.isSyncing ? null : () => _sync(30),
-                              icon: const Icon(Icons.sync, size: 18),
-                              label: const Text('Sync 30 Days'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: healthColor,
-                                side: BorderSide(color: healthColor),
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: healthSyncState.isSyncing ? null : () => _sync(90),
-                              icon: const Icon(Icons.history, size: 18),
-                              label: const Text('Sync 90 Days'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: healthColor,
-                                side: BorderSide(color: healthColor),
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Center(
-                        child: TextButton(
-                          onPressed: () => _disconnect(),
-                          child: Text(
-                            'Disconnect',
-                            style: TextStyle(color: textMuted, fontSize: 12),
-                          ),
-                        ),
-                      ),
-                    ] else
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: healthSyncState.isSyncing ? null : () => _connect(),
-                          icon: const Icon(Icons.link, size: 18),
-                          label: Text('Connect to $healthName'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: healthColor,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                    // Error message
-                    if (healthSyncState.error != null) ...[
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.error.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.error_outline, color: AppColors.error, size: 16),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                healthSyncState.error!,
-                                style: const TextStyle(fontSize: 11, color: AppColors.error),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-
-                    // Sync result
-                    if (healthSyncState.syncedCount != null && healthSyncState.syncedCount! > 0) ...[
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.success.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.check_circle, color: AppColors.success, size: 16),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Synced ${healthSyncState.syncedCount} measurements',
-                                style: const TextStyle(fontSize: 11, color: AppColors.success),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
+          // Date range filter
+          Row(
+            children: [
+              Text(
+                'Date Range',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
                 ),
               ),
-              crossFadeState: _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-              duration: const Duration(milliseconds: 200),
-            ),
-          ],
+              const Spacer(),
+              if (_startDate != null || _endDate != null)
+                GestureDetector(
+                  onTap: () => setState(() { _startDate = null; _endDate = null; }),
+                  child: Text('Clear', style: TextStyle(fontSize: 12, color: cyan)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _startDate ?? DateTime.now().subtract(const Duration(days: 30)),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now(),
+                    );
+                    if (picked != null) setState(() => _startDate = picked);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: elevated,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: cardBorder),
+                    ),
+                    child: Text(
+                      _startDate != null ? DateFormat('MMM d, y').format(_startDate!) : 'Start date',
+                      style: TextStyle(fontSize: 13, color: _startDate != null ? textPrimary : textMuted),
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text('to', style: TextStyle(color: textMuted, fontSize: 12)),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _endDate ?? DateTime.now(),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now(),
+                    );
+                    if (picked != null) setState(() => _endDate = picked);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: elevated,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: cardBorder),
+                    ),
+                    child: Text(
+                      _endDate != null ? DateFormat('MMM d, y').format(_endDate!) : 'End date',
+                      style: TextStyle(fontSize: 13, color: _endDate != null ? textPrimary : textMuted),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Measurement types filter
+          Row(
+            children: [
+              Text(
+                'Measurements',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (_allSelected) {
+                      _selectedTypes.clear();
+                    } else {
+                      _selectedTypes.addAll(_allTypes.map((t) => t['key']!));
+                    }
+                  });
+                },
+                child: Text(
+                  _allSelected ? 'Deselect All' : 'Select All',
+                  style: TextStyle(fontSize: 12, color: cyan),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: _allTypes.map((t) {
+              final key = t['key']!;
+              final isSelected = _selectedTypes.contains(key);
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (isSelected) {
+                      _selectedTypes.remove(key);
+                    } else {
+                      _selectedTypes.add(key);
+                    }
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isSelected ? cyan.withOpacity(0.15) : elevated,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: isSelected ? cyan : cardBorder),
+                  ),
+                  child: Text(
+                    t['label']!,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      color: isSelected ? cyan : textMuted,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 20),
+
+          // Option 1: Measurements Only
+          _ExportOptionTile(
+            icon: Icons.straighten,
+            title: 'Measurements Only',
+            subtitle: _selectedTypes.isEmpty
+                ? 'Select at least one measurement type'
+                : 'Export ${_allSelected ? "all" : "${_selectedTypes.length}"} measurement types as .$_selectedFormat',
+            iconColor: _selectedTypes.isEmpty ? textMuted : cyan,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+            elevated: elevated,
+            cardBorder: cardBorder,
+            onTap: _selectedTypes.isEmpty ? () {} : () => _exportMeasurements(context),
+          ),
+          const SizedBox(height: 10),
+
+          // Option 2: Export All Data
+          _ExportOptionTile(
+            icon: Icons.cloud_download_outlined,
+            title: 'Export All Data',
+            subtitle: 'Workouts, nutrition, measurements & more',
+            iconColor: cyan,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+            elevated: elevated,
+            cardBorder: cardBorder,
+            onTap: () {
+              Navigator.pop(context);
+              showExportDialog(context, widget.ref);
+            },
+          ),
+        ],
         ),
       ),
     );
   }
 
-  String _formatSyncTime(DateTime time) {
-    final now = DateTime.now();
-    final diff = now.difference(time);
+  void _showFormatInfoDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays == 1) return 'Yesterday';
-    return DateFormat('MMM d').format(time);
-  }
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.pureWhite,
+        title: Text('Export Info', style: TextStyle(color: textPrimary)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Columns section
+              Text('Exported Columns', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: cyan)),
+              const SizedBox(height: 6),
+              _columnInfoRow('date', 'When the measurement was recorded', textPrimary, textSecondary),
+              _columnInfoRow('type', 'Measurement type (weight, waist, etc.)', textPrimary, textSecondary),
+              _columnInfoRow('value', 'The recorded value', textPrimary, textSecondary),
+              _columnInfoRow('unit', 'Unit of measurement (kg, %, cm)', textPrimary, textSecondary),
+              _columnInfoRow('notes', 'Optional notes for the entry', textPrimary, textSecondary),
+              const SizedBox(height: 14),
 
-  Future<void> _connect() async {
-    final notifier = ref.read(healthSyncProvider.notifier);
+              // Available types
+              Text('Available Measurement Types', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: cyan)),
+              const SizedBox(height: 6),
+              Text(
+                'weight, body_fat, chest, waist, hips, neck, shoulders, biceps_left, biceps_right, forearm_left, forearm_right, thigh_left, thigh_right, calf_left, calf_right',
+                style: TextStyle(fontSize: 11, color: textMuted, height: 1.5),
+              ),
+              const SizedBox(height: 14),
 
-    // Check availability first
-    final available = await notifier.checkAvailability();
-    if (!available && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            Platform.isAndroid
-                ? 'Health Connect is not available. Please install it from the Play Store.'
-                : 'Apple Health is not available on this device.',
+              // Formats section
+              Text('Formats', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: cyan)),
+              const SizedBox(height: 6),
+              _formatInfoRow('CSV', 'Opens in Excel, Google Sheets, any spreadsheet app', textPrimary, textSecondary),
+              const SizedBox(height: 8),
+              _formatInfoRow('JSON', 'Structured data. Best for developers or importing into other apps', textPrimary, textSecondary),
+              const SizedBox(height: 8),
+              _formatInfoRow('Excel', 'Native .xlsx workbook. Opens directly in Excel', textPrimary, textSecondary),
+              const SizedBox(height: 8),
+              _formatInfoRow('Parquet', 'Columnar storage. Compact for large datasets. Used in Python/Pandas, R, Spark', textPrimary, textSecondary),
+            ],
           ),
-          backgroundColor: AppColors.error,
-          duration: const Duration(seconds: 5),
         ),
-      );
-      return;
-    }
-
-    final connected = await notifier.connect();
-    if (connected && mounted) {
-      // Auto-sync after connecting
-      await _sync(30);
-    } else if (mounted) {
-      // Show helpful message about granting permissions manually
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            Platform.isAndroid
-                ? 'Please open Health Connect and grant permissions for FitWiz'
-                : 'Please open Health settings and grant permissions for FitWiz',
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Got it', style: TextStyle(color: cyan)),
           ),
-          backgroundColor: AppColors.orange,
-          duration: const Duration(seconds: 6),
-        ),
-      );
-    }
+        ],
+      ),
+    );
   }
 
-  Future<void> _disconnect() async {
-    await ref.read(healthSyncProvider.notifier).disconnect();
+  Widget _columnInfoRow(String name, String desc, Color titleColor, Color descColor) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 50,
+            child: Text(name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: titleColor, fontFamily: 'monospace')),
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: Text(desc, style: TextStyle(fontSize: 11, color: descColor))),
+        ],
+      ),
+    );
   }
 
-  Future<void> _sync(int days) async {
-    final data = await ref.read(healthSyncProvider.notifier).syncMeasurements(days: days);
-
-    if (data.isNotEmpty && mounted) {
-      // Import the data to our app's measurements
-      await _importHealthData(data);
-      widget.onSyncComplete?.call();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Synced ${data.length} measurements from Health Connect'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-    }
+  Widget _formatInfoRow(String name, String desc, Color titleColor, Color descColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: titleColor)),
+        const SizedBox(height: 2),
+        Text(desc, style: TextStyle(fontSize: 12, color: descColor)),
+      ],
+    );
   }
 
-  Future<void> _importHealthData(List<HealthDataPoint> data) async {
-    final auth = ref.read(authStateProvider);
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _exportMeasurements(BuildContext context) async {
+    final auth = widget.ref.read(authStateProvider);
     if (auth.user == null) return;
 
-    final measurementsNotifier = ref.read(measurementsProvider.notifier);
+    final userId = auth.user!.id;
+    final apiClient = widget.ref.read(apiClientProvider);
 
-    for (final point in data) {
-      // Map Health Connect type to our measurement type
-      MeasurementType? measurementType;
-      double value = (point.value as NumericHealthValue).numericValue.toDouble();
-      String unit = 'kg';
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
 
-      switch (point.type) {
-        case HealthDataType.WEIGHT:
-          measurementType = MeasurementType.weight;
-          unit = 'kg';
-          break;
-        case HealthDataType.BODY_FAT_PERCENTAGE:
-          measurementType = MeasurementType.bodyFat;
-          unit = '%';
-          break;
-        case HealthDataType.HEIGHT:
-          // Height comes in meters, we store in cm
-          value = value * 100;
-          unit = 'cm';
-          break;
-        default:
-          // Skip unsupported types
-          continue;
+    try {
+      final queryParams = <String, String>{
+        'format': _selectedFormat,
+      };
+      if (_startDate != null) queryParams['start_date'] = _formatDate(_startDate!);
+      if (_endDate != null) queryParams['end_date'] = _formatDate(_endDate!);
+      if (!_allSelected && _selectedTypes.isNotEmpty) {
+        queryParams['types'] = _selectedTypes.join(',');
       }
 
-      if (measurementType != null) {
-        await measurementsNotifier.recordMeasurement(
-          userId: auth.user!.id,
-          type: measurementType,
-          value: value,
-          unit: unit,
-          notes: 'Synced from ${Platform.isAndroid ? "Samsung Health" : "Apple Health"}',
+      final useBytes = _selectedFormat != 'json';
+      final response = await apiClient.dio.get(
+        '${ApiConstants.apiVersion}${ApiConstants.metrics}/body/export/$userId',
+        queryParameters: queryParams,
+        options: Options(
+          responseType: useBytes ? ResponseType.bytes : ResponseType.plain,
+        ),
+      );
+
+      final dir = await getTemporaryDirectory();
+      final ext = _selectedFormat == 'xlsx' ? 'xlsx' : _selectedFormat;
+      final file = File('${dir.path}/measurements.$ext');
+
+      if (useBytes) {
+        await file.writeAsBytes(response.data as List<int>);
+      } else {
+        await file.writeAsString(response.data as String);
+      }
+
+      // Dismiss loading
+      if (context.mounted) Navigator.pop(context);
+      // Dismiss export sheet
+      if (context.mounted) Navigator.pop(context);
+
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        subject: 'FitWiz Measurements Export',
+      );
+    } catch (e) {
+      // Dismiss loading
+      if (context.mounted) Navigator.pop(context);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Export failed: ${e is DioException ? e.message : e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     }
   }
 }
 
-class _DataTypeChip extends StatelessWidget {
-  final String label;
-  final Color color;
-
-  const _DataTypeChip({required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w500),
-      ),
-    );
-  }
-}
-
-/// Glassmorphic button with blur effect
-class _GlassmorphicButton extends StatelessWidget {
+class _ExportOptionTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color iconColor;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color elevated;
+  final Color cardBorder;
   final VoidCallback onTap;
-  final Widget child;
-  final bool isDark;
 
-  const _GlassmorphicButton({
+  const _ExportOptionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.iconColor,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.elevated,
+    required this.cardBorder,
     required this.onTap,
-    required this.child,
-    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
-    const size = 40.0;
     return GestureDetector(
       onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(size / 2),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : Colors.black.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(size / 2),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.15)
-                    : Colors.black.withValues(alpha: 0.08),
-                width: 1,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: iconColor, size: 24),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: textSecondary),
+                  ),
+                ],
               ),
             ),
-            child: Center(child: child),
-          ),
+            Icon(Icons.chevron_right, color: textSecondary, size: 20),
+          ],
         ),
       ),
     );

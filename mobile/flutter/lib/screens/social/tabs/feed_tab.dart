@@ -5,6 +5,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/providers/admin_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 import '../widgets/activity_card.dart';
 import '../widgets/empty_state.dart';
@@ -152,16 +153,17 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     HapticFeedback.mediumImpact();
     // Hide the floating nav bar when sheet opens
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
         initialChildSize: 0.85,
         minChildSize: 0.5,
         maxChildSize: 0.95,
         builder: (context, scrollController) => const CreatePostSheet(),
+      ),
       ),
     ).then((result) {
       // Show the floating nav bar again when sheet closes

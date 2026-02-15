@@ -1,11 +1,10 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/personal_goals_service.dart';
 import 'goal_history_chart.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Bottom sheet displaying goal history with a progress chart
 class GoalHistorySheet extends ConsumerStatefulWidget {
@@ -99,40 +98,11 @@ class _GoalHistorySheetState extends ConsumerState<GoalHistorySheet> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
+    return GlassSheet(
           child: SafeArea(
             child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle bar
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: cardBorder,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-
             // Header
             Padding(
               padding: const EdgeInsets.all(20),
@@ -226,8 +196,6 @@ class _GoalHistorySheetState extends ConsumerState<GoalHistorySheet> {
           ],
             ),
           ),
-        ),
-      ),
     );
   }
 
@@ -426,20 +394,25 @@ void showGoalHistorySheet(
   int? currentValue,
   int? personalBest,
 }) {
-  showModalBottomSheet(
+  showGlassSheet(
     context: context,
-    isScrollControlled: true,
     useRootNavigator: true,
-    backgroundColor: Colors.transparent,
+    initialChildSize: 0.85,
+    minChildSize: 0.5,
+    maxChildSize: 0.95,
     builder: (context) => DraggableScrollableSheet(
       initialChildSize: 0.85,
       minChildSize: 0.5,
       maxChildSize: 0.95,
-      builder: (context, scrollController) => GoalHistorySheet(
-        exerciseName: exerciseName,
-        goalType: goalType,
-        currentValue: currentValue,
-        personalBest: personalBest,
+      expand: false,
+      builder: (context, scrollController) => GlassSheet(
+        showHandle: false,
+        child: GoalHistorySheet(
+          exerciseName: exerciseName,
+          goalType: goalType,
+          currentValue: currentValue,
+          personalBest: personalBest,
+        ),
       ),
     ),
   );

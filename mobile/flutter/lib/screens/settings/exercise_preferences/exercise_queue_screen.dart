@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/exercise_queue_provider.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
+import '../../../widgets/glass_back_button.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
 /// Screen for managing the exercise queue
@@ -64,10 +65,8 @@ class ExerciseQueueScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'Exercise Queue',
           style: TextStyle(

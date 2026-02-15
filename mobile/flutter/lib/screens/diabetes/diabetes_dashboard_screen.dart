@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_sheet.dart';
 
 // ============================================
 // Diabetes Data Models
@@ -771,37 +772,21 @@ class _DiabetesDashboardScreenState
 
     HapticService.light();
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+      builder: (context) => GlassSheet(
+        child: Padding(
         padding: EdgeInsets.fromLTRB(
           16,
           16,
           16,
           MediaQuery.of(context).viewInsets.bottom + 16,
         ),
-        decoration: BoxDecoration(
-          color: nearBlack,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
             Row(
               children: [
                 Container(
@@ -909,6 +894,7 @@ class _DiabetesDashboardScreenState
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -924,38 +910,22 @@ class _DiabetesDashboardScreenState
 
     HapticService.light();
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setSheetState) => Container(
+      builder: (context) => GlassSheet(
+        child: StatefulBuilder(
+        builder: (context, setSheetState) => Padding(
           padding: EdgeInsets.fromLTRB(
             16,
             16,
             16,
             MediaQuery.of(context).viewInsets.bottom + 16,
           ),
-          decoration: BoxDecoration(
-            color: nearBlack,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: textMuted,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
               Row(
                 children: [
                   Container(
@@ -1105,6 +1075,7 @@ class _DiabetesDashboardScreenState
             ],
           ),
         ),
+      ),
       ),
     );
   }

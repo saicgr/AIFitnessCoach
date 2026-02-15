@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/recipe_suggestion.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Card widget for displaying a recipe suggestion
 class RecipeSuggestionCard extends StatelessWidget {
@@ -288,32 +289,20 @@ class RecipeSuggestionCard extends StatelessWidget {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final accent = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: background,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.9,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => Column(
-          children: [
-            // Handle
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textSecondary.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            // Content
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        maxHeightFraction: 0.95,
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.9,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) => Column(
+            children: [
+              const SizedBox(height: 12),
+              // Content
             Expanded(
               child: ListView(
                 controller: scrollController,
@@ -514,6 +503,7 @@ class RecipeSuggestionCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

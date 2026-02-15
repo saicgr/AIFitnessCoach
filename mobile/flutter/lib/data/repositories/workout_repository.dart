@@ -11,6 +11,7 @@ import '../models/mood.dart';
 import '../models/today_workout.dart';
 import '../models/workout_generation_params.dart';
 import '../models/parsed_exercise.dart';
+import '../models/workout_screen_summary.dart';
 import '../services/api_client.dart';
 import 'auth_repository.dart';
 
@@ -34,6 +35,11 @@ final workoutRepositoryProvider = Provider<WorkoutRepository>((ref) {
 /// This allows the home screen to show a loading indicator
 final aiGeneratingWorkoutProvider = StateProvider<bool>((ref) => false);
 
+/// Session-scoped provider tracking user's comeback mode choice.
+/// null = not yet asked, true = skip comeback (full workout), false = use comeback mode.
+/// Resets on app restart.
+final comebackChoiceProvider = StateProvider<bool?>((ref) => null);
+
 /// Session-level flag to prevent redundant regeneration checks
 /// Resets when app restarts - prevents expensive API calls on every Home tab switch
 final hasCheckedRegenerationProvider = StateProvider<bool>((ref) => false);
@@ -41,6 +47,49 @@ final hasCheckedRegenerationProvider = StateProvider<bool>((ref) => false);
 /// In-memory cache for instant display on provider recreation
 /// Survives provider invalidation and prevents loading flash
 List<Workout>? _workoutsInMemoryCache;
+
+/// In-memory cache for workout screen summary
+WorkoutScreenSummary? _screenSummaryInMemoryCache;
+
+/// Lightweight workout screen summary provider
+/// Uses cache-first pattern: returns cached data instantly, refreshes in background
+final workoutScreenSummaryProvider =
+    FutureProvider<WorkoutScreenSummary?>((ref) async {
+  // Return cached data instantly if available
+  if (_screenSummaryInMemoryCache != null) {
+    // Still refresh in background
+    _refreshScreenSummaryInBackground(ref);
+    return _screenSummaryInMemoryCache;
+  }
+
+  final repository = ref.watch(workoutRepositoryProvider);
+  final authState = ref.watch(authStateProvider);
+  final userId = authState.user?.id;
+  if (userId == null) return null;
+
+  try {
+    final summary = await repository.getWorkoutScreenSummary(userId);
+    _screenSummaryInMemoryCache = summary;
+    return summary;
+  } catch (e) {
+    debugPrint('❌ [WorkoutScreenSummary] Error: $e');
+    return _screenSummaryInMemoryCache;
+  }
+});
+
+void _refreshScreenSummaryInBackground(Ref ref) {
+  Future.microtask(() async {
+    try {
+      final repository = ref.read(workoutRepositoryProvider);
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+      if (userId == null) return;
+
+      final summary = await repository.getWorkoutScreenSummary(userId);
+      _screenSummaryInMemoryCache = summary;
+    } catch (_) {}
+  });
+}
 
 /// Workouts state provider
 final workoutsProvider =
@@ -107,6 +156,29 @@ class WorkoutRepository {
       return [];
     } catch (e) {
       debugPrint('❌ [Workout] Error fetching workouts: $e');
+      rethrow;
+    }
+  }
+
+  /// Get lightweight workout screen summary
+  Future<WorkoutScreenSummary> getWorkoutScreenSummary(String userId) async {
+    try {
+      debugPrint('🔍 [Workout] Fetching screen summary for user: $userId');
+      final response = await _apiClient.get(
+        '${ApiConstants.workouts}/screen-summary',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200) {
+        final summary = WorkoutScreenSummary.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+        debugPrint('✅ [Workout] Screen summary: ${summary.completedThisWeek}/${summary.plannedThisWeek} this week');
+        return summary;
+      }
+      throw Exception('Failed to fetch screen summary: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Workout] Error fetching screen summary: $e');
       rethrow;
     }
   }
@@ -392,6 +464,7 @@ class WorkoutRepository {
     int? durationMinutesMax,
     List<String>? focusAreas,
     String? scheduledDate,  // YYYY-MM-DD format for specific date generation
+    bool? skipComeback,
   }) async* {
     debugPrint('🚀 [Workout] Starting streaming workout generation for $userId');
     final startTime = DateTime.now();
@@ -434,6 +507,7 @@ class WorkoutRepository {
           if (durationMinutesMax != null) 'duration_minutes_max': durationMinutesMax,
           if (focusAreas != null && focusAreas.isNotEmpty) 'focus_areas': focusAreas,
           if (scheduledDate != null) 'scheduled_date': scheduledDate,
+          if (skipComeback != null) 'skip_comeback': skipComeback,
         },
         options: Options(
           responseType: ResponseType.stream,
@@ -1119,6 +1193,16 @@ class WorkoutRepository {
       debugPrint('❌ [Workout] Error deleting workout: $e');
       return false;
     }
+  }
+
+  /// Toggle the favorite status of a workout
+  Future<bool> toggleWorkoutFavorite(String workoutId) async {
+    final userId = await getCurrentUserId();
+    final response = await _apiClient.patch(
+      '${ApiConstants.workouts}/$workoutId/favorite',
+      queryParameters: {'user_id': userId},
+    );
+    return response.data['is_favorite'] as bool;
   }
 
   /// Get today's workout for quick start widget
@@ -2931,6 +3015,114 @@ class WorkoutRepository {
       debugPrint('⚠️ [Superset] Failed to log supersets: $e');
     }
   }
+
+  /// Mark a workout as done (quick mark, no set tracking)
+  /// Sends completion_method: 'marked_done' to differentiate from tracked completion
+  Future<WorkoutCompletionResponse?> markWorkoutAsDone(String workoutId) async {
+    // Optimistic update: mark workout as completed in the in-memory cache immediately
+    List<Workout>? previousCache;
+    if (_workoutsInMemoryCache != null) {
+      previousCache = List<Workout>.from(_workoutsInMemoryCache!);
+      _workoutsInMemoryCache = _workoutsInMemoryCache!.map((w) {
+        if (w.id == workoutId) {
+          return w.copyWith(isCompleted: true, completionMethod: 'marked_done');
+        }
+        return w;
+      }).toList();
+      debugPrint('⚡ [Workout] Optimistic update: marked $workoutId as done in cache');
+    }
+
+    try {
+      debugPrint('🏋️ [Workout] Marking workout as done: $workoutId');
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/$workoutId/complete',
+        queryParameters: {'completion_method': 'marked_done'},
+      );
+      if (response.statusCode == 200) {
+        final completionResponse = WorkoutCompletionResponse.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+        debugPrint('✅ [Workout] Workout marked as done: ${completionResponse.message}');
+        return completionResponse;
+      }
+      // Non-200 response: rollback optimistic update
+      if (previousCache != null) {
+        _workoutsInMemoryCache = previousCache;
+        debugPrint('⚠️ [Workout] Rolled back optimistic update (non-200 response)');
+      }
+      return null;
+    } catch (e) {
+      // Error: rollback optimistic update
+      if (previousCache != null) {
+        _workoutsInMemoryCache = previousCache;
+        debugPrint('⚠️ [Workout] Rolled back optimistic update after error: $e');
+      }
+      debugPrint('❌ [Workout] Error marking workout as done: $e');
+      rethrow;
+    }
+  }
+
+  /// Undo a workout completion (mark as incomplete)
+  Future<bool> uncompleteWorkout(String workoutId) async {
+    // Optimistic update: mark workout as incomplete in cache
+    List<Workout>? previousCache;
+    if (_workoutsInMemoryCache != null) {
+      previousCache = List<Workout>.from(_workoutsInMemoryCache!);
+      _workoutsInMemoryCache = _workoutsInMemoryCache!.map((w) {
+        if (w.id == workoutId) {
+          return w.copyWith(isCompleted: false);
+        }
+        return w;
+      }).toList();
+      debugPrint('⚡ [Workout] Optimistic update: marked $workoutId as incomplete in cache');
+    }
+
+    try {
+      debugPrint('🏋️ [Workout] Uncompleting workout: $workoutId');
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/$workoutId/uncomplete',
+      );
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Workout uncompleted successfully');
+        return true;
+      }
+      // Non-200 response: rollback
+      if (previousCache != null) {
+        _workoutsInMemoryCache = previousCache;
+        debugPrint('⚠️ [Workout] Rolled back uncomplete optimistic update (non-200)');
+      }
+      return false;
+    } catch (e) {
+      // Error: rollback
+      if (previousCache != null) {
+        _workoutsInMemoryCache = previousCache;
+        debugPrint('⚠️ [Workout] Rolled back uncomplete optimistic update after error: $e');
+      }
+      debugPrint('❌ [Workout] Error uncompleting workout: $e');
+      rethrow;
+    }
+  }
+
+  /// Get completion summary for a completed workout (PRs, performance comparison, coach summary)
+  Future<WorkoutSummaryResponse?> getWorkoutCompletionSummary(String workoutId) async {
+    try {
+      debugPrint('🏋️ [Workout] Fetching completion summary for workout: $workoutId');
+      final response = await _apiClient.get(
+        '${ApiConstants.workouts}/$workoutId/completion-summary',
+      );
+      if (response.statusCode == 200) {
+        final summary = WorkoutSummaryResponse.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+        debugPrint('✅ [Workout] Completion summary fetched successfully');
+        return summary;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error fetching completion summary: $e');
+      rethrow;
+    }
+  }
 }
 
 /// Result of body part exclusion operation
@@ -3480,7 +3672,7 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
 
   /// Generate a workout for a specific date
   /// This is used when the user taps a placeholder card in the carousel
-  Future<Workout?> generateWorkoutForDate(DateTime date) async {
+  Future<Workout?> generateWorkoutForDate(DateTime date, {bool? skipComeback}) async {
     String? userId = _userId;
     if (userId == null || userId.isEmpty) {
       userId = await _apiClient.getUserId();
@@ -3498,6 +3690,7 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
       await for (final progress in _repository.generateWorkoutStreaming(
         userId: userId,
         scheduledDate: scheduledDate,
+        skipComeback: skipComeback,
       )) {
         if (progress.status == WorkoutGenerationStatus.completed && progress.workout != null) {
           generatedWorkout = progress.workout;

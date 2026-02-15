@@ -8,6 +8,7 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/comeback_mode_sheet.dart';
 import 'hero_workout_card.dart';
 import 'generate_workout_placeholder.dart';
 
@@ -86,11 +87,54 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   String _dateKey(DateTime date) =>
       '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
+  /// Minimum days since last completed workout to trigger comeback mode prompt.
+  static const int _comebackThresholdDays = 14;
+
+  /// Computes days since the most recent completed workout.
+  /// Returns null if no completed workouts are found.
+  int? _daysSinceLastCompletedWorkout() {
+    final workouts = ref.read(workoutsProvider).valueOrNull ?? [];
+    DateTime? latestCompleted;
+    for (final w in workouts) {
+      if (w.isCompleted != true) continue;
+      final dateKey = w.scheduledDateKey;
+      if (dateKey == null) continue;
+      try {
+        final parts = dateKey.split('-');
+        final d = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+        if (latestCompleted == null || d.isAfter(latestCompleted)) {
+          latestCompleted = d;
+        }
+      } catch (_) {}
+    }
+    if (latestCompleted == null) return null;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return today.difference(latestCompleted).inDays;
+  }
+
   Future<void> _handleGenerateWorkout(DateTime date) async {
     final key = _dateKey(date);
 
     // Clear permanent failure state if user manually taps retry
     _permanentlyFailed.remove(key);
+
+    // --- Comeback mode check ---
+    bool? skipComeback = ref.read(comebackChoiceProvider);
+    if (skipComeback == null) {
+      final daysSince = _daysSinceLastCompletedWorkout();
+      if (daysSince != null && daysSince >= _comebackThresholdDays && mounted) {
+        final choice = await showComebackModeSheet(context, daysSinceLastWorkout: daysSince);
+        if (!mounted) return;
+        if (choice == null) {
+          // User dismissed without choosing - don't generate
+          return;
+        }
+        // choice: true = skip comeback (full workout), false = use comeback mode
+        skipComeback = choice;
+        ref.read(comebackChoiceProvider.notifier).state = choice;
+      }
+    }
 
     setState(() {
       _generatingForDate = date;
@@ -118,6 +162,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
       await for (final progress in repository.generateWorkoutStreaming(
         userId: userId,
         scheduledDate: scheduledDate,
+        skipComeback: skipComeback,
       )) {
         if (!mounted) break;
 

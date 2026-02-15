@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/training_intensity_provider.dart';
 import '../../../data/models/training_intensity.dart';
+import '../../../widgets/glass_sheet.dart';
 
 // Import linked exercises types
 export '../../../data/models/training_intensity.dart' show LinkedExercise, ExerciseLinkSuggestion;
@@ -189,44 +190,44 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
   }
 
   void _showAddOneRMSheet(BuildContext context) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _AddEditOneRMSheet(
-        onSave: (exerciseName, weight, source) async {
-          final success = await ref.read(userOneRMsProvider.notifier).setOneRM(
-            exerciseName: exerciseName,
-            oneRepMaxKg: weight,
-            source: source,
-          );
-          if (success && mounted) {
-            Navigator.pop(context);
-          }
-        },
+      builder: (context) => GlassSheet(
+        child: _AddEditOneRMSheet(
+          onSave: (exerciseName, weight, source) async {
+            final success = await ref.read(userOneRMsProvider.notifier).setOneRM(
+              exerciseName: exerciseName,
+              oneRepMaxKg: weight,
+              source: source,
+            );
+            if (success && mounted) {
+              Navigator.pop(context);
+            }
+          },
+        ),
       ),
     );
   }
 
   void _showEditOneRMSheet(BuildContext context, UserExercise1RM oneRM) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _AddEditOneRMSheet(
-        existingOneRM: oneRM,
-        onSave: (exerciseName, weight, source) async {
-          final success = await ref.read(userOneRMsProvider.notifier).setOneRM(
-            exerciseName: exerciseName,
-            oneRepMaxKg: weight,
-            source: source,
-          );
-          if (success && mounted) {
-            Navigator.pop(context);
-          }
-        },
+      builder: (context) => GlassSheet(
+        child: _AddEditOneRMSheet(
+          existingOneRM: oneRM,
+          onSave: (exerciseName, weight, source) async {
+            final success = await ref.read(userOneRMsProvider.notifier).setOneRM(
+              exerciseName: exerciseName,
+              oneRepMaxKg: weight,
+              source: source,
+            );
+            if (success && mounted) {
+              Navigator.pop(context);
+            }
+          },
+        ),
       ),
     );
   }
@@ -503,14 +504,14 @@ class _OneRMCardState extends ConsumerState<_OneRMCard> {
     // Load suggestions first
     ref.read(linkedExercisesProvider.notifier).loadSuggestions(widget.oneRM.exerciseName);
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _LinkExerciseSheet(
-        primaryExerciseName: widget.oneRM.exerciseName,
-        primaryOneRM: widget.oneRM.oneRepMaxKg,
+      builder: (context) => GlassSheet(
+        child: _LinkExerciseSheet(
+          primaryExerciseName: widget.oneRM.exerciseName,
+          primaryOneRM: widget.oneRM.oneRepMaxKg,
+        ),
       ),
     );
   }

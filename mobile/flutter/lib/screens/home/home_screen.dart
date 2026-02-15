@@ -20,6 +20,7 @@ import '../../data/repositories/workout_repository.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/services/deep_link_service.dart';
 import '../../data/services/health_service.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../widgets/main_shell.dart';
 import '../../widgets/pill_swipe_navigation.dart';
@@ -510,49 +511,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       tilesByCategory[category]!.add(tile);
     }
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: elevatedColor,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) => Column(
-          children: [
-            // Handle
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                borderRadius: BorderRadius.circular(2),
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) => Column(
+            children: [
+              // Handle
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            // Title
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Icon(Icons.add_circle_outline, color: AppColors.cyan),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Add Tile',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
+              // Title
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(Icons.add_circle_outline, color: AppColors.cyan),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Add Tile',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
             // Tiles list
             Expanded(
               child: ListView(
@@ -585,6 +582,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -791,22 +789,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: elevatedColor,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) => Column(
-          children: [
-            // Handle
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) => Column(
+            children: [
+              // Handle
             Container(
               margin: const EdgeInsets.only(top: 12),
               width: 40,
@@ -927,6 +921,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -3495,31 +3490,13 @@ class _ProfileMenuButton extends StatelessWidget {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      builder: (context) => Container(
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: BorderRadius.circular(20),
-        ),
+      builder: (context) => GlassSheet(
         child: SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(height: 12),
-              // Handle bar
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textSecondary.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
               const SizedBox(height: 24),
 
               // Profile option

@@ -8,6 +8,7 @@ import '../widgets/exercise_search_bar.dart';
 import '../widgets/filter_button.dart';
 import '../widgets/active_filter_chips.dart';
 import '../widgets/exercise_card.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../components/exercise_filter_sheet.dart';
 
 /// Exercises tab content with search, filters, and paginated list
@@ -49,11 +50,8 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
   }
 
   void _showFilterSheet(BuildContext context) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => const ExerciseFilterSheet(),
     );
   }
@@ -69,6 +67,7 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
     final selectedGoals = ref.watch(selectedGoalsProvider);
     final selectedSuitableFor = ref.watch(selectedSuitableForSetProvider);
     final selectedAvoid = ref.watch(selectedAvoidSetProvider);
+    final searchSuggestion = ref.watch(searchSuggestionProvider);
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
@@ -117,6 +116,54 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
         ),
 
         const SizedBox(height: 12),
+
+        // "Did you mean?" suggestion banner
+        if (searchSuggestion != null && searchSuggestion.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: GestureDetector(
+              onTap: () {
+                ref.read(exerciseSearchProvider.notifier).state = searchSuggestion;
+                ref.read(searchSuggestionProvider.notifier).state = null;
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: cyan.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: cyan.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.search, size: 16, color: cyan),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          style: TextStyle(fontSize: 14, color: textMuted),
+                          children: [
+                            const TextSpan(text: 'Did you mean: '),
+                            TextSpan(
+                              text: searchSuggestion,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: cyan,
+                              ),
+                            ),
+                            const TextSpan(text: '?'),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, size: 16, color: textMuted),
+                  ],
+                ),
+              ),
+            ),
+          ).animate().fadeIn(duration: 200.ms).slideY(begin: -0.1, end: 0),
+          const SizedBox(height: 8),
+        ],
 
         // Active filter chips
         if (activeFilters > 0) ...[

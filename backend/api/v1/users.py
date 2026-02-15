@@ -1594,30 +1594,24 @@ async def full_reset(user_id: str):
 @router.get("/{user_id}/export")
 async def export_user_data(
     user_id: str,
+    format: str = "csv",
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
 ):
     """
-    Export all user data as a ZIP file containing CSV files.
+    Export all user data in the specified format.
 
     Query parameters:
+    - format: Export format - "csv" (ZIP of CSVs), "json", "xlsx", or "parquet" (ZIP of Parquet files). Default: "csv"
     - start_date: Optional ISO date string (YYYY-MM-DD) for filtering data from this date
     - end_date: Optional ISO date string (YYYY-MM-DD) for filtering data until this date
-
-    The ZIP contains:
-    - profile.csv - User profile and settings
-    - body_metrics.csv - Historical body measurements
-    - workouts.csv - All workout plans
-    - workout_logs.csv - Completed workout sessions
-    - exercise_sets.csv - Per-set performance data
-    - strength_records.csv - Personal records
-    - achievements.csv - Earned achievements
-    - streaks.csv - Streak history
-    - _metadata.csv - Export metadata for import validation
     """
     import time
     start_time = time.time()
-    logger.info(f"🔄 Starting data export for user: id={user_id}, date_range={start_date} to {end_date}")
+    logger.info(f"Starting data export for user: id={user_id}, format={format}, date_range={start_date} to {end_date}")
+
+    if format not in ("csv", "json", "xlsx", "parquet"):
+        raise HTTPException(status_code=400, detail=f"Unsupported export format: {format}. Use csv, json, xlsx, or parquet.")
 
     try:
         db = get_supabase_db()
@@ -1628,36 +1622,71 @@ async def export_user_data(
             logger.warning(f"User not found for export: id={user_id}")
             raise HTTPException(status_code=404, detail="User not found")
 
-        logger.info(f"✅ User verified, generating export...")
+        logger.info(f"User verified, generating {format} export...")
 
-        # Import here to avoid circular imports
-        from services.data_export import export_user_data as do_export
-
-        # Generate ZIP file with date filters
-        zip_bytes = do_export(user_id, start_date=start_date, end_date=end_date)
-
-        # Create filename with date
         date_str = datetime.utcnow().strftime("%Y-%m-%d")
-        filename = f"fitness_data_{date_str}.zip"
 
-        elapsed = time.time() - start_time
-        logger.info(f"✅ Data export complete for user {user_id} in {elapsed:.2f}s, size: {len(zip_bytes)} bytes")
+        if format == "json":
+            from services.data_export import export_user_data_json
+            data = export_user_data_json(user_id, start_date=start_date, end_date=end_date)
+            from fastapi.responses import JSONResponse
+            elapsed = time.time() - start_time
+            logger.info(f"JSON export complete for user {user_id} in {elapsed:.2f}s")
+            return JSONResponse(
+                content=data,
+                headers={
+                    "Content-Disposition": f'attachment; filename="fitness_data_{date_str}.json"',
+                }
+            )
 
-        # Return as streaming response
-        return StreamingResponse(
-            io.BytesIO(zip_bytes),
-            media_type="application/zip",
-            headers={
-                "Content-Disposition": f'attachment; filename="{filename}"',
-                "Content-Length": str(len(zip_bytes)),
-            }
-        )
+        elif format == "xlsx":
+            from services.data_export import export_user_data_excel
+            xlsx_bytes = export_user_data_excel(user_id, start_date=start_date, end_date=end_date)
+            elapsed = time.time() - start_time
+            logger.info(f"Excel export complete for user {user_id} in {elapsed:.2f}s, size: {len(xlsx_bytes)} bytes")
+            return StreamingResponse(
+                io.BytesIO(xlsx_bytes),
+                media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                headers={
+                    "Content-Disposition": f'attachment; filename="fitness_data_{date_str}.xlsx"',
+                    "Content-Length": str(len(xlsx_bytes)),
+                }
+            )
+
+        elif format == "parquet":
+            from services.data_export import export_user_data_parquet
+            parquet_bytes = export_user_data_parquet(user_id, start_date=start_date, end_date=end_date)
+            elapsed = time.time() - start_time
+            logger.info(f"Parquet export complete for user {user_id} in {elapsed:.2f}s, size: {len(parquet_bytes)} bytes")
+            return StreamingResponse(
+                io.BytesIO(parquet_bytes),
+                media_type="application/octet-stream",
+                headers={
+                    "Content-Disposition": f'attachment; filename="fitness_data_{date_str}.zip"',
+                    "Content-Length": str(len(parquet_bytes)),
+                }
+            )
+
+        else:
+            # Default: CSV ZIP
+            from services.data_export import export_user_data as do_export
+            zip_bytes = do_export(user_id, start_date=start_date, end_date=end_date)
+            elapsed = time.time() - start_time
+            logger.info(f"CSV export complete for user {user_id} in {elapsed:.2f}s, size: {len(zip_bytes)} bytes")
+            return StreamingResponse(
+                io.BytesIO(zip_bytes),
+                media_type="application/zip",
+                headers={
+                    "Content-Disposition": f'attachment; filename="fitness_data_{date_str}.zip"',
+                    "Content-Length": str(len(zip_bytes)),
+                }
+            )
 
     except HTTPException:
         raise
     except Exception as e:
         elapsed = time.time() - start_time
-        logger.error(f"❌ Failed to export user data after {elapsed:.2f}s: {e}")
+        logger.error(f"Failed to export user data after {elapsed:.2f}s: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

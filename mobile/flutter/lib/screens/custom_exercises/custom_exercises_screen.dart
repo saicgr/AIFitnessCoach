@@ -5,6 +5,8 @@ import '../../core/constants/app_colors.dart';
 import '../../core/providers/custom_exercises_provider.dart';
 import '../../data/models/custom_exercise.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_sheet.dart';
+import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/custom_exercise_card.dart';
 import 'widgets/create_exercise_sheet.dart';
 import 'widgets/empty_custom_exercises.dart';
@@ -204,35 +206,14 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
   }
 
   Widget _buildTabBar(BuildContext context, bool isDark) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(12),
-        border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        indicatorSize: TabBarIndicatorSize.tab,
-        indicator: BoxDecoration(
-          color: cyan.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        labelColor: cyan,
-        unselectedLabelColor: textMuted,
-        labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
-        dividerColor: Colors.transparent,
-        tabs: const [
-          Tab(text: 'All'),
-          Tab(text: 'Simple'),
-          Tab(text: 'Combos'),
-        ],
-      ),
+    return SegmentedTabBar(
+      controller: _tabController,
+      showIcons: false,
+      tabs: const [
+        SegmentedTabItem(label: 'All'),
+        SegmentedTabItem(label: 'Simple'),
+        SegmentedTabItem(label: 'Combos'),
+      ],
     );
   }
 
@@ -302,12 +283,12 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
 
   void _showCreateSheet(BuildContext context) {
     HapticService.light();
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const CreateExerciseSheet(),
+      builder: (context) => const GlassSheet(
+        child: CreateExerciseSheet(),
+      ),
     );
   }
 

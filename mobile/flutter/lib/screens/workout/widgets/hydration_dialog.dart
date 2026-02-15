@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/hydration.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Result from the hydration dialog
 class HydrationDialogResult {
@@ -25,16 +26,13 @@ Future<HydrationDialogResult?> showHydrationDialog({
   bool useOz = false;
   final customController = TextEditingController();
 
-  return showModalBottomSheet<HydrationDialogResult>(
+  return showGlassSheet<HydrationDialogResult>(
     context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    useRootNavigator: true,
     enableDrag: true,
-    builder: (ctx) => StatefulBuilder(
+    builder: (ctx) => GlassSheet(
+      child: StatefulBuilder(
       builder: (context, setModalState) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        final backgroundColor = isDark ? AppColors.surface : Colors.white;
         final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
         final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
         final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
@@ -73,26 +71,11 @@ Future<HydrationDialogResult?> showHydrationDialog({
 
         return Padding(
           padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: Container(
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            ),
+          child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Handle bar
-                Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: textMuted.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-
                 // Title row with close button
                 Row(
                   children: [
@@ -336,6 +319,7 @@ Future<HydrationDialogResult?> showHydrationDialog({
           ),
         );
       },
+    ),
     ),
   );
 }

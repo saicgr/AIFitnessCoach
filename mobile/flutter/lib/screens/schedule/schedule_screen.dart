@@ -12,6 +12,7 @@ import '../../data/models/workout.dart';
 import '../../data/providers/schedule_provider.dart';
 import '../../data/repositories/schedule_repository.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../widgets/glass_sheet.dart';
 import 'widgets/add_schedule_item_sheet.dart';
 import 'widgets/schedule_item_card.dart';
 import 'widgets/timeline_view.dart';
@@ -241,14 +242,14 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         ? DateTime(now.year, now.month, now.day)
         : selectedWeek;
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => AddScheduleItemSheet(
-        selectedDate: selectedDate,
-        prefilledTime: prefilledTime,
-        onSave: (item) => _createScheduleItem(item, colors),
+      builder: (ctx) => GlassSheet(
+        child: AddScheduleItemSheet(
+          selectedDate: selectedDate,
+          prefilledTime: prefilledTime,
+          onSave: (item) => _createScheduleItem(item, colors),
+        ),
       ),
     );
   }

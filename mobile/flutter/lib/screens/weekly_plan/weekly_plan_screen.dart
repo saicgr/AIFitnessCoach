@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/weekly_plan.dart';
 import '../../data/providers/weekly_plan_provider.dart';
+import '../../widgets/glass_sheet.dart';
 import 'widgets/day_card.dart';
 import 'widgets/plan_header.dart';
 import 'widgets/generate_plan_sheet.dart';
@@ -26,22 +27,20 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
   }
 
   void _showGeneratePlanSheet() {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const GeneratePlanSheet(),
+      builder: (context) => const GlassSheet(
+        child: GeneratePlanSheet(),
+      ),
     );
   }
 
   void _showDayDetail(DailyPlanEntry entry) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DailyPlanDetailSheet(entry: entry),
+      builder: (context) => GlassSheet(
+        child: DailyPlanDetailSheet(entry: entry),
+      ),
     );
   }
 

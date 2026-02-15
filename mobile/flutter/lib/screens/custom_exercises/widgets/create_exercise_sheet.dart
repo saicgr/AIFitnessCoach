@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/custom_exercises_provider.dart';
 import '../../../data/models/custom_exercise.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/segmented_tab_bar.dart';
 
 /// Bottom sheet for creating a new custom exercise
 class CreateExerciseSheet extends ConsumerStatefulWidget {
@@ -139,28 +140,13 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
           ),
 
           // Tab bar
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.surface : AppColorsLight.surface,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: TabBar(
-              controller: _tabController,
-              indicatorSize: TabBarIndicatorSize.tab,
-              indicator: BoxDecoration(
-                color: cyan.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              labelColor: cyan,
-              unselectedLabelColor: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-              labelStyle: const TextStyle(fontWeight: FontWeight.w600),
-              dividerColor: Colors.transparent,
-              tabs: const [
-                Tab(text: 'Simple'),
-                Tab(text: 'Combo'),
-              ],
-            ),
+          SegmentedTabBar(
+            controller: _tabController,
+            showIcons: false,
+            tabs: const [
+              SegmentedTabItem(label: 'Simple'),
+              SegmentedTabItem(label: 'Combo'),
+            ],
           ),
 
           // Content

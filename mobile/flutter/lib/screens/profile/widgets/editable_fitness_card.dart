@@ -10,6 +10,7 @@ import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../home/widgets/manage_gym_profiles_sheet.dart';
 
 /// Editable fitness card with inline editing for goal, level, days, and injuries.
@@ -652,11 +653,8 @@ class _EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     return InkWell(
       onTap: () {
         HapticFeedback.lightImpact();
-        showModalBottomSheet(
+        showGlassSheet(
           context: context,
-          isScrollControlled: true,
-          useRootNavigator: true,
-          backgroundColor: Colors.transparent,
           builder: (context) => const ManageGymProfilesSheet(),
         );
       },

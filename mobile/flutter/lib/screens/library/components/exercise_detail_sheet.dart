@@ -17,6 +17,7 @@ import '../../../data/services/context_logging_service.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/video_cache_service.dart';
 import '../../../widgets/log_1rm_sheet.dart';
+import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../widgets/info_badge.dart';
 
@@ -426,6 +427,87 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
     );
   }
 
+  void _showHelpDialog(BuildContext context, bool isDark, Color textPrimary, Color textMuted, Color cyan, Color purple) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Action Guide',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: textPrimary,
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _helpItem(Icons.favorite, AppColors.error, 'Favorite', 'Prioritizes this exercise in AI suggestions', textPrimary, textMuted),
+              const SizedBox(height: 12),
+              _helpItem(Icons.playlist_add, AppColors.cyan, 'Queue', 'Adds to your exercise queue for the next workout', textPrimary, textMuted),
+              const SizedBox(height: 12),
+              _helpItem(Icons.block, AppColors.orange, 'Avoid', 'AI will never include this exercise in your workouts', textPrimary, textMuted),
+              const SizedBox(height: 12),
+              _helpItem(Icons.push_pin, purple, 'Staple', 'Locks this exercise so it\'s NEVER rotated out', textPrimary, textMuted),
+              const SizedBox(height: 16),
+              Divider(color: textMuted.withValues(alpha: 0.2)),
+              const SizedBox(height: 12),
+              Text(
+                'Staple Options',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _helpItem(Icons.bolt, cyan, 'Current Workout', 'Change applies to today\'s workout immediately', textPrimary, textMuted),
+              const SizedBox(height: 8),
+              _helpItem(Icons.skip_next, textMuted, 'Upcoming', 'Change takes effect from next generation', textPrimary, textMuted),
+              const SizedBox(height: 8),
+              _helpItem(Icons.whatshot_outlined, AppColors.orange, 'Add to Warmup', 'Places exercise in the warmup section', textPrimary, textMuted),
+              const SizedBox(height: 8),
+              _helpItem(Icons.self_improvement, purple, 'Add to Stretch', 'Places exercise in the stretch section', textPrimary, textMuted),
+              const SizedBox(height: 8),
+              _helpItem(Icons.add, cyan, 'Add as Exercise', 'Adds as a main workout exercise', textPrimary, textMuted),
+              const SizedBox(height: 8),
+              _helpItem(Icons.swap_horiz, AppColors.orange, 'Replace Exercise', 'Swaps out an existing exercise', textPrimary, textMuted),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Got it', style: TextStyle(color: cyan)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _helpItem(IconData icon, Color iconColor, String title, String desc, Color textPrimary, Color textMuted) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: iconColor),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary)),
+              const SizedBox(height: 2),
+              Text(desc, style: TextStyle(fontSize: 12, color: textMuted)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final exercise = widget.exercise;
@@ -464,252 +546,286 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
                 ),
               ),
             ),
-            child: SingleChildScrollView(
-              controller: scrollController,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Handle
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: textMuted.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-
-              // Video Player
-              GestureDetector(
-                onTap: _toggleVideo,
-                child: Container(
-                  width: double.infinity,
-                  height: 300,
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: elevated,
-                    borderRadius: BorderRadius.circular(16),
-                    border: isDark
-                        ? null
-                        : Border.all(color: AppColorsLight.cardBorder),
-                  ),
-                  clipBehavior: Clip.hardEdge,
-                  child: _buildVideoContent(cyan, textMuted, purple),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Title
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  exercise.name,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Badges
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    if (exercise.muscleGroup != null)
-                      DetailBadge(
-                        icon: Icons.accessibility_new,
-                        label: 'Muscle',
-                        value: exercise.muscleGroup!,
-                        color: purple,
-                      ),
-                    if (exercise.difficulty != null)
-                      DetailBadge(
-                        icon: Icons.signal_cellular_alt,
-                        label: 'Level',
-                        value: DifficultyUtils.getDisplayName(exercise.difficulty!),
-                        color: DifficultyUtils.getColor(exercise.difficulty!),
-                      ),
-                    if (exercise.type != null)
-                      DetailBadge(
-                        icon: Icons.category,
-                        label: 'Type',
-                        value: exercise.type!,
-                        color: cyan,
-                      ),
-                  ],
-                ),
-              ),
-
-              // Exercise Action Buttons (Favorite, Queue, Avoid, Staple)
-              const SizedBox(height: 16),
-              _ExerciseActionButtonsRow(
-                exerciseName: exercise.name,
-                muscleGroup: exercise.muscleGroup,
-              ),
-
-              // Equipment
-              if (exercise.equipment.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  controller: scrollController,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'EQUIPMENT NEEDED',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: textMuted,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: exercise.equipment.map((eq) {
-                          return Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
+                      // Handle + Help button
+                      Stack(
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 40,
+                              height: 4,
+                              margin: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: textMuted.withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
                             ),
-                            decoration: BoxDecoration(
-                              color: elevated,
-                              borderRadius: BorderRadius.circular(8),
-                              border: isDark
-                                  ? null
-                                  : Border.all(
-                                      color: AppColorsLight.cardBorder),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.fitness_center,
-                                  size: 14,
-                                  color: textSecondary,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  eq,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: textPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-
-              // Instructions
-              if (exercise.instructions.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'INSTRUCTIONS',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: textMuted,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ...exercise.instructions.asMap().entries.map((entry) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                width: 24,
-                                height: 24,
+                          ),
+                          Positioned(
+                            right: 8,
+                            top: 4,
+                            child: GestureDetector(
+                              onTap: () => _showHelpDialog(context, isDark, textPrimary, textMuted, cyan, purple),
+                              child: Container(
+                                width: 28,
+                                height: 28,
                                 decoration: BoxDecoration(
-                                  color: cyan.withOpacity(0.2),
+                                  color: textMuted.withValues(alpha: 0.15),
                                   shape: BoxShape.circle,
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    '${entry.key + 1}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: cyan,
-                                    ),
-                                  ),
+                                child: Icon(
+                                  Icons.help_outline,
+                                  size: 16,
+                                  color: textMuted,
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  entry.value,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    height: 1.5,
-                                    color: textPrimary,
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-              ],
-
-              // Action Buttons Row
-              const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    // Download Video Button
-                    if (_videoUrl != null)
-                      Expanded(
-                        child: _DownloadVideoButton(
-                          exerciseId: exercise.id ??
-                              exercise.name.toLowerCase().replaceAll(' ', '_'),
-                          exerciseName: exercise.name,
-                          videoUrl: _videoUrl!,
-                        ),
+                        ],
                       ),
-                    if (_videoUrl != null) const SizedBox(width: 12),
-                    // Log 1RM Button
-                    Expanded(
-                      child: _Log1RMButton(
-                        exerciseName: exercise.name,
-                        exerciseId: exercise.id ??
-                            exercise.name.toLowerCase().replaceAll(' ', '_'),
+
+                  // Video Player
+                  GestureDetector(
+                    onTap: _toggleVideo,
+                    child: Container(
+                      width: double.infinity,
+                      height: 300,
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: elevated,
+                        borderRadius: BorderRadius.circular(16),
+                        border: isDark
+                            ? null
+                            : Border.all(color: AppColorsLight.cardBorder),
+                      ),
+                      clipBehavior: Clip.hardEdge,
+                      child: _buildVideoContent(cyan, textMuted, purple),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Title
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      exercise.name,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Badges
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        if (exercise.muscleGroup != null)
+                          DetailBadge(
+                            icon: Icons.accessibility_new,
+                            label: 'Muscle',
+                            value: exercise.muscleGroup!,
+                            color: purple,
+                          ),
+                        if (exercise.difficulty != null)
+                          DetailBadge(
+                            icon: Icons.signal_cellular_alt,
+                            label: 'Level',
+                            value: DifficultyUtils.getDisplayName(exercise.difficulty!),
+                            color: DifficultyUtils.getColor(exercise.difficulty!),
+                          ),
+                        if (exercise.type != null)
+                          DetailBadge(
+                            icon: Icons.category,
+                            label: 'Type',
+                            value: exercise.type!,
+                            color: cyan,
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  // Equipment
+                  if (exercise.equipment.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'EQUIPMENT NEEDED',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: textMuted,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: exercise.equipment.map((eq) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: elevated,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: isDark
+                                      ? null
+                                      : Border.all(
+                                          color: AppColorsLight.cardBorder),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.fitness_center,
+                                      size: 14,
+                                      color: textSecondary,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      eq,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: textPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
                       ),
                     ),
                   ],
-                ),
-              ),
 
-              const SizedBox(height: 40),
-            ],
-              ),
+                  // Instructions
+                  if (exercise.instructions.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'INSTRUCTIONS',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: textMuted,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          ...exercise.instructions.asMap().entries.map((entry) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      color: cyan.withOpacity(0.2),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '${entry.key + 1}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: cyan,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      entry.value,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        height: 1.5,
+                                        color: textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  // Action Buttons Row
+                  const SizedBox(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        // Download Video Button
+                        if (_videoUrl != null)
+                          Expanded(
+                            child: _DownloadVideoButton(
+                              exerciseId: exercise.id ??
+                                  exercise.name.toLowerCase().replaceAll(' ', '_'),
+                              exerciseName: exercise.name,
+                              videoUrl: _videoUrl!,
+                            ),
+                          ),
+                        if (_videoUrl != null) const SizedBox(width: 12),
+                        // Log 1RM Button
+                        Expanded(
+                          child: _Log1RMButton(
+                            exerciseName: exercise.name,
+                            exerciseId: exercise.id ??
+                                exercise.name.toLowerCase().replaceAll(' ', '_'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Bottom clearance for floating action icons
+                  const SizedBox(height: 120),
+                ],
+                  ),
+                ),
+                // Floating action buttons at bottom
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: _ExerciseActionButtons(
+                    exerciseName: exercise.name,
+                    muscleGroup: exercise.muscleGroup,
+                    equipmentValue: exercise.equipmentValue,
+                    category: exercise.category,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -1142,99 +1258,372 @@ class _DownloadVideoButton extends ConsumerWidget {
   }
 }
 
-/// Row of action buttons for exercise preferences (Favorite, Queue, Avoid, Staple)
-class _ExerciseActionButtonsRow extends ConsumerWidget {
+/// Floating action buttons for exercise preferences with inline staple pills
+class _ExerciseActionButtons extends ConsumerStatefulWidget {
   final String exerciseName;
   final String? muscleGroup;
+  final String? equipmentValue;
+  final String? category;
 
-  const _ExerciseActionButtonsRow({
+  const _ExerciseActionButtons({
     required this.exerciseName,
     this.muscleGroup,
+    this.equipmentValue,
+    this.category,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ExerciseActionButtons> createState() => _ExerciseActionButtonsState();
+}
+
+class _ExerciseActionButtonsState extends ConsumerState<_ExerciseActionButtons> {
+  bool _showStaplePills = false;
+  bool _isProcessing = false;
+  bool _currentWorkout = true; // true = current workout, false = upcoming
+
+  Future<void> _handleStaple(String section) async {
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
+    try {
+      final success = await ref.read(staplesProvider.notifier).addStaple(
+        widget.exerciseName,
+        muscleGroup: widget.muscleGroup,
+        section: section,
+        addToCurrentWorkout: _currentWorkout,
+      );
+      if (mounted) {
+        setState(() { _showStaplePills = false; _isProcessing = false; });
+        if (success) {
+          final timing = _currentWorkout ? 'current workout' : 'upcoming workouts';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.push_pin, color: Colors.white, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text('Stapled "${widget.exerciseName}" to $section ($timing)')),
+                ],
+              ),
+              backgroundColor: AppColors.success,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to staple: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleUnstaple() async {
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
+    await ref.read(staplesProvider.notifier).toggleStaple(
+      widget.exerciseName,
+      muscleGroup: widget.muscleGroup,
+    );
+    if (mounted) {
+      setState(() { _showStaplePills = false; _isProcessing = false; });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.push_pin_outlined, color: Colors.white, size: 18),
+              const SizedBox(width: 8),
+              Text('"${widget.exerciseName}" unstapled'),
+            ],
+          ),
+          backgroundColor: AppColors.success,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleReplaceExercise() async {
+    final todayResponse = ref.read(todayWorkoutProvider).valueOrNull;
+    final workout = todayResponse?.todayWorkout ?? todayResponse?.nextWorkout;
+    final exercises = workout?.exercises ?? [];
+
+    if (exercises.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No exercises in current workout to replace'),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Replace which exercise?',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: textPrimary,
+          ),
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: exercises.length,
+            itemBuilder: (ctx, index) {
+              final ex = exercises[index];
+              return ListTile(
+                leading: Icon(Icons.fitness_center, size: 18, color: textMuted),
+                title: Text(
+                  ex.name,
+                  style: TextStyle(fontSize: 14, color: textPrimary),
+                ),
+                subtitle: ex.muscleGroup != null
+                    ? Text(ex.muscleGroup!, style: TextStyle(fontSize: 12, color: textMuted))
+                    : null,
+                dense: true,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                onTap: () => Navigator.pop(ctx, ex.name),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: TextStyle(color: textMuted)),
+          ),
+        ],
+      ),
+    );
+
+    if (selected != null && mounted) {
+      setState(() => _isProcessing = true);
+      final success = await ref.read(staplesProvider.notifier).addStaple(
+        widget.exerciseName,
+        muscleGroup: widget.muscleGroup,
+        section: 'main',
+        addToCurrentWorkout: _currentWorkout,
+        swapExerciseId: selected,
+      );
+      if (mounted) {
+        setState(() { _showStaplePills = false; _isProcessing = false; });
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.swap_horiz, color: Colors.white, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text('Replaced "$selected" with "${widget.exerciseName}"')),
+                ],
+              ),
+              backgroundColor: AppColors.success,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Widget _buildStaplePillsSection(bool isDark) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final isAlreadyStaple = ref.watch(staplesProvider).isStaple(widget.exerciseName);
 
-    // Watch providers for state
-    final isFavorite = ref.watch(favoritesProvider).isFavorite(exerciseName);
-    final isQueued = ref.watch(exerciseQueueProvider).isQueued(exerciseName);
-    final isAvoided = ref.watch(avoidedProvider).isAvoided(exerciseName);
-    final isStaple = ref.watch(staplesProvider).isStaple(exerciseName);
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.black.withValues(alpha: 0.95)
+            : Colors.white.withValues(alpha: 0.97),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.08),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Timing toggle row
+          Row(
+            children: [
+              Expanded(
+                child: _buildTimingChip(
+                  'Current Workout',
+                  isSelected: _currentWorkout,
+                  onTap: () => setState(() => _currentWorkout = true),
+                  isDark: isDark,
+                  cyan: cyan,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildTimingChip(
+                  'Upcoming Workouts',
+                  isSelected: !_currentWorkout,
+                  onTap: () => setState(() => _currentWorkout = false),
+                  isDark: isDark,
+                  cyan: cyan,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Row 1: section pills
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (isAlreadyStaple)
+                _buildPill(
+                  'Unstaple',
+                  Icons.push_pin_outlined,
+                  onTap: _handleUnstaple,
+                  color: AppColors.error,
+                  isDark: isDark,
+                  textPrimary: textPrimary,
+                ),
+              _buildPill(
+                'Add to Warmup',
+                Icons.whatshot_outlined,
+                onTap: () => _handleStaple('warmup'),
+                color: AppColors.orange,
+                isDark: isDark,
+                textPrimary: textPrimary,
+              ),
+              _buildPill(
+                'Add to Stretch',
+                Icons.self_improvement,
+                onTap: () => _handleStaple('stretches'),
+                color: purple,
+                isDark: isDark,
+                textPrimary: textPrimary,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Row 2: action pills
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildPill(
+                'Add as Exercise',
+                Icons.add,
+                onTap: () => _handleStaple('main'),
+                color: cyan,
+                isDark: isDark,
+                textPrimary: textPrimary,
+              ),
+              _buildPill(
+                'Replace Exercise',
+                Icons.swap_horiz,
+                onTap: _handleReplaceExercise,
+                color: AppColors.orange,
+                isDark: isDark,
+                textPrimary: textPrimary,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+  Widget _buildTimingChip(
+    String label, {
+    required bool isSelected,
+    required VoidCallback onTap,
+    required bool isDark,
+    required Color cyan,
+    required Color textPrimary,
+    required Color textMuted,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: cardBorder),
+          color: isSelected ? cyan.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? cyan : textMuted.withValues(alpha: 0.3),
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            color: isSelected ? cyan : textMuted,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPill(
+    String label,
+    IconData icon, {
+    required VoidCallback onTap,
+    required Color color,
+    required bool isDark,
+    required Color textPrimary,
+  }) {
+    return GestureDetector(
+      onTap: _isProcessing ? null : () {
+        HapticService.light();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Favorite
-            _buildActionButton(
-              context: context,
-              icon: isFavorite ? Icons.favorite : Icons.favorite_border,
-              label: 'Favorite',
-              isActive: isFavorite,
-              activeColor: AppColors.error,
-              inactiveColor: textMuted,
-              onTap: () {
-                HapticService.light();
-                ref.read(favoritesProvider.notifier).toggleFavorite(exerciseName);
-              },
-            ),
-            // Queue
-            _buildActionButton(
-              context: context,
-              icon: isQueued ? Icons.playlist_add_check : Icons.playlist_add,
-              label: 'Queue',
-              isActive: isQueued,
-              activeColor: AppColors.cyan,
-              inactiveColor: textMuted,
-              onTap: () {
-                HapticService.light();
-                ref.read(exerciseQueueProvider.notifier).toggleQueue(
-                  exerciseName,
-                  targetMuscleGroup: muscleGroup,
-                );
-              },
-            ),
-            // Avoid
-            _buildActionButton(
-              context: context,
-              icon: isAvoided ? Icons.block : Icons.block_outlined,
-              label: 'Avoid',
-              isActive: isAvoided,
-              activeColor: AppColors.orange,
-              inactiveColor: textMuted,
-              onTap: () {
-                HapticService.light();
-                ref.read(avoidedProvider.notifier).toggleAvoided(exerciseName);
-              },
-            ),
-            // Staple
-            _buildActionButton(
-              context: context,
-              icon: isStaple ? Icons.push_pin : Icons.push_pin_outlined,
-              label: 'Staple',
-              isActive: isStaple,
-              activeColor: purple,
-              inactiveColor: textMuted,
-              onTap: () {
-                HapticService.light();
-                ref.read(staplesProvider.notifier).toggleStaple(
-                  exerciseName,
-                  muscleGroup: muscleGroup,
-                );
-              },
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
             ),
           ],
         ),
@@ -1242,8 +1631,111 @@ class _ExerciseActionButtonsRow extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionButton({
-    required BuildContext context,
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+
+    // Watch providers for state
+    final isFavorite = ref.watch(favoritesProvider).isFavorite(widget.exerciseName);
+    final isQueued = ref.watch(exerciseQueueProvider).isQueued(widget.exerciseName);
+    final isAvoided = ref.watch(avoidedProvider).isAvoided(widget.exerciseName);
+    final isStaple = ref.watch(staplesProvider).isStaple(widget.exerciseName);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Animated pills section (only when staple is tapped)
+        AnimatedSize(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+          child: _showStaplePills
+              ? _buildStaplePillsSection(isDark)
+              : const SizedBox.shrink(),
+        ),
+        // Processing indicator
+        if (_isProcessing)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: purple,
+              ),
+            ),
+          ),
+        // 4 floating action icons
+        Container(
+          padding: const EdgeInsets.fromLTRB(0, 8, 0, 16),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.95)
+                : Colors.white.withValues(alpha: 0.97),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildFloatingIcon(
+                  icon: isFavorite ? Icons.favorite : Icons.favorite_border,
+                  label: 'Favorite',
+                  isActive: isFavorite,
+                  activeColor: AppColors.error,
+                  inactiveColor: textMuted,
+                  onTap: () {
+                    HapticService.light();
+                    ref.read(favoritesProvider.notifier).toggleFavorite(widget.exerciseName);
+                  },
+                ),
+                _buildFloatingIcon(
+                  icon: isQueued ? Icons.playlist_add_check : Icons.playlist_add,
+                  label: 'Queue',
+                  isActive: isQueued,
+                  activeColor: AppColors.cyan,
+                  inactiveColor: textMuted,
+                  onTap: () {
+                    HapticService.light();
+                    ref.read(exerciseQueueProvider.notifier).toggleQueue(
+                      widget.exerciseName,
+                      targetMuscleGroup: widget.muscleGroup,
+                    );
+                  },
+                ),
+                _buildFloatingIcon(
+                  icon: isAvoided ? Icons.block : Icons.block_outlined,
+                  label: 'Avoid',
+                  isActive: isAvoided,
+                  activeColor: AppColors.orange,
+                  inactiveColor: textMuted,
+                  onTap: () {
+                    HapticService.light();
+                    ref.read(avoidedProvider.notifier).toggleAvoided(widget.exerciseName);
+                  },
+                ),
+                _buildFloatingIcon(
+                  icon: isStaple ? Icons.push_pin : Icons.push_pin_outlined,
+                  label: 'Staple',
+                  isActive: isStaple || _showStaplePills,
+                  activeColor: purple,
+                  inactiveColor: textMuted,
+                  onTap: () {
+                    HapticService.light();
+                    setState(() => _showStaplePills = !_showStaplePills);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFloatingIcon({
     required IconData icon,
     required String label,
     required bool isActive,

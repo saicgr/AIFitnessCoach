@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -10,6 +9,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/fasting_repository.dart';
 import '../../../data/repositories/measurements_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../home/widgets/components/sheet_theme_colors.dart';
 
 /// Shows the log weight bottom sheet
@@ -19,15 +19,13 @@ Future<WeightLogResult?> showLogWeightSheet(
 ) async {
   final parentTheme = Theme.of(context);
 
-  return showModalBottomSheet<WeightLogResult>(
+  return showGlassSheet<WeightLogResult>(
     context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    isScrollControlled: true,
-    useRootNavigator: true,
-    builder: (sheetContext) => Theme(
-      data: parentTheme,
-      child: const _LogWeightSheet(),
+    builder: (sheetContext) => GlassSheet(
+      child: Theme(
+        data: parentTheme,
+        child: const _LogWeightSheet(),
+      ),
     ),
   );
 }
@@ -298,38 +296,13 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
     final colors = context.sheetColors;
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-          ),
-          decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: SafeArea(
-            bottom: false,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: _showSuccess
-                  ? _buildSuccessState(colors)
-                  : _buildInputState(colors, bottomPadding),
-            ),
-          ),
-        ),
+    return SafeArea(
+      bottom: false,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: _showSuccess
+            ? _buildSuccessState(colors)
+            : _buildInputState(colors, bottomPadding),
       ),
     );
   }
@@ -414,114 +387,67 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
   }
 
   Widget _buildInputState(SheetColors colors, double bottomPadding) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildHeader(colors),
-        Divider(height: 1, color: colors.cardBorder.withValues(alpha: 0.3)),
-        Flexible(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.only(bottom: bottomPadding),
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 24),
-                _buildWeightInput(colors),
-                const SizedBox(height: 24),
-                _buildDateSelector(colors),
-                const SizedBox(height: 16),
-                _buildFastingDayIndicator(colors),
-                const SizedBox(height: 16),
-                _buildNotesInput(colors),
-                const SizedBox(height: 24),
-                if (_errorMessage != null) ...[
-                  _buildErrorMessage(colors),
-                  const SizedBox(height: 16),
-                ],
-                _buildSubmitButton(colors),
-                const SizedBox(height: 16),
-                // View History link
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    context.push('/measurements');
-                  },
-                  icon: Icon(Icons.history, color: colors.textSecondary, size: 18),
-                  label: Text(
-                    'View Weight History',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: colors.textSecondary,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-        ),
-      ],
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomPadding),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildHeader(colors),
+          const SizedBox(height: 12),
+          // Date row (top-left) + Unit toggle (right)
+          _buildDateAndUnitRow(colors),
+          const SizedBox(height: 16),
+          _buildWeightInput(colors),
+          const SizedBox(height: 16),
+          _buildFastingDayIndicator(colors),
+          _buildNotesInput(colors),
+          if (_errorMessage != null) ...[
+            const SizedBox(height: 8),
+            _buildErrorMessage(colors),
+          ],
+          const SizedBox(height: 16),
+          _buildSubmitButton(colors),
+          SizedBox(height: 8 + MediaQuery.of(context).padding.bottom),
+        ],
+      ),
     );
   }
 
   Widget _buildHeader(SheetColors colors) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 12, 16, 16),
-      child: Column(
+      padding: const EdgeInsets.fromLTRB(24, 12, 8, 8),
+      child: Row(
         children: [
-          // Handle bar
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colors.textMuted.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: colors.cyan.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.monitor_weight_outlined, color: colors.cyan, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Log Weight',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
               ),
             ),
           ),
-          const SizedBox(height: 20),
-          // Title row
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: colors.cyan.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(Icons.monitor_weight_outlined, color: colors.cyan, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Log Weight',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Track your progress',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: colors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                onPressed: _isSubmitting ? null : () => Navigator.pop(context),
-                icon: Icon(Icons.close, color: colors.textSecondary),
-              ),
-            ],
+          IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.push('/measurements');
+            },
+            icon: Icon(Icons.history_rounded, color: colors.textSecondary, size: 22),
+            tooltip: 'Weight History',
+          ),
+          IconButton(
+            onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+            icon: Icon(Icons.close, color: colors.textSecondary),
           ),
         ],
       ),
@@ -531,197 +457,242 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
         .slideY(begin: -0.1, end: 0);
   }
 
-  Widget _buildWeightInput(SheetColors colors) {
-    final displayWeight = _selectedUnit.fromKg(_weightKg);
+  Widget _buildDateAndUnitRow(SheetColors colors) {
+    final isToday = DateUtils.isSameDay(_selectedDate, DateTime.now());
+    final formattedDate = isToday
+        ? 'Today'
+        : DateFormat('EEE, MMM d').format(_selectedDate);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
+      child: Row(
         children: [
-          // Unit toggle
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: WeightUnit.values.map((unit) {
-              final isSelected = unit == _selectedUnit;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: GestureDetector(
-                  onTap: _toggleUnit,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? colors.cyan.withValues(alpha: 0.15)
-                          : colors.glassSurface.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isSelected
-                            ? colors.cyan
-                            : colors.cardBorder.withValues(alpha: 0.3),
-                        width: isSelected ? 2 : 1,
-                      ),
-                    ),
-                    child: Text(
-                      unit.label,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                        color: isSelected ? colors.cyan : colors.textSecondary,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 32),
-
-          // Circular weight input - tap to edit directly
+          // Date selector (left)
           GestureDetector(
-            onTap: () => _showDirectInput(colors),
-            child: AnimatedBuilder(
-              animation: _pulseController,
-              builder: (context, child) {
-                final pulseValue = _pulseController.value * 0.02 + 1.0;
-                return Transform.scale(
-                  scale: pulseValue,
-                  child: child,
-                );
-              },
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      colors.cyan.withValues(alpha: 0.2),
-                      colors.cyan.withValues(alpha: 0.05),
-                    ],
+            onTap: _selectDate,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: colors.glassSurface.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: colors.cardBorder.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.calendar_today, color: colors.purple, size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    formattedDate,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textPrimary,
+                    ),
                   ),
-                  border: Border.all(
-                    color: colors.cyan.withValues(alpha: 0.5),
-                    width: 3,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.cyan.withValues(alpha: 0.2),
-                      blurRadius: 30,
-                      spreadRadius: 5,
+                  if (!isToday) ...[
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: () {
+                        HapticService.light();
+                        setState(() => _selectedDate = DateTime.now());
+                        _checkFastingDay();
+                      },
+                      child: Icon(Icons.close, color: colors.textMuted, size: 16),
                     ),
                   ],
-                ),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        displayWeight.toStringAsFixed(1),
-                        style: TextStyle(
-                          fontSize: 48,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                          height: 1,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _selectedUnit.label,
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: colors.textMuted,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Tap to edit',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: colors.textMuted.withValues(alpha: 0.6),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                ],
               ),
             ),
           )
               .animate()
-              .scale(
-                begin: const Offset(0.8, 0.8),
-                end: const Offset(1.0, 1.0),
-                duration: 400.ms,
-                curve: Curves.easeOut,
-              )
-              .fadeIn(),
-          const SizedBox(height: 24),
-
-          // +/- buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Decrease button
-              _WeightAdjustButton(
-                icon: Icons.remove,
-                onTap: _decrementWeight,
-                onLongPress: () {
-                  // Continuous decrease
-                  HapticService.medium();
-                  for (int i = 0; i < 5; i++) {
-                    Future.delayed(Duration(milliseconds: i * 50), _decrementWeight);
-                  }
-                },
-                colors: colors,
-              ),
-              const SizedBox(width: 32),
-              // Direct input button
-              GestureDetector(
-                onTap: () => _showDirectInput(colors),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: colors.glassSurface.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: colors.cardBorder.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.edit, color: colors.textMuted, size: 16),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Type',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: colors.textMuted,
-                        ),
+              .fadeIn(delay: 100.ms)
+              .slideX(begin: -0.1, end: 0),
+          const Spacer(),
+          // Unit toggle (right)
+          Container(
+            decoration: BoxDecoration(
+              color: colors.glassSurface.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: colors.cardBorder.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: WeightUnit.values.map((unit) {
+                final isSelected = unit == _selectedUnit;
+                return GestureDetector(
+                  onTap: _toggleUnit,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? colors.cyan.withValues(alpha: 0.2)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      unit.label,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                        color: isSelected ? colors.cyan : colors.textMuted,
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 32),
-              // Increase button
-              _WeightAdjustButton(
-                icon: Icons.add,
-                onTap: _incrementWeight,
-                onLongPress: () {
-                  // Continuous increase
-                  HapticService.medium();
-                  for (int i = 0; i < 5; i++) {
-                    Future.delayed(Duration(milliseconds: i * 50), _incrementWeight);
-                  }
-                },
-                colors: colors,
-              ),
-            ],
+                );
+              }).toList(),
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildWeightInput(SheetColors colors) {
+    final displayWeight = _selectedUnit.fromKg(_weightKg);
+
+    return Column(
+      children: [
+        // Smaller circular weight input
+        GestureDetector(
+          onTap: () => _showDirectInput(colors),
+          child: AnimatedBuilder(
+            animation: _pulseController,
+            builder: (context, child) {
+              final pulseValue = _pulseController.value * 0.015 + 1.0;
+              return Transform.scale(
+                scale: pulseValue,
+                child: child,
+              );
+            },
+            child: Container(
+              width: 160,
+              height: 160,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    colors.cyan.withValues(alpha: 0.2),
+                    colors.cyan.withValues(alpha: 0.05),
+                  ],
+                ),
+                border: Border.all(
+                  color: colors.cyan.withValues(alpha: 0.5),
+                  width: 2.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.cyan.withValues(alpha: 0.15),
+                    blurRadius: 24,
+                    spreadRadius: 3,
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      displayWeight.toStringAsFixed(1),
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _selectedUnit.label,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: colors.textMuted,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Tap to edit',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: colors.textMuted.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        )
+            .animate()
+            .scale(
+              begin: const Offset(0.8, 0.8),
+              end: const Offset(1.0, 1.0),
+              duration: 400.ms,
+              curve: Curves.easeOut,
+            )
+            .fadeIn(),
+        const SizedBox(height: 16),
+
+        // +/- buttons
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _WeightAdjustButton(
+              icon: Icons.remove,
+              onTap: _decrementWeight,
+              onLongPress: () {
+                HapticService.medium();
+                for (int i = 0; i < 5; i++) {
+                  Future.delayed(Duration(milliseconds: i * 50), _decrementWeight);
+                }
+              },
+              colors: colors,
+            ),
+            const SizedBox(width: 28),
+            GestureDetector(
+              onTap: () => _showDirectInput(colors),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                decoration: BoxDecoration(
+                  color: colors.glassSurface.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: colors.cardBorder.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.edit, color: colors.textMuted, size: 14),
+                    const SizedBox(width: 5),
+                    Text(
+                      'Type',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 28),
+            _WeightAdjustButton(
+              icon: Icons.add,
+              onTap: _incrementWeight,
+              onLongPress: () {
+                HapticService.medium();
+                for (int i = 0; i < 5; i++) {
+                  Future.delayed(Duration(milliseconds: i * 50), _incrementWeight);
+                }
+              },
+              colors: colors,
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -817,68 +788,6 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
     );
   }
 
-  Widget _buildDateSelector(SheetColors colors) {
-    final isToday = DateUtils.isSameDay(_selectedDate, DateTime.now());
-    final formattedDate = isToday
-        ? 'Today'
-        : DateFormat('EEE, MMM d').format(_selectedDate);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: GestureDetector(
-        onTap: _selectDate,
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: colors.glassSurface.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: colors.cardBorder.withValues(alpha: 0.3)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: colors.purple.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(Icons.calendar_today, color: colors.purple, size: 20),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Date',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colors.textMuted,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      formattedDate,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right, color: colors.textMuted),
-            ],
-          ),
-        ),
-      ),
-    )
-        .animate()
-        .fadeIn(delay: 100.ms)
-        .slideX(begin: -0.1, end: 0);
-  }
-
   Widget _buildFastingDayIndicator(SheetColors colors) {
     if (_isCheckingFastingDay) {
       return Padding(
@@ -960,41 +869,29 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
 
   Widget _buildNotesInput(SheetColors colors) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Notes (optional)',
-            style: TextStyle(
-              fontSize: 14,
-              color: colors.textMuted,
-              fontWeight: FontWeight.w500,
-            ),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.glassSurface.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: colors.cardBorder.withValues(alpha: 0.3)),
+        ),
+        child: TextField(
+          controller: _notesController,
+          focusNode: _notesFocusNode,
+          style: TextStyle(color: colors.textPrimary, fontSize: 14),
+          maxLines: 1,
+          maxLength: 200,
+          decoration: InputDecoration(
+            hintText: 'Add a note (optional)',
+            hintStyle: TextStyle(color: colors.textMuted.withValues(alpha: 0.5), fontSize: 13),
+            counterText: '',
+            prefixIcon: Icon(Icons.note_outlined, color: colors.textMuted.withValues(alpha: 0.4), size: 18),
+            prefixIconConstraints: const BoxConstraints(minWidth: 40),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           ),
-          const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: colors.glassSurface.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: colors.cardBorder.withValues(alpha: 0.3)),
-            ),
-            child: TextField(
-              controller: _notesController,
-              focusNode: _notesFocusNode,
-              style: TextStyle(color: colors.textPrimary, fontSize: 15),
-              maxLines: 2,
-              maxLength: 200,
-              decoration: InputDecoration(
-                hintText: 'e.g., Morning weight, post-workout...',
-                hintStyle: TextStyle(color: colors.textMuted.withValues(alpha: 0.6)),
-                counterStyle: TextStyle(color: colors.textMuted, fontSize: 11),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.all(16),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     )
         .animate()
@@ -1104,28 +1001,29 @@ class _WeightAdjustButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       onLongPress: onLongPress,
       child: Container(
-        width: 56,
-        height: 56,
+        width: 48,
+        height: 48,
         decoration: BoxDecoration(
-          color: colors.glassSurface.withValues(alpha: 0.4),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.12)
+              : Colors.black.withValues(alpha: 0.07),
           shape: BoxShape.circle,
-          border: Border.all(color: colors.cardBorder.withValues(alpha: 0.4)),
-          boxShadow: [
-            BoxShadow(
-              color: colors.cyan.withValues(alpha: 0.1),
-              blurRadius: 10,
-              spreadRadius: 1,
-            ),
-          ],
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.25)
+                : Colors.black.withValues(alpha: 0.15),
+            width: 1.5,
+          ),
         ),
         child: Icon(
           icon,
           color: colors.textPrimary,
-          size: 28,
+          size: 24,
         ),
       ),
     );

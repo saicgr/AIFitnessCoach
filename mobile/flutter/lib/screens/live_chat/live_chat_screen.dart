@@ -8,6 +8,8 @@ import '../../core/constants/app_colors.dart';
 import '../../data/services/haptic_service.dart';
 import 'widgets/agent_info_header.dart';
 import 'widgets/live_chat_input_bar.dart';
+import '../../widgets/glass_back_button.dart';
+import '../../widgets/glass_sheet.dart';
 import 'widgets/live_chat_message_bubble.dart';
 import 'widgets/queue_position_card.dart';
 import 'widgets/typing_indicator.dart';
@@ -333,44 +335,33 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
   }
 
   void _showOptionsMenu() {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: AppColors.elevated,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: AppColors.textMuted,
-                borderRadius: BorderRadius.circular(2),
+      builder: (context) => GlassSheet(
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.call_end, color: AppColors.error),
+                title: const Text('End Chat'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showEndChatDialog();
+                },
               ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.call_end, color: AppColors.error),
-              title: const Text('End Chat'),
-              onTap: () {
-                Navigator.pop(context);
-                _showEndChatDialog();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.info_outline, color: AppColors.cyan),
-              title: const Text('About Live Chat'),
-              onTap: () {
-                Navigator.pop(context);
-                _showAboutDialog();
-              },
-            ),
-            const SizedBox(height: 16),
-          ],
+              ListTile(
+                leading: const Icon(Icons.info_outline, color: AppColors.cyan),
+                title: const Text('About Live Chat'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showAboutDialog();
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -513,9 +504,9 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
   PreferredSizeWidget _buildAppBar(LiveChatState chatState) {
     return AppBar(
       backgroundColor: AppColors.pureBlack,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: () {
+      automaticallyImplyLeading: false,
+      leading: GlassBackButton(
+        onTap: () {
           HapticService.light();
           if (chatState.status == LiveChatStatus.connected) {
             _showEndChatDialog();

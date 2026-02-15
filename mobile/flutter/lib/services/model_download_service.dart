@@ -76,13 +76,13 @@ class ModelDownloadState {
 class ModelDownloadService {
   static const String _modelsDirName = 'models';
 
-  // Placeholder model download URLs - will be configured with actual hosting later
+  // HuggingFace model download URLs (gated repos require auth token)
   static const Map<GemmaModelType, String> _modelUrls = {
-    GemmaModelType.functionGemma270M: 'https://storage.googleapis.com/gemma-models/function_gemma_270m.bin',
-    GemmaModelType.gemma3_1B: 'https://storage.googleapis.com/gemma-models/gemma3_1b.bin',
-    GemmaModelType.gemma3n_E2B: 'https://storage.googleapis.com/gemma-models/gemma3n_e2b.bin',
-    GemmaModelType.gemma3n_E4B: 'https://storage.googleapis.com/gemma-models/gemma3n_e4b.bin',
-    GemmaModelType.embeddingGemma300M: 'https://storage.googleapis.com/gemma-models/embedding_gemma_300m.bin',
+    GemmaModelType.gemma3_270M: 'https://huggingface.co/litert-community/gemma-3-270m-it/resolve/main/gemma3-270m-it-q8.task',
+    GemmaModelType.gemma3_1B: 'https://huggingface.co/litert-community/Gemma3-1B-IT/resolve/main/gemma3-1b-it-int4.task',
+    GemmaModelType.gemma3n_E2B: 'https://huggingface.co/google/gemma-3n-E2B-it-litert-preview/resolve/main/gemma-3n-E2B-it-int4.task',
+    GemmaModelType.gemma3n_E4B: 'https://huggingface.co/google/gemma-3n-E4B-it-litert-preview/resolve/main/gemma-3n-E4B-it-int4.task',
+    GemmaModelType.embeddingGemma300M: 'https://huggingface.co/litert-community/embeddinggemma-300m/resolve/main/embeddinggemma-300M_seq512_mixed-precision.tflite',
   };
 
   /// Get the local directory for storing model files.
@@ -125,10 +125,12 @@ class ModelDownloadService {
   /// Download a Gemma model file to local storage.
   ///
   /// Progress is reported via [onProgress] callback (0.0 - 1.0).
+  /// [huggingFaceToken] is required for gated HuggingFace model repos.
   /// Throws on network errors or insufficient storage.
   Future<void> downloadModel(
     GemmaModelType model, {
     Function(double)? onProgress,
+    String? huggingFaceToken,
   }) async {
     final url = _modelUrls[model];
     if (url == null) {
@@ -142,6 +144,9 @@ class ModelDownloadService {
     final httpClient = HttpClient();
     try {
       final request = await httpClient.getUrl(Uri.parse(url));
+      if (huggingFaceToken != null && huggingFaceToken.isNotEmpty) {
+        request.headers.add('Authorization', 'Bearer $huggingFaceToken');
+      }
       final response = await request.close();
 
       if (response.statusCode != 200) {

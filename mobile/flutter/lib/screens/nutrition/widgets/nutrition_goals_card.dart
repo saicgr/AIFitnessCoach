@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/models/nutrition_preferences.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
+import '../../../data/repositories/hydration_repository.dart';
 import '../../../data/repositories/nutrition_preferences_repository.dart';
 import '../../../data/services/health_service.dart';
 
@@ -14,6 +15,7 @@ class NutritionGoalsCard extends ConsumerWidget {
   final bool isDark;
   final VoidCallback? onEdit;
   final VoidCallback? onRecalculate;
+  final VoidCallback? onHydrationTap;
 
   const NutritionGoalsCard({
     super.key,
@@ -22,6 +24,7 @@ class NutritionGoalsCard extends ConsumerWidget {
     required this.isDark,
     this.onEdit,
     this.onRecalculate,
+    this.onHydrationTap,
   });
 
   @override
@@ -35,6 +38,12 @@ class NutritionGoalsCard extends ConsumerWidget {
     final orange = isDark ? AppColors.orange : AppColorsLight.orange;
     final coral = isDark ? AppColors.coral : AppColorsLight.coral;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final electricBlue = isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final hydrationState = ref.watch(hydrationProvider);
+    final currentMl = hydrationState.todaySummary?.totalMl ?? 0;
+    final goalMl = hydrationState.dailyGoalMl;
+    final hydrationPct = goalMl > 0 ? (currentMl / goalMl).clamp(0.0, 1.0) : 0.0;
 
     final prefsState = ref.watch(nutritionPreferencesProvider);
     final dynamicTargets = prefsState.dynamicTargets;
@@ -96,15 +105,12 @@ class NutritionGoalsCard extends ConsumerWidget {
             children: [
               Icon(Icons.track_changes, color: teal, size: 18),
               const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  'Daily Goals',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+              Text(
+                'Daily Goals',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: textPrimary,
                 ),
               ),
               if (isTrainingDay) ...[
@@ -132,7 +138,39 @@ class NutritionGoalsCard extends ConsumerWidget {
                   ),
                 ),
               ],
-              const Spacer(),
+              const SizedBox(width: 8),
+              Flexible(
+                child: GestureDetector(
+                  onTap: onHydrationTap,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.water_drop,
+                        size: 14,
+                        color: hydrationPct >= 0.75
+                            ? electricBlue
+                            : hydrationPct >= 0.25
+                                ? electricBlue.withValues(alpha: 0.6)
+                                : textMuted,
+                      ),
+                      const SizedBox(width: 3),
+                      Flexible(
+                        child: Text(
+                          '$currentMl/${goalMl}ml',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
               // Edit button
               IconButton(
                 onPressed: onEdit,

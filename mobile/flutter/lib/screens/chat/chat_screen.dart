@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/models/coach_persona.dart';
 import '../../data/models/live_chat_session.dart';
@@ -12,6 +13,7 @@ import '../../data/providers/offline_coach_provider.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/coach_avatar.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../widgets/floating_chat/floating_chat_overlay.dart';
 import '../../widgets/medical_disclaimer_banner.dart';
 import '../ai_settings/ai_settings_screen.dart';
@@ -137,9 +139,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.pureBlack,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
+        automaticallyImplyLeading: false,
+        leading: GlassBackButton(
+          onTap: () {
             HapticService.light();
             context.pop();
           },
@@ -326,26 +328,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   void _showOptionsMenu(BuildContext context) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: AppColors.elevated,
-      useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: AppColors.textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+      builder: (context) => GlassSheet(
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             ListTile(
               leading: const Icon(Icons.support_agent, color: AppColors.cyan),
               title: const Text('Talk to Human Support'),
@@ -407,6 +396,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             const SizedBox(height: 16),
           ],
         ),
+      ),
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../data/models/kegel.dart';
 import '../../data/providers/kegel_provider.dart';
 import '../../core/providers/user_provider.dart';
+import '../../widgets/glass_sheet.dart';
 
 /// Guided kegel/pelvic floor exercise session with timer
 class KegelSessionScreen extends ConsumerStatefulWidget {
@@ -450,12 +451,13 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
   }
 
   void _showExerciseDetails(KegelExercise exercise) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
       useRootNavigator: true,
       builder: (context) {
-        return DraggableScrollableSheet(
+        return GlassSheet(
+          showHandle: false,
+          child: DraggableScrollableSheet(
           initialChildSize: 0.7,
           maxChildSize: 0.9,
           minChildSize: 0.5,
@@ -465,17 +467,6 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
               controller: scrollController,
               padding: const EdgeInsets.all(20),
               children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.outline,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
                 Text(
                   exercise.displayName,
                   style: Theme.of(context).textTheme.headlineSmall,
@@ -534,6 +525,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
               ],
             );
           },
+        ),
         );
       },
     );

@@ -5,10 +5,10 @@ import 'device_capability_service.dart';
 /// Builds structured prompts for on-device Gemma models to generate workouts.
 ///
 /// Two prompt formats are supported:
-/// - Function calling format for FunctionGemma 270M
+/// - Function calling format for Gemma 3 270M
 /// - Instruction format for Gemma 3 1B / Gemma 3n E2B / Gemma 3n E4B
 class WorkoutPromptBuilder {
-  /// Build a prompt for FunctionGemma 270M using function-calling format.
+  /// Build a prompt for Gemma 3 270M using function-calling format.
   ///
   /// FunctionGemma expects a tool/function definition followed by user input,
   /// and responds with a structured function call containing the workout JSON.
@@ -129,7 +129,7 @@ Respond with ONLY the JSON object. No markdown, no explanation, no code blocks.'
     List<String> injuries = const [],
   }) {
     switch (modelType) {
-      case GemmaModelType.functionGemma270M:
+      case GemmaModelType.gemma3_270M:
         return buildFunctionGemmaPrompt(
           splitType: splitType,
           fitnessLevel: fitnessLevel,

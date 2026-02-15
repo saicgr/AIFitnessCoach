@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/models/home_layout.dart';
+import '../../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../../data/repositories/nutrition_repository.dart';
 import '../../../../data/services/health_service.dart';
 import '../../../../data/services/haptic_service.dart';
@@ -66,8 +67,9 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
 
     // Get nutrition data (for deficit calculation)
     final nutritionState = ref.watch(nutritionProvider);
+    final prefsState = ref.watch(nutritionPreferencesProvider);
     final caloriesConsumed = nutritionState.todaySummary?.totalCalories ?? 0;
-    final calorieTarget = nutritionState.targets?.dailyCalorieTarget ?? 2000;
+    final calorieTarget = prefsState.dynamicTargets?.targetCalories ?? nutritionState.targets?.dailyCalorieTarget ?? 2000;
 
     // Calculate deficit: target - consumed + exercise burned
     // Positive = in deficit (good for fat loss), Negative = over calories

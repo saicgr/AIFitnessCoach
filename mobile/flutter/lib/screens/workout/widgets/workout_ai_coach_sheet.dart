@@ -4,8 +4,6 @@
 /// existing chat system (shared history, AI settings, coach persona).
 library;
 
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +17,7 @@ import '../../../data/models/coach_persona.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../screens/ai_settings/ai_settings_screen.dart';
 import '../../../widgets/coach_avatar.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Show AI coach sheet during workout
 Future<void> showWorkoutAICoachSheet({
@@ -31,19 +30,18 @@ Future<void> showWorkoutAICoachSheet({
   required bool useKg,
   required List<WorkoutExercise> remainingExercises,
 }) {
-  return showModalBottomSheet(
+  return showGlassSheet(
     context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    isScrollControlled: true,
-    useRootNavigator: true,
-    builder: (ctx) => WorkoutAICoachSheet(
-      currentExercise: currentExercise,
-      completedSets: completedSets,
-      totalSets: totalSets,
-      currentWeight: currentWeight,
-      useKg: useKg,
-      remainingExercises: remainingExercises,
+    builder: (ctx) => GlassSheet(
+      showHandle: false,
+      child: WorkoutAICoachSheet(
+        currentExercise: currentExercise,
+        completedSets: completedSets,
+        totalSets: totalSets,
+        currentWeight: currentWeight,
+        useKg: useKg,
+        remainingExercises: remainingExercises,
+      ),
     ),
   );
 }
@@ -191,41 +189,8 @@ User question: $message
     final coach = _getCoachPersona(aiSettings);
     final screenHeight = MediaQuery.of(context).size.height;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          height: screenHeight * 0.85,
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: Column(
+    return Column(
             children: [
-              // Handle bar
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.black.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-
           // Header with coach info
           _buildHeader(isDark, coach),
 
@@ -263,9 +228,6 @@ User question: $message
           // Input field
           _buildInputField(isDark),
         ],
-          ),
-        ),
-      ),
     )
         .animate()
         .fadeIn(duration: 200.ms)

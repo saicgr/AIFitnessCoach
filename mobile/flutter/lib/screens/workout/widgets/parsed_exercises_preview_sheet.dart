@@ -11,6 +11,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/parsed_exercise.dart';
 import '../../../widgets/exercise_image.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Show the parsed exercises preview sheet
 Future<List<ParsedExercise>?> showParsedExercisesPreview(
@@ -19,14 +20,13 @@ Future<List<ParsedExercise>?> showParsedExercisesPreview(
   required List<ParsedExercise> exercises,
   required bool useKg,
 }) async {
-  return await showModalBottomSheet<List<ParsedExercise>>(
+  return await showGlassSheet<List<ParsedExercise>>(
     context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    useRootNavigator: true,
-    builder: (context) => _ParsedExercisesPreviewSheet(
-      exercises: exercises,
-      useKg: useKg,
+    builder: (context) => GlassSheet(
+      child: _ParsedExercisesPreviewSheet(
+        exercises: exercises,
+        useKg: useKg,
+      ),
     ),
   );
 }
@@ -191,30 +191,9 @@ class _ParsedExercisesPreviewSheetState
     final textPrimary = isDark ? AppColors.textPrimary : Colors.black87;
     final textMuted = isDark ? AppColors.textMuted : Colors.grey.shade600;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.7,
-      ),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.nearBlack : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
+    return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle bar
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withOpacity(0.2)
-                  : Colors.black.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
           // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
@@ -337,7 +316,6 @@ class _ParsedExercisesPreviewSheetState
             ),
           ),
         ],
-      ),
     );
   }
 }
