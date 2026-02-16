@@ -55,7 +55,6 @@ import 'widgets/minimal_header.dart';
 import 'widgets/collapsed_banner_strip.dart';
 import '../../widgets/health_connect_sheet.dart';
 import '../../data/providers/health_import_provider.dart';
-import 'widgets/workout_import_screen.dart';
 
 /// The main home screen displaying workouts, progress, and quick actions
 class HomeScreen extends ConsumerStatefulWidget {
@@ -207,7 +206,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     showHealthConnectSheet(context, ref);
   }
 
-  /// Check Health Connect for unimported workout sessions.
+  /// Check Health Connect for unimported workout sessions and auto-import them.
   /// Delayed 800ms to let the UI render first. Skips if HC not connected.
   Future<void> _checkForWorkoutImports() async {
     await Future.delayed(const Duration(milliseconds: 800));
@@ -220,19 +219,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (!mounted) return;
 
     final importState = ref.read(healthImportProvider);
-    if (importState.pendingImports.isNotEmpty) {
-      _showNextImportPrompt();
-    }
-  }
-
-  /// Show the workout import sheet for pending Health Connect imports.
-  void _showNextImportPrompt() {
-    if (!mounted) return;
-
-    final importState = ref.read(healthImportProvider);
     if (importState.pendingImports.isEmpty) return;
 
-    showWorkoutImportSheet(context, ref);
+    // Auto-import all detected workouts
+    final count =
+        await ref.read(healthImportProvider.notifier).autoImportAll();
+    if (!mounted) return;
+
+    if (count > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              'Imported $count workout${count > 1 ? 's' : ''} from Health Connect'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   /// Map XPGoalType from provider to animation widget enum

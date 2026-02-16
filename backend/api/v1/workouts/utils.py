@@ -2221,6 +2221,34 @@ FITNESS_LEVEL_CAPS = {
     "advanced": {"max_sets": 5, "max_reps": 20, "min_rest": 30},
 }
 
+# Exercises that naturally use higher rep ranges (bodyweight, isolation, core, etc.)
+# These get a +8 rep bonus on top of the fitness level cap
+HIGH_REP_EXERCISE_KEYWORDS = {
+    # Core / abs
+    "crunch", "sit-up", "sit up", "situp", "bicycle", "russian twist",
+    "leg raise", "flutter kick", "scissor kick", "mountain climber",
+    "dead bug", "bird dog", "plank jack", "toe touch",
+    "heel tap", "v-up", "v up",
+    # Calves
+    "calf raise", "calf press", "heel raise",
+    # Glutes / hip
+    "glute bridge", "hip thrust", "fire hydrant", "clamshell",
+    "donkey kick", "kickback", "hip circle", "band walk",
+    # Light isolation
+    "face pull", "band pull apart", "band pull-apart",
+    "lateral raise", "front raise", "reverse fly",
+    "wrist curl", "forearm curl",
+    # Bodyweight conditioning
+    "jumping jack", "high knee", "butt kick", "burpee",
+    "squat jump", "jump squat", "box step", "step up", "step-up",
+    "wall sit", "wall squat",
+}
+
+def is_high_rep_exercise(exercise_name: str) -> bool:
+    """Check if an exercise naturally uses higher rep ranges."""
+    name_lower = exercise_name.lower().strip()
+    return any(kw in name_lower for kw in HIGH_REP_EXERCISE_KEYWORDS)
+
 # Hell mode caps - higher limits for maximum intensity workouts
 # Users must accept risk warning before Hell mode is enabled
 HELL_MODE_CAPS = {
@@ -2425,7 +2453,12 @@ def validate_and_cap_exercise_parameters(
         capped_sets = min(original_sets, effective_max_sets)
         capped_sets = max(capped_sets, user_min_sets)  # Ensure at least min_sets
 
-        capped_reps = min(original_reps, caps["max_reps"], ABSOLUTE_MAX_REPS)
+        # Allow higher reps for exercises that naturally use them (core, calves, etc.)
+        effective_max_reps = caps["max_reps"]
+        if is_high_rep_exercise(exercise_name):
+            effective_max_reps = min(caps["max_reps"] + 8, ABSOLUTE_MAX_REPS)
+
+        capped_reps = min(original_reps, effective_max_reps, ABSOLUTE_MAX_REPS)
 
         # Apply user's rep ceiling if enforce_rep_ceiling is enabled
         if enforce_rep_ceiling and user_max_reps_ceiling:

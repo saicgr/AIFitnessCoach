@@ -63,6 +63,7 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
 
   void _dismiss() {
     HapticService.light();
+    if (!mounted) return;
     _animationController.reverse().then((_) {
       if (mounted) {
         setState(() => _isDismissed = true);

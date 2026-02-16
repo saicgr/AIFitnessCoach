@@ -9,6 +9,13 @@
 *.duckdb.wal
 *.sqlite3
 
+# Large data files
+food_curation/output/
+*.parquet
+*.csv
+data_keys.gz
+*.pdf
+
 # Chroma vector store data
 backend/data/chroma/
 

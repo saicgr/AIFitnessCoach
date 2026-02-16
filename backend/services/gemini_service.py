@@ -930,23 +930,20 @@ Create engaging, creative names that:
             logger.warning(f"USDA lookup failed for '{food_name}': {e}")
         return None
 
-    async def _enhance_food_items_with_usda(self, food_items: List[Dict]) -> List[Dict]:
+    async def _enhance_food_items_with_nutrition_db(self, food_items: List[Dict], use_usda: bool = False) -> List[Dict]:
         """
-        Enhance food items with USDA per-100g nutrition data for accurate scaling.
-        Uses parallel lookups for faster performance.
+        Enhance food items with per-100g nutrition data for accurate scaling.
+
+        Primary flow (use_usda=False): Uses local food database (528K foods in Supabase)
+        via batch lookup for instant results (~50-100ms for 5 items).
+
+        Retry flow (use_usda=True): Falls back to USDA API for a different data source.
 
         For each food item:
-        1. Look up in USDA database (in parallel)
+        1. Look up in nutrition database (batch or parallel)
         2. If found: Add usda_data with per-100g values
         3. If not found: Calculate ai_per_gram from AI's estimate
         """
-        try:
-            from services.usda_food_service import get_usda_food_service
-            usda_service = get_usda_food_service()
-        except Exception as e:
-            logger.warning(f"Could not initialize USDA service: {e}")
-            usda_service = None
-
         # Parse weights first (synchronous, fast)
         # Use Gemini's weight_g if provided, otherwise parse from amount string
         parsed_items = []
@@ -967,47 +964,70 @@ Create engaging, creative names that:
 
             parsed_items.append(enhanced_item)
 
-        # Run all USDA lookups in parallel (async)
         food_names = [item.get('name', '') for item in food_items]
-        print(f"🔍 [USDA] Looking up {len(food_names)} items in parallel...")
 
-        usda_results = await asyncio.gather(
-            *[self._lookup_single_usda(usda_service, name) for name in food_names],
-            return_exceptions=True  # Don't fail if one lookup fails
-        )
+        if use_usda:
+            # Retry flow: Use USDA API (parallel individual lookups)
+            try:
+                from services.usda_food_service import get_usda_food_service
+                usda_service = get_usda_food_service()
+            except Exception as e:
+                logger.warning(f"Could not initialize USDA service: {e}")
+                usda_service = None
 
-        # Process results
+            print(f"🔍 [USDA] Looking up {len(food_names)} items in parallel (retry flow)...")
+            lookup_results = await asyncio.gather(
+                *[self._lookup_single_usda(usda_service, name) for name in food_names],
+                return_exceptions=True
+            )
+            # Convert gather results to list, replacing exceptions with None
+            nutrition_results = []
+            for r in lookup_results:
+                if isinstance(r, Exception):
+                    nutrition_results.append(None)
+                else:
+                    nutrition_results.append(r)
+        else:
+            # Primary flow: Use local food database (single batch call)
+            try:
+                from services.food_database_lookup_service import get_food_db_lookup_service
+                food_db_service = get_food_db_lookup_service()
+                print(f"🔍 [FoodDB] Batch looking up {len(food_names)} items...")
+                batch_results = await food_db_service.batch_lookup_foods(food_names)
+                # Convert batch dict to ordered list matching food_names
+                nutrition_results = [batch_results.get(name) for name in food_names]
+            except Exception as e:
+                logger.warning(f"Food DB batch lookup failed, falling back to AI estimates: {e}")
+                nutrition_results = [None] * len(food_names)
+
+        # Process results (same logic for both flows)
         enhanced_items = []
-        for i, (item, usda_data) in enumerate(zip(parsed_items, usda_results)):
-            # Handle exceptions from gather
-            if isinstance(usda_data, Exception):
-                logger.warning(f"USDA lookup exception for '{food_names[i]}': {usda_data}")
-                usda_data = None
-
+        source_label = "USDA" if use_usda else "FoodDB"
+        for i, (item, nutrition_data) in enumerate(zip(parsed_items, nutrition_results)):
             weight_g = item['weight_g']
 
-            if usda_data:
-                # Check if USDA data has valid calories (non-zero)
-                usda_calories_per_100g = usda_data.get('calories_per_100g', 0)
+            if nutrition_data:
+                # Check if data has valid calories (non-zero)
+                calories_per_100g = nutrition_data.get('calories_per_100g', 0)
 
-                if usda_calories_per_100g > 0 and weight_g > 0:
-                    # Use USDA data - it has valid nutritional info
-                    item['usda_data'] = usda_data
+                if calories_per_100g > 0 and weight_g > 0:
+                    # Use nutrition DB data
+                    item['usda_data'] = nutrition_data
                     item['ai_per_gram'] = None
 
                     multiplier = weight_g / 100.0
-                    item['calories'] = round(usda_calories_per_100g * multiplier)
-                    item['protein_g'] = round(usda_data['protein_per_100g'] * multiplier, 1)
-                    item['carbs_g'] = round(usda_data['carbs_per_100g'] * multiplier, 1)
-                    item['fat_g'] = round(usda_data['fat_per_100g'] * multiplier, 1)
-                    item['fiber_g'] = round(usda_data['fiber_per_100g'] * multiplier, 1)
-                    logger.info(f"[USDA] Using USDA data for '{food_names[i]}' | calories={item['calories']} | usda_cal/100g={usda_calories_per_100g}")
+                    item['calories'] = round(calories_per_100g * multiplier)
+                    item['protein_g'] = round(nutrition_data['protein_per_100g'] * multiplier, 1)
+                    item['carbs_g'] = round(nutrition_data['carbs_per_100g'] * multiplier, 1)
+                    item['fat_g'] = round(nutrition_data['fat_per_100g'] * multiplier, 1)
+                    item['fiber_g'] = round(nutrition_data['fiber_per_100g'] * multiplier, 1)
+                    logger.info(f"[{source_label}] Using data for '{food_names[i]}' | calories={item['calories']} | cal/100g={calories_per_100g}")
                 else:
-                    # USDA match found but has 0 calories - fall back to AI values
-                    logger.warning(f"[USDA] Found match for '{food_names[i]}' but calories=0, keeping AI estimate | ai_calories={item.get('calories', 0)}")
-                    item['usda_data'] = None  # Mark as no valid USDA data
+                    # Match found but has 0 calories - fall back to AI values
+                    logger.warning(f"[{source_label}] Found match for '{food_names[i]}' but calories=0, keeping AI estimate | ai_calories={item.get('calories', 0)}")
+                    item['usda_data'] = None
                     item['ai_per_gram'] = None
-            elif usda_data is None:
+            else:
                 # Fallback: Calculate per-gram from AI estimate
                 item['usda_data'] = None
                 original_item = food_items[i]
@@ -1025,7 +1045,7 @@ Create engaging, creative names that:
                         'fat': round(ai_fat / weight_g, 4),
                         'fiber': round(ai_fiber / weight_g, 4) if ai_fiber else 0,
                     }
-                    print(f"⚠️ [USDA] No match for '{food_names[i]}', using AI per-gram estimate")
+                    print(f"⚠️ [{source_label}] No match for '{food_names[i]}', using AI per-gram estimate")
                 else:
                     item['ai_per_gram'] = None
 
@@ -2009,7 +2029,7 @@ WEIGHT/COUNT FIELDS (required for portion editing):
             # Enhance food items with USDA per-100g data for accurate scaling
             if result and result.get('food_items'):
                 try:
-                    enhanced_items = await self._enhance_food_items_with_usda(result['food_items'])
+                    enhanced_items = await self._enhance_food_items_with_nutrition_db(result['food_items'])
                     result['food_items'] = enhanced_items
 
                     # Recalculate totals based on enhanced items
@@ -2025,7 +2045,7 @@ WEIGHT/COUNT FIELDS (required for portion editing):
                     result['fat_g'] = round(total_fat, 1)
                     result['fiber_g'] = round(total_fiber, 1)
 
-                    logger.info(f"[IMAGE-ANALYSIS:{req_id}] USDA enhanced {len(enhanced_items)} items | total_calories={total_calories}")
+                    logger.info(f"[IMAGE-ANALYSIS:{req_id}] Nutrition DB enhanced {len(enhanced_items)} items | total_calories={total_calories}")
 
                     # Debug: Log values AFTER USDA enhancement
                     for idx, item in enumerate(enhanced_items):
@@ -2316,7 +2336,7 @@ IMPORTANT - ALWAYS identify foods:
 
                     # Enhance food items with USDA per-100g data for accurate scaling
                     try:
-                        enhanced_items = await self._enhance_food_items_with_usda(result['food_items'])
+                        enhanced_items = await self._enhance_food_items_with_nutrition_db(result['food_items'])
                         result['food_items'] = enhanced_items
 
                         # Recalculate totals based on enhanced items
@@ -2332,9 +2352,9 @@ IMPORTANT - ALWAYS identify foods:
                         result['fat_g'] = round(total_fat, 1)
                         result['fiber_g'] = round(total_fiber, 1)
 
-                        print(f"✅ [USDA] Enhanced {len(enhanced_items)} items, total: {total_calories} cal")
+                        print(f"✅ [NutritionDB] Enhanced {len(enhanced_items)} items, total: {total_calories} cal")
                     except Exception as e:
-                        logger.warning(f"USDA enhancement failed, using AI estimates: {e}")
+                        logger.warning(f"Nutrition DB enhancement failed, using AI estimates: {e}")
                         # Continue with original AI estimates if enhancement fails
 
                     # Cache the successful result
@@ -2380,7 +2400,7 @@ IMPORTANT - ALWAYS identify foods:
 
                     # Enhance with USDA data
                     try:
-                        enhanced_items = await self._enhance_food_items_with_usda(result['food_items'])
+                        enhanced_items = await self._enhance_food_items_with_nutrition_db(result['food_items'])
                         result['food_items'] = enhanced_items
                         result['total_calories'] = sum(item.get('calories', 0) or 0 for item in enhanced_items)
                         result['protein_g'] = round(sum(item.get('protein_g', 0) or 0 for item in enhanced_items), 1)
@@ -2388,7 +2408,7 @@ IMPORTANT - ALWAYS identify foods:
                         result['fat_g'] = round(sum(item.get('fat_g', 0) or 0 for item in enhanced_items), 1)
                         result['fiber_g'] = round(sum(item.get('fiber_g', 0) or 0 for item in enhanced_items), 1)
                     except Exception as e:
-                        logger.warning(f"USDA enhancement failed in fallback: {e}")
+                        logger.warning(f"Nutrition DB enhancement failed in fallback: {e}")
 
                     # Cache the fallback result too
                     try:

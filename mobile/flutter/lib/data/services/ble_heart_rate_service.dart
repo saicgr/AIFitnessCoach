@@ -56,8 +56,10 @@ class BleHeartRateService {
   static const _keyLastDeviceName = 'ble_hr_last_device_name';
   static const _keyAutoConnect = 'ble_hr_auto_connect';
 
-  // BLE library
-  final FlutterReactiveBle _ble = FlutterReactiveBle();
+  // BLE library - lazily initialized to avoid triggering
+  // the "Nearby Devices" permission dialog on app startup
+  FlutterReactiveBle? _bleInstance;
+  FlutterReactiveBle get _ble => _bleInstance ??= FlutterReactiveBle();
 
   // Stream controllers
   final _hrController = StreamController<BleHeartRateReading>.broadcast();

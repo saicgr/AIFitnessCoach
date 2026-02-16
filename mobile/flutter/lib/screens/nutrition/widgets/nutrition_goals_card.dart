@@ -138,39 +138,7 @@ class NutritionGoalsCard extends ConsumerWidget {
                   ),
                 ),
               ],
-              const SizedBox(width: 8),
-              Flexible(
-                child: GestureDetector(
-                  onTap: onHydrationTap,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.water_drop,
-                        size: 14,
-                        color: hydrationPct >= 0.75
-                            ? electricBlue
-                            : hydrationPct >= 0.25
-                                ? electricBlue.withValues(alpha: 0.6)
-                                : textMuted,
-                      ),
-                      const SizedBox(width: 3),
-                      Flexible(
-                        child: Text(
-                          '$currentMl/${goalMl}ml',
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: textSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 4),
+              const Spacer(),
               // Edit button
               IconButton(
                 onPressed: onEdit,
@@ -189,6 +157,62 @@ class NutritionGoalsCard extends ConsumerWidget {
                 tooltip: 'Recalculate',
               ),
             ],
+          ),
+
+          // Hydration progress row
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: onHydrationTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: electricBlue.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.water_drop,
+                    size: 18,
+                    color: hydrationPct >= 0.75
+                        ? electricBlue
+                        : hydrationPct >= 0.25
+                            ? electricBlue.withValues(alpha: 0.7)
+                            : textMuted,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Water',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: textSecondary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: hydrationPct,
+                        minHeight: 6,
+                        backgroundColor: electricBlue.withValues(alpha: 0.15),
+                        color: electricBlue,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '$currentMl / ${goalMl}ml',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: hydrationPct >= 0.75 ? electricBlue : textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
 
           // Goal type badge

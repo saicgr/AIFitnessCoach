@@ -72,6 +72,45 @@ class ApiClient with WidgetsBindingObserver {
       ),
     );
 
+    // 307/308 redirect interceptor for POST/PUT/DELETE
+    // Dio 5.x only follows redirects for GET/HEAD, so we manually handle
+    // 307/308 redirects (e.g. FastAPI trailing-slash redirects).
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onResponse: (response, handler) {
+          if ((response.statusCode == 307 || response.statusCode == 308) &&
+              response.headers['location'] != null) {
+            final redirectUrl = response.headers['location']!.first;
+            final options = response.requestOptions;
+            options.path = redirectUrl;
+            _dio.fetch(options).then(
+              (r) => handler.resolve(r),
+              onError: (e) => handler.reject(e as DioException),
+            );
+            return;
+          }
+          handler.next(response);
+        },
+        onError: (error, handler) {
+          if (error.response != null &&
+              (error.response!.statusCode == 307 ||
+                  error.response!.statusCode == 308) &&
+              error.response!.headers['location'] != null) {
+            final redirectUrl =
+                error.response!.headers['location']!.first;
+            final options = error.requestOptions;
+            options.path = redirectUrl;
+            _dio.fetch(options).then(
+              (r) => handler.resolve(r),
+              onError: (e) => handler.reject(e as DioException),
+            );
+            return;
+          }
+          handler.next(error);
+        },
+      ),
+    );
+
     // Auth interceptor — always uses the CURRENT Supabase session token
     _dio.interceptors.add(
       InterceptorsWrapper(

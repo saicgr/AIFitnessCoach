@@ -155,11 +155,14 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
         ApiConstants.workouts,
         data: {
           'user_id': userId,
-          'workout_name': workoutName,
-          'generation_method': 'health_connect_import',
-          'workout_type': pending.activityType,
+          'name': workoutName,
+          'type': pending.activityType,
+          'difficulty': difficulty,
           'scheduled_date': pending.startTime.toIso8601String(),
-          'difficulty_level': difficulty,
+          'exercises_json': '[]',
+          'duration_minutes': pending.durationMinutes,
+          'generation_method': 'health_connect_import',
+          'generation_source': 'health_connect',
           'generation_metadata': jsonEncode(metadata),
         },
       );
@@ -171,12 +174,10 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
 
       debugPrint('✅ [HealthImport] Created workout $workoutId');
 
-      // 2. Mark the workout as complete with duration.
+      // 2. Mark the workout as complete.
       await _apiClient.post(
         '${ApiConstants.workouts}/$workoutId/complete',
-        data: {
-          'duration_minutes': pending.durationMinutes,
-        },
+        queryParameters: {'completion_method': 'marked_done'},
       );
 
       debugPrint('✅ [HealthImport] Marked workout $workoutId as complete');
@@ -241,6 +242,87 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
       ..removeWhere((p) => p.uuid == pending.uuid);
     state = state.copyWith(pendingImports: updated);
     debugPrint('⏭️ [HealthImport] Skipped workout ${pending.uuid}');
+  }
+
+  /// Auto-import all pending Health Connect workouts in the background.
+  /// Returns the count of successfully imported workouts.
+  Future<int> autoImportAll() async {
+    if (state.pendingImports.isEmpty) return 0;
+
+    state = state.copyWith(isImporting: true, error: null);
+    int successCount = 0;
+
+    // Copy list to iterate safely
+    final toImport = List<PendingWorkoutImport>.from(state.pendingImports);
+
+    for (final pending in toImport) {
+      try {
+        final userId = await _apiClient.getUserId();
+        if (userId == null) break;
+
+        final workoutName = _buildWorkoutName(pending.activityType);
+        final metadata = <String, dynamic>{};
+        if (pending.avgHeartRate != null) {
+          metadata['avg_heart_rate'] = pending.avgHeartRate;
+        }
+        if (pending.maxHeartRate != null) {
+          metadata['max_heart_rate'] = pending.maxHeartRate;
+        }
+        if (pending.caloriesBurned != null) {
+          metadata['calories_burned'] = pending.caloriesBurned;
+        }
+        if (pending.distanceMeters != null) {
+          metadata['distance_meters'] = pending.distanceMeters;
+        }
+        if (pending.sourceName != null) {
+          metadata['source_app'] = pending.sourceName;
+        }
+
+        // Create workout
+        final createResponse = await _apiClient.post(
+          ApiConstants.workouts,
+          data: {
+            'user_id': userId,
+            'name': workoutName,
+            'type': pending.activityType,
+            'difficulty': 'intermediate',
+            'scheduled_date': pending.startTime.toIso8601String(),
+            'exercises_json': '[]',
+            'duration_minutes': pending.durationMinutes,
+            'generation_method': 'health_connect_import',
+            'generation_source': 'health_connect',
+            'generation_metadata': jsonEncode(metadata),
+          },
+        );
+
+        final workoutId = createResponse.data['id'] as String?;
+        if (workoutId == null) continue;
+
+        // Mark complete
+        await _apiClient.post(
+          '${ApiConstants.workouts}/$workoutId/complete',
+          queryParameters: {'completion_method': 'marked_done'},
+        );
+
+        // Track UUID
+        await _importService.markImported(pending.uuid);
+        successCount++;
+      } catch (e) {
+        debugPrint(
+            '⚠️ [HealthImport] Auto-import failed for ${pending.uuid}: $e');
+        // Continue with next workout, don't stop on individual failures
+      }
+    }
+
+    // Clear all pending imports
+    state = state.copyWith(
+      isImporting: false,
+      pendingImports: [],
+    );
+
+    debugPrint(
+        '✅ [HealthImport] Auto-imported $successCount/${toImport.length} workouts');
+    return successCount;
   }
 
   /// Build a user-friendly workout name from activity type.

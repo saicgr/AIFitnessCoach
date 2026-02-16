@@ -103,7 +103,8 @@ enum FoodSearchSource {
   saved('Saved'),
   recent('Recent'),
   database('Database'),
-  barcode('Barcode');
+  barcode('Barcode'),
+  foodDatabase('Food DB');
 
   final String label;
   const FoodSearchSource(this.label);
@@ -128,6 +129,7 @@ class FoodSearchResults extends FoodSearchState {
   final List<FoodSearchResult> saved;
   final List<FoodSearchResult> recent;
   final List<FoodSearchResult> database;
+  final List<FoodSearchResult> foodDatabase;
   final bool fromCache;
 
   const FoodSearchResults({
@@ -135,14 +137,21 @@ class FoodSearchResults extends FoodSearchState {
     this.saved = const [],
     this.recent = const [],
     this.database = const [],
+    this.foodDatabase = const [],
     this.fromCache = false,
   });
 
-  bool get isEmpty => saved.isEmpty && recent.isEmpty && database.isEmpty;
+  bool get isEmpty =>
+      saved.isEmpty &&
+      recent.isEmpty &&
+      database.isEmpty &&
+      foodDatabase.isEmpty;
 
-  int get totalCount => saved.length + recent.length + database.length;
+  int get totalCount =>
+      saved.length + recent.length + database.length + foodDatabase.length;
 
-  List<FoodSearchResult> get allResults => [...saved, ...recent, ...database];
+  List<FoodSearchResult> get allResults =>
+      [...saved, ...recent, ...database, ...foodDatabase];
 }
 
 class FoodSearchError extends FoodSearchState {
@@ -223,6 +232,7 @@ class FoodSearchService {
         saved: cachedEntry.results.saved,
         recent: cachedEntry.results.recent,
         database: cachedEntry.results.database,
+        foodDatabase: cachedEntry.results.foodDatabase,
         fromCache: true,
       ));
       return;
@@ -254,6 +264,7 @@ class FoodSearchService {
         _searchSavedFoods(query, userId),
         _searchRecentFoods(query, userId),
         _searchSemanticDatabase(query, userId),
+        _searchFoodDatabase(query, userId),
       ]);
 
       // Check if query is still current before emitting results
@@ -265,15 +276,17 @@ class FoodSearchService {
       final savedResults = results[0];
       final recentResults = results[1];
       final databaseResults = results[2];
+      final foodDatabaseResults = results[3];
 
       stopwatch.stop();
-      debugPrint('FoodSearch: Found ${savedResults.length + recentResults.length + databaseResults.length} results in ${stopwatch.elapsedMilliseconds}ms');
+      debugPrint('FoodSearch: Found ${savedResults.length + recentResults.length + databaseResults.length + foodDatabaseResults.length} results in ${stopwatch.elapsedMilliseconds}ms');
 
       final searchResults = FoodSearchResults(
         query: query,
         saved: savedResults,
         recent: recentResults,
         database: databaseResults,
+        foodDatabase: foodDatabaseResults,
       );
 
       // Cache the results
@@ -380,6 +393,41 @@ class FoodSearchService {
           .toList();
     } catch (e) {
       debugPrint('FoodSearch: Error searching database: $e');
+      return [];
+    }
+  }
+
+  /// Search the curated food database via backend API
+  Future<List<FoodSearchResult>> _searchFoodDatabase(
+      String query, String userId) async {
+    try {
+      final response = await _apiClient.get(
+        '/nutrition/food-search',
+        queryParameters: {
+          'query': query,
+          'page_size': 10,
+        },
+      );
+
+      // Backend returns USDASearchResponse format: {foods: [...], total_hits, ...}
+      final List<dynamic> foods = response.data['foods'] ?? [];
+      return foods.map((item) {
+        final nutrients = item['nutrients'] as Map<String, dynamic>? ?? {};
+        return FoodSearchResult(
+          id: (item['fdc_id'] ?? 0).toString(),
+          name: item['description'] as String? ?? 'Unknown',
+          brand: item['brand_owner'] as String?,
+          calories: (nutrients['calories_per_100g'] as num?)?.toInt() ?? 0,
+          protein: (nutrients['protein_per_100g'] as num?)?.toDouble(),
+          carbs: (nutrients['carbs_per_100g'] as num?)?.toDouble(),
+          fat: (nutrients['fat_per_100g'] as num?)?.toDouble(),
+          servingSize: '100g',
+          source: FoodSearchSource.foodDatabase,
+          originalData: item as Map<String, dynamic>,
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('FoodSearch: Error searching food database: $e');
       return [];
     }
   }

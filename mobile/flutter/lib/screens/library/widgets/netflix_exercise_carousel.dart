@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -274,6 +275,8 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
         final videoUrl = videoResponse.data['url'] as String?;
         if (videoUrl != null && mounted) {
           await _initializeVideoController(videoUrl, isLocal: false);
+        } else if (mounted) {
+          setState(() => _isLoadingVideo = false);
         }
       } else {
         if (mounted) setState(() => _isLoadingVideo = false);
@@ -293,7 +296,14 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
         _videoController = VideoPlayerController.networkUrl(Uri.parse(source));
       }
 
-      await _videoController!.initialize();
+      await _videoController!.initialize().timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          _videoController?.dispose();
+          _videoController = null;
+          throw TimeoutException('Video initialization timed out');
+        },
+      );
       _videoController!.setLooping(true);
       _videoController!.setVolume(0);
 

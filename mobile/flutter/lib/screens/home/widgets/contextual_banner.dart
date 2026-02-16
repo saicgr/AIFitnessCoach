@@ -141,6 +141,7 @@ class _ContextualBannerState extends ConsumerState<ContextualBanner>
   Future<void> _dismiss(String dismissKey, ContextualBannerType type) async {
     HapticService.light();
 
+    if (!mounted) return;
     await _animationController.reverse();
 
     final prefs = await SharedPreferences.getInstance();

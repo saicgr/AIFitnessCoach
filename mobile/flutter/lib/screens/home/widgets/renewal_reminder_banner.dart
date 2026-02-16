@@ -70,6 +70,7 @@ class _RenewalBannerContentState extends ConsumerState<_RenewalBannerContent>
 
   Future<void> _dismissBanner() async {
     if (_isDismissing) return;
+    if (!mounted) return;
 
     setState(() => _isDismissing = true);
     HapticService.light();

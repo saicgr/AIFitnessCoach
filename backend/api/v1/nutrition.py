@@ -837,10 +837,14 @@ class CombinedFoodSearchResponse(BaseModel):
 
 
 @router.get("/food-search", response_model=USDASearchResponse)
-async def search_usda_foods(
+async def search_foods(
     query: str = Query(..., min_length=1, max_length=200, description="Food search query"),
     page_size: int = Query(default=25, ge=1, le=50, description="Number of results per page"),
     page: int = Query(default=1, ge=1, description="Page number"),
+    source: Optional[str] = Query(
+        default=None,
+        description="Filter by data source: usda, openfoodfacts, cnf, indb"
+    ),
     data_types: Optional[str] = Query(
         default=None,
         description="Comma-separated food types: Branded,Foundation,SR Legacy"
@@ -852,71 +856,122 @@ async def search_usda_foods(
     ),
 ):
     """
-    Search USDA FoodData Central for foods.
+    Search the food database for foods matching a query.
 
-    This endpoint searches the comprehensive USDA food database which includes:
-    - **Branded Foods**: Packaged/processed foods from manufacturers
-    - **Foundation Foods**: Minimally processed foods with detailed nutrients
-    - **SR Legacy**: USDA Standard Reference database (basic foods)
+    Primary search uses the local food database (528K+ foods from USDA, OpenFoodFacts,
+    CNF, and INDB) for instant results. Falls back to USDA API if local DB is unavailable.
 
-    Returns complete nutrient data including calories, macros, vitamins, and minerals.
-
-    **Rate Limits**: USDA API has rate limits. Results are cached for 1 hour.
+    Returns complete nutrient data including calories, macros, and serving info.
     """
-    logger.info(f"Searching USDA foods for: {query} (page {page}, size {page_size})")
+    logger.info(f"Searching foods for: {query} (page {page}, size {page_size}, source={source})")
 
     try:
-        service = get_usda_food_service()
+        # Primary: Use local food database
+        from services.food_database_lookup_service import get_food_db_lookup_service
+        food_db_service = get_food_db_lookup_service()
 
-        # Parse data types if provided
-        parsed_data_types = None
-        if data_types:
-            parsed_data_types = [dt.strip() for dt in data_types.split(",") if dt.strip()]
-
-        result = await service.search_foods(
+        results = await food_db_service.search_foods(
             query=query,
             page_size=page_size,
-            page_number=page,
-            data_types=parsed_data_types,
-            brand_owner=brand_owner,
+            page=page,
+            source=source,
         )
 
-        # Convert to response format
+        # Convert local DB results to USDAFoodResponse format for compatibility
         foods = []
-        for food in result.foods:
-            food_dict = food.to_dict()
+        for item in results:
+            nutrients = {
+                "calories_per_100g": item.get("calories_per_100g", 0),
+                "protein_per_100g": item.get("protein_per_100g", 0),
+                "carbs_per_100g": item.get("carbs_per_100g", 0),
+                "fat_per_100g": item.get("fat_per_100g", 0),
+                "fiber_per_100g": item.get("fiber_per_100g", 0),
+                "sugar_per_100g": item.get("sugar_per_100g", 0),
+            }
+
+            # Calculate per-serving if serving info available
+            nutrients_per_serving = None
+            serving_weight = item.get("serving_weight_g")
+            if serving_weight and serving_weight > 0:
+                mult = serving_weight / 100.0
+                nutrients_per_serving = {
+                    "calories": round((item.get("calories_per_100g", 0) or 0) * mult, 1),
+                    "protein_g": round((item.get("protein_per_100g", 0) or 0) * mult, 1),
+                    "carbs_g": round((item.get("carbs_per_100g", 0) or 0) * mult, 1),
+                    "fat_g": round((item.get("fat_per_100g", 0) or 0) * mult, 1),
+                }
+
             foods.append(USDAFoodResponse(
-                fdc_id=food_dict["fdc_id"],
-                description=food_dict["description"],
-                data_type=food_dict["data_type"],
-                brand_owner=food_dict.get("brand_owner"),
-                brand_name=food_dict.get("brand_name"),
-                ingredients=food_dict.get("ingredients"),
-                food_category=food_dict.get("food_category"),
-                gtin_upc=food_dict.get("gtin_upc"),
-                nutrients=food_dict["nutrients"],
-                nutrients_per_serving=food_dict.get("nutrients_per_serving"),
-                score=food_dict.get("score"),
+                fdc_id=item.get("id", 0),
+                description=item.get("name", "Unknown"),
+                data_type=item.get("source", "local_db"),
+                brand_owner=item.get("brand"),
+                brand_name=item.get("brand"),
+                ingredients=None,
+                food_category=item.get("category"),
+                gtin_upc=None,
+                nutrients=nutrients,
+                nutrients_per_serving=nutrients_per_serving,
+                score=item.get("similarity_score"),
             ))
 
-        logger.info(f"Found {len(foods)} USDA foods for query: {query}")
+        total_hits = len(foods)
+        logger.info(f"Found {total_hits} foods for query: {query}")
 
         return USDASearchResponse(
             foods=foods,
-            total_hits=result.total_hits,
-            current_page=result.current_page,
-            total_pages=result.total_pages,
+            total_hits=total_hits,
+            current_page=page,
+            total_pages=max(1, (total_hits + page_size - 1) // page_size),
             query=query,
         )
 
     except Exception as e:
-        logger.error(f"Failed to search USDA foods: {e}")
-        if "not configured" in str(e).lower():
-            raise HTTPException(
-                status_code=503,
-                detail="USDA food search is not available. Please configure USDA_API_KEY."
+        logger.warning(f"Local food DB search failed, falling back to USDA: {e}")
+
+        # Fallback: Use USDA API
+        try:
+            service = get_usda_food_service()
+
+            parsed_data_types = None
+            if data_types:
+                parsed_data_types = [dt.strip() for dt in data_types.split(",") if dt.strip()]
+
+            result = await service.search_foods(
+                query=query,
+                page_size=page_size,
+                page_number=page,
+                data_types=parsed_data_types,
+                brand_owner=brand_owner,
             )
-        raise HTTPException(status_code=500, detail=str(e))
+
+            foods = []
+            for food in result.foods:
+                food_dict = food.to_dict()
+                foods.append(USDAFoodResponse(
+                    fdc_id=food_dict["fdc_id"],
+                    description=food_dict["description"],
+                    data_type=food_dict["data_type"],
+                    brand_owner=food_dict.get("brand_owner"),
+                    brand_name=food_dict.get("brand_name"),
+                    ingredients=food_dict.get("ingredients"),
+                    food_category=food_dict.get("food_category"),
+                    gtin_upc=food_dict.get("gtin_upc"),
+                    nutrients=food_dict["nutrients"],
+                    nutrients_per_serving=food_dict.get("nutrients_per_serving"),
+                    score=food_dict.get("score"),
+                ))
+
+            return USDASearchResponse(
+                foods=foods,
+                total_hits=result.total_hits,
+                current_page=result.current_page,
+                total_pages=result.total_pages,
+                query=query,
+            )
+        except Exception as usda_error:
+            logger.error(f"Both local DB and USDA search failed: {usda_error}")
+            raise HTTPException(status_code=500, detail=str(usda_error))
 
 
 @router.get("/food/{fdc_id}", response_model=USDAFoodResponse)
@@ -975,39 +1030,52 @@ async def search_branded_foods(
     page_size: int = Query(default=25, ge=1, le=50, description="Number of results per page"),
 ):
     """
-    Search only branded/packaged foods from USDA database.
+    Search branded/packaged foods.
 
-    Branded foods include products from manufacturers with UPC codes.
-    Ideal for searching packaged foods, snacks, beverages, etc.
+    Uses the local food database filtered to branded items from OpenFoodFacts and USDA Branded.
     """
-    logger.info(f"Searching USDA branded foods for: {query}")
+    logger.info(f"Searching branded foods for: {query}")
 
     try:
-        service = get_usda_food_service()
-        result = await service.search_branded_foods(query=query, page_size=page_size)
+        from services.food_database_lookup_service import get_food_db_lookup_service
+        food_db_service = get_food_db_lookup_service()
+
+        # Search local DB — branded items typically come from openfoodfacts
+        results = await food_db_service.search_foods(
+            query=query,
+            page_size=page_size,
+            source="openfoodfacts",
+        )
 
         foods = []
-        for food in result.foods:
-            food_dict = food.to_dict()
+        for item in results:
+            nutrients = {
+                "calories_per_100g": item.get("calories_per_100g", 0),
+                "protein_per_100g": item.get("protein_per_100g", 0),
+                "carbs_per_100g": item.get("carbs_per_100g", 0),
+                "fat_per_100g": item.get("fat_per_100g", 0),
+                "fiber_per_100g": item.get("fiber_per_100g", 0),
+                "sugar_per_100g": item.get("sugar_per_100g", 0),
+            }
             foods.append(USDAFoodResponse(
-                fdc_id=food_dict["fdc_id"],
-                description=food_dict["description"],
-                data_type=food_dict["data_type"],
-                brand_owner=food_dict.get("brand_owner"),
-                brand_name=food_dict.get("brand_name"),
-                ingredients=food_dict.get("ingredients"),
-                food_category=food_dict.get("food_category"),
-                gtin_upc=food_dict.get("gtin_upc"),
-                nutrients=food_dict["nutrients"],
-                nutrients_per_serving=food_dict.get("nutrients_per_serving"),
-                score=food_dict.get("score"),
+                fdc_id=item.get("id", 0),
+                description=item.get("name", "Unknown"),
+                data_type=item.get("source", "openfoodfacts"),
+                brand_owner=item.get("brand"),
+                brand_name=item.get("brand"),
+                ingredients=None,
+                food_category=item.get("category"),
+                gtin_upc=None,
+                nutrients=nutrients,
+                nutrients_per_serving=None,
+                score=item.get("similarity_score"),
             ))
 
         return USDASearchResponse(
             foods=foods,
-            total_hits=result.total_hits,
-            current_page=result.current_page,
-            total_pages=result.total_pages,
+            total_hits=len(foods),
+            current_page=1,
+            total_pages=1,
             query=query,
         )
 
@@ -1022,39 +1090,52 @@ async def search_whole_foods(
     page_size: int = Query(default=25, ge=1, le=50, description="Number of results per page"),
 ):
     """
-    Search foundation and SR Legacy foods from USDA database.
+    Search whole/basic foods (fruits, vegetables, meats, grains).
 
-    These are whole/basic foods like fruits, vegetables, meats, grains.
-    Foundation foods have the most detailed and accurate nutrient data.
+    Uses the local food database filtered to USDA Foundation and SR Legacy data.
     """
-    logger.info(f"Searching USDA whole foods for: {query}")
+    logger.info(f"Searching whole foods for: {query}")
 
     try:
-        service = get_usda_food_service()
-        result = await service.search_all_types(query=query, page_size=page_size)
+        from services.food_database_lookup_service import get_food_db_lookup_service
+        food_db_service = get_food_db_lookup_service()
+
+        # Search local DB filtered to USDA source (Foundation/SR Legacy)
+        results = await food_db_service.search_foods(
+            query=query,
+            page_size=page_size,
+            source="usda",
+        )
 
         foods = []
-        for food in result.foods:
-            food_dict = food.to_dict()
+        for item in results:
+            nutrients = {
+                "calories_per_100g": item.get("calories_per_100g", 0),
+                "protein_per_100g": item.get("protein_per_100g", 0),
+                "carbs_per_100g": item.get("carbs_per_100g", 0),
+                "fat_per_100g": item.get("fat_per_100g", 0),
+                "fiber_per_100g": item.get("fiber_per_100g", 0),
+                "sugar_per_100g": item.get("sugar_per_100g", 0),
+            }
             foods.append(USDAFoodResponse(
-                fdc_id=food_dict["fdc_id"],
-                description=food_dict["description"],
-                data_type=food_dict["data_type"],
-                brand_owner=food_dict.get("brand_owner"),
-                brand_name=food_dict.get("brand_name"),
-                ingredients=food_dict.get("ingredients"),
-                food_category=food_dict.get("food_category"),
-                gtin_upc=food_dict.get("gtin_upc"),
-                nutrients=food_dict["nutrients"],
-                nutrients_per_serving=food_dict.get("nutrients_per_serving"),
-                score=food_dict.get("score"),
+                fdc_id=item.get("id", 0),
+                description=item.get("name", "Unknown"),
+                data_type=item.get("source", "usda"),
+                brand_owner=item.get("brand"),
+                brand_name=item.get("brand"),
+                ingredients=None,
+                food_category=item.get("category"),
+                gtin_upc=None,
+                nutrients=nutrients,
+                nutrients_per_serving=None,
+                score=item.get("similarity_score"),
             ))
 
         return USDASearchResponse(
             foods=foods,
-            total_hits=result.total_hits,
-            current_page=result.current_page,
-            total_pages=result.total_pages,
+            total_hits=len(foods),
+            current_page=1,
+            total_pages=1,
             query=query,
         )
 
@@ -6345,4 +6426,84 @@ async def select_recommendation(user_id: str, request: SelectRecommendationReque
         raise
     except Exception as e:
         logger.error(f"Failed to select recommendation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================
+# Food Report / Correction Endpoints
+# ============================================
+
+
+class FoodReportRequest(BaseModel):
+    """Request to report incorrect food data or submit corrections."""
+    user_id: str
+    food_database_id: Optional[int] = None
+    food_name: str
+    reported_issue: Optional[str] = None
+    original_calories: Optional[float] = None
+    original_protein: Optional[float] = None
+    original_carbs: Optional[float] = None
+    original_fat: Optional[float] = None
+    corrected_calories: Optional[float] = None
+    corrected_protein: Optional[float] = None
+    corrected_carbs: Optional[float] = None
+    corrected_fat: Optional[float] = None
+
+
+class FoodReportResponse(BaseModel):
+    """Response after submitting a food report."""
+    success: bool
+    report_id: str
+    message: str
+
+
+@router.post("/food-report", response_model=FoodReportResponse)
+async def report_food(request: FoodReportRequest):
+    """
+    Report incorrect food nutrition data or submit user corrections.
+
+    Users can flag foods with wrong data and optionally provide corrected values.
+    Corrected values will be used for that user's future lookups.
+    """
+    logger.info(f"Food report from user {request.user_id} for '{request.food_name}'")
+
+    try:
+        from core.db import get_supabase_db
+        db = get_supabase_db()
+
+        report_data = {
+            "user_id": request.user_id,
+            "food_name": request.food_name,
+            "reported_issue": request.reported_issue,
+            "original_calories": request.original_calories,
+            "original_protein": request.original_protein,
+            "original_carbs": request.original_carbs,
+            "original_fat": request.original_fat,
+            "corrected_calories": request.corrected_calories,
+            "corrected_protein": request.corrected_protein,
+            "corrected_carbs": request.corrected_carbs,
+            "corrected_fat": request.corrected_fat,
+            "status": "pending",
+        }
+
+        if request.food_database_id:
+            report_data["food_database_id"] = request.food_database_id
+
+        result = db.client.table("food_reports").insert(report_data).execute()
+
+        if result.data and len(result.data) > 0:
+            report_id = result.data[0].get("id", "unknown")
+        else:
+            report_id = "unknown"
+
+        logger.info(f"Food report created: {report_id}")
+
+        return FoodReportResponse(
+            success=True,
+            report_id=str(report_id),
+            message="Food report submitted successfully. Thank you for helping improve our data!",
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to create food report: {e}")
         raise HTTPException(status_code=500, detail=str(e))

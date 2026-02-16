@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../widgets/glass_sheet.dart';
 import '../log_meal_sheet.dart';
-import 'quick_add_sheet.dart';
 
 /// Floating action button for quick meal logging
 /// Always visible for easy access to food logging
@@ -29,7 +27,7 @@ class QuickAddFAB extends ConsumerWidget {
       bottom: 100, // Above the bottom nav bar
       child: FloatingActionButton.extended(
         heroTag: 'quick_add_fab',
-        onPressed: () => _showQuickAddSheet(context, ref),
+        onPressed: () => _openLogMealSheet(context, ref),
         backgroundColor: teal,
         foregroundColor: Colors.white,
         elevation: 6,
@@ -46,24 +44,9 @@ class QuickAddFAB extends ConsumerWidget {
     );
   }
 
-  void _showQuickAddSheet(BuildContext context, WidgetRef ref) {
-    // Haptic feedback for button press
+  void _openLogMealSheet(BuildContext context, WidgetRef ref) {
     HapticFeedback.lightImpact();
-
-    showGlassSheet<String>(
-      context: context,
-      builder: (ctx) => GlassSheet(
-        child: QuickAddSheet(
-          userId: userId,
-          onMealLogged: onMealLogged,
-        ),
-      ),
-    ).then((result) {
-      // If user chose to open full log sheet, show LogMealSheet
-      if (result == 'openFullLog' && context.mounted) {
-        showLogMealSheet(context, ref).then((_) => onMealLogged());
-      }
-    });
+    showLogMealSheet(context, ref).then((_) => onMealLogged());
   }
 }
 
@@ -86,7 +69,7 @@ class QuickAddFABSimple extends ConsumerWidget {
 
     return FloatingActionButton.extended(
       heroTag: 'quick_add_fab_simple',
-      onPressed: () => _showQuickAddSheet(context, ref),
+      onPressed: () => _openLogMealSheet(context, ref),
       backgroundColor: teal,
       foregroundColor: Colors.white,
       elevation: 6,
@@ -102,23 +85,8 @@ class QuickAddFABSimple extends ConsumerWidget {
     );
   }
 
-  void _showQuickAddSheet(BuildContext context, WidgetRef ref) {
-    // Haptic feedback for button press
+  void _openLogMealSheet(BuildContext context, WidgetRef ref) {
     HapticFeedback.lightImpact();
-
-    showGlassSheet<String>(
-      context: context,
-      builder: (ctx) => GlassSheet(
-        child: QuickAddSheet(
-          userId: userId,
-          onMealLogged: onMealLogged,
-        ),
-      ),
-    ).then((result) {
-      // If user chose to open full log sheet, show LogMealSheet
-      if (result == 'openFullLog' && context.mounted) {
-        showLogMealSheet(context, ref).then((_) => onMealLogged());
-      }
-    });
+    showLogMealSheet(context, ref).then((_) => onMealLogged());
   }
 }

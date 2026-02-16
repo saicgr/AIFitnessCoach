@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -144,8 +145,13 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
         if (videoUrl != null && mounted) {
           _videoUrl = videoUrl;
           await _initializeVideo(videoUrl, isLocal: false);
+        } else if (mounted) {
+          setState(() {
+            _isLoadingVideo = false;
+            _videoError = 'Video not available';
+          });
         }
-      } else {
+      } else if (mounted) {
         setState(() {
           _isLoadingVideo = false;
           _videoError = 'Video not available';
@@ -171,7 +177,15 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
         _videoController = VideoPlayerController.networkUrl(Uri.parse(source));
       }
 
-      await _videoController!.initialize();
+      // Timeout prevents hanging forever if S3 returns an error response
+      await _videoController!.initialize().timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          _videoController?.dispose();
+          _videoController = null;
+          throw TimeoutException('Video initialization timed out');
+        },
+      );
       _videoController!.setLooping(true);
       _videoController!.setVolume(0);
 

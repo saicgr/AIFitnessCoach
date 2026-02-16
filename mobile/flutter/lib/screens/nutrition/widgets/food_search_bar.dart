@@ -7,7 +7,8 @@ import '../../../data/services/food_search_service.dart';
 enum FoodSearchFilter {
   all('All'),
   saved('Saved'),
-  recent('Recent');
+  recent('Recent'),
+  foodDatabase('Food DB');
 
   final String label;
   const FoodSearchFilter(this.label);

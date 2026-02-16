@@ -120,6 +120,7 @@ class _WatchInstallBannerState extends ConsumerState<WatchInstallBanner>
   Future<void> _dismiss() async {
     HapticService.light();
 
+    if (!mounted) return;
     await _animationController.reverse();
 
     final prefs = await SharedPreferences.getInstance();

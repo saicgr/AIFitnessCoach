@@ -27,7 +27,6 @@ import 'nutrition_settings_screen.dart';
 import 'recipe_builder_sheet.dart';
 import 'weekly_checkin_sheet.dart';
 import 'widgets/quick_add_fab.dart';
-import 'widgets/quick_add_sheet.dart';
 import 'widgets/nutrition_goals_card.dart';
 import 'tabs/hydration_tab.dart';
 import 'tabs/fasting_tab.dart';
@@ -473,14 +472,17 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         ),
       ),
       ),
-      // Quick Add FAB for easy food logging
+      // Quick Add FAB for easy food logging - padded above the floating nav bar
       floatingActionButton: _userId != null && _userId!.isNotEmpty
-          ? QuickAddFABSimple(
-              userId: _userId!,
-              onMealLogged: () {
-                // Refresh nutrition data after logging a meal
-                ref.read(nutritionProvider.notifier).loadTodaySummary(_userId!);
-              },
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 80),
+              child: QuickAddFABSimple(
+                userId: _userId!,
+                onMealLogged: () {
+                  // Refresh nutrition data after logging a meal
+                  ref.read(nutritionProvider.notifier).loadTodaySummary(_userId!);
+                },
+              ),
             )
           : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,

@@ -56,8 +56,8 @@ class FoodSearchResults extends ConsumerWidget {
       case search.FoodSearchLoading():
         return const _ShimmerLoadingResults();
 
-      case search.FoodSearchResults(:final saved, :final recent, :final database, :final query, :final fromCache):
-        if (saved.isEmpty && recent.isEmpty && database.isEmpty) {
+      case search.FoodSearchResults(:final saved, :final recent, :final database, :final foodDatabase, :final query, :final fromCache):
+        if (saved.isEmpty && recent.isEmpty && database.isEmpty && foodDatabase.isEmpty) {
           return _NoResultsState(query: query, onAnalyzeWithAI: onAnalyzeWithAI);
         }
 
@@ -65,15 +65,23 @@ class FoodSearchResults extends ConsumerWidget {
         List<search.FoodSearchResult> filteredSaved = saved;
         List<search.FoodSearchResult> filteredRecent = recent;
         List<search.FoodSearchResult> filteredDatabase = database;
+        List<search.FoodSearchResult> filteredFoodDatabase = foodDatabase;
 
         if (filter != null) {
           switch (filter!) {
             case FoodSearchFilter.saved:
               filteredRecent = [];
               filteredDatabase = [];
+              filteredFoodDatabase = [];
               break;
             case FoodSearchFilter.recent:
               filteredSaved = [];
+              filteredDatabase = [];
+              filteredFoodDatabase = [];
+              break;
+            case FoodSearchFilter.foodDatabase:
+              filteredSaved = [];
+              filteredRecent = [];
               filteredDatabase = [];
               break;
             case FoodSearchFilter.all:
@@ -86,6 +94,7 @@ class FoodSearchResults extends ConsumerWidget {
           saved: filteredSaved,
           recent: filteredRecent,
           database: filteredDatabase,
+          foodDatabase: filteredFoodDatabase,
           onResultSelected: onResultSelected,
           scrollController: scrollController,
           showCategories: showCategories,
@@ -275,6 +284,7 @@ class _ResultsList extends StatelessWidget {
   final List<search.FoodSearchResult> saved;
   final List<search.FoodSearchResult> recent;
   final List<search.FoodSearchResult> database;
+  final List<search.FoodSearchResult> foodDatabase;
   final Function(search.FoodSearchResult result) onResultSelected;
   final ScrollController? scrollController;
   final bool showCategories;
@@ -284,6 +294,7 @@ class _ResultsList extends StatelessWidget {
     required this.saved,
     required this.recent,
     required this.database,
+    this.foodDatabase = const [],
     required this.onResultSelected,
     this.scrollController,
     this.showCategories = true,
@@ -347,9 +358,24 @@ class _ResultsList extends StatelessWidget {
           )));
     }
 
+    // Food Database section
+    if (foodDatabase.isNotEmpty && showCategories) {
+      items.add(_SectionHeader(
+        title: 'Food Database',
+        icon: Icons.restaurant_menu_rounded,
+        count: foodDatabase.length,
+        isDark: isDark,
+      ));
+      items.addAll(foodDatabase.map((result) => _ResultCard(
+            result: result,
+            onTap: () => onResultSelected(result),
+            isDark: isDark,
+          )));
+    }
+
     // If not showing categories, just show flat list
     if (!showCategories) {
-      final allResults = [...saved, ...recent, ...database];
+      final allResults = [...saved, ...recent, ...database, ...foodDatabase];
       items.clear();
       items.addAll(allResults.map((result) => _ResultCard(
             result: result,
@@ -615,6 +641,11 @@ class _ResultCard extends StatelessWidget {
         return (
           Icons.qr_code_scanner_rounded,
           isDark ? AppColors.orange : AppColorsLight.orange
+        );
+      case search.FoodSearchSource.foodDatabase:
+        return (
+          Icons.restaurant_menu_rounded,
+          isDark ? AppColors.green : AppColorsLight.green
         );
     }
   }
