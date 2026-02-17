@@ -592,17 +592,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Update user in state
+  /// Update user in state and persist to cache
   void updateUser(app_user.User user) {
     state = state.copyWith(user: user);
+    _repository._cacheUser(user);
   }
 
-  /// Refresh user data
+  /// Refresh user data from server
   Future<void> refreshUser() async {
     try {
       final user = await _repository.getCurrentUser();
       if (user != null) {
-        state = state.copyWith(user: user);
+        // Force new AuthState to ensure StateNotifier notifies listeners
+        // even if Equatable comparison has edge cases
+        state = AuthState(status: AuthStatus.authenticated, user: user);
       }
     } catch (e) {
       debugPrint('❌ [Auth] Refresh user error: $e');
@@ -614,9 +617,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (state.user != null) {
       final updatedUser = state.user!.copyWith(onboardingCompleted: true);
       state = state.copyWith(user: updatedUser);
-      // Update cache to persist across app restarts
-      await _repository._cacheUser(updatedUser);
-      debugPrint('✅ [Auth] Marked onboarding as complete (cached)');
+      // Don't cache here — full user with preferences will be cached by refreshUser()
+      debugPrint('✅ [Auth] Marked onboarding as complete (in-memory)');
     }
   }
 
@@ -625,9 +627,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (state.user != null) {
       final updatedUser = state.user!.copyWith(coachSelected: true);
       state = state.copyWith(user: updatedUser);
-      // Update cache to persist across app restarts
-      await _repository._cacheUser(updatedUser);
-      debugPrint('✅ [Auth] Marked coach as selected (cached)');
+      // Don't cache here — full user with preferences will be cached by refreshUser()
+      debugPrint('✅ [Auth] Marked coach as selected (in-memory)');
     }
   }
 
@@ -636,9 +637,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (state.user != null) {
       final updatedUser = state.user!.copyWith(paywallCompleted: true);
       state = state.copyWith(user: updatedUser);
-      // Update cache to persist across app restarts
-      await _repository._cacheUser(updatedUser);
-      debugPrint('✅ [Auth] Marked paywall as completed (cached)');
+      // Don't cache here — full user with preferences will be cached by refreshUser()
+      debugPrint('✅ [Auth] Marked paywall as completed (in-memory)');
     }
   }
 
@@ -670,9 +670,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (state.user != null) {
       final updatedUser = state.user!.copyWith(coachSelected: false);
       state = state.copyWith(user: updatedUser);
-      // Update cache to persist across app restarts
-      await _repository._cacheUser(updatedUser);
-      debugPrint('✅ [Auth] Reset coach selection (cached)');
+      // Don't cache here — full user with preferences will be cached by refreshUser()
+      debugPrint('✅ [Auth] Reset coach selection (in-memory)');
     }
   }
 
@@ -681,9 +680,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (state.user != null) {
       final updatedUser = state.user!.copyWith(onboardingCompleted: false);
       state = state.copyWith(user: updatedUser);
-      // Update cache to persist across app restarts
-      await _repository._cacheUser(updatedUser);
-      debugPrint('✅ [Auth] Reset onboarding status (cached)');
+      // Don't cache here — full user with preferences will be cached by refreshUser()
+      debugPrint('✅ [Auth] Reset onboarding status (in-memory)');
     }
   }
 
@@ -692,9 +690,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (state.user != null) {
       final updatedUser = state.user!.copyWith(paywallCompleted: false);
       state = state.copyWith(user: updatedUser);
-      // Update cache to persist across app restarts
-      await _repository._cacheUser(updatedUser);
-      debugPrint('✅ [Auth] Reset paywall status (cached)');
+      // Don't cache here — full user with preferences will be cached by refreshUser()
+      debugPrint('✅ [Auth] Reset paywall status (in-memory)');
     }
   }
 }

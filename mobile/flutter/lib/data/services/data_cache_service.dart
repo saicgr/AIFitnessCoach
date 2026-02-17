@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Generic data cache service using SharedPreferences
+/// Generic data cache service using SharedPreferences with TTL support
 ///
 /// Provides cache-first pattern for API data:
-/// 1. Load cached data instantly
+/// 1. Load cached data instantly (if not expired)
 /// 2. Fetch fresh data in background
 /// 3. Update cache when fresh data arrives
 class DataCacheService {
@@ -20,6 +20,15 @@ class DataCacheService {
   static const String xpStreakKey = 'cache_xp_streak';
   static const String trophySummaryKey = 'cache_trophy_summary';
   static const String bodyMeasurementsKey = 'cache_body_measurements';
+
+  // TTL durations in milliseconds
+  static const int _userProfileTtlMs = 30 * 60 * 1000; // 30 minutes
+  static const int _defaultTtlMs = 60 * 60 * 1000; // 1 hour
+
+  /// Per-key TTL overrides
+  static const Map<String, int> _ttlOverrides = {
+    userProfileKey: _userProfileTtlMs,
+  };
 
   DataCacheService._();
 
@@ -40,11 +49,29 @@ class DataCacheService {
     return _prefs!;
   }
 
+  /// Get TTL for a given key
+  int _getTtl(String key) => _ttlOverrides[key] ?? _defaultTtlMs;
+
+  /// Wrap data in a TTL envelope
+  Map<String, dynamic> _wrapWithTtl(dynamic data) => {
+        'data': data,
+        'cachedAt': DateTime.now().millisecondsSinceEpoch,
+      };
+
+  /// Check if cached data is still valid
+  bool _isValid(Map<String, dynamic> envelope, String key) {
+    final cachedAt = envelope['cachedAt'] as int?;
+    if (cachedAt == null) return false;
+    final age = DateTime.now().millisecondsSinceEpoch - cachedAt;
+    return age < _getTtl(key);
+  }
+
   /// Cache JSON data with a key
   Future<void> cache(String key, Map<String, dynamic> data) async {
     try {
       final p = await prefs;
-      final jsonString = jsonEncode(data);
+      final envelope = _wrapWithTtl(data);
+      final jsonString = jsonEncode(envelope);
       await p.setString(key, jsonString);
       debugPrint('💾 [Cache] Saved: $key (${jsonString.length} chars)');
     } catch (e) {
@@ -56,7 +83,8 @@ class DataCacheService {
   Future<void> cacheList(String key, List<Map<String, dynamic>> data) async {
     try {
       final p = await prefs;
-      final jsonString = jsonEncode(data);
+      final envelope = _wrapWithTtl(data);
+      final jsonString = jsonEncode(envelope);
       await p.setString(key, jsonString);
       debugPrint('💾 [Cache] Saved list: $key (${data.length} items)');
     } catch (e) {
@@ -64,7 +92,7 @@ class DataCacheService {
     }
   }
 
-  /// Get cached JSON data
+  /// Get cached JSON data (returns null if expired or missing)
   Future<Map<String, dynamic>?> getCached(String key) async {
     try {
       final p = await prefs;
@@ -73,15 +101,30 @@ class DataCacheService {
         debugPrint('📭 [Cache] Miss: $key');
         return null;
       }
-      debugPrint('✅ [Cache] Hit: $key');
-      return jsonDecode(jsonString) as Map<String, dynamic>;
+      final decoded = jsonDecode(jsonString);
+      if (decoded is Map<String, dynamic>) {
+        // Check if this is a TTL envelope (has 'data' and 'cachedAt')
+        if (decoded.containsKey('cachedAt') && decoded.containsKey('data')) {
+          if (!_isValid(decoded, key)) {
+            debugPrint('⏰ [Cache] Expired: $key');
+            await p.remove(key);
+            return null;
+          }
+          debugPrint('✅ [Cache] Hit: $key');
+          return decoded['data'] as Map<String, dynamic>;
+        }
+        // Legacy entry without TTL envelope — treat as valid but wrap on next write
+        debugPrint('✅ [Cache] Hit (legacy): $key');
+        return decoded;
+      }
+      return null;
     } catch (e) {
       debugPrint('❌ [Cache] Error reading $key: $e');
       return null;
     }
   }
 
-  /// Get cached list of JSON objects
+  /// Get cached list of JSON objects (returns null if expired or missing)
   Future<List<Map<String, dynamic>>?> getCachedList(String key) async {
     try {
       final p = await prefs;
@@ -90,9 +133,26 @@ class DataCacheService {
         debugPrint('📭 [Cache] Miss: $key');
         return null;
       }
-      debugPrint('✅ [Cache] Hit: $key');
-      final list = jsonDecode(jsonString) as List;
-      return list.cast<Map<String, dynamic>>();
+      final decoded = jsonDecode(jsonString);
+      if (decoded is Map<String, dynamic> &&
+          decoded.containsKey('cachedAt') &&
+          decoded.containsKey('data')) {
+        // TTL envelope
+        if (!_isValid(decoded, key)) {
+          debugPrint('⏰ [Cache] Expired: $key');
+          await p.remove(key);
+          return null;
+        }
+        debugPrint('✅ [Cache] Hit: $key');
+        final list = decoded['data'] as List;
+        return list.cast<Map<String, dynamic>>();
+      }
+      // Legacy entry without TTL envelope
+      if (decoded is List) {
+        debugPrint('✅ [Cache] Hit (legacy): $key');
+        return decoded.cast<Map<String, dynamic>>();
+      }
+      return null;
     } catch (e) {
       debugPrint('❌ [Cache] Error reading list $key: $e');
       return null;
@@ -127,7 +187,7 @@ class DataCacheService {
     }
   }
 
-  /// Check if a key has cached data
+  /// Check if a key has cached data (does not check TTL)
   Future<bool> hasCached(String key) async {
     final p = await prefs;
     return p.containsKey(key);

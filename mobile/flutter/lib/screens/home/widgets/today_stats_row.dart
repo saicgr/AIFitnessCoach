@@ -75,11 +75,11 @@ class _GoalsPill extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _goalDot('L', loggedIn, doneColor, mutedColor),
-              const SizedBox(width: 3),
+              const SizedBox(width: 2),
               _goalDot('W', loggedWeight, doneColor, mutedColor),
-              const SizedBox(width: 3),
+              const SizedBox(width: 2),
               _goalDot('M', loggedMeal, doneColor, mutedColor),
-              const SizedBox(width: 3),
+              const SizedBox(width: 2),
               _goalDot('T', completedWorkout, doneColor, mutedColor),
             ],
           ),
@@ -92,8 +92,8 @@ class _GoalsPill extends ConsumerWidget {
     return Tooltip(
       message: _tooltipFor(letter),
       child: Container(
-        width: 16,
-        height: 16,
+        width: 14,
+        height: 14,
         decoration: BoxDecoration(
           color: done ? doneColor : mutedColor,
           shape: BoxShape.circle,
@@ -102,7 +102,7 @@ class _GoalsPill extends ConsumerWidget {
           child: Text(
             letter,
             style: TextStyle(
-              fontSize: 8,
+              fontSize: 7,
               fontWeight: FontWeight.bold,
               color: done ? Colors.white : Colors.white54,
             ),

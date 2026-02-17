@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/providers/user_provider.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/today_workout_provider.dart';
@@ -574,24 +575,30 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   }
 
   Widget _buildNoWorkoutDaysState(bool isDark, Color accentColor) {
-    return Container(
-      height: 200,
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1a1a1a) : const Color(0xFFF5F5F5),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: accentColor.withValues(alpha: 0.3)),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.calendar_today_outlined, size: 48, color: accentColor.withValues(alpha: 0.5)),
-            const SizedBox(height: 16),
-            Text('Set your workout days', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black87)),
-            const SizedBox(height: 8),
-            Text('Go to Settings to configure', style: TextStyle(fontSize: 14, color: isDark ? Colors.white60 : Colors.black45)),
-          ],
+    return GestureDetector(
+      onTap: () {
+        // Refresh user data in case workout days were set but cache is stale
+        ref.read(authStateProvider.notifier).refreshUser();
+      },
+      child: Container(
+        height: 200,
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1a1a1a) : const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.calendar_today_outlined, size: 48, color: accentColor.withValues(alpha: 0.5)),
+              const SizedBox(height: 16),
+              Text('Set your workout days', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black87)),
+              const SizedBox(height: 8),
+              Text('Tap to refresh or go to Settings', style: TextStyle(fontSize: 14, color: isDark ? Colors.white60 : Colors.black45)),
+            ],
+          ),
         ),
       ),
     );

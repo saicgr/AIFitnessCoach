@@ -184,6 +184,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // M13: Set time at start to prevent concurrent/double-refreshes
       _lastRefreshTime = now;
       debugPrint('🔄 [Home] Auto-refreshing workouts...');
+      // Refresh user data (picks up workout days, preferences changes)
+      ref.read(authStateProvider.notifier).refreshUser();
       final workoutsNotifier = ref.read(workoutsProvider.notifier);
       await workoutsNotifier.refresh();
 
@@ -1762,6 +1764,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             _lastRefreshTime = DateTime.now();
             // Reset carousel auto-generation so it can re-evaluate
             HeroWorkoutCarousel.resetAutoGeneration();
+            // Refresh user data (picks up workout days, preferences changes)
+            await ref.read(authStateProvider.notifier).refreshUser();
             // Invalidate todayWorkoutProvider to refetch
             ref.invalidate(todayWorkoutProvider);
             // Also refresh layout in case it changed

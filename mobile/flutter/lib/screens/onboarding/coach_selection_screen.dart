@@ -170,6 +170,21 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
         final userId = await apiClient.getUserId();
         if (userId == null) return;
 
+        // Retry helper for Render cold starts
+        Future<T> retryWithBackoff<T>(Future<T> Function() fn, {int maxAttempts = 3}) async {
+          for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+              return await fn();
+            } catch (e) {
+              if (attempt == maxAttempts) rethrow;
+              final delay = Duration(seconds: 2 * attempt);
+              debugPrint('⚠️ [CoachSelection] Attempt $attempt failed, retrying in ${delay.inSeconds}s: $e');
+              await Future.delayed(delay);
+            }
+          }
+          throw Exception('Unreachable');
+        }
+
         // Build AI-ready payload using the payload builder
         final aiPayload = AIProfilePayloadBuilder.buildPayload(quizData);
 
@@ -218,20 +233,20 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
           'coach_id': _isCustomMode ? 'custom' : _selectedCoach?.id,
         };
 
-        // Submit preferences to backend
-        await apiClient.post(
+        // Submit preferences to backend (with retry for cold starts)
+        await retryWithBackoff(() => apiClient.post(
           '${ApiConstants.users}/$userId/preferences',
           data: preferencesPayload,
-        );
+        ));
 
-        // Update flags
-        await apiClient.put(
+        // Update flags (with retry for cold starts)
+        await retryWithBackoff(() => apiClient.put(
           '${ApiConstants.users}/$userId',
           data: {
             'coach_selected': true,
             'onboarding_completed': true,
           },
-        );
+        ));
 
         // Also set in SharedPreferences so local notification scheduling works
         final prefs = await SharedPreferences.getInstance();
@@ -272,7 +287,12 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                 'weight_direction': quizData.weightDirection ?? 'maintain',
                 'weight_change_rate': quizData.weightChangeRate ?? 'moderate',
                 'goal_weight_kg': quizData.goalWeightKg ?? quizData.weightKg,
-                'nutrition_goals': quizData.nutritionGoals ?? ['maintain'],
+                'nutrition_goals': quizData.nutritionGoals ??
+                    (quizData.weightDirection == 'lose'
+                        ? ['lose_fat']
+                        : quizData.weightDirection == 'gain'
+                            ? ['build_muscle']
+                            : ['maintain']),
                 'workout_days_per_week': quizData.daysPerWeek ?? 3,
               },
             );

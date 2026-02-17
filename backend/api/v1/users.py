@@ -2200,6 +2200,14 @@ async def calculate_nutrition_targets(user_id: str, request: NutritionCalculatio
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
+        # Derive nutrition_goals from weight_direction if client sent stale default
+        nutrition_goals = request.nutrition_goals
+        if (not nutrition_goals or nutrition_goals == ['maintain']) and request.weight_direction:
+            direction_map = {'lose': ['lose_fat'], 'gain': ['build_muscle']}
+            nutrition_goals = direction_map.get(request.weight_direction, nutrition_goals or ['maintain'])
+            if nutrition_goals != request.nutrition_goals:
+                logger.info(f"Derived nutrition_goals={nutrition_goals} from weight_direction={request.weight_direction} for user {user_id}")
+
         # Call the Supabase function to calculate and save metrics
         # Timeout at 90s — well under Gunicorn's 120s worker timeout
         try:
@@ -2218,7 +2226,7 @@ async def calculate_nutrition_targets(user_id: str, request: NutritionCalculatio
                             'p_weight_direction': request.weight_direction,
                             'p_weight_change_rate': request.weight_change_rate,
                             'p_goal_weight_kg': request.goal_weight_kg,
-                            'p_nutrition_goals': request.nutrition_goals,
+                            'p_nutrition_goals': nutrition_goals,
                             'p_workout_days_per_week': request.workout_days_per_week,
                         }
                     ).execute()
